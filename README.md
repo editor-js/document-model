@@ -1,0 +1,1 @@
+# @editorjs/document-model
