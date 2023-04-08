@@ -5,9 +5,15 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc --project tsconfig.build.json"
+    "build": "tsc --project tsconfig.build.json",
+    "lint": "eslint .",
+    "lint:ci": "yarn lint --max-warnings 0",
+    "lint:fix": "yarn lint --fix"
   },
   "devDependencies": {
+    "@types/eslint": "^8",
+    "eslint": "^8.38.0",
+    "eslint-config-codex": "^1.7.2",
     "typescript": "^5.0.4"
   }
 }

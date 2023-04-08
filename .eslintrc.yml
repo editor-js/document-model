@@ -1,0 +1,6 @@
+extends:
+  - codex/ts
+
+ignorePatterns:
+  - node_modules
+  - dist
