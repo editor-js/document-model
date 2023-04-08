@@ -1,5 +1,13 @@
 {
   "name": "@editorjs/document-model",
   "version": "0.0.0",
-  "packageManager": "yarn@3.5.0"
+  "packageManager": "yarn@3.5.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.4"
+  }
 }
