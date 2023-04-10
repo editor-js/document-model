@@ -1,5 +1,5 @@
 import { TextNode } from '../../TextNode';
-import { ValueNode } from '../../DataNode';
+import { ValueNode } from '../../ValueNode';
 import { FormattingNode } from '../../FormattingNode';
 import { EditorDocument } from '../../EditorDocument';
 import { BlockTune } from '../../BlockTune';

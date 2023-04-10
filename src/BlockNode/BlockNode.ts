@@ -1,7 +1,7 @@
 import { EditorDocument } from '../EditorDocument';
 import { FormattingNode } from '../FormattingNode';
 import { TextNode } from '../TextNode';
-import { ValueNode } from '../DataNode';
+import { ValueNode } from '../ValueNode';
 import { BlockTune } from '../BlockTune';
 import { BlockNodeConstructorParameters } from './types';
 
