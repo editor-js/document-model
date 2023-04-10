@@ -1,9 +1,7 @@
-import { TextNode } from '../../TextNode';
-import { ValueNode } from '../../ValueNode';
-import { FormattingNode } from '../../FormattingNode';
 import { EditorDocument } from '../../EditorDocument';
 import { BlockTune, BlockTuneName } from '../../BlockTune';
 import { BlockNodeName } from './BlockNodeName';
+import { BlockNodeChildren } from './BlockNodeChildren';
 
 export interface BlockNodeConstructorParameters {
   /**
@@ -14,7 +12,7 @@ export interface BlockNodeConstructorParameters {
   /**
    * The child nodes of the BlockNode
    */
-  children: Record<string, TextNode | ValueNode | FormattingNode>;
+  children: BlockNodeChildren;
 
   /**
    * The parent EditorDocument of the BlockNode

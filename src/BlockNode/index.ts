@@ -1,14 +1,11 @@
 import { EditorDocument } from '../EditorDocument';
-import { FormattingNode } from '../FormattingNode';
-import { TextNode } from '../TextNode';
-import { ValueNode } from '../ValueNode';
 import { BlockTune, BlockTuneName } from '../BlockTune';
 import {
   BlockNodeConstructorParameters,
   BlockNodeName,
   createBlockNodeName,
   DataKey,
-  createDataKey
+  createDataKey, BlockNodeChildren
 } from './types';
 
 /**
@@ -29,7 +26,7 @@ export class BlockNode {
    *
    * @private
    */
-  #children: Record<DataKey, TextNode | ValueNode | FormattingNode>;
+  #children: BlockNodeChildren;
 
   /**
    * Field representing the parent EditorDocument of the BlockNode
