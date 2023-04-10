@@ -49,7 +49,7 @@ export class BlockNode {
    * @param args.parent - The parent EditorDocument of the BlockNode.
    * @param args.tunes - The BlockTunes associated with the BlockNode.
    */
-  constructor({ name, children, parent, tunes }: BlockNodeConstructorParameters) {
+  constructor({ name, children, parent, tunes = {} }: BlockNodeConstructorParameters) {
     this.#name = name;
     this.#children = children;
     this.#parent = parent;
