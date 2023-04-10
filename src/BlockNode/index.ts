@@ -3,7 +3,13 @@ import { FormattingNode } from '../FormattingNode';
 import { TextNode } from '../TextNode';
 import { ValueNode } from '../ValueNode';
 import { BlockTune, BlockTuneName } from '../BlockTune';
-import { BlockNodeConstructorParameters, BlockNodeName, createBlockNodeName } from './types';
+import {
+  BlockNodeConstructorParameters,
+  BlockNodeName,
+  createBlockNodeName,
+  DataKey,
+  createDataKey
+} from './types';
 
 /**
  * BlockNode class represents a node in a tree-like structure used to store and manipulate Blocks in an editor document.
@@ -23,7 +29,7 @@ export class BlockNode {
    *
    * @private
    */
-  #children: Record<string, TextNode | ValueNode | FormattingNode>;
+  #children: Record<DataKey, TextNode | ValueNode | FormattingNode>;
 
   /**
    * Field representing the parent EditorDocument of the BlockNode
@@ -56,5 +62,7 @@ export class BlockNode {
 
 export {
   BlockNodeName,
-  createBlockNodeName
+  createBlockNodeName,
+  DataKey,
+  createDataKey
 };
