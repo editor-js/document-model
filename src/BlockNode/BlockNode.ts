@@ -1,7 +1,7 @@
 import { EditorDocument } from '../EditorDocument';
 import { FormattingNode } from '../FormattingNode';
 import { TextNode } from '../TextNode';
-import { DataNode } from '../DataNode';
+import { ValueNode } from '../DataNode';
 import { BlockTune } from '../BlockTune';
 import { BlockNodeConstructorParameters } from './types';
 
@@ -23,7 +23,7 @@ export class BlockNode {
    *
    * @private
    */
-  #children: Record<string, TextNode | DataNode | FormattingNode>;
+  #children: Record<string, TextNode | ValueNode | FormattingNode>;
 
   /**
    * Private field representing the parent EditorDocument of the BlockNode

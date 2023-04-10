@@ -1,1 +1,1 @@
-export { DataNodeConstructorParameters } from './DataNodeConstructorParameters';
+export { ValueNodeConstructorParameters } from './ValueNodeConstructorParameters';

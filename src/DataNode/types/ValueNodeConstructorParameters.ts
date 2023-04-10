@@ -1,8 +1,8 @@
 import { BlockNode } from '../../BlockNode';
 
-export interface DataNodeConstructorParameters {
+export interface ValueNodeConstructorParameters {
   /**
-   * The data associated with the DataNode
+   * The data associated with the ValueNode
    */
   data: Record<string, unknown>;
 
