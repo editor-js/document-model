@@ -2,13 +2,14 @@ import { TextNode } from '../../TextNode';
 import { ValueNode } from '../../ValueNode';
 import { FormattingNode } from '../../FormattingNode';
 import { EditorDocument } from '../../EditorDocument';
-import { BlockTune } from '../../BlockTune';
+import { BlockTune, BlockTuneName } from '../../BlockTune';
+import { BlockNodeName } from './BlockNodeName';
 
 export interface BlockNodeConstructorParameters {
   /**
    * The name of the tool created a Block
    */
-  name: string;
+  name: BlockNodeName;
 
   /**
    * The child nodes of the BlockNode
@@ -23,5 +24,5 @@ export interface BlockNodeConstructorParameters {
   /**
    * The BlockTunes associated with the BlockNode
    */
-  tunes: Record<string, BlockTune>;
+  tunes: Record<BlockTuneName, BlockTune>;
 }

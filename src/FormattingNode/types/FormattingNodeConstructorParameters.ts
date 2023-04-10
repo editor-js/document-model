@@ -1,8 +1,10 @@
+import { FormattingNodeName } from './FormattingNodeName';
+
 export interface FormattingNodeConstructorParameters {
   /**
    * The name of the formatting tool applied to the content
    */
-  name: string;
+  name: FormattingNodeName;
 
   /**
    * Any additional data associated with the formatting

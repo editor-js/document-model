@@ -2,8 +2,8 @@ import { EditorDocument } from '../EditorDocument';
 import { FormattingNode } from '../FormattingNode';
 import { TextNode } from '../TextNode';
 import { ValueNode } from '../ValueNode';
-import { BlockTune } from '../BlockTune';
-import { BlockNodeConstructorParameters } from './types';
+import { BlockTune, BlockTuneName } from '../BlockTune';
+import { BlockNodeConstructorParameters, BlockNodeName, createBlockNodeName } from './types';
 
 /**
  * BlockNode class represents a node in a tree-like structure used to store and manipulate Blocks in an editor document.
@@ -16,7 +16,7 @@ export class BlockNode {
    *
    * @private
    */
-  #name: string;
+  #name: BlockNodeName;
 
   /**
    * Field representing the content of the Block
@@ -35,7 +35,7 @@ export class BlockNode {
    *
    * @private
    */
-  #tunes: Record<string, BlockTune>;
+  #tunes: Record<BlockTuneName, BlockTune>;
 
   /**
    * Constructor for BlockNode class.
@@ -53,3 +53,8 @@ export class BlockNode {
     this.#tunes = tunes;
   }
 }
+
+export {
+  BlockNodeName,
+  createBlockNodeName
+};

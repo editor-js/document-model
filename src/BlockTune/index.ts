@@ -1,5 +1,5 @@
 import { BlockNode } from '../BlockNode';
-import { BlockTuneConstructorParameters } from './types';
+import { BlockTuneConstructorParameters, BlockTuneName, createBlockTuneName } from './types';
 
 /**
  * BlockTune class represents a set of additional information associated with a BlockNode.
@@ -11,7 +11,7 @@ export class BlockTune {
    *
    * @private
    */
-  #name: string;
+  #name: BlockTuneName;
 
   /**
    * Private field representing any additional data associated with the tune
@@ -41,3 +41,8 @@ export class BlockTune {
     this.#block = block;
   }
 }
+
+export {
+  BlockTuneName,
+  createBlockTuneName
+};

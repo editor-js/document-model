@@ -1,3 +1,3 @@
-declare const __nominal__: unique symbol;
+declare const nominalTypeField: unique symbol;
 
-export type Nominal<Type, Identifier> = Type & { readonly [__nominal__]: Identifier };
+export type Nominal<Type, Identifier> = Type & { readonly [nominalTypeField]: Identifier };

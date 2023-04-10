@@ -1,5 +1,5 @@
 import { BlockNode } from '../BlockNode';
-import { EditorDocumentConstructorParameters } from './types';
+import { EditorDocumentConstructorParameters, PropName } from './types';
 
 /**
  * EditorDocument class represents the top-level container for a tree-like structure of BlockNodes in an editor document.
@@ -18,7 +18,7 @@ export class EditorDocument {
    *
    * @private
    */
-  #properties: Record<string, unknown>;
+  #properties: Record<PropName, unknown>;
 
   /**
    * Constructor for EditorDocument class.

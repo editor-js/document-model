@@ -1,5 +1,5 @@
 import { TextNode } from '../TextNode';
-import { FormattingNodeConstructorParameters } from './types';
+import { FormattingNodeConstructorParameters, FormattingNodeName, createFormattingNodeName } from './types';
 
 /**
  * FormattingNode class represents a node in a tree-like structure, used to store and manipulate formatted text content
@@ -10,7 +10,7 @@ export class FormattingNode {
    *
    * @private
    */
-  #name: string;
+  #name: FormattingNodeName;
 
   /**
    * Private field representing any additional data associated with the formatting
@@ -47,3 +47,8 @@ export class FormattingNode {
     this.#children = [];
   }
 }
+
+export {
+  FormattingNodeName,
+  createFormattingNodeName
+};

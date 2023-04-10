@@ -1,10 +1,11 @@
 import { BlockNode } from '../../BlockNode';
+import { BlockTuneName } from './BlockTuneName';
 
 export interface BlockTuneConstructorParameters {
   /**
    * The name of the tune
    */
-  name: string;
+  name: BlockTuneName;
 
   /**
    * Any additional data associated with the tune
