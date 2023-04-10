@@ -42,10 +42,11 @@ export class BlockNode {
   /**
    * Constructor for BlockNode class.
    *
-   * @param name - The name of the BlockNode.
-   * @param children - The child nodes of the BlockNode.
-   * @param parent - The parent EditorDocument of the BlockNode.
-   * @param tunes - The BlockTunes associated with the BlockNode.
+   * @param args - TextNode constructor arguments.
+   * @param args.name - The name of the BlockNode.
+   * @param args.children - The child nodes of the BlockNode.
+   * @param args.parent - The parent EditorDocument of the BlockNode.
+   * @param args.tunes - The BlockTunes associated with the BlockNode.
    */
   constructor({ name, children, parent, tunes }: BlockNodeConstructorParameters) {
     this.#name = name;

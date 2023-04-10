@@ -37,9 +37,10 @@ export class TextNode {
   /**
    * Constructor for TextNode class
    *
-   * @param value - text content of the node
-   * @param children - array of child nodes
-   * @param parent - a parent of TextNode
+   * @param args - TextNode constructor arguments.
+   * @param args.value - Text content of the node.
+   * @param args.children - Array of child nodes.
+   * @param args.parent - A parent of TextNode.
    */
   constructor({ value, children, parent }: TextNodeConstructorParameters) {
     this.#value = value;

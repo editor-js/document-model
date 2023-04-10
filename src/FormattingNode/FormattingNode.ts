@@ -36,8 +36,9 @@ export class FormattingNode {
   /**
    * Constructor for FormattingNode class.
    *
-   * @param name - The name of the formatting tool applied to the content.
-   * @param data - Any additional data associated with the formatting.
+   * @param args - FormattingNode constructor arguments.
+   * @param args.name - The name of the formatting tool applied to the content.
+   * @param args.data - Any additional data associated with the formatting.
    */
   constructor({ name, data }: FormattingNodeConstructorParameters) {
     this.#name = name;

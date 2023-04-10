@@ -30,9 +30,10 @@ export class BlockTune {
   /**
    * Constructor for BlockTune class.
    *
-   * @param name - The name of the tune.
-   * @param data - Any additional data associated with the tune.
-   * @param block - The BlockNode associated with this tune.
+   * @param args - BlockTune constructor arguments.
+   * @param args.name - The name of the tune.
+   * @param args.data - Any additional data associated with the tune.
+   * @param args.block - The BlockNode associated with this tune.
    */
   constructor({ name, data, block }: BlockTuneConstructorParameters) {
     this.#name = name;

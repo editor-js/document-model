@@ -24,8 +24,9 @@ export class DataNode {
   /**
    * Constructor for DataNode class.
    *
-   * @param data - The data associated with this node.
-   * @param parent - The parent BlockNode of this node.
+   * @param args - DataNode constructor arguments.
+   * @param args.data - The data associated with this node.
+   * @param args.parent - The parent BlockNode of this node.
    */
   constructor({ data, parent }: DataNodeConstructorParameters) {
     this.#data = data;
