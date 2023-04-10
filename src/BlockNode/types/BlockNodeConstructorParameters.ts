@@ -6,7 +6,7 @@ import { BlockTune } from '../../BlockTune';
 
 export interface BlockNodeConstructorParameters {
   /**
-   * The name of the BlockNode
+   * The name of the tool created a Block
    */
   name: string;
 

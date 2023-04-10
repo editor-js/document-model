@@ -6,29 +6,27 @@ import { BlockTune } from '../BlockTune';
 import { BlockNodeConstructorParameters } from './types';
 
 /**
- * BlockNode class represents a node in a tree-like structure used to store and manipulate content in an editor document.
- * A BlockNode can contain one or more child nodes of type TextNode, DataNode or FormattingNode.
+ * BlockNode class represents a node in a tree-like structure used to store and manipulate Blocks in an editor document.
+ * A BlockNode can contain one or more child nodes of type TextNode, ValueNode or FormattingNode.
  * It can also be associated with one or more BlockTunes, which can modify the behavior of the BlockNode.
  */
 export class BlockNode {
   /**
-   * Private field representing the name of the BlockNode
+   * Field representing a name of the Tool created this Block
    *
    * @private
    */
   #name: string;
 
   /**
-   * Private field representing the child nodes of the BlockNode
+   * Field representing the content of the Block
    *
    * @private
    */
   #children: Record<string, TextNode | ValueNode | FormattingNode>;
 
   /**
-   * Private field representing the parent EditorDocument of the BlockNode
-   *
-   * @private
+   * Field representing the parent EditorDocument of the BlockNode
    */
   #parent: EditorDocument;
 
