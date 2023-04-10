@@ -1,4 +1,4 @@
-import { Nominal } from '../../utils/Nominal';
+import { Nominal } from '../../../utils/Nominal';
 
 export type FormattingNodeName = Nominal<string, 'FormattingNodeName'>;
 
