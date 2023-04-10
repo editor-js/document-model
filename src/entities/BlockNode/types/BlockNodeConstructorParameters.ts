@@ -22,5 +22,5 @@ export interface BlockNodeConstructorParameters {
   /**
    * The BlockTunes associated with the BlockNode
    */
-  tunes: Record<BlockTuneName, BlockTune>;
+  tunes?: Record<BlockTuneName, BlockTune>;
 }

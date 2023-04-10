@@ -10,7 +10,7 @@ export interface TextNodeConstructorParameters {
   /**
    * Array of child nodes
    */
-  children: FormattingNode[];
+  children?: FormattingNode[];
 
   /**
    * A parent of TextNode
