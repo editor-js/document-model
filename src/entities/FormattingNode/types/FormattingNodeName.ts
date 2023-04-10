@@ -1,5 +1,7 @@
 import { Nominal } from '../../../utils/Nominal';
 
-export type FormattingNodeName = Nominal<string, 'FormattingNodeName'>;
+type FormattingNodeNameBase = string;
 
-export const createFormattingNodeName = (name: string): FormattingNodeName => (name as FormattingNodeName);
+export type FormattingNodeName = Nominal<FormattingNodeNameBase, 'FormattingNodeName'>;
+
+export const createFormattingNodeName = (name: FormattingNodeNameBase): FormattingNodeName => (name as FormattingNodeName);
