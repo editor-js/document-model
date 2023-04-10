@@ -20,11 +20,11 @@ export class FormattingNode {
   #data: Record<string, unknown>;
 
   /**
-   * Private field representing the length of the content stored in this node
+   * Private field representing the length of the text content stored as a children in this node
    *
    * @private
    */
-  #length: number; // @todo what is a length for FormattingNode?
+  #length: number;
 
   /**
    * Private array field of FormattingNode and TextNode objects, representing any child nodes of this node
