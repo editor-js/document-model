@@ -1,7 +1,7 @@
-import { Nominal } from '../../../utils/Nominal';
+import { create, Nominal } from '../../../utils/Nominal';
 
 type BlockNodeNameBase = string;
 
 export type BlockNodeName = Nominal<BlockNodeNameBase, 'BlockNodeName'>;
 
-export const createBlockNodeName = (name: BlockNodeNameBase): BlockNodeName => (name as BlockNodeName);
+export const createBlockNodeName = create<BlockNodeName>();
