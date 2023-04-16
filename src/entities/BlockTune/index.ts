@@ -8,22 +8,16 @@ import { BlockTuneConstructorParameters, BlockTuneName, createBlockTuneName } fr
 export class BlockTune {
   /**
    * Private field representing the name of the tune
-   *
-   * @private
    */
   #name: BlockTuneName;
 
   /**
    * Private field representing any additional data associated with the tune
-   *
-   * @private
    */
   #data: Record<string, unknown>;
 
   /**
    * Private field representing the BlockNode associated with this tune
-   *
-   * @private
    */
   #block: BlockNode;
 

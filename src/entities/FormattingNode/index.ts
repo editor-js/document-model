@@ -7,29 +7,21 @@ import { FormattingNodeConstructorParameters, FormattingNodeName, createFormatti
 export class FormattingNode {
   /**
    * Private field representing the name of the formatting tool applied to the content
-   *
-   * @private
    */
   #name: FormattingNodeName;
 
   /**
    * Private field representing any additional data associated with the formatting
-   *
-   * @private
    */
   #data: Record<string, unknown>;
 
   /**
    * Private field representing the length of the text content stored as a children in this node
-   *
-   * @private
    */
   #length: number;
 
   /**
    * Private array field of FormattingNode and TextNode objects, representing any child nodes of this node
-   *
-   * @private
    */
   #children: (FormattingNode | TextNode)[];
 

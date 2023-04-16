@@ -9,15 +9,11 @@ import { ValueNodeConstructorParameters } from './types';
 export class ValueNode {
   /**
    * Private field representing the data associated with this node
-   *
-   * @private
    */
   #data: Record<string, unknown>;
 
   /**
    * Private field representing the parent BlockNode of this node
-   *
-   * @private
    */
   #parent: BlockNode;
 

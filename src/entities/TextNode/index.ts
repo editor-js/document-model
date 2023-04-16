@@ -8,29 +8,21 @@ import { TextNodeConstructorParameters } from './types';
 export class TextNode {
   /**
    * Private field representing the text content of the node
-   *
-   * @private
    */
   #value: string;
 
   /**
    * Private field representing the length of the text content
-   *
-   * @private
    */
   #length: number;
 
   /**
    * Private array field of FormattingNode objects
-   *
-   * @private
    */
   #children: FormattingNode[];
 
   /**
    * Private field that can be either a BlockNode or a FormattingNode, representing the parent node of the TextNode
-   *
-   * @private
    */
   #parent: BlockNode | FormattingNode;
 

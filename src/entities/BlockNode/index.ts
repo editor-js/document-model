@@ -16,15 +16,11 @@ import {
 export class BlockNode {
   /**
    * Field representing a name of the Tool created this Block
-   *
-   * @private
    */
   #name: BlockNodeName;
 
   /**
    * Field representing the content of the Block
-   *
-   * @private
    */
   #children: BlockNodeChildren;
 
@@ -35,8 +31,6 @@ export class BlockNode {
 
   /**
    * Private field representing the BlockTunes associated with the BlockNode
-   *
-   * @private
    */
   #tunes: Record<BlockTuneName, BlockTune>;
 

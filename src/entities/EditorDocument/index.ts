@@ -8,15 +8,11 @@ import { EditorDocumentConstructorParameters, PropName } from './types';
 export class EditorDocument {
   /**
    * Private field representing the child BlockNodes of the EditorDocument
-   *
-   * @private
    */
   #children: BlockNode[];
 
   /**
    * Private field representing the properties of the document
-   *
-   * @private
    */
   #properties: Record<PropName, unknown>;
 
