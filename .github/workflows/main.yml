@@ -28,5 +28,11 @@ jobs:
       - name: Run ESLint check
         run: yarn lint:ci
 
+      - name: Run tests
+        uses: ArtiomTr/jest-coverage-report-action@v2
+        with:
+          test-script: "yarn test"
+          package-manager: yarn
+
       - name: Build the package
         run: yarn build

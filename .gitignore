@@ -15,3 +15,10 @@
 
 node_modules/*
 dist/*
+
+# tests
+coverage/
+reports/
+
+# stryker temp files
+.stryker-tmp
