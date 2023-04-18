@@ -35,6 +35,7 @@ jobs:
         with:
           test-command: "yarn test:coverage"
           changes-only: true
+          working-directory: "./"
 
       - name: Build the package
         run: yarn build
