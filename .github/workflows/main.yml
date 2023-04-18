@@ -28,5 +28,13 @@ jobs:
       - name: Run ESLint check
         run: yarn lint:ci
 
+      - name: Run tests
+        uses: mattallty/jest-github-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          test-command: "yarn test:coverage"
+          changes-only: true
+
       - name: Build the package
         run: yarn build
