@@ -5,12 +5,7 @@ export interface TextNodeConstructorParameters {
   /**
    * Text content of the node
    */
-  value: string;
-
-  /**
-   * Array of child nodes
-   */
-  children?: FormattingNode[];
+  value?: string;
 
   /**
    * A parent of TextNode

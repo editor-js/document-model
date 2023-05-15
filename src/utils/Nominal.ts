@@ -23,4 +23,4 @@ const assertType = <N extends Nominal<unknown, unknown>>(value: Base<N>): N => v
 /**
  * Generic function returns assertType function with Nominal type
  */
-export const create = <N extends Nominal<unknown, unknown>>(): typeof assertType<N> => assertType;
+export const create = <N extends Nominal<unknown, unknown>>(): typeof assertType<N> => assertType<N>;

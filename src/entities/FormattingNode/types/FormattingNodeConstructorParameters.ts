@@ -1,4 +1,7 @@
 import { FormattingNodeName } from './FormattingNodeName';
+import { FormattingNodeData } from './FormattingNodeData';
+import { FormattingNode } from '../index';
+import { BlockNode } from '../../BlockNode';
 
 export interface FormattingNodeConstructorParameters {
   /**
@@ -9,5 +12,7 @@ export interface FormattingNodeConstructorParameters {
   /**
    * Any additional data associated with the formatting
    */
-  data: Record<string, unknown>;
+  data?: FormattingNodeData;
+
+  parent: FormattingNode | BlockNode;
 }
