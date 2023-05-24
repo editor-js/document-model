@@ -38,10 +38,7 @@ export class EditorDocument {
    */
   public addBlock(blockNode: BlockNode, index?: number): void | never {
     if (index === undefined) {
-      /**
-       * Always create a new array when adding a new block
-       */
-      this.#children = [...this.#children, blockNode];
+      this.#children.push(blockNode);
 
       return;
     }
@@ -53,9 +50,20 @@ export class EditorDocument {
       throw new Error('Invalid index');
     }
 
-    const head = this.#children.slice(0, index);
-    const tail = this.#children.slice(index);
+    this.#children.splice(index, 0, blockNode);
+  }
 
-    this.#children = [...head, blockNode, ...tail];
+  /**
+   * Removes a BlockNode from the EditorDocument at the specified index.
+   * Throws an error if the index is out of bounds.
+   *
+   * @param index - The index of the BlockNode to remove
+   */
+  public removeBlock(index: number): void | never {
+    if (index < 0 || index >= this.#children.length) {
+      throw new Error('Invalid index');
+    }
+
+    this.#children.splice(index, 1);
   }
 }
