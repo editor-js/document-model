@@ -66,4 +66,18 @@ export class EditorDocument {
 
     this.#children.splice(index, 1);
   }
+
+  /**
+   * Returns the BlockNode at the specified index.
+   * Throws an error if the index is out of bounds.
+   *
+   * @param index - The index of the BlockNode to return
+   */
+  public getBlock(index: number): BlockNode | never {
+    if (index < 0 || index >= this.#children.length) {
+      throw new Error('Invalid index');
+    }
+
+    return this.#children[index];
+  }
 }
