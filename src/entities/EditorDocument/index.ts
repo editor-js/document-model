@@ -47,7 +47,7 @@ export class EditorDocument {
      * Throws error if index is out of bounds
      */
     if (index < 0 || index > this.#children.length) {
-      throw new Error('Invalid index');
+      throw new Error('Index out of bounds');
     }
 
     this.#children.splice(index, 0, blockNode);
@@ -75,7 +75,7 @@ export class EditorDocument {
    */
   public getBlock(index: number): BlockNode | never {
     if (index < 0 || index >= this.#children.length) {
-      throw new Error('Invalid index');
+      throw new Error('Index out of bounds');
     }
 
     return this.#children[index];
