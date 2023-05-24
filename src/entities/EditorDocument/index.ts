@@ -61,7 +61,7 @@ export class EditorDocument {
    */
   public removeBlock(index: number): void | never {
     if (index < 0 || index >= this.#children.length) {
-      throw new Error('Invalid index');
+      throw new Error('Index out of bounds');
     }
 
     this.#children.splice(index, 1);
