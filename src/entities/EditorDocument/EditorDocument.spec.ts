@@ -11,6 +11,7 @@ const createBlock = ({ name, parent }: { name?: BlockNodeName, parent: EditorDoc
 
 describe('EditorDocument', () => {
   let document: EditorDocument;
+  let blocks: BlockNode[];
 
   beforeEach(() => {
     document = new EditorDocument({
@@ -20,22 +21,18 @@ describe('EditorDocument', () => {
       },
     });
 
-    const block1 = createBlock({
-      name: createBlockNodeName('block1'),
-      parent: document,
-    });
-    const block2 = createBlock({
-      name: createBlockNodeName('block2'),
-      parent: document,
-    });
-    const block3 = createBlock({
-      name: createBlockNodeName('block3'),
-      parent: document,
-    });
+    const countOfBlocks = 3;
 
-    document.addBlock(block1);
-    document.addBlock(block2);
-    document.addBlock(block3);
+    blocks = [];
+
+    for (let i = 0; i < countOfBlocks; i++) {
+      const block = createBlock({
+        parent: document,
+      });
+
+      document.addBlock(block);
+      blocks.push(block);
+    }
   });
 
   describe('length', () => {
@@ -84,7 +81,6 @@ describe('EditorDocument', () => {
     it('should add the block to the beginning of the document if index is 0', () => {
       // Arrange
       const block = createBlock({
-        name: createBlockNodeName('block'),
         parent: document,
       });
 
@@ -98,7 +94,6 @@ describe('EditorDocument', () => {
     it('should add the block to the specified index', () => {
       // Arrange
       const block = createBlock({
-        name: createBlockNodeName('block'),
         parent: document,
       });
 
@@ -211,7 +206,7 @@ describe('EditorDocument', () => {
       const block = document.getBlock(index);
 
       // Assert
-      expect(block).toBe(document.getBlock(index));
+      expect(block).toBe(blocks[index]);
     });
 
     it('should throw an error if index is greater then block nodes length', () => {
