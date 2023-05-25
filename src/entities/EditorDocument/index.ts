@@ -38,38 +38,31 @@ export class EditorDocument {
   /**
    * Adds a BlockNode to the EditorDocument at the specified index.
    * If no index is provided, the BlockNode will be added to the end of the array.
-   * Throws an error if the index is out of bounds.
    *
    * @param blockNode - The BlockNode to add to the EditorDocument
    * @param index - The index at which to add the BlockNode
+   * @throws Error if the index is out of bounds
    */
-  public addBlock(blockNode: BlockNode, index?: number): void | never {
+  public addBlock(blockNode: BlockNode, index?: number): void {
     if (index === undefined) {
       this.#children.push(blockNode);
 
       return;
     }
 
-    /**
-     * Throws error if index is out of bounds
-     */
-    if (index < 0 || index > this.#children.length) {
-      throw new Error('Index out of bounds');
-    }
+    this.checkIndexOutOfBounds(index);
 
     this.#children.splice(index, 0, blockNode);
   }
 
   /**
    * Removes a BlockNode from the EditorDocument at the specified index.
-   * Throws an error if the index is out of bounds.
    *
    * @param index - The index of the BlockNode to remove
+   * @throws Error if the index is out of bounds
    */
-  public removeBlock(index: number): void | never {
-    if (this.isIndexOutOfBounds(index)) {
-      throw new Error('Index out of bounds');
-    }
+  public removeBlock(index: number): void {
+    this.checkIndexOutOfBounds(index, this.length - 1);
 
     this.#children.splice(index, 1);
   }
@@ -79,21 +72,24 @@ export class EditorDocument {
    * Throws an error if the index is out of bounds.
    *
    * @param index - The index of the BlockNode to return
+   * @throws Error if the index is out of bounds
    */
-  public getBlock(index: number): BlockNode | never {
-    if (this.isIndexOutOfBounds(index)) {
-      throw new Error('Index out of bounds');
-    }
+  public getBlock(index: number): BlockNode {
+    this.checkIndexOutOfBounds(index, this.length - 1);
 
     return this.#children[index];
   }
 
   /**
-   * Returns true if the index is out of bounds of children array, false otherwise.
+   * Checks if the index is out of bounds.
    *
    * @param index - The index to check
+   * @param max - The maximum index value. Defaults to the length of the children array.
+   * @throws Error if the index is out of bounds
    */
-  private isIndexOutOfBounds(index: number): boolean {
-    return index < 0 || index >= this.#children.length;
+  private checkIndexOutOfBounds(index: number, max: number = this.length): void {
+    if (index < 0 || index > max) {
+      throw new Error('Index out of bounds');
+    }
   }
 }
