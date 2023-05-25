@@ -32,7 +32,7 @@ export class BlockTune {
   constructor({ name, data, block }: BlockTuneConstructorParameters) {
     this.#name = name;
     this.#data = data;
-    this.#block = block;
+    this.#block = block; // @todo add block tune to block node tunes field
   }
 
   /**
