@@ -1,4 +1,3 @@
-import { BlockNode } from '../BlockNode';
 import { BlockTuneConstructorParameters, BlockTuneName, BlockTuneSerialized, createBlockTuneName } from './types';
 
 /**
@@ -17,22 +16,15 @@ export class BlockTune {
   #data: Record<string, unknown>;
 
   /**
-   * Private field representing the BlockNode associated with this tune
-   */
-  #block: BlockNode;
-
-  /**
    * Constructor for BlockTune class.
    *
    * @param args - BlockTune constructor arguments.
    * @param args.name - The name of the tune.
    * @param args.data - Any additional data associated with the tune.
-   * @param args.block - The BlockNode associated with this tune.
    */
-  constructor({ name, data, block }: BlockTuneConstructorParameters) {
+  constructor({ name, data }: BlockTuneConstructorParameters) {
     this.#name = name;
     this.#data = data;
-    this.#block = block; // @todo add block tune to block node tunes field
   }
 
   /**

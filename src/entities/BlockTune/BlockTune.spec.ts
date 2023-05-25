@@ -1,32 +1,13 @@
 import { BlockTune, BlockTuneName, createBlockTuneName } from './index';
-import { BlockNode, createBlockNodeName } from '../BlockNode';
-import { EditorDocument } from '../EditorDocument';
 
-const createBlockTune = ({ name, data, block }: {
+const createBlockTune = ({ name, data }: {
   name?: BlockTuneName,
-  data: Record<string, unknown>,
-  block?: BlockNode,
+  data?: Record<string, unknown>,
 }): BlockTune => {
-  const document = new EditorDocument({
-    children: [],
-    properties: {
-      readOnly: false,
-    },
-  });
-
-  const blockNode = block || new BlockNode({
-    name: createBlockNodeName('block'),
-    children: {},
-    parent: document,
-  });
-
-  document.addBlock(blockNode);
-
   return new BlockTune(
     {
       name: name || createBlockTuneName('blockTune'),
-      data,
-      block: blockNode,
+      data: data || {},
     }
   );
 };
