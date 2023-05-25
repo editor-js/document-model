@@ -29,6 +29,13 @@ export class EditorDocument {
   }
 
   /**
+   * Returns count of child BlockNodes of the EditorDocument.
+   */
+  public get length(): number {
+    return this.#children.length;
+  }
+
+  /**
    * Adds a BlockNode to the EditorDocument at the specified index.
    * If no index is provided, the BlockNode will be added to the end of the array.
    * Throws an error if the index is out of bounds.

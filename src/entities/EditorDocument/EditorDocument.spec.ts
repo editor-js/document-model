@@ -11,7 +11,6 @@ const createBlock = ({ name, parent }: { name?: BlockNodeName, parent: EditorDoc
 
 describe('EditorDocument', () => {
   let document: EditorDocument;
-  let blocksInDocument = 0;
 
   beforeEach(() => {
     document = new EditorDocument({
@@ -37,9 +36,33 @@ describe('EditorDocument', () => {
     document.addBlock(block1);
     document.addBlock(block2);
     document.addBlock(block3);
+  });
 
-    // eslint-disable-next-line @typescript-eslint/no-magic-numbers -- 3 is the number of blocks in the document before each test
-    blocksInDocument = 3;
+  describe('length', () => {
+    it('should return the number of blocks in the document', () => {
+      // Arrange
+      const expected = 3;
+      const document1 = new EditorDocument({
+        children: [],
+        properties: {
+          readOnly: false,
+        },
+      });
+
+      for (let i = 0; i < expected; i++) {
+        const block = createBlock({
+          parent: document1,
+        });
+
+        document1.addBlock(block);
+      }
+
+      // Act
+      const actual = document1.length;
+
+      // Assert
+      expect(actual).toBe(expected);
+    });
   });
 
   describe('addBlock', () => {
@@ -53,7 +76,9 @@ describe('EditorDocument', () => {
       document.addBlock(block);
 
       // Assert
-      expect(document.getBlock(blocksInDocument)).toBe(block);
+      const lastBlock = document.getBlock(document.length - 1);
+
+      expect(lastBlock).toBe(block);
     });
 
     it('should add the block to the beginning of the document if index is 0', () => {
@@ -91,10 +116,12 @@ describe('EditorDocument', () => {
       });
 
       // Act
-      document.addBlock(block, blocksInDocument);
+      document.addBlock(block, document.length);
 
       // Assert
-      expect(document.getBlock(blocksInDocument)).toBe(block);
+      const lastBlock = document.getBlock(document.length - 1);
+
+      expect(lastBlock).toBe(block);
     });
 
     it('should throw an error if index is greater then block nodes length', () => {
@@ -104,7 +131,7 @@ describe('EditorDocument', () => {
       });
 
       // Act
-      const action = (): void | never => document.addBlock(block, blocksInDocument + 1);
+      const action = (): void | never => document.addBlock(block, document.length + 1);
 
       // Assert
       expect(action).toThrowError('Index out of bounds');
@@ -148,16 +175,19 @@ describe('EditorDocument', () => {
     });
 
     it('should remove the block from the end of the document', () => {
+      // Arrange
+      const documentLengthBeforeRemove = document.length;
+
       // Act
-      document.removeBlock(blocksInDocument - 1);
+      document.removeBlock(document.length - 1);
 
       // Assert
-      expect(() => document.getBlock(blocksInDocument - 1)).toThrowError('Index out of bounds');
+      expect(document.length).toBe(documentLengthBeforeRemove - 1);
     });
 
     it('should throw an error if index is greater then block nodes length', () => {
       // Act
-      const action = (): void | never => document.removeBlock(blocksInDocument);
+      const action = (): void | never => document.removeBlock(document.length);
 
       // Assert
       expect(action).toThrowError('Index out of bounds');
@@ -186,7 +216,7 @@ describe('EditorDocument', () => {
 
     it('should throw an error if index is greater then block nodes length', () => {
       // Act
-      const action = (): BlockNode | never => document.getBlock(blocksInDocument);
+      const action = (): BlockNode | never => document.getBlock(document.length);
 
       // Assert
       expect(action).toThrowError('Index out of bounds');
