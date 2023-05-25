@@ -1,5 +1,5 @@
 import { BlockNode } from '../BlockNode';
-import { BlockTuneConstructorParameters, BlockTuneName, createBlockTuneName } from './types';
+import { BlockTuneConstructorParameters, BlockTuneName, BlockTuneSerialized, createBlockTuneName } from './types';
 
 /**
  * BlockTune class represents a set of additional information associated with a BlockNode.
@@ -48,10 +48,9 @@ export class BlockTune {
   /**
    * Returns serialized version of the BlockTune.
    */
-  public get serialized(): Record<string, unknown> {
+  public get serialized(): BlockTuneSerialized {
     return {
       name: this.#name,
-      block: this.#block,
       data: this.#data,
     };
   }

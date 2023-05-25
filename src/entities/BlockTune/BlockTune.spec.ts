@@ -70,23 +70,16 @@ describe('BlockTune', () => {
     // Arrange
     const expected = {
       name: createBlockTuneName('blockTune'),
-      block: new BlockNode({
-        name: createBlockNodeName('block'),
-        children: {},
-        parent: new EditorDocument({
-          children: [],
-          properties: {
-            readOnly: false,
-          },
-        }),
-      }),
       data: {
         test: 'test',
       },
     };
 
     // Act
-    const actual = new BlockTune(expected).serialized;
+    const actual = createBlockTune({
+      name: expected.name,
+      data: expected.data,
+    }).serialized;
 
     // Assert
     expect(actual).toEqual(expected);
