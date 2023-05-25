@@ -67,7 +67,7 @@ export class EditorDocument {
    * @param index - The index of the BlockNode to remove
    */
   public removeBlock(index: number): void | never {
-    if (index < 0 || index >= this.#children.length) {
+    if (this.isIndexOutOfBounds(index)) {
       throw new Error('Index out of bounds');
     }
 
@@ -81,10 +81,19 @@ export class EditorDocument {
    * @param index - The index of the BlockNode to return
    */
   public getBlock(index: number): BlockNode | never {
-    if (index < 0 || index >= this.#children.length) {
+    if (this.isIndexOutOfBounds(index)) {
       throw new Error('Index out of bounds');
     }
 
     return this.#children[index];
+  }
+
+  /**
+   * Returns true if the index is out of bounds of children array, false otherwise.
+   *
+   * @param index - The index to check
+   */
+  private isIndexOutOfBounds(index: number): boolean {
+    return index < 0 || index >= this.#children.length;
   }
 }
