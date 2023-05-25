@@ -34,6 +34,27 @@ export class BlockTune {
     this.#data = data;
     this.#block = block;
   }
+
+  /**
+   * Updates data associated with the tune.
+   *
+   * @param key - The key of the data to update
+   * @param value - The value to update the data with
+   */
+  public update(key: string, value: unknown): void {
+    this.#data[key] = value;
+  }
+
+  /**
+   * Returns serialized version of the BlockTune.
+   */
+  public get serialized(): Record<string, unknown> {
+    return {
+      name: this.#name,
+      block: this.#block,
+      data: this.#data,
+    };
+  }
 }
 
 export {
