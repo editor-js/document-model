@@ -126,7 +126,7 @@ describe('EditorDocument', () => {
       });
 
       // Act
-      const action = (): void | never => document.addBlock(block, document.length + 1);
+      const action = (): void => document.addBlock(block, document.length + 1);
 
       // Assert
       expect(action).toThrowError('Index out of bounds');
@@ -139,7 +139,7 @@ describe('EditorDocument', () => {
       });
 
       // Act
-      const action = (): void | never => document.addBlock(block, -1);
+      const action = (): void => document.addBlock(block, -1);
 
       // Assert
       expect(action).toThrowError('Index out of bounds');
@@ -182,7 +182,7 @@ describe('EditorDocument', () => {
 
     it('should throw an error if index is greater then block nodes length', () => {
       // Act
-      const action = (): void | never => document.removeBlock(document.length);
+      const action = (): void => document.removeBlock(document.length);
 
       // Assert
       expect(action).toThrowError('Index out of bounds');
@@ -190,7 +190,7 @@ describe('EditorDocument', () => {
 
     it('should throw an error if index is less then 0', () => {
       // Act
-      const action = (): void | never => document.removeBlock(-1);
+      const action = (): void => document.removeBlock(-1);
 
       // Assert
       expect(action).toThrowError('Index out of bounds');
@@ -211,7 +211,7 @@ describe('EditorDocument', () => {
 
     it('should throw an error if index is greater then block nodes length', () => {
       // Act
-      const action = (): BlockNode | never => document.getBlock(document.length);
+      const action = (): BlockNode => document.getBlock(document.length);
 
       // Assert
       expect(action).toThrowError('Index out of bounds');
@@ -219,7 +219,7 @@ describe('EditorDocument', () => {
 
     it('should throw an error if index is less then 0', () => {
       // Act
-      const action = (): BlockNode | never => document.getBlock(-1);
+      const action = (): BlockNode => document.getBlock(-1);
 
       // Assert
       expect(action).toThrowError('Index out of bounds');
