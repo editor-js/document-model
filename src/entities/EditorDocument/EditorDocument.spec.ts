@@ -104,7 +104,7 @@ describe('EditorDocument', () => {
       expect(document.getBlock(1)).toBe(block);
     });
 
-    it('should add the block to the end of the document if the last index is passed', () => {
+    it('should add the block to the end of the document if the index after the last element is passed', () => {
       // Arrange
       const block = createBlock({
         parent: document,
