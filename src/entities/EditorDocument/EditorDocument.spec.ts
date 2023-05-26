@@ -35,7 +35,7 @@ describe('EditorDocument', () => {
     }
   });
 
-  describe('length', () => {
+  describe('.length', () => {
     it('should return the number of blocks in the document', () => {
       // Arrange
       const expected = 3;
@@ -62,7 +62,7 @@ describe('EditorDocument', () => {
     });
   });
 
-  describe('addBlock', () => {
+  describe('.addBlock()', () => {
     it('should add the block to the end of the document if index is not provided', () => {
       // Arrange
       const block = createBlock({
@@ -119,7 +119,7 @@ describe('EditorDocument', () => {
       expect(lastBlock).toBe(block);
     });
 
-    it('should throw an error if index is greater then block nodes length', () => {
+    it('should throw an error if index is greater then document length', () => {
       // Arrange
       const block = createBlock({
         parent: document,
@@ -146,7 +146,7 @@ describe('EditorDocument', () => {
     });
   });
 
-  describe('removeBlock', () => {
+  describe('.removeBlock()', () => {
     it('should remove the block from the beginning of the document', () => {
       // Arrange
       const block = document.getBlock(0);
@@ -180,7 +180,7 @@ describe('EditorDocument', () => {
       expect(document.length).toBe(documentLengthBeforeRemove - 1);
     });
 
-    it('should throw an error if index is greater then block nodes length', () => {
+    it('should throw an error if index is greater then document length', () => {
       // Act
       const action = (): void => document.removeBlock(document.length);
 
@@ -197,7 +197,7 @@ describe('EditorDocument', () => {
     });
   });
 
-  describe('getBlock', () => {
+  describe('.getBlock()', () => {
     it('should return the block from the specific index', () => {
       // Arrange
       const index = 1;
@@ -209,7 +209,7 @@ describe('EditorDocument', () => {
       expect(block).toBe(blocks[index]);
     });
 
-    it('should throw an error if index is greater then block nodes length', () => {
+    it('should throw an error if index is greater then document length', () => {
       // Act
       const action = (): BlockNode => document.getBlock(document.length);
 
