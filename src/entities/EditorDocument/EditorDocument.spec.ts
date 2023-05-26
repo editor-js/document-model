@@ -91,7 +91,7 @@ describe('EditorDocument', () => {
       expect(document.getBlock(0)).toBe(block);
     });
 
-    it('should add the block to the specified index', () => {
+    it('should add the block to the specified index in the middle of the document', () => {
       // Arrange
       const block = createBlock({
         parent: document,
@@ -104,7 +104,7 @@ describe('EditorDocument', () => {
       expect(document.getBlock(1)).toBe(block);
     });
 
-    it('should add the block to the end of the document', () => {
+    it('should add the block to the end of the document if the last index is passed', () => {
       // Arrange
       const block = createBlock({
         parent: document,
@@ -119,19 +119,6 @@ describe('EditorDocument', () => {
       expect(lastBlock).toBe(block);
     });
 
-    it('should throw an error if index is greater then document length', () => {
-      // Arrange
-      const block = createBlock({
-        parent: document,
-      });
-
-      // Act
-      const action = (): void => document.addBlock(block, document.length + 1);
-
-      // Assert
-      expect(action).toThrowError('Index out of bounds');
-    });
-
     it('should throw an error if index is less then 0', () => {
       // Arrange
       const block = createBlock({
@@ -144,10 +131,23 @@ describe('EditorDocument', () => {
       // Assert
       expect(action).toThrowError('Index out of bounds');
     });
+
+    it('should throw an error if index is greater then document length', () => {
+      // Arrange
+      const block = createBlock({
+        parent: document,
+      });
+
+      // Act
+      const action = (): void => document.addBlock(block, document.length + 1);
+
+      // Assert
+      expect(action).toThrowError('Index out of bounds');
+    });
   });
 
   describe('.removeBlock()', () => {
-    it('should remove the block from the beginning of the document', () => {
+    it('should remove the block from the beginning of the document if index 0 is passed', () => {
       // Arrange
       const block = document.getBlock(0);
 
@@ -158,7 +158,7 @@ describe('EditorDocument', () => {
       expect(document.getBlock(0)).not.toBe(block);
     });
 
-    it('should remove the block from the specified index', () => {
+    it('should remove the block from the specified index in the middle of the document', () => {
       // Arrange
       const block = document.getBlock(1);
 
@@ -169,7 +169,7 @@ describe('EditorDocument', () => {
       expect(document.getBlock(1)).not.toBe(block);
     });
 
-    it('should remove the block from the end of the document', () => {
+    it('should remove the block from the end of the document if the last index is passed', () => {
       // Arrange
       const documentLengthBeforeRemove = document.length;
 
@@ -180,17 +180,17 @@ describe('EditorDocument', () => {
       expect(document.length).toBe(documentLengthBeforeRemove - 1);
     });
 
-    it('should throw an error if index is greater then document length', () => {
+    it('should throw an error if index is less then 0', () => {
       // Act
-      const action = (): void => document.removeBlock(document.length);
+      const action = (): void => document.removeBlock(-1);
 
       // Assert
       expect(action).toThrowError('Index out of bounds');
     });
 
-    it('should throw an error if index is less then 0', () => {
+    it('should throw an error if index is greater then document length', () => {
       // Act
-      const action = (): void => document.removeBlock(-1);
+      const action = (): void => document.removeBlock(document.length);
 
       // Assert
       expect(action).toThrowError('Index out of bounds');
@@ -209,17 +209,17 @@ describe('EditorDocument', () => {
       expect(block).toBe(blocks[index]);
     });
 
-    it('should throw an error if index is greater then document length', () => {
+    it('should throw an error if index is less then 0', () => {
       // Act
-      const action = (): BlockNode => document.getBlock(document.length);
+      const action = (): BlockNode => document.getBlock(-1);
 
       // Assert
       expect(action).toThrowError('Index out of bounds');
     });
 
-    it('should throw an error if index is less then 0', () => {
+    it('should throw an error if index is greater then document length', () => {
       // Act
-      const action = (): BlockNode => document.getBlock(-1);
+      const action = (): BlockNode => document.getBlock(document.length);
 
       // Assert
       expect(action).toThrowError('Index out of bounds');
