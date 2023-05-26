@@ -38,7 +38,7 @@ describe('EditorDocument', () => {
   describe('.length', () => {
     it('should return the number of blocks in the document', () => {
       // Arrange
-      const expected = 3;
+      const blocksCount = 3;
       const document1 = new EditorDocument({
         children: [],
         properties: {
@@ -46,7 +46,7 @@ describe('EditorDocument', () => {
         },
       });
 
-      for (let i = 0; i < expected; i++) {
+      for (let i = 0; i < blocksCount; i++) {
         const block = createBlock({
           parent: document1,
         });
@@ -58,7 +58,7 @@ describe('EditorDocument', () => {
       const actual = document1.length;
 
       // Assert
-      expect(actual).toBe(expected);
+      expect(actual).toBe(blocksCount);
     });
   });
 
