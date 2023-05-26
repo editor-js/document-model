@@ -39,7 +39,8 @@ describe('EditorDocument', () => {
     it('should return the number of blocks in the document', () => {
       // Arrange
       const blocksCount = 3;
-      const document1 = new EditorDocument({
+
+      document = new EditorDocument({
         children: [],
         properties: {
           readOnly: false,
@@ -48,14 +49,14 @@ describe('EditorDocument', () => {
 
       for (let i = 0; i < blocksCount; i++) {
         const block = createBlock({
-          parent: document1,
+          parent: document,
         });
 
-        document1.addBlock(block);
+        document.addBlock(block);
       }
 
       // Act
-      const actual = document1.length;
+      const actual = document.length;
 
       // Assert
       expect(actual).toBe(blocksCount);
