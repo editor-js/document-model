@@ -1,53 +1,33 @@
 import { EditorDocument } from './index';
-import { BlockNode, BlockNodeName, createBlockNodeName } from '../BlockNode';
+import { BlockNode } from '../BlockNode';
+import { createBlockNodeMock } from '../../utils/mocks/createBlockNodeMock';
+import { createEditorDocumentMock } from '../../utils/mocks/createEditorDocumentMock';
 
 /**
- * Creates a BlockNode with the specified name and adds it to the specified parent.
- *
- * @param args - The arguments to pass to the BlockNode constructor.
- * @param args.name - The name of the BlockNode.
- * @param args.parent - The parent of the BlockNode.
+ * Creates an EditorDocument object with some blocks for tests.
  */
-function createBlock({ name, parent }: { name?: BlockNodeName, parent: EditorDocument }): BlockNode {
-  return new BlockNode({
-    name: name || createBlockNodeName('header'),
-    parent,
-    children: {},
-  });
+function createEditorDocumentMockWithSomeBlocks(): EditorDocument {
+  const document = createEditorDocumentMock();
+
+  const countOfBlocks = 3;
+
+  for (let i = 0; i < countOfBlocks; i++) {
+    const block = createBlockNodeMock({
+      parent: document,
+    });
+
+    document.addBlock(block);
+  }
+
+  return document;
 }
 
 describe('EditorDocument', () => {
-  let document: EditorDocument;
-  let blocks: BlockNode[];
-
-  beforeEach(() => {
-    document = new EditorDocument({
-      children: [],
-      properties: {
-        readOnly: false,
-      },
-    });
-
-    const countOfBlocks = 3;
-
-    blocks = [];
-
-    for (let i = 0; i < countOfBlocks; i++) {
-      const block = createBlock({
-        parent: document,
-      });
-
-      document.addBlock(block);
-      blocks.push(block);
-    }
-  });
-
   describe('.length', () => {
     it('should return the number of blocks in the document', () => {
       // Arrange
       const blocksCount = 3;
-
-      document = new EditorDocument({
+      const document = new EditorDocument({
         children: [],
         properties: {
           readOnly: false,
@@ -55,7 +35,7 @@ describe('EditorDocument', () => {
       });
 
       for (let i = 0; i < blocksCount; i++) {
-        const block = createBlock({
+        const block = createBlockNodeMock({
           parent: document,
         });
 
@@ -73,7 +53,8 @@ describe('EditorDocument', () => {
   describe('.addBlock()', () => {
     it('should add the block to the end of the document if index is not provided', () => {
       // Arrange
-      const block = createBlock({
+      const document = createEditorDocumentMockWithSomeBlocks();
+      const block = createBlockNodeMock({
         parent: document,
       });
 
@@ -88,7 +69,8 @@ describe('EditorDocument', () => {
 
     it('should add the block to the beginning of the document if index is 0', () => {
       // Arrange
-      const block = createBlock({
+      const document = createEditorDocumentMockWithSomeBlocks();
+      const block = createBlockNodeMock({
         parent: document,
       });
 
@@ -101,7 +83,8 @@ describe('EditorDocument', () => {
 
     it('should add the block to the specified index in the middle of the document', () => {
       // Arrange
-      const block = createBlock({
+      const document = createEditorDocumentMockWithSomeBlocks();
+      const block = createBlockNodeMock({
         parent: document,
       });
 
@@ -114,7 +97,8 @@ describe('EditorDocument', () => {
 
     it('should add the block to the end of the document if the index after the last element is passed', () => {
       // Arrange
-      const block = createBlock({
+      const document = createEditorDocumentMockWithSomeBlocks();
+      const block = createBlockNodeMock({
         parent: document,
       });
 
@@ -129,7 +113,8 @@ describe('EditorDocument', () => {
 
     it('should throw an error if index is less then 0', () => {
       // Arrange
-      const block = createBlock({
+      const document = createEditorDocumentMockWithSomeBlocks();
+      const block = createBlockNodeMock({
         parent: document,
       });
 
@@ -142,7 +127,8 @@ describe('EditorDocument', () => {
 
     it('should throw an error if index is greater then document length', () => {
       // Arrange
-      const block = createBlock({
+      const document = createEditorDocumentMockWithSomeBlocks();
+      const block = createBlockNodeMock({
         parent: document,
       });
 
@@ -157,6 +143,7 @@ describe('EditorDocument', () => {
   describe('.removeBlock()', () => {
     it('should remove the block from the beginning of the document if index 0 is passed', () => {
       // Arrange
+      const document = createEditorDocumentMockWithSomeBlocks();
       const block = document.getBlock(0);
 
       // Act
@@ -168,6 +155,7 @@ describe('EditorDocument', () => {
 
     it('should remove the block from the specified index in the middle of the document', () => {
       // Arrange
+      const document = createEditorDocumentMockWithSomeBlocks();
       const block = document.getBlock(1);
 
       // Act
@@ -179,6 +167,7 @@ describe('EditorDocument', () => {
 
     it('should remove the block from the end of the document if the last index is passed', () => {
       // Arrange
+      const document = createEditorDocumentMockWithSomeBlocks();
       const documentLengthBeforeRemove = document.length;
 
       // Act
@@ -189,6 +178,9 @@ describe('EditorDocument', () => {
     });
 
     it('should throw an error if index is less then 0', () => {
+      // Arrange
+      const document = createEditorDocumentMockWithSomeBlocks();
+
       // Act
       const action = (): void => document.removeBlock(-1);
 
@@ -197,6 +189,9 @@ describe('EditorDocument', () => {
     });
 
     it('should throw an error if index is greater then document length', () => {
+      // Arrange
+      const document = createEditorDocumentMockWithSomeBlocks();
+
       // Act
       const action = (): void => document.removeBlock(document.length);
 
@@ -208,6 +203,18 @@ describe('EditorDocument', () => {
   describe('.getBlock()', () => {
     it('should return the block from the specific index', () => {
       // Arrange
+      const document = createEditorDocumentMock();
+      const countOfBlocks = 3;
+      const blocks: BlockNode[] = [];
+
+      for (let i = 0; i < countOfBlocks; i++) {
+        const block = createBlockNodeMock({
+          parent: document,
+        });
+
+        document.addBlock(block);
+        blocks.push(block);
+      }
       const index = 1;
 
       // Act
@@ -218,6 +225,9 @@ describe('EditorDocument', () => {
     });
 
     it('should throw an error if index is less then 0', () => {
+      // Arrange
+      const document = createEditorDocumentMockWithSomeBlocks();
+
       // Act
       const action = (): BlockNode => document.getBlock(-1);
 
@@ -226,6 +236,9 @@ describe('EditorDocument', () => {
     });
 
     it('should throw an error if index is greater then document length', () => {
+      // Arrange
+      const document = createEditorDocumentMockWithSomeBlocks();
+
       // Act
       const action = (): BlockNode => document.getBlock(document.length);
 
