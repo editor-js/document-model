@@ -10,7 +10,7 @@ import { BlockNode, BlockNodeName, createBlockNodeName } from '../BlockNode';
  */
 function createBlock({ name, parent }: { name?: BlockNodeName, parent: EditorDocument }): BlockNode {
   return new BlockNode({
-    name: name || createBlockNodeName('block'),
+    name: name || createBlockNodeName('header'),
     parent,
     children: {},
   });
