@@ -1,68 +1,59 @@
-import { BlockTune, BlockTuneName, createBlockTuneName } from './index';
-
-const createBlockTune = ({ name, data }: {
-  name?: BlockTuneName,
-  data?: Record<string, unknown>,
-}): BlockTune => {
-  return new BlockTune(
-    {
-      name: name || createBlockTuneName('blockTune'),
-      data: data || {},
-    }
-  );
-};
+import { createBlockTuneName } from './index';
+import { createBlockTuneMock } from '../../utils/mocks/createBlockTuneMock';
 
 describe('BlockTune', () => {
-  describe('update method', () => {
+  describe('.update()', () => {
     it('should add field to data object by key if it doesn\'t exist', () => {
       // Arrange
-      const blockTune = createBlockTune({
+      const blockTune = createBlockTuneMock({
         data: {},
       });
 
       // Act
-      blockTune.update('test', 'test');
+      blockTune.update('align', 'left');
 
       // Assert
       expect(blockTune.serialized.data).toEqual({
-        test: 'test',
+        align: 'left',
       });
     });
 
     it('should update field in data object by key', () => {
       // Arrange
-      const blockTune = createBlockTune({
+      const blockTune = createBlockTuneMock({
         data: {
-          test: 'test',
+          align: 'center',
         },
       });
 
       // Act
-      blockTune.update('test', 'newTest');
+      blockTune.update('align', 'right');
 
       // Assert
       expect(blockTune.serialized.data).toEqual({
-        test: 'newTest',
+        align: 'right',
       });
     });
   });
 
-  it('should return serialized version of the BlockTune', () => {
-    // Arrange
-    const expected = {
-      name: createBlockTuneName('blockTune'),
-      data: {
-        test: 'test',
-      },
-    };
+  describe('.serialized', () => {
+    it('should return serialized version of the BlockTune', () => {
+      // Arrange
+      const expected = {
+        name: createBlockTuneName('styling'),
+        data: {
+          background: 'transparent',
+        },
+      };
 
-    // Act
-    const actual = createBlockTune({
-      name: expected.name,
-      data: expected.data,
-    }).serialized;
+      // Act
+      const actual = createBlockTuneMock({
+        name: expected.name,
+        data: expected.data,
+      }).serialized;
 
-    // Assert
-    expect(actual).toEqual(expected);
+      // Assert
+      expect(actual).toEqual(expected);
+    });
   });
 });
