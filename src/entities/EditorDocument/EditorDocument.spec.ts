@@ -1,71 +1,60 @@
 import { EditorDocument } from './index';
-import { BlockNode, BlockNodeName, createBlockNodeName } from '../BlockNode';
+import { BlockNode } from '../BlockNode';
+import { createBlockNodeMock } from '../../utils/mocks/createBlockNodeMock';
+import { createEditorDocumentMock } from '../../utils/mocks/createEditorDocumentMock';
 
-const createBlock = ({ name, parent }: { name?: BlockNodeName, parent: EditorDocument }): BlockNode => {
-  return new BlockNode({
-    name: name || createBlockNodeName('block'),
-    parent,
-    children: {},
-  });
-};
+/**
+ * Creates an EditorDocument object with some blocks for tests.
+ */
+function createEditorDocumentMockWithSomeBlocks(): EditorDocument {
+  const document = createEditorDocumentMock();
 
-describe('EditorDocument', () => {
-  let document: EditorDocument;
-  let blocks: BlockNode[];
+  const countOfBlocks = 3;
 
-  beforeEach(() => {
-    document = new EditorDocument({
-      children: [],
-      properties: {
-        readOnly: false,
-      },
+  for (let i = 0; i < countOfBlocks; i++) {
+    const block = createBlockNodeMock({
+      parent: document,
     });
 
-    const countOfBlocks = 3;
+    document.addBlock(block);
+  }
 
-    blocks = [];
+  return document;
+}
 
-    for (let i = 0; i < countOfBlocks; i++) {
-      const block = createBlock({
-        parent: document,
-      });
-
-      document.addBlock(block);
-      blocks.push(block);
-    }
-  });
-
-  describe('length', () => {
+describe('EditorDocument', () => {
+  describe('.length', () => {
     it('should return the number of blocks in the document', () => {
       // Arrange
-      const expected = 3;
-      const document1 = new EditorDocument({
+      const blocksCount = 3;
+      const document = new EditorDocument({
         children: [],
         properties: {
           readOnly: false,
         },
       });
 
-      for (let i = 0; i < expected; i++) {
-        const block = createBlock({
-          parent: document1,
+      for (let i = 0; i < blocksCount; i++) {
+        const block = createBlockNodeMock({
+          parent: document,
         });
 
-        document1.addBlock(block);
+        document.addBlock(block);
       }
 
       // Act
-      const actual = document1.length;
+      const actual = document.length;
 
       // Assert
-      expect(actual).toBe(expected);
+      expect(actual).toBe(blocksCount);
     });
   });
 
-  describe('addBlock', () => {
+  describe('.addBlock()', () => {
     it('should add the block to the end of the document if index is not provided', () => {
       // Arrange
-      const block = createBlock({
+      const document = createEditorDocumentMockWithSomeBlocks();
+      const block = createBlockNodeMock({
         parent: document,
       });
 
@@ -80,7 +69,8 @@ describe('EditorDocument', () => {
 
     it('should add the block to the beginning of the document if index is 0', () => {
       // Arrange
-      const block = createBlock({
+      const document = createEditorDocumentMockWithSomeBlocks();
+      const block = createBlockNodeMock({
         parent: document,
       });
 
@@ -91,9 +81,10 @@ describe('EditorDocument', () => {
       expect(document.getBlock(0)).toBe(block);
     });
 
-    it('should add the block to the specified index', () => {
+    it('should add the block to the specified index in the middle of the document', () => {
       // Arrange
-      const block = createBlock({
+      const document = createEditorDocumentMockWithSomeBlocks();
+      const block = createBlockNodeMock({
         parent: document,
       });
 
@@ -104,9 +95,10 @@ describe('EditorDocument', () => {
       expect(document.getBlock(1)).toBe(block);
     });
 
-    it('should add the block to the end of the document', () => {
+    it('should add the block to the end of the document if the index after the last element is passed', () => {
       // Arrange
-      const block = createBlock({
+      const document = createEditorDocumentMockWithSomeBlocks();
+      const block = createBlockNodeMock({
         parent: document,
       });
 
@@ -119,22 +111,10 @@ describe('EditorDocument', () => {
       expect(lastBlock).toBe(block);
     });
 
-    it('should throw an error if index is greater then block nodes length', () => {
-      // Arrange
-      const block = createBlock({
-        parent: document,
-      });
-
-      // Act
-      const action = (): void => document.addBlock(block, document.length + 1);
-
-      // Assert
-      expect(action).toThrowError('Index out of bounds');
-    });
-
     it('should throw an error if index is less then 0', () => {
       // Arrange
-      const block = createBlock({
+      const document = createEditorDocumentMockWithSomeBlocks();
+      const block = createBlockNodeMock({
         parent: document,
       });
 
@@ -144,11 +124,26 @@ describe('EditorDocument', () => {
       // Assert
       expect(action).toThrowError('Index out of bounds');
     });
+
+    it('should throw an error if index is greater then document length', () => {
+      // Arrange
+      const document = createEditorDocumentMockWithSomeBlocks();
+      const block = createBlockNodeMock({
+        parent: document,
+      });
+
+      // Act
+      const action = (): void => document.addBlock(block, document.length + 1);
+
+      // Assert
+      expect(action).toThrowError('Index out of bounds');
+    });
   });
 
-  describe('removeBlock', () => {
-    it('should remove the block from the beginning of the document', () => {
+  describe('.removeBlock()', () => {
+    it('should remove the block from the beginning of the document if index 0 is passed', () => {
       // Arrange
+      const document = createEditorDocumentMockWithSomeBlocks();
       const block = document.getBlock(0);
 
       // Act
@@ -158,8 +153,9 @@ describe('EditorDocument', () => {
       expect(document.getBlock(0)).not.toBe(block);
     });
 
-    it('should remove the block from the specified index', () => {
+    it('should remove the block from the specified index in the middle of the document', () => {
       // Arrange
+      const document = createEditorDocumentMockWithSomeBlocks();
       const block = document.getBlock(1);
 
       // Act
@@ -169,8 +165,9 @@ describe('EditorDocument', () => {
       expect(document.getBlock(1)).not.toBe(block);
     });
 
-    it('should remove the block from the end of the document', () => {
+    it('should remove the block from the end of the document if the last index is passed', () => {
       // Arrange
+      const document = createEditorDocumentMockWithSomeBlocks();
       const documentLengthBeforeRemove = document.length;
 
       // Act
@@ -180,26 +177,44 @@ describe('EditorDocument', () => {
       expect(document.length).toBe(documentLengthBeforeRemove - 1);
     });
 
-    it('should throw an error if index is greater then block nodes length', () => {
-      // Act
-      const action = (): void => document.removeBlock(document.length);
-
-      // Assert
-      expect(action).toThrowError('Index out of bounds');
-    });
-
     it('should throw an error if index is less then 0', () => {
+      // Arrange
+      const document = createEditorDocumentMockWithSomeBlocks();
+
       // Act
       const action = (): void => document.removeBlock(-1);
 
       // Assert
       expect(action).toThrowError('Index out of bounds');
     });
+
+    it('should throw an error if index is greater then document length', () => {
+      // Arrange
+      const document = createEditorDocumentMockWithSomeBlocks();
+
+      // Act
+      const action = (): void => document.removeBlock(document.length);
+
+      // Assert
+      expect(action).toThrowError('Index out of bounds');
+    });
   });
 
-  describe('getBlock', () => {
+  describe('.getBlock()', () => {
     it('should return the block from the specific index', () => {
       // Arrange
+      const document = createEditorDocumentMock();
+      const countOfBlocks = 3;
+      const blocks: BlockNode[] = [];
+
+      for (let i = 0; i < countOfBlocks; i++) {
+        const block = createBlockNodeMock({
+          parent: document,
+        });
+
+        document.addBlock(block);
+        blocks.push(block);
+      }
       const index = 1;
 
       // Act
@@ -209,17 +224,23 @@ describe('EditorDocument', () => {
       expect(block).toBe(blocks[index]);
     });
 
-    it('should throw an error if index is greater then block nodes length', () => {
+    it('should throw an error if index is less then 0', () => {
+      // Arrange
+      const document = createEditorDocumentMockWithSomeBlocks();
+
       // Act
-      const action = (): BlockNode => document.getBlock(document.length);
+      const action = (): BlockNode => document.getBlock(-1);
 
       // Assert
       expect(action).toThrowError('Index out of bounds');
     });
 
-    it('should throw an error if index is less then 0', () => {
+    it('should throw an error if index is greater then document length', () => {
+      // Arrange
+      const document = createEditorDocumentMockWithSomeBlocks();
+
       // Act
-      const action = (): BlockNode => document.getBlock(-1);
+      const action = (): BlockNode => document.getBlock(document.length);
 
       // Assert
       expect(action).toThrowError('Index out of bounds');
