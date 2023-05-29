@@ -1,5 +1,5 @@
 import { BlockNode } from '../BlockNode';
-import { ValueNodeConstructorParameters } from './types';
+import { ValueNodeConstructorParameters, ValueNodeData } from './types';
 
 /**
  * ValueNode class represents a node in a tree-like structure, used to store and manipulate data associated with a BlockNode.
@@ -10,7 +10,7 @@ export class ValueNode {
   /**
    * Private field representing the data associated with this node
    */
-  #data: Record<string, unknown>;
+  #data: ValueNodeData;
 
   /**
    * Private field representing the parent BlockNode of this node
@@ -27,5 +27,22 @@ export class ValueNode {
   constructor({ data, parent }: ValueNodeConstructorParameters) {
     this.#data = data;
     this.#parent = parent;
+  }
+
+  /**
+   * Updates the data associated with this value node.
+   *
+   * @param key - The key of the data to update.
+   * @param value - The value to update the data with.
+   */
+  public update(key: string, value: unknown): void {
+    this.#data[key] = value;
+  }
+
+  /**
+   * Returns serialized data associated with this value node.
+   */
+  public get serialized(): ValueNodeData {
+    return this.#data;
   }
 }
