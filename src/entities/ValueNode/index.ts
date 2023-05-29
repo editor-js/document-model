@@ -45,4 +45,11 @@ export class ValueNode {
   public get serialized(): ValueNodeData {
     return this.#data;
   }
+
+  /**
+   * Returns the parent BlockNode of this value node.
+   */
+  public get parent(): BlockNode {
+    return this.#parent;
+  }
 }
