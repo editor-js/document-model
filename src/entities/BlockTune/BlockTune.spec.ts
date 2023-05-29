@@ -39,21 +39,25 @@ describe('BlockTune', () => {
   describe('.serialized', () => {
     it('should return serialized version of the BlockTune', () => {
       // Arrange
-      const expected = {
+      const tune = createBlockTuneMock({
         name: createBlockTuneName('styling'),
         data: {
           background: 'transparent',
         },
-      };
+      });
 
       // Act
-      const actual = createBlockTuneMock({
-        name: expected.name,
-        data: expected.data,
-      }).serialized;
+      const tuneSerialized = tune.serialized;
 
       // Assert
-      expect(actual).toEqual(expected);
+      expect(tuneSerialized).toEqual(
+        {
+          name: 'styling',
+          data: {
+            background: 'transparent',
+          },
+        }
+      );
     });
   });
 });
