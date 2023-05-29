@@ -1,13 +1,12 @@
-import { BlockTuneName } from './BlockTuneName';
-
 /**
  * BlockTuneSerialized represents a serialized version of a BlockTune.
  */
 export interface BlockTuneSerialized {
   /**
    * The name of the tune.
+   * Serialized as a string.
    */
-  name: BlockTuneName;
+  name: string;
 
   /**
    * Any additional data associated with the tune.
