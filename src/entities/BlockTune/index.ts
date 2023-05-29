@@ -1,5 +1,4 @@
-import { BlockNode } from '../BlockNode';
-import { BlockTuneConstructorParameters, BlockTuneName, createBlockTuneName } from './types';
+import { BlockTuneConstructorParameters, BlockTuneName, BlockTuneSerialized, createBlockTuneName } from './types';
 
 /**
  * BlockTune class represents a set of additional information associated with a BlockNode.
@@ -17,22 +16,35 @@ export class BlockTune {
   #data: Record<string, unknown>;
 
   /**
-   * Private field representing the BlockNode associated with this tune
-   */
-  #block: BlockNode;
-
-  /**
    * Constructor for BlockTune class.
    *
    * @param args - BlockTune constructor arguments.
    * @param args.name - The name of the tune.
    * @param args.data - Any additional data associated with the tune.
-   * @param args.block - The BlockNode associated with this tune.
    */
-  constructor({ name, data, block }: BlockTuneConstructorParameters) {
+  constructor({ name, data }: BlockTuneConstructorParameters) {
     this.#name = name;
     this.#data = data;
-    this.#block = block;
+  }
+
+  /**
+   * Updates data associated with the tune.
+   *
+   * @param key - The key of the data to update
+   * @param value - The value to update the data with
+   */
+  public update(key: string, value: unknown): void {
+    this.#data[key] = value;
+  }
+
+  /**
+   * Returns serialized version of the BlockTune.
+   */
+  public get serialized(): BlockTuneSerialized {
+    return {
+      name: this.#name,
+      data: this.#data,
+    };
   }
 }
 
