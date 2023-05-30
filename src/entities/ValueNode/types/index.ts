@@ -1,2 +1,3 @@
 export { ValueNodeConstructorParameters } from './ValueNodeConstructorParameters';
-export { ValueNodeData } from './ValueNodeData';
+export { ValueNodeSerialized } from './ValueNodeSerialized';
+export { ValueNodeName, createValueNodeName } from './ValueNodeName';

@@ -1,10 +1,10 @@
 import { BlockNode } from '../../BlockNode';
+import { ValueNodeName } from './ValueNodeName';
 
 export interface ValueNodeConstructorParameters {
-  /**
-   * The data associated with the ValueNode
-   */
-  data: Record<string, unknown>;
+  name: ValueNodeName;
+
+  value: unknown;
 
   /**
    * The parent BlockNode

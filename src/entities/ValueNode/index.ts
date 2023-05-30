@@ -1,5 +1,5 @@
 import { BlockNode } from '../BlockNode';
-import { ValueNodeConstructorParameters, ValueNodeData } from './types';
+import type { ValueNodeConstructorParameters, ValueNodeName, ValueNodeSerialized } from './types';
 
 /**
  * ValueNode class represents a node in a tree-like structure, used to store and manipulate data associated with a BlockNode.
@@ -8,9 +8,14 @@ import { ValueNodeConstructorParameters, ValueNodeData } from './types';
  */
 export class ValueNode {
   /**
+   * Private field representing the name of this value node.
+   */
+  #name: ValueNodeName;
+
+  /**
    * Private field representing the data associated with this node
    */
-  #data: ValueNodeData;
+  #value: unknown;
 
   /**
    * Private field representing the parent BlockNode of this node
@@ -21,29 +26,33 @@ export class ValueNode {
    * Constructor for ValueNode class.
    *
    * @param args - ValueNode constructor arguments.
-   * @param args.data - The data associated with this node.
+   * @param args.name - The name of this value node.
+   * @param args.value - The value of this value node.
    * @param args.parent - The parent BlockNode of this node.
    */
-  constructor({ data, parent }: ValueNodeConstructorParameters) {
-    this.#data = data;
+  constructor({ name, value, parent }: ValueNodeConstructorParameters) {
+    this.#name = name;
+    this.#value = value;
     this.#parent = parent;
   }
 
   /**
    * Updates the data associated with this value node.
    *
-   * @param key - The key of the data to update.
-   * @param value - The value to update the data with.
+   * @param value - The new value of this value node.
    */
-  public update(key: string, value: unknown): void {
-    this.#data[key] = value;
+  public update(value: unknown): void {
+    this.#value = value;
   }
 
   /**
    * Returns serialized data associated with this value node.
    */
-  public get serialized(): ValueNodeData {
-    return this.#data;
+  public get serialized(): ValueNodeSerialized {
+    return {
+      name: this.#name,
+      value: this.#value,
+    };
   }
 
   /**
@@ -53,3 +62,8 @@ export class ValueNode {
     return this.#parent;
   }
 }
+
+export {
+  ValueNodeName,
+  createValueNodeName
+} from './types';
