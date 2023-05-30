@@ -5,11 +5,11 @@ import type { ValueNodeConstructorParameters } from './types';
  * Unlike TextNode, changing the data of a ValueNode will replace the entire data in this node.
  * This can be useful for storing data that needs to be updated in its entirety, such as a link or other metadata associated with a BlockNode.
  */
-export class ValueNode {
+export class ValueNode<ValueType = unknown> {
   /**
    * Private field representing the data associated with this node
    */
-  #value: unknown;
+  #value: ValueType;
 
   /**
    * Constructor for ValueNode class.
@@ -17,7 +17,7 @@ export class ValueNode {
    * @param args - ValueNode constructor arguments.
    * @param args.value - The value of this value node.
    */
-  constructor({ value }: ValueNodeConstructorParameters) {
+  constructor({ value }: ValueNodeConstructorParameters<ValueType>) {
     this.#value = value;
   }
 
@@ -26,14 +26,18 @@ export class ValueNode {
    *
    * @param value - The new value of this value node.
    */
-  public update(value: unknown): void {
+  public update(value: ValueType): void {
     this.#value = value;
   }
 
   /**
    * Returns serialized data associated with this value node.
    */
-  public get serialized(): unknown {
+  public get serialized(): ValueType {
     return this.#value;
   }
 }
+
+export type {
+  ValueNodeConstructorParameters
+};
