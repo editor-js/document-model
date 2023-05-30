@@ -1,31 +1,43 @@
-import { BlockNode } from '../BlockNode';
-import { ValueNodeConstructorParameters } from './types';
+import type { ValueNodeConstructorParameters } from './types';
 
 /**
  * ValueNode class represents a node in a tree-like structure, used to store and manipulate data associated with a BlockNode.
  * Unlike TextNode, changing the data of a ValueNode will replace the entire data in this node.
  * This can be useful for storing data that needs to be updated in its entirety, such as a link or other metadata associated with a BlockNode.
  */
-export class ValueNode {
+export class ValueNode<ValueType = unknown> {
   /**
    * Private field representing the data associated with this node
    */
-  #data: Record<string, unknown>;
-
-  /**
-   * Private field representing the parent BlockNode of this node
-   */
-  #parent: BlockNode;
+  #value: ValueType;
 
   /**
    * Constructor for ValueNode class.
    *
    * @param args - ValueNode constructor arguments.
-   * @param args.data - The data associated with this node.
-   * @param args.parent - The parent BlockNode of this node.
+   * @param args.value - The value of this value node.
    */
-  constructor({ data, parent }: ValueNodeConstructorParameters) {
-    this.#data = data;
-    this.#parent = parent;
+  constructor({ value }: ValueNodeConstructorParameters<ValueType>) {
+    this.#value = value;
+  }
+
+  /**
+   * Updates the data associated with this value node.
+   *
+   * @param value - The new value of this value node.
+   */
+  public update(value: ValueType): void {
+    this.#value = value;
+  }
+
+  /**
+   * Returns serialized data associated with this value node.
+   */
+  public get serialized(): ValueType {
+    return this.#value;
   }
 }
+
+export type {
+  ValueNodeConstructorParameters
+};
