@@ -1,7 +1,6 @@
 import { FormattingNodeName } from './FormattingNodeName';
 import { FormattingNodeData } from './FormattingNodeData';
 import { FormattingNode } from '../index';
-import { BlockNode } from '../../BlockNode';
 
 export interface FormattingNodeConstructorParameters {
   /**
@@ -14,5 +13,5 @@ export interface FormattingNodeConstructorParameters {
    */
   data?: FormattingNodeData;
 
-  parent: FormattingNode | BlockNode;
+  parent?: FormattingNode;
 }

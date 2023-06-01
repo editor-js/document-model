@@ -10,5 +10,5 @@ export interface TextNodeConstructorParameters {
   /**
    * A parent of TextNode
    */
-  parent: BlockNode | FormattingNode;
+  parent?: FormattingNode;
 }

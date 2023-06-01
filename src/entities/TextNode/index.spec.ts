@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { TextNode } from './index';
-import type { BlockNode } from '../BlockNode';
 import { createFormattingNodeName, FormattingNode } from '../FormattingNode';
 
 describe('TextNode', () => {
@@ -11,23 +10,18 @@ describe('TextNode', () => {
   beforeEach(() => {
     node = new TextNode({
       value: initialText,
-      parent: {} as BlockNode,
     });
   });
 
   it('should have empty value by default', () => {
-    node = new TextNode({
-      parent: {} as BlockNode,
-    });
+    node = new TextNode();
 
     expect(node.getText()).toEqual('');
   });
 
-  describe('insertText', () => {
-    it('should set text to value if empty', () => {
-      node = new TextNode({
-        parent: {} as BlockNode,
-      });
+  describe('.insertText()', () => {
+    it('should set text to value if node is empty', () => {
+      node = new TextNode();
 
       node.insertText(text);
 
@@ -67,7 +61,7 @@ describe('TextNode', () => {
     });
   });
 
-  describe('getText', () => {
+  describe('.getText()', () => {
     it('should return sliced value if start provided', () => {
       const start = 5;
 
@@ -111,7 +105,7 @@ describe('TextNode', () => {
     });
   });
 
-  describe('format', () => {
+  describe('.format()', () => {
     it('should return just one FormattingNode, if formatting full TextNode', () => {
       const name = createFormattingNodeName('bold');
 

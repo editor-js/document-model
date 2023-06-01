@@ -1,13 +1,16 @@
-import { BlockNode } from '../BlockNode';
 import { FormattingNode, FormattingNodeName, FormattingNodeData } from '../FormattingNode';
 import { TextNodeConstructorParameters } from './types';
+import { ChildNode, InlineNode, InlineNodeSerialized } from '../interfaces';
 
 export * from './types';
+
+export interface TextNode extends ChildNode {}
 
 /**
  * TextNode class represents a node in a tree-like structure, used to store and manipulate text content.
  */
-export class TextNode {
+@ChildNode
+export class TextNode implements InlineNode {
   /**
    * Private field representing the text content of the node
    */
@@ -17,18 +20,16 @@ export class TextNode {
   /**
    * Private field that can be either a BlockNode or a FormattingNode, representing the parent node of the TextNode
    */
-  #parent: BlockNode | FormattingNode;
+  #parent?: FormattingNode;
 
   /**
    * Constructor for TextNode class
    *
    * @param args - TextNode constructor arguments.
    * @param args.value - Text content of the node.
-   * @param args.parent - A parent of TextNode.
    */
-  constructor({ value = '', parent }: TextNodeConstructorParameters) {
+  constructor({ value = '' }: TextNodeConstructorParameters = {}) {
     this.#value = value;
-    this.#parent = parent;
   }
 
   /**
@@ -36,6 +37,16 @@ export class TextNode {
    */
   public get length(): number {
     return this.#value.length;
+  }
+
+  /**
+   *
+   */
+  public get serialized(): InlineNodeSerialized {
+    return {
+      text: this.getText(),
+      fragments: [],
+    };
   }
 
   /**
@@ -72,14 +83,16 @@ export class TextNode {
    * @param end
    * @param data
    */
-  public format(name: FormattingNodeName, start: number, end: number, data?: FormattingNodeData): (TextNode | FormattingNode)[] {
+  public format(name: FormattingNodeName, start: number, end: number, data?: FormattingNodeData): InlineNode[] {
     this.#validateIndex(start);
     this.#validateIndex(end);
 
-    const formattingNode = new FormattingNode({ name,
+    const formattingNode = new FormattingNode({
+      name,
       data,
-      parent: this.#parent });
-    const fragments: (TextNode | FormattingNode)[] = [];
+    });
+
+    const fragments: (InlineNode & ChildNode)[] = [];
 
     if (start > 0) {
       fragments.push(this.#cloneFragment(0, start));
@@ -95,17 +108,11 @@ export class TextNode {
       fragments.push(this.#cloneFragment(end, this.length));
     }
 
-    return fragments;
-  }
+    this.remove();
 
-  /**
-   *
-   * @param parent
-   */
-  public appendTo(parent: FormattingNode): void {
-    this.#parent = parent;
+    this.#parent?.append(...fragments);
 
-    parent.appendChild(this);
+    return fragments as InlineNode[];
   }
 
   /**
@@ -126,7 +133,6 @@ export class TextNode {
   #cloneFragment(start: number, end: number): TextNode {
     return new TextNode({
       value: this.getText(start, end),
-      parent: this.#parent,
     });
   }
 }
