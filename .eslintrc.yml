@@ -4,3 +4,10 @@ extends:
 ignorePatterns:
   - node_modules
   - dist
+
+overrides:
+  - files:
+      - '**/*.test.ts'
+      - '**/*.spec.ts'
+    env:
+      jest: true

@@ -1,13 +1,9 @@
-import { BlockNode } from '../../BlockNode';
-
-export interface ValueNodeConstructorParameters {
+/**
+ * Type of the constructor parameters for a ValueNode.
+ */
+export interface ValueNodeConstructorParameters<ValueType = unknown> {
   /**
-   * The data associated with the ValueNode
+   * The value of this value node.
    */
-  data: Record<string, unknown>;
-
-  /**
-   * The parent BlockNode
-   */
-  parent: BlockNode;
+  value: ValueType;
 }
