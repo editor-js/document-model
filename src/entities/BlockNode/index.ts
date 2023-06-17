@@ -5,7 +5,7 @@ import {
   BlockNodeName,
   createBlockNodeName,
   DataKey,
-  createDataKey, BlockNodeChildren
+  createDataKey, BlockNodeData
 } from './types';
 
 /**
@@ -22,7 +22,7 @@ export class BlockNode {
   /**
    * Field representing the content of the Block
    */
-  #children: BlockNodeChildren;
+  #data: BlockNodeData;
 
   /**
    * Field representing the parent EditorDocument of the BlockNode
@@ -39,13 +39,13 @@ export class BlockNode {
    *
    * @param args - TextNode constructor arguments.
    * @param args.name - The name of the BlockNode.
-   * @param args.children - The child nodes of the BlockNode.
+   * @param args.data - The content of the BlockNode.
    * @param args.parent - The parent EditorDocument of the BlockNode.
    * @param args.tunes - The BlockTunes associated with the BlockNode.
    */
-  constructor({ name, children, parent, tunes = {} }: BlockNodeConstructorParameters) {
+  constructor({ name, data, parent, tunes = {} }: BlockNodeConstructorParameters) {
     this.#name = name;
-    this.#children = children;
+    this.#data = data;
     this.#parent = parent;
     this.#tunes = tunes;
   }

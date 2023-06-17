@@ -12,6 +12,6 @@ export function createBlockNodeMock({ name, parent }: { name?: BlockNodeName, pa
   return new BlockNode({
     name: name || createBlockNodeName('header'),
     parent,
-    children: {},
+    data: {},
   });
 }
