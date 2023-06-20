@@ -20,11 +20,13 @@ export interface ChildNodeConstructorOptions {
  * @param constructor - class to decorate
  * @example
  *
+ * ```ts
  * // interface is required to let TS know about ChildNode's methods
  * interface MyNode extends ChildNode {}
  *
  * @ChildNode
  * class MyNode {}
+ * ```
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- any type here is a TS requirement for mixin classes
 export function ChildNode<C extends { new(...args: any[]): Node }>(constructor: C): C {
