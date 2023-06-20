@@ -5,6 +5,7 @@ runs:
     - name: Get yarn cache directory path
       id: yarn-cache-dir-path
       run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
+      shell: bash
 
     - name: Restore yarn cache folder
       uses: actions/cache@v3
@@ -17,3 +18,4 @@ runs:
 
     - name: Install dependencies
       run: yarn install
+      shell: bash
