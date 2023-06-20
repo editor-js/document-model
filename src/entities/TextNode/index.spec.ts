@@ -208,7 +208,7 @@ describe('TextNode', () => {
       const fragments = node.format(name, start, end);
       const formattingNode = fragments[1] as FormattingNode;
 
-      expect(formattingNode.children[0].getText()).toEqual(initialText.slice(5, 8));
+      expect(formattingNode.children[0].getText()).toEqual(initialText.slice(start, end));
     });
 
     it('should call parent\'s insertAfter with new nodes', () => {

@@ -16,7 +16,7 @@ const createChildMock = (value: string): TextNode => ({
   insertText: jest.fn(),
   removeText: jest.fn(),
   split: jest.fn(() => null),
-  format: jest.fn(() => [new FormattingNode({ tool: createInlineToolName('tool') })]),
+  format: jest.fn(() => [ new FormattingNode({ tool: createInlineToolName('tool') }) ]),
   length: value.length,
 } as unknown as TextNode);
 
@@ -61,7 +61,6 @@ describe('FormattingNode', () => {
         ],
       });
     });
-
   });
 
   describe('.insertText()', () => {
@@ -69,7 +68,6 @@ describe('FormattingNode', () => {
     const index = 3;
 
     it('should call insertText() of child by the passed index', () => {
-
       node.insertText(newText, index);
 
       expect(childMock.insertText).toBeCalledWith(newText, index);
@@ -179,7 +177,7 @@ describe('FormattingNode', () => {
     it.todo('should return fragments for sub-tree');
 
     it('should return node\'s fragment', () => {
-      const {fragments} = node.serialized;
+      const { fragments } = node.serialized;
 
       expect(fragments).toEqual([
         {
@@ -215,7 +213,7 @@ describe('FormattingNode', () => {
     it('should create new FormattingNode with children split from the original one', () => {
       const newNode = node.split(index);
 
-      expect(newNode?.children).toEqual([anotherChildMock]);
+      expect(newNode?.children).toEqual([ anotherChildMock ]);
     });
 
     it('should call split method of child containing the specified index', () => {

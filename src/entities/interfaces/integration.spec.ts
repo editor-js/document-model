@@ -4,6 +4,9 @@ import { ChildNode } from './ChildNode';
 
 interface DummyParent extends ParentNode {}
 
+/**
+ *
+ */
 @ParentNode
 class DummyParent {
   /**
@@ -16,6 +19,9 @@ class DummyParent {
 
 interface DummyChild extends ChildNode {}
 
+/**
+ *
+ */
 @ChildNode
 class DummyChild {
   /**
@@ -27,7 +33,6 @@ class DummyChild {
 }
 
 describe('ParentNode and ChildNode integration', () => {
-
   describe('child removal', () => {
     let parent: DummyParent;
     let child: DummyChild;

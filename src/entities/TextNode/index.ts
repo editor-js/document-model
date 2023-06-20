@@ -61,7 +61,6 @@ export class TextNode implements InlineNode {
    *
    * @param [start] - start index of the range, 0 by default
    * @param [end] - end index of the range, text length by default
-   *
    * @returns {string} removed text
    */
   public removeText(start = 0, end = this.length): string {

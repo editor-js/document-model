@@ -26,7 +26,6 @@ class Dummy {
 }
 
 describe('ChildNode decorator', () => {
-
   let dummy: Dummy;
 
   beforeEach(() => {

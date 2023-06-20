@@ -81,7 +81,6 @@ export class FormattingNode implements InlineNode {
    *
    * @param [start] - start index of the range, by default 0
    * @param [end] - end index of the range, by default length of the text value
-   *
    * @returns {string} removed text
    */
   public removeText(start = 0, end = this.length): string {
@@ -157,7 +156,6 @@ export class FormattingNode implements InlineNode {
    * Splits current node by the specified index
    *
    * @param index - index where to split the node
-   *
    * @returns {FormattingNode | null} new node
    */
   public split(index: number): FormattingNode | null {
