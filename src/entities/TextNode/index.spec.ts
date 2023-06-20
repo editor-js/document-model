@@ -1,15 +1,23 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { TextNode } from './index';
-import { createFormattingNodeName, FormattingNode } from '../FormattingNode';
+import { createInlineToolName, FormattingNode } from '../FormattingNode';
+import type { ParentNode } from '../interfaces';
 
 describe('TextNode', () => {
   const initialText = 'initial text';
   const text = 'some text';
+  const parentMock = {
+    insertAfter: jest.fn(),
+    removeChild: jest.fn(),
+    append: jest.fn(),
+    children: [],
+  } as ParentNode;
   let node: TextNode;
 
   beforeEach(() => {
     node = new TextNode({
       value: initialText,
+      parent: parentMock as FormattingNode,
     });
   });
 
@@ -105,9 +113,50 @@ describe('TextNode', () => {
     });
   });
 
+  describe('.removeText()', () => {
+    it('should remove all text by default', () => {
+      node.removeText();
+
+      expect(node.getText()).toEqual('');
+    });
+
+    it('should remove text from specified index', () => {
+      const start = 3;
+
+      node.removeText(start);
+
+      expect(node.getText()).toEqual(initialText.slice(0, start));
+    });
+
+    it('should remove text from 0 to specified end index', () => {
+      const end = 8;
+
+      node.removeText(0, end);
+
+      expect(node.getText()).toEqual(initialText.slice(end));
+    });
+
+    it('should remove text from specified start and end indecies', () => {
+      const start = 3;
+      const end = 8;
+
+      node.removeText(start, end);
+
+      expect(node.getText()).toEqual(initialText.slice(0, start) + initialText.slice(end));
+    });
+
+    it('should call remove() method if node is empty after removeText() call', () => {
+      jest.spyOn(node, 'remove');
+
+      node.removeText();
+
+      expect(node.remove).toBeCalled();
+    });
+  });
+
   describe('.format()', () => {
     it('should return just one FormattingNode, if formatting full TextNode', () => {
-      const name = createFormattingNodeName('bold');
+      const name = createInlineToolName('bold');
 
       const fragments = node.format(name, 0, initialText.length);
 
@@ -115,8 +164,8 @@ describe('TextNode', () => {
       expect(fragments[0]).toBeInstanceOf(FormattingNode);
     });
 
-    it('should return return two fragments if formatting from the start, but not to the end', () => {
-      const name = createFormattingNodeName('bold');
+    it('should return two fragments if formatting from the start, but not to the end', () => {
+      const name = createInlineToolName('bold');
       const end = 5;
 
       const fragments = node.format(name, 0, end);
@@ -126,8 +175,8 @@ describe('TextNode', () => {
       expect(fragments[1]).toBeInstanceOf(TextNode);
     });
 
-    it('should return return two fragments if formatting to the end, but not from the start', () => {
-      const name = createFormattingNodeName('bold');
+    it('should return two fragments if formatting to the end, but not from the start', () => {
+      const name = createInlineToolName('bold');
       const start = 5;
 
       const fragments = node.format(name, start, initialText.length);
@@ -137,8 +186,8 @@ describe('TextNode', () => {
       expect(fragments[1]).toBeInstanceOf(FormattingNode);
     });
 
-    it('should return return three fragments if formatting in the middle', () => {
-      const name = createFormattingNodeName('bold');
+    it('should return three fragments if formatting in the middle', () => {
+      const name = createInlineToolName('bold');
       const start = 5;
       const end = 8;
 
@@ -149,6 +198,78 @@ describe('TextNode', () => {
       expect(fragments[0]).toBeInstanceOf(TextNode);
       expect(fragments[1]).toBeInstanceOf(FormattingNode);
       expect(fragments[2]).toBeInstanceOf(TextNode);
+    });
+
+    it('should return FormattingNode with a TextNode as a child with correct text value', () => {
+      const name = createInlineToolName('bold');
+      const start = 5;
+      const end = 8;
+
+      const fragments = node.format(name, start, end);
+      const formattingNode = fragments[1] as FormattingNode;
+
+      expect(formattingNode.children[0].getText()).toEqual(initialText.slice(5, 8));
+    });
+
+    it('should call parent\'s insertAfter with new nodes', () => {
+      const name = createInlineToolName('bold');
+      const start = 5;
+      const end = 8;
+
+      const fragments = node.format(name, start, end);
+
+      expect(parentMock.insertAfter).toBeCalledWith(node, ...fragments);
+    });
+  });
+
+  describe('.split()', () => {
+    const index = 5;
+
+    it('should not split (return null) if index is 0', () => {
+      const newNode = node.split(0);
+
+      expect(newNode).toBeNull();
+    });
+
+    it('should not split (return null) if index equals text length', () => {
+      const newNode = node.split(initialText.length);
+
+      expect(newNode).toBeNull();
+    });
+
+    it('should create new TextNode on split', () => {
+      const newNode = node.split(index);
+
+      expect(newNode).toBeInstanceOf(TextNode);
+    });
+
+    it('should create new TextNode with text value splitted from the original one', () => {
+      const newNode = node.split(index);
+
+      expect(newNode?.getText()).toEqual(initialText.slice(index));
+    });
+
+    it('should remove split text value from the original node', () => {
+      node.split(index);
+
+      expect(node.getText()).toEqual(initialText.slice(0, index));
+    });
+
+    it('should insert new node to the parent', () => {
+      const newNode = node.split(index);
+
+      expect(parentMock.insertAfter).toBeCalledWith(node, newNode);
+    });
+  });
+
+  describe('.serialized', () => {
+    it('should return text value and empty array of fragments', () => {
+      const result = node.serialized;
+
+      expect(result).toEqual({
+        text: initialText,
+        fragments: [],
+      });
     });
   });
 });

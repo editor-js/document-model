@@ -1,20 +1,24 @@
-import { FormattingNodeData, FormattingNodeName } from '../FormattingNode';
+import { InlineToolData, InlineToolName } from '../FormattingNode';
 
 export interface InlineNode {
   length: number;
 
   getText(start?: number, end?: number): string;
 
-  format(name: FormattingNodeName, start?: number, end?: number, data?: FormattingNodeData): InlineNode[];
+  format(name: InlineToolName, start?: number, end?: number, data?: InlineToolData): InlineNode[];
 
   insertText(text: string, index?: number): void;
+
+  removeText(start?: number, end?: number): string;
+
+  split(index?: number): InlineNode | null;
 
   serialized: InlineNodeSerialized;
 }
 
 export interface InlineFragment {
-  name: FormattingNodeName;
-  data?: FormattingNodeData;
+  tool: InlineToolName;
+  data?: InlineToolData;
   range: [number, number];
 }
 

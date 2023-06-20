@@ -1,3 +1,3 @@
 export { FormattingNodeConstructorParameters } from './FormattingNodeConstructorParameters';
-export { FormattingNodeName, createFormattingNodeName } from './FormattingNodeName';
-export { FormattingNodeData, createFormattingNodeData } from './FormattingNodeData';
+export { InlineToolName, createInlineToolName } from './InlineToolName';
+export { InlineToolData, createInlineToolData } from './InlineToolData';

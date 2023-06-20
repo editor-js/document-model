@@ -1,17 +1,15 @@
-import { FormattingNodeName } from './FormattingNodeName';
-import { FormattingNodeData } from './FormattingNodeData';
-import { FormattingNode } from '../index';
+import { InlineToolName } from './InlineToolName';
+import { InlineToolData } from './InlineToolData';
+import type { ChildNodeConstructorOptions, ParentNodeConstructorOptions } from '../../interfaces';
 
-export interface FormattingNodeConstructorParameters {
+export interface FormattingNodeConstructorParameters extends ChildNodeConstructorOptions, ParentNodeConstructorOptions {
   /**
    * The name of the formatting tool applied to the content
    */
-  name: FormattingNodeName;
+  tool: InlineToolName;
 
   /**
    * Any additional data associated with the formatting
    */
-  data?: FormattingNodeData;
-
-  parent?: FormattingNode;
+  data?: InlineToolData;
 }

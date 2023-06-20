@@ -1,14 +1,8 @@
-import { FormattingNode } from '../../FormattingNode';
-import { BlockNode } from '../../BlockNode';
+import type { ChildNodeConstructorOptions } from '../../interfaces';
 
-export interface TextNodeConstructorParameters {
+export interface TextNodeConstructorParameters extends ChildNodeConstructorOptions {
   /**
    * Text content of the node
    */
   value?: string;
-
-  /**
-   * A parent of TextNode
-   */
-  parent?: FormattingNode;
 }
