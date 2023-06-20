@@ -63,17 +63,9 @@ export class FormattingNode implements InlineNode {
    * @param [index] - index where to insert text
    */
   public insertText(text: string, index = this.length): void {
-    let totalLength = 0;
+    const [child, offset] = this.#findChildByIndex(index);
 
-    for (const child of this.children) {
-      if (index <= child.length + totalLength) {
-        child.insertText(text, index - totalLength);
-
-        return;
-      }
-
-      totalLength += child.length;
-    }
+    child?.insertText(text, index - offset);
   }
 
   /**
@@ -84,16 +76,14 @@ export class FormattingNode implements InlineNode {
    * @returns {string} removed text
    */
   public removeText(start = 0, end = this.length): string {
-    let result = '';
-
-    for (const child of this.children) {
-      if (start < child.length && end > 0 && start < end) {
-        result += child.removeText(Math.max(start, 0), Math.min(child.length, end));
-      }
-
-      start -= child.length;
-      end -= child.length;
-    }
+    const result = this.#reduceChildrenInRange(
+      start,
+      end,
+      (acc, child, childStart, childEnd) => {
+        return acc + child.removeText(childStart, childEnd);
+      },
+      ''
+    );
 
     if (this.length === 0) {
       this.remove();
@@ -109,18 +99,14 @@ export class FormattingNode implements InlineNode {
    * @param [end] - end index of the range, by default length of the text value
    */
   public getText(start = 0, end = this.length): string {
-    let result = '';
-
-    for (const child of this.children) {
-      if (start < child.length && end > 0 && start < end) {
-        result += child.getText(Math.max(start, 0), Math.min(child.length, end));
-      }
-
-      start -= child.length;
-      end -= child.length;
-    }
-
-    return result;
+    return this.#reduceChildrenInRange(
+      start,
+      end,
+      (acc, child, childStart, childEnd) => {
+        return acc + child.getText(childStart, childEnd);
+      },
+      ''
+    );
   }
 
   /**
@@ -130,26 +116,24 @@ export class FormattingNode implements InlineNode {
    * @param [end] - end index of the range, by default length of the text value
    */
   public getFragments(start = 0, end = this.length): InlineFragment[] {
-    const result: InlineFragment[] = [ {
-      tool: this.#tool,
-      data: this.#data,
-      range: [start, end],
-    } ];
+    return this.#reduceChildrenInRange<InlineFragment[]>(
+      start,
+      end,
+      (acc, child, childStart, childEnd) => {
+        if (!(child instanceof FormattingNode)) {
+          return acc;
+        }
 
-    for (const child of this.children) {
-      if (!(child instanceof FormattingNode)) {
-        continue;
-      }
+        acc.push(...child.getFragments(childStart, childEnd));
 
-      if (start < child.length && end > 0 && start < end) {
-        result.push(...child.getFragments(start, end));
-      }
-
-      start -= child.length;
-      end -= child.length;
-    }
-
-    return result;
+        return acc;
+      },
+      [ {
+        tool: this.#tool,
+        data: this.#data,
+        range: [start, end],
+      } ]
+    );
   }
 
   /**
@@ -168,24 +152,23 @@ export class FormattingNode implements InlineNode {
       data: this.#data,
     });
 
-    let totalLength = 0;
-    let midNodeIndex = 0;
+    const [child, offset] = this.#findChildByIndex(index);
 
-    for (const [i, child] of this.children.entries()) {
-      if (index <= child.length + totalLength) {
-        const splitNode = child.split(index - totalLength);
+    if (!child) {
+      return null;
+    }
 
-        if (!splitNode && index === child.length) {
-          midNodeIndex = i;
+    // Have to save length as it is changed after split
+    const childLength = child.length;
 
-          break;
-        }
+    const splitNode = child.split(index - offset);
+    let midNodeIndex = this.children.indexOf(child);
 
-        midNodeIndex = i + 1;
-        break;
-      }
-
-      totalLength += child.length;
+    /**
+     * If node is split or if node is not split but index equals to child length, we should split children from the next node
+     */
+    if (splitNode || (index - offset === childLength)) {
+      midNodeIndex += 1;
     }
 
     newNode.append(...this.children.slice(midNodeIndex));
@@ -211,11 +194,39 @@ export class FormattingNode implements InlineNode {
       return [];
     }
 
-    const result = [];
+
+    return this.#reduceChildrenInRange<InlineNode[]>(
+      start,
+      end,
+      (acc, child, childStart, childEnd) => {
+        acc.push(...child.format(tool, childStart, childEnd, data));
+
+        return acc;
+      },
+      []
+    );
+  }
+
+  /**
+   * Iterates through children in range and calls callback for each
+   *
+   * @param start - range start index
+   * @param end - range end index
+   * @param callback - callback to apply on children
+   * @param initialValue - initial accumulator value
+   * @private
+   */
+  #reduceChildrenInRange<Acc>(
+    start: number,
+    end: number,
+    callback: (acc: Acc, child: InlineNode, start: number, end: number) => Acc,
+    initialValue: Acc
+  ): Acc {
+    let result = initialValue;
 
     for (const child of this.children) {
       if (start < child.length && end > 0 && start < end) {
-        result.push(...child.format(tool, Math.max(start, 0), Math.min(end, child.length), data));
+        result = callback(result, child, Math.max(start, 0), Math.min(child.length, end));
       }
 
       start -= child.length;
@@ -223,5 +234,25 @@ export class FormattingNode implements InlineNode {
     }
 
     return result;
+  }
+
+  /**
+   * Returns child by passed text index
+   *
+   * @param index - text index
+   * @private
+   */
+  #findChildByIndex(index: number): [child: InlineNode & ChildNode | null, offset: number] {
+    let totalLength = 0;
+
+    for (const child of this.children) {
+      if (index <= child.length + totalLength) {
+        return [child, totalLength];
+      }
+
+      totalLength += child.length;
+    }
+
+    return [null, totalLength];
   }
 }

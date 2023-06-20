@@ -210,8 +210,11 @@ describe('FormattingNode', () => {
       expect(newNode).toBeInstanceOf(FormattingNode);
     });
 
+    /**
+     * @todo check this and related cases with integration tests
+     */
     it('should create new FormattingNode with children split from the original one', () => {
-      const newNode = node.split(index);
+      const newNode = node.split(childMock.length);
 
       expect(newNode?.children).toEqual([ anotherChildMock ]);
     });
