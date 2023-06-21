@@ -52,3 +52,7 @@ export {
   BlockTuneName,
   createBlockTuneName
 };
+
+export type {
+  BlockTuneSerialized
+};
