@@ -50,7 +50,7 @@ export class EditorDocument {
       return;
     }
 
-    this.checkIndexOutOfBounds(index);
+    this.#checkIndexOutOfBounds(index);
 
     this.#children.splice(index, 0, blockNode);
   }
@@ -62,7 +62,7 @@ export class EditorDocument {
    * @throws Error if the index is out of bounds
    */
   public removeBlock(index: number): void {
-    this.checkIndexOutOfBounds(index, this.length - 1);
+    this.#checkIndexOutOfBounds(index, this.length - 1);
 
     this.#children.splice(index, 1);
   }
@@ -75,7 +75,7 @@ export class EditorDocument {
    * @throws Error if the index is out of bounds
    */
   public getBlock(index: number): BlockNode {
-    this.checkIndexOutOfBounds(index, this.length - 1);
+    this.#checkIndexOutOfBounds(index, this.length - 1);
 
     return this.#children[index];
   }
@@ -87,7 +87,7 @@ export class EditorDocument {
    * @param max - The maximum index value. Defaults to the length of the children array.
    * @throws Error if the index is out of bounds
    */
-  private checkIndexOutOfBounds(index: number, max: number = this.length): void {
+  #checkIndexOutOfBounds(index: number, max: number = this.length): void {
     if (index < 0 || index > max) {
       throw new Error('Index out of bounds');
     }
