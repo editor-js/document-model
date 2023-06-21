@@ -1,11 +1,12 @@
 import { EditorDocument } from '../EditorDocument';
-import { BlockTune, BlockTuneName } from '../BlockTune';
+import { BlockTune, BlockTuneName, BlockTuneSerialized } from '../BlockTune';
 import {
   BlockNodeConstructorParameters,
   BlockNodeName,
   createBlockNodeName,
   DataKey,
-  createDataKey, BlockNodeData
+  createDataKey, BlockNodeData,
+  BlockNodeSerialized
 } from './types';
 
 /**
@@ -48,6 +49,45 @@ export class BlockNode {
     this.#data = data;
     this.#parent = parent;
     this.#tunes = tunes;
+  }
+
+  /**
+   * Returns serialized object representing the BlockNode
+   */
+  public get serialized(): BlockNodeSerialized {
+    const serializedData = Object
+      .entries(this.#data)
+      .reduce(
+        (acc, [dataKey, value]) => {
+          if (value instanceof Array) {
+            acc[dataKey] = value.map((node) => node.serialized);
+
+            return acc;
+          }
+
+          acc[dataKey] = value.serialized;
+
+          return acc;
+        },
+        {} as Record<string, unknown>
+      );
+
+    const serializedTunes = Object
+      .entries(this.#tunes)
+      .reduce(
+        (acc, [name, tune]) => {
+          acc[name] = tune.serialized;
+
+          return acc;
+        },
+        {} as Record<string, BlockTuneSerialized>
+      );
+
+    return {
+      name: this.#name,
+      data: serializedData,
+      tunes: serializedTunes,
+    };
   }
 }
 
