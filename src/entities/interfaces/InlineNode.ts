@@ -40,7 +40,6 @@ export interface InlineNode {
    *
    * @param [start] - start char index of the range
    * @param [end] - утв char index of the range
-   *
    * @returns {string} removed text
    */
   removeText(start?: number, end?: number): string;
@@ -49,7 +48,6 @@ export interface InlineNode {
    * Splits current node at the passed index
    *
    * @param index - char index where to split the node
-   *
    * @returns {InlineNode | null} new node if split successful, null if nothing to split
    */
   split(index?: number): InlineNode | null;
