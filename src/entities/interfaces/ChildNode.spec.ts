@@ -13,7 +13,7 @@ interface Dummy extends ChildNode {
 }
 
 /**
- *
+ * Dummy Node's class
  */
 @ChildNode
 class Dummy {

@@ -1,5 +1,4 @@
 import type { ChildNode } from './ChildNode';
-import { InlineNode } from './InlineNode';
 
 /**
  * Abstract parent node interface
@@ -52,7 +51,7 @@ export interface ParentNodeConstructorOptions {
  * ```
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- any type here is a TS requirement for mixin classes
-export function ParentNode<C extends { new(...args: any[]): InlineNode }>(constructor: C): C {
+export function ParentNode<C extends { new(...args: any[]): object }>(constructor: C): C {
   return class extends constructor {
     #children: ChildNode[];
 
