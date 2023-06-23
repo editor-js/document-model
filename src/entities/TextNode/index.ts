@@ -48,7 +48,7 @@ export class TextNode implements InlineNode {
    * Inserts text to specified position. By default, appends new text to the current value
    *
    * @param text - text to insert
-   * @param [index] - start index
+   * @param [index] - char start index
    */
   public insertText(text: string, index = this.length): void {
     this.#validateIndex(index);
@@ -59,8 +59,8 @@ export class TextNode implements InlineNode {
   /**
    * Remove text from specified range
    *
-   * @param [start] - start index of the range, 0 by default
-   * @param [end] - end index of the range, text length by default
+   * @param [start] - start char index of the range, 0 by default
+   * @param [end] - end char index of the range, text length by default
    * @returns {string} removed text
    */
   public removeText(start = 0, end = this.length): string {
@@ -81,8 +81,8 @@ export class TextNode implements InlineNode {
   /**
    * Returns text value from the specified range
    *
-   * @param [start] - start index of the range, 0 by default
-   * @param [end] - end index of the range, text length by default
+   * @param [start] - start char index of the range, 0 by default
+   * @param [end] - end char index of the range, text length by default
    */
   public getText(start = 0, end = this.length): string {
     if (start > end) {
@@ -100,8 +100,8 @@ export class TextNode implements InlineNode {
    * Applies inline tool for specified range
    *
    * @param tool - name of the tool to apply
-   * @param start - start index of the range
-   * @param end - end index of the range
+   * @param start - start char index of the range
+   * @param end - end char index of the range
    * @param [data] - inline tool data if applicable
    * @returns {InlineNode[]} - array of nodes after applied formatting
    */
@@ -140,7 +140,7 @@ export class TextNode implements InlineNode {
   /**
    * Splits current node into two nodes by the specified index
    *
-   * @param index - index where to split
+   * @param index - char index where to split
    * @returns {TextNode|null} - new node or null if split is not applicable
    */
   public split(index: number): TextNode | null {
@@ -161,7 +161,7 @@ export class TextNode implements InlineNode {
   /**
    * Validates index
    *
-   * @param index - index to validate
+   * @param index - char index to validate
    * @throws Error if index is out of the text length
    */
   #validateIndex(index: number): void {
@@ -174,8 +174,8 @@ export class TextNode implements InlineNode {
   /**
    * Clones specified range to a new TextNode
    *
-   * @param start - start index of the range
-   * @param end - end index of the range
+   * @param start - start char index of the range
+   * @param end - end char index of the range
    */
   #cloneFragment(start: number, end: number): TextNode {
     return new TextNode({

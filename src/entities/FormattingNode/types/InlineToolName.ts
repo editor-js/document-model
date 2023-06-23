@@ -1,12 +1,12 @@
 import { create, Nominal } from '../../../utils/Nominal';
 
 /**
- * Base type of the formatting node name field
+ * Base type of the formatting node tool field
  */
 type InlineToolNameBase = string;
 
 /**
- * Nominal type for the formatting node name field
+ * Nominal type for the formatting node tool field
  */
 export type InlineToolName = Nominal<InlineToolNameBase, 'InlineToolName'>;
 

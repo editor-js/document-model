@@ -7,6 +7,9 @@ import { ChildNode, InlineFragment, InlineNode, InlineNodeSerialized, ParentNode
 
 export * from './types';
 
+/**
+ * We need to extend FormattingNode interface with ChildNode and ParentNode ones to use the methods from mixins
+ */
 export interface FormattingNode extends ChildNode, ParentNode {
   children: (InlineNode & ChildNode)[]
 }
@@ -23,7 +26,7 @@ export class FormattingNode implements InlineNode {
   #tool: InlineToolName;
 
   /**
-   * Private field representing any additional data associated with the formatting tool
+   * ny additional data associated with the formatting tool
    */
   #data?: InlineToolData;
 
@@ -60,7 +63,7 @@ export class FormattingNode implements InlineNode {
    * Inserts text to the specified index, by default appends text to the end of the current value
    *
    * @param text - text to insert
-   * @param [index] - index where to insert text
+   * @param [index] - char index where to insert text
    */
   public insertText(text: string, index = this.length): void {
     const [child, offset] = this.#findChildByIndex(index);
@@ -71,8 +74,8 @@ export class FormattingNode implements InlineNode {
   /**
    * Removes text form the specified range
    *
-   * @param [start] - start index of the range, by default 0
-   * @param [end] - end index of the range, by default length of the text value
+   * @param [start] - start char index of the range, by default 0
+   * @param [end] - end char index of the range, by default length of the text value
    * @returns {string} removed text
    */
   public removeText(start = 0, end = this.length): string {
@@ -95,8 +98,8 @@ export class FormattingNode implements InlineNode {
   /**
    * Returns text from the specified range
    *
-   * @param [start] - start index of the range, by default 0
-   * @param [end] - end index of the range, by default length of the text value
+   * @param [start] - start char index of the range, by default 0
+   * @param [end] - end char index of the range, by default length of the text value
    */
   public getText(start = 0, end = this.length): string {
     return this.#reduceChildrenInRange(
@@ -112,14 +115,17 @@ export class FormattingNode implements InlineNode {
   /**
    * Returns inline fragments for subtree including current node from the specified range
    *
-   * @param [start] - start index of the range, by default 0
-   * @param [end] - end index of the range, by default length of the text value
+   * @param [start] - start char index of the range, by default 0
+   * @param [end] - end char index of the range, by default length of the text value
    */
   public getFragments(start = 0, end = this.length): InlineFragment[] {
     return this.#reduceChildrenInRange<InlineFragment[]>(
       start,
       end,
       (acc, child, childStart, childEnd) => {
+        /**
+         * If child is not a FormattingNode, it doesn't include any fragments. So we skip it.
+         */
         if (!(child instanceof FormattingNode)) {
           return acc;
         }
@@ -139,7 +145,7 @@ export class FormattingNode implements InlineNode {
   /**
    * Splits current node by the specified index
    *
-   * @param index - index where to split the node
+   * @param index - char index where to split the node
    * @returns {FormattingNode | null} new node
    */
   public split(index: number): FormattingNode | null {
@@ -182,8 +188,8 @@ export class FormattingNode implements InlineNode {
    * Applies formatting to the text with specified inline tool in the specified range
    *
    * @param tool - name of inline tool to apply
-   * @param start - start of the range
-   * @param end - end of the range
+   * @param start - char start index of the range
+   * @param end - char end index of the range
    * @param [data] - inline tool data if applicable
    */
   public format(tool: InlineToolName, start: number, end: number, data?: InlineToolData): InlineNode[] {
@@ -210,8 +216,8 @@ export class FormattingNode implements InlineNode {
   /**
    * Iterates through children in range and calls callback for each
    *
-   * @param start - range start index
-   * @param end - range end index
+   * @param start - range start char index
+   * @param end - range end char index
    * @param callback - callback to apply on children
    * @param initialValue - initial accumulator value
    * @private
@@ -239,7 +245,7 @@ export class FormattingNode implements InlineNode {
   /**
    * Returns child by passed text index
    *
-   * @param index - text index
+   * @param index - char index
    * @private
    */
   #findChildByIndex(index: number): [child: InlineNode & ChildNode | null, offset: number] {
