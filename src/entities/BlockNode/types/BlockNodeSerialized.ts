@@ -12,7 +12,7 @@ export interface BlockNodeSerialized {
   /**
    * The content of the Block
    */
-  data: Record<string, any>; // @todo replace any type with serialized root node and value node
+  data: Record<string, unknown>; // @todo replace unknown type with serialized root node and value node
 
   /**
    * Serialized BlockTunes associated with the BlockNode
