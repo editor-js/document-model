@@ -24,6 +24,7 @@ export interface InlineNode {
    * @param [start] - start char index of the range
    * @param [end] - end char index of the range
    * @param [data] - Inline Tool data if applicable
+   * @returns {InlineNode[]} - array of nodes after applied formatting
    */
   format(name: InlineToolName, start?: number, end?: number, data?: InlineToolData): InlineNode[];
 

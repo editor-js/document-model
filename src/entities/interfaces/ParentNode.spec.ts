@@ -6,7 +6,7 @@ const createChildMock = (): ChildNode => {
     appendTo: jest.fn(),
     remove: jest.fn(),
     parent: null,
-  } as ChildNode;
+  } as unknown as ChildNode;
 };
 
 interface Dummy extends ParentNode {

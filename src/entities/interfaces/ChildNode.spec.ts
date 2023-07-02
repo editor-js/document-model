@@ -7,7 +7,7 @@ const parentMock = {
   removeChild: jest.fn(),
   insertAfter: jest.fn(),
   children: [],
-} as ParentNode;
+} as unknown as ParentNode;
 
 interface Dummy extends ChildNode {
 }
@@ -52,7 +52,7 @@ describe('ChildNode decorator', () => {
     });
   });
 
-  describe('remove()', () => {
+  describe('.remove()', () => {
     beforeEach(() => {
       dummy = new Dummy({
         parent: parentMock,

@@ -10,9 +10,7 @@ export * from './types';
 /**
  * We need to extend FormattingNode interface with ChildNode and ParentNode ones to use the methods from mixins
  */
-export interface FormattingNode extends ChildNode, ParentNode {
-  children: (InlineNode & ChildNode)[]
-}
+export interface FormattingNode extends ChildNode, ParentNode {}
 
 /**
  * FormattingNode class represents a node in a tree-like structure, used to store and manipulate formatted text content

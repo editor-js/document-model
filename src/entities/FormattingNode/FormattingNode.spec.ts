@@ -8,7 +8,7 @@ const parentMock = {
   removeChild: jest.fn(),
   append: jest.fn(),
   children: [],
-} as ParentNode;
+} as unknown as ParentNode;
 
 const createChildMock = (value: string): TextNode => ({
   getText: jest.fn(() => value),
@@ -41,13 +41,13 @@ describe('FormattingNode', () => {
   });
 
   describe('.length', () => {
-    it('should return length sum of lengths of children', () => {
+    it('should return sum of lengths of children', () => {
       expect(node.length).toEqual(childMock.length + anotherChildMock.length);
     });
   });
 
-  describe('.serialized()', () => {
-    it('should serialized node\'s values', () => {
+  describe('.serialized', () => {
+    it('should return concatenated text of all fragments with fragments list describing formatting', () => {
       const result = node.serialized;
 
       expect(result).toEqual({
@@ -67,7 +67,7 @@ describe('FormattingNode', () => {
     const newText = 'new text';
     const index = 3;
 
-    it('should call insertText() of child by the passed index', () => {
+    it('should lead calling insertText() of the child with the passed index', () => {
       node.insertText(newText, index);
 
       expect(childMock.insertText).toBeCalledWith(newText, index);
@@ -122,7 +122,7 @@ describe('FormattingNode', () => {
       expect(anotherChildMock.removeText).toBeCalledWith(0, anotherChildMock.length);
     });
 
-    it('should call remove() if length is 0', () => {
+    it('should call remove() if length is 0 after removeText() call', () => {
       const removeSpy = jest.spyOn(node, 'remove');
       const lengthSpy = jest.spyOn(node, 'length', 'get').mockImplementation(() => 0);
 
@@ -177,7 +177,7 @@ describe('FormattingNode', () => {
     it.todo('should return fragments for sub-tree');
 
     it('should return node\'s fragment', () => {
-      const { fragments } = node.serialized;
+      const fragments = node.getFragments();
 
       expect(fragments).toEqual([
         {
@@ -189,7 +189,7 @@ describe('FormattingNode', () => {
     });
   });
 
-  describe('.split()',  () => {
+  describe('.split()', () => {
     const index = 5;
 
     it('should not split (return null) if index is 0', () => {
@@ -272,7 +272,7 @@ describe('FormattingNode', () => {
       expect(result).toHaveLength(0);
     });
 
-    it('should return arary of new formatting nodes', () => {
+    it('should return array of new formatting nodes', () => {
       const result = node.format(anotherTool, start, end);
 
       expect(result).toEqual(childMock.format(anotherTool, start, end));

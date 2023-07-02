@@ -11,7 +11,7 @@ describe('TextNode', () => {
     removeChild: jest.fn(),
     append: jest.fn(),
     children: [],
-  } as ParentNode;
+  } as unknown as ParentNode;
   let node: TextNode;
 
   beforeEach(() => {

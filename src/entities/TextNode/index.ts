@@ -114,7 +114,7 @@ export class TextNode implements InlineNode {
       data,
     });
 
-    const fragments: (InlineNode & ChildNode)[] = [];
+    const fragments: ChildNode[] = [];
 
     if (start > 0) {
       fragments.push(this.#cloneFragment(0, start));
@@ -134,7 +134,7 @@ export class TextNode implements InlineNode {
 
     this.remove();
 
-    return fragments as InlineNode[];
+    return fragments;
   }
 
   /**
