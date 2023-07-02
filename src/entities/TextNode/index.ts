@@ -40,4 +40,13 @@ export class TextNode {
     this.#children = children;
     this.#parent = parent;
   }
+
+  /**
+   * Returns serialized object representing the TextNode
+   *
+   * @todo implement
+   */
+  public get serialized(): void {
+    return;
+  }
 }

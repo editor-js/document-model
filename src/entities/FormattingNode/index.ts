@@ -38,6 +38,15 @@ export class FormattingNode {
     this.#length = 0;
     this.#children = [];
   }
+
+  /**
+   * Returns serialized object representing the FormattingNode
+   *
+   * @todo implement
+   */
+  public get serialized(): void {
+    return;
+  }
 }
 
 export {
