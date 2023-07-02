@@ -1,8 +1,11 @@
 import { createBlockNodeMock } from '../../utils/mocks/createBlockNodeMock';
 import { createBlockTuneMock } from '../../utils/mocks/createBlockTuneMock';
 import type { EditorDocument } from '../EditorDocument';
+import type { BlockNode } from './index';
 import { createBlockTuneName } from '../BlockTune';
-import { createBlockNodeName } from './types';
+import { createBlockNodeName, createDataKey } from './types';
+import { TextNode } from '../TextNode';
+import { createValueNodeMock } from '../../utils/mocks/createValueNodeMock';
 
 describe('BlockNode', () => {
   describe('.serialized', () => {
@@ -14,9 +17,24 @@ describe('BlockNode', () => {
           background: 'transparent',
         },
       });
+
+      const textNodeDataKey = createDataKey('data-key-1a2b');
+      const textNode = new TextNode({
+        value: 'Hello world!',
+        parent: {} as BlockNode,
+      });
+
+      const valueNodeDataKey = createDataKey('data-key-3c4d');
+      const valueNode = createValueNodeMock({
+        value: 'https://codex.so',
+      });
+
       const blockNode = createBlockNodeMock({
         name: createBlockNodeName('paragraph'),
-        data: {}, // @todo add data to this test case when TextNode and FormattingNode will have implemented .serialized method
+        data: {
+          [textNodeDataKey]: [ textNode ],
+          [valueNodeDataKey]: valueNode,
+        },
         tunes: {
           [createBlockTuneName('styling')]: tune,
         },
@@ -29,7 +47,10 @@ describe('BlockNode', () => {
       // Assert
       expect(serialized).toEqual({
         name: 'paragraph',
-        data: {},
+        data: {
+          [textNodeDataKey]: [ textNode.serialized ],
+          [valueNodeDataKey]: valueNode.serialized,
+        },
         tunes: {
           'styling': {
             name: 'styling',
