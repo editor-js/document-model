@@ -24,7 +24,7 @@ export class FormattingNode implements InlineNode {
   #tool: InlineToolName;
 
   /**
-   * ny additional data associated with the formatting tool
+   * Any additional data associated with the formatting tool
    */
   #data?: InlineToolData;
 
