@@ -20,6 +20,9 @@ const config = {
   testRunner_comment:
     "Take a look at https://stryker-mutator.io/docs/stryker-js/jest-runner for information about the jest plugin.",
   coverageAnalysis: "perTest",
+  tsconfigFile: "tsconfig.json",
+  checkers: ["typescript"],
+  timeoutMS: 10000,
 };
 
 export default config;

@@ -3,39 +3,37 @@ on:
   - pull_request
 
 jobs:
-  main:
+  lint:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Get yarn cache directory path
-        id: yarn-cache-dir-path
-        run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
-
-      - name: Restore yarn cache folder
-        uses: actions/cache@v3
-        id: yarn-cache
-        with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
-
-      - name: Install dependencies
-        run: yarn install
-
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup
       - name: Run ESLint check
         run: yarn lint:ci
 
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup
       - name: Run unit tests
         uses: ArtiomTr/jest-coverage-report-action@v2
         with:
           test-script: "yarn test"
           package-manager: yarn
 
+  mutation-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup
       - name: Run mutation tests
         run: yarn test:mutations
 
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup
       - name: Build the package
         run: yarn build
