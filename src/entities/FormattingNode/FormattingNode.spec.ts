@@ -139,7 +139,7 @@ describe('FormattingNode', () => {
     const start = 3;
     const end = 5;
 
-    it('should return text from the relevant child', () => {
+    it('should call getText() for the relevant child', () => {
       node.getText(start, end);
 
       expect(childMock.getText).toBeCalledWith(start, end);
@@ -153,7 +153,7 @@ describe('FormattingNode', () => {
       expect(anotherChildMock.getText).toBeCalledWith(start, end);
     });
 
-    it('should return text from all relevant children', () => {
+    it('should call getText for all relevant children', () => {
       const offset = childMock.length;
 
       node.getText(start, offset + end);

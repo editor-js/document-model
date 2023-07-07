@@ -32,23 +32,33 @@ describe('ChildNode decorator', () => {
     jest.resetAllMocks();
   });
 
+
+  it('should decorated class to a parent', () => {
+    dummy = new Dummy({ parent: parentMock });
+
+    expect(parentMock.append).toBeCalledWith(dummy);
+  });
+
+  it('should add remove method to the decorated class', () => {
+    expect(dummy.remove).toBeInstanceOf(Function);
+  });
+
+  it('should add appendTo method to the decorated class', () => {
+    expect(dummy.appendTo).toBeInstanceOf(Function);
+  });
+
+
   describe('.parent', () => {
-    it('should set null to parent by default', () => {
+    it('should return null by default', () => {
       dummy = new Dummy();
 
       expect(dummy.parent).toBeNull();
     });
 
-    it('should set passed parent', () => {
+    it('should return parent passed via constructor', () => {
       dummy = new Dummy({ parent: parentMock });
 
       expect(dummy.parent).toEqual(parentMock);
-    });
-
-    it('should append child to parent', () => {
-      dummy = new Dummy({ parent: parentMock });
-
-      expect(parentMock.append).toBeCalledWith(dummy);
     });
   });
 
@@ -57,10 +67,6 @@ describe('ChildNode decorator', () => {
       dummy = new Dummy({
         parent: parentMock,
       });
-    });
-
-    it('should add remove method', () => {
-      expect(dummy.remove).toBeInstanceOf(Function);
     });
 
     it('should call parent\'s removeChild method', () => {
@@ -80,11 +86,6 @@ describe('ChildNode decorator', () => {
     beforeEach(() => {
       dummy = new Dummy();
     });
-
-    it('should add appendTo method', () => {
-      expect(dummy.appendTo).toBeInstanceOf(Function);
-    });
-
 
     it('should call parent\'s append method on appendTo call', () => {
       dummy.appendTo(parentMock);

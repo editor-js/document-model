@@ -116,16 +116,25 @@ export class TextNode implements InlineNode {
 
     const fragments: ChildNode[] = [];
 
+    /**
+     * If start index is greater than 0, we need extract part of the text before the start index
+     */
     if (start > 0) {
       fragments.push(this.#cloneFragment(0, start));
     }
 
+    /**
+     * Formatting is applied to the specified range
+     */
     const formattedFragment = this.#cloneFragment(start, end);
 
     formattedFragment.appendTo(formattingNode);
 
     fragments.push(formattingNode);
 
+    /**
+     * If end index is less than the text length, we need to extract part of the text after the end index
+     */
     if (end < this.length) {
       fragments.push(this.#cloneFragment(end, this.length));
     }

@@ -34,21 +34,20 @@ describe('ParentNode decorator', () => {
     jest.resetAllMocks();
   });
 
-  describe('.children', () => {
-    it('should set empty array by default', () => {
-      expect(dummy.children).toEqual([]);
-    });
+  it('should add removeChild method to the decorated class', () => {
+    expect(dummy.removeChild).toBeInstanceOf(Function);
+  });
 
-    it('should set passed children', () => {
-      const childMock = createChildMock();
+  it('should add append method to the decorated class', () => {
+    expect(dummy.append).toBeInstanceOf(Function);
+  });
 
-      dummy = new Dummy({
-        children: [ childMock ],
-      });
+  it('should add insertAfter method to the decorated class', () => {
+    expect(dummy.insertAfter).toBeInstanceOf(Function);
+  });
 
-      expect(dummy.children).toEqual([ childMock ]);
-    });
 
+  describe('constructor', () => {
     it('should append passed children to new parent', () => {
       const childMock = createChildMock();
 
@@ -60,11 +59,23 @@ describe('ParentNode decorator', () => {
     });
   });
 
-  describe('.append()', () => {
-    it('should add append method', () => {
-      expect(dummy.append).toBeInstanceOf(Function);
+  describe('.children', () => {
+    it('should return empty array by default', () => {
+      expect(dummy.children).toEqual([]);
     });
 
+    it('should return children passed via constructor', () => {
+      const childMock = createChildMock();
+
+      dummy = new Dummy({
+        children: [ childMock ],
+      });
+
+      expect(dummy.children).toEqual([ childMock ]);
+    });
+  });
+
+  describe('.append()', () => {
     it('should add child to the children array', () => {
       const childMock = createChildMock();
 
@@ -82,7 +93,7 @@ describe('ParentNode decorator', () => {
       expect(dummy.children).toEqual([childMock, anotherChildMock]);
     });
 
-    it('should remove existing child and append it to the children array', () => {
+    it('should move a child to the end of children array if it is already there', () => {
       const childMock = createChildMock();
       const anotherChildMock = createChildMock();
       const oneMoreChildMock = createChildMock();
@@ -113,10 +124,6 @@ describe('ParentNode decorator', () => {
   });
 
   describe('.insertAfter()', () => {
-    it('should add insertAfter method', () => {
-      expect(dummy.insertAfter).toBeInstanceOf(Function);
-    });
-
     it('should insert a child after passed target', () => {
       const childMock = createChildMock();
       const anotherChildMock = createChildMock();
@@ -163,10 +170,6 @@ describe('ParentNode decorator', () => {
   });
 
   describe('.removeChild()', () => {
-    it('should add removeChild method', () => {
-      expect(dummy.removeChild).toBeInstanceOf(Function);
-    });
-
     it('should remove child from the children array', () => {
       const childMock = createChildMock();
 
