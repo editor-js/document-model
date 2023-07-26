@@ -120,13 +120,13 @@ export class TextNode implements InlineNode {
      * If start index is greater than 0, we need extract part of the text before the start index
      */
     if (start > 0) {
-      fragments.push(this.#cloneFragment(0, start));
+      fragments.push(this.#cloneContents(0, start));
     }
 
     /**
      * Formatting is applied to the specified range
      */
-    const formattedFragment = this.#cloneFragment(start, end);
+    const formattedFragment = this.#cloneContents(start, end);
 
     formattedFragment.appendTo(formattingNode);
 
@@ -136,7 +136,7 @@ export class TextNode implements InlineNode {
      * If end index is less than the text length, we need to extract part of the text after the end index
      */
     if (end < this.length) {
-      fragments.push(this.#cloneFragment(end, this.length));
+      fragments.push(this.#cloneContents(end, this.length));
     }
 
     this.parent?.insertAfter(this, ...fragments);
@@ -186,7 +186,7 @@ export class TextNode implements InlineNode {
    * @param start - start char index of the range
    * @param end - end char index of the range
    */
-  #cloneFragment(start: number, end: number): TextNode {
+  #cloneContents(start: number, end: number): TextNode {
     return new TextNode({
       value: this.getText(start, end),
     });
