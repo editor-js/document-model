@@ -193,6 +193,8 @@ export class FormattingNode implements InlineNode {
   public format(tool: InlineToolName, start: number, end: number, data?: InlineToolData): InlineNode[] {
     /**
      * In case current tool is the same as new one, do nothing
+     *
+     * @todo Compare data as well
      */
     if (tool === this.#tool) {
       return [];
@@ -204,6 +206,51 @@ export class FormattingNode implements InlineNode {
       end,
       (acc, child, childStart, childEnd) => {
         acc.push(...child.format(tool, childStart, childEnd, data));
+
+        return acc;
+      },
+      []
+    );
+  }
+
+  /**
+   * Removes formatting from the text for a specified inline tool in the specified range
+   *
+   * @param tool - name of inline tool to remove
+   * @param start - char start index of the range
+   * @param end - char end index of the range
+   * @todo Possibly pass data or some InlineTool identifier to relevant only required fragments
+   */
+  public unformat(tool: InlineToolName, start: number, end: number): InlineNode[] {
+    if (this.#tool === tool) {
+      const middleNode = this.split(start);
+      const endNode = middleNode?.split(end);
+
+      const result: InlineNode[] = [ this ];
+
+      if (middleNode) {
+        result.push(...middleNode.children);
+      }
+
+      if (endNode) {
+        result.push(endNode);
+      }
+
+      return result;
+    }
+
+    return this.#reduceChildrenInRange<InlineNode[]>(
+      start,
+      end,
+      (acc, child, childStart, childEnd) => {
+        /**
+         * TextNodes don't have unformat method, so skip them
+         */
+        if (!(child instanceof FormattingNode)) {
+          return acc;
+        }
+
+        acc.push(...child.unformat(tool, childStart, childEnd));
 
         return acc;
       },
@@ -228,7 +275,12 @@ export class FormattingNode implements InlineNode {
   ): Acc {
     let result = initialValue;
 
-    for (const child of this.children) {
+    /**
+     * Make a copy of the children array in case callback would modify it
+     */
+    const children = Array.from(this.children);
+
+    for (const child of children) {
       if (start < child.length && end > 0 && start < end) {
         result = callback(result, child, Math.max(start, 0), Math.min(child.length, end));
       }

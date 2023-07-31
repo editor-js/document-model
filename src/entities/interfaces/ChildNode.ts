@@ -59,7 +59,7 @@ export function ChildNode<C extends { new(...args: any[]): InlineNode }>(constru
     // Stryker disable next-line BlockStatement -- Styker's bug, see https://github.com/stryker-mutator/stryker-js/issues/2474
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- any type here is a TS requirement for mixin classes
     constructor(...args: any[]) {
-      const { parent, ...rest } = args[0] ?? {};
+      const { parent, ...rest } = args[0] as ChildNodeConstructorOptions ?? {};
 
       super(rest);
 
