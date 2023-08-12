@@ -191,13 +191,4 @@ export class TextNode implements InlineNode {
       value: this.getText(start, end),
     });
   }
-
-  /**
-   * Returns serialized object representing the TextNode
-   *
-   * @todo implement
-   */
-  public get serialized(): void {
-    return;
-  }
 }

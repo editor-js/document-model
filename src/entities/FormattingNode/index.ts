@@ -259,13 +259,4 @@ export class FormattingNode implements InlineNode {
 
     return [null, totalLength];
   }
-
-  /**
-   * Returns serialized object representing the FormattingNode
-   *
-   * @todo implement
-   */
-  public get serialized(): void {
-    return;
-  }
 }

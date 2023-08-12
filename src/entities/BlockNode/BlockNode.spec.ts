@@ -7,8 +7,9 @@ import { ValueNode } from '../ValueNode';
 
 import type { EditorDocument } from '../EditorDocument';
 import type { BlockTuneConstructorParameters } from '../BlockTune/types';
-import type { TextNodeConstructorParameters } from '../TextNode/types';
+import type { TextNodeConstructorParameters } from '../TextNode';
 import type { ValueNodeConstructorParameters } from '../ValueNode';
+import type { InlineNodeSerialized } from '../interfaces';
 
 describe('BlockNode', () => {
   describe('.serialized', () => {
@@ -55,7 +56,7 @@ describe('BlockNode', () => {
     it('should call .serialized getter of all nodes associated with the BlockNode', () => {
       const textNodeSerializedSpy = jest
         .spyOn(TextNode.prototype, 'serialized', 'get')
-        .mockImplementation(() => ({}));
+        .mockImplementation(() => ({} as InlineNodeSerialized));
 
       const valueNodeSerializedSpy = jest
         .spyOn(ValueNode.prototype, 'serialized', 'get')
