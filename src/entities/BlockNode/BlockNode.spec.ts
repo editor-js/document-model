@@ -1,7 +1,7 @@
 import { BlockNode } from './index';
 import { createBlockNodeName, createDataKey } from './types';
 
-import { BlockTune, BlockTuneSerialized, createBlockTuneName } from '../BlockTune';
+import { BlockTune, createBlockTuneName } from '../BlockTune';
 import { TextNode } from '../TextNode';
 import { ValueNode } from '../ValueNode';
 
@@ -9,10 +9,30 @@ import type { EditorDocument } from '../EditorDocument';
 import type { BlockTuneConstructorParameters } from '../BlockTune/types';
 import type { TextNodeConstructorParameters } from '../TextNode';
 import type { ValueNodeConstructorParameters } from '../ValueNode';
-import type { InlineNodeSerialized } from '../interfaces';
 
 describe('BlockNode', () => {
   describe('.serialized', () => {
+    beforeEach(() => {
+      jest.mock('../BlockTune', () => ({
+        BlockTune: jest.fn().mockImplementation(() => ({}) as BlockTune),
+        serialized: jest.fn(),
+      }));
+
+      jest.mock('../TextNode', () => ({
+        TextNode: jest.fn().mockImplementation(() => ({}) as TextNode),
+        serialized: jest.fn(),
+      }));
+
+      jest.mock('../ValueNode', () => ({
+        ValueNode: jest.fn().mockImplementation(() => ({}) as ValueNode),
+        serialized: jest.fn(),
+      }));
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
     it('should return a name of a tool that created a BlockNode', () => {
       const blockNodeName = createBlockNodeName('paragraph');
 
@@ -35,8 +55,7 @@ describe('BlockNode', () => {
       ];
 
       const spy = jest
-        .spyOn(BlockTune.prototype, 'serialized', 'get')
-        .mockImplementation(() => ({} as BlockTuneSerialized));
+        .spyOn(BlockTune.prototype, 'serialized', 'get');
 
       const blockNode = new BlockNode({
         name: createBlockNodeName('paragraph'),
@@ -53,20 +72,11 @@ describe('BlockNode', () => {
       expect(spy).toHaveBeenCalledTimes(blockTunesNames.length);
     });
 
-    it('should call .serialized getter of all nodes associated with the BlockNode', () => {
-      const textNodeSerializedSpy = jest
-        .spyOn(TextNode.prototype, 'serialized', 'get')
-        .mockImplementation(() => ({} as InlineNodeSerialized));
-
+    it('should call .serialized getter of all child ValueNodes associated with the BlockNode', () => {
       const valueNodeSerializedSpy = jest
-        .spyOn(ValueNode.prototype, 'serialized', 'get')
-        .mockImplementation(() => ({}));
+        .spyOn(ValueNode.prototype, 'serialized', 'get');
 
-      const countOfTextNodes = 3;
-      const countOfValueNodes = 1;
-
-      const textNodes = [ ...Array(countOfTextNodes).keys() ]
-        .map((index) => new TextNode({ value: `${index}` } as TextNodeConstructorParameters));
+      const countOfValueNodes = 2;
 
       const valueNodes = [ ...Array(countOfValueNodes).keys() ]
         .reduce((acc, index) => ({
@@ -77,7 +87,6 @@ describe('BlockNode', () => {
       const blockNode = new BlockNode({
         name: createBlockNodeName('paragraph'),
         data: {
-          [createDataKey('data-key-1a2b')]: textNodes,
           ...valueNodes,
         },
         parent: {} as EditorDocument,
@@ -85,8 +94,29 @@ describe('BlockNode', () => {
 
       blockNode.serialized;
 
-      expect(textNodeSerializedSpy).toHaveBeenCalledTimes(countOfTextNodes);
       expect(valueNodeSerializedSpy).toHaveBeenCalledTimes(countOfValueNodes);
+    });
+
+    it('should call .serialized getter of all child TextNodes associated with the BlockNode', () => {
+      const textNodeSerializedSpy = jest
+        .spyOn(TextNode.prototype, 'serialized', 'get');
+
+      const countOfTextNodes = 3;
+
+      const textNodes = [ ...Array(countOfTextNodes).keys() ]
+        .map(() => new TextNode({} as TextNodeConstructorParameters));
+
+      const blockNode = new BlockNode({
+        name: createBlockNodeName('paragraph'),
+        data: {
+          [createDataKey('data-key-1a2b')]: textNodes,
+        },
+        parent: {} as EditorDocument,
+      });
+
+      blockNode.serialized;
+
+      expect(textNodeSerializedSpy).toHaveBeenCalledTimes(countOfTextNodes);
     });
   });
 });
