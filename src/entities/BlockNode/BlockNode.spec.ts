@@ -54,28 +54,32 @@ describe('BlockNode', () => {
         createBlockTuneName('font-weight'),
       ];
 
-      const spy = jest
-        .spyOn(BlockTune.prototype, 'serialized', 'get');
+      const blockTunes = blockTunesNames.reduce((acc, name) => ({
+        ...acc,
+        [name]: new BlockTune({} as BlockTuneConstructorParameters),
+      }), {});
+
+      const spyArray = Object
+        .values(blockTunes)
+        .map((blockTune) => {
+          return jest.spyOn(blockTune as BlockTune, 'serialized', 'get');
+        });
 
       const blockNode = new BlockNode({
         name: createBlockNodeName('paragraph'),
         data: {},
         parent: {} as EditorDocument,
-        tunes: blockTunesNames.reduce((acc, name) => ({
-          ...acc,
-          [name]: new BlockTune({} as BlockTuneConstructorParameters),
-        }), {}),
+        tunes: blockTunes,
       });
 
       blockNode.serialized;
 
-      expect(spy).toHaveBeenCalledTimes(blockTunesNames.length);
+      spyArray.forEach((spy) => {
+        expect(spy).toHaveBeenCalled();
+      });
     });
 
     it('should call .serialized getter of all child ValueNodes associated with the BlockNode', () => {
-      const valueNodeSerializedSpy = jest
-        .spyOn(ValueNode.prototype, 'serialized', 'get');
-
       const countOfValueNodes = 2;
 
       const valueNodes = [ ...Array(countOfValueNodes).keys() ]
@@ -83,6 +87,12 @@ describe('BlockNode', () => {
           ...acc,
           [createDataKey(`data-key-${index}c${index}d`)]: new ValueNode({} as ValueNodeConstructorParameters),
         }), {});
+
+      const spyArray = Object
+        .values(valueNodes)
+        .map((valueNode) => {
+          return jest.spyOn(valueNode as ValueNode, 'serialized', 'get');
+        });
 
       const blockNode = new BlockNode({
         name: createBlockNodeName('paragraph'),
@@ -94,17 +104,21 @@ describe('BlockNode', () => {
 
       blockNode.serialized;
 
-      expect(valueNodeSerializedSpy).toHaveBeenCalledTimes(countOfValueNodes);
+      spyArray.forEach((spy) => {
+        expect(spy).toHaveBeenCalled();
+      });
     });
 
     it('should call .serialized getter of all child TextNodes associated with the BlockNode', () => {
-      const textNodeSerializedSpy = jest
-        .spyOn(TextNode.prototype, 'serialized', 'get');
-
       const countOfTextNodes = 3;
 
       const textNodes = [ ...Array(countOfTextNodes).keys() ]
         .map(() => new TextNode({} as TextNodeConstructorParameters));
+
+      const spyArray = textNodes
+        .map((textNode) => {
+          return jest.spyOn(textNode, 'serialized', 'get');
+        });
 
       const blockNode = new BlockNode({
         name: createBlockNodeName('paragraph'),
@@ -116,7 +130,9 @@ describe('BlockNode', () => {
 
       blockNode.serialized;
 
-      expect(textNodeSerializedSpy).toHaveBeenCalledTimes(countOfTextNodes);
+      spyArray.forEach((spy) => {
+        expect(spy).toHaveBeenCalled();
+      });
     });
   });
 });
