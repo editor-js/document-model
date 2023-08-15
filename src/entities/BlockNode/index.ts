@@ -62,6 +62,7 @@ export class BlockNode {
           /**
            * If the value is an array, we need to serialize each node in the array
            * Value is an array if the BlockNode contains TextNodes and FormattingNodes
+           * After serializing there will be InlineNodeSerialized object
            */
           if (value instanceof Array) {
             acc[dataKey] = value.map((node) => node.serialized);
