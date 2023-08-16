@@ -1,11 +1,12 @@
 import { EditorDocument } from '../EditorDocument';
-import { BlockTune, BlockTuneName } from '../BlockTune';
+import { BlockTune, BlockTuneName, BlockTuneSerialized } from '../BlockTune';
 import {
   BlockNodeConstructorParameters,
   BlockNodeName,
   createBlockNodeName,
   DataKey,
-  createDataKey, BlockNodeChildren
+  createDataKey, BlockNodeData,
+  BlockNodeSerialized
 } from './types';
 
 /**
@@ -22,7 +23,7 @@ export class BlockNode {
   /**
    * Field representing the content of the Block
    */
-  #children: BlockNodeChildren;
+  #data: BlockNodeData;
 
   /**
    * Field representing the parent EditorDocument of the BlockNode
@@ -39,15 +40,59 @@ export class BlockNode {
    *
    * @param args - TextNode constructor arguments.
    * @param args.name - The name of the BlockNode.
-   * @param args.children - The child nodes of the BlockNode.
+   * @param args.data - The content of the BlockNode.
    * @param args.parent - The parent EditorDocument of the BlockNode.
    * @param args.tunes - The BlockTunes associated with the BlockNode.
    */
-  constructor({ name, children, parent, tunes = {} }: BlockNodeConstructorParameters) {
+  constructor({ name, data, parent, tunes = {} }: BlockNodeConstructorParameters) {
     this.#name = name;
-    this.#children = children;
+    this.#data = data;
     this.#parent = parent;
     this.#tunes = tunes;
+  }
+
+  /**
+   * Returns serialized object representing the BlockNode
+   */
+  public get serialized(): BlockNodeSerialized {
+    const serializedData = Object
+      .entries(this.#data)
+      .reduce(
+        (acc, [dataKey, value]) => {
+          /**
+           * If the value is an array, we need to serialize each node in the array
+           * Value is an array if the BlockNode contains TextNodes and FormattingNodes
+           * After serializing there will be InlineNodeSerialized object
+           */
+          if (value instanceof Array) {
+            acc[dataKey] = value.map((node) => node.serialized);
+
+            return acc;
+          }
+
+          acc[dataKey] = value.serialized;
+
+          return acc;
+        },
+        {} as Record<string, unknown>
+      );
+
+    const serializedTunes = Object
+      .entries(this.#tunes)
+      .reduce(
+        (acc, [name, tune]) => {
+          acc[name] = tune.serialized;
+
+          return acc;
+        },
+        {} as Record<string, BlockTuneSerialized>
+      );
+
+    return {
+      name: this.#name,
+      data: serializedData,
+      tunes: serializedTunes,
+    };
   }
 }
 
