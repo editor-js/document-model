@@ -19,7 +19,7 @@ export class RootInlineNode implements InlineNode {
   /**
    * Empty constructor to support types
    *
-   * @param options
+   * @param options - ParentNode construtor options to support types
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars,@typescript-eslint/no-empty-function,no-unused-vars
   constructor(options?: RootInlineNodeConstructorOptions) {}

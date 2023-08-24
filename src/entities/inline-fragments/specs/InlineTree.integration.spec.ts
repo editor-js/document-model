@@ -18,7 +18,7 @@ describe('Inline fragments tree integration', () => {
       const initialText = 'Editor.js is a block-styled editor.';
       const child = new TextNode({ value: initialText });
 
-      const tree = new RootInlineNode({ children: [child] });
+      const tree = new RootInlineNode({ children: [ child ] });
       const text = ' Editor outputs clean data in JSON';
 
       tree.insertText(text);
@@ -31,7 +31,7 @@ describe('Inline fragments tree integration', () => {
       const initialText = 'Editor.js is a block-styled editor.';
       const child = new TextNode({ value: initialText });
 
-      const tree = new RootInlineNode({ children: [child] });
+      const tree = new RootInlineNode({ children: [ child ] });
       const text = 'Editor outputs clean data in JSON ';
 
       tree.insertText(text, 0);
@@ -45,7 +45,7 @@ describe('Inline fragments tree integration', () => {
       const index = 10;
       const child = new TextNode({ value: initialText });
 
-      const tree = new RootInlineNode({ children: [child] });
+      const tree = new RootInlineNode({ children: [ child ] });
       const text = ' Editor outputs clean data in JSON ';
 
       tree.insertText(text, index);
@@ -59,7 +59,7 @@ describe('Inline fragments tree integration', () => {
     it('should return removed text', () => {
       const initialText = 'Editor.js is a block-styled editor.';
       const child = new TextNode({ value: initialText });
-      const tree = new RootInlineNode({ children: [child] });
+      const tree = new RootInlineNode({ children: [ child ] });
 
       const removedText = tree.removeText();
 
@@ -70,7 +70,7 @@ describe('Inline fragments tree integration', () => {
     it('should remove all text from the tree', () => {
       const initialText = 'Editor.js is a block-styled editor.';
       const child = new TextNode({ value: initialText });
-      const tree = new RootInlineNode({ children: [child] });
+      const tree = new RootInlineNode({ children: [ child ] });
 
       tree.removeText();
 
@@ -81,7 +81,7 @@ describe('Inline fragments tree integration', () => {
     it('should remove text from the beginning of the tree', () => {
       const initialText = 'Editor.js is a block-styled editor.';
       const child = new TextNode({ value: initialText });
-      const tree = new RootInlineNode({ children: [child] });
+      const tree = new RootInlineNode({ children: [ child ] });
       const index = 10;
 
       tree.removeText(0, index);
@@ -93,7 +93,7 @@ describe('Inline fragments tree integration', () => {
     it('should remove text from the middle of the tree', () => {
       const initialText = 'Editor.js is a block-styled editor.';
       const child = new TextNode({ value: initialText });
-      const tree = new RootInlineNode({ children: [child] });
+      const tree = new RootInlineNode({ children: [ child ] });
       const index = 10;
       const length = 5;
 
@@ -106,7 +106,7 @@ describe('Inline fragments tree integration', () => {
     it('should remove text from the end of the tree', () => {
       const initialText = 'Editor.js is a block-styled editor.';
       const child = new TextNode({ value: initialText });
-      const tree = new RootInlineNode({ children: [child] });
+      const tree = new RootInlineNode({ children: [ child ] });
       const index = 10;
 
       tree.removeText(index);
@@ -118,7 +118,7 @@ describe('Inline fragments tree integration', () => {
     it('should throw an error if index is out of range', () => {
       const initialText = 'Editor.js is a block-styled editor.';
       const child = new TextNode({ value: initialText });
-      const tree = new RootInlineNode({ children: [child] });
+      const tree = new RootInlineNode({ children: [ child ] });
       const index = 100;
 
       expect(() => tree.removeText(index))
@@ -132,20 +132,20 @@ describe('Inline fragments tree integration', () => {
     it('should format text', () => {
       const initialText = 'Editor.js is a block-styled editor.';
       const child = new TextNode({ value: initialText });
-      const tree = new RootInlineNode({ children: [child] });
+      const tree = new RootInlineNode({ children: [ child ] });
       const index = 10;
       const length = 5;
 
       tree.format(inlineTool, index, index + length);
 
       expect(tree.getFragments())
-        .toStrictEqual([{
+        .toStrictEqual([ {
           tool: inlineTool,
           range: [
             index,
             index + length,
           ],
-        }]);
+        } ]);
     });
   });
 });
