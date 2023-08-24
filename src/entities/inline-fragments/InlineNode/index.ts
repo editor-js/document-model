@@ -78,6 +78,25 @@ export interface InlineNode {
    * @returns {InlineNode | null} new node if split successful, null if nothing to split
    */
   split(index?: number): InlineNode | null;
+
+  /**
+   * Merges passed node with current
+   *
+   * @param node - node to merge
+   */
+  mergeWith(node: InlineNode): void;
+
+  /**
+   * Check if passed node is equal to current
+   *
+   * @param node - node to check
+   */
+  isEqual(node: InlineNode): boolean;
+
+  /**
+   * Normalizes nodes subtree
+   */
+  normalize(): void;
 }
 
 /**

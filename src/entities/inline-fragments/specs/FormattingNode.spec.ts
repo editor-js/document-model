@@ -164,7 +164,28 @@ describe('FormattingNode', () => {
     /**
      * @todo
      */
-    it.todo('should return fragments for sub-tree');
+    it('should return fragments for sub-tree', () => {
+      const parentNode = new FormattingNode({
+        tool: anotherTool,
+        data,
+        children: [ node ],
+      });
+
+      const fragments = parentNode.getFragments();
+
+      expect(fragments).toEqual([
+        {
+          tool: anotherTool,
+          data,
+          range: [0, parentNode.length],
+        },
+        {
+          tool,
+          data,
+          range: [0, node.length],
+        },
+      ]);
+    });
 
     it('should return node\'s fragment', () => {
       const fragments = node.getFragments();

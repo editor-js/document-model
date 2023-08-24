@@ -1,4 +1,3 @@
-import { RootInlineNode } from '../index';
 import {
   FormattingNodeConstructorParameters,
   InlineToolName,
@@ -7,6 +6,7 @@ import {
 import type { InlineFragment, InlineNode } from '../InlineNode';
 import { ParentNode } from '../mixins/ParentNode';
 import { ChildNode } from '../mixins/ChildNode';
+import { ParentInlineNode } from '../ParentInlineNode';
 
 export * from './types';
 
@@ -20,16 +20,16 @@ export interface FormattingNode extends ChildNode {}
  */
 @ParentNode
 @ChildNode
-export class FormattingNode extends RootInlineNode implements InlineNode {
+export class FormattingNode extends ParentInlineNode implements InlineNode {
   /**
    * Private field representing the name of the formatting tool applied to the content
    */
-  #tool: InlineToolName;
+  public readonly tool: InlineToolName;
 
   /**
    * Any additional data associated with the formatting tool
    */
-  #data?: InlineToolData;
+  public readonly data?: InlineToolData;
 
   /**
    * Constructor for FormattingNode class.
@@ -42,8 +42,8 @@ export class FormattingNode extends RootInlineNode implements InlineNode {
   constructor({ tool, data }: FormattingNodeConstructorParameters) {
     super();
 
-    this.#tool = tool;
-    this.#data = data;
+    this.tool = tool;
+    this.data = data;
   }
 
   /**
@@ -73,12 +73,12 @@ export class FormattingNode extends RootInlineNode implements InlineNode {
     const fragments = super.getFragments(start, end);
 
     const currentFragment: InlineFragment = {
-      tool: this.#tool,
+      tool: this.tool,
       range: [start, end],
     };
 
-    if (this.#data) {
-      currentFragment.data = this.#data;
+    if (this.data) {
+      currentFragment.data = this.data;
     }
 
     fragments.unshift(currentFragment);
@@ -98,8 +98,8 @@ export class FormattingNode extends RootInlineNode implements InlineNode {
     }
 
     const newNode = new FormattingNode({
-      tool: this.#tool,
-      data: this.#data,
+      tool: this.tool,
+      data: this.data,
     });
 
     const [child, offset] = this.findChildByIndex(index);
@@ -142,7 +142,7 @@ export class FormattingNode extends RootInlineNode implements InlineNode {
      *
      * @todo Compare data as well
      */
-    if (tool === this.#tool) {
+    if (tool === this.tool) {
       return [];
     }
 
@@ -159,7 +159,7 @@ export class FormattingNode extends RootInlineNode implements InlineNode {
    * @todo Possibly pass data or some InlineTool identifier to relevant only required fragments
    */
   public unformat(tool: InlineToolName, start: number, end: number): InlineNode[] {
-    if (this.#tool === tool) {
+    if (this.tool === tool) {
       const middleNode = this.split(start);
       const endNode = middleNode?.split(end);
 
@@ -177,5 +177,47 @@ export class FormattingNode extends RootInlineNode implements InlineNode {
     }
 
     return super.unformat(tool, start, end);
+  }
+
+  /**
+   * Checks if node is equal to passed node
+   *
+   * @param node - node to check
+   */
+  public isEqual(node: InlineNode): node is FormattingNode {
+    if (!(node instanceof FormattingNode)) {
+      return false;
+    }
+
+    if (this.tool !== node.tool) {
+      return false;
+    }
+
+    /**
+     * @todo check data equality
+     */
+
+    return true;
+  }
+
+  /**
+   * Merges current node with passed node
+   *
+   * @param node - node to merge with
+   */
+  public mergeWith(node: InlineNode): void {
+    if (!this.isEqual(node)) {
+      throw new Error('Can not merge unequal nodes');
+    }
+
+    /**
+     * @todo merge data
+     */
+
+    node.children.forEach((child) => {
+      this.append(child);
+    });
+
+    node.remove();
   }
 }

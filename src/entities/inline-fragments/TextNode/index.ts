@@ -15,7 +15,7 @@ export class TextNode implements InlineNode {
   /**
    * Private field representing the text content of the node
    */
-  #value: string;
+  public value: string;
 
   /**
    * Constructor for TextNode class
@@ -24,14 +24,14 @@ export class TextNode implements InlineNode {
    * @param args.value - Text content of the node.
    */
   constructor({ value = '' }: TextNodeConstructorParameters = {}) {
-    this.#value = value;
+    this.value = value;
   }
 
   /**
    * Returns length of the text
    */
   public get length(): number {
-    return this.#value.length;
+    return this.value.length;
   }
 
   /**
@@ -54,7 +54,7 @@ export class TextNode implements InlineNode {
   public insertText(text: string, index = this.length): void {
     this.#validateIndex(index);
 
-    this.#value = this.#value.slice(0, index) + text + this.#value.slice(index);
+    this.value = this.value.slice(0, index) + text + this.value.slice(index);
   }
 
   /**
@@ -68,9 +68,9 @@ export class TextNode implements InlineNode {
     this.#validateIndex(start);
     this.#validateIndex(end);
 
-    const removedValue = this.#value.slice(start, end);
+    const removedValue = this.value.slice(start, end);
 
-    this.#value = this.#value.slice(0, start) + this.#value.slice(end);
+    this.value = this.value.slice(0, start) + this.value.slice(end);
 
     if (this.length === 0) {
       this.remove();
@@ -94,7 +94,7 @@ export class TextNode implements InlineNode {
     this.#validateIndex(start);
     this.#validateIndex(end);
 
-    return this.#value.slice(start, end);
+    return this.value.slice(start, end);
   }
 
   /**
@@ -166,6 +166,39 @@ export class TextNode implements InlineNode {
     this.parent?.insertAfter(this, newNode);
 
     return newNode;
+  }
+
+  /**
+   * Checks if node is equal to passed node
+   *
+   * @param node - node to check
+   */
+  public isEqual(node: InlineNode): node is TextNode {
+    return node instanceof this.constructor;
+  }
+
+  /**
+   * Merges current node with passed node
+   *
+   * @param node - node to merge with
+   */
+  public mergeWith(node: InlineNode): void {
+    if (!this.isEqual(node)) {
+      return;
+    }
+
+    this.value += node.value;
+
+    node.remove();
+  }
+
+  /**
+   * Normalizes node
+   */
+  public normalize(): void {
+    /**
+     * do nothing
+     */
   }
 
   /**

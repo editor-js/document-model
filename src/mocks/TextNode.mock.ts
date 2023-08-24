@@ -25,5 +25,7 @@ export const createTextNodeMock = (value: string): TextNode => {
     format: jest.fn(() => [ new FormattingNode({ tool: createInlineToolName('tool') }) ]),
     length: value.length,
     serialized: value,
+    isEqual: jest.fn(() => false),
+    normalize: jest.fn(),
   } as unknown as TextNode);
 };
