@@ -1,4 +1,4 @@
-import type { ChildNodeConstructorOptions } from '../../interfaces';
+import type { ChildNodeConstructorOptions } from '../../mixins/ChildNode';
 
 export interface TextNodeConstructorParameters extends ChildNodeConstructorOptions {
   /**

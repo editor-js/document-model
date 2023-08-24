@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
 import type { TextNode } from '../TextNode';
-import { createInlineToolData, createInlineToolName, FormattingNode } from './index';
-import { createTextNodeMock } from '../../mocks/TextNode.mock';
-import { createParentNodeMock } from '../../mocks/ParentNode.mock';
-import type { ParentNode } from '../interfaces';
+import { createInlineToolData, createInlineToolName, FormattingNode } from '../FormattingNode';
+import { createTextNodeMock } from '../../../mocks/TextNode.mock';
+import { createParentNodeMock } from '../../../mocks/ParentNode.mock';
+import type { ParentNode } from '../mixins/ParentNode';
 
 describe('FormattingNode', () => {
   let parentMock: ParentNode;

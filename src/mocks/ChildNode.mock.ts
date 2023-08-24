@@ -1,6 +1,5 @@
 import { jest } from '@jest/globals';
-import type { ChildNode } from '../entities/interfaces';
-import type { ParentNode } from '../entities/interfaces';
+import type { ChildNode, ParentNode } from '../entities/inline-fragments';
 
 export const createChildNodeMock = (): ChildNode => {
   let parent: ParentNode | null = null;

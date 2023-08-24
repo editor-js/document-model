@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { TextNode } from './index';
+import { TextNode } from '../TextNode';
 import { createInlineToolName, FormattingNode } from '../FormattingNode';
-import type { ParentNode } from '../interfaces';
+import type { ParentNode } from '../mixins/ParentNode';
 
 describe('TextNode', () => {
   const initialText = 'initial text';

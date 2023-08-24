@@ -1,6 +1,6 @@
 import { beforeEach, describe } from '@jest/globals';
-import { ParentNode } from './ParentNode';
-import { ChildNode } from './ChildNode';
+import { ParentNode } from '../mixins/ParentNode';
+import { ChildNode } from '../mixins/ChildNode';
 
 interface DummyParent extends ParentNode {}
 

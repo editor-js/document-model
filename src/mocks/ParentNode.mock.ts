@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import type { ParentNode } from '../entities/interfaces';
+import type { ParentNode } from '../entities/inline-fragments';
 
 export const createParentNodeMock = (): ParentNode => ({
   insertAfter: jest.fn(),

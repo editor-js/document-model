@@ -1,6 +1,7 @@
-import { FormattingNode, InlineToolName, InlineToolData } from '../FormattingNode';
+import { FormattingNode, InlineToolName, InlineToolData } from '../index';
 import { TextNodeConstructorParameters } from './types';
-import { ChildNode, InlineNode, InlineNodeSerialized } from '../interfaces';
+import { InlineNode, InlineNodeSerialized } from '../InlineNode';
+import { ChildNode } from '../mixins/ChildNode';
 
 export * from './types';
 

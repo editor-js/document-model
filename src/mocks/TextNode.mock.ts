@@ -1,6 +1,5 @@
 import { jest } from '@jest/globals';
-import type { TextNode } from '../entities/TextNode';
-import { createInlineToolName, FormattingNode } from '../entities/FormattingNode';
+import { TextNode, createInlineToolName, FormattingNode } from '../entities/inline-fragments';
 import { createChildNodeMock } from './ChildNode.mock';
 
 export const createTextNodeMock = (value: string): TextNode => {

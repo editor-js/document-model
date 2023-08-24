@@ -1,51 +1,28 @@
-import {
-  FormattingNodeConstructorParameters,
-  InlineToolName,
-  InlineToolData
-} from './types';
-import { ChildNode, InlineFragment, InlineNode, InlineNodeSerialized, ParentNode } from '../interfaces';
-
-export * from './types';
+import { InlineFragment, InlineNode, InlineNodeSerialized } from '../InlineNode';
+import { ParentNode, ParentNodeConstructorOptions } from '../mixins/ParentNode';
+import { ChildNode } from '../mixins/ChildNode';
+import type { InlineToolData, InlineToolName } from '../FormattingNode';
 
 /**
- * We need to extend FormattingNode interface with ChildNode and ParentNode ones to use the methods from mixins
+ * We need to extend RootInlineNode interface with ParentNode ones to use the methods from mixins
  */
-export interface FormattingNode extends ChildNode, ParentNode {}
+export interface RootInlineNode extends ParentNode {
+}
+
+export interface RootInlineNodeConstructorOptions extends ParentNodeConstructorOptions {}
 
 /**
- * FormattingNode class represents a node in a tree-like structure, used to store and manipulate formatted text content
+ * RootInlineNode class represents a root node in a tree-like structure to have a single access point to the tree
  */
 @ParentNode
-@ChildNode
-export class FormattingNode implements InlineNode {
+export class RootInlineNode implements InlineNode {
   /**
-   * Private field representing the name of the formatting tool applied to the content
-   */
-  #tool: InlineToolName;
-
-  /**
-   * Any additional data associated with the formatting tool
-   */
-  #data?: InlineToolData;
-
-  /**
-   * Constructor for FormattingNode class.
+   * Empty constructor to support types
    *
-   * @param args - FormattingNode constructor arguments.
-   * @param args.tool - The name of the formatting tool applied to the content.
-   * @param args.data - Any additional data associated with the formatting.
+   * @param options
    */
-  constructor({ tool, data }: FormattingNodeConstructorParameters) {
-    this.#tool = tool;
-    this.#data = data;
-  }
-
-  /**
-   * Returns text value length of current node (including subtree)
-   */
-  public get length(): number {
-    return this.children.reduce((sum, child) => sum + child.length, 0);
-  }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars,@typescript-eslint/no-empty-function,no-unused-vars
+  constructor(options?: RootInlineNodeConstructorOptions) {}
 
   /**
    * Returns serialized value of the node: text and formatting fragments
@@ -64,7 +41,21 @@ export class FormattingNode implements InlineNode {
    * @param [index] - char index where to insert text
    */
   public insertText(text: string, index = this.length): void {
-    const [child, offset] = this.#findChildByIndex(index);
+    this.#validateIndex(index);
+
+    if (this.length === 0) {
+      /**
+       * We need to resolve circular dependency by require
+       */
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { TextNode } = require('../TextNode');
+
+      const textNode = new TextNode();
+
+      this.append(textNode);
+    }
+
+    const [child, offset] = this.findChildByIndex(index);
 
     child?.insertText(text, index - offset);
   }
@@ -77,7 +68,10 @@ export class FormattingNode implements InlineNode {
    * @returns {string} removed text
    */
   public removeText(start = 0, end = this.length): string {
-    const result = this.#reduceChildrenInRange(
+    this.#validateIndex(start);
+    this.#validateIndex(end);
+
+    return this.#reduceChildrenInRange(
       start,
       end,
       (acc, child, childStart, childEnd) => {
@@ -85,12 +79,6 @@ export class FormattingNode implements InlineNode {
       },
       ''
     );
-
-    if (this.length === 0) {
-      this.remove();
-    }
-
-    return result;
   }
 
   /**
@@ -100,6 +88,9 @@ export class FormattingNode implements InlineNode {
    * @param [end] - end char index of the range, by default length of the text value
    */
   public getText(start = 0, end = this.length): string {
+    this.#validateIndex(start);
+    this.#validateIndex(end);
+
     return this.#reduceChildrenInRange(
       start,
       end,
@@ -117,69 +108,31 @@ export class FormattingNode implements InlineNode {
    * @param [end] - end char index of the range, by default length of the text value
    */
   public getFragments(start = 0, end = this.length): InlineFragment[] {
+    this.#validateIndex(start);
+    this.#validateIndex(end);
+
     return this.#reduceChildrenInRange<InlineFragment[]>(
       start,
       end,
-      (acc, child, childStart, childEnd) => {
+      (acc, child, childStart, childEnd, offset) => {
         /**
          * If child is not a FormattingNode, it doesn't include any fragments. So we skip it.
          */
-        if (!(child instanceof FormattingNode)) {
+        if (typeof child.getFragments !== 'function') {
           return acc;
         }
 
-        acc.push(...child.getFragments(childStart, childEnd));
+        const fragments = child.getFragments(childStart, childEnd);
+
+        acc.push(...fragments.map(fragment => ({
+          ...fragment,
+          range: fragment.range.map(index => index + offset) as InlineFragment['range'],
+        })));
 
         return acc;
       },
-      [ {
-        tool: this.#tool,
-        data: this.#data,
-        range: [start, end],
-      } ]
+      []
     );
-  }
-
-  /**
-   * Splits current node by the specified index
-   *
-   * @param index - char index where to split the node
-   * @returns {FormattingNode | null} new node
-   */
-  public split(index: number): FormattingNode | null {
-    if (index === 0 || index === this.length) {
-      return null;
-    }
-
-    const newNode = new FormattingNode({
-      tool: this.#tool,
-      data: this.#data,
-    });
-
-    const [child, offset] = this.#findChildByIndex(index);
-
-    if (!child) {
-      return null;
-    }
-
-    // Have to save length as it is changed after split
-    const childLength = child.length;
-
-    const splitNode = child.split(index - offset);
-    let midNodeIndex = this.children.indexOf(child);
-
-    /**
-     * If node is split or if node is not split but index equals to child length, we should split children from the next node
-     */
-    if (splitNode || (index - offset === childLength)) {
-      midNodeIndex += 1;
-    }
-
-    newNode.append(...this.children.slice(midNodeIndex));
-
-    this.parent?.insertAfter(this, newNode);
-
-    return newNode;
   }
 
   /**
@@ -191,15 +144,8 @@ export class FormattingNode implements InlineNode {
    * @param [data] - inline tool data if applicable
    */
   public format(tool: InlineToolName, start: number, end: number, data?: InlineToolData): InlineNode[] {
-    /**
-     * In case current tool is the same as new one, do nothing
-     *
-     * @todo Compare data as well
-     */
-    if (tool === this.#tool) {
-      return [];
-    }
-
+    this.#validateIndex(start);
+    this.#validateIndex(end);
 
     return this.#reduceChildrenInRange<InlineNode[]>(
       start,
@@ -222,22 +168,8 @@ export class FormattingNode implements InlineNode {
    * @todo Possibly pass data or some InlineTool identifier to relevant only required fragments
    */
   public unformat(tool: InlineToolName, start: number, end: number): InlineNode[] {
-    if (this.#tool === tool) {
-      const middleNode = this.split(start);
-      const endNode = middleNode?.split(end);
-
-      const result: InlineNode[] = [ this ];
-
-      if (middleNode) {
-        result.push(...middleNode.children);
-      }
-
-      if (endNode) {
-        result.push(endNode);
-      }
-
-      return result;
-    }
+    this.#validateIndex(start);
+    this.#validateIndex(end);
 
     return this.#reduceChildrenInRange<InlineNode[]>(
       start,
@@ -246,7 +178,7 @@ export class FormattingNode implements InlineNode {
         /**
          * TextNodes don't have unformat method, so skip them
          */
-        if (!(child instanceof FormattingNode)) {
+        if (typeof child.unformat !== 'function') {
           return acc;
         }
 
@@ -256,6 +188,26 @@ export class FormattingNode implements InlineNode {
       },
       []
     );
+  }
+
+  /**
+   * Returns child by passed text index
+   *
+   * @param index - char index
+   * @private
+   */
+  protected findChildByIndex(index: number): [child: InlineNode & ChildNode | null, offset: number] {
+    let totalLength = 0;
+
+    for (const child of this.children) {
+      if (index <= child.length + totalLength) {
+        return [child, totalLength];
+      }
+
+      totalLength += child.length;
+    }
+
+    return [null, totalLength];
   }
 
   /**
@@ -270,7 +222,7 @@ export class FormattingNode implements InlineNode {
   #reduceChildrenInRange<Acc>(
     start: number,
     end: number,
-    callback: (acc: Acc, child: InlineNode, start: number, end: number) => Acc,
+    callback: (acc: Acc, child: InlineNode, start: number, end: number, offset: number) => Acc,
     initialValue: Acc
   ): Acc {
     let result = initialValue;
@@ -280,11 +232,14 @@ export class FormattingNode implements InlineNode {
      */
     const children = Array.from(this.children);
 
+    let offset = 0;
+
     for (const child of children) {
       if (start < child.length && end > 0 && start < end) {
-        result = callback(result, child, Math.max(start, 0), Math.min(child.length, end));
+        result = callback(result, child, Math.max(start, 0), Math.min(child.length, end), offset);
       }
 
+      offset += child.length;
       start -= child.length;
       end -= child.length;
     }
@@ -292,23 +247,17 @@ export class FormattingNode implements InlineNode {
     return result;
   }
 
+
   /**
-   * Returns child by passed text index
+   * Validates index
    *
-   * @param index - char index
-   * @private
+   * @param index - char index to validate
+   * @throws Error if index is out of the text length
    */
-  #findChildByIndex(index: number): [child: InlineNode & ChildNode | null, offset: number] {
-    let totalLength = 0;
-
-    for (const child of this.children) {
-      if (index <= child.length + totalLength) {
-        return [child, totalLength];
-      }
-
-      totalLength += child.length;
+  #validateIndex(index: number): void {
+    if (index < 0 || index > this.length) {
+      // Stryker disable next-line StringLiteral
+      throw new Error(`Index ${index} is not in valid range [0, ${this.length}]`);
     }
-
-    return [null, totalLength];
   }
 }

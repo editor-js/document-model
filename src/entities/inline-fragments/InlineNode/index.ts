@@ -1,13 +1,18 @@
 import { InlineToolData, InlineToolName } from '../FormattingNode';
 
 /**
- * Interface describing abstract InlineNode
+ * Interface describing abstract Index
  */
 export interface InlineNode {
   /**
    * Text length of node and it's subtree
    */
-  length: number;
+  readonly length: number;
+
+  /**
+   * Serialized value of the node
+   */
+  readonly serialized: InlineNodeSerialized;
 
   /**
    * Returns text value in passed range
@@ -40,6 +45,16 @@ export interface InlineNode {
   unformat?(name: InlineToolName, start?: number, end?: number): InlineNode[];
 
   /**
+   * Returns inline fragments for subtree including current node from the specified range
+   *
+   * Optional as some nodes don't contain any formatting (e.g. TextNode)
+   *
+   * @param [start] - start char index of the range, by default 0
+   * @param [end] - end char index of the range, by default length of the text value
+   */
+  getFragments?(start: number, end: number): InlineFragment[];
+
+  /**
    * Inserts text at passed char index
    *
    * @param text - text to insert
@@ -63,11 +78,6 @@ export interface InlineNode {
    * @returns {InlineNode | null} new node if split successful, null if nothing to split
    */
   split(index?: number): InlineNode | null;
-
-  /**
-   * Serialized value of the node
-   */
-  serialized: InlineNodeSerialized;
 }
 
 /**

@@ -1,4 +1,4 @@
-import { create, Nominal } from '../../../utils/Nominal';
+import { create, Nominal } from '../../../../utils/Nominal';
 
 /**
  * Base type of the formatting node tool field

@@ -1,5 +1,5 @@
-import type { ChildNode } from './ChildNode';
-import { InlineNode } from './InlineNode';
+import { ChildNode } from '../ChildNode';
+import { InlineNode } from '../../InlineNode';
 
 /**
  * Abstract parent node interface
@@ -30,7 +30,7 @@ export interface ParentNode extends InlineNode {
   /**
    * Node's children
    */
-  children: ChildNode[];
+  readonly children: ChildNode[];
 }
 
 export interface ParentNodeConstructorOptions {
@@ -75,6 +75,13 @@ export function ParentNode<C extends { new(...args: any[]): InlineNode }>(constr
      */
     public get children(): ChildNode[] {
       return this.#children;
+    }
+
+    /**
+     * Returns text value length of current node (including subtree)
+     */
+    public get length(): number {
+      return this.children.reduce((sum, child) => sum + child.length, 0);
     }
 
     /**
