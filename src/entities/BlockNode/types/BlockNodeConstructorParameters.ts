@@ -1,7 +1,7 @@
 import { EditorDocument } from '../../EditorDocument';
 import { BlockTune, BlockTuneName } from '../../BlockTune';
 import { BlockNodeName } from './BlockNodeName';
-import { BlockNodeChildren } from './BlockNodeChildren';
+import { BlockNodeData } from './BlockNodeData';
 
 export interface BlockNodeConstructorParameters {
   /**
@@ -10,9 +10,9 @@ export interface BlockNodeConstructorParameters {
   name: BlockNodeName;
 
   /**
-   * The child nodes of the BlockNode
+   * The content of the Block
    */
-  children: BlockNodeChildren;
+  data: BlockNodeData;
 
   /**
    * The parent EditorDocument of the BlockNode
