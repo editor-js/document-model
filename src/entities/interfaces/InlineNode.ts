@@ -29,6 +29,17 @@ export interface InlineNode {
   format(name: InlineToolName, start?: number, end?: number, data?: InlineToolData): InlineNode[];
 
   /**
+   * Removes inline formatting from the passed range
+   *
+   * Optional as some nodes don't contain any formatting (e.g. TextNode)
+   *
+   * @param name - name of Inline Tool to remove
+   * @param start - start char index of the range
+   * @param end - end char index of the range
+   */
+  unformat?(name: InlineToolName, start?: number, end?: number): InlineNode[];
+
+  /**
    * Inserts text at passed char index
    *
    * @param text - text to insert

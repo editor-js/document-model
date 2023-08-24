@@ -1,28 +1,14 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
-import { ParentNode } from '../interfaces';
+import type { TextNode } from '../TextNode';
 import { createInlineToolData, createInlineToolName, FormattingNode } from './index';
-import { TextNode } from '../TextNode';
-
-const parentMock = {
-  insertAfter: jest.fn(),
-  removeChild: jest.fn(),
-  append: jest.fn(),
-  children: [],
-} as unknown as ParentNode;
-
-const createChildMock = (value: string): TextNode => ({
-  getText: jest.fn(() => value),
-  appendTo: jest.fn(),
-  insertText: jest.fn(),
-  removeText: jest.fn(),
-  split: jest.fn(() => null),
-  format: jest.fn(() => [ new FormattingNode({ tool: createInlineToolName('tool') }) ]),
-  length: value.length,
-} as unknown as TextNode);
+import { createTextNodeMock } from '../../mocks/TextNode.mock';
+import { createParentNodeMock } from '../../mocks/ParentNode.mock';
+import type { ParentNode } from '../interfaces';
 
 describe('FormattingNode', () => {
-  const childMock = createChildMock('Some text here. ');
-  const anotherChildMock = createChildMock('Another text here.');
+  let parentMock: ParentNode;
+  let childMock: TextNode;
+  let anotherChildMock: TextNode;
 
   const tool = createInlineToolName('bold');
   const anotherTool = createInlineToolName('italic');
@@ -30,10 +16,14 @@ describe('FormattingNode', () => {
   let node: FormattingNode;
 
   beforeEach(() => {
+    parentMock = createParentNodeMock() as FormattingNode;
+    childMock = createTextNodeMock('Some text here. ');
+    anotherChildMock = createTextNodeMock('Another text here.');
+
     node = new FormattingNode({
       tool,
       data,
-      parent: parentMock as FormattingNode,
+      parent: parentMock,
       children: [childMock, anotherChildMock],
     });
 
@@ -276,6 +266,86 @@ describe('FormattingNode', () => {
       const result = node.format(anotherTool, start, end);
 
       expect(result).toEqual(childMock.format(anotherTool, start, end));
+    });
+  });
+
+  describe('.unformat()', () => {
+    const start = 3;
+    const end = 5;
+    let childFormattingNode: FormattingNode;
+    let anotherChildFormattingNode: FormattingNode;
+
+    beforeEach(() => {
+      childFormattingNode =   new FormattingNode({
+        tool: anotherTool,
+        data,
+        children: [ createTextNodeMock('Some text here. ') ],
+      });
+
+      anotherChildFormattingNode = new FormattingNode({
+        tool: anotherTool,
+        data,
+        children: [ createTextNodeMock('Another text here. ') ] }
+      );
+
+
+      node = new FormattingNode({
+        tool,
+        data,
+        parent: parentMock as FormattingNode,
+        children: [childFormattingNode, anotherChildFormattingNode],
+      });
+
+      jest.spyOn(childFormattingNode, 'unformat');
+      jest.spyOn(anotherChildFormattingNode, 'unformat');
+    });
+
+    it('should remove formatting from the relevant child', () => {
+      node.unformat(anotherTool, start, end);
+
+      expect(childFormattingNode.unformat).toBeCalledWith(anotherTool, start, end);
+    });
+
+    it('should adjust index by child offset', () => {
+      const offset = childFormattingNode.length;
+
+      node.unformat(anotherTool, offset + start, offset + end);
+
+      expect(anotherChildFormattingNode.unformat).toBeCalledWith(anotherTool, start, end);
+    });
+
+    it('should call unformat for all relevant children', () => {
+      const offset = childMock.length;
+
+      node.unformat(anotherTool, start, offset + end);
+
+      expect(childFormattingNode.unformat).toBeCalledWith(anotherTool, start, offset);
+      expect(anotherChildFormattingNode.unformat).toBeCalledWith(anotherTool, 0, end);
+    });
+
+    it('should do nothing if different tool is being unformatted', () => {
+      node.unformat(tool, start, end);
+
+      expect(childFormattingNode.unformat).not.toBeCalled();
+      expect(anotherChildFormattingNode.unformat).not.toBeCalled();
+    });
+
+    it('should return array of new nodes with unformatted part', () => {
+      const result = node.unformat(anotherTool, start, end);
+
+      expect(result).toEqual([
+        expect.any(FormattingNode),
+        /**
+         * On this place is unformatted TextNode mock
+         */
+        expect.any(Object),
+        expect.any(FormattingNode)]);
+    });
+
+    it('should do nothing for TextNode children', () => {
+      const result = childFormattingNode.unformat(tool, start, end);
+
+      expect(result).toEqual([]);
     });
   });
 });

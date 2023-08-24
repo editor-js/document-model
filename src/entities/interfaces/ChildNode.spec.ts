@@ -1,13 +1,7 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { ChildNode } from './ChildNode';
 import type { ParentNode } from './ParentNode';
-
-const parentMock = {
-  append: jest.fn(),
-  removeChild: jest.fn(),
-  insertAfter: jest.fn(),
-  children: [],
-} as unknown as ParentNode;
+import { createParentNodeMock } from '../../mocks/ParentNode.mock';
 
 interface Dummy extends ChildNode {
 }
@@ -27,8 +21,11 @@ class Dummy {
 
 describe('ChildNode decorator', () => {
   let dummy: Dummy;
+  let parentMock: ParentNode;
 
   beforeEach(() => {
+    parentMock = createParentNodeMock();
+
     jest.resetAllMocks();
   });
 

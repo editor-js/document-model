@@ -54,7 +54,7 @@ export interface ParentNodeConstructorOptions {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- any type here is a TS requirement for mixin classes
 export function ParentNode<C extends { new(...args: any[]): InlineNode }>(constructor: C): C {
   return class extends constructor {
-    #children: ChildNode[];
+    #children: ChildNode[] = [];
 
     /**
      * @param args — constructor arguments
@@ -63,13 +63,11 @@ export function ParentNode<C extends { new(...args: any[]): InlineNode }>(constr
     // Stryker disable next-line BlockStatement -- Styker's bug, see https://github.com/stryker-mutator/stryker-js/issues/2474
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- any type here is a TS requirement for mixin classes
     constructor(...args: any[]) {
-      const { children = [], ...rest } = args[0] ?? {};
+      const { children = [], ...rest } = args[0] as ParentNodeConstructorOptions ?? {};
 
       super(rest);
 
-      this.#children = children;
-
-      this.children.forEach(child => child.appendTo(this));
+      children.forEach(child => child.appendTo(this));
     }
 
     /**
@@ -124,23 +122,25 @@ export function ParentNode<C extends { new(...args: any[]): InlineNode }>(constr
      */
     public insertAfter(target: ChildNode, ...children: ChildNode[]): void {
       /**
-       * If node is already a child of current node, remove it to append at the end
+       * Append children to the parent to set their parent property
+       */
+      children.forEach(child => child.appendTo(this));
+
+      /**
+       * Remove all appended children from the children array to insert if on the next step
        */
       children.forEach(child => {
         const index = this.children.indexOf(child);
 
-        if (index === -1) {
-          return;
-        }
-
         this.children.splice(index, 1);
       });
 
+      /**
+       * Insert added children to correct places
+       */
       const index = this.children.indexOf(target);
 
       this.children.splice(index + 1, 0, ...children);
-
-      children.forEach(child => child.appendTo(this));
     }
   };
 }

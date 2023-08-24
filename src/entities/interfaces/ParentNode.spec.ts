@@ -1,13 +1,6 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { ParentNode } from './ParentNode';
-import type { ChildNode } from './ChildNode';
-const createChildMock = (): ChildNode => {
-  return {
-    appendTo: jest.fn(),
-    remove: jest.fn(),
-    parent: null,
-  } as unknown as ChildNode;
-};
+import { createChildNodeMock } from '../../mocks/ChildNode.mock';
 
 interface Dummy extends ParentNode {
 }
@@ -49,7 +42,7 @@ describe('ParentNode decorator', () => {
 
   describe('constructor', () => {
     it('should append passed children to new parent', () => {
-      const childMock = createChildMock();
+      const childMock = createChildNodeMock();
 
       dummy = new Dummy({
         children: [ childMock ],
@@ -65,7 +58,7 @@ describe('ParentNode decorator', () => {
     });
 
     it('should return children passed via constructor', () => {
-      const childMock = createChildMock();
+      const childMock = createChildNodeMock();
 
       dummy = new Dummy({
         children: [ childMock ],
@@ -77,7 +70,7 @@ describe('ParentNode decorator', () => {
 
   describe('.append()', () => {
     it('should add child to the children array', () => {
-      const childMock = createChildMock();
+      const childMock = createChildNodeMock();
 
       dummy.append(childMock);
 
@@ -85,8 +78,8 @@ describe('ParentNode decorator', () => {
     });
 
     it('should add several children to the children array', () => {
-      const childMock = createChildMock();
-      const anotherChildMock = createChildMock();
+      const childMock = createChildNodeMock();
+      const anotherChildMock = createChildNodeMock();
 
       dummy.append(childMock, anotherChildMock);
 
@@ -94,9 +87,9 @@ describe('ParentNode decorator', () => {
     });
 
     it('should move a child to the end of children array if it is already there', () => {
-      const childMock = createChildMock();
-      const anotherChildMock = createChildMock();
-      const oneMoreChildMock = createChildMock();
+      const childMock = createChildNodeMock();
+      const anotherChildMock = createChildNodeMock();
+      const oneMoreChildMock = createChildNodeMock();
 
 
       dummy = new Dummy({
@@ -109,9 +102,9 @@ describe('ParentNode decorator', () => {
     });
 
     it('should preserve already existing children', () => {
-      const childMock = createChildMock();
-      const anotherChildMock = createChildMock();
-      const oneMoreChildMock = createChildMock();
+      const childMock = createChildNodeMock();
+      const anotherChildMock = createChildNodeMock();
+      const oneMoreChildMock = createChildNodeMock();
 
       dummy = new Dummy({
         children: [childMock, anotherChildMock],
@@ -125,9 +118,9 @@ describe('ParentNode decorator', () => {
 
   describe('.insertAfter()', () => {
     it('should insert a child after passed target', () => {
-      const childMock = createChildMock();
-      const anotherChildMock = createChildMock();
-      const childMockToInsert = createChildMock();
+      const childMock = createChildNodeMock();
+      const anotherChildMock = createChildNodeMock();
+      const childMockToInsert = createChildNodeMock();
 
       dummy = new Dummy({
         children: [childMock, anotherChildMock],
@@ -139,10 +132,10 @@ describe('ParentNode decorator', () => {
     });
 
     it('should insert several children after passed target', () => {
-      const childMock = createChildMock();
-      const anotherChildMock = createChildMock();
-      const childMockToInsert = createChildMock();
-      const anotherChildMockToInsert = createChildMock();
+      const childMock = createChildNodeMock();
+      const anotherChildMock = createChildNodeMock();
+      const childMockToInsert = createChildNodeMock();
+      const anotherChildMockToInsert = createChildNodeMock();
 
       dummy = new Dummy({
         children: [childMock, anotherChildMock],
@@ -154,10 +147,10 @@ describe('ParentNode decorator', () => {
     });
 
     it('should remove existing child and insert it to the new place', () => {
-      const childMock = createChildMock();
-      const anotherChildMock = createChildMock();
-      const oneMoreChildMock = createChildMock();
-      const childMockToInsert = createChildMock();
+      const childMock = createChildNodeMock();
+      const anotherChildMock = createChildNodeMock();
+      const oneMoreChildMock = createChildNodeMock();
+      const childMockToInsert = createChildNodeMock();
 
       dummy = new Dummy({
         children: [childMock, anotherChildMock, oneMoreChildMock, childMockToInsert],
@@ -171,7 +164,7 @@ describe('ParentNode decorator', () => {
 
   describe('.removeChild()', () => {
     it('should remove child from the children array', () => {
-      const childMock = createChildMock();
+      const childMock = createChildNodeMock();
 
       dummy = new Dummy({
         children: [ childMock ],
@@ -183,7 +176,7 @@ describe('ParentNode decorator', () => {
     });
 
     it('should call remove method of child', () => {
-      const childMock = createChildMock();
+      const childMock = createChildNodeMock();
 
       dummy = new Dummy({
         children: [ childMock ],
