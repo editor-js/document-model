@@ -1,7 +1,6 @@
 import { DataKey } from './DataKey';
-import { TextNode } from '../../TextNode';
 import { ValueNode } from '../../ValueNode';
-import { FormattingNode } from '../../FormattingNode';
+import { TextNode, FormattingNode } from '../../inline-fragments';
 
 /**
  * Represents a record object containing the data of a block node.
