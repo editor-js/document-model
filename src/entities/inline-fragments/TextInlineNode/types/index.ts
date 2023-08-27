@@ -1,0 +1,1 @@
+export { TextInlineNodeConstructorParameters } from './TextInlineNodeConstructorParameters';

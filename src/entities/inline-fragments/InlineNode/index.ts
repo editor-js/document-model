@@ -1,7 +1,7 @@
-import { InlineToolData, InlineToolName } from '../FormattingNode';
+import { InlineToolData, InlineToolName } from '../FormattingInlineNode';
 
 /**
- * Interface describing abstract Index
+ * Interface describing abstract InlineNode — common properties and methods for all inline nodes
  */
 export interface InlineNode {
   /**
@@ -36,7 +36,7 @@ export interface InlineNode {
   /**
    * Removes inline formatting from the passed range
    *
-   * Optional as some nodes don't contain any formatting (e.g. TextNode)
+   * Optional as some nodes don't contain any formatting (e.g. TextInlineNode)
    *
    * @param name - name of Inline Tool to remove
    * @param start - start char index of the range
@@ -47,7 +47,7 @@ export interface InlineNode {
   /**
    * Returns inline fragments for subtree including current node from the specified range
    *
-   * Optional as some nodes don't contain any formatting (e.g. TextNode)
+   * Optional as some nodes don't contain any formatting (e.g. TextInlineNode)
    *
    * @param [start] - start char index of the range, by default 0
    * @param [end] - end char index of the range, by default length of the text value

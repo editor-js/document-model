@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { TextNode } from '../TextNode';
-import { createInlineToolName, FormattingNode } from '../FormattingNode';
+import { TextInlineNode } from '../TextInlineNode';
+import { createInlineToolName, FormattingInlineNode } from '../FormattingInlineNode';
 import type { ParentNode } from '../mixins/ParentNode';
 
-describe('TextNode', () => {
+describe('TextInlineNode', () => {
   const initialText = 'initial text';
   const text = 'some text';
   const parentMock = {
@@ -12,24 +12,24 @@ describe('TextNode', () => {
     append: jest.fn(),
     children: [],
   } as unknown as ParentNode;
-  let node: TextNode;
+  let node: TextInlineNode;
 
   beforeEach(() => {
-    node = new TextNode({
+    node = new TextInlineNode({
       value: initialText,
-      parent: parentMock as FormattingNode,
+      parent: parentMock as FormattingInlineNode,
     });
   });
 
   it('should have empty value by default', () => {
-    node = new TextNode();
+    node = new TextInlineNode();
 
     expect(node.getText()).toEqual('');
   });
 
   describe('.insertText()', () => {
     it('should set text to value if node is empty', () => {
-      node = new TextNode();
+      node = new TextInlineNode();
 
       node.insertText(text);
 
@@ -155,13 +155,13 @@ describe('TextNode', () => {
   });
 
   describe('.format()', () => {
-    it('should return just one FormattingNode, if formatting full TextNode', () => {
+    it('should return just one FormattingInlineNode, if formatting full TextInlineNode', () => {
       const name = createInlineToolName('bold');
 
       const fragments = node.format(name, 0, initialText.length);
 
       expect(fragments).toHaveLength(1);
-      expect(fragments[0]).toBeInstanceOf(FormattingNode);
+      expect(fragments[0]).toBeInstanceOf(FormattingInlineNode);
     });
 
     it('should return two fragments if formatting from the start, but not to the end', () => {
@@ -171,8 +171,8 @@ describe('TextNode', () => {
       const fragments = node.format(name, 0, end);
 
       expect(fragments).toHaveLength(2);
-      expect(fragments[0]).toBeInstanceOf(FormattingNode);
-      expect(fragments[1]).toBeInstanceOf(TextNode);
+      expect(fragments[0]).toBeInstanceOf(FormattingInlineNode);
+      expect(fragments[1]).toBeInstanceOf(TextInlineNode);
     });
 
     it('should return two fragments if formatting to the end, but not from the start', () => {
@@ -182,8 +182,8 @@ describe('TextNode', () => {
       const fragments = node.format(name, start, initialText.length);
 
       expect(fragments).toHaveLength(2);
-      expect(fragments[0]).toBeInstanceOf(TextNode);
-      expect(fragments[1]).toBeInstanceOf(FormattingNode);
+      expect(fragments[0]).toBeInstanceOf(TextInlineNode);
+      expect(fragments[1]).toBeInstanceOf(FormattingInlineNode);
     });
 
     it('should return three fragments if formatting in the middle', () => {
@@ -195,18 +195,18 @@ describe('TextNode', () => {
 
       // eslint-disable-next-line @typescript-eslint/no-magic-numbers
       expect(fragments).toHaveLength(3);
-      expect(fragments[0]).toBeInstanceOf(TextNode);
-      expect(fragments[1]).toBeInstanceOf(FormattingNode);
-      expect(fragments[2]).toBeInstanceOf(TextNode);
+      expect(fragments[0]).toBeInstanceOf(TextInlineNode);
+      expect(fragments[1]).toBeInstanceOf(FormattingInlineNode);
+      expect(fragments[2]).toBeInstanceOf(TextInlineNode);
     });
 
-    it('should return FormattingNode with a TextNode as a child with correct text value', () => {
+    it('should return FormattingInlineNode with a TextInlineNode as a child with correct text value', () => {
       const name = createInlineToolName('bold');
       const start = 5;
       const end = 8;
 
       const fragments = node.format(name, start, end);
-      const formattingNode = fragments[1] as FormattingNode;
+      const formattingNode = fragments[1] as FormattingInlineNode;
 
       expect(formattingNode.children[0].getText()).toEqual(initialText.slice(start, end));
     });
@@ -237,13 +237,13 @@ describe('TextNode', () => {
       expect(newNode).toBeNull();
     });
 
-    it('should create new TextNode on split', () => {
+    it('should create new TextInlineNode on split', () => {
       const newNode = node.split(index);
 
-      expect(newNode).toBeInstanceOf(TextNode);
+      expect(newNode).toBeInstanceOf(TextInlineNode);
     });
 
-    it('should create new TextNode with text value splitted from the original one', () => {
+    it('should create new TextInlineNode with text value splitted from the original one', () => {
       const newNode = node.split(index);
 
       expect(newNode?.getText()).toEqual(initialText.slice(index));

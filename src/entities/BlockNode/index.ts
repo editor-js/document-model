@@ -11,7 +11,7 @@ import {
 
 /**
  * BlockNode class represents a node in a tree-like structure used to store and manipulate Blocks in an editor document.
- * A BlockNode can contain one or more child nodes of type TextNode, ValueNode or FormattingNode.
+ * A BlockNode can contain one or more child nodes of type TextInlineNode, ValueNode or FormattingInlineNode.
  * It can also be associated with one or more BlockTunes, which can modify the behavior of the BlockNode.
  */
 export class BlockNode {
@@ -38,7 +38,7 @@ export class BlockNode {
   /**
    * Constructor for BlockNode class.
    *
-   * @param args - TextNode constructor arguments.
+   * @param args - TextInlineNode constructor arguments.
    * @param args.name - The name of the BlockNode.
    * @param args.data - The content of the BlockNode.
    * @param args.parent - The parent EditorDocument of the BlockNode.
@@ -61,7 +61,7 @@ export class BlockNode {
         (acc, [dataKey, value]) => {
           /**
            * If the value is an array, we need to serialize each node in the array
-           * Value is an array if the BlockNode contains TextNodes and FormattingNodes
+           * Value is an array if the BlockNode contains TextInlineNodes and FormattingInlineNodes
            * After serializing there will be InlineNodeSerialized object
            */
           if (value instanceof Array) {

@@ -1,29 +1,29 @@
-import { FormattingNode, InlineToolName, InlineToolData } from '../index';
-import { TextNodeConstructorParameters } from './types';
+import { FormattingInlineNode, InlineToolName, InlineToolData } from '../index';
+import { TextInlineNodeConstructorParameters } from './types';
 import { InlineNode, InlineNodeSerialized } from '../InlineNode';
 import { ChildNode } from '../mixins/ChildNode';
 
 export * from './types';
 
-export interface TextNode extends ChildNode {}
+export interface TextInlineNode extends ChildNode {}
 
 /**
- * TextNode class represents a node in a tree-like structure, used to store and manipulate text content.
+ * TextInlineNode class represents a node in a tree-like structure, used to store and manipulate text content.
  */
 @ChildNode
-export class TextNode implements InlineNode {
+export class TextInlineNode implements InlineNode {
   /**
-   * Private field representing the text content of the node
+   * Property representing the text content of the node
    */
   public value: string;
 
   /**
-   * Constructor for TextNode class
+   * Constructor for TextInlineNode class
    *
-   * @param args - TextNode constructor arguments.
+   * @param args - TextInlineNode constructor arguments.
    * @param args.value - Text content of the node.
    */
-  constructor({ value = '' }: TextNodeConstructorParameters = {}) {
+  constructor({ value = '' }: TextInlineNodeConstructorParameters = {}) {
     this.value = value;
   }
 
@@ -110,7 +110,7 @@ export class TextNode implements InlineNode {
     this.#validateIndex(start);
     this.#validateIndex(end);
 
-    const formattingNode = new FormattingNode({
+    const formattingNode = new FormattingInlineNode({
       tool,
       data,
     });
@@ -151,14 +151,14 @@ export class TextNode implements InlineNode {
    * Splits current node into two nodes by the specified index
    *
    * @param index - char index where to split
-   * @returns {TextNode|null} - new node or null if split is not applicable
+   * @returns {TextInlineNode|null} - new node or null if split is not applicable
    */
-  public split(index: number): TextNode | null {
+  public split(index: number): TextInlineNode | null {
     if (index === 0 || index === this.length) {
       return null;
     }
 
-    const newNode = new TextNode();
+    const newNode = new TextInlineNode();
     const text = this.removeText(index);
 
     newNode.insertText(text);
@@ -173,7 +173,7 @@ export class TextNode implements InlineNode {
    *
    * @param node - node to check
    */
-  public isEqual(node: InlineNode): node is TextNode {
+  public isEqual(node: InlineNode): node is TextInlineNode {
     return node instanceof this.constructor;
   }
 
@@ -215,13 +215,13 @@ export class TextNode implements InlineNode {
   }
 
   /**
-   * Clones specified range to a new TextNode
+   * Clones specified range to a new TextInlineNode
    *
    * @param start - start char index of the range
    * @param end - end char index of the range
    */
-  #cloneContents(start: number, end: number): TextNode {
-    return new TextNode({
+  #cloneContents(start: number, end: number): TextInlineNode {
+    return new TextInlineNode({
       value: this.getText(start, end),
     });
   }

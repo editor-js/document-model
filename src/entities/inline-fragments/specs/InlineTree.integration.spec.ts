@@ -1,6 +1,6 @@
 import { RootInlineNode } from '../RootInlineNode';
-import { TextNode } from '../TextNode';
-import { createInlineToolData, createInlineToolName } from '../FormattingNode';
+import { TextInlineNode } from '../TextInlineNode';
+import { createInlineToolData, createInlineToolName } from '../FormattingInlineNode';
 
 describe('Inline fragments tree integration', () => {
   describe('text insertion', () => {
@@ -16,7 +16,7 @@ describe('Inline fragments tree integration', () => {
 
     it('should insert text at the end of the non-empty tree', () => {
       const initialText = 'Editor.js is a block-styled editor.';
-      const child = new TextNode({ value: initialText });
+      const child = new TextInlineNode({ value: initialText });
 
       const tree = new RootInlineNode({ children: [ child ] });
       const text = ' Editor outputs clean data in JSON';
@@ -29,7 +29,7 @@ describe('Inline fragments tree integration', () => {
 
     it('should insert text at the beginning of the non-empty tree', () => {
       const initialText = 'Editor.js is a block-styled editor.';
-      const child = new TextNode({ value: initialText });
+      const child = new TextInlineNode({ value: initialText });
 
       const tree = new RootInlineNode({ children: [ child ] });
       const text = 'Editor outputs clean data in JSON ';
@@ -43,7 +43,7 @@ describe('Inline fragments tree integration', () => {
     it('should insert text at the middle of the non-empty tree', () => {
       const initialText = 'Editor.js is a block-styled editor.';
       const index = 10;
-      const child = new TextNode({ value: initialText });
+      const child = new TextInlineNode({ value: initialText });
 
       const tree = new RootInlineNode({ children: [ child ] });
       const text = ' Editor outputs clean data in JSON ';
@@ -58,7 +58,7 @@ describe('Inline fragments tree integration', () => {
   describe('text removal', () => {
     it('should return removed text', () => {
       const initialText = 'Editor.js is a block-styled editor.';
-      const child = new TextNode({ value: initialText });
+      const child = new TextInlineNode({ value: initialText });
       const tree = new RootInlineNode({ children: [ child ] });
 
       const removedText = tree.removeText();
@@ -69,7 +69,7 @@ describe('Inline fragments tree integration', () => {
 
     it('should remove all text from the tree', () => {
       const initialText = 'Editor.js is a block-styled editor.';
-      const child = new TextNode({ value: initialText });
+      const child = new TextInlineNode({ value: initialText });
       const tree = new RootInlineNode({ children: [ child ] });
 
       tree.removeText();
@@ -80,7 +80,7 @@ describe('Inline fragments tree integration', () => {
 
     it('should remove text from the beginning of the tree', () => {
       const initialText = 'Editor.js is a block-styled editor.';
-      const child = new TextNode({ value: initialText });
+      const child = new TextInlineNode({ value: initialText });
       const tree = new RootInlineNode({ children: [ child ] });
       const index = 10;
 
@@ -92,7 +92,7 @@ describe('Inline fragments tree integration', () => {
 
     it('should remove text from the middle of the tree', () => {
       const initialText = 'Editor.js is a block-styled editor.';
-      const child = new TextNode({ value: initialText });
+      const child = new TextInlineNode({ value: initialText });
       const tree = new RootInlineNode({ children: [ child ] });
       const index = 10;
       const length = 5;
@@ -105,7 +105,7 @@ describe('Inline fragments tree integration', () => {
 
     it('should remove text from passed index to the end of the tree', () => {
       const initialText = 'Editor.js is a block-styled editor.';
-      const child = new TextNode({ value: initialText });
+      const child = new TextInlineNode({ value: initialText });
       const tree = new RootInlineNode({ children: [ child ] });
       const index = 10;
 
@@ -117,7 +117,7 @@ describe('Inline fragments tree integration', () => {
 
     it('should throw an error if index is out of range', () => {
       const initialText = 'Editor.js is a block-styled editor.';
-      const child = new TextNode({ value: initialText });
+      const child = new TextInlineNode({ value: initialText });
       const tree = new RootInlineNode({ children: [ child ] });
       const index = 100;
 
@@ -131,7 +131,7 @@ describe('Inline fragments tree integration', () => {
 
     it('should format text', () => {
       const initialText = 'Editor.js is a block-styled editor.';
-      const child = new TextNode({ value: initialText });
+      const child = new TextInlineNode({ value: initialText });
       const tree = new RootInlineNode({ children: [ child ] });
       const index = 0;
 
@@ -151,7 +151,7 @@ describe('Inline fragments tree integration', () => {
 
     it('should save formatting data', () => {
       const initialText = 'Editor.js is a block-styled editor.';
-      const child = new TextNode({ value: initialText });
+      const child = new TextInlineNode({ value: initialText });
       const tree = new RootInlineNode({ children: [ child ] });
       const index = 0;
       const data = createInlineToolData({ bold: true });
@@ -173,7 +173,7 @@ describe('Inline fragments tree integration', () => {
 
     it('should format text in the middle of the tree', () => {
       const initialText = 'Editor.js is a block-styled editor.';
-      const child = new TextNode({ value: initialText });
+      const child = new TextInlineNode({ value: initialText });
       const tree = new RootInlineNode({ children: [ child ] });
       const index = 10;
       const length = 5;
@@ -193,7 +193,7 @@ describe('Inline fragments tree integration', () => {
 
     it('should support nested formatting for the same tool', () => {
       const initialText = 'Editor.js is a block-styled editor.';
-      const child = new TextNode({ value: initialText });
+      const child = new TextInlineNode({ value: initialText });
       const tree = new RootInlineNode({
         children: [ child ],
       });
@@ -217,7 +217,7 @@ describe('Inline fragments tree integration', () => {
 
     it('should support nested formatting for different tools', () => {
       const initialText = 'Editor.js is a block-styled editor.';
-      const child = new TextNode({ value: initialText });
+      const child = new TextInlineNode({ value: initialText });
       const tree = new RootInlineNode({
         children: [ child ],
       });
@@ -250,7 +250,7 @@ describe('Inline fragments tree integration', () => {
 
     it('should support overlapping formatting for the same tool', () => {
       const initialText = 'Editor.js is a block-styled editor.';
-      const child = new TextNode({ value: initialText });
+      const child = new TextInlineNode({ value: initialText });
       const tree = new RootInlineNode({
         children: [ child ],
       });
@@ -275,7 +275,7 @@ describe('Inline fragments tree integration', () => {
 
     it('should support overlapping formatting for different tools', () => {
       const initialText = 'Editor.js is a block-styled editor.';
-      const child = new TextNode({ value: initialText });
+      const child = new TextInlineNode({ value: initialText });
       const tree = new RootInlineNode({
         children: [ child ],
       });
@@ -307,7 +307,27 @@ describe('Inline fragments tree integration', () => {
     });
   });
 
-  it('should pass "ultimate" test', () => {
+  /**
+   * This test-case is trying to reproduce the real user behaviour
+   *
+   * 1. User types "Editor.js is a block-styled editor."
+   * 2. User types " It's written in Vanilla JavaScript and released under MIT license."
+   * 3. User types " Designed to be extendable and pluggable with a simple API."
+   * 4. User types " It returns clean data output in JSON." as a third sentence
+   * 5. User selects "block-styled" and applies bold formatting
+   * 6. User selects "clean" and applies italic formatting
+   * 7. User selects "extendable and pluggable" and applies italic formatting
+   * 8. User "extandable" and applies bold formatting
+   * 9. User selects "pluggable" and applies bold formatting
+   * 10. User removes " It's written in Vanilla JavaScript and released under MIT license."
+   * 11. User removes " data"
+   * 12. User removes bold formatting from "pluggable"
+   *
+   * Result string should be:
+   * Editor.js is a <bold>block-styled</bold> editor. It returns <italic>clean<italic> output in JSON. Designed to be <italic><bold>extendable</bold> and pluggable</italic> with a simple API.
+   *
+   */
+  it('should pass "real behaviour" test', () => {
     const tree = new RootInlineNode();
 
     const firstFragment = 'Editor.js is a block-styled editor.';
@@ -344,6 +364,8 @@ describe('Inline fragments tree integration', () => {
     tree.removeText(firstFragment.length, firstFragment.length + fourthFragment.length);
     tree.removeText(data[0] - fourthFragment.length, data[1] - fourthFragment.length);
 
+    tree.unformat(boldTool, ...(pluggable.map((value) => value - removedChars) as [number, number]));
+
     expect(tree.serialized).toStrictEqual({
       text: firstFragment + secondFragment.replace(' data', '') + thirdFragment,
       fragments: [
@@ -362,10 +384,6 @@ describe('Inline fragments tree integration', () => {
         {
           tool: boldTool,
           range: extendable.map((value) => value - removedChars),
-        },
-        {
-          tool: boldTool,
-          range: pluggable.map((value) => value - removedChars),
         },
       ],
     });

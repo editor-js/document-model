@@ -2,12 +2,12 @@ import { BlockNode } from './index';
 import { createBlockNodeName, createDataKey } from './types';
 
 import { BlockTune, createBlockTuneName } from '../BlockTune';
-import { TextNode } from '../inline-fragments/TextNode';
+import { TextInlineNode } from '../inline-fragments/TextInlineNode';
 import { ValueNode } from '../ValueNode';
 
 import type { EditorDocument } from '../EditorDocument';
 import type { BlockTuneConstructorParameters } from '../BlockTune/types';
-import type { TextNodeConstructorParameters } from '../inline-fragments/TextNode';
+import type { TextInlineNodeConstructorParameters } from '../inline-fragments/TextInlineNode';
 import type { ValueNodeConstructorParameters } from '../ValueNode';
 
 describe('BlockNode', () => {
@@ -18,8 +18,8 @@ describe('BlockNode', () => {
         serialized: jest.fn(),
       }));
 
-      jest.mock('../inline-fragments/TextNode', () => ({
-        TextNode: jest.fn().mockImplementation(() => ({}) as TextNode),
+      jest.mock('../inline-fragments/TextInlineNode', () => ({
+        TextInlineNode: jest.fn().mockImplementation(() => ({}) as TextInlineNode),
         serialized: jest.fn(),
       }));
 
@@ -109,11 +109,11 @@ describe('BlockNode', () => {
       });
     });
 
-    it('should call .serialized getter of all child TextNodes associated with the BlockNode', () => {
+    it('should call .serialized getter of all child TextInlineNodes associated with the BlockNode', () => {
       const countOfTextNodes = 3;
 
       const textNodes = [ ...Array(countOfTextNodes).keys() ]
-        .map(() => new TextNode({} as TextNodeConstructorParameters));
+        .map(() => new TextInlineNode({} as TextInlineNodeConstructorParameters));
 
       const spyArray = textNodes
         .map((textNode) => {

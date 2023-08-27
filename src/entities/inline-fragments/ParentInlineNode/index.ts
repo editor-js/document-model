@@ -1,7 +1,7 @@
 import { InlineFragment, InlineNode, InlineNodeSerialized } from '../InlineNode';
 import { ParentNode, ParentNodeConstructorOptions } from '../mixins/ParentNode';
 import { ChildNode } from '../mixins/ChildNode';
-import type { InlineToolData, InlineToolName } from '../FormattingNode';
+import type { InlineToolData, InlineToolName } from '../FormattingInlineNode';
 
 /**
  * We need to extend ParentInlineNode interface with ParentNode ones to use the methods from mixins
@@ -13,10 +13,10 @@ export interface ParentInlineNodeConstructorOptions extends ParentNodeConstructo
 }
 
 /**
- * ParentInlineNode is an abstract class that contains common attributes for inline nodes that may have children. For example, RootInlineNode or FormattingNode
+ * ParentInlineNode is a class that contains common attributes for inline nodes that may have children. For example, RootInlineNode or FormattingInlineNode
  */
 @ParentNode
-export abstract class ParentInlineNode implements InlineNode {
+export class ParentInlineNode implements InlineNode {
   /**
    * Empty constructor to support types
    *
@@ -50,9 +50,9 @@ export abstract class ParentInlineNode implements InlineNode {
        * We need to resolve circular dependency by require
        */
       // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { TextNode } = require('../TextNode');
+      const { TextInlineNode } = require('../TextInlineNode');
 
-      const textNode = new TextNode();
+      const textNode = new TextInlineNode();
 
       this.append(textNode);
     }
@@ -124,7 +124,7 @@ export abstract class ParentInlineNode implements InlineNode {
       end,
       (acc, child, childStart, childEnd, offset) => {
         /**
-         * If child is not a FormattingNode, it doesn't include any fragments. So we skip it.
+         * If child is not a FormattingInlineNode, it doesn't include any fragments. So we skip it.
          */
         if (typeof child.getFragments !== 'function') {
           return acc;
@@ -205,7 +205,7 @@ export abstract class ParentInlineNode implements InlineNode {
       end,
       (acc, child, childStart, childEnd) => {
         /**
-         * TextNodes don't have unformat method, so skip them
+         * TextInlineNodes don't have unformat method, so skip them
          */
         if (typeof child.unformat !== 'function') {
           return acc;

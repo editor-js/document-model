@@ -1,5 +1,5 @@
 import {
-  FormattingNodeConstructorParameters,
+  FormattingInlineNodeConstructorParameters,
   InlineToolName,
   InlineToolData
 } from './types';
@@ -11,18 +11,18 @@ import { ParentInlineNode } from '../ParentInlineNode';
 export * from './types';
 
 /**
- * We need to extend FormattingNode interface with ChildNode and ParentNode ones to use the methods from mixins
+ * We need to extend FormattingInlineNode interface with ChildNode and ParentNode ones to use the methods from mixins
  */
-export interface FormattingNode extends ChildNode {}
+export interface FormattingInlineNode extends ChildNode {}
 
 /**
- * FormattingNode class represents a node in a tree-like structure, used to store and manipulate formatted text content
+ * FormattingInlineNode class represents a node in a tree-like structure, used to store and manipulate formatted text content
  */
 @ParentNode
 @ChildNode
-export class FormattingNode extends ParentInlineNode implements InlineNode {
+export class FormattingInlineNode extends ParentInlineNode implements InlineNode {
   /**
-   * Private field representing the name of the formatting tool applied to the content
+   * Property representing the name of the formatting tool applied to the content
    */
   public readonly tool: InlineToolName;
 
@@ -32,14 +32,14 @@ export class FormattingNode extends ParentInlineNode implements InlineNode {
   public readonly data?: InlineToolData;
 
   /**
-   * Constructor for FormattingNode class.
+   * Constructor for FormattingInlineNode class.
    *
-   * @param args - FormattingNode constructor arguments.
+   * @param args - FormattingInlineNode constructor arguments.
    * @param args.tool - The name of the formatting tool applied to the content.
    * @param args.data - Any additional data associated with the formatting.
    */
   // Stryker disable next-line BlockStatement -- Styker's bug, see https://github.com/stryker-mutator/stryker-js/issues/2474
-  constructor({ tool, data }: FormattingNodeConstructorParameters) {
+  constructor({ tool, data }: FormattingInlineNodeConstructorParameters) {
     super();
 
     this.tool = tool;
@@ -64,7 +64,9 @@ export class FormattingNode extends ParentInlineNode implements InlineNode {
   }
 
   /**
-   * Returns inline fragments for subtree including current node from the specified range
+   * Returns inline fragments for node from the specified character range
+   *
+   * If start and/or end is specified, method will return partial fragments for the specified range
    *
    * @param [start] - start char index of the range, by default 0
    * @param [end] - end char index of the range, by default length of the text value
@@ -81,6 +83,9 @@ export class FormattingNode extends ParentInlineNode implements InlineNode {
       currentFragment.data = this.data;
     }
 
+    /**
+     * Current node is not processed in super.getFragments, so we need to add it manually at the beginning
+     */
     fragments.unshift(currentFragment);
 
     return fragments;
@@ -90,14 +95,14 @@ export class FormattingNode extends ParentInlineNode implements InlineNode {
    * Splits current node by the specified index
    *
    * @param index - char index where to split the node
-   * @returns {FormattingNode | null} new node
+   * @returns {FormattingInlineNode | null} new node
    */
-  public split(index: number): FormattingNode | null {
+  public split(index: number): FormattingInlineNode | null {
     if (index === 0 || index === this.length) {
       return null;
     }
 
-    const newNode = new FormattingNode({
+    const newNode = new FormattingInlineNode({
       tool: this.tool,
       data: this.data,
     });
@@ -163,14 +168,33 @@ export class FormattingNode extends ParentInlineNode implements InlineNode {
       const middleNode = this.split(start);
       const endNode = middleNode?.split(end);
 
-      const result: InlineNode[] = [ this ];
+      const result: ChildNode[] = [];
 
+      /**
+       * If start > 0, then there is a middle node, so we'll need to append its children to the parent
+       */
       if (middleNode) {
-        result.push(...middleNode.children);
+        result.push(this, ...middleNode.children);
+      /**
+       * Else we'll need to append current nodes children to the parent
+       */
+      } else {
+        result.push(...this.children);
       }
 
+      /**
+       * If end < this.length, we just append it to the parent
+       */
       if (endNode) {
         result.push(endNode);
+      }
+
+      this.parent?.insertAfter(this, ...result);
+
+      if (middleNode) {
+        middleNode.remove();
+      } else {
+        this.remove();
       }
 
       return result;
@@ -184,8 +208,8 @@ export class FormattingNode extends ParentInlineNode implements InlineNode {
    *
    * @param node - node to check
    */
-  public isEqual(node: InlineNode): node is FormattingNode {
-    if (!(node instanceof FormattingNode)) {
+  public isEqual(node: InlineNode): node is FormattingInlineNode {
+    if (!(node instanceof FormattingInlineNode)) {
       return false;
     }
 

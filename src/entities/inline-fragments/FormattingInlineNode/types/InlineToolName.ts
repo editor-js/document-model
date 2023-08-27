@@ -11,6 +11,6 @@ type InlineToolNameBase = string;
 export type InlineToolName = Nominal<InlineToolNameBase, 'InlineToolName'>;
 
 /**
- * Function returns a value with the nominal FormattingNodeName type
+ * Function returns a value with the nominal InlineToolName type
  */
 export const createInlineToolName = create<InlineToolName>();

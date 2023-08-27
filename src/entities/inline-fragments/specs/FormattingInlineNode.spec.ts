@@ -1,26 +1,26 @@
-import { createTextNodeMock } from '../../../mocks/TextNode.mock';
+import { createTextInlineNodeMock } from '../../../mocks/TextInlineNode.mock';
 import { createParentNodeMock } from '../../../mocks/ParentNode.mock';
 import { beforeEach, describe, expect, it } from '@jest/globals';
-import type { TextNode } from '../TextNode';
-import { createInlineToolData, createInlineToolName, FormattingNode } from '../FormattingNode';
+import type { TextInlineNode } from '../TextInlineNode';
+import { createInlineToolData, createInlineToolName, FormattingInlineNode } from '../FormattingInlineNode';
 import type { ParentNode } from '../mixins/ParentNode';
 
-describe('FormattingNode', () => {
+describe('FormattingInlineNode', () => {
   let parentMock: ParentNode;
-  let childMock: TextNode;
-  let anotherChildMock: TextNode;
+  let childMock: TextInlineNode;
+  let anotherChildMock: TextInlineNode;
 
   const tool = createInlineToolName('bold');
   const anotherTool = createInlineToolName('italic');
   const data = createInlineToolData({});
-  let node: FormattingNode;
+  let node: FormattingInlineNode;
 
   beforeEach(() => {
-    parentMock = createParentNodeMock() as FormattingNode;
-    childMock = createTextNodeMock('Some text here. ');
-    anotherChildMock = createTextNodeMock('Another text here.');
+    parentMock = createParentNodeMock() as FormattingInlineNode;
+    childMock = createTextInlineNodeMock('Some text here. ');
+    anotherChildMock = createTextInlineNodeMock('Another text here.');
 
-    node = new FormattingNode({
+    node = new FormattingInlineNode({
       tool,
       data,
       parent: parentMock,
@@ -161,11 +161,8 @@ describe('FormattingNode', () => {
   });
 
   describe('.getFragments()', () => {
-    /**
-     * @todo
-     */
     it('should return fragments for sub-tree', () => {
-      const parentNode = new FormattingNode({
+      const parentNode = new FormattingInlineNode({
         tool: anotherTool,
         data,
         children: [ node ],
@@ -215,16 +212,16 @@ describe('FormattingNode', () => {
       expect(newNode).toBeNull();
     });
 
-    it('should create new FormattingNode on split', () => {
+    it('should create new FormattingInlineNode on split', () => {
       const newNode = node.split(index);
 
-      expect(newNode).toBeInstanceOf(FormattingNode);
+      expect(newNode).toBeInstanceOf(FormattingInlineNode);
     });
 
     /**
      * @todo check this and related cases with integration tests
      */
-    it('should create new FormattingNode with children split from the original one', () => {
+    it('should create new FormattingInlineNode with children split from the original one', () => {
       const newNode = node.split(childMock.length);
 
       expect(newNode?.children).toEqual([ anotherChildMock ]);
@@ -293,27 +290,27 @@ describe('FormattingNode', () => {
   describe('.unformat()', () => {
     const start = 3;
     const end = 5;
-    let childFormattingNode: FormattingNode;
-    let anotherChildFormattingNode: FormattingNode;
+    let childFormattingNode: FormattingInlineNode;
+    let anotherChildFormattingNode: FormattingInlineNode;
 
     beforeEach(() => {
-      childFormattingNode =   new FormattingNode({
+      childFormattingNode =   new FormattingInlineNode({
         tool: anotherTool,
         data,
-        children: [ createTextNodeMock('Some text here. ') ],
+        children: [ createTextInlineNodeMock('Some text here. ') ],
       });
 
-      anotherChildFormattingNode = new FormattingNode({
+      anotherChildFormattingNode = new FormattingInlineNode({
         tool: anotherTool,
         data,
-        children: [ createTextNodeMock('Another text here. ') ] }
+        children: [ createTextInlineNodeMock('Another text here. ') ] }
       );
 
 
-      node = new FormattingNode({
+      node = new FormattingInlineNode({
         tool,
         data,
-        parent: parentMock as FormattingNode,
+        parent: parentMock as FormattingInlineNode,
         children: [childFormattingNode, anotherChildFormattingNode],
       });
 
@@ -355,15 +352,15 @@ describe('FormattingNode', () => {
       const result = node.unformat(anotherTool, start, end);
 
       expect(result).toEqual([
-        expect.any(FormattingNode),
+        expect.any(FormattingInlineNode),
         /**
-         * On this place is unformatted TextNode mock
+         * On this place is unformatted TextInlineNode mock
          */
         expect.any(Object),
-        expect.any(FormattingNode)]);
+        expect.any(FormattingInlineNode)]);
     });
 
-    it('should do nothing for TextNode children', () => {
+    it('should do nothing for TextInlineNode children', () => {
       const result = childFormattingNode.unformat(tool, start, end);
 
       expect(result).toEqual([]);
