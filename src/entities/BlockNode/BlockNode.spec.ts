@@ -175,4 +175,70 @@ describe('BlockNode', () => {
       expect(spy).toHaveBeenCalledWith(dataKey, dataValue);
     });
   });
+
+  describe('.updateValue()', () => {
+    beforeEach(() => {
+      jest.mock('../ValueNode', () => ({
+        ValueNode: jest.fn().mockImplementation(() => ({}) as ValueNode),
+        update: jest.fn(),
+      }));
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should call .update() method of the ValueNode with the passed value', () => {
+      const dataKey = createDataKey('data-key-1a2b');
+      const value = 'Some value';
+
+      const valueNode = new ValueNode({} as ValueNodeConstructorParameters);
+
+      const blockNode = new BlockNode({
+        name: createBlockNodeName('paragraph'),
+        data: {
+          [dataKey]: valueNode,
+        },
+        parent: {} as EditorDocument,
+      });
+
+      const spy = jest.spyOn(valueNode, 'update');
+
+      blockNode.updateValue(dataKey, value);
+
+      expect(spy).toHaveBeenCalledWith(value);
+    });
+
+    it('should throw an error if the ValueNode with the passed dataKey does not exist', () => {
+      const dataKey = createDataKey('data-key-1a2b');
+      const value = 'Some value';
+
+      const blockNode = new BlockNode({
+        name: createBlockNodeName('paragraph'),
+        data: {},
+        parent: {} as EditorDocument,
+      });
+
+      expect(() => {
+        blockNode.updateValue(dataKey, value);
+      }).toThrowError(`BlockNode: data with key ${dataKey} does not exist`);
+    });
+
+    it('should throw an error if the ValueNode with the passed dataKey is not a ValueNode', () => {
+      const dataKey = createDataKey('data-key-1a2b');
+      const value = 'Some value';
+
+      const blockNode = new BlockNode({
+        name: createBlockNodeName('paragraph'),
+        data: {
+          [dataKey]: [ {} as TextNode ],
+        },
+        parent: {} as EditorDocument,
+      });
+
+      expect(() => {
+        blockNode.updateValue(dataKey, value);
+      }).toThrowError(`BlockNode: data with key ${dataKey} is not a ValueNode`);
+    });
+  });
 });
