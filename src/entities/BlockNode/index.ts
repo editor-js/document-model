@@ -8,6 +8,7 @@ import {
   createDataKey, BlockNodeData,
   BlockNodeSerialized
 } from './types';
+import { ValueNode } from '../ValueNode';
 
 /**
  * BlockNode class represents a node in a tree-like structure used to store and manipulate Blocks in an editor document.
@@ -105,6 +106,26 @@ export class BlockNode {
     Object.entries(data).forEach(([key, value]) => {
       this.#tunes[tuneName].update(key, value);
     });
+  }
+
+  /**
+   * Updates the ValueNode data associated with this BlockNode
+   *
+   * @param dataKey - The key of the ValueNode to update
+   * @param value - The new value of the ValueNode
+   */
+  public updateValue(dataKey: DataKey, value: unknown): void {
+    const data = this.#data[dataKey];
+
+    if (data === undefined) {
+      throw new Error(`BlockNode: data with key ${dataKey} does not exist`);
+    }
+
+    if (!(data instanceof ValueNode)) {
+      throw new Error(`BlockNode: data with key ${dataKey} is not a ValueNode`);
+    }
+
+    data.update(value);
   }
 }
 
