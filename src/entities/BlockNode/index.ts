@@ -94,6 +94,18 @@ export class BlockNode {
       tunes: serializedTunes,
     };
   }
+
+  /**
+   * Updates data in the BlockTune by the BlockTuneName
+   *
+   * @param tuneName - The name of the BlockTune
+   * @param data - The data to update the BlockTune with
+   */
+  public updateTuneData(tuneName: BlockTuneName, data: Record<string, unknown>): void {
+    Object.entries(data).forEach(([key, value]) => {
+      this.#tunes[tuneName].update(key, value);
+    });
+  }
 }
 
 export {

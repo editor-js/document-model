@@ -135,4 +135,44 @@ describe('BlockNode', () => {
       });
     });
   });
+
+  describe('.updateTuneData()', () => {
+    beforeEach(() => {
+      jest.mock('../BlockTune', () => ({
+        BlockTune: jest.fn().mockImplementation(() => ({}) as BlockTune),
+        update: jest.fn(),
+      }));
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should call .update() method of the BlockTune', () => {
+      const blockTuneName = createBlockTuneName('align');
+
+      const blockTune = new BlockTune({} as BlockTuneConstructorParameters);
+
+      const blockNode = new BlockNode({
+        name: createBlockNodeName('paragraph'),
+        data: {},
+        parent: {} as EditorDocument,
+        tunes: {
+          [blockTuneName]: blockTune,
+        },
+      });
+
+      const dataKey = 'align';
+      const dataValue = 'left';
+      const data = {
+        [dataKey]: dataValue,
+      };
+
+      const spy = jest.spyOn(blockTune, 'update');
+
+      blockNode.updateTuneData(blockTuneName, data);
+
+      expect(spy).toHaveBeenCalledWith(dataKey, dataValue);
+    });
+  });
 });
