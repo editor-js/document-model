@@ -38,7 +38,7 @@ export class BlockNode {
   /**
    * Constructor for BlockNode class.
    *
-   * @param args - TextInlineNode constructor arguments.
+   * @param args - BlockNode constructor arguments.
    * @param args.name - The name of the BlockNode.
    * @param args.data - The content of the BlockNode.
    * @param args.parent - The parent EditorDocument of the BlockNode.
