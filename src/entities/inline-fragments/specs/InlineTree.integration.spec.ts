@@ -103,7 +103,7 @@ describe('Inline fragments tree integration', () => {
         .toBe(initialText.slice(0, index) + initialText.slice(index + length));
     });
 
-    it('should remove text from the end of the tree', () => {
+    it('should remove text from passed index to the end of the tree', () => {
       const initialText = 'Editor.js is a block-styled editor.';
       const child = new TextNode({ value: initialText });
       const tree = new RootInlineNode({ children: [ child ] });

@@ -47,7 +47,7 @@ export class FormattingNode extends ParentInlineNode implements InlineNode {
   }
 
   /**
-   * Removes text form the specified range
+   * Removes text from the specified range. If there is no text left in a node, removes a node from a parent.
    *
    * @param [start] - start char index of the range, by default 0
    * @param [end] - end char index of the range, by default length of the text value

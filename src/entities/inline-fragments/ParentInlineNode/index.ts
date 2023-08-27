@@ -4,7 +4,7 @@ import { ChildNode } from '../mixins/ChildNode';
 import type { InlineToolData, InlineToolName } from '../FormattingNode';
 
 /**
- * We need to extend RootInlineNode interface with ParentNode ones to use the methods from mixins
+ * We need to extend ParentInlineNode interface with ParentNode ones to use the methods from mixins
  */
 export interface ParentInlineNode extends ParentNode {
 }
@@ -13,14 +13,14 @@ export interface ParentInlineNodeConstructorOptions extends ParentNodeConstructo
 }
 
 /**
- * RootInlineNode class represents a root node in a tree-like structure to have a single access point to the tree
+ * ParentInlineNode is an abstract class that contains common attributes for inline nodes that may have children. For example, RootInlineNode or FormattingNode
  */
 @ParentNode
-export class ParentInlineNode implements InlineNode {
+export abstract class ParentInlineNode implements InlineNode {
   /**
    * Empty constructor to support types
    *
-   * @param options - ParentNode constructor options to support types
+   * @param options - constructor options to support types
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars,@typescript-eslint/no-empty-function,no-unused-vars
   constructor(options?: ParentInlineNodeConstructorOptions) {

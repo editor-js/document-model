@@ -80,14 +80,14 @@ export interface InlineNode {
   split(index?: number): InlineNode | null;
 
   /**
-   * Merges passed node with current
+   * Merges current node with passed
    *
    * @param node - node to merge
    */
   mergeWith(node: InlineNode): void;
 
   /**
-   * Check if passed node is equal to current
+   * Check if current node is equal to passed
    *
    * @param node - node to check
    */
