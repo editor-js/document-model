@@ -22,7 +22,7 @@ export class BlockTune {
    * @param args.name - The name of the tune.
    * @param args.data - Any additional data associated with the tune.
    */
-  constructor({ name, data }: BlockTuneConstructorParameters) {
+  constructor({ name, data = {} }: BlockTuneConstructorParameters) {
     this.#name = name;
     this.#data = data;
   }
