@@ -81,6 +81,23 @@ export class EditorDocument {
   }
 
   /**
+   * Returns the serialised properties of the EditorDocument.
+   */
+  public get properties(): Record<string, unknown> {
+    return this.#properties;
+  }
+
+  /**
+   * Updates a property of the EditorDocument.
+   *
+   * @param name - The name of the property to update
+   * @param value - The value to update the property with
+   */
+  public updateProperty(name: PropName, value: unknown): void {
+    this.#properties[name] = value;
+  }
+
+  /**
    * Checks if the index is out of bounds.
    *
    * @param index - The index to check
@@ -93,3 +110,7 @@ export class EditorDocument {
     }
   }
 }
+
+export {
+  PropName
+};

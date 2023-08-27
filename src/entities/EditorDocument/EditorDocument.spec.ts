@@ -1,4 +1,4 @@
-import { EditorDocument } from './index';
+import { EditorDocument, PropName } from './index';
 import { BlockNode } from '../BlockNode';
 import { createBlockNodeMock } from '../../utils/mocks/createBlockNodeMock';
 import { createEditorDocumentMock } from '../../utils/mocks/createEditorDocumentMock';
@@ -244,6 +244,40 @@ describe('EditorDocument', () => {
 
       // Assert
       expect(action).toThrowError('Index out of bounds');
+    });
+  });
+
+  describe('.properties', () => {
+    it('should return the properties of the document', () => {
+      const properties = {
+        [PropName.ReadOnly]: true,
+      };
+
+      const document = new EditorDocument({
+        children: [],
+        properties: {
+          ...properties,
+        },
+      });
+
+      expect(document.properties).toEqual(properties);
+    });
+  });
+
+  describe('.updateProperty()', () => {
+    it('should update the property with the specified name', () => {
+      const propertyName = PropName.ReadOnly;
+      const expectedValue = true;
+      const document = new EditorDocument({
+        children: [],
+        properties: {
+          [propertyName]: false,
+        },
+      });
+
+      document.updateProperty(propertyName, expectedValue);
+
+      expect(document.properties[propertyName]).toBe(expectedValue);
     });
   });
 });
