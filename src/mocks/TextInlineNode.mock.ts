@@ -1,9 +1,8 @@
 import { jest } from '@jest/globals';
-import type { TextNode } from '../entities/TextNode';
-import { createInlineToolName, FormattingNode } from '../entities/FormattingNode';
+import { TextInlineNode, createInlineToolName, FormattingInlineNode } from '../entities/inline-fragments';
 import { createChildNodeMock } from './ChildNode.mock';
 
-export const createTextNodeMock = (value: string): TextNode => {
+export const createTextInlineNodeMock = (value: string): TextInlineNode => {
   const childMock = createChildNodeMock();
 
   return Object.assign(childMock, {
@@ -15,7 +14,7 @@ export const createTextNodeMock = (value: string): TextNode => {
         return null;
       }
 
-      const newNode = createTextNodeMock(value.slice(index));
+      const newNode = createTextInlineNodeMock(value.slice(index));
 
       childMock.parent?.append(newNode);
 
@@ -23,7 +22,10 @@ export const createTextNodeMock = (value: string): TextNode => {
 
       return newNode;
     }),
-    format: jest.fn(() => [ new FormattingNode({ tool: createInlineToolName('tool') }) ]),
+    format: jest.fn(() => [ new FormattingInlineNode({ tool: createInlineToolName('tool') }) ]),
     length: value.length,
-  } as unknown as TextNode);
+    serialized: value,
+    isEqual: jest.fn(() => false),
+    normalize: jest.fn(),
+  } as unknown as TextInlineNode);
 };

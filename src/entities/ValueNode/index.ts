@@ -2,7 +2,7 @@ import type { ValueNodeConstructorParameters } from './types';
 
 /**
  * ValueNode class represents a node in a tree-like structure, used to store and manipulate data associated with a BlockNode.
- * Unlike TextNode, changing the data of a ValueNode will replace the entire data in this node.
+ * Unlike TextInlineNode, changing the data of a ValueNode will replace the entire data in this node.
  * This can be useful for storing data that needs to be updated in its entirety, such as a link or other metadata associated with a BlockNode.
  */
 export class ValueNode<ValueType = unknown> {
