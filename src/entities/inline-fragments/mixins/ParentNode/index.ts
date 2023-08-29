@@ -1,10 +1,15 @@
-import type { ChildNode } from './ChildNode';
-import { InlineNode } from './InlineNode';
+import { ChildNode } from '../ChildNode';
+import { InlineNode } from '../../InlineNode';
 
 /**
  * Abstract parent node interface
  */
 export interface ParentNode extends InlineNode {
+  /**
+   * Node's children
+   */
+  readonly children: ChildNode[];
+
   /**
    * Appends passed children to this node
    *
@@ -28,9 +33,9 @@ export interface ParentNode extends InlineNode {
   insertAfter(target: ChildNode, ...children: ChildNode[]): void
 
   /**
-   * Node's children
+   * Normalizes node's children
    */
-  children: ChildNode[];
+  normalize(): void;
 }
 
 export interface ParentNodeConstructorOptions {
@@ -75,6 +80,13 @@ export function ParentNode<C extends { new(...args: any[]): InlineNode }>(constr
      */
     public get children(): ChildNode[] {
       return this.#children;
+    }
+
+    /**
+     * Returns text value length of current node (including subtree)
+     */
+    public get length(): number {
+      return this.children.reduce((sum, child) => sum + child.length, 0);
     }
 
     /**
@@ -141,6 +153,36 @@ export function ParentNode<C extends { new(...args: any[]): InlineNode }>(constr
       const index = this.children.indexOf(target);
 
       this.children.splice(index + 1, 0, ...children);
+    }
+
+
+    /**
+     * Normalizes node's subtree
+     */
+    public normalize(): void {
+      const children = Array.from(this.children);
+
+      if (!children.length) {
+        return;
+      }
+
+      children.reduce((prev, child) => {
+        if (prev && prev.isEqual(child)) {
+          prev.mergeWith(child);
+
+          return prev;
+        }
+
+        return child;
+      });
+
+      children.forEach(child => {
+        if (!child.length) {
+          child.remove();
+        }
+      });
+
+      this.children.forEach(child => child.normalize());
     }
   };
 }

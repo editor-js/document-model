@@ -1,8 +1,9 @@
 import { InlineToolName } from './InlineToolName';
 import { InlineToolData } from './InlineToolData';
-import type { ChildNodeConstructorOptions, ParentNodeConstructorOptions } from '../../interfaces';
+import type { ChildNodeConstructorOptions } from '../../mixins/ChildNode';
+import type { ParentNodeConstructorOptions } from '../../mixins/ParentNode';
 
-export interface FormattingNodeConstructorParameters extends ChildNodeConstructorOptions, ParentNodeConstructorOptions {
+export interface FormattingInlineNodeConstructorParameters extends ChildNodeConstructorOptions, ParentNodeConstructorOptions {
   /**
    * The name of the formatting tool applied to the content
    */

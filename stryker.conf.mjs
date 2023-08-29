@@ -23,6 +23,7 @@ const config = {
   tsconfigFile: "tsconfig.json",
   checkers: ["typescript"],
   timeoutMS: 10000,
+  mutate: ["./src/**/*.ts", "!./src/**/*.mock.ts", "!./src/**/*.spec.ts"]
 };
 
 export default config;

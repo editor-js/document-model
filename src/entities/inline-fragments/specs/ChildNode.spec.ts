@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { ChildNode } from './ChildNode';
-import type { ParentNode } from './ParentNode';
-import { createParentNodeMock } from '../../mocks/ParentNode.mock';
+import { ChildNode } from '../mixins/ChildNode';
+import type { ParentNode } from '../mixins/ParentNode';
+import { createParentNodeMock } from '../../../mocks/ParentNode.mock';
 
 interface Dummy extends ChildNode {
 }

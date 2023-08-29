@@ -1,5 +1,5 @@
-import type { ParentNode } from './ParentNode';
-import { InlineNode } from './InlineNode';
+import { ParentNode } from '../ParentNode';
+import { InlineNode } from '../../InlineNode';
 
 /**
  * Abstract child node interface
