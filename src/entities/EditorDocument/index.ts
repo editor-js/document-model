@@ -93,7 +93,7 @@ export class EditorDocument {
    *
    * @param name - The name of the property to return
    */
-  public getProperty<T = unknown>(name: keyof Properties): T {
+  public getProperty<T = unknown>(name: keyof Properties): T | undefined {
     return this.#properties[name] as T;
   }
 

@@ -275,7 +275,7 @@ describe('EditorDocument', () => {
         },
       });
 
-      const actualValue = document.getProperty(propertyName);
+      const actualValue = document.getProperty<boolean>(propertyName);
 
       expect(actualValue).toBe(expectedValue);
     });
@@ -287,7 +287,7 @@ describe('EditorDocument', () => {
         properties: {},
       });
 
-      const actualValue = document.getProperty(propertyName);
+      const actualValue = document.getProperty<boolean>(propertyName);
 
       expect(actualValue).toBeUndefined();
     });
