@@ -231,7 +231,7 @@ describe('BlockNode', () => {
       const blockNode = new BlockNode({
         name: createBlockNodeName('paragraph'),
         data: {
-          [dataKey]: [ {} as TextNode ],
+          [dataKey]: [ {} as TextInlineNode ],
         },
         parent: {} as EditorDocument,
       });
