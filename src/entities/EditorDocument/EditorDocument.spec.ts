@@ -308,5 +308,18 @@ describe('EditorDocument', () => {
 
       expect(document.properties[propertyName]).toBe(expectedValue);
     });
+
+    it('should add the property if it does not exist', () => {
+      const propertyName = 'readOnly';
+      const expectedValue = true;
+      const document = new EditorDocument({
+        children: [],
+        properties: {},
+      });
+
+      document.updateProperty(propertyName, expectedValue);
+
+      expect(document.properties[propertyName]).toBe(expectedValue);
+    });
   });
 });
