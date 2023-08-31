@@ -1,4 +1,4 @@
-import { EditorDocument, PropName } from './index';
+import { EditorDocument } from './index';
 import { BlockNode } from '../BlockNode';
 import { createBlockNodeMock } from '../../utils/mocks/createBlockNodeMock';
 import { createEditorDocumentMock } from '../../utils/mocks/createEditorDocumentMock';
@@ -250,7 +250,7 @@ describe('EditorDocument', () => {
   describe('.properties', () => {
     it('should return the properties of the document', () => {
       const properties = {
-        [PropName.ReadOnly]: true,
+        'readOnly' : true,
       };
 
       const document = new EditorDocument({
@@ -264,9 +264,38 @@ describe('EditorDocument', () => {
     });
   });
 
+  describe('.getProperty()', () => {
+    it('should return the property by name', () => {
+      const propertyName = 'readOnly';
+      const expectedValue = true;
+      const document = new EditorDocument({
+        children: [],
+        properties: {
+          [propertyName]: expectedValue,
+        },
+      });
+
+      const actualValue = document.getProperty(propertyName);
+
+      expect(actualValue).toBe(expectedValue);
+    });
+
+    it('should return undefined if the property does not exist', () => {
+      const propertyName = 'readOnly';
+      const document = new EditorDocument({
+        children: [],
+        properties: {},
+      });
+
+      const actualValue = document.getProperty(propertyName);
+
+      expect(actualValue).toBeUndefined();
+    });
+  });
+
   describe('.updateProperty()', () => {
     it('should update the property with the specified name', () => {
-      const propertyName = PropName.ReadOnly;
+      const propertyName = 'readOnly';
       const expectedValue = true;
       const document = new EditorDocument({
         children: [],

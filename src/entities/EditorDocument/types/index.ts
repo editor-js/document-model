@@ -1,2 +1,2 @@
-export { EditorDocumentConstructorParameters } from './EditorDocumentConstructorParameters';
-export { PropName } from './PropName';
+export type { EditorDocumentConstructorParameters } from './EditorDocumentConstructorParameters';
+export type { Properties } from './Properties';
