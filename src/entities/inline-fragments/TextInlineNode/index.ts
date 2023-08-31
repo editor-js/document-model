@@ -1,36 +1,37 @@
-import { FormattingNode, InlineToolName, InlineToolData } from '../FormattingNode';
-import { TextNodeConstructorParameters } from './types';
-import { ChildNode, InlineNode, InlineNodeSerialized } from '../interfaces';
+import { FormattingInlineNode, InlineToolName, InlineToolData } from '../index';
+import { TextInlineNodeConstructorParameters } from './types';
+import { InlineNode, InlineNodeSerialized } from '../InlineNode';
+import { ChildNode } from '../mixins/ChildNode';
 
 export * from './types';
 
-export interface TextNode extends ChildNode {}
+export interface TextInlineNode extends ChildNode {}
 
 /**
- * TextNode class represents a node in a tree-like structure, used to store and manipulate text content.
+ * TextInlineNode class represents a node in a tree-like structure, used to store and manipulate text content.
  */
 @ChildNode
-export class TextNode implements InlineNode {
+export class TextInlineNode implements InlineNode {
   /**
-   * Private field representing the text content of the node
+   * Property representing the text content of the node
    */
-  #value: string;
+  public value: string;
 
   /**
-   * Constructor for TextNode class
+   * Constructor for TextInlineNode class
    *
-   * @param args - TextNode constructor arguments.
+   * @param args - TextInlineNode constructor arguments.
    * @param args.value - Text content of the node.
    */
-  constructor({ value = '' }: TextNodeConstructorParameters = {}) {
-    this.#value = value;
+  constructor({ value = '' }: TextInlineNodeConstructorParameters = {}) {
+    this.value = value;
   }
 
   /**
    * Returns length of the text
    */
   public get length(): number {
-    return this.#value.length;
+    return this.value.length;
   }
 
   /**
@@ -53,7 +54,7 @@ export class TextNode implements InlineNode {
   public insertText(text: string, index = this.length): void {
     this.#validateIndex(index);
 
-    this.#value = this.#value.slice(0, index) + text + this.#value.slice(index);
+    this.value = this.value.slice(0, index) + text + this.value.slice(index);
   }
 
   /**
@@ -67,9 +68,9 @@ export class TextNode implements InlineNode {
     this.#validateIndex(start);
     this.#validateIndex(end);
 
-    const removedValue = this.#value.slice(start, end);
+    const removedValue = this.value.slice(start, end);
 
-    this.#value = this.#value.slice(0, start) + this.#value.slice(end);
+    this.value = this.value.slice(0, start) + this.value.slice(end);
 
     if (this.length === 0) {
       this.remove();
@@ -93,7 +94,7 @@ export class TextNode implements InlineNode {
     this.#validateIndex(start);
     this.#validateIndex(end);
 
-    return this.#value.slice(start, end);
+    return this.value.slice(start, end);
   }
 
   /**
@@ -109,7 +110,7 @@ export class TextNode implements InlineNode {
     this.#validateIndex(start);
     this.#validateIndex(end);
 
-    const formattingNode = new FormattingNode({
+    const formattingNode = new FormattingInlineNode({
       tool,
       data,
     });
@@ -150,14 +151,14 @@ export class TextNode implements InlineNode {
    * Splits current node into two nodes by the specified index
    *
    * @param index - char index where to split
-   * @returns {TextNode|null} - new node or null if split is not applicable
+   * @returns {TextInlineNode|null} - new node or null if split is not applicable
    */
-  public split(index: number): TextNode | null {
+  public split(index: number): TextInlineNode | null {
     if (index === 0 || index === this.length) {
       return null;
     }
 
-    const newNode = new TextNode();
+    const newNode = new TextInlineNode();
     const text = this.removeText(index);
 
     newNode.insertText(text);
@@ -165,6 +166,39 @@ export class TextNode implements InlineNode {
     this.parent?.insertAfter(this, newNode);
 
     return newNode;
+  }
+
+  /**
+   * Checks if node is equal to passed node
+   *
+   * @param node - node to check
+   */
+  public isEqual(node: InlineNode): node is TextInlineNode {
+    return node instanceof this.constructor;
+  }
+
+  /**
+   * Merges current node with passed node
+   *
+   * @param node - node to merge with
+   */
+  public mergeWith(node: InlineNode): void {
+    if (!this.isEqual(node)) {
+      return;
+    }
+
+    this.value += node.value;
+
+    node.remove();
+  }
+
+  /**
+   * Normalizes node
+   */
+  public normalize(): void {
+    /**
+     * do nothing
+     */
   }
 
   /**
@@ -181,13 +215,13 @@ export class TextNode implements InlineNode {
   }
 
   /**
-   * Clones specified range to a new TextNode
+   * Clones specified range to a new TextInlineNode
    *
    * @param start - start char index of the range
    * @param end - end char index of the range
    */
-  #cloneContents(start: number, end: number): TextNode {
-    return new TextNode({
+  #cloneContents(start: number, end: number): TextInlineNode {
+    return new TextInlineNode({
       value: this.getText(start, end),
     });
   }

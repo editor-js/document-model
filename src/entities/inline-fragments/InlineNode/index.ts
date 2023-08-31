@@ -1,13 +1,18 @@
-import { InlineToolData, InlineToolName } from '../FormattingNode';
+import { InlineToolData, InlineToolName } from '../FormattingInlineNode';
 
 /**
- * Interface describing abstract InlineNode
+ * Interface describing abstract InlineNode — common properties and methods for all inline nodes
  */
 export interface InlineNode {
   /**
    * Text length of node and it's subtree
    */
-  length: number;
+  readonly length: number;
+
+  /**
+   * Serialized value of the node
+   */
+  readonly serialized: InlineNodeSerialized;
 
   /**
    * Returns text value in passed range
@@ -31,13 +36,23 @@ export interface InlineNode {
   /**
    * Removes inline formatting from the passed range
    *
-   * Optional as some nodes don't contain any formatting (e.g. TextNode)
+   * Optional as some nodes don't contain any formatting (e.g. TextInlineNode)
    *
    * @param name - name of Inline Tool to remove
    * @param start - start char index of the range
    * @param end - end char index of the range
    */
   unformat?(name: InlineToolName, start?: number, end?: number): InlineNode[];
+
+  /**
+   * Returns inline fragments for subtree including current node from the specified range
+   *
+   * Optional as some nodes don't contain any formatting (e.g. TextInlineNode)
+   *
+   * @param [start] - start char index of the range, by default 0
+   * @param [end] - end char index of the range, by default length of the text value
+   */
+  getFragments?(start: number, end: number): InlineFragment[];
 
   /**
    * Inserts text at passed char index
@@ -65,9 +80,23 @@ export interface InlineNode {
   split(index?: number): InlineNode | null;
 
   /**
-   * Serialized value of the node
+   * Merges current node with passed
+   *
+   * @param node - node to merge
    */
-  serialized: InlineNodeSerialized;
+  mergeWith(node: InlineNode): void;
+
+  /**
+   * Check if current node is equal to passed
+   *
+   * @param node - node to check
+   */
+  isEqual(node: InlineNode): boolean;
+
+  /**
+   * Normalizes nodes subtree
+   */
+  normalize(): void;
 }
 
 /**
