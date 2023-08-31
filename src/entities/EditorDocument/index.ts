@@ -99,11 +99,12 @@ export class EditorDocument {
 
   /**
    * Updates a property of the EditorDocument.
+   * Adds the property if it does not exist.
    *
    * @param name - The name of the property to update
    * @param value - The value to update the property with
    */
-  public updateProperty<T = unknown>(name: keyof Properties, value: T): void {
+  public setProperty<T = unknown>(name: keyof Properties, value: T): void {
     this.#properties[name] = value;
   }
 

@@ -293,7 +293,7 @@ describe('EditorDocument', () => {
     });
   });
 
-  describe('.updateProperty()', () => {
+  describe('.setProperty()', () => {
     it('should update the property with the specified name', () => {
       const propertyName = 'readOnly';
       const expectedValue = true;
@@ -304,7 +304,7 @@ describe('EditorDocument', () => {
         },
       });
 
-      document.updateProperty(propertyName, expectedValue);
+      document.setProperty(propertyName, expectedValue);
 
       expect(document.properties[propertyName]).toBe(expectedValue);
     });
@@ -317,7 +317,7 @@ describe('EditorDocument', () => {
         properties: {},
       });
 
-      document.updateProperty(propertyName, expectedValue);
+      document.setProperty(propertyName, expectedValue);
 
       expect(document.properties[propertyName]).toBe(expectedValue);
     });
