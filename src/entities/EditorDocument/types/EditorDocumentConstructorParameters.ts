@@ -10,5 +10,5 @@ export interface EditorDocumentConstructorParameters {
   /**
    * The properties of the document
    */
-  properties: Properties;
+  properties?: Properties;
 }

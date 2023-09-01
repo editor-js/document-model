@@ -21,9 +21,9 @@ export class EditorDocument {
    *
    * @param args - EditorDocument constructor arguments.
    * @param args.children - The child BlockNodes of the EditorDocument.
-   * @param args.properties - The properties of the document.
+   * @param [args.properties] - The properties of the document.
    */
-  constructor({ children, properties }: EditorDocumentConstructorParameters) {
+  constructor({ children, properties = {} }: EditorDocumentConstructorParameters) {
     this.#children = children;
     this.#properties = properties;
   }
