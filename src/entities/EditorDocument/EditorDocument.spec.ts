@@ -246,4 +246,80 @@ describe('EditorDocument', () => {
       expect(action).toThrowError('Index out of bounds');
     });
   });
+
+  describe('.properties', () => {
+    it('should return the properties of the document', () => {
+      const properties = {
+        'readOnly' : true,
+      };
+
+      const document = new EditorDocument({
+        children: [],
+        properties: {
+          ...properties,
+        },
+      });
+
+      expect(document.properties).toEqual(properties);
+    });
+  });
+
+  describe('.getProperty()', () => {
+    it('should return the property by name', () => {
+      const propertyName = 'readOnly';
+      const expectedValue = true;
+      const document = new EditorDocument({
+        children: [],
+        properties: {
+          [propertyName]: expectedValue,
+        },
+      });
+
+      const actualValue = document.getProperty<boolean>(propertyName);
+
+      expect(actualValue).toBe(expectedValue);
+    });
+
+    it('should return undefined if the property does not exist', () => {
+      const propertyName = 'readOnly';
+      const document = new EditorDocument({
+        children: [],
+        properties: {},
+      });
+
+      const actualValue = document.getProperty<boolean>(propertyName);
+
+      expect(actualValue).toBeUndefined();
+    });
+  });
+
+  describe('.setProperty()', () => {
+    it('should update the property with the specified name', () => {
+      const propertyName = 'readOnly';
+      const expectedValue = true;
+      const document = new EditorDocument({
+        children: [],
+        properties: {
+          [propertyName]: false,
+        },
+      });
+
+      document.setProperty(propertyName, expectedValue);
+
+      expect(document.properties[propertyName]).toBe(expectedValue);
+    });
+
+    it('should add the property if it does not exist', () => {
+      const propertyName = 'readOnly';
+      const expectedValue = true;
+      const document = new EditorDocument({
+        children: [],
+        properties: {},
+      });
+
+      document.setProperty(propertyName, expectedValue);
+
+      expect(document.properties[propertyName]).toBe(expectedValue);
+    });
+  });
 });

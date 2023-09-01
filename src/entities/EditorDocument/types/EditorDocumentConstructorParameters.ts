@@ -1,5 +1,5 @@
-import { BlockNode } from '../../BlockNode';
-import { PropName } from './PropName';
+import type { BlockNode } from '../../BlockNode';
+import type { Properties } from './Properties';
 
 export interface EditorDocumentConstructorParameters {
   /**
@@ -10,5 +10,5 @@ export interface EditorDocumentConstructorParameters {
   /**
    * The properties of the document
    */
-  properties: Record<PropName, unknown>;
+  properties?: Properties;
 }

@@ -1,5 +1,5 @@
 import { BlockNode } from '../BlockNode';
-import { EditorDocumentConstructorParameters, PropName } from './types';
+import type { EditorDocumentConstructorParameters, Properties } from './types';
 
 /**
  * EditorDocument class represents the top-level container for a tree-like structure of BlockNodes in an editor document.
@@ -14,16 +14,16 @@ export class EditorDocument {
   /**
    * Private field representing the properties of the document
    */
-  #properties: Record<PropName, unknown>;
+  #properties: Properties;
 
   /**
    * Constructor for EditorDocument class.
    *
    * @param args - EditorDocument constructor arguments.
    * @param args.children - The child BlockNodes of the EditorDocument.
-   * @param args.properties - The properties of the document.
+   * @param [args.properties] - The properties of the document.
    */
-  constructor({ children, properties }: EditorDocumentConstructorParameters) {
+  constructor({ children, properties = {} }: EditorDocumentConstructorParameters) {
     this.#children = children;
     this.#properties = properties;
   }
@@ -78,6 +78,34 @@ export class EditorDocument {
     this.#checkIndexOutOfBounds(index, this.length - 1);
 
     return this.#children[index];
+  }
+
+  /**
+   * Returns the serialised properties of the EditorDocument.
+   */
+  public get properties(): Properties {
+    return this.#properties;
+  }
+
+  /**
+   * Returns property by name.
+   * Returns undefined if property does not exist.
+   *
+   * @param name - The name of the property to return
+   */
+  public getProperty<T = unknown>(name: keyof Properties): T | undefined {
+    return this.#properties[name] as T;
+  }
+
+  /**
+   * Updates a property of the EditorDocument.
+   * Adds the property if it does not exist.
+   *
+   * @param name - The name of the property to update
+   * @param value - The value to update the property with
+   */
+  public setProperty<T = unknown>(name: keyof Properties, value: T): void {
+    this.#properties[name] = value;
   }
 
   /**
