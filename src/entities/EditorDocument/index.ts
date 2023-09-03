@@ -1,5 +1,6 @@
 import { BlockNode, DataKey } from '../BlockNode';
 import type { EditorDocumentConstructorParameters, Properties } from './types';
+import { BlockTuneName } from '../BlockTune';
 
 /**
  * EditorDocument class represents the top-level container for a tree-like structure of BlockNodes in an editor document.
@@ -120,6 +121,20 @@ export class EditorDocument {
     this.#checkIndexOutOfBounds(blockIndex, this.length - 1);
 
     this.#children[blockIndex].updateValue(dataKey, value);
+  }
+
+  /**
+   * Updates BlockTune data associated with the BlockNode at the specified index.
+   *
+   * @param blockIndex - The index of the BlockNode to update
+   * @param tuneName - The name of the BlockTune to update
+   * @param data - The data to update the BlockTune with
+   * @throws Error if the index is out of bounds
+   */
+  public updateTuneData(blockIndex: number, tuneName: BlockTuneName, data: Record<string, unknown>): void {
+    this.#checkIndexOutOfBounds(blockIndex, this.length - 1);
+
+    this.#children[blockIndex].updateTuneData(tuneName, data);
   }
 
   /**

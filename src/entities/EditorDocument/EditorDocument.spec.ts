@@ -3,6 +3,7 @@ import { BlockNode, createDataKey } from '../BlockNode';
 import { createBlockNodeMock } from '../../utils/mocks/createBlockNodeMock';
 import { createEditorDocumentMock } from '../../utils/mocks/createEditorDocumentMock';
 import { BlockNodeConstructorParameters } from '../BlockNode/types';
+import { createBlockTuneName } from '../BlockTune';
 
 /**
  * Creates an EditorDocument object with some blocks for tests.
@@ -396,6 +397,89 @@ describe('EditorDocument', () => {
       const expectedValue = 'new value';
 
       const action = (): void => document.updateValue(blockIndexOutOfBound, dataKey, expectedValue);
+
+      expect(action).toThrowError('Index out of bounds');
+    });
+  });
+
+  describe('.updateTuneData()', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should call .updateTuneData() method of the BlockNode at the specific index', () => {
+      const blockNodes = [
+        new BlockNode({} as BlockNodeConstructorParameters),
+        new BlockNode({} as BlockNodeConstructorParameters),
+        new BlockNode({} as BlockNodeConstructorParameters),
+      ];
+
+      blockNodes.forEach((blockNode) => {
+        jest
+          .spyOn(blockNode, 'updateTuneData')
+          // eslint-disable-next-line @typescript-eslint/no-empty-function -- mock of the method
+          .mockImplementation(() => {});
+      });
+
+      const document = new EditorDocument({
+        children: blockNodes,
+      });
+      const blockIndexToUpdate = 1;
+      const tuneName = createBlockTuneName('blockFormatting');
+      const updateData = {
+        'align': 'right',
+      };
+
+      document.updateTuneData(blockIndexToUpdate, tuneName, updateData);
+
+      expect(document.getBlock(blockIndexToUpdate).updateTuneData).toHaveBeenCalledWith(tuneName, updateData);
+    });
+
+    it('should not call .updateTuneData() method of other BlockNodes', () => {
+      const blockNodes = [
+        new BlockNode({} as BlockNodeConstructorParameters),
+        new BlockNode({} as BlockNodeConstructorParameters),
+        new BlockNode({} as BlockNodeConstructorParameters),
+      ];
+
+      blockNodes.forEach((blockNode) => {
+        jest
+          .spyOn(blockNode, 'updateTuneData')
+          // eslint-disable-next-line @typescript-eslint/no-empty-function -- mock of the method
+          .mockImplementation(() => {});
+      });
+
+      const document = new EditorDocument({
+        children: blockNodes,
+      });
+      const blockIndexToUpdate = 1;
+      const tuneName = createBlockTuneName('blockFormatting');
+      const updateData = {
+        'align': 'right',
+      };
+
+      document.updateTuneData(blockIndexToUpdate, tuneName, updateData);
+
+      blockNodes.forEach((blockNode, index) => {
+        if (index === blockIndexToUpdate) {
+          return;
+        }
+
+        expect(blockNode.updateTuneData).not.toHaveBeenCalled();
+      });
+    });
+
+    it('should throw an error if the index is out of bounds', () => {
+      const document = new EditorDocument({
+        children: [],
+      });
+      const blockIndexOutOfBound = document.length + 1;
+      const tuneName = createBlockTuneName('blockFormatting');
+      const updateData = {
+        'align': 'right',
+      };
+
+      const action = (): void => document.updateTuneData(blockIndexOutOfBound, tuneName, updateData);
 
       expect(action).toThrowError('Index out of bounds');
     });
