@@ -114,7 +114,7 @@ export class BlockNode {
    * @param dataKey - The key of the ValueNode to update
    * @param value - The new value of the ValueNode
    */
-  public updateValue(dataKey: DataKey, value: unknown): void {
+  public updateValue<T = unknown>(dataKey: DataKey, value: T): void {
     const data = this.#data[dataKey];
 
     if (data === undefined) {

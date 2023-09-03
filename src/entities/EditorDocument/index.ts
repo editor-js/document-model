@@ -1,4 +1,4 @@
-import { BlockNode } from '../BlockNode';
+import { BlockNode, DataKey } from '../BlockNode';
 import type { EditorDocumentConstructorParameters, Properties } from './types';
 
 /**
@@ -106,6 +106,20 @@ export class EditorDocument {
    */
   public setProperty<T = unknown>(name: keyof Properties, value: T): void {
     this.#properties[name] = value;
+  }
+
+  /**
+   * Updates the ValueNode data associated with the BlockNode at the specified index.
+   *
+   * @param blockIndex - The index of the BlockNode to update
+   * @param dataKey - The key of the ValueNode to update
+   * @param value - The new value of the ValueNode
+   * @throws Error if the index is out of bounds
+   */
+  public updateValue<T = unknown>(blockIndex: number, dataKey: DataKey, value: T): void {
+    this.#checkIndexOutOfBounds(blockIndex, this.length - 1);
+
+    this.#children[blockIndex].updateValue(dataKey, value);
   }
 
   /**

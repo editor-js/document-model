@@ -1,7 +1,8 @@
 import { EditorDocument } from './index';
-import { BlockNode } from '../BlockNode';
+import { BlockNode, createDataKey } from '../BlockNode';
 import { createBlockNodeMock } from '../../utils/mocks/createBlockNodeMock';
 import { createEditorDocumentMock } from '../../utils/mocks/createEditorDocumentMock';
+import { BlockNodeConstructorParameters } from '../BlockNode/types';
 
 /**
  * Creates an EditorDocument object with some blocks for tests.
@@ -320,6 +321,83 @@ describe('EditorDocument', () => {
       document.setProperty(propertyName, expectedValue);
 
       expect(document.properties[propertyName]).toBe(expectedValue);
+    });
+  });
+
+  describe('.updateValue()', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should call .updateValue() method of the BlockNode at the specific index', () => {
+      const blockNodes = [
+        new BlockNode({} as BlockNodeConstructorParameters),
+        new BlockNode({} as BlockNodeConstructorParameters),
+        new BlockNode({} as BlockNodeConstructorParameters),
+      ];
+
+      blockNodes.forEach((blockNode) => {
+        jest
+          .spyOn(blockNode, 'updateValue')
+          // eslint-disable-next-line @typescript-eslint/no-empty-function -- mock of the method
+          .mockImplementation(() => {});
+      });
+
+      const document = new EditorDocument({
+        children: blockNodes,
+      });
+      const blockIndexToUpdate = 1;
+      const dataKey = createDataKey('data-key-1a2b');
+      const value = 'Some value';
+
+      document.updateValue(blockIndexToUpdate, dataKey, value);
+
+      expect(document.getBlock(blockIndexToUpdate).updateValue).toHaveBeenCalledWith(dataKey, value);
+    });
+
+    it('should not call .updateValue() method of other BlockNodes', () => {
+      const blockNodes = [
+        new BlockNode({} as BlockNodeConstructorParameters),
+        new BlockNode({} as BlockNodeConstructorParameters),
+        new BlockNode({} as BlockNodeConstructorParameters),
+      ];
+
+      blockNodes.forEach((blockNode) => {
+        jest
+          .spyOn(blockNode, 'updateValue')
+          // eslint-disable-next-line @typescript-eslint/no-empty-function -- mock of the method
+          .mockImplementation(() => {});
+      });
+
+      const document = new EditorDocument({
+        children: blockNodes,
+      });
+      const blockIndexToUpdate = 1;
+      const dataKey = createDataKey('data-key-1a2b');
+      const value = 'Some value';
+
+      document.updateValue(blockIndexToUpdate, dataKey, value);
+
+      blockNodes.forEach((blockNode, index) => {
+        if (index === blockIndexToUpdate) {
+          return;
+        }
+
+        expect(blockNode.updateValue).not.toHaveBeenCalled();
+      });
+    });
+
+    it('should throw an error if the index is out of bounds', () => {
+      const document = new EditorDocument({
+        children: [],
+      });
+      const blockIndexOutOfBound = document.length + 1;
+      const dataKey = createDataKey('data-key-1a2b');
+      const expectedValue = 'new value';
+
+      const action = (): void => document.updateValue(blockIndexOutOfBound, dataKey, expectedValue);
+
+      expect(action).toThrowError('Index out of bounds');
     });
   });
 });
