@@ -28,7 +28,26 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup
       - name: Run mutation tests
+        id: run-mutation-tests
         run: yarn test:mutations
+        continue-on-error: true
+      - name: Test
+        run: echo "Result ${{ steps.run-mutation-tests.outcome == 'success' }}"
+      - uses: thollander/actions-comment-pull-request@v2
+        if: steps.run-mutation-tests.outcome == 'success'
+        with:
+          message: |
+            ✅👾 Mutation testing passed score threshold\n\nReport: https://dashboard.stryker-nutator.io/reports/github.com/editor-js/document-model/${{ github.ref_name }}
+          comment_tag: mutation-tests
+      - uses: thollander/actions-comment-pull-request@v2
+        if: steps.run-mutation-tests.outcome == 'failure'
+        with:
+          message: |
+            ❌👾 Mutation testing hasn't passed score threshold\n\nReport: https://dashboard.stryker-nutator.io/reports/github.com/editor-js/document-model/${{ github.ref_name }}
+          comment_tag: mutation-tests
+      - if: ${{ failure() }}
+        run: exit 1
+
 
   build:
     runs-on: ubuntu-latest
