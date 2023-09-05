@@ -37,13 +37,17 @@ jobs:
         if: steps.run-mutation-tests.outcome == 'success'
         with:
           message: |
-            ✅👾 Mutation testing passed score threshold\n\nReport: https://dashboard.stryker-nutator.io/reports/github.com/editor-js/document-model/${{ github.ref_name }}
+            ## ✅ Mutation testing passed score threshold
+            
+            Report: https://dashboard.stryker-nutator.io/reports/github.com/editor-js/document-model/${{ github.ref_name }}
           comment_tag: mutation-tests
       - uses: thollander/actions-comment-pull-request@v2
         if: steps.run-mutation-tests.outcome == 'failure'
         with:
           message: |
-            ❌👾 Mutation testing hasn't passed score threshold\n\nReport: https://dashboard.stryker-nutator.io/reports/github.com/editor-js/document-model/${{ github.ref_name }}
+            ## ❌ Mutation testing hasn't passed score threshold
+            
+            Report: https://dashboard.stryker-nutator.io/reports/github.com/editor-js/document-model/${{ github.ref }}
           comment_tag: mutation-tests
       - if: ${{ failure() }}
         run: exit 1
