@@ -24,6 +24,8 @@ jobs:
 
   mutation-tests:
     runs-on: ubuntu-latest
+    env:
+      STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup
