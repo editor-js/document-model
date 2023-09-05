@@ -3,6 +3,7 @@ import type { InlineFragment, InlineNode } from '../../InlineNode';
 /**
  * We still need actual class for private and protected methods we can't mock
  */
+// eslint-disable-next-line no-undef
 const { ParentInlineNode: ActualClass } = jest.requireActual('../index');
 
 /**

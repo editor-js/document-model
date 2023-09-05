@@ -18,6 +18,8 @@ jest.mock('../mixins/ChildNode', () => ({
 
       /**
        * Mock method
+       *
+       * @param parent - parent to append the node to
        */
       public appendTo(parent: ParentNode): void {
         if (this.parent === parent) {
@@ -239,7 +241,6 @@ describe('ParentNode mixin', () => {
 
       expect(dummy.children).toEqual([childMock, anotherChildMock, childMockToInsert]);
     });
-
   });
 
   describe('.removeChild()', () => {

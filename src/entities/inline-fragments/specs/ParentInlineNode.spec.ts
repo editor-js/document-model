@@ -300,10 +300,10 @@ describe('ParentInlineNode', () => {
 
       const result = node.getFragments();
 
-      expect(result).toEqual([{
+      expect(result).toEqual([ {
         tool: 'bold',
         range: [childMock.length, node.length],
-      }]);
+      } ]);
     });
   });
 

@@ -10,7 +10,6 @@ export interface FormattingInlineNode extends ParentNode, ChildNode {}
 @ParentNode
 @ChildNode
 export class FormattingInlineNode {
-
   /**
    * Method mock
    */

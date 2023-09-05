@@ -1,5 +1,6 @@
 import { ChildNode } from '../../mixins/ChildNode';
 import { InlineNode } from '../../InlineNode';
+import { TextInlineNodeConstructorParameters } from '../types';
 
 export interface TextInlineNode extends ChildNode {}
 
@@ -14,9 +15,10 @@ export class TextInlineNode implements InlineNode {
   /**
    * Mock constructor
    *
-   * @param root0
+   * @param args - constructor params
+   * @param [args.value] - TextNode value
    */
-  constructor({ value = '' }: { value: string }) {
+  constructor({ value = '' }: TextInlineNodeConstructorParameters) {
     this.value = value;
   }
 
@@ -36,6 +38,8 @@ export class TextInlineNode implements InlineNode {
 
   /**
    * Mock method
+   *
+   * @param text - text to insert
    */
   public insertText(text: string): void {
     this.value += text;
@@ -64,13 +68,15 @@ export class TextInlineNode implements InlineNode {
 
   /**
    * Mock method
+   *
+   * @param index - index where to split the node
    */
   public split(index: number): InlineNode | null {
     if (index === 0 || index === this.length) {
       return null;
     }
 
-    const newNode = new TextInlineNode({ value: this.value.slice(index)});
+    const newNode = new TextInlineNode({ value: this.value.slice(index) });
 
     this.value = this.value.slice(0, index);
 
