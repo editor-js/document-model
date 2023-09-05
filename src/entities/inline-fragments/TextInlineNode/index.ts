@@ -184,7 +184,7 @@ export class TextInlineNode implements InlineNode {
    */
   public mergeWith(node: InlineNode): void {
     if (!this.isEqual(node)) {
-      return;
+      throw new Error('Can not merge unequal nodes');
     }
 
     this.value += node.value;

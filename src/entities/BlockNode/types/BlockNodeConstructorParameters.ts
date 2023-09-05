@@ -12,12 +12,12 @@ export interface BlockNodeConstructorParameters {
   /**
    * The content of the Block
    */
-  data: BlockNodeData;
+  data?: BlockNodeData;
 
   /**
    * The parent EditorDocument of the BlockNode
    */
-  parent: EditorDocument;
+  parent?: EditorDocument;
 
   /**
    * The BlockTunes associated with the BlockNode

@@ -9,5 +9,5 @@ export interface BlockTuneConstructorParameters {
   /**
    * Any additional data associated with the tune
    */
-  data: Record<string, unknown>;
+  data?: Record<string, unknown>;
 }

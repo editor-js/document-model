@@ -1,34 +1,69 @@
-import { BlockNode } from './index';
-import { createBlockNodeName, createDataKey } from './types';
+import { BlockNode, createBlockNodeName, createDataKey } from './index';
 
-import { BlockTune, createBlockTuneName } from '../BlockTune';
-import { TextInlineNode } from '../inline-fragments/TextInlineNode';
+import { BlockTune, BlockTuneName } from '../BlockTune';
 import { ValueNode } from '../ValueNode';
 
 import type { EditorDocument } from '../EditorDocument';
 import type { BlockTuneConstructorParameters } from '../BlockTune/types';
-import type { TextInlineNodeConstructorParameters } from '../inline-fragments/TextInlineNode';
 import type { ValueNodeConstructorParameters } from '../ValueNode';
+import { RootInlineNode } from '../inline-fragments';
+import { describe } from '@jest/globals';
+
+jest.mock('../BlockTune', () => ({
+  BlockTune: jest.fn().mockImplementation(() => ({
+    get serialized() {
+      return {};
+    },
+    update() {
+      return;
+    },
+  }) as unknown as BlockTune),
+}));
+
+jest.mock('../inline-fragments', () => ({
+  RootInlineNode: jest.fn().mockImplementation(() => ({
+    get serialized() {
+      return {};
+    },
+  }) as RootInlineNode),
+}));
+
+jest.mock('../ValueNode', () => ({
+  ValueNode: (class {
+    /**
+     * Mock method
+     */
+    public get serialized(): object {
+      return {};
+    }
+
+    /**
+     * Mock method
+     */
+    public update(): void {
+      return;
+    }
+  }) as unknown as typeof ValueNode,
+}));
 
 describe('BlockNode', () => {
-  describe('.serialized', () => {
+  describe('constructor', () => {
+    let node: BlockNode;
+
     beforeEach(() => {
-      jest.mock('../BlockTune', () => ({
-        BlockTune: jest.fn().mockImplementation(() => ({}) as BlockTune),
-        serialized: jest.fn(),
-      }));
-
-      jest.mock('../inline-fragments/TextInlineNode', () => ({
-        TextInlineNode: jest.fn().mockImplementation(() => ({}) as TextInlineNode),
-        serialized: jest.fn(),
-      }));
-
-      jest.mock('../ValueNode', () => ({
-        ValueNode: jest.fn().mockImplementation(() => ({}) as ValueNode),
-        serialized: jest.fn(),
-      }));
+      node = new BlockNode({ name: createBlockNodeName('header') });
     });
 
+    it('should have empty object as data by default', () => {
+      expect(node.serialized.data).toEqual({});
+    });
+
+    it('should set null as parent by default', () => {
+      expect(node.parent).toBeNull();
+    });
+  });
+
+  describe('.serialized', () => {
     afterEach(() => {
       jest.clearAllMocks();
     });
@@ -49,9 +84,9 @@ describe('BlockNode', () => {
 
     it('should call .serialized getter of all tunes associated with the BlockNode', () => {
       const blockTunesNames = [
-        createBlockTuneName('align'),
-        createBlockTuneName('font-size'),
-        createBlockTuneName('font-weight'),
+        'align' as BlockTuneName,
+        'font-size' as BlockTuneName,
+        'font-weight' as BlockTuneName,
       ];
 
       const blockTunes = blockTunesNames.reduce((acc, name) => ({
@@ -109,21 +144,25 @@ describe('BlockNode', () => {
       });
     });
 
-    it('should call .serialized getter of all child TextInlineNodes associated with the BlockNode', () => {
+    it('should call .serialized getter of all child RootInlineNodes associated with the BlockNode', () => {
       const countOfTextNodes = 3;
 
-      const textNodes = [ ...Array(countOfTextNodes).keys() ]
-        .map(() => new TextInlineNode({} as TextInlineNodeConstructorParameters));
 
-      const spyArray = textNodes
+      const textNodes = [ ...Array(countOfTextNodes).keys() ]
+        .reduce((acc, index) => ({
+          ...acc,
+          [createDataKey(`data-key-${index}c${index}d`)]: new RootInlineNode(),
+        }), {});
+
+      const spyArray = Object.values(textNodes)
         .map((textNode) => {
-          return jest.spyOn(textNode, 'serialized', 'get');
+          return jest.spyOn(textNode as RootInlineNode, 'serialized', 'get');
         });
 
       const blockNode = new BlockNode({
         name: createBlockNodeName('paragraph'),
         data: {
-          [createDataKey('data-key-1a2b')]: textNodes,
+          ...textNodes,
         },
         parent: {} as EditorDocument,
       });
@@ -149,7 +188,7 @@ describe('BlockNode', () => {
     });
 
     it('should call .update() method of the BlockTune', () => {
-      const blockTuneName = createBlockTuneName('align');
+      const blockTuneName = 'align' as BlockTuneName;
 
       const blockTune = new BlockTune({} as BlockTuneConstructorParameters);
 
@@ -231,7 +270,7 @@ describe('BlockNode', () => {
       const blockNode = new BlockNode({
         name: createBlockNodeName('paragraph'),
         data: {
-          [dataKey]: [ {} as TextInlineNode ],
+          [dataKey]: {} as RootInlineNode,
         },
         parent: {} as EditorDocument,
       });

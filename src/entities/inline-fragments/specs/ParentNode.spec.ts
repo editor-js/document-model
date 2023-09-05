@@ -1,12 +1,70 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { ParentNode } from '../mixins/ParentNode';
-import { createChildNodeMock } from '../../../mocks/ChildNode.mock';
+import { ChildNode } from '../mixins/ChildNode';
+import type { InlineNode } from '../InlineNode';
+
+jest.mock('../mixins/ChildNode', () => ({
+  ChildNode: function (constructor: { new(): InlineNode }): typeof ChildNode {
+    return (class extends constructor {
+      /**
+       * Parent mock
+       */
+      public parent: ParentNode | null = null;
+      /**
+       * Mock property
+       */
+      // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+      public length = 5;
+
+      /**
+       * Mock method
+       */
+      public appendTo(parent: ParentNode): void {
+        if (this.parent === parent) {
+          return;
+        }
+
+        this.parent = parent;
+
+        parent.append(this);
+      }
+
+      /**
+       * Mock method
+       */
+      public remove(): void {
+        return;
+      }
+
+      /**
+       * Mock method
+       */
+      public normalize(): void {
+        return;
+      }
+
+      /**
+       * Mock method
+       */
+      public isEqual(): boolean {
+        return false;
+      }
+
+      /**
+       * Mock method
+       */
+      public mergeWith(): void {
+        return;
+      }
+    }) as unknown as typeof ChildNode;
+  },
+}));
 
 interface Dummy extends ParentNode {
 }
 
 /**
- *
+ * ParentNode class dummy
  */
 @ParentNode
 class Dummy {
@@ -18,12 +76,22 @@ class Dummy {
   constructor(_options?: unknown) {}
 }
 
-describe('ParentNode decorator', () => {
+interface ChildDummy extends ChildNode {}
+
+/**
+ * ChildNode class dummy
+ */
+@ChildNode
+class ChildDummy {}
+
+describe('ParentNode mixin', () => {
   let dummy: Dummy;
 
   beforeEach(() => {
     dummy = new Dummy();
+  });
 
+  afterEach(() => {
     jest.resetAllMocks();
   });
 
@@ -42,13 +110,25 @@ describe('ParentNode decorator', () => {
 
   describe('constructor', () => {
     it('should append passed children to new parent', () => {
-      const childMock = createChildNodeMock();
+      const childMock = new ChildDummy();
+      const spy = jest.spyOn(childMock, 'appendTo');
 
       dummy = new Dummy({
         children: [ childMock ],
       });
 
-      expect(childMock.appendTo).toBeCalledWith(dummy);
+      expect(spy).toBeCalledWith(dummy);
+    });
+  });
+
+  describe('.length', () => {
+    it('should return sum of children lengths', () => {
+      const childMock = new ChildDummy();
+      const anotherChildMock = new ChildDummy();
+
+      dummy.append(childMock, anotherChildMock);
+
+      expect(dummy.length).toEqual(childMock.length + anotherChildMock.length);
     });
   });
 
@@ -57,20 +137,21 @@ describe('ParentNode decorator', () => {
       expect(dummy.children).toEqual([]);
     });
 
-    it('should return children passed via constructor', () => {
-      const childMock = createChildNodeMock();
+    it('should append children passed via constructor', () => {
+      const childMock = new ChildDummy();
+      const spy = jest.spyOn(childMock, 'appendTo');
 
       dummy = new Dummy({
         children: [ childMock ],
       });
 
-      expect(dummy.children).toEqual([ childMock ]);
+      expect(spy).toBeCalledWith(dummy);
     });
   });
 
   describe('.append()', () => {
     it('should add child to the children array', () => {
-      const childMock = createChildNodeMock();
+      const childMock = new ChildDummy();
 
       dummy.append(childMock);
 
@@ -78,23 +159,20 @@ describe('ParentNode decorator', () => {
     });
 
     it('should add several children to the children array', () => {
-      const childMock = createChildNodeMock();
-      const anotherChildMock = createChildNodeMock();
+      const childMock = new ChildDummy();
+      const anotherChildMock = new ChildDummy();
 
       dummy.append(childMock, anotherChildMock);
 
       expect(dummy.children).toEqual([childMock, anotherChildMock]);
     });
 
-    it('should move a child to the end of children array if it is already there', () => {
-      const childMock = createChildNodeMock();
-      const anotherChildMock = createChildNodeMock();
-      const oneMoreChildMock = createChildNodeMock();
+    it('should append a child to the end of children array if it is already there', () => {
+      const childMock = new ChildDummy();
+      const anotherChildMock = new ChildDummy();
+      const oneMoreChildMock = new ChildDummy();
 
-
-      dummy = new Dummy({
-        children: [childMock, anotherChildMock, oneMoreChildMock],
-      });
+      dummy.append(childMock, anotherChildMock, oneMoreChildMock);
 
       dummy.append(anotherChildMock);
 
@@ -102,13 +180,11 @@ describe('ParentNode decorator', () => {
     });
 
     it('should preserve already existing children', () => {
-      const childMock = createChildNodeMock();
-      const anotherChildMock = createChildNodeMock();
-      const oneMoreChildMock = createChildNodeMock();
+      const childMock = new ChildDummy();
+      const anotherChildMock = new ChildDummy();
+      const oneMoreChildMock = new ChildDummy();
 
-      dummy = new Dummy({
-        children: [childMock, anotherChildMock],
-      });
+      dummy.append(childMock, anotherChildMock);
 
       dummy.append(oneMoreChildMock);
 
@@ -117,10 +193,12 @@ describe('ParentNode decorator', () => {
   });
 
   describe('.insertAfter()', () => {
-    it('should insert a child after passed target', () => {
-      const childMock = createChildNodeMock();
-      const anotherChildMock = createChildNodeMock();
-      const childMockToInsert = createChildNodeMock();
+    it('should call child\'s appendTo methods', () => {
+      const childMock = new ChildDummy();
+      const anotherChildMock = new ChildDummy();
+      const childMockToInsert = new ChildDummy();
+
+      const spy = jest.spyOn(childMockToInsert, 'appendTo');
 
       dummy = new Dummy({
         children: [childMock, anotherChildMock],
@@ -128,14 +206,16 @@ describe('ParentNode decorator', () => {
 
       dummy.insertAfter(childMock, childMockToInsert);
 
-      expect(dummy.children).toEqual([childMock, childMockToInsert, anotherChildMock]);
+      expect(spy).toBeCalledWith(dummy);
     });
 
-    it('should insert several children after passed target', () => {
-      const childMock = createChildNodeMock();
-      const anotherChildMock = createChildNodeMock();
-      const childMockToInsert = createChildNodeMock();
-      const anotherChildMockToInsert = createChildNodeMock();
+    it('should call appendTo for each passed child', () => {
+      const childMock = new ChildDummy();
+      const anotherChildMock = new ChildDummy();
+      const childMockToInsert = new ChildDummy();
+      const anotherChildMockToInsert = new ChildDummy();
+
+      const spies = [childMockToInsert, anotherChildMockToInsert].map(child => jest.spyOn(child, 'appendTo'));
 
       dummy = new Dummy({
         children: [childMock, anotherChildMock],
@@ -143,28 +223,28 @@ describe('ParentNode decorator', () => {
 
       dummy.insertAfter(childMock, childMockToInsert, anotherChildMockToInsert);
 
-      expect(dummy.children).toEqual([childMock, childMockToInsert, anotherChildMockToInsert, anotherChildMock]);
+      spies.forEach(spy => {
+        expect(spy).toBeCalledWith(dummy);
+      });
     });
 
     it('should remove existing child and insert it to the new place', () => {
-      const childMock = createChildNodeMock();
-      const anotherChildMock = createChildNodeMock();
-      const oneMoreChildMock = createChildNodeMock();
-      const childMockToInsert = createChildNodeMock();
+      const childMock = new ChildDummy();
+      const anotherChildMock = new ChildDummy();
+      const childMockToInsert = new ChildDummy();
 
-      dummy = new Dummy({
-        children: [childMock, anotherChildMock, oneMoreChildMock, childMockToInsert],
-      });
+      dummy.append(childMock, childMockToInsert, anotherChildMock);
 
       dummy.insertAfter(anotherChildMock, childMockToInsert);
 
-      expect(dummy.children).toEqual([childMock, anotherChildMock, childMockToInsert, oneMoreChildMock]);
+      expect(dummy.children).toEqual([childMock, anotherChildMock, childMockToInsert]);
     });
+
   });
 
   describe('.removeChild()', () => {
     it('should remove child from the children array', () => {
-      const childMock = createChildNodeMock();
+      const childMock = new ChildDummy();
 
       dummy = new Dummy({
         children: [ childMock ],
@@ -176,7 +256,8 @@ describe('ParentNode decorator', () => {
     });
 
     it('should call remove method of child', () => {
-      const childMock = createChildNodeMock();
+      const childMock = new ChildDummy();
+      const spy = jest.spyOn(childMock, 'remove');
 
       dummy = new Dummy({
         children: [ childMock ],
@@ -184,7 +265,71 @@ describe('ParentNode decorator', () => {
 
       dummy.removeChild(childMock);
 
-      expect(childMock.remove).toBeCalled();
+      expect(spy).toBeCalled();
+    });
+  });
+
+  describe('.normalize()', () => {
+    it('should call normalize for each child', () => {
+      const childMock = new ChildDummy();
+      const anotherChildMock = new ChildDummy();
+
+      const spies = [childMock, anotherChildMock].map(child => jest.spyOn(child, 'normalize'));
+
+      dummy.append(childMock, anotherChildMock);
+
+      dummy.normalize();
+
+      spies.forEach(spy => expect(spy).toHaveBeenCalled());
+    });
+
+    it('should merge two equal children', () => {
+      const childMock = new ChildDummy();
+      const anotherChildMock = new ChildDummy();
+
+      jest.spyOn(childMock, 'isEqual').mockImplementation(() => true);
+
+      const spy = jest.spyOn(childMock, 'mergeWith');
+
+      dummy.append(childMock, anotherChildMock);
+
+      dummy.normalize();
+
+      expect(spy).toHaveBeenCalledWith(anotherChildMock);
+    });
+
+    it('should merge more than two equal children', () => {
+      const childMock = new ChildDummy();
+      const anotherChildMock = new ChildDummy();
+      const oneMoreChildMock = new ChildDummy();
+
+      jest.spyOn(childMock, 'isEqual').mockImplementation(() => true);
+
+      const spy = jest.spyOn(childMock, 'mergeWith');
+
+      dummy.append(childMock, anotherChildMock, oneMoreChildMock);
+
+      dummy.normalize();
+
+      expect(spy).toHaveBeenCalledWith(oneMoreChildMock);
+    });
+
+    it('should remove child if it\'s length is 0', () => {
+      const childMock = new ChildDummy();
+
+      jest.replaceProperty(childMock, 'length', 0);
+
+      const spy = jest.spyOn(childMock, 'remove');
+
+      dummy.append(childMock);
+
+      dummy.normalize();
+
+      expect(spy).toHaveBeenCalled();
+    });
+
+    it('should not throw an error if there is no children', () => {
+      expect(() => dummy.normalize()).not.toThrow();
     });
   });
 });

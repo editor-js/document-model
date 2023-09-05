@@ -1,11 +1,22 @@
-import { createBlockTuneName } from './index';
-import { createBlockTuneMock } from '../../utils/mocks/createBlockTuneMock';
+import { BlockTune, createBlockTuneName } from './index';
+import { describe } from '@jest/globals';
 
 describe('BlockTune', () => {
+  const tuneName = createBlockTuneName('alignment');
+
+  describe('constructor', () => {
+    it('should have empty object as default data value', () => {
+      const blockTune = new BlockTune({ name: tuneName });
+
+      expect(blockTune.serialized.data).toEqual({});
+    });
+  });
+
   describe('.update()', () => {
     it('should add field to data object by key if it doesn\'t exist', () => {
       // Arrange
-      const blockTune = createBlockTuneMock({
+      const blockTune = new BlockTune({
+        name: tuneName,
         data: {},
       });
 
@@ -20,7 +31,8 @@ describe('BlockTune', () => {
 
     it('should update field in data object by key', () => {
       // Arrange
-      const blockTune = createBlockTuneMock({
+      const blockTune = new BlockTune({
+        name: tuneName,
         data: {
           align: 'center',
         },
@@ -39,8 +51,8 @@ describe('BlockTune', () => {
   describe('.serialized', () => {
     it('should return serialized version of the BlockTune', () => {
       // Arrange
-      const tune = createBlockTuneMock({
-        name: createBlockTuneName('styling'),
+      const tune = new BlockTune({
+        name: tuneName,
         data: {
           background: 'transparent',
         },
@@ -52,7 +64,7 @@ describe('BlockTune', () => {
       // Assert
       expect(tuneSerialized).toEqual(
         {
-          name: 'styling',
+          name: tuneName,
           data: {
             background: 'transparent',
           },

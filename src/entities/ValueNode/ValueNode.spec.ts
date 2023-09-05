@@ -1,10 +1,10 @@
-import { createValueNodeMock } from '../../utils/mocks/createValueNodeMock';
+import { ValueNode } from './index';
 
 describe('ValueNode', () => {
   describe('.update()', () => {
     it('should update existing data associated with this value node', () => {
       // Arrange
-      const longitudeValueNode = createValueNodeMock({
+      const longitudeValueNode = new ValueNode({
         value: 23.123,
       });
       const updatedLongitude = 23.456;
@@ -21,7 +21,7 @@ describe('ValueNode', () => {
     it('should return the serialized data associated with this value node', () => {
       // Arrange
       const longitude = 23.123;
-      const longitudeValueNode = createValueNodeMock({
+      const longitudeValueNode = new ValueNode({
         value: longitude,
       });
 

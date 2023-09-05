@@ -1,7 +1,27 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { ChildNode } from '../mixins/ChildNode';
-import type { ParentNode } from '../mixins/ParentNode';
-import { createParentNodeMock } from '../../../mocks/ParentNode.mock';
+import { ParentNode } from '../mixins/ParentNode';
+import { InlineNode } from '../InlineNode';
+
+jest.mock('../mixins/ParentNode', () => ({
+  ParentNode: function (constructor: { new(): InlineNode }): typeof ParentNode {
+    return (class extends constructor {
+      /**
+       * Mock method
+       */
+      public append(): void {
+        return;
+      }
+
+      /**
+       * Mock method
+       */
+      public removeChild(): void {
+        return;
+      }
+    }) as unknown as typeof ParentNode;
+  },
+}));
 
 interface Dummy extends ChildNode {
 }
@@ -19,21 +39,35 @@ class Dummy {
   constructor(_options?: unknown) {}
 }
 
-describe('ChildNode decorator', () => {
+interface ParentDummy extends ParentNode {}
+
+/**
+ * ParentNode class dummy
+ */
+@ParentNode
+class ParentDummy {}
+
+describe('ChildNode mixin', () => {
   let dummy: Dummy;
   let parentMock: ParentNode;
 
   beforeEach(() => {
-    parentMock = createParentNodeMock();
+    parentMock = new ParentDummy();
 
     jest.resetAllMocks();
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
 
   it('should decorated class to a parent', () => {
+    const spy = jest.spyOn(parentMock, 'append');
+
     dummy = new Dummy({ parent: parentMock });
 
-    expect(parentMock.append).toBeCalledWith(dummy);
+    expect(spy).toBeCalledWith(dummy);
   });
 
   it('should add remove method to the decorated class', () => {
@@ -67,9 +101,11 @@ describe('ChildNode decorator', () => {
     });
 
     it('should call parent\'s removeChild method', () => {
+      const spy = jest.spyOn(parentMock, 'removeChild');
+
       dummy.remove();
 
-      expect(parentMock.removeChild).toBeCalledWith(dummy);
+      expect(spy).toBeCalledWith(dummy);
     });
 
     it('should set node\'s parent to null', () => {
@@ -85,9 +121,11 @@ describe('ChildNode decorator', () => {
     });
 
     it('should call parent\'s append method on appendTo call', () => {
+      const spy = jest.spyOn(parentMock, 'append');
+
       dummy.appendTo(parentMock);
 
-      expect(parentMock.append).toBeCalledWith(dummy);
+      expect(spy).toBeCalledWith(dummy);
     });
 
     it('should set node\'s parent on appendTo call', () => {
@@ -101,11 +139,11 @@ describe('ChildNode decorator', () => {
         parent: parentMock,
       });
 
-      jest.resetAllMocks();
+      const spy = jest.spyOn(parentMock, 'append');
 
       dummyWithParent.appendTo(parentMock);
 
-      expect(parentMock.append).not.toBeCalled();
+      expect(spy).not.toBeCalled();
     });
   });
 });
