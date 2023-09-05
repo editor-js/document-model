@@ -42,7 +42,7 @@ jobs:
           message: |
             ## ✅ Mutation testing passed score threshold
             
-            Report: https://dashboard.stryker-nutator.io/reports/github.com/editor-js/document-model/${{ github.ref }}
+            Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/${{ github.ref }}
           comment_tag: mutation-tests
 
       - uses: thollander/actions-comment-pull-request@v2
@@ -51,7 +51,7 @@ jobs:
           message: |
             ## ❌ Mutation testing hasn't passed score threshold
             
-            Report: https://dashboard.stryker-nutator.io/reports/github.com/editor-js/document-model/${{ github.ref }}
+            Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/${{ github.ref }}
           comment_tag: mutation-tests
 
       - if: ${{ failure() }}
