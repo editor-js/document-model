@@ -2,6 +2,8 @@ import { InlineFragment, InlineNode, InlineNodeSerialized } from '../InlineNode'
 import { ParentNode, ParentNodeConstructorOptions } from '../mixins/ParentNode';
 import { ChildNode } from '../mixins/ChildNode';
 import type { InlineToolData, InlineToolName } from '../FormattingInlineNode';
+import { TextInlineNode } from '../index';
+
 /**
  * We need to extend ParentInlineNode interface with ParentNode ones to use the methods from mixins
  */
@@ -45,12 +47,6 @@ export class ParentInlineNode implements InlineNode {
     this.validateIndex(index);
 
     if (this.length === 0) {
-      /**
-       * We need to resolve circular dependency by require
-       */
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { TextInlineNode } = require('../TextInlineNode');
-
       const textNode = new TextInlineNode();
 
       this.append(textNode);
