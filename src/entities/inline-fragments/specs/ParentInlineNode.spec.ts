@@ -66,7 +66,7 @@ describe('ParentInlineNode', () => {
     const start = 3;
     const end = 5;
 
-    it('should throw a error if start index is invalid', () => {
+    it('should throw an error if start index is invalid', () => {
       expect(() => node.getText(-1)).toThrowError();
       expect(() => node.getText(node.length + 1)).toThrowError();
     });
