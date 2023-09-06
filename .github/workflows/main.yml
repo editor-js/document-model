@@ -39,9 +39,9 @@ jobs:
               - 'src/**/*.ts'
               - '!src/**/*.spec.tsx'
               - '!src/**/__mocks__/**'
-          separator: ","
+          separator: "','"
 
-      - run: echo ${{ steps.changed-files.outputs.src_all_changed_files }}
+      - run: echo "'${{ steps.changed-files.outputs.src_all_changed_files }}'"
 
 #      - name: Run mutation tests
 #        id: run-mutation-tests
@@ -59,7 +59,7 @@ jobs:
             <details>
               <summary>Changed files</summary>
               <pre>
-                ${{ join(fromJson(format('[{0}]', steps.changed-files.outputs.src_all_changed_files)), '\n') }}
+                ${{ join(fromJson(format('[{0}]', '\'' + steps.changed-files.outputs.src_all_changed_files '\'')), '\n') }}
               </pre>
             </details>
           comment_tag: mutation-tests
