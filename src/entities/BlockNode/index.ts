@@ -1,3 +1,5 @@
+console.log('Change file to test CI');
+
 import { EditorDocument } from '../EditorDocument';
 import { BlockTune, BlockTuneName } from '../BlockTune';
 import {
