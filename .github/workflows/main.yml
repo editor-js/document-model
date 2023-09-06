@@ -41,21 +41,26 @@ jobs:
               - '!src/**/__mocks__/**'
           separator: ","
 
-      - run: echo ${{ steps.changed-files.outputs.src_all_changed_files }}
-
 #      - name: Run mutation tests
 #        id: run-mutation-tests
 #        run: yarn test:mutations
 #        continue-on-error: true
 #
-#      - uses: thollander/actions-comment-pull-request@v2
+      - uses: thollander/actions-comment-pull-request@v2
 #        if: steps.run-mutation-tests.outcome == 'success'
-#        with:
-#          message: |
-#            ## ✅ Mutation testing passed score threshold
-#
-#            Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${{ github.event.number }}
-#          comment_tag: mutation-tests
+        with:
+          message: |
+            ## ✅ Mutation testing passed score threshold
+
+            Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${{ github.event.number }}
+            
+            <details>
+              <summary>Changed files</summary>
+              <pre>
+                ${{ join(fromJson(format('[{0}]', steps.changed-files.outputs.src_all_changed_files)), '\n') }}
+              </pre>
+            </details>
+          comment_tag: mutation-tests
 #
 #      - uses: thollander/actions-comment-pull-request@v2
 #        if: steps.run-mutation-tests.outcome == 'failure'
