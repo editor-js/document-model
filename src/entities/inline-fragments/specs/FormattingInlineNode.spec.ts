@@ -139,7 +139,7 @@ describe('FormattingInlineNode', () => {
     it('should create new FormattingInlineNode with children split from the original one', () => {
       const newNode = node.split(firstChildMock.length);
 
-      expect(newNode?.children).toEqual([ secondChildMock, thirdChildMock ]);
+      expect(newNode?.children).toEqual([secondChildMock, thirdChildMock]);
     });
 
     it('should call split method of child containing the specified index', () => {
