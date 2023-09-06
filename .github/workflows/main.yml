@@ -41,6 +41,8 @@ jobs:
               - '!src/**/__mocks__/**'
           separator: ","
 
+      - run: echo ${{ steps.changed-files.outputs.src_all_changed_files }}
+
 #      - name: Run mutation tests
 #        id: run-mutation-tests
 #        run: yarn test:mutations
@@ -57,7 +59,7 @@ jobs:
             <details>
               <summary>Changed files</summary>
               <pre>
-                ${{ join(fromJson(format('[{0}]', steps.changed-files.outputs.src_all_changed_files)), '\n') }}
+                ${{ join(fromJson(format("[{0}]", steps.changed-files.outputs.src_all_changed_files)), "\n") }}
               </pre>
             </details>
           comment_tag: mutation-tests
