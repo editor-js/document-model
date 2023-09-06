@@ -1,3 +1,5 @@
+console.log('This is a change to test workflow');
+
 import { EditorDocument } from '../EditorDocument';
 import { BlockTune, BlockTuneName } from '../BlockTune';
 import {
