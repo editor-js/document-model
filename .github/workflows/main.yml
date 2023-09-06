@@ -31,31 +31,43 @@ jobs:
 
       - uses: ./.github/actions/setup
 
-      - name: Run mutation tests
-        id: run-mutation-tests
-        run: yarn test:mutations
-        continue-on-error: true
-
-      - uses: thollander/actions-comment-pull-request@v2
-        if: steps.run-mutation-tests.outcome == 'success'
+      - uses: tj-actions/changed-files
+        id: changed-files
         with:
-          message: |
-            ## ✅ Mutation testing passed score threshold
-            
-            Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${{ github.event.number }}
-          comment_tag: mutation-tests
+          files_yml: |
+            src:
+              - 'src/**/*.ts'
+              - '!src/**/*.spec.tsx'
+              - '!src/**/__mocks__/**'
+          separator: ","
 
-      - uses: thollander/actions-comment-pull-request@v2
-        if: steps.run-mutation-tests.outcome == 'failure'
-        with:
-          message: |
-            ## ❌ Mutation testing hasn't passed score threshold
-            
-            Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${{ github.event.number }}
-          comment_tag: mutation-tests
+      - run: echo ${{ steps.changed-files.outputs.src_all_changed_files }}
 
-      - if: ${{ failure() }}
-        run: exit 1
+#      - name: Run mutation tests
+#        id: run-mutation-tests
+#        run: yarn test:mutations
+#        continue-on-error: true
+#
+#      - uses: thollander/actions-comment-pull-request@v2
+#        if: steps.run-mutation-tests.outcome == 'success'
+#        with:
+#          message: |
+#            ## ✅ Mutation testing passed score threshold
+#
+#            Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${{ github.event.number }}
+#          comment_tag: mutation-tests
+#
+#      - uses: thollander/actions-comment-pull-request@v2
+#        if: steps.run-mutation-tests.outcome == 'failure'
+#        with:
+#          message: |
+#            ## ❌ Mutation testing hasn't passed score threshold
+#
+#            Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${{ github.event.number }}
+#          comment_tag: mutation-tests
+#
+#      - if: ${{ failure() }}
+#        run: exit 1
 
 
   build:
