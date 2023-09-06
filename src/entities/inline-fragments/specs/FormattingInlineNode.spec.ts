@@ -1,4 +1,4 @@
-import { TextInlineNode, createInlineToolData, createInlineToolName, FormattingInlineNode } from '../index';
+import { TextInlineNode, createInlineToolData, createInlineToolName, FormattingInlineNode, ChildNode } from '../index';
 import type { ParentNode } from '../mixins/ParentNode';
 import type { InlineNode } from '../InlineNode';
 import { ParentInlineNode } from '../ParentInlineNode';
@@ -8,24 +8,29 @@ jest.mock('../TextInlineNode');
 
 describe('FormattingInlineNode', () => {
   let parent: ParentNode;
-  let childMock: TextInlineNode;
-  let anotherChildMock: TextInlineNode;
+  let firstChildMock: TextInlineNode;
+  let secondChildMock: TextInlineNode;
+  let thirdChildMock: TextInlineNode;
 
   const tool = createInlineToolName('bold');
   const anotherTool = createInlineToolName('italic');
   const data = createInlineToolData({});
   let node: FormattingInlineNode;
+  let children: ChildNode[];
 
   beforeEach(() => {
     parent = new FormattingInlineNode({ tool: createInlineToolName('parentTool') });
-    childMock = new TextInlineNode({ value: 'Some text here. ' });
-    anotherChildMock = new TextInlineNode({ value: 'Another text here.' });
+    firstChildMock = new TextInlineNode({ value: 'Some text here. ' });
+    secondChildMock = new TextInlineNode({ value: 'Another text here.' });
+    thirdChildMock = new TextInlineNode({ value: 'Some more text.' });
+
+    children = [firstChildMock, secondChildMock, thirdChildMock];
 
     node = new FormattingInlineNode({
       tool,
       data,
-      parent: parent,
-      children: [childMock, anotherChildMock],
+      parent,
+      children,
     });
 
     jest.clearAllMocks();
@@ -131,19 +136,16 @@ describe('FormattingInlineNode', () => {
       expect(newNode).toBeInstanceOf(FormattingInlineNode);
     });
 
-    /**
-     * @todo check this and related cases with integration tests
-     */
     it('should create new FormattingInlineNode with children split from the original one', () => {
-      const newNode = node.split(childMock.length);
+      const newNode = node.split(firstChildMock.length);
 
-      expect(newNode?.children).toEqual([ anotherChildMock ]);
+      expect(newNode?.children).toEqual([ secondChildMock, thirdChildMock ]);
     });
 
     it('should call split method of child containing the specified index', () => {
-      const spy = jest.spyOn(childMock, 'split');
+      const spy = jest.spyOn(secondChildMock, 'split');
 
-      node.split(index);
+      node.split(index + firstChildMock.length);
 
       expect(spy).toBeCalledWith(index);
     });
@@ -182,6 +184,8 @@ describe('FormattingInlineNode', () => {
     let childNode: TextInlineNode;
 
     beforeEach(() => {
+      parent = new FormattingInlineNode({ tool: createInlineToolName('parentTool') });
+
       childNode = new TextInlineNode({
         value: 'Editor.js is a block-styled editor',
       });
@@ -210,13 +214,19 @@ describe('FormattingInlineNode', () => {
       expect(spy).not.toBeCalled();
     });
 
-    it('should split node into two if unformatting from the start to the middle of the text', () => {
+    it('should split node into two if unformatting applied from the start to the middle of the text', () => {
       const result = node.unformat(tool, 0, end);
 
       expect(result).toEqual([
         expect.any(TextInlineNode),
         expect.any(FormattingInlineNode),
       ]);
+    });
+
+    it('should remove unformatted node from parent if unformatting applied from the start to the middle of the text', () => {
+      const result = node.unformat(tool, 0, end);
+
+      expect(parent.children).toHaveLength(result.length);
     });
 
     it('should split node into tree if unformatting applied in the middle of the node', () => {
@@ -229,6 +239,12 @@ describe('FormattingInlineNode', () => {
       ]);
     });
 
+    it('should remove unformatted node from parent if unformatting applied in the middle of the node', () => {
+      const result = node.unformat(tool, start, end);
+
+      expect(parent.children).toHaveLength(result.length);
+    });
+
     it('should split node into two if unformatting applied at the end of the node', () => {
       const result = node.unformat(tool, end, node.length);
 
@@ -236,6 +252,12 @@ describe('FormattingInlineNode', () => {
         expect.any(FormattingInlineNode),
         expect.any(TextInlineNode),
       ]);
+    });
+
+    it('should remove unformatted node from parent if unformatting applied at the end of the node', () => {
+      const result = node.unformat(tool, end, node.length);
+
+      expect(parent.children).toHaveLength(result.length);
     });
   });
 

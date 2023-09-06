@@ -111,18 +111,13 @@ export class FormattingInlineNode extends ParentInlineNode implements InlineNode
 
     const [child, offset] = this.findChildByIndex(index);
 
-    // Have to save length as it is changed after split
-    const childLength = child.length;
-
-    const splitNode = child.split(index - offset);
-    let midNodeIndex = this.children.indexOf(child);
+    child.split(index - offset);
 
     /**
-     * If node is split or if node is not split but index equals to child length, we should split children from the next node
+     * We need to add 1 to the index to get the index of the new node appended to the parent after child split
      */
-    if (splitNode || (index - offset === childLength)) {
-      midNodeIndex += 1;
-    }
+    const midNodeIndex = this.children.indexOf(child) + 1;
+
 
     newNode.append(...this.children.slice(midNodeIndex));
 
