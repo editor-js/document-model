@@ -1,4 +1,6 @@
+/* Stryker disable next-line StringLiteral */
 const nominalField = '_nominal_';
+/* Stryker disable next-line StringLiteral */
 const baseTypeField = '_baseType_';
 
 /**

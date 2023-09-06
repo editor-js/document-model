@@ -243,6 +243,7 @@ export class ParentInlineNode implements InlineNode {
     /**
      * This is unreachable code in normal operation, but we need it to have consistent types
      */
+    /* Stryker disable next-line StringLiteral */
     /* istanbul ignore next */
     throw new Error(`Child is not found by ${index} index`);
   }

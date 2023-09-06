@@ -1,4 +1,4 @@
-import { TextInlineNode, FormattingInlineNode, InlineToolName } from '../index';
+import { TextInlineNode, FormattingInlineNode, InlineToolName, ChildNode } from '../index';
 import { ParentInlineNode } from '../ParentInlineNode';
 import { InlineNode } from '../InlineNode';
 
@@ -10,6 +10,7 @@ describe('ParentInlineNode', () => {
   let anotherChildMock: TextInlineNode;
   let formattingNodeMock: FormattingInlineNode;
   let anotherFormattingNodeMock: FormattingInlineNode;
+  let children: ChildNode[];
 
   let node: ParentInlineNode;
 
@@ -25,8 +26,10 @@ describe('ParentInlineNode', () => {
       children: [ new TextInlineNode({ value: 'Some italic text.' }) ],
     });
 
+    children = [childMock, formattingNodeMock, anotherFormattingNodeMock];
+
     node = new ParentInlineNode({
-      children: [childMock, formattingNodeMock, anotherFormattingNodeMock],
+      children: children,
     });
   });
 
@@ -97,6 +100,33 @@ describe('ParentInlineNode', () => {
       expect(spy).toBeCalledWith(start, end);
     });
 
+
+    it('should not call getText() for previous child if start equals its length', () => {
+      const spy = jest.spyOn(childMock, 'getText');
+
+      const childLength = childMock.length;
+
+      node.getText(childLength, childLength + end);
+
+      expect(spy).not.toBeCalled();
+    });
+
+    it('should not call getText() for next child if end equals its start index', () => {
+      const spy = jest.spyOn(formattingNodeMock, 'getText');
+
+      node.getText(start, childMock.length);
+
+      expect(spy).not.toBeCalled();
+    });
+
+    it('should not call getText() for if start equals end', () => {
+      const spy = jest.spyOn(childMock, 'getText');
+
+      node.getText(start, start);
+
+      expect(spy).not.toBeCalled();
+    });
+
     it('should call getText for all relevant children', () => {
       const spy = jest.spyOn(childMock, 'getText');
       const anotherSpy = jest.spyOn(formattingNodeMock, 'getText');
@@ -136,7 +166,15 @@ describe('ParentInlineNode', () => {
       expect(node.children).toEqual([ expect.any(TextInlineNode) ]);
     });
 
-    it('should lead calling insertText() of the child with the passed index', () => {
+    it('should not append empty node if there is already a child node', () => {
+      const spy = jest.spyOn(node, 'append');
+
+      node.insertText(newText);
+
+      expect(spy).not.toBeCalled();
+    });
+
+    it('should call insertText() of the child with the passed index', () => {
       const spy = jest.spyOn(childMock, 'insertText');
 
       node.insertText(newText, index);
@@ -278,7 +316,7 @@ describe('ParentInlineNode', () => {
       expect(result).toHaveLength(0);
     });
 
-    it('should normalize fragments', () => {
+    it('should normalize fragments for same tools', () => {
       jest
         .spyOn(formattingNodeMock, 'getFragments')
         .mockImplementationOnce(() => ([
@@ -303,6 +341,38 @@ describe('ParentInlineNode', () => {
         range: [childMock.length, node.length],
       } ]);
     });
+
+    it('should not normalize fragments for different tools', () => {
+      jest
+        .spyOn(formattingNodeMock, 'getFragments')
+        .mockImplementationOnce(() => ([
+          {
+            tool: 'bold' as InlineToolName,
+            range: [0, formattingNodeMock.length],
+          },
+        ]));
+      jest
+        .spyOn(anotherFormattingNodeMock, 'getFragments')
+        .mockImplementationOnce(() => ([
+          {
+            tool: 'italic' as InlineToolName,
+            range: [0, anotherFormattingNodeMock.length],
+          },
+        ]));
+
+      const result = node.getFragments();
+
+      expect(result).toEqual([
+        {
+          tool: 'bold',
+          range: [childMock.length, childMock.length + formattingNodeMock.length],
+        },
+        {
+          tool: 'italic',
+          range: [childMock.length + formattingNodeMock.length, node.length],
+        },
+      ]);
+    });
   });
 
   describe('.format()', () => {
@@ -322,6 +392,10 @@ describe('ParentInlineNode', () => {
 
     it('should throw an error if end is less than start', () => {
       expect(() => node.format(tool, end, start)).toThrowError();
+    });
+
+    it('should not throw an error if end equals start', () => {
+      expect(() => node.format(tool, start, start)).not.toThrowError();
     });
 
     it('should apply formatting to the relevant child', () => {
