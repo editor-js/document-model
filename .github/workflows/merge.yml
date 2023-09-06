@@ -35,6 +35,8 @@ jobs:
         id: run-mutation-tests
         run: yarn test:mutations
 
+      - run: exit 1
+
 
   build:
     runs-on: ubuntu-latest
