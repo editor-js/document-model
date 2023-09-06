@@ -29,9 +29,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: ./.github/actions/setup
+      - name: Setup environment
+        uses: ./.github/actions/setup
 
-      - uses: tj-actions/changed-files@v39.0.0
+      - name: Get changed files
+        uses: tj-actions/changed-files@v39.0.0
         id: changed-files
         with:
           files_yaml: |
@@ -42,12 +44,14 @@ jobs:
           separator: "','"
 
       - name: Run mutation tests
+        if: steps.changed-files.outputs.src_any_changed == 'true'
         id: run-mutation-tests
         run: yarn test:mutations --mutate ${{format('''{0}''', steps.changed-files.outputs.src_all_changed_files)}}
         continue-on-error: true
 
-      - uses: thollander/actions-comment-pull-request@v2
-        if: steps.run-mutation-tests.outcome == 'success'
+      - name: Comment on successful mutation testing
+        uses: thollander/actions-comment-pull-request@v2
+        if: steps.changed-files.outputs.src_any_changed == 'true' && steps.run-mutation-tests.outcome == 'success'
         with:
           message: |
             ## ✅ Mutation testing passed score threshold
@@ -62,8 +66,9 @@ jobs:
             </details>
           comment_tag: mutation-tests
 
-      - uses: thollander/actions-comment-pull-request@v2
-        if: steps.run-mutation-tests.outcome == 'failure'
+      - name: Comment on failed mutation testing
+        uses: thollander/actions-comment-pull-request@v2
+        if: steps.changed-files.outputs.src_any_changed == 'true' && steps.run-mutation-tests.outcome == 'failure'
         with:
           message: |
             ## ❌ Mutation testing hasn't passed score threshold
@@ -76,6 +81,15 @@ jobs:
             ${{ join(fromJson(format('[{0}]', format('''{0}''', steps.changed-files.outputs.src_all_changed_files))), '<br />') }}
               </pre>
             </details>
+          comment_tag: mutation-tests
+
+      - name: Comment on empty changes
+        uses: thollander/actions-comment-pull-request@v2
+        if: steps.changed-files.outputs.src_any_changed == 'false'
+        with:
+          message: |
+            ## ⏭️ No files to mutate
+
           comment_tag: mutation-tests
 
       - if: ${{ failure() }}

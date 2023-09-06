@@ -1,5 +1,3 @@
-console.log('One more changed file');
-
 import { BlockTuneConstructorParameters, BlockTuneName, BlockTuneSerialized, createBlockTuneName } from './types';
 
 /**
