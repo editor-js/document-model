@@ -1,66 +1,7 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { ParentNode } from '../mixins/ParentNode';
 import { ChildNode } from '../mixins/ChildNode';
-import type { InlineNode } from '../InlineNode';
 
-jest.mock('../mixins/ChildNode', () => ({
-  ChildNode: function (constructor: { new(): InlineNode }): typeof ChildNode {
-    return (class extends constructor {
-      /**
-       * Parent mock
-       */
-      public parent: ParentNode | null = null;
-      /**
-       * Mock property
-       */
-      // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-      public length = 5;
-
-      /**
-       * Mock method
-       *
-       * @param parent - parent to append the node to
-       */
-      public appendTo(parent: ParentNode): void {
-        if (this.parent === parent) {
-          return;
-        }
-
-        this.parent = parent;
-
-        parent.append(this);
-      }
-
-      /**
-       * Mock method
-       */
-      public remove(): void {
-        return;
-      }
-
-      /**
-       * Mock method
-       */
-      public normalize(): void {
-        return;
-      }
-
-      /**
-       * Mock method
-       */
-      public isEqual(): boolean {
-        return false;
-      }
-
-      /**
-       * Mock method
-       */
-      public mergeWith(): void {
-        return;
-      }
-    }) as unknown as typeof ChildNode;
-  },
-}));
+jest.mock('../mixins/ChildNode');
 
 interface Dummy extends ParentNode {
 }

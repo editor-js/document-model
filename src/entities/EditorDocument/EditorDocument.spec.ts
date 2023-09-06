@@ -3,23 +3,7 @@ import { BlockNode, BlockNodeName, DataKey } from '../BlockNode';
 import { BlockNodeConstructorParameters } from '../BlockNode/types';
 import type { BlockTuneName } from '../BlockTune';
 
-jest.mock('../BlockNode', () => ({
-  BlockNode: jest.fn().mockImplementation(() => ({
-    /**
-     * Mock method
-     */
-    updateValue() {
-      return;
-    },
-
-    /**
-     * Mock method
-     */
-    updateTuneData() {
-      return;
-    },
-  } as unknown as BlockNode)),
-}));
+jest.mock('../BlockNode');
 
 /**
  * Creates an EditorDocument object with some blocks for tests.

@@ -1,27 +1,7 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { ChildNode } from '../mixins/ChildNode';
 import { ParentNode } from '../mixins/ParentNode';
-import { InlineNode } from '../InlineNode';
 
-jest.mock('../mixins/ParentNode', () => ({
-  ParentNode: function (constructor: { new(): InlineNode }): typeof ParentNode {
-    return (class extends constructor {
-      /**
-       * Mock method
-       */
-      public append(): void {
-        return;
-      }
-
-      /**
-       * Mock method
-       */
-      public removeChild(): void {
-        return;
-      }
-    }) as unknown as typeof ParentNode;
-  },
-}));
+jest.mock('../mixins/ParentNode');
 
 interface Dummy extends ChildNode {
 }

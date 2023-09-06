@@ -1,4 +1,3 @@
-import { beforeEach, describe, expect, it } from '@jest/globals';
 import { TextInlineNode, createInlineToolData, createInlineToolName, FormattingInlineNode } from '../index';
 import type { ParentNode } from '../mixins/ParentNode';
 import type { InlineNode } from '../InlineNode';

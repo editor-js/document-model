@@ -7,44 +7,12 @@ import type { EditorDocument } from '../EditorDocument';
 import type { BlockTuneConstructorParameters } from '../BlockTune/types';
 import type { ValueNodeConstructorParameters } from '../ValueNode';
 import { RootInlineNode } from '../inline-fragments';
-import { describe } from '@jest/globals';
 
-jest.mock('../BlockTune', () => ({
-  BlockTune: jest.fn().mockImplementation(() => ({
-    get serialized() {
-      return {};
-    },
-    update() {
-      return;
-    },
-  }) as unknown as BlockTune),
-}));
+jest.mock('../BlockTune');
 
-jest.mock('../inline-fragments', () => ({
-  RootInlineNode: jest.fn().mockImplementation(() => ({
-    get serialized() {
-      return {};
-    },
-  }) as RootInlineNode),
-}));
+jest.mock('../inline-fragments/RootInlineNode');
 
-jest.mock('../ValueNode', () => ({
-  ValueNode: (class {
-    /**
-     * Mock method
-     */
-    public get serialized(): object {
-      return {};
-    }
-
-    /**
-     * Mock method
-     */
-    public update(): void {
-      return;
-    }
-  }) as unknown as typeof ValueNode,
-}));
+jest.mock('../ValueNode');
 
 describe('BlockNode', () => {
   describe('constructor', () => {
@@ -176,13 +144,6 @@ describe('BlockNode', () => {
   });
 
   describe('.updateTuneData()', () => {
-    beforeEach(() => {
-      jest.mock('../BlockTune', () => ({
-        BlockTune: jest.fn().mockImplementation(() => ({}) as BlockTune),
-        update: jest.fn(),
-      }));
-    });
-
     afterEach(() => {
       jest.clearAllMocks();
     });
@@ -216,13 +177,6 @@ describe('BlockNode', () => {
   });
 
   describe('.updateValue()', () => {
-    beforeEach(() => {
-      jest.mock('../ValueNode', () => ({
-        ValueNode: jest.fn().mockImplementation(() => ({}) as ValueNode),
-        update: jest.fn(),
-      }));
-    });
-
     afterEach(() => {
       jest.clearAllMocks();
     });

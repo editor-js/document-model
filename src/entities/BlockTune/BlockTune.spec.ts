@@ -1,5 +1,4 @@
 import { BlockTune, createBlockTuneName } from './index';
-import { describe } from '@jest/globals';
 
 describe('BlockTune', () => {
   const tuneName = createBlockTuneName('alignment');
