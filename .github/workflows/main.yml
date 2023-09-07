@@ -1,7 +1,5 @@
 name: Main workflow runner
-on:
-  - pull_request:
-  - merge_group:
+on: [pull_request, merge_group]
 
 jobs:
   lint:
