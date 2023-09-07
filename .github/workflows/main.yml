@@ -1,6 +1,6 @@
 name: Main workflow runner
 on:
-  - pull_request
+  pull_request:
 
 jobs:
   lint:
@@ -23,6 +23,7 @@ jobs:
           package-manager: yarn
 
   mutation-tests:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     env:
       STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
@@ -94,7 +95,6 @@ jobs:
 
       - if: ${{ failure() }}
         run: exit 1
-
 
   build:
     runs-on: ubuntu-latest

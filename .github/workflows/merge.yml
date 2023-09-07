@@ -1,6 +1,6 @@
 name: Merge queue workflow runner
 on:
-  - merge_group
+  merge_group:
 
 jobs:
   lint:
@@ -33,9 +33,7 @@ jobs:
 
       - name: Run mutation tests
         id: run-mutation-tests
-        run: yarn test:mutations
-
-      - run: exit 1
+        run: yarn test:mutations --dashboard.version main
 
 
   build:
