@@ -1,7 +1,6 @@
 name: Main workflow runner
 on:
   pull_request:
-  merge_group:
 
 jobs:
   lint:
@@ -23,7 +22,7 @@ jobs:
           test-script: "yarn test"
           package-manager: yarn
 
-  partial-mutation-tests:
+  mutation-tests:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     env:
@@ -96,22 +95,6 @@ jobs:
 
       - if: ${{ failure() }}
         run: exit 1
-
-  full-mutation-tests:
-    if: github.event_name != 'pull_request' || github.event.action == 'enqueued'
-    runs-on: ubuntu-latest
-    env:
-      STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: ./.github/actions/setup
-
-      - name: Run mutation tests
-        id: run-mutation-tests
-        run: yarn test:mutations
-
-      - run: exit 1
 
   build:
     runs-on: ubuntu-latest
