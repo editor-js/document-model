@@ -24,7 +24,7 @@ jobs:
           package-manager: yarn
 
   partial-mutation-tests:
-    if: github.event_name == 'pull_request' || github.event.action != 'enqueued'
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     env:
       STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
