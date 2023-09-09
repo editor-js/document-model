@@ -40,7 +40,7 @@ jobs:
         if: steps.run-mutation-tests.outcome == 'success'
         with:
           message: |
-            ## ✅ Mutation testing passed score threshold
+            ## ✅ Mutation testing passed
             
             Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${{ github.event.number }}
           comment_tag: mutation-tests
