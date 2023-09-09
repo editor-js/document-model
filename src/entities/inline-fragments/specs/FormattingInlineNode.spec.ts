@@ -1,115 +1,61 @@
-import { createTextInlineNodeMock } from '../../../mocks/TextInlineNode.mock';
-import { createParentNodeMock } from '../../../mocks/ParentNode.mock';
-import { beforeEach, describe, expect, it } from '@jest/globals';
-import type { TextInlineNode } from '../TextInlineNode';
-import { createInlineToolData, createInlineToolName, FormattingInlineNode } from '../FormattingInlineNode';
+import { TextInlineNode, createInlineToolData, createInlineToolName, FormattingInlineNode, ChildNode } from '../index';
 import type { ParentNode } from '../mixins/ParentNode';
+import type { InlineNode } from '../InlineNode';
+import { ParentInlineNode } from '../ParentInlineNode';
+
+jest.mock('../ParentInlineNode');
+jest.mock('../TextInlineNode');
 
 describe('FormattingInlineNode', () => {
-  let parentMock: ParentNode;
-  let childMock: TextInlineNode;
-  let anotherChildMock: TextInlineNode;
+  let parent: ParentNode;
+  let firstChildMock: TextInlineNode;
+  let secondChildMock: TextInlineNode;
+  let thirdChildMock: TextInlineNode;
 
   const tool = createInlineToolName('bold');
   const anotherTool = createInlineToolName('italic');
   const data = createInlineToolData({});
   let node: FormattingInlineNode;
+  let children: ChildNode[];
 
   beforeEach(() => {
-    parentMock = createParentNodeMock() as FormattingInlineNode;
-    childMock = createTextInlineNodeMock('Some text here. ');
-    anotherChildMock = createTextInlineNodeMock('Another text here.');
+    parent = new FormattingInlineNode({ tool: createInlineToolName('parentTool') });
+    firstChildMock = new TextInlineNode({ value: 'Some text here. ' });
+    secondChildMock = new TextInlineNode({ value: 'Another text here.' });
+    thirdChildMock = new TextInlineNode({ value: 'Some more text.' });
+
+    children = [firstChildMock, secondChildMock, thirdChildMock];
 
     node = new FormattingInlineNode({
       tool,
       data,
-      parent: parentMock,
-      children: [childMock, anotherChildMock],
+      parent,
+      children,
     });
 
     jest.clearAllMocks();
   });
 
-  describe('.length', () => {
-    it('should return sum of lengths of children', () => {
-      expect(node.length).toEqual(childMock.length + anotherChildMock.length);
-    });
-  });
-
-  describe('.serialized', () => {
-    it('should return concatenated text of all fragments with fragments list describing formatting', () => {
-      const result = node.serialized;
-
-      expect(result).toEqual({
-        text: childMock.getText() + anotherChildMock.getText(),
-        fragments: [
-          {
-            tool,
-            data,
-            range: [0, node.length],
-          },
-        ],
-      });
-    });
-  });
-
-  describe('.insertText()', () => {
-    const newText = 'new text';
-    const index = 3;
-
-    it('should lead calling insertText() of the child with the passed index', () => {
-      node.insertText(newText, index);
-
-      expect(childMock.insertText).toBeCalledWith(newText, index);
-    });
-
-    it('should adjust index by child offset', () => {
-      const offset = childMock.length;
-
-      node.insertText(newText, index + offset);
-
-      expect(anotherChildMock.insertText).toBeCalledWith(newText, index);
-    });
-
-    it('should append text to the last child by default', () => {
-      node.insertText(newText);
-
-      expect(anotherChildMock.insertText).toBeCalledWith(newText, anotherChildMock.length);
-    });
-  });
-
   describe('.removeText()', () => {
-    const start = 3;
-    const end = 5;
+    it('should call parents removeText() method', () => {
+      const start = 0;
+      const end = 3;
 
-    it('should remove text from appropriate child', () => {
+      const spy = jest.spyOn(ParentInlineNode.prototype, 'removeText');
+
       node.removeText(start, end);
 
-      expect(childMock.removeText).toBeCalledWith(start, end);
+      expect(spy).toBeCalledWith(start, end);
     });
 
-    it('should adjust indices by child offset', () => {
-      const offset = childMock.length;
+    it('should return removed text', () => {
+      const removedText = 'Editor.js is a block-styled editor';
 
-      node.removeText(offset + start, offset + end);
+      jest.spyOn(FormattingInlineNode.prototype, 'removeText').mockImplementationOnce(() => removedText);
 
-      expect(anotherChildMock.removeText).toBeCalledWith(start, end);
-    });
+      const result = node.removeText();
 
-    it('should call removeText for each affected child', () => {
-      const offset = childMock.length;
-
-      node.removeText(start, offset + end);
-
-      expect(childMock.removeText).toBeCalledWith(start, offset);
-      expect(anotherChildMock.removeText).toBeCalledWith(0, end);
-    });
-
-    it('should remove all text by default', () => {
-      node.removeText();
-
-      expect(childMock.removeText).toBeCalledWith(0, childMock.length);
-      expect(anotherChildMock.removeText).toBeCalledWith(0, anotherChildMock.length);
+      expect(result).toEqual(removedText);
     });
 
     it('should call remove() if length is 0 after removeText() call', () => {
@@ -125,80 +71,52 @@ describe('FormattingInlineNode', () => {
     });
   });
 
-  describe('.getText()', () => {
-    const start = 3;
-    const end = 5;
-
-    it('should call getText() for the relevant child', () => {
-      node.getText(start, end);
-
-      expect(childMock.getText).toBeCalledWith(start, end);
-    });
-
-    it('should adjust index by child offset', () => {
-      const offset = childMock.length;
-
-      node.getText(offset + start, offset + end);
-
-      expect(anotherChildMock.getText).toBeCalledWith(start, end);
-    });
-
-    it('should call getText for all relevant children', () => {
-      const offset = childMock.length;
-
-      node.getText(start, offset + end);
-
-      expect(childMock.getText).toBeCalledWith(start, offset);
-      expect(anotherChildMock.getText).toBeCalledWith(0, end);
-    });
-
-    it('should return all text by default', () => {
-      node.getText();
-
-      expect(childMock.getText).toBeCalledWith(0, childMock.length);
-      expect(anotherChildMock.getText).toBeCalledWith(0, anotherChildMock.length);
-    });
-  });
-
   describe('.getFragments()', () => {
-    it('should return fragments for sub-tree', () => {
-      const parentNode = new FormattingInlineNode({
-        tool: anotherTool,
-        data,
-        children: [ node ],
-      });
+    it('should call parents getFragments() method', () => {
+      const start = 0;
+      const end = 3;
 
-      const fragments = parentNode.getFragments();
+      const spy = jest.spyOn(ParentInlineNode.prototype, 'getFragments');
 
-      expect(fragments).toEqual([
-        {
-          tool: anotherTool,
-          data,
-          range: [0, parentNode.length],
-        },
-        {
-          tool,
-          data,
-          range: [0, node.length],
-        },
-      ]);
+      node.getFragments(start, end);
+
+      expect(spy).toBeCalledWith(start, end);
     });
 
-    it('should return node\'s fragment', () => {
-      const fragments = node.getFragments();
+    it('should add own data as first fragment within passed start and end', () => {
+      const start = 0;
+      const end = 3;
 
-      expect(fragments).toEqual([
-        {
-          tool,
-          data,
-          range: [0, node.length],
-        },
-      ]);
+      const result = node.getFragments(start, end);
+
+      expect(result[0]).toEqual(expect.objectContaining({
+        tool: node.tool,
+        range: [start, end],
+      }));
+    });
+
+    it('should add tool\'s data if it exists', () => {
+      const result = node.getFragments();
+
+      expect(result[0]).toHaveProperty('data', data);
+    });
+
+    it('should not add tool\'s data if it doesn\'t exist', () => {
+      node = new FormattingInlineNode({ tool });
+
+      const result = node.getFragments();
+
+      expect(result[0]).not.toHaveProperty('data');
     });
   });
 
   describe('.split()', () => {
     const index = 5;
+
+    it('should throw an error if index is invalid', () => {
+      expect(() => node.split(-1)).toThrowError();
+      expect(() => node.split(node.length + 1)).toThrowError();
+    });
 
     it('should not split (return null) if index is 0', () => {
       const newNode = node.split(0);
@@ -218,25 +136,26 @@ describe('FormattingInlineNode', () => {
       expect(newNode).toBeInstanceOf(FormattingInlineNode);
     });
 
-    /**
-     * @todo check this and related cases with integration tests
-     */
     it('should create new FormattingInlineNode with children split from the original one', () => {
-      const newNode = node.split(childMock.length);
+      const newNode = node.split(firstChildMock.length);
 
-      expect(newNode?.children).toEqual([ anotherChildMock ]);
+      expect(newNode?.children).toEqual([secondChildMock, thirdChildMock]);
     });
 
     it('should call split method of child containing the specified index', () => {
-      node.split(index);
+      const spy = jest.spyOn(secondChildMock, 'split');
 
-      expect(childMock.split).toBeCalledWith(index);
+      node.split(index + firstChildMock.length);
+
+      expect(spy).toBeCalledWith(index);
     });
 
     it('should insert new node to the parent', () => {
+      const spy = jest.spyOn(parent, 'insertAfter');
+
       const newNode = node.split(index);
 
-      expect(parentMock.insertAfter).toBeCalledWith(node, newNode);
+      expect(spy).toBeCalledWith(node, newNode);
     });
   });
 
@@ -244,126 +163,153 @@ describe('FormattingInlineNode', () => {
     const start = 3;
     const end = 5;
 
-    it('should apply formatting to the relevant child', () => {
-      node.format(anotherTool, start, end);
-
-      expect(childMock.format).toBeCalledWith(anotherTool, start, end, undefined);
-    });
-
-    it('should adjust index by child offset', () => {
-      const offset = childMock.length;
-
-      node.format(anotherTool, offset + start, offset + end);
-
-      expect(anotherChildMock.format).toBeCalledWith(anotherTool, start, end, undefined);
-    });
-
-    it('should format all relevant children', () => {
-      const offset = childMock.length;
-
-      node.format(anotherTool, start, offset + end);
-
-      expect(childMock.format).toBeCalledWith(anotherTool, start, offset, undefined);
-      expect(anotherChildMock.format).toBeCalledWith(anotherTool, 0, end, undefined);
-    });
-
-    it('should do nothing if same tool is being applied', () => {
-      node.format(tool, start, end);
-
-      expect(childMock.format).not.toBeCalled();
-      expect(anotherChildMock.format).not.toBeCalled();
-    });
-
-    it('should return empty array if same tool is being applied', () => {
+    it('should return empty array if formatting is already applied', () => {
       const result = node.format(tool, start, end);
 
       expect(result).toHaveLength(0);
     });
 
-    it('should return array of new formatting nodes', () => {
-      const result = node.format(anotherTool, start, end);
+    it('should call parent format() method', () => {
+      const spy = jest.spyOn(ParentInlineNode.prototype, 'format');
 
-      expect(result).toEqual(childMock.format(anotherTool, start, end));
+      node.format(anotherTool, start, end, data);
+
+      expect(spy).toBeCalledWith(anotherTool, start, end, data);
     });
   });
 
   describe('.unformat()', () => {
     const start = 3;
     const end = 5;
-    let childFormattingNode: FormattingInlineNode;
-    let anotherChildFormattingNode: FormattingInlineNode;
+    let childNode: TextInlineNode;
 
     beforeEach(() => {
-      childFormattingNode =   new FormattingInlineNode({
-        tool: anotherTool,
-        data,
-        children: [ createTextInlineNodeMock('Some text here. ') ],
+      parent = new FormattingInlineNode({ tool: createInlineToolName('parentTool') });
+
+      childNode = new TextInlineNode({
+        value: 'Editor.js is a block-styled editor',
       });
-
-      anotherChildFormattingNode = new FormattingInlineNode({
-        tool: anotherTool,
-        data,
-        children: [ createTextInlineNodeMock('Another text here. ') ] }
-      );
-
 
       node = new FormattingInlineNode({
         tool,
         data,
-        parent: parentMock as FormattingInlineNode,
-        children: [childFormattingNode, anotherChildFormattingNode],
+        parent: parent as FormattingInlineNode,
+        children: [ childNode ],
       });
-
-      jest.spyOn(childFormattingNode, 'unformat');
-      jest.spyOn(anotherChildFormattingNode, 'unformat');
     });
 
-    it('should remove formatting from the relevant child', () => {
+    it('should call parents unformat() method if tools are unequal', () => {
+      const spy = jest.spyOn(ParentInlineNode.prototype, 'unformat');
+
       node.unformat(anotherTool, start, end);
 
-      expect(childFormattingNode.unformat).toBeCalledWith(anotherTool, start, end);
+      expect(spy).toBeCalledWith(anotherTool, start, end);
     });
 
-    it('should adjust index by child offset', () => {
-      const offset = childFormattingNode.length;
+    it('should not call parent unformat() method if tools are equal', () => {
+      const spy = jest.spyOn(ParentInlineNode.prototype, 'unformat');
 
-      node.unformat(anotherTool, offset + start, offset + end);
-
-      expect(anotherChildFormattingNode.unformat).toBeCalledWith(anotherTool, start, end);
-    });
-
-    it('should call unformat for all relevant children', () => {
-      const offset = childMock.length;
-
-      node.unformat(anotherTool, start, offset + end);
-
-      expect(childFormattingNode.unformat).toBeCalledWith(anotherTool, start, offset);
-      expect(anotherChildFormattingNode.unformat).toBeCalledWith(anotherTool, 0, end);
-    });
-
-    it('should do nothing if different tool is being unformatted', () => {
       node.unformat(tool, start, end);
 
-      expect(childFormattingNode.unformat).not.toBeCalled();
-      expect(anotherChildFormattingNode.unformat).not.toBeCalled();
+      expect(spy).not.toBeCalled();
     });
 
-    it('should return array of new nodes with unformatted part', () => {
-      const result = node.unformat(anotherTool, start, end);
+    it('should split node into two if unformatting applied from the start to the middle of the text', () => {
+      const result = node.unformat(tool, 0, end);
+
+      expect(result).toEqual([
+        expect.any(TextInlineNode),
+        expect.any(FormattingInlineNode),
+      ]);
+    });
+
+    it('should remove unformatted node from parent if unformatting applied from the start to the middle of the text', () => {
+      const result = node.unformat(tool, 0, end);
+
+      expect(parent.children).toHaveLength(result.length);
+    });
+
+    it('should split node into tree if unformatting applied in the middle of the node', () => {
+      const result = node.unformat(tool, start, end);
 
       expect(result).toEqual([
         expect.any(FormattingInlineNode),
-        /**
-         * On this place is unformatted TextInlineNode mock
-         */
-        expect.any(Object),
-        expect.any(FormattingInlineNode)]);
+        expect.any(TextInlineNode),
+        expect.any(FormattingInlineNode),
+      ]);
     });
 
-    it('should do nothing for TextInlineNode children', () => {
-      const result = childFormattingNode.unformat(tool, start, end);
+    it('should remove unformatted node from parent if unformatting applied in the middle of the node', () => {
+      const result = node.unformat(tool, start, end);
 
-      expect(result).toEqual([]);
+      expect(parent.children).toHaveLength(result.length);
+    });
+
+    it('should split node into two if unformatting applied at the end of the node', () => {
+      const result = node.unformat(tool, end, node.length);
+
+      expect(result).toEqual([
+        expect.any(FormattingInlineNode),
+        expect.any(TextInlineNode),
+      ]);
+    });
+
+    it('should remove unformatted node from parent if unformatting applied at the end of the node', () => {
+      const result = node.unformat(tool, end, node.length);
+
+      expect(parent.children).toHaveLength(result.length);
+    });
+  });
+
+  describe('.isEqual()', () => {
+    it('should return true for FormattingInlineNode with the same tool name', () => {
+      const nodeToCompare = new FormattingInlineNode({ tool });
+
+      expect(node.isEqual(nodeToCompare)).toEqual(true);
+    });
+
+    it('should return false for not FormattingInlineNode object', () => {
+      const nodeToCompare = {} as InlineNode;
+
+      expect(node.isEqual(nodeToCompare)).toEqual(false);
+    });
+
+    it('should return false for FormattingInlineNode with another tool name', () => {
+      const nodeToCompare = new FormattingInlineNode({ tool: anotherTool });
+
+      expect(node.isEqual(nodeToCompare)).toEqual(false);
+    });
+  });
+
+  describe('.mergeWith()', () => {
+    it('should append children of merged node to the current', () => {
+      const child = new TextInlineNode({ value: 'Text node' });
+      const nodeToMerge = new FormattingInlineNode({
+        tool,
+        children: [ child ],
+      });
+
+      const spy = jest.spyOn(node, 'append');
+
+      node.mergeWith(nodeToMerge);
+
+      expect(spy).toBeCalledWith(child);
+    });
+
+    it('should remove merged node', () => {
+      const nodeToMerge = new FormattingInlineNode({ tool });
+
+      const spy = jest.spyOn(nodeToMerge, 'remove');
+
+      node.mergeWith(nodeToMerge);
+
+      expect(spy).toBeCalled();
+    });
+
+    it('should throw an error if node to merge is not equal to the current', () => {
+      const nodeToMerge = new FormattingInlineNode({ tool: anotherTool });
+
+      expect(() => node.mergeWith(nodeToMerge)).toThrow();
     });
   });
 });

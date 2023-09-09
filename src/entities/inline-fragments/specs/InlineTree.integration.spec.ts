@@ -1,6 +1,4 @@
-import { RootInlineNode } from '../RootInlineNode';
-import { TextInlineNode } from '../TextInlineNode';
-import { createInlineToolData, createInlineToolName } from '../FormattingInlineNode';
+import { TextInlineNode, RootInlineNode, createInlineToolData, createInlineToolName } from '../index';
 
 describe('Inline fragments tree integration', () => {
   describe('text insertion', () => {

@@ -1,7 +1,9 @@
-import { describe, it, expect, beforeEach } from '@jest/globals';
 import { TextInlineNode } from '../TextInlineNode';
-import { createInlineToolName, FormattingInlineNode } from '../FormattingInlineNode';
+import { FormattingInlineNode, InlineToolName } from '../FormattingInlineNode';
 import type { ParentNode } from '../mixins/ParentNode';
+import type { InlineNode } from '../InlineNode';
+
+jest.mock('../FormattingInlineNode');
 
 describe('TextInlineNode', () => {
   const initialText = 'initial text';
@@ -155,9 +157,9 @@ describe('TextInlineNode', () => {
   });
 
   describe('.format()', () => {
-    it('should return just one FormattingInlineNode, if formatting full TextInlineNode', () => {
-      const name = createInlineToolName('bold');
+    const name = 'bold' as InlineToolName;
 
+    it('should return just one FormattingInlineNode, if formatting full TextInlineNode', () => {
       const fragments = node.format(name, 0, initialText.length);
 
       expect(fragments).toHaveLength(1);
@@ -165,7 +167,6 @@ describe('TextInlineNode', () => {
     });
 
     it('should return two fragments if formatting from the start, but not to the end', () => {
-      const name = createInlineToolName('bold');
       const end = 5;
 
       const fragments = node.format(name, 0, end);
@@ -176,7 +177,6 @@ describe('TextInlineNode', () => {
     });
 
     it('should return two fragments if formatting to the end, but not from the start', () => {
-      const name = createInlineToolName('bold');
       const start = 5;
 
       const fragments = node.format(name, start, initialText.length);
@@ -187,7 +187,6 @@ describe('TextInlineNode', () => {
     });
 
     it('should return three fragments if formatting in the middle', () => {
-      const name = createInlineToolName('bold');
       const start = 5;
       const end = 8;
 
@@ -200,8 +199,7 @@ describe('TextInlineNode', () => {
       expect(fragments[2]).toBeInstanceOf(TextInlineNode);
     });
 
-    it('should return FormattingInlineNode with a TextInlineNode as a child with correct text value', () => {
-      const name = createInlineToolName('bold');
+    it('should return FormattingInlineNode with a TextInlineNode as a child', () => {
       const start = 5;
       const end = 8;
 
@@ -212,7 +210,6 @@ describe('TextInlineNode', () => {
     });
 
     it('should call parent\'s insertAfter with new nodes', () => {
-      const name = createInlineToolName('bold');
       const start = 5;
       const end = 8;
 
@@ -270,6 +267,48 @@ describe('TextInlineNode', () => {
         text: initialText,
         fragments: [],
       });
+    });
+  });
+
+  describe('.isEqual()', () => {
+    it('should return true for TextInlineNode', () => {
+      const nodeToCompare = new TextInlineNode();
+
+      expect(node.isEqual(nodeToCompare)).toEqual(true);
+    });
+
+    it('should return false for not TextInlineNode', () => {
+      const nodeToCompare = {} as InlineNode;
+
+      expect(node.isEqual(nodeToCompare)).toEqual(false);
+    });
+  });
+
+  describe('.mergeWith()', () => {
+    it('should concat nodes values', () => {
+      const nodeToMerge = new TextInlineNode({
+        value: text,
+      });
+
+      node.mergeWith(nodeToMerge);
+
+      expect(node.value).toEqual(initialText + text);
+    });
+
+    it('should remove merged node', () => {
+      const nodeToMerge = new TextInlineNode({
+        value: text,
+      });
+
+      const spy = jest.spyOn(nodeToMerge, 'remove');
+
+      node.mergeWith(nodeToMerge);
+
+      expect(spy).toHaveBeenCalled();
+    });
+
+    it('should throw an error if node to merge is not TextInlineNode', () => {
+      expect(() => node.mergeWith({} as InlineNode)).toThrowError();
     });
   });
 });

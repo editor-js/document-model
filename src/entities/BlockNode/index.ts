@@ -1,5 +1,5 @@
 import { EditorDocument } from '../EditorDocument';
-import { BlockTune, BlockTuneName, BlockTuneSerialized } from '../BlockTune';
+import { BlockTune, BlockTuneName } from '../BlockTune';
 import {
   BlockNodeConstructorParameters,
   BlockNodeName,
@@ -12,7 +12,7 @@ import { ValueNode } from '../ValueNode';
 
 /**
  * BlockNode class represents a node in a tree-like structure used to store and manipulate Blocks in an editor document.
- * A BlockNode can contain one or more child nodes of type TextInlineNode, ValueNode or FormattingInlineNode.
+ * A BlockNode can contain one or more child nodes of type RootInlineNode or ValueNode.
  * It can also be associated with one or more BlockTunes, which can modify the behavior of the BlockNode.
  */
 export class BlockNode {
@@ -29,7 +29,7 @@ export class BlockNode {
   /**
    * Field representing the parent EditorDocument of the BlockNode
    */
-  #parent: EditorDocument;
+  #parent: EditorDocument | null;
 
   /**
    * Private field representing the BlockTunes associated with the BlockNode
@@ -41,53 +41,41 @@ export class BlockNode {
    *
    * @param args - BlockNode constructor arguments.
    * @param args.name - The name of the BlockNode.
-   * @param args.data - The content of the BlockNode.
-   * @param args.parent - The parent EditorDocument of the BlockNode.
-   * @param args.tunes - The BlockTunes associated with the BlockNode.
+   * @param [args.data] - The content of the BlockNode.
+   * @param [args.parent] - The parent EditorDocument of the BlockNode.
+   * @param [args.tunes] - The BlockTunes associated with the BlockNode.
    */
-  constructor({ name, data, parent, tunes = {} }: BlockNodeConstructorParameters) {
+  constructor({ name, data = {}, parent, tunes = {} }: BlockNodeConstructorParameters) {
     this.#name = name;
     this.#data = data;
-    this.#parent = parent;
+    this.#parent = parent ?? null;
     this.#tunes = tunes;
+  }
+
+  /**
+   * Getter to access BlockNode parent
+   */
+  public get parent(): EditorDocument | null {
+    return this.#parent;
   }
 
   /**
    * Returns serialized object representing the BlockNode
    */
   public get serialized(): BlockNodeSerialized {
-    const serializedData = Object
-      .entries(this.#data)
-      .reduce(
-        (acc, [dataKey, value]) => {
-          /**
-           * If the value is an array, we need to serialize each node in the array
-           * Value is an array if the BlockNode contains TextInlineNodes and FormattingInlineNodes
-           * After serializing there will be InlineNodeSerialized object
-           */
-          if (value instanceof Array) {
-            acc[dataKey] = value.map((node) => node.serialized);
+    const serializedData = Object.fromEntries(
+      Object
+        .entries(this.#data)
+        .map(([dataKey, value]) => ([dataKey, value.serialized]))
+    );
 
-            return acc;
-          }
-
-          acc[dataKey] = value.serialized;
-
-          return acc;
-        },
-        {} as Record<string, unknown>
-      );
-
-    const serializedTunes = Object
-      .entries(this.#tunes)
-      .reduce(
-        (acc, [name, tune]) => {
-          acc[name] = tune.serialized;
-
-          return acc;
-        },
-        {} as Record<string, BlockTuneSerialized>
-      );
+    const serializedTunes = Object.fromEntries(
+      Object
+        .entries(this.#tunes)
+        .map(
+          ([name, tune]) => ([name, tune.serialized])
+        )
+    );
 
     return {
       name: this.#name,

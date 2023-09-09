@@ -1,9 +1,9 @@
 import { DataKey } from './DataKey';
 import { ValueNode } from '../../ValueNode';
-import { TextInlineNode, FormattingInlineNode } from '../../inline-fragments';
+import { RootInlineNode } from '../../inline-fragments';
 
 /**
  * Represents a record object containing the data of a block node.
  * Each root node is associated with a specific data key.
  */
-export type BlockNodeData = Record<DataKey, ValueNode | (FormattingInlineNode | TextInlineNode)[]>;
+export type BlockNodeData = Record<DataKey, ValueNode | RootInlineNode>;

@@ -2,6 +2,7 @@ import { InlineFragment, InlineNode, InlineNodeSerialized } from '../InlineNode'
 import { ParentNode, ParentNodeConstructorOptions } from '../mixins/ParentNode';
 import { ChildNode } from '../mixins/ChildNode';
 import type { InlineToolData, InlineToolName } from '../FormattingInlineNode';
+import { TextInlineNode } from '../index';
 
 /**
  * We need to extend ParentInlineNode interface with ParentNode ones to use the methods from mixins
@@ -43,15 +44,9 @@ export class ParentInlineNode implements InlineNode {
    * @param [index] - char index where to insert text
    */
   public insertText(text: string, index = this.length): void {
-    this.#validateIndex(index);
+    this.validateIndex(index);
 
     if (this.length === 0) {
-      /**
-       * We need to resolve circular dependency by require
-       */
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { TextInlineNode } = require('../TextInlineNode');
-
       const textNode = new TextInlineNode();
 
       this.append(textNode);
@@ -59,7 +54,7 @@ export class ParentInlineNode implements InlineNode {
 
     const [child, offset] = this.findChildByIndex(index);
 
-    child?.insertText(text, index - offset);
+    child.insertText(text, index - offset);
 
     this.normalize();
   }
@@ -72,8 +67,7 @@ export class ParentInlineNode implements InlineNode {
    * @returns {string} removed text
    */
   public removeText(start = 0, end = this.length): string {
-    this.#validateIndex(start);
-    this.#validateIndex(end);
+    this.validateRange(start, end);
 
     const removedText = this.#reduceChildrenInRange(
       start,
@@ -96,8 +90,7 @@ export class ParentInlineNode implements InlineNode {
    * @param [end] - end char index of the range, by default length of the text value
    */
   public getText(start = 0, end = this.length): string {
-    this.#validateIndex(start);
-    this.#validateIndex(end);
+    this.validateRange(start, end);
 
     return this.#reduceChildrenInRange(
       start,
@@ -116,8 +109,7 @@ export class ParentInlineNode implements InlineNode {
    * @param [end] - end char index of the range, by default length of the text value
    */
   public getFragments(start = 0, end = this.length): InlineFragment[] {
-    this.#validateIndex(start);
-    this.#validateIndex(end);
+    this.validateRange(start, end);
 
     return this.#reduceChildrenInRange<InlineFragment[]>(
       start,
@@ -169,8 +161,7 @@ export class ParentInlineNode implements InlineNode {
    * @param [data] - inline tool data if applicable
    */
   public format(tool: InlineToolName, start: number, end: number, data?: InlineToolData): InlineNode[] {
-    this.#validateIndex(start);
-    this.#validateIndex(end);
+    this.validateRange(start, end);
 
     const newNodes = this.#reduceChildrenInRange<InlineNode[]>(
       start,
@@ -197,8 +188,7 @@ export class ParentInlineNode implements InlineNode {
    * @todo Possibly pass data or some InlineTool identifier to relevant only required fragments
    */
   public unformat(tool: InlineToolName, start: number, end: number): InlineNode[] {
-    this.#validateIndex(start);
-    this.#validateIndex(end);
+    this.validateRange(start, end);
 
     const newNodes = this.#reduceChildrenInRange<InlineNode[]>(
       start,
@@ -238,7 +228,7 @@ export class ParentInlineNode implements InlineNode {
    * @param index - char index
    * @private
    */
-  protected findChildByIndex(index: number): [child: InlineNode & ChildNode | null, offset: number] {
+  protected findChildByIndex(index: number): [child: InlineNode & ChildNode, offset: number] {
     let totalLength = 0;
 
     for (const child of this.children) {
@@ -249,7 +239,13 @@ export class ParentInlineNode implements InlineNode {
       totalLength += child.length;
     }
 
-    return [null, totalLength];
+
+    /**
+     * This is unreachable code in normal operation, but we need it to have consistent types
+     */
+    /* Stryker disable next-line StringLiteral */
+    /* istanbul ignore next */
+    throw new Error(`Child is not found by ${index} index`);
   }
 
   /**
@@ -294,6 +290,22 @@ export class ParentInlineNode implements InlineNode {
     return result;
   }
 
+  /**
+   * Validates if range has valid start and end points
+   *
+   * @param start - range start
+   * @param end - range end
+   * @throws Error if range is invalid
+   */
+  protected validateRange(start: number, end: number): void {
+    this.validateIndex(start);
+    this.validateIndex(end);
+
+    if (end < start) {
+      throw new Error(`The end of range must be greater or equal than the start: [${start}, ${end}]`);
+    }
+  }
+
 
   /**
    * Validates index
@@ -301,7 +313,7 @@ export class ParentInlineNode implements InlineNode {
    * @param index - char index to validate
    * @throws Error if index is out of the text length
    */
-  #validateIndex(index: number): void {
+  protected validateIndex(index: number): void {
     if (index < 0 || index > this.length) {
       // Stryker disable next-line StringLiteral
       throw new Error(`Index ${index} is not in valid range [0, ${this.length}]`);

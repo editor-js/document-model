@@ -98,6 +98,8 @@ export class FormattingInlineNode extends ParentInlineNode implements InlineNode
    * @returns {FormattingInlineNode | null} new node
    */
   public split(index: number): FormattingInlineNode | null {
+    this.validateIndex(index);
+
     if (index === 0 || index === this.length) {
       return null;
     }
@@ -109,22 +111,13 @@ export class FormattingInlineNode extends ParentInlineNode implements InlineNode
 
     const [child, offset] = this.findChildByIndex(index);
 
-    if (!child) {
-      return null;
-    }
-
-    // Have to save length as it is changed after split
-    const childLength = child.length;
-
-    const splitNode = child.split(index - offset);
-    let midNodeIndex = this.children.indexOf(child);
+    child.split(index - offset);
 
     /**
-     * If node is split or if node is not split but index equals to child length, we should split children from the next node
+     * We need to add 1 to the index to get the index of the new node appended to the parent after child split
      */
-    if (splitNode || (index - offset === childLength)) {
-      midNodeIndex += 1;
-    }
+    const midNodeIndex = this.children.indexOf(child) + 1;
+
 
     newNode.append(...this.children.slice(midNodeIndex));
 
@@ -166,7 +159,7 @@ export class FormattingInlineNode extends ParentInlineNode implements InlineNode
   public unformat(tool: InlineToolName, start: number, end: number): InlineNode[] {
     if (this.tool === tool) {
       const middleNode = this.split(start);
-      const endNode = middleNode?.split(end);
+      const endNode = middleNode ? middleNode.split(end - this.length) : this.split(end);
 
       const result: ChildNode[] = [];
 

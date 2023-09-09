@@ -20,11 +20,11 @@ export class EditorDocument {
   /**
    * Constructor for EditorDocument class.
    *
-   * @param args - EditorDocument constructor arguments.
-   * @param args.children - The child BlockNodes of the EditorDocument.
+   * @param [args] - EditorDocument constructor arguments.
+   * @param [args.children] - The child BlockNodes of the EditorDocument.
    * @param [args.properties] - The properties of the document.
    */
-  constructor({ children, properties = {} }: EditorDocumentConstructorParameters) {
+  constructor({ children = [], properties = {} }: EditorDocumentConstructorParameters = {}) {
     this.#children = children;
     this.#properties = properties;
   }
@@ -141,7 +141,7 @@ export class EditorDocument {
    * Checks if the index is out of bounds.
    *
    * @param index - The index to check
-   * @param max - The maximum index value. Defaults to the length of the children array.
+   * @param max - The maximum index value. Defaults to the length of the blocks array.
    * @throws Error if the index is out of bounds
    */
   #checkIndexOutOfBounds(index: number, max: number = this.length): void {

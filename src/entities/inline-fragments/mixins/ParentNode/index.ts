@@ -121,6 +121,10 @@ export function ParentNode<C extends { new(...args: any[]): InlineNode }>(constr
     public removeChild(child: ChildNode): void {
       const index = this.children.indexOf(child);
 
+      if (index === -1) {
+        return;
+      }
+
       this.children.splice(index, 1);
 
       child.remove();
@@ -162,7 +166,7 @@ export function ParentNode<C extends { new(...args: any[]): InlineNode }>(constr
     public normalize(): void {
       const children = Array.from(this.children);
 
-      if (!children.length) {
+      if (children.length === 0) {
         return;
       }
 
@@ -177,7 +181,7 @@ export function ParentNode<C extends { new(...args: any[]): InlineNode }>(constr
       });
 
       children.forEach(child => {
-        if (!child.length) {
+        if (child.length === 0) {
           child.remove();
         }
       });
