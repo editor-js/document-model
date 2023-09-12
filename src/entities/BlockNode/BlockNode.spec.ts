@@ -6,7 +6,7 @@ import { ValueNode } from '../ValueNode';
 import type { EditorDocument } from '../EditorDocument';
 import type { BlockTuneConstructorParameters } from '../BlockTune/types';
 import type { ValueNodeConstructorParameters } from '../ValueNode';
-import { RootInlineNode } from '../inline-fragments';
+import { InlineToolData, InlineToolName, RootInlineNode } from '../inline-fragments';
 
 jest.mock('../BlockTune');
 
@@ -232,6 +232,214 @@ describe('BlockNode', () => {
       expect(() => {
         blockNode.updateValue(dataKey, value);
       }).toThrowError(`BlockNode: data with key ${dataKey} is not a ValueNode`);
+    });
+  });
+
+  describe('.insertText()', () => {
+    let node: BlockNode;
+    const dataKey = createDataKey('text');
+    let textNode: RootInlineNode;
+    const text = 'Some text';
+
+    beforeEach(() => {
+      textNode = new RootInlineNode();
+
+      node = new BlockNode({ name: createBlockNodeName('header'),
+        data: {
+          [dataKey]: textNode,
+        },
+      });
+    });
+
+    it('should call .insertText() method of the RootInlineNode', () => {
+      const spy = jest.spyOn(textNode, 'insertText');
+
+      node.insertText(dataKey, text);
+
+      expect(spy).toHaveBeenCalledWith(text, undefined);
+    });
+
+    it('should pass start index to the .insertText() method of the RootInlineNode', () => {
+      const spy = jest.spyOn(textNode, 'insertText');
+      const start = 5;
+
+      node.insertText(dataKey, text, start);
+
+      expect(spy).toHaveBeenCalledWith(text, start);
+    });
+
+    it('should throw an error if node does not exist', () => {
+      const key = createDataKey('non-existing-key');
+
+      expect(() => node.insertText(key, text)).toThrow();
+    });
+
+    it('should throw an error if node is not a RootInlineNode', () => {
+      node = new BlockNode({
+        name: createBlockNodeName('header'),
+        data: {
+          [dataKey]: new ValueNode({} as ValueNodeConstructorParameters),
+        },
+      });
+
+      expect(() => node.insertText(dataKey, text)).toThrow();
+    });
+  });
+
+  describe('.removeText()', () => {
+    let node: BlockNode;
+    const dataKey = createDataKey('text');
+    let textNode: RootInlineNode;
+
+    beforeEach(() => {
+      textNode = new RootInlineNode();
+
+      node = new BlockNode({ name: createBlockNodeName('header'),
+        data: {
+          [dataKey]: textNode,
+        },
+      });
+    });
+
+    it('should call .removeText() method of the RootInlineNode', () => {
+      const spy = jest.spyOn(textNode, 'removeText');
+
+      node.removeText(dataKey);
+
+      expect(spy).toHaveBeenCalledWith(undefined, undefined);
+    });
+
+    it('should pass start index to the .removeText() method of the RootInlineNode', () => {
+      const spy = jest.spyOn(textNode, 'removeText');
+      const start = 5;
+
+      node.removeText(dataKey, start);
+
+      expect(spy).toHaveBeenCalledWith(start, undefined);
+    });
+
+    it('should pass end index to the .removeText() method of the RootInlineNode', () => {
+      const spy = jest.spyOn(textNode, 'removeText');
+      const start = 5;
+      const end = 10;
+
+      node.removeText(dataKey, start, end);
+
+      expect(spy).toHaveBeenCalledWith(start, end);
+    });
+
+    it('should throw an error if node does not exist', () => {
+      const key = createDataKey('non-existing-key');
+
+      expect(() => node.removeText(key)).toThrow();
+    });
+
+    it('should throw an error if node is not a RootInlineNode', () => {
+      node = new BlockNode({
+        name: createBlockNodeName('header'),
+        data: {
+          [dataKey]: new ValueNode({} as ValueNodeConstructorParameters),
+        },
+      });
+
+      expect(() => node.removeText(dataKey)).toThrow();
+    });
+  });
+
+  describe('.format()', () => {
+    let node: BlockNode;
+    const dataKey = createDataKey('text');
+    const tool = 'bold' as InlineToolName;
+    const start = 5;
+    const end = 10;
+    let textNode: RootInlineNode;
+
+    beforeEach(() => {
+      textNode = new RootInlineNode();
+
+      node = new BlockNode({ name: createBlockNodeName('header'),
+        data: {
+          [dataKey]: textNode,
+        },
+      });
+    });
+
+    it('should call .format() method of the RootInlineNode', () => {
+      const spy = jest.spyOn(textNode, 'format');
+
+      node.format(dataKey, tool, start, end);
+
+      expect(spy).toHaveBeenCalledWith(tool, start, end, undefined);
+    });
+
+    it('should pass data to the .format() method of the RootInlineNode', () => {
+      const spy = jest.spyOn(textNode, 'format');
+      const data = {} as InlineToolData;
+
+      node.format(dataKey, tool, start, end, data);
+
+      expect(spy).toHaveBeenCalledWith(tool, start, end, data);
+    });
+
+    it('should throw an error if node does not exist', () => {
+      const key = createDataKey('non-existing-key');
+
+      expect(() => node.format(key, tool, start, end)).toThrow();
+    });
+
+    it('should throw an error if node is not a RootInlineNode', () => {
+      node = new BlockNode({
+        name: createBlockNodeName('header'),
+        data: {
+          [dataKey]: new ValueNode({} as ValueNodeConstructorParameters),
+        },
+      });
+
+      expect(() => node.format(dataKey, tool, start, end)).toThrow();
+    });
+  });
+
+  describe('.unformat()', () => {
+    let node: BlockNode;
+    const dataKey = createDataKey('text');
+    const tool = 'bold' as InlineToolName;
+    const start = 5;
+    const end = 10;
+    let textNode: RootInlineNode;
+
+    beforeEach(() => {
+      textNode = new RootInlineNode();
+
+      node = new BlockNode({ name: createBlockNodeName('header'),
+        data: {
+          [dataKey]: textNode,
+        },
+      });
+    });
+
+    it('should call .unformat() method of the RootInlineNode', () => {
+      const spy = jest.spyOn(textNode, 'unformat');
+
+      node.unformat(dataKey, tool, start, end);
+
+      expect(spy).toHaveBeenCalledWith(tool, start, end);
+    });
+
+    it('should throw an error if node does not exist', () => {
+      const key = createDataKey('non-existing-key');
+
+      expect(() => node.unformat(key, tool, start, end)).toThrow();
+    });
+
+    it('should throw an error if node is not a RootInlineNode', () => {
+      node = new BlockNode({
+        name: createBlockNodeName('header'),
+        data: {
+          [dataKey]: new ValueNode({} as ValueNodeConstructorParameters),
+        },
+      });
+
+      expect(() => node.unformat(dataKey, tool, start, end)).toThrow();
     });
   });
 });

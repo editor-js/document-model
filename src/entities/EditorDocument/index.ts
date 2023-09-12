@@ -1,6 +1,7 @@
 import { BlockNode, DataKey } from '../BlockNode';
 import type { EditorDocumentConstructorParameters, Properties } from './types';
 import { BlockTuneName } from '../BlockTune';
+import { InlineToolData, InlineToolName } from '../inline-fragments';
 
 /**
  * EditorDocument class represents the top-level container for a tree-like structure of BlockNodes in an editor document.
@@ -135,6 +136,65 @@ export class EditorDocument {
     this.#checkIndexOutOfBounds(blockIndex, this.length - 1);
 
     this.#children[blockIndex].updateTuneData(tuneName, data);
+  }
+
+  /**
+   * Inserts text to the specified block
+   *
+   * @param blockIndex - index of the block
+   * @param dataKey - key of the data
+   * @param text - text to insert
+   * @param [start] - char index where to insert text
+   */
+  public insertText(blockIndex: number, dataKey: DataKey, text: string, start?: number): void {
+    this.#checkIndexOutOfBounds(blockIndex, this.length - 1);
+
+    this.#children[blockIndex].insertText(dataKey, text, start);
+  }
+
+  /**
+   * Removes text from specified block
+   *
+   * @param blockIndex - index of the block
+   * @param dataKey - key of the data
+   * @param [start] - start char index of the range
+   * @param [end] - end char index of the range
+   */
+  public removeText(blockIndex: number, dataKey: DataKey, start?: number, end?: number): string {
+    this.#checkIndexOutOfBounds(blockIndex, this.length - 1);
+
+    return this.#children[blockIndex].removeText(dataKey, start, end);
+  }
+
+  /**
+   * Formats text in the specified block
+   *
+   * @param blockIndex - index of the block
+   * @param dataKey - key of the data
+   * @param tool - name of the Inline Tool to apply
+   * @param start - start char index of the range
+   * @param end - end char index of the range
+   * @param [data] - Inline Tool data if applicable
+   */
+  public format(blockIndex: number, dataKey: DataKey, tool: InlineToolName, start: number, end: number, data?: InlineToolData): void {
+    this.#checkIndexOutOfBounds(blockIndex, this.length - 1);
+
+    this.#children[blockIndex].format(dataKey, tool, start, end, data);
+  }
+
+  /**
+   * Removes formatting from the specified block
+   *
+   * @param blockIndex - index of the block
+   * @param key - key of the data
+   * @param tool - name of the Inline Tool to remove
+   * @param start - start char index of the range
+   * @param end - end char index of the range
+   */
+  public unformat(blockIndex: number, key: DataKey, tool: InlineToolName, start: number, end: number): void {
+    this.#checkIndexOutOfBounds(blockIndex, this.length - 1);
+
+    this.#children[blockIndex].unformat(key, tool, start, end);
   }
 
   /**
