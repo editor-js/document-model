@@ -39,7 +39,7 @@ jobs:
           files_yaml: |
             src:
               - 'src/**/*.ts'
-              - '!src/**/*.spec.tsx'
+              - '!src/**/*.spec.ts'
               - '!src/**/__mocks__/**'
           separator: "','"
 

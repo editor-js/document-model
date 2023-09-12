@@ -509,7 +509,7 @@ describe('EditorDocument', () => {
     });
 
     it('should throw an error if index is out of bounds', () => {
-      expect(() => document.insertText(blockIndex + 1, dataKey, text)).toThrow();
+      expect(() => document.insertText(document.length + 1, dataKey, text)).toThrowError('Index out of bounds');
     });
   });
 
@@ -554,7 +554,7 @@ describe('EditorDocument', () => {
     });
 
     it('should throw an error if index is out of bounds', () => {
-      expect(() => document.removeText(blockIndex + 1, dataKey)).toThrow();
+      expect(() => document.removeText(document.length + 2, dataKey)).toThrowError('Index out of bounds');
     });
   });
 
@@ -592,7 +592,7 @@ describe('EditorDocument', () => {
     });
 
     it('should throw an error if index is out of bounds', () => {
-      expect(() => document.format(blockIndex + 1, dataKey, tool, start, end)).toThrow();
+      expect(() => document.format(document.length + 1, dataKey, tool, start, end)).toThrowError('Index out of bounds');
     });
   });
 
@@ -621,7 +621,7 @@ describe('EditorDocument', () => {
     });
 
     it('should throw an error if index is out of bounds', () => {
-      expect(() => document.unformat(blockIndex + 1, dataKey, tool, start, end)).toThrow();
+      expect(() => document.unformat(document.length + 1, dataKey, tool, start, end)).toThrowError('Index out of bounds');
     });
   });
 });
