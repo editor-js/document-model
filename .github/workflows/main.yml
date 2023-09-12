@@ -92,7 +92,7 @@ jobs:
 
           comment_tag: mutation-tests
 
-      - if: ${{ failure() }}
+      - if: steps.changed-files.outputs.src_any_changed == 'true' && steps.run-mutation-tests.outcome == 'failure'
         run: exit 1
 
   build:
