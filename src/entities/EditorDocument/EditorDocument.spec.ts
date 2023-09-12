@@ -554,7 +554,7 @@ describe('EditorDocument', () => {
     });
 
     it('should throw an error if index is out of bounds', () => {
-      expect(() => document.removeText(document.length + 2, dataKey)).toThrowError('Index out of bounds');
+      expect(() => document.removeText(document.length + 1, dataKey)).toThrowError('Index out of bounds');
     });
   });
 
