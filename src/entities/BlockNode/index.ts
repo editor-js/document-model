@@ -9,6 +9,7 @@ import {
   BlockNodeSerialized
 } from './types';
 import { ValueNode } from '../ValueNode';
+import { InlineToolData, InlineToolName, RootInlineNode } from '../inline-fragments';
 
 /**
  * BlockNode class represents a node in a tree-like structure used to store and manipulate Blocks in an editor document.
@@ -103,17 +104,91 @@ export class BlockNode {
    * @param value - The new value of the ValueNode
    */
   public updateValue<T = unknown>(dataKey: DataKey, value: T): void {
-    const data = this.#data[dataKey];
+    this.#validateKey(dataKey, ValueNode);
 
-    if (data === undefined) {
-      throw new Error(`BlockNode: data with key ${dataKey} does not exist`);
+    const node = this.#data[dataKey] as ValueNode<T>;
+
+    node.update(value);
+  }
+
+  /**
+   * Inserts text to the specified text node by index, by default appends text to the end of the current value
+   *
+   * @param dataKey - key of the data
+   * @param text - text to insert
+   * @param [start] - char index where to insert text
+   */
+  public insertText(dataKey: DataKey, text: string, start?: number): void {
+    this.#validateKey(dataKey, RootInlineNode);
+
+    const node = this.#data[dataKey] as RootInlineNode;
+
+    node.insertText(text, start);
+  }
+
+  /**
+   * Removes text from specified text node
+   *
+   * @param dataKey - key of the data
+   * @param [start] - start char index of the range
+   * @param [end] - end char index of the range
+   */
+  public removeText(dataKey: DataKey, start?: number, end?: number): string {
+    this.#validateKey(dataKey, RootInlineNode);
+
+    const node = this.#data[dataKey] as RootInlineNode;
+
+    return node.removeText(start, end);
+  }
+
+  /**
+   * Formats text in the specified text node
+   *
+   * @param dataKey - key of the data
+   * @param tool - name of the Inline Tool to apply
+   * @param start - start char index of the range
+   * @param end - end char index of the range
+   * @param [data] - Inline Tool data if applicable
+   */
+  public format(dataKey: DataKey, tool: InlineToolName, start: number, end: number, data?: InlineToolData): void {
+    this.#validateKey(dataKey, RootInlineNode);
+
+    const node = this.#data[dataKey] as RootInlineNode;
+
+    node.format(tool, start, end, data);
+  }
+
+  /**
+   * Removes formatting from the specified text node
+   *
+   * @param key - key of the data
+   * @param tool - name of the Inline Tool to remove
+   * @param start - start char index of the range
+   * @param end - end char index of the range
+   */
+  public unformat(key: DataKey, tool: InlineToolName, start: number, end: number): void {
+    this.#validateKey(key, RootInlineNode);
+
+    const node = this.#data[key] as RootInlineNode;
+
+    node.unformat(tool, start, end);
+  }
+
+  /**
+   * Validates data key and node type
+   *
+   * @param key - key to validate
+   * @param [Node] - node type to check
+   * @private
+   */
+  #validateKey(key: DataKey, Node?: typeof ValueNode | typeof RootInlineNode): void {
+    if (this.#data[key] === undefined) {
+      throw new Error(`BlockNode: data with key ${key} does not exist`);
     }
 
-    if (!(data instanceof ValueNode)) {
-      throw new Error(`BlockNode: data with key ${dataKey} is not a ValueNode`);
+    if (Node && !(this.#data[key] instanceof Node)) {
+      throw new Error(`BlockNode: data with key ${key} is not a ${Node.name}`);
     }
-
-    data.update(value);
   }
 }
 

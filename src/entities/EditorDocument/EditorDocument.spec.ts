@@ -2,6 +2,7 @@ import { EditorDocument } from './index';
 import { BlockNode, BlockNodeName, DataKey } from '../BlockNode';
 import { BlockNodeConstructorParameters } from '../BlockNode/types';
 import type { BlockTuneName } from '../BlockTune';
+import { InlineToolData, InlineToolName } from '../inline-fragments';
 
 jest.mock('../BlockNode');
 
@@ -473,6 +474,154 @@ describe('EditorDocument', () => {
       const action = (): void => document.updateTuneData(blockIndexOutOfBound, tuneName, updateData);
 
       expect(action).toThrowError('Index out of bounds');
+    });
+  });
+
+  describe('.insertText()', () => {
+    let document: EditorDocument;
+    const dataKey = 'text' as DataKey;
+    const text = 'Some text';
+    const blockIndex = 0;
+    let block: BlockNode;
+
+    beforeEach(() => {
+      block = new BlockNode({} as BlockNodeConstructorParameters);
+      document = new EditorDocument({
+        children: [ block ],
+      });
+    });
+
+    it('should call .insertText() method of the BlockNode', () => {
+      const spy = jest.spyOn(block, 'insertText');
+
+      document.insertText(blockIndex, dataKey, text);
+
+      expect(spy).toHaveBeenCalledWith(dataKey, text, undefined);
+    });
+
+    it('should pass start index to the .insertText() method of the BlockNode', () => {
+      const spy = jest.spyOn(block, 'insertText');
+      const start = 5;
+
+      document.insertText(blockIndex, dataKey, text, start);
+
+      expect(spy).toHaveBeenCalledWith(dataKey, text, start);
+    });
+
+    it('should throw an error if index is out of bounds', () => {
+      expect(() => document.insertText(blockIndex + 1, dataKey, text)).toThrow();
+    });
+  });
+
+  describe('.removeText()', () => {
+    let document: EditorDocument;
+    const dataKey = 'text' as DataKey;
+    const blockIndex = 0;
+    let block: BlockNode;
+
+    beforeEach(() => {
+      block = new BlockNode({} as BlockNodeConstructorParameters);
+      document = new EditorDocument({
+        children: [ block ],
+      });
+    });
+
+    it('should call .removeText() method of the BlockNode', () => {
+      const spy = jest.spyOn(block, 'removeText');
+
+      document.removeText(blockIndex, dataKey);
+
+      expect(spy).toHaveBeenCalledWith(dataKey, undefined, undefined);
+    });
+
+    it('should pass start index to the .removeText() method of the BlockNode', () => {
+      const spy = jest.spyOn(block, 'removeText');
+      const start = 5;
+
+      document.removeText(blockIndex, dataKey, start);
+
+      expect(spy).toHaveBeenCalledWith(dataKey, start, undefined);
+    });
+
+    it('should pass end index to the .removeText() method of the BlockNode', () => {
+      const spy = jest.spyOn(block, 'removeText');
+      const start = 5;
+      const end = 10;
+
+      document.removeText(blockIndex, dataKey, start, end);
+
+      expect(spy).toHaveBeenCalledWith(dataKey, start, end);
+    });
+
+    it('should throw an error if index is out of bounds', () => {
+      expect(() => document.removeText(blockIndex + 1, dataKey)).toThrow();
+    });
+  });
+
+  describe('.format()', () => {
+    let document: EditorDocument;
+    const dataKey = 'text' as DataKey;
+    const blockIndex = 0;
+    const tool = 'bold' as InlineToolName;
+    const start = 5;
+    const end = 10;
+    let block: BlockNode;
+
+    beforeEach(() => {
+      block = new BlockNode({} as BlockNodeConstructorParameters);
+      document = new EditorDocument({
+        children: [ block ],
+      });
+    });
+
+    it('should call .format() method of the BlockNode', () => {
+      const spy = jest.spyOn(block, 'format');
+
+      document.format(blockIndex, dataKey, tool, start, end);
+
+      expect(spy).toHaveBeenCalledWith(dataKey, tool, start, end, undefined);
+    });
+
+    it('should pass data to the .format() method of the BlockNode', () => {
+      const spy = jest.spyOn(block, 'format');
+      const data = {} as InlineToolData;
+
+      document.format(blockIndex, dataKey, tool, start, end, data);
+
+      expect(spy).toHaveBeenCalledWith(dataKey, tool, start, end, data);
+    });
+
+    it('should throw an error if index is out of bounds', () => {
+      expect(() => document.format(blockIndex + 1, dataKey, tool, start, end)).toThrow();
+    });
+  });
+
+  describe('.unformat()', () => {
+    let document: EditorDocument;
+    const dataKey = 'text' as DataKey;
+    const blockIndex = 0;
+    const tool = 'bold' as InlineToolName;
+    const start = 5;
+    const end = 10;
+    let block: BlockNode;
+
+    beforeEach(() => {
+      block = new BlockNode({} as BlockNodeConstructorParameters);
+      document = new EditorDocument({
+        children: [ block ],
+      });
+    });
+
+    it('should call .unformat() method of the BlockNode', () => {
+      const spy = jest.spyOn(block, 'unformat');
+
+      document.unformat(blockIndex, dataKey, tool, start, end);
+
+      expect(spy).toHaveBeenCalledWith(dataKey, tool, start, end);
+    });
+
+    it('should throw an error if index is out of bounds', () => {
+      expect(() => document.unformat(blockIndex + 1, dataKey, tool, start, end)).toThrow();
     });
   });
 });

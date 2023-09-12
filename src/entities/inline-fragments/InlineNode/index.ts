@@ -66,7 +66,7 @@ export interface InlineNode {
    * Removes text from the passed range
    *
    * @param [start] - start char index of the range
-   * @param [end] - утв char index of the range
+   * @param [end] - end char index of the range
    * @returns {string} removed text
    */
   removeText(start?: number, end?: number): string;
