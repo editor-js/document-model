@@ -1,5 +1,8 @@
 import type { EditorDocument } from '../entities';
 
+/**
+ * Type for IoC Container instance — simple map with symbol keys
+ */
 type Container = Map<symbol, unknown>;
 
 /**
@@ -24,7 +27,7 @@ export class IoCContainer {
    *
    * @private
    */
-  static #containers: Map<EditorDocument, Container> = new Map();
+  static #containers: WeakMap<EditorDocument, Container> = new WeakMap();
 
   /**
    * Private constructor to prevent creating instances of the class
