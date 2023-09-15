@@ -425,7 +425,7 @@ describe('Inline fragments tree integration', () => {
 
     const tree = new TextNode({
       value: data.text,
-      fragments: data.fragments
+      fragments: data.fragments,
     });
 
     expect(tree.serialized).toEqual(data);
