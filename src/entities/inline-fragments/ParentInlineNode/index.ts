@@ -1,4 +1,4 @@
-import { InlineFragment, InlineNode, InlineNodeSerialized } from '../InlineNode';
+import { InlineFragment, InlineNode, TextNodeSerialized } from '../InlineNode';
 import { ParentNode, ParentNodeConstructorOptions } from '../mixins/ParentNode';
 import { ChildNode } from '../mixins/ChildNode';
 import type { InlineToolData, InlineToolName } from '../FormattingInlineNode';
@@ -14,7 +14,7 @@ export interface ParentInlineNodeConstructorOptions extends ParentNodeConstructo
 }
 
 /**
- * ParentInlineNode is a class that contains common attributes for inline nodes that may have children. For example, RootInlineNode or FormattingInlineNode
+ * ParentInlineNode is a class that contains common attributes for inline nodes that may have children. For example, TextInlineNode or FormattingInlineNode
  */
 @ParentNode
 export class ParentInlineNode implements InlineNode {
@@ -30,7 +30,7 @@ export class ParentInlineNode implements InlineNode {
   /**
    * Returns serialized value of the node: text and formatting fragments
    */
-  public get serialized(): InlineNodeSerialized {
+  public get serialized(): TextNodeSerialized {
     return {
       text: this.getText(),
       fragments: this.getFragments(),

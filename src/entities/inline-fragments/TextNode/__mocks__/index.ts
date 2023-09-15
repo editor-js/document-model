@@ -1,7 +1,7 @@
 /**
- * Mock for RootInlineNode class
+ * Mock for TextNode class
  */
-export class RootInlineNode {
+export class TextNode {
   /**
    * Mock getter
    */

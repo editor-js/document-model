@@ -12,7 +12,7 @@ export interface InlineNode {
   /**
    * Serialized value of the node
    */
-  readonly serialized: InlineNodeSerialized;
+  readonly serialized: TextNodeSerialized;
 
   /**
    * Returns text value in passed range
@@ -122,7 +122,7 @@ export interface InlineFragment {
 /**
  * Serialized Inline Node value
  */
-export interface InlineNodeSerialized {
+export interface TextNodeSerialized {
   /**
    * Text value of the node and its subtree
    */

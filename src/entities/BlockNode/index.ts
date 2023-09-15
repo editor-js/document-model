@@ -9,11 +9,11 @@ import {
   BlockNodeSerialized
 } from './types';
 import { ValueNode } from '../ValueNode';
-import { InlineToolData, InlineToolName, RootInlineNode } from '../inline-fragments';
+import { InlineToolData, InlineToolName, TextNode } from '../inline-fragments';
 
 /**
  * BlockNode class represents a node in a tree-like structure used to store and manipulate Blocks in an editor document.
- * A BlockNode can contain one or more child nodes of type RootInlineNode or ValueNode.
+ * A BlockNode can contain one or more child nodes of type TextNode or ValueNode.
  * It can also be associated with one or more BlockTunes, which can modify the behavior of the BlockNode.
  */
 export class BlockNode {
@@ -119,9 +119,9 @@ export class BlockNode {
    * @param [start] - char index where to insert text
    */
   public insertText(dataKey: DataKey, text: string, start?: number): void {
-    this.#validateKey(dataKey, RootInlineNode);
+    this.#validateKey(dataKey, TextNode);
 
-    const node = this.#data[dataKey] as RootInlineNode;
+    const node = this.#data[dataKey] as TextNode;
 
     node.insertText(text, start);
   }
@@ -134,9 +134,9 @@ export class BlockNode {
    * @param [end] - end char index of the range
    */
   public removeText(dataKey: DataKey, start?: number, end?: number): string {
-    this.#validateKey(dataKey, RootInlineNode);
+    this.#validateKey(dataKey, TextNode);
 
-    const node = this.#data[dataKey] as RootInlineNode;
+    const node = this.#data[dataKey] as TextNode;
 
     return node.removeText(start, end);
   }
@@ -151,9 +151,9 @@ export class BlockNode {
    * @param [data] - Inline Tool data if applicable
    */
   public format(dataKey: DataKey, tool: InlineToolName, start: number, end: number, data?: InlineToolData): void {
-    this.#validateKey(dataKey, RootInlineNode);
+    this.#validateKey(dataKey, TextNode);
 
-    const node = this.#data[dataKey] as RootInlineNode;
+    const node = this.#data[dataKey] as TextNode;
 
     node.format(tool, start, end, data);
   }
@@ -167,9 +167,9 @@ export class BlockNode {
    * @param end - end char index of the range
    */
   public unformat(key: DataKey, tool: InlineToolName, start: number, end: number): void {
-    this.#validateKey(key, RootInlineNode);
+    this.#validateKey(key, TextNode);
 
-    const node = this.#data[key] as RootInlineNode;
+    const node = this.#data[key] as TextNode;
 
     node.unformat(tool, start, end);
   }
@@ -181,7 +181,7 @@ export class BlockNode {
    * @param [Node] - node type to check
    * @private
    */
-  #validateKey(key: DataKey, Node?: typeof ValueNode | typeof RootInlineNode): void {
+  #validateKey(key: DataKey, Node?: typeof ValueNode | typeof TextNode): void {
     if (this.#data[key] === undefined) {
       throw new Error(`BlockNode: data with key ${key} does not exist`);
     }
