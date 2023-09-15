@@ -14,6 +14,7 @@ export class TextNode extends ParentInlineNode {
    *
    * @param options - TextNode constructor options
    */
+  // Stryker disable next-line BlockStatement -- Styker's bug, see https://github.com/stryker-mutator/stryker-js/issues/2474
   constructor(options: TextNodeConstructorOptions = {}) {
     const { value = '', fragments = [], ...rest } = options;
 
