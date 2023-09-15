@@ -22,6 +22,13 @@ export class ParentInlineNode extends ActualClass {
   /**
    * Mock method
    */
+  public insertText(): void {
+    return;
+  }
+
+  /**
+   * Mock method
+   */
   public removeText(): void {
     return;
   }

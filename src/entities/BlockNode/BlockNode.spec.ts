@@ -6,11 +6,11 @@ import { ValueNode } from '../ValueNode';
 import type { EditorDocument } from '../EditorDocument';
 import type { BlockTuneConstructorParameters } from '../BlockTune/types';
 import type { ValueNodeConstructorParameters } from '../ValueNode';
-import { InlineToolData, InlineToolName, RootInlineNode } from '../inline-fragments';
+import { InlineToolData, InlineToolName, TextNode } from '../inline-fragments';
 
 jest.mock('../BlockTune');
 
-jest.mock('../inline-fragments/RootInlineNode');
+jest.mock('../inline-fragments/TextNode');
 
 jest.mock('../ValueNode');
 
@@ -119,12 +119,12 @@ describe('BlockNode', () => {
       const textNodes = [ ...Array(countOfTextNodes).keys() ]
         .reduce((acc, index) => ({
           ...acc,
-          [createDataKey(`data-key-${index}c${index}d`)]: new RootInlineNode(),
+          [createDataKey(`data-key-${index}c${index}d`)]: new TextNode(),
         }), {});
 
       const spyArray = Object.values(textNodes)
         .map((textNode) => {
-          return jest.spyOn(textNode as RootInlineNode, 'serialized', 'get');
+          return jest.spyOn(textNode as TextNode, 'serialized', 'get');
         });
 
       const blockNode = new BlockNode({
@@ -224,7 +224,7 @@ describe('BlockNode', () => {
       const blockNode = new BlockNode({
         name: createBlockNodeName('paragraph'),
         data: {
-          [dataKey]: {} as RootInlineNode,
+          [dataKey]: {} as TextNode,
         },
         parent: {} as EditorDocument,
       });
@@ -238,11 +238,11 @@ describe('BlockNode', () => {
   describe('.insertText()', () => {
     let node: BlockNode;
     const dataKey = createDataKey('text');
-    let textNode: RootInlineNode;
+    let textNode: TextNode;
     const text = 'Some text';
 
     beforeEach(() => {
-      textNode = new RootInlineNode();
+      textNode = new TextNode();
 
       node = new BlockNode({ name: createBlockNodeName('header'),
         data: {
@@ -251,7 +251,7 @@ describe('BlockNode', () => {
       });
     });
 
-    it('should call .insertText() method of the RootInlineNode', () => {
+    it('should call .insertText() method of the TextNode', () => {
       const spy = jest.spyOn(textNode, 'insertText');
 
       node.insertText(dataKey, text);
@@ -259,7 +259,7 @@ describe('BlockNode', () => {
       expect(spy).toHaveBeenCalledWith(text, undefined);
     });
 
-    it('should pass start index to the .insertText() method of the RootInlineNode', () => {
+    it('should pass start index to the .insertText() method of the TextNode', () => {
       const spy = jest.spyOn(textNode, 'insertText');
       const start = 5;
 
@@ -274,7 +274,7 @@ describe('BlockNode', () => {
       expect(() => node.insertText(key, text)).toThrow();
     });
 
-    it('should throw an error if node is not a RootInlineNode', () => {
+    it('should throw an error if node is not a TextNode', () => {
       node = new BlockNode({
         name: createBlockNodeName('header'),
         data: {
@@ -289,10 +289,10 @@ describe('BlockNode', () => {
   describe('.removeText()', () => {
     let node: BlockNode;
     const dataKey = createDataKey('text');
-    let textNode: RootInlineNode;
+    let textNode: TextNode;
 
     beforeEach(() => {
-      textNode = new RootInlineNode();
+      textNode = new TextNode();
 
       node = new BlockNode({ name: createBlockNodeName('header'),
         data: {
@@ -301,7 +301,7 @@ describe('BlockNode', () => {
       });
     });
 
-    it('should call .removeText() method of the RootInlineNode', () => {
+    it('should call .removeText() method of the TextNode', () => {
       const spy = jest.spyOn(textNode, 'removeText');
 
       node.removeText(dataKey);
@@ -309,7 +309,7 @@ describe('BlockNode', () => {
       expect(spy).toHaveBeenCalledWith(undefined, undefined);
     });
 
-    it('should pass start index to the .removeText() method of the RootInlineNode', () => {
+    it('should pass start index to the .removeText() method of the TextNode', () => {
       const spy = jest.spyOn(textNode, 'removeText');
       const start = 5;
 
@@ -318,7 +318,7 @@ describe('BlockNode', () => {
       expect(spy).toHaveBeenCalledWith(start, undefined);
     });
 
-    it('should pass end index to the .removeText() method of the RootInlineNode', () => {
+    it('should pass end index to the .removeText() method of the TextNode', () => {
       const spy = jest.spyOn(textNode, 'removeText');
       const start = 5;
       const end = 10;
@@ -334,7 +334,7 @@ describe('BlockNode', () => {
       expect(() => node.removeText(key)).toThrow();
     });
 
-    it('should throw an error if node is not a RootInlineNode', () => {
+    it('should throw an error if node is not a TextNode', () => {
       node = new BlockNode({
         name: createBlockNodeName('header'),
         data: {
@@ -352,10 +352,10 @@ describe('BlockNode', () => {
     const tool = 'bold' as InlineToolName;
     const start = 5;
     const end = 10;
-    let textNode: RootInlineNode;
+    let textNode: TextNode;
 
     beforeEach(() => {
-      textNode = new RootInlineNode();
+      textNode = new TextNode();
 
       node = new BlockNode({ name: createBlockNodeName('header'),
         data: {
@@ -364,7 +364,7 @@ describe('BlockNode', () => {
       });
     });
 
-    it('should call .format() method of the RootInlineNode', () => {
+    it('should call .format() method of the TextNode', () => {
       const spy = jest.spyOn(textNode, 'format');
 
       node.format(dataKey, tool, start, end);
@@ -372,7 +372,7 @@ describe('BlockNode', () => {
       expect(spy).toHaveBeenCalledWith(tool, start, end, undefined);
     });
 
-    it('should pass data to the .format() method of the RootInlineNode', () => {
+    it('should pass data to the .format() method of the TextNode', () => {
       const spy = jest.spyOn(textNode, 'format');
       const data = {} as InlineToolData;
 
@@ -387,7 +387,7 @@ describe('BlockNode', () => {
       expect(() => node.format(key, tool, start, end)).toThrow();
     });
 
-    it('should throw an error if node is not a RootInlineNode', () => {
+    it('should throw an error if node is not a TextNode', () => {
       node = new BlockNode({
         name: createBlockNodeName('header'),
         data: {
@@ -405,10 +405,10 @@ describe('BlockNode', () => {
     const tool = 'bold' as InlineToolName;
     const start = 5;
     const end = 10;
-    let textNode: RootInlineNode;
+    let textNode: TextNode;
 
     beforeEach(() => {
-      textNode = new RootInlineNode();
+      textNode = new TextNode();
 
       node = new BlockNode({ name: createBlockNodeName('header'),
         data: {
@@ -417,7 +417,7 @@ describe('BlockNode', () => {
       });
     });
 
-    it('should call .unformat() method of the RootInlineNode', () => {
+    it('should call .unformat() method of the TextNode', () => {
       const spy = jest.spyOn(textNode, 'unformat');
 
       node.unformat(dataKey, tool, start, end);
@@ -431,7 +431,7 @@ describe('BlockNode', () => {
       expect(() => node.unformat(key, tool, start, end)).toThrow();
     });
 
-    it('should throw an error if node is not a RootInlineNode', () => {
+    it('should throw an error if node is not a TextNode', () => {
       node = new BlockNode({
         name: createBlockNodeName('header'),
         data: {
