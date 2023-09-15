@@ -6,7 +6,7 @@ type Container = Map<symbol, unknown>;
  * Singletone IoC container to store EditorDocuments dependencies, for example ToolsRegistry and EventBus
  *
  *
- * @usage
+ * @example
  * ```ts
  * import { IoCContainer } from './IoCContainer';
  *
@@ -37,6 +37,6 @@ export class IoCContainer {
       this.#containers.set(document, new Map());
     }
 
-    return this.#containers.get(document)!;
+    return this.#containers.get(document) as Container;
   }
 }
