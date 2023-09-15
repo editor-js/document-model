@@ -19,6 +19,11 @@ type Container = Map<symbol, unknown>;
  * ```
  */
 export class IoCContainer {
+  /**
+   * Map of containers for each document
+   *
+   * @private
+   */
   static #containers: Map<EditorDocument, Container> = new Map();
 
   /**
