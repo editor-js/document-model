@@ -1,5 +1,6 @@
 import type { BlockNode } from '../../BlockNode';
 import type { Properties } from './Properties';
+import { ToolsRegistry } from '../../../tools/ToolsRegistry';
 
 export interface EditorDocumentConstructorParameters {
   /**
@@ -11,4 +12,9 @@ export interface EditorDocumentConstructorParameters {
    * The properties of the document
    */
   properties?: Properties;
+
+  /**
+   * ToolsRegistry instance for the current document
+   */
+  toolsRegistry?: ToolsRegistry;
 }

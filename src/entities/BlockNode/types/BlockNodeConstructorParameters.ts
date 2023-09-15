@@ -1,13 +1,13 @@
 import { EditorDocument } from '../../EditorDocument';
 import { BlockTune, BlockTuneName } from '../../BlockTune';
-import { BlockNodeName } from './BlockNodeName';
+import { BlockToolName } from './BlockToolName';
 import { BlockNodeData } from './BlockNodeData';
 
 export interface BlockNodeConstructorParameters {
   /**
    * The name of the tool created a Block
    */
-  name: BlockNodeName;
+  name: BlockToolName;
 
   /**
    * The content of the Block

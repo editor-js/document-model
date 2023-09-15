@@ -1,5 +1,5 @@
 export { BlockNodeConstructorParameters } from './BlockNodeConstructorParameters';
-export { BlockNodeName, createBlockNodeName } from './BlockNodeName';
+export { BlockToolName, createBlockToolName } from './BlockToolName';
 export { DataKey, createDataKey } from './DataKey';
 export { BlockNodeData } from './BlockNodeData';
 export { BlockNodeSerialized } from './BlockNodeSerialized';

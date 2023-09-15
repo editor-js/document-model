@@ -1,5 +1,5 @@
 import { EditorDocument } from './index';
-import { BlockNode, BlockNodeName, DataKey } from '../BlockNode';
+import { BlockNode, BlockToolName, DataKey } from '../BlockNode';
 import { BlockNodeConstructorParameters } from '../BlockNode/types';
 import type { BlockTuneName } from '../BlockTune';
 import { InlineToolData, InlineToolName } from '../inline-fragments';
@@ -13,7 +13,7 @@ function createEditorDocumentWithSomeBlocks(): EditorDocument {
   const countOfBlocks = 3;
   const blocks = new Array(countOfBlocks).fill(undefined)
     .map(() => new BlockNode({
-      name: 'header' as BlockNodeName,
+      name: 'header' as BlockToolName,
     }));
 
   return new EditorDocument({
@@ -39,7 +39,7 @@ describe('EditorDocument', () => {
 
       for (let i = 0; i < blocksCount; i++) {
         const block = new BlockNode({
-          name: 'header' as BlockNodeName,
+          name: 'header' as BlockToolName,
         });
 
         document.addBlock(block);
@@ -58,7 +58,7 @@ describe('EditorDocument', () => {
       // Arrange
       const document = createEditorDocumentWithSomeBlocks();
       const block = new BlockNode({
-        name: 'header' as BlockNodeName,
+        name: 'header' as BlockToolName,
       });
 
       // Act
@@ -74,7 +74,7 @@ describe('EditorDocument', () => {
       // Arrange
       const document = createEditorDocumentWithSomeBlocks();
       const block = new BlockNode({
-        name: 'header' as BlockNodeName,
+        name: 'header' as BlockToolName,
       });
 
       // Act
@@ -88,7 +88,7 @@ describe('EditorDocument', () => {
       // Arrange
       const document = createEditorDocumentWithSomeBlocks();
       const block = new BlockNode({
-        name: 'header' as BlockNodeName,
+        name: 'header' as BlockToolName,
       });
 
       // Act
@@ -102,7 +102,7 @@ describe('EditorDocument', () => {
       // Arrange
       const document = createEditorDocumentWithSomeBlocks();
       const block = new BlockNode({
-        name: 'header' as BlockNodeName,
+        name: 'header' as BlockToolName,
       });
 
       // Act
@@ -118,7 +118,7 @@ describe('EditorDocument', () => {
       // Arrange
       const document = createEditorDocumentWithSomeBlocks();
       const block = new BlockNode({
-        name: 'header' as BlockNodeName,
+        name: 'header' as BlockToolName,
       });
 
       // Act
@@ -132,7 +132,7 @@ describe('EditorDocument', () => {
       // Arrange
       const document = createEditorDocumentWithSomeBlocks();
       const block = new BlockNode({
-        name: 'header' as BlockNodeName,
+        name: 'header' as BlockToolName,
       });
 
       // Act
@@ -212,7 +212,7 @@ describe('EditorDocument', () => {
 
       for (let i = 0; i < countOfBlocks; i++) {
         const block = new BlockNode({
-          name: 'header' as BlockNodeName,
+          name: 'header' as BlockToolName,
         });
 
         document.addBlock(block);

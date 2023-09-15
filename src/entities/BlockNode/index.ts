@@ -2,8 +2,8 @@ import { EditorDocument } from '../EditorDocument';
 import { BlockTune, BlockTuneName } from '../BlockTune';
 import {
   BlockNodeConstructorParameters,
-  BlockNodeName,
-  createBlockNodeName,
+  BlockToolName,
+  createBlockToolName,
   DataKey,
   createDataKey, BlockNodeData,
   BlockNodeSerialized
@@ -20,7 +20,7 @@ export class BlockNode {
   /**
    * Field representing a name of the Tool created this Block
    */
-  #name: BlockNodeName;
+  #name: BlockToolName;
 
   /**
    * Field representing the content of the Block
@@ -193,8 +193,8 @@ export class BlockNode {
 }
 
 export {
-  BlockNodeName,
-  createBlockNodeName,
+  BlockToolName,
+  createBlockToolName,
   DataKey,
   createDataKey
 };
