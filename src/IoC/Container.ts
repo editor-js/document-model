@@ -23,6 +23,7 @@ export class IoCContainer {
    *
    * @private
    */
+  /* Stryker disable next-line BlockStatement -- no way to kill this mutant */
   private constructor() {
     return;
   }
