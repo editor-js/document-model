@@ -27,7 +27,7 @@ export class IoCContainer {
    *
    * @private
    */
-  static #containers: WeakMap<EditorDocument, Container> = new WeakMap();
+  static #containers = new WeakMap<EditorDocument, Container>();
 
   /**
    * Private constructor to prevent creating instances of the class
