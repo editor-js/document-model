@@ -5,6 +5,10 @@ ignorePatterns:
   - node_modules
   - dist
 
+# Eslint seems to not recognize WeakMap as a global
+globals:
+  WeakMap: readonly
+
 overrides:
   - files:
       - '**/*.test.ts'
