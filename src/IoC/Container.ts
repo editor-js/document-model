@@ -5,6 +5,7 @@ type Container = Map<symbol, unknown>;
 /**
  * Singletone IoC container to store EditorDocuments dependencies, for example ToolsRegistry and EventBus
  *
+ * We need it to provide shared instances of dependencies for all model entities without passing them through the constructor
  *
  * @example
  * ```ts
@@ -13,6 +14,8 @@ type Container = Map<symbol, unknown>;
  * const container = IoCContainer.of(document);
  *
  * container.set(TOOLS_REGISTRY, new ToolsRegistry());
+ *
+ * const registry = container.get(TOOLS_REGISTRY);
  * ```
  */
 export class IoCContainer {
@@ -25,6 +28,7 @@ export class IoCContainer {
    */
   /* Stryker disable next-line BlockStatement -- no way to kill this mutant */
   private constructor() {
+    /* istanbul ignore next */
     return;
   }
 

@@ -1,4 +1,4 @@
 export * from './BlockToolConstructable';
 export * from './InlineToolConstructable';
-export * from './DataType';
+export * from './BlockDataType';
 export * from './BlockToolDataScheme';
