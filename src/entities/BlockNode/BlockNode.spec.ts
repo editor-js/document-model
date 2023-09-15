@@ -1,4 +1,4 @@
-import { BlockNode, createBlockNodeName, createDataKey } from './index';
+import { BlockNode, createBlockToolName, createDataKey } from './index';
 
 import { BlockTune, BlockTuneName } from '../BlockTune';
 import { ValueNode } from '../ValueNode';
@@ -19,7 +19,7 @@ describe('BlockNode', () => {
     let node: BlockNode;
 
     beforeEach(() => {
-      node = new BlockNode({ name: createBlockNodeName('header') });
+      node = new BlockNode({ name: createBlockToolName('header') });
     });
 
     it('should have empty object as data by default', () => {
@@ -37,7 +37,7 @@ describe('BlockNode', () => {
     });
 
     it('should return a name of a tool that created a BlockNode', () => {
-      const blockNodeName = createBlockNodeName('paragraph');
+      const blockNodeName = createBlockToolName('paragraph');
 
       const blockNode = new BlockNode({
         name: blockNodeName,
@@ -69,7 +69,7 @@ describe('BlockNode', () => {
         });
 
       const blockNode = new BlockNode({
-        name: createBlockNodeName('paragraph'),
+        name: createBlockToolName('paragraph'),
         data: {},
         parent: {} as EditorDocument,
         tunes: blockTunes,
@@ -98,7 +98,7 @@ describe('BlockNode', () => {
         });
 
       const blockNode = new BlockNode({
-        name: createBlockNodeName('paragraph'),
+        name: createBlockToolName('paragraph'),
         data: {
           ...valueNodes,
         },
@@ -128,7 +128,7 @@ describe('BlockNode', () => {
         });
 
       const blockNode = new BlockNode({
-        name: createBlockNodeName('paragraph'),
+        name: createBlockToolName('paragraph'),
         data: {
           ...textNodes,
         },
@@ -154,7 +154,7 @@ describe('BlockNode', () => {
       const blockTune = new BlockTune({} as BlockTuneConstructorParameters);
 
       const blockNode = new BlockNode({
-        name: createBlockNodeName('paragraph'),
+        name: createBlockToolName('paragraph'),
         data: {},
         parent: {} as EditorDocument,
         tunes: {
@@ -188,7 +188,7 @@ describe('BlockNode', () => {
       const valueNode = new ValueNode({} as ValueNodeConstructorParameters);
 
       const blockNode = new BlockNode({
-        name: createBlockNodeName('paragraph'),
+        name: createBlockToolName('paragraph'),
         data: {
           [dataKey]: valueNode,
         },
@@ -207,7 +207,7 @@ describe('BlockNode', () => {
       const value = 'Some value';
 
       const blockNode = new BlockNode({
-        name: createBlockNodeName('paragraph'),
+        name: createBlockToolName('paragraph'),
         data: {},
         parent: {} as EditorDocument,
       });
@@ -222,7 +222,7 @@ describe('BlockNode', () => {
       const value = 'Some value';
 
       const blockNode = new BlockNode({
-        name: createBlockNodeName('paragraph'),
+        name: createBlockToolName('paragraph'),
         data: {
           [dataKey]: {} as TextNode,
         },
@@ -244,7 +244,7 @@ describe('BlockNode', () => {
     beforeEach(() => {
       textNode = new TextNode();
 
-      node = new BlockNode({ name: createBlockNodeName('header'),
+      node = new BlockNode({ name: createBlockToolName('header'),
         data: {
           [dataKey]: textNode,
         },
@@ -276,7 +276,7 @@ describe('BlockNode', () => {
 
     it('should throw an error if node is not a TextNode', () => {
       node = new BlockNode({
-        name: createBlockNodeName('header'),
+        name: createBlockToolName('header'),
         data: {
           [dataKey]: new ValueNode({} as ValueNodeConstructorParameters),
         },
@@ -294,7 +294,7 @@ describe('BlockNode', () => {
     beforeEach(() => {
       textNode = new TextNode();
 
-      node = new BlockNode({ name: createBlockNodeName('header'),
+      node = new BlockNode({ name: createBlockToolName('header'),
         data: {
           [dataKey]: textNode,
         },
@@ -336,7 +336,7 @@ describe('BlockNode', () => {
 
     it('should throw an error if node is not a TextNode', () => {
       node = new BlockNode({
-        name: createBlockNodeName('header'),
+        name: createBlockToolName('header'),
         data: {
           [dataKey]: new ValueNode({} as ValueNodeConstructorParameters),
         },
@@ -357,7 +357,7 @@ describe('BlockNode', () => {
     beforeEach(() => {
       textNode = new TextNode();
 
-      node = new BlockNode({ name: createBlockNodeName('header'),
+      node = new BlockNode({ name: createBlockToolName('header'),
         data: {
           [dataKey]: textNode,
         },
@@ -389,7 +389,7 @@ describe('BlockNode', () => {
 
     it('should throw an error if node is not a TextNode', () => {
       node = new BlockNode({
-        name: createBlockNodeName('header'),
+        name: createBlockToolName('header'),
         data: {
           [dataKey]: new ValueNode({} as ValueNodeConstructorParameters),
         },
@@ -410,7 +410,7 @@ describe('BlockNode', () => {
     beforeEach(() => {
       textNode = new TextNode();
 
-      node = new BlockNode({ name: createBlockNodeName('header'),
+      node = new BlockNode({ name: createBlockToolName('header'),
         data: {
           [dataKey]: textNode,
         },
@@ -433,7 +433,7 @@ describe('BlockNode', () => {
 
     it('should throw an error if node is not a TextNode', () => {
       node = new BlockNode({
-        name: createBlockNodeName('header'),
+        name: createBlockToolName('header'),
         data: {
           [dataKey]: new ValueNode({} as ValueNodeConstructorParameters),
         },

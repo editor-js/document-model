@@ -2,6 +2,8 @@ import { BlockNode, DataKey } from '../BlockNode';
 import type { EditorDocumentConstructorParameters, Properties } from './types';
 import { BlockTuneName } from '../BlockTune';
 import { InlineToolData, InlineToolName } from '../inline-fragments';
+import { IoCContainer, TOOLS_REGISTRY } from '../../IoC';
+import { ToolsRegistry } from '../../tools';
 
 /**
  * EditorDocument class represents the top-level container for a tree-like structure of BlockNodes in an editor document.
@@ -24,10 +26,15 @@ export class EditorDocument {
    * @param [args] - EditorDocument constructor arguments.
    * @param [args.children] - The child BlockNodes of the EditorDocument.
    * @param [args.properties] - The properties of the document.
+   * @param [args.toolsRegistry] - ToolsRegistry instance for the current document. Defaults to a new ToolsRegistry instance.
    */
-  constructor({ children = [], properties = {} }: EditorDocumentConstructorParameters = {}) {
+  constructor({ children = [], properties = {}, toolsRegistry = new ToolsRegistry() }: EditorDocumentConstructorParameters = {}) {
     this.#children = children;
     this.#properties = properties;
+
+    const container = IoCContainer.of(this);
+
+    container.set(TOOLS_REGISTRY, toolsRegistry);
   }
 
   /**
