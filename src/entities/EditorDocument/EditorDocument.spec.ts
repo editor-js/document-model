@@ -38,11 +38,11 @@ describe('EditorDocument', () => {
       });
 
       for (let i = 0; i < blocksCount; i++) {
-        const block = new BlockNode({
+        const blockData = {
           name: 'header' as BlockToolName,
-        });
+        };
 
-        document.addBlock(block);
+        document.addBlock(blockData);
       }
 
       // Act
@@ -55,74 +55,79 @@ describe('EditorDocument', () => {
 
   describe('.addBlock()', () => {
     it('should add the block to the end of the document if index is not provided', () => {
-      // Arrange
       const document = createEditorDocumentWithSomeBlocks();
-      const block = new BlockNode({
-        name: 'header' as BlockToolName,
-      });
+      const lastBlockBeforeTest = document.getBlock(document.length - 1);
+      const blockData = {
+        name: 'header-last' as BlockToolName,
+      };
 
-      // Act
-      document.addBlock(block);
+      document.addBlock(blockData);
 
-      // Assert
       const lastBlock = document.getBlock(document.length - 1);
+      const blockBeforeAdded = document.getBlock(document.length - 2);
 
-      expect(lastBlock).toBe(block);
+      expect(lastBlockBeforeTest).not.toBe(lastBlock);
+      expect(blockBeforeAdded).toBe(lastBlockBeforeTest);
     });
 
     it('should add the block to the beginning of the document if index is 0', () => {
-      // Arrange
       const document = createEditorDocumentWithSomeBlocks();
-      const block = new BlockNode({
-        name: 'header' as BlockToolName,
-      });
+      const firstBlockBeforeTest = document.getBlock(0);
+      const blockData = {
+        name: 'header-0' as BlockToolName,
+      };
 
-      // Act
-      document.addBlock(block, 0);
+      document.addBlock(blockData, 0);
 
-      // Assert
-      expect(document.getBlock(0)).toBe(block);
+      const firstBlock = document.getBlock(0);
+      const blockAfterAdded = document.getBlock(1);
+
+      expect(firstBlockBeforeTest).not.toBe(firstBlock);
+      expect(blockAfterAdded).toBe(firstBlockBeforeTest);
     });
 
     it('should add the block to the specified index in the middle of the document', () => {
-      // Arrange
       const document = createEditorDocumentWithSomeBlocks();
-      const block = new BlockNode({
-        name: 'header' as BlockToolName,
-      });
+      const index = 1;
+      const blockBeforeTest = document.getBlock(index);
+      const blockData = {
+        name: 'header-1a2b' as BlockToolName,
+      };
 
-      // Act
-      document.addBlock(block, 1);
+      document.addBlock(blockData, index);
 
-      // Assert
-      expect(document.getBlock(1)).toBe(block);
+      const addedBlock = document.getBlock(index);
+      const blockAfterAdded = document.getBlock(index + 1);
+
+      expect(blockBeforeTest).not.toBe(addedBlock);
+      expect(blockBeforeTest).toBe(blockAfterAdded);
     });
 
     it('should add the block to the end of the document if the index after the last element is passed', () => {
-      // Arrange
       const document = createEditorDocumentWithSomeBlocks();
-      const block = new BlockNode({
-        name: 'header' as BlockToolName,
-      });
+      const lastBlockBeforeTest = document.getBlock(document.length - 1);
+      const blockData = {
+        name: 'header-last' as BlockToolName,
+      };
 
-      // Act
-      document.addBlock(block, document.length);
+      document.addBlock(blockData, document.length);
 
-      // Assert
       const lastBlock = document.getBlock(document.length - 1);
+      const blockBeforeAdded = document.getBlock(document.length - 2);
 
-      expect(lastBlock).toBe(block);
+      expect(lastBlockBeforeTest).not.toBe(lastBlock);
+      expect(blockBeforeAdded).toBe(lastBlockBeforeTest);
     });
 
     it('should throw an error if index is less then 0', () => {
       // Arrange
       const document = createEditorDocumentWithSomeBlocks();
-      const block = new BlockNode({
+      const blockData = {
         name: 'header' as BlockToolName,
-      });
+      };
 
       // Act
-      const action = (): void => document.addBlock(block, -1);
+      const action = (): void => document.addBlock(blockData, -1);
 
       // Assert
       expect(action).toThrowError('Index out of bounds');
@@ -131,12 +136,12 @@ describe('EditorDocument', () => {
     it('should throw an error if index is greater then document length', () => {
       // Arrange
       const document = createEditorDocumentWithSomeBlocks();
-      const block = new BlockNode({
+      const blockData = {
         name: 'header' as BlockToolName,
-      });
+      };
 
       // Act
-      const action = (): void => document.addBlock(block, document.length + 1);
+      const action = (): void => document.addBlock(blockData, document.length + 1);
 
       // Assert
       expect(action).toThrowError('Index out of bounds');
@@ -205,25 +210,25 @@ describe('EditorDocument', () => {
 
   describe('.getBlock()', () => {
     it('should return the block from the specific index', () => {
-      // Arrange
-      const document = new EditorDocument();
-      const countOfBlocks = 3;
-      const blocks: BlockNode[] = [];
+      const countOfBlocks = 5;
+      const blocks = [];
 
       for (let i = 0; i < countOfBlocks; i++) {
         const block = new BlockNode({
-          name: 'header' as BlockToolName,
+          name: (`header-${i}`) as BlockToolName,
         });
 
-        document.addBlock(block);
         blocks.push(block);
       }
+
+      const document = new EditorDocument({
+        children: blocks,
+      });
+
       const index = 1;
 
-      // Act
       const block = document.getBlock(index);
 
-      // Assert
       expect(block).toBe(blocks[index]);
     });
 
