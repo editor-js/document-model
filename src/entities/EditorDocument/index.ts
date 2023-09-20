@@ -1,5 +1,5 @@
 import { BlockNode, DataKey } from '../BlockNode';
-import type { EditorDocumentConstructorParameters, Properties } from './types';
+import type { BlockNodeData, EditorDocumentConstructorParameters, Properties } from './types';
 import { BlockTuneName } from '../BlockTune';
 import { InlineToolData, InlineToolName } from '../inline-fragments';
 import { IoCContainer, TOOLS_REGISTRY } from '../../IoC';
@@ -48,11 +48,16 @@ export class EditorDocument {
    * Adds a BlockNode to the EditorDocument at the specified index.
    * If no index is provided, the BlockNode will be added to the end of the array.
    *
-   * @param blockNode - The BlockNode to add to the EditorDocument
+   * @param blockNodeData - The data to create the BlockNode with
    * @param index - The index at which to add the BlockNode
    * @throws Error if the index is out of bounds
    */
-  public addBlock(blockNode: BlockNode, index?: number): void {
+  public addBlock(blockNodeData: BlockNodeData, index?: number): void {
+    const blockNode = new BlockNode({
+      ...blockNodeData,
+      parent: this,
+    });
+
     if (index === undefined) {
       this.#children.push(blockNode);
 
