@@ -1,6 +1,6 @@
 import { FormattingInlineNode, InlineToolName, InlineToolData } from '../index';
 import { TextInlineNodeConstructorParameters } from './types';
-import { InlineNode, TextNodeSerialized } from '../InlineNode';
+import { InlineNode, ChildTextNodeSerialized } from '../InlineNode';
 import { ChildNode } from '../mixins/ChildNode';
 
 export * from './types';
@@ -37,7 +37,7 @@ export class TextInlineNode implements InlineNode {
   /**
    * Returns serialized value of the node
    */
-  public get serialized(): TextNodeSerialized {
+  public get serialized(): ChildTextNodeSerialized {
     return {
       text: this.getText(),
       // No fragments for text node

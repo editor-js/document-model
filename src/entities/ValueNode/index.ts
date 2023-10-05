@@ -1,4 +1,5 @@
-import type { ValueNodeConstructorParameters } from './types';
+import type { ValueNodeConstructorParameters, ValueSerialized } from './types';
+import { BlockChildType } from '../BlockNode/types';
 
 /**
  * ValueNode class represents a node in a tree-like structure, used to store and manipulate data associated with a BlockNode.
@@ -33,8 +34,14 @@ export class ValueNode<ValueType = unknown> {
   /**
    * Returns serialized data associated with this value node.
    */
-  public get serialized(): ValueType {
-    return this.#value;
+  public get serialized(): ValueSerialized<ValueType> {
+    let value = this.#value;
+
+    if (typeof value === 'object' && this.#value !== null) {
+      value = Object.assign({ $t: BlockChildType.Value }, value);
+    }
+
+    return value as ValueSerialized<ValueType>;
   }
 }
 

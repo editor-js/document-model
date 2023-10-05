@@ -1,4 +1,5 @@
 import { BlockTuneName } from './BlockTuneName';
+import { BlockTuneSerialized } from './BlockTuneSerialized';
 
 export interface BlockTuneConstructorParameters {
   /**
@@ -9,5 +10,5 @@ export interface BlockTuneConstructorParameters {
   /**
    * Any additional data associated with the tune
    */
-  data?: Record<string, unknown>;
+  data?: BlockTuneSerialized;
 }

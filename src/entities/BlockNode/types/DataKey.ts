@@ -3,7 +3,7 @@ import { create, Nominal } from '../../../utils/Nominal';
 /**
  * Base type of the data key field
  */
-type DataKeyBase = string;
+type DataKeyBase = string | number;
 
 /**
  * Nominal type for the data key field

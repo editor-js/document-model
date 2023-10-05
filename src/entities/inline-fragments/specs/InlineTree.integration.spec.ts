@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
-import { TextInlineNode, TextNode, createInlineToolData, createInlineToolName, TextNodeSerialized } from '../index';
+import { TextInlineNode, TextNode, createInlineToolData, createInlineToolName, ChildTextNodeSerialized } from '../index';
 
 describe('Inline fragments tree integration', () => {
   describe('text insertion', () => {
@@ -421,7 +421,7 @@ describe('Inline fragments tree integration', () => {
           ],
         },
       ],
-    } as TextNodeSerialized;
+    } as ChildTextNodeSerialized;
 
     const tree = new TextNode({
       value: data.text,

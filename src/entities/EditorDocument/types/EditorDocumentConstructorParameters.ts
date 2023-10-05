@@ -1,12 +1,12 @@
-import type { BlockNode } from '../../BlockNode';
 import type { Properties } from './Properties';
 import { ToolsRegistry } from '../../../tools/ToolsRegistry';
+import { BlockNodeSerialized } from '../../BlockNode/types';
 
 export interface EditorDocumentConstructorParameters {
   /**
    * The child BlockNodes of the EditorDocument
    */
-  children?: BlockNode[];
+  blocks?: BlockNodeSerialized[];
 
   /**
    * The properties of the document

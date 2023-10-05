@@ -1,15 +1,21 @@
 import { EditorDocument } from '../EditorDocument';
-import { BlockTune, BlockTuneName } from '../BlockTune';
+import { BlockTune, BlockTuneName, createBlockTuneName } from '../BlockTune';
 import {
   BlockNodeConstructorParameters,
   BlockToolName,
   createBlockToolName,
   DataKey,
-  createDataKey, BlockNodeData,
-  BlockNodeSerialized
+  createDataKey,
+  BlockNodeData,
+  BlockNodeSerialized,
+  BlockNodeDataSerialized,
+  BlockNodeDataSerializedValue,
+  BlockChildType,
+  ChildNode,
+  BlockNodeDataValue
 } from './types';
 import { ValueNode } from '../ValueNode';
-import { InlineToolData, InlineToolName, TextNode } from '../inline-fragments';
+import { InlineToolData, InlineToolName, TextNode, TextNodeSerialized } from '../inline-fragments';
 
 /**
  * BlockNode class represents a node in a tree-like structure used to store and manipulate Blocks in an editor document.
@@ -25,7 +31,7 @@ export class BlockNode {
   /**
    * Field representing the content of the Block
    */
-  #data: BlockNodeData;
+  #data: BlockNodeData = {};
 
   /**
    * Field representing the parent EditorDocument of the BlockNode
@@ -47,10 +53,22 @@ export class BlockNode {
    * @param [args.tunes] - The BlockTunes associated with the BlockNode.
    */
   constructor({ name, data = {}, parent, tunes = {} }: BlockNodeConstructorParameters) {
-    this.#name = name;
-    this.#data = data;
+    this.#name = createBlockToolName(name);
     this.#parent = parent ?? null;
-    this.#tunes = tunes;
+    this.#tunes = Object.fromEntries(
+      Object.entries(tunes)
+        .map(
+          ([tuneName, tuneData]) => ([
+            createBlockTuneName(tuneName),
+            new BlockTune({
+              name: createBlockTuneName(tuneName),
+              data: tuneData,
+            }),
+          ])
+        )
+    );
+
+    this.#initialize(data);
   }
 
   /**
@@ -172,6 +190,41 @@ export class BlockNode {
     const node = this.#data[key] as TextNode;
 
     node.unformat(tool, start, end);
+  }
+
+  /**
+   *
+   * @param data
+   */
+  #initialize(data: BlockNodeDataSerialized): void {
+    const map = (value: BlockNodeDataSerializedValue): BlockNodeData | BlockNodeDataValue => {
+      if (Array.isArray(value)) {
+        return value.map(map) as BlockNodeData[] | ChildNode[];
+      }
+
+      if (typeof value === 'object' && value !== null) {
+        if ('$t' in value) {
+          switch (value.$t) {
+            case BlockChildType.Value:
+              return new ValueNode({ value });
+            case BlockChildType.Text:
+              return new TextNode(value as TextNodeSerialized);
+          }
+        }
+
+        return Object.fromEntries(
+          Object.entries(value)
+            .map(([key, v]) => ([key, map(v)]))
+        );
+      }
+
+      return new ValueNode({ value });
+    };
+
+    this.#data = Object.fromEntries(
+      Object.entries(data)
+        .map(([key, value]) => ([key, map(value)]))
+    );
   }
 
   /**

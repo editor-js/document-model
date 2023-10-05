@@ -1,4 +1,5 @@
-import { InlineFragment, ParentInlineNode, ParentInlineNodeConstructorOptions } from '../index';
+import { InlineFragment, ParentInlineNode, ParentInlineNodeConstructorOptions, TextNodeSerialized } from '../index';
+import { BlockChildType } from '../../BlockNode/types';
 
 interface TextNodeConstructorOptions extends ParentInlineNodeConstructorOptions {
   value?: string;
@@ -21,6 +22,13 @@ export class TextNode extends ParentInlineNode {
     super(rest);
 
     this.#initialize(value, fragments);
+  }
+
+  /**
+   * Returns serialized TextNode
+   */
+  public get serialized(): TextNodeSerialized {
+    return Object.assign({ $t: BlockChildType.Text as const }, super.serialized);
   }
 
   /**

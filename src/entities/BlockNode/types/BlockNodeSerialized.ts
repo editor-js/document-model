@@ -1,4 +1,15 @@
 import { BlockTuneSerialized } from '../../BlockTune';
+import { ValueSerialized } from '../../ValueNode/types';
+import { TextNodeSerialized } from '../../inline-fragments';
+
+export type BlockChildNodeSerialized = ValueSerialized | TextNodeSerialized;
+
+export type BlockNodeDataSerializedValue = BlockChildNodeSerialized | BlockChildNodeSerialized[] | BlockNodeDataSerialized | BlockNodeDataSerialized[];
+
+export interface BlockNodeDataSerialized {
+  [key: string]: BlockNodeDataSerializedValue;
+}
+
 
 /**
  * Serialized version of the BlockNode
@@ -12,7 +23,7 @@ export interface BlockNodeSerialized {
   /**
    * The content of the Block
    */
-  data: Record<string, unknown>; // @todo replace unknown type with serialized root node and value node
+  data: BlockNodeDataSerialized;
 
   /**
    * Serialized BlockTunes associated with the BlockNode
