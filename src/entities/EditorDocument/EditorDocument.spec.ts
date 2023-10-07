@@ -231,10 +231,7 @@ describe('EditorDocument', () => {
   });
 
   describe('.getBlock()', () => {
-    /**
-     * @todo move this to integration tests
-     */
-    it.skip('should return the block from the specific index', () => {
+    it('should return the block from the specific index', () => {
       const countOfBlocks = 5;
       const blocksData = [];
       const document = new EditorDocument();
@@ -253,8 +250,8 @@ describe('EditorDocument', () => {
 
       const block = document.getBlock(index);
 
-      expect(block.serialized)
-        .toBe(blocksData[index]);
+      expect(block)
+        .toBeInstanceOf(BlockNode);
     });
 
     it('should throw an error if index is less then 0', () => {
@@ -584,11 +581,11 @@ describe('EditorDocument', () => {
     beforeEach(() => {
       const blockData = {
         name: 'header' as BlockToolName,
-        data: {}
+        data: {},
       };
 
       document = new EditorDocument({
-        blocks: [blockData],
+        blocks: [ blockData ],
       });
 
       block = document.getBlock(0);
@@ -628,11 +625,11 @@ describe('EditorDocument', () => {
     beforeEach(() => {
       const blockData = {
         name: 'header' as BlockToolName,
-        data: {}
+        data: {},
       };
 
       document = new EditorDocument({
-        blocks: [blockData],
+        blocks: [ blockData ],
       });
 
       block = document.getBlock(0);
@@ -686,11 +683,11 @@ describe('EditorDocument', () => {
     beforeEach(() => {
       const blockData = {
         name: 'header' as BlockToolName,
-        data: {}
+        data: {},
       };
 
       document = new EditorDocument({
-        blocks: [blockData],
+        blocks: [ blockData ],
       });
 
       block = document.getBlock(0);
@@ -733,11 +730,11 @@ describe('EditorDocument', () => {
     beforeEach(() => {
       const blockData = {
         name: 'header' as BlockToolName,
-        data: {}
+        data: {},
       };
 
       document = new EditorDocument({
-        blocks: [blockData],
+        blocks: [ blockData ],
       });
 
       block = document.getBlock(0);
@@ -755,6 +752,29 @@ describe('EditorDocument', () => {
     it('should throw an error if index is out of bounds', () => {
       expect(() => document.unformat(document.length + 1, dataKey, tool, start, end))
         .toThrowError('Index out of bounds');
+    });
+  });
+
+  describe('.serialized', () => {
+    it('should call .serialized property of the BlockNodes', () => {
+      const spy  = jest.spyOn(BlockNode.prototype, 'serialized', 'get');
+      const document = createEditorDocumentWithSomeBlocks();
+
+      document.serialized;
+
+      expect(spy).toBeCalledTimes(document.length);
+    });
+
+
+    it('should return document properties', () => {
+      const properties = {
+        readOnly: true,
+      };
+      const document = new EditorDocument({
+        properties,
+      });
+
+      expect(document.serialized).toHaveProperty('properties', properties);
     });
   });
 });

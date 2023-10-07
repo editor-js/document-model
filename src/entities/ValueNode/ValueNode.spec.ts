@@ -1,4 +1,5 @@
 import { ValueNode } from './index';
+import { BlockChildType } from '../BlockNode/types';
 
 describe('ValueNode', () => {
   describe('.update()', () => {
@@ -30,6 +31,17 @@ describe('ValueNode', () => {
 
       // Assert
       expect(serializedLongitude).toStrictEqual(longitude);
+    });
+
+    it('should mark serialized value as value node if object returned', () => {
+      const value = { align: 'left' };
+      const longitudeValueNode = new ValueNode({
+        value,
+      });
+
+      const serializedValue = longitudeValueNode.serialized;
+
+      expect(serializedValue).toHaveProperty('$t', BlockChildType.Value);
     });
   });
 });

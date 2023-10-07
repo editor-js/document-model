@@ -47,7 +47,8 @@ describe('BlockNode', () => {
 
       const serialized = blockNode.serialized;
 
-      expect(serialized.name).toEqual(blockNodeName);
+      expect(serialized.name)
+        .toEqual(blockNodeName);
     });
 
     it('should call .serialized getter of all tunes associated with the BlockNode', () => {
@@ -73,13 +74,15 @@ describe('BlockNode', () => {
 
       blockNode.serialized;
 
-      expect(spy).toHaveBeenCalledTimes(blockTunesNames.length);
+      expect(spy)
+        .toHaveBeenCalledTimes(blockTunesNames.length);
     });
 
     it('should call .serialized getter of all child ValueNodes associated with the BlockNode', () => {
       const numberOfValueNodes = 2;
 
-      const valueNodes = [ ...Array(numberOfValueNodes).keys() ]
+      const valueNodes = [ ...Array(numberOfValueNodes)
+        .keys() ]
         .reduce((acc, index) => ({
           ...acc,
           [createDataKey(`data-key-${index}c${index}d`)]: index,
@@ -97,13 +100,15 @@ describe('BlockNode', () => {
 
       blockNode.serialized;
 
-      expect(spy).toHaveBeenCalledTimes(numberOfValueNodes);
+      expect(spy)
+        .toHaveBeenCalledTimes(numberOfValueNodes);
     });
 
     it('should call .serialized getter of all child TextNodes associated with the BlockNode', () => {
       const numberOfTextNodes = 3;
 
-      const textNodes = [ ...Array(numberOfTextNodes).keys() ]
+      const textNodes = [ ...Array(numberOfTextNodes)
+        .keys() ]
         .reduce((acc, index) => ({
           ...acc,
           [createDataKey(`data-key-${index}c${index}d`)]: {
@@ -125,7 +130,228 @@ describe('BlockNode', () => {
 
       blockNode.serialized;
 
-      expect(spy).toHaveBeenCalledTimes(numberOfTextNodes);
+      expect(spy)
+        .toHaveBeenCalledTimes(numberOfTextNodes);
+    });
+
+
+    it('should call .serialized getter of ValueNodes in an array', () => {
+      const spy = jest.spyOn(ValueNode.prototype, 'serialized', 'get');
+      const blockNode = new BlockNode({
+        name: createBlockToolName('paragraph'),
+        data: {
+          items: [ 'value' ],
+        },
+        parent: {} as EditorDocument,
+      });
+
+      blockNode.serialized;
+
+      expect(spy)
+        .toHaveBeenCalledTimes(1);
+    });
+
+    it('should call .serialized getter of TextNode in an array', () => {
+      const spy = jest.spyOn(TextNode.prototype, 'serialized', 'get');
+      const blockNode = new BlockNode({
+        name: createBlockToolName('paragraph'),
+        data: {
+          items: [
+            {
+              $t: BlockChildType.Text,
+              value: '',
+              fragments: [],
+            },
+          ],
+        },
+        parent: {} as EditorDocument,
+      });
+
+      blockNode.serialized;
+
+      expect(spy)
+        .toHaveBeenCalledTimes(1);
+    });
+
+    it('should call .serialized getter of ValueNodes in an nested object', () => {
+      const spy = jest.spyOn(ValueNode.prototype, 'serialized', 'get');
+      const blockNode = new BlockNode({
+        name: createBlockToolName('paragraph'),
+        data: {
+          object: {
+            nestedObject: { value: 'value' },
+          },
+        },
+        parent: {} as EditorDocument,
+      });
+
+      blockNode.serialized;
+
+      expect(spy)
+        .toHaveBeenCalledTimes(1);
+    });
+
+    it('should call .serialized getter of TextNode in a nested object', () => {
+      const spy = jest.spyOn(TextNode.prototype, 'serialized', 'get');
+      const blockNode = new BlockNode({
+        name: createBlockToolName('paragraph'),
+        data: {
+          object: {
+            nestedObject: {
+              text: {
+                $t: BlockChildType.Text,
+                value: '',
+                fragments: [],
+              },
+            },
+          },
+        },
+        parent: {} as EditorDocument,
+      });
+
+      blockNode.serialized;
+
+      expect(spy)
+        .toHaveBeenCalledTimes(1);
+    });
+
+    it('should call .serialized getter of ValueNodes in an array inside an object', () => {
+      const spy = jest.spyOn(ValueNode.prototype, 'serialized', 'get');
+      const blockNode = new BlockNode({
+        name: createBlockToolName('paragraph'),
+        data: {
+          object: {
+            array: [ 'value' ],
+          },
+        },
+        parent: {} as EditorDocument,
+      });
+
+      blockNode.serialized;
+
+      expect(spy)
+        .toHaveBeenCalledTimes(1);
+    });
+
+    it('should call .serialized getter of TextNode in an array inside an object', () => {
+      const spy = jest.spyOn(TextNode.prototype, 'serialized', 'get');
+      const blockNode = new BlockNode({
+        name: createBlockToolName('paragraph'),
+        data: {
+          object: {
+            array: [ {
+              text: {
+                $t: BlockChildType.Text,
+                value: '',
+                fragments: [],
+              },
+            } ],
+          },
+        },
+        parent: {} as EditorDocument,
+      });
+
+      blockNode.serialized;
+
+      expect(spy)
+        .toHaveBeenCalledTimes(1);
+    });
+
+    it('should call .serialized getter of ValueNodes in an object inside an array', () => {
+      const spy = jest.spyOn(ValueNode.prototype, 'serialized', 'get');
+      const blockNode = new BlockNode({
+        name: createBlockToolName('paragraph'),
+        data: {
+          array: [ { value: 'value' } ],
+        },
+        parent: {} as EditorDocument,
+      });
+
+      blockNode.serialized;
+
+      expect(spy)
+        .toHaveBeenCalledTimes(1);
+    });
+
+    it('should call .serialized getter of TextNode in an object inside an array', () => {
+      const spy = jest.spyOn(TextNode.prototype, 'serialized', 'get');
+      const blockNode = new BlockNode({
+        name: createBlockToolName('paragraph'),
+        data: {
+          array: [ {
+            object: {
+              text: {
+                $t: BlockChildType.Text,
+                value: '',
+                fragments: [],
+              },
+            },
+          } ],
+        },
+        parent: {} as EditorDocument,
+      });
+
+      blockNode.serialized;
+
+      expect(spy)
+        .toHaveBeenCalledTimes(1);
+    });
+
+    it('should call .serialized getter of ValueNodes in a nested array', () => {
+      const spy = jest.spyOn(ValueNode.prototype, 'serialized', 'get');
+      const blockNode = new BlockNode({
+        name: createBlockToolName('paragraph'),
+        data: {
+          array: [ [ 'value' ] ],
+        },
+        parent: {} as EditorDocument,
+      });
+
+      blockNode.serialized;
+
+      expect(spy)
+        .toHaveBeenCalledTimes(1);
+    });
+
+    it('should call .serialized getter of TextNode in a nested array', () => {
+      const spy = jest.spyOn(TextNode.prototype, 'serialized', 'get');
+      const blockNode = new BlockNode({
+        name: createBlockToolName('paragraph'),
+        data: {
+          array: [ [
+            {
+              $t: BlockChildType.Text,
+              value: '',
+              fragments: [],
+            },
+          ] ],
+        },
+        parent: {} as EditorDocument,
+      });
+
+      blockNode.serialized;
+
+      expect(spy)
+        .toHaveBeenCalledTimes(1);
+    });
+
+    it('should call .serialized getter of object marked as value node', () => {
+      const spy = jest.spyOn(ValueNode.prototype, 'serialized', 'get');
+      const blockNode = new BlockNode({
+        name: createBlockToolName('paragraph'),
+        data: {
+          value: {
+            $t: BlockChildType.Value,
+            property: '',
+          },
+        },
+        parent: {} as EditorDocument,
+      });
+
+      blockNode.serialized;
+
+      expect(spy)
+        .toHaveBeenCalledTimes(1);
     });
   });
 
