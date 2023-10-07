@@ -222,8 +222,9 @@ export class EditorDocument {
   }
 
   /**
+   * Initializes EditorDocument with passed blocks
    *
-   * @param blocks
+   * @param blocks - document serialized blocks
    */
   #initialize(blocks: BlockNodeSerialized[]): void {
     blocks.forEach((block) => {

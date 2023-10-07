@@ -135,6 +135,9 @@ export interface ChildTextNodeSerialized {
   fragments: InlineFragment[];
 }
 
+/**
+ * Root type representing serialized TextNode data
+ */
 export interface TextNodeSerialized extends ChildTextNodeSerialized {
   $t: BlockChildType.Text;
 }

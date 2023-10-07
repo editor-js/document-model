@@ -12,7 +12,7 @@ import {
   BlockNodeDataSerializedValue,
   BlockChildType,
   ChildNode,
-  BlockNodeDataValue,
+  BlockNodeDataValue
 } from './types';
 import { ValueNode } from '../ValueNode';
 import { InlineToolData, InlineToolName, TextNode, TextNodeSerialized } from '../inline-fragments';
@@ -208,8 +208,9 @@ export class BlockNode {
   }
 
   /**
+   * Initializes BlockNode with passed block data
    *
-   * @param data
+   * @param data - block data
    */
   #initialize(data: BlockNodeDataSerialized): void {
     const map = (value: BlockNodeDataSerializedValue): BlockNodeData | BlockNodeDataValue => {
