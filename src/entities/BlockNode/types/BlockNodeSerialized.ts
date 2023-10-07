@@ -28,5 +28,5 @@ export interface BlockNodeSerialized {
   /**
    * Serialized BlockTunes associated with the BlockNode
    */
-  tunes: Record<string, BlockTuneSerialized>;
+  tunes?: Record<string, BlockTuneSerialized>;
 }

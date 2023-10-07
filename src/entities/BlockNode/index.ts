@@ -12,7 +12,7 @@ import {
   BlockNodeDataSerializedValue,
   BlockChildType,
   ChildNode,
-  BlockNodeDataValue
+  BlockNodeDataValue,
 } from './types';
 import { ValueNode } from '../ValueNode';
 import { InlineToolData, InlineToolName, TextNode, TextNodeSerialized } from '../inline-fragments';
@@ -82,10 +82,25 @@ export class BlockNode {
    * Returns serialized object representing the BlockNode
    */
   public get serialized(): BlockNodeSerialized {
+    const map = (data: BlockNodeDataValue): BlockNodeDataSerializedValue => {
+      if (Array.isArray(data)) {
+        return data.map(map) as BlockNodeDataSerialized[];
+      }
+
+      if (data instanceof ValueNode || data instanceof TextNode) {
+        return data.serialized;
+      }
+
+      return Object.fromEntries(
+        Object.entries(data)
+          .map(([key, value]) => ([key, map(value)]))
+      );
+    };
+
     const serializedData = Object.fromEntries(
       Object
         .entries(this.#data)
-        .map(([dataKey, value]) => ([dataKey, value.serialized]))
+        .map(([dataKey, value]) => ([dataKey, map(value)]))
     );
 
     const serializedTunes = Object.fromEntries(

@@ -1,3 +1,5 @@
+import { createBlockTuneName } from '../types';
+
 /**
  * Mock for BlockTune class
  */
@@ -16,3 +18,5 @@ export class BlockTune {
     return;
   }
 }
+
+export { createBlockTuneName };

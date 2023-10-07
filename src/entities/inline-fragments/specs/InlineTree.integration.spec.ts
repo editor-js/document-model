@@ -1,5 +1,12 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
-import { TextInlineNode, TextNode, createInlineToolData, createInlineToolName, ChildTextNodeSerialized } from '../index';
+import {
+  TextInlineNode,
+  TextNode,
+  createInlineToolData,
+  createInlineToolName,
+  TextNodeSerialized
+} from '../index';
+import { BlockChildType } from '../../BlockNode/types';
 
 describe('Inline fragments tree integration', () => {
   describe('text insertion', () => {
@@ -366,6 +373,7 @@ describe('Inline fragments tree integration', () => {
     tree.unformat(boldTool, ...(pluggable.map((value) => value - removedChars) as [number, number]));
 
     expect(tree.serialized).toStrictEqual({
+      $t: BlockChildType.Text,
       text: firstFragment + secondFragment.replace(' data', '') + thirdFragment,
       fragments: [
         {
@@ -390,6 +398,7 @@ describe('Inline fragments tree integration', () => {
 
   it('should initialize tree with initial text and fragments', () => {
     const data = {
+      $t: BlockChildType.Text,
       text: 'Editor.js is a block-styled editor. It returns clean output in JSON. Designed to be extendable and pluggable with a simple API.',
       fragments: [
         {
@@ -421,7 +430,7 @@ describe('Inline fragments tree integration', () => {
           ],
         },
       ],
-    } as ChildTextNodeSerialized;
+    } as TextNodeSerialized;
 
     const tree = new TextNode({
       value: data.text,

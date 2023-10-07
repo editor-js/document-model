@@ -54,7 +54,7 @@ export class EditorDocument {
    * @param index - The index at which to add the BlockNode
    * @throws Error if the index is out of bounds
    */
-  public addBlock(blockNodeData: BlockNodeSerialized, index?: number): void {
+  public addBlock(blockNodeData: Pick<BlockNodeSerialized, 'name'> & Partial<Omit<BlockNodeSerialized, 'name'>>, index?: number): void {
     const blockNode = new BlockNode({
       ...blockNodeData,
       parent: this,

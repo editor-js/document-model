@@ -4,9 +4,9 @@ import { BlockTune, BlockTuneName } from '../BlockTune';
 import { ValueNode } from '../ValueNode';
 
 import type { EditorDocument } from '../EditorDocument';
-import type { BlockTuneConstructorParameters } from '../BlockTune/types';
 import type { ValueNodeConstructorParameters } from '../ValueNode';
 import { InlineToolData, InlineToolName, TextNode } from '../inline-fragments';
+import { BlockChildType } from './types';
 
 jest.mock('../BlockTune');
 
@@ -59,14 +59,10 @@ describe('BlockNode', () => {
 
       const blockTunes = blockTunesNames.reduce((acc, name) => ({
         ...acc,
-        [name]: new BlockTune({} as BlockTuneConstructorParameters),
+        [name]: {},
       }), {});
 
-      const spyArray = Object
-        .values(blockTunes)
-        .map((blockTune) => {
-          return jest.spyOn(blockTune as BlockTune, 'serialized', 'get');
-        });
+      const spy = jest.spyOn(BlockTune.prototype, 'serialized', 'get');
 
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
@@ -77,25 +73,19 @@ describe('BlockNode', () => {
 
       blockNode.serialized;
 
-      spyArray.forEach((spy) => {
-        expect(spy).toHaveBeenCalled();
-      });
+      expect(spy).toHaveBeenCalledTimes(blockTunesNames.length);
     });
 
     it('should call .serialized getter of all child ValueNodes associated with the BlockNode', () => {
-      const countOfValueNodes = 2;
+      const numberOfValueNodes = 2;
 
-      const valueNodes = [ ...Array(countOfValueNodes).keys() ]
+      const valueNodes = [ ...Array(numberOfValueNodes).keys() ]
         .reduce((acc, index) => ({
           ...acc,
-          [createDataKey(`data-key-${index}c${index}d`)]: new ValueNode({} as ValueNodeConstructorParameters),
+          [createDataKey(`data-key-${index}c${index}d`)]: index,
         }), {});
 
-      const spyArray = Object
-        .values(valueNodes)
-        .map((valueNode) => {
-          return jest.spyOn(valueNode as ValueNode, 'serialized', 'get');
-        });
+      const spy = jest.spyOn(ValueNode.prototype, 'serialized', 'get');
 
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
@@ -107,25 +97,23 @@ describe('BlockNode', () => {
 
       blockNode.serialized;
 
-      spyArray.forEach((spy) => {
-        expect(spy).toHaveBeenCalled();
-      });
+      expect(spy).toHaveBeenCalledTimes(numberOfValueNodes);
     });
 
-    it('should call .serialized getter of all child RootInlineNodes associated with the BlockNode', () => {
-      const countOfTextNodes = 3;
+    it('should call .serialized getter of all child TextNodes associated with the BlockNode', () => {
+      const numberOfTextNodes = 3;
 
-
-      const textNodes = [ ...Array(countOfTextNodes).keys() ]
+      const textNodes = [ ...Array(numberOfTextNodes).keys() ]
         .reduce((acc, index) => ({
           ...acc,
-          [createDataKey(`data-key-${index}c${index}d`)]: new TextNode(),
+          [createDataKey(`data-key-${index}c${index}d`)]: {
+            $t: BlockChildType.Text,
+            value: '',
+            fragments: [],
+          },
         }), {});
 
-      const spyArray = Object.values(textNodes)
-        .map((textNode) => {
-          return jest.spyOn(textNode as TextNode, 'serialized', 'get');
-        });
+      const spy = jest.spyOn(TextNode.prototype, 'serialized', 'get');
 
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
@@ -137,9 +125,7 @@ describe('BlockNode', () => {
 
       blockNode.serialized;
 
-      spyArray.forEach((spy) => {
-        expect(spy).toHaveBeenCalled();
-      });
+      expect(spy).toHaveBeenCalledTimes(numberOfTextNodes);
     });
   });
 
@@ -151,14 +137,12 @@ describe('BlockNode', () => {
     it('should call .update() method of the BlockTune', () => {
       const blockTuneName = 'align' as BlockTuneName;
 
-      const blockTune = new BlockTune({} as BlockTuneConstructorParameters);
-
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
         data: {},
         parent: {} as EditorDocument,
         tunes: {
-          [blockTuneName]: blockTune,
+          [blockTuneName]: {},
         },
       });
 
@@ -168,7 +152,7 @@ describe('BlockNode', () => {
         [dataKey]: dataValue,
       };
 
-      const spy = jest.spyOn(blockTune, 'update');
+      const spy = jest.spyOn(BlockTune.prototype, 'update');
 
       blockNode.updateTuneData(blockTuneName, data);
 
@@ -185,17 +169,15 @@ describe('BlockNode', () => {
       const dataKey = createDataKey('data-key-1a2b');
       const value = 'Some value';
 
-      const valueNode = new ValueNode({} as ValueNodeConstructorParameters);
-
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
         data: {
-          [dataKey]: valueNode,
+          [dataKey]: 'value',
         },
         parent: {} as EditorDocument,
       });
 
-      const spy = jest.spyOn(valueNode, 'update');
+      const spy = jest.spyOn(ValueNode.prototype, 'update');
 
       blockNode.updateValue(dataKey, value);
 
@@ -238,21 +220,22 @@ describe('BlockNode', () => {
   describe('.insertText()', () => {
     let node: BlockNode;
     const dataKey = createDataKey('text');
-    let textNode: TextNode;
     const text = 'Some text';
 
     beforeEach(() => {
-      textNode = new TextNode();
-
       node = new BlockNode({ name: createBlockToolName('header'),
         data: {
-          [dataKey]: textNode,
+          [dataKey]: {
+            $t: BlockChildType.Text,
+            value: '',
+            fragments: [],
+          },
         },
       });
     });
 
     it('should call .insertText() method of the TextNode', () => {
-      const spy = jest.spyOn(textNode, 'insertText');
+      const spy = jest.spyOn(TextNode.prototype, 'insertText');
 
       node.insertText(dataKey, text);
 
@@ -260,7 +243,7 @@ describe('BlockNode', () => {
     });
 
     it('should pass start index to the .insertText() method of the TextNode', () => {
-      const spy = jest.spyOn(textNode, 'insertText');
+      const spy = jest.spyOn(TextNode.prototype, 'insertText');
       const start = 5;
 
       node.insertText(dataKey, text, start);
@@ -289,20 +272,21 @@ describe('BlockNode', () => {
   describe('.removeText()', () => {
     let node: BlockNode;
     const dataKey = createDataKey('text');
-    let textNode: TextNode;
 
     beforeEach(() => {
-      textNode = new TextNode();
-
       node = new BlockNode({ name: createBlockToolName('header'),
         data: {
-          [dataKey]: textNode,
+          [dataKey]: {
+            $t: BlockChildType.Text,
+            value: '',
+            fragments: [],
+          },
         },
       });
     });
 
     it('should call .removeText() method of the TextNode', () => {
-      const spy = jest.spyOn(textNode, 'removeText');
+      const spy = jest.spyOn(TextNode.prototype, 'removeText');
 
       node.removeText(dataKey);
 
@@ -310,7 +294,7 @@ describe('BlockNode', () => {
     });
 
     it('should pass start index to the .removeText() method of the TextNode', () => {
-      const spy = jest.spyOn(textNode, 'removeText');
+      const spy = jest.spyOn(TextNode.prototype, 'removeText');
       const start = 5;
 
       node.removeText(dataKey, start);
@@ -319,7 +303,7 @@ describe('BlockNode', () => {
     });
 
     it('should pass end index to the .removeText() method of the TextNode', () => {
-      const spy = jest.spyOn(textNode, 'removeText');
+      const spy = jest.spyOn(TextNode.prototype, 'removeText');
       const start = 5;
       const end = 10;
 
@@ -352,20 +336,21 @@ describe('BlockNode', () => {
     const tool = 'bold' as InlineToolName;
     const start = 5;
     const end = 10;
-    let textNode: TextNode;
 
     beforeEach(() => {
-      textNode = new TextNode();
-
       node = new BlockNode({ name: createBlockToolName('header'),
         data: {
-          [dataKey]: textNode,
+          [dataKey]: {
+            $t: BlockChildType.Text,
+            value: '',
+            fragments: [],
+          },
         },
       });
     });
 
     it('should call .format() method of the TextNode', () => {
-      const spy = jest.spyOn(textNode, 'format');
+      const spy = jest.spyOn(TextNode.prototype, 'format');
 
       node.format(dataKey, tool, start, end);
 
@@ -373,7 +358,7 @@ describe('BlockNode', () => {
     });
 
     it('should pass data to the .format() method of the TextNode', () => {
-      const spy = jest.spyOn(textNode, 'format');
+      const spy = jest.spyOn(TextNode.prototype, 'format');
       const data = {} as InlineToolData;
 
       node.format(dataKey, tool, start, end, data);
@@ -405,20 +390,21 @@ describe('BlockNode', () => {
     const tool = 'bold' as InlineToolName;
     const start = 5;
     const end = 10;
-    let textNode: TextNode;
 
     beforeEach(() => {
-      textNode = new TextNode();
-
       node = new BlockNode({ name: createBlockToolName('header'),
         data: {
-          [dataKey]: textNode,
+          [dataKey]: {
+            $t: BlockChildType.Text,
+            value: '',
+            fragments: [],
+          },
         },
       });
     });
 
     it('should call .unformat() method of the TextNode', () => {
-      const spy = jest.spyOn(textNode, 'unformat');
+      const spy = jest.spyOn(TextNode.prototype, 'unformat');
 
       node.unformat(dataKey, tool, start, end);
 
