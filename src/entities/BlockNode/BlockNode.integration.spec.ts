@@ -21,7 +21,7 @@ describe('BlockNode integration tests', () => {
       });
   });
 
-  it('should create ValueNode by object marked as value', () => {
+  it('should create ValueNode by object marked as value and update its value', () => {
     const value = {
       [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Value,
       value: 'value',
@@ -47,7 +47,7 @@ describe('BlockNode integration tests', () => {
       });
   });
 
-  it('should create TextNode by passed text node data', () => {
+  it('should create TextNode by passed text node data and insert new text into it', () => {
     const text = {
       value: 'Editor.js is a block-styled editor',
       [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
@@ -71,7 +71,7 @@ describe('BlockNode integration tests', () => {
     });
   });
 
-  it('should create relevant nodes from the array', () => {
+  it('should create relevant nodes from the array and update their values', () => {
     const value = 'value';
     const updatedValue = 'updated value';
     const text = {
