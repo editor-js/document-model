@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { get, has, set } from './keypath';
 
 describe('keypath util', () => {

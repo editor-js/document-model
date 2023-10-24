@@ -4,7 +4,7 @@
  * @param data - object to get value from
  * @param keys - keypath to a value
  */
-export function get<T = unknown>(data: Record<any, any>, keys: string | string[]): T | undefined {
+export function get<T = unknown>(data: Record<string | number | symbol, unknown>, keys: string | string[]): T | undefined {
   const parsedKeys  = Array.isArray(keys) ? keys : keys.split('.');
   const key = parsedKeys.shift();
 
@@ -53,6 +53,6 @@ export function set<T = unknown>(data: Record<string, unknown>, keys: string | s
  * @param data - object to check
  * @param keys - keypath to a value
  */
-export function has(data: Record<any, any>, keys: string | string[]): boolean {
+export function has(data: Record<string | number | symbol, unknown>, keys: string | string[]): boolean {
   return get(data, keys) !== undefined;
 }
