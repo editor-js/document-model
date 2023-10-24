@@ -264,7 +264,7 @@ describe('TextInlineNode', () => {
       const result = node.serialized;
 
       expect(result).toEqual({
-        text: initialText,
+        value: initialText,
         fragments: [],
       });
     });

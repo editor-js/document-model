@@ -212,7 +212,11 @@ export class EditorDocument {
   }
 
   /**
+   * Returns serialized data associated with the document
    *
+   * Data contains:
+   * - blocks - array of serialized blocks
+   * - properties - JSON object with document properties (eg read-only)
    */
   public get serialized(): EditorDocumentSerialized {
     return {

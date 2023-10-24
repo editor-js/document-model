@@ -1,5 +1,6 @@
 import type { ValueNodeConstructorParameters, ValueSerialized } from './types';
 import { BlockChildType } from '../BlockNode/types';
+import { NODE_TYPE_HIDDEN_PROP } from '../BlockNode/consts';
 
 /**
  * ValueNode class represents a node in a tree-like structure, used to store and manipulate data associated with a BlockNode.
@@ -38,7 +39,7 @@ export class ValueNode<ValueType = unknown> {
     let value = this.#value;
 
     if (typeof value === 'object' && this.#value !== null) {
-      value = Object.assign({ $t: BlockChildType.Value }, value);
+      value = Object.assign({ [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Value }, value);
     }
 
     return value as ValueSerialized<ValueType>;

@@ -7,6 +7,7 @@ import type { EditorDocument } from '../EditorDocument';
 import type { ValueNodeConstructorParameters } from '../ValueNode';
 import { InlineToolData, InlineToolName, TextNode } from '../inline-fragments';
 import { BlockChildType } from './types';
+import { NODE_TYPE_HIDDEN_PROP } from './consts';
 
 jest.mock('../BlockTune');
 
@@ -23,11 +24,13 @@ describe('BlockNode', () => {
     });
 
     it('should have empty object as data by default', () => {
-      expect(node.serialized.data).toEqual({});
+      expect(node.serialized.data)
+        .toEqual({});
     });
 
     it('should set null as parent by default', () => {
-      expect(node.parent).toBeNull();
+      expect(node.parent)
+        .toBeNull();
     });
   });
 
@@ -112,7 +115,7 @@ describe('BlockNode', () => {
         .reduce((acc, index) => ({
           ...acc,
           [createDataKey(`data-key-${index}c${index}d`)]: {
-            $t: BlockChildType.Text,
+            [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
             value: '',
             fragments: [],
           },
@@ -158,7 +161,7 @@ describe('BlockNode', () => {
         data: {
           items: [
             {
-              $t: BlockChildType.Text,
+              [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
               value: '',
               fragments: [],
             },
@@ -173,7 +176,7 @@ describe('BlockNode', () => {
         .toHaveBeenCalledTimes(1);
     });
 
-    it('should call .serialized getter of ValueNodes in an nested object', () => {
+    it('should call .serialized getter of ValueNodes in a nested object', () => {
       const spy = jest.spyOn(ValueNode.prototype, 'serialized', 'get');
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
@@ -199,7 +202,7 @@ describe('BlockNode', () => {
           object: {
             nestedObject: {
               text: {
-                $t: BlockChildType.Text,
+                [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
                 value: '',
                 fragments: [],
               },
@@ -241,7 +244,7 @@ describe('BlockNode', () => {
           object: {
             array: [ {
               text: {
-                $t: BlockChildType.Text,
+                [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
                 value: '',
                 fragments: [],
               },
@@ -281,7 +284,7 @@ describe('BlockNode', () => {
           array: [ {
             object: {
               text: {
-                $t: BlockChildType.Text,
+                [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
                 value: '',
                 fragments: [],
               },
@@ -320,7 +323,7 @@ describe('BlockNode', () => {
         data: {
           array: [ [
             {
-              $t: BlockChildType.Text,
+              [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
               value: '',
               fragments: [],
             },
@@ -341,7 +344,7 @@ describe('BlockNode', () => {
         name: createBlockToolName('paragraph'),
         data: {
           value: {
-            $t: BlockChildType.Value,
+            [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Value,
             property: '',
           },
         },
@@ -382,7 +385,8 @@ describe('BlockNode', () => {
 
       blockNode.updateTuneData(blockTuneName, data);
 
-      expect(spy).toHaveBeenCalledWith(dataKey, dataValue);
+      expect(spy)
+        .toHaveBeenCalledWith(dataKey, dataValue);
     });
   });
 
@@ -407,7 +411,70 @@ describe('BlockNode', () => {
 
       blockNode.updateValue(dataKey, value);
 
-      expect(spy).toHaveBeenCalledWith(value);
+      expect(spy)
+        .toHaveBeenCalledWith(value);
+    });
+
+    it('should call .update() method of ValueNode when node is inside an object', () => {
+      const dataKey = createDataKey('data-key-1a2b');
+      const value = 'Some value';
+
+      const blockNode = new BlockNode({
+        name: createBlockToolName('paragraph'),
+        data: {
+          object: {
+            [dataKey]: 'value',
+          },
+        },
+        parent: {} as EditorDocument,
+      });
+
+      const spy = jest.spyOn(ValueNode.prototype, 'update');
+
+      blockNode.updateValue(createDataKey(`object.${dataKey}`), value);
+
+      expect(spy)
+        .toHaveBeenCalledWith(value);
+    });
+
+    it('should call .update() method of ValueNode when node is in an array', () => {
+      const value = 'Some value';
+
+      const blockNode = new BlockNode({
+        name: createBlockToolName('paragraph'),
+        data: {
+          array: [ 'value' ],
+        },
+        parent: {} as EditorDocument,
+      });
+
+      const spy = jest.spyOn(ValueNode.prototype, 'update');
+
+      blockNode.updateValue(createDataKey(`array.0`), value);
+
+      expect(spy)
+        .toHaveBeenCalledWith(value);
+    });
+
+    it('should call .update() method of ValueNode when node is in an array in an object', () => {
+      const value = 'Some value';
+
+      const blockNode = new BlockNode({
+        name: createBlockToolName('paragraph'),
+        data: {
+          object: {
+            array: [ 'value' ],
+          },
+        },
+        parent: {} as EditorDocument,
+      });
+
+      const spy = jest.spyOn(ValueNode.prototype, 'update');
+
+      blockNode.updateValue(createDataKey(`object.array.0`), value);
+
+      expect(spy)
+        .toHaveBeenCalledWith(value);
     });
 
     it('should throw an error if the ValueNode with the passed dataKey does not exist', () => {
@@ -422,7 +489,8 @@ describe('BlockNode', () => {
 
       expect(() => {
         blockNode.updateValue(dataKey, value);
-      }).toThrowError(`BlockNode: data with key ${dataKey} does not exist`);
+      })
+        .toThrowError(`BlockNode: data with key ${dataKey} does not exist`);
     });
 
     it('should throw an error if the ValueNode with the passed dataKey is not a ValueNode', () => {
@@ -439,7 +507,8 @@ describe('BlockNode', () => {
 
       expect(() => {
         blockNode.updateValue(dataKey, value);
-      }).toThrowError(`BlockNode: data with key ${dataKey} is not a ValueNode`);
+      })
+        .toThrowError(`BlockNode: data with key ${dataKey} is not a ValueNode`);
     });
   });
 
@@ -449,13 +518,35 @@ describe('BlockNode', () => {
     const text = 'Some text';
 
     beforeEach(() => {
-      node = new BlockNode({ name: createBlockToolName('header'),
+      node = new BlockNode({
+        name: createBlockToolName('header'),
         data: {
           [dataKey]: {
-            $t: BlockChildType.Text,
+            [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
             value: '',
             fragments: [],
           },
+          object: {
+            [dataKey]: {
+              [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+              value: '',
+              fragments: [],
+            },
+            array: [
+              {
+                [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+                value: '',
+                fragments: [],
+              },
+            ],
+          },
+          array: [
+            {
+              [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+              value: '',
+              fragments: [],
+            },
+          ],
         },
       });
     });
@@ -465,7 +556,35 @@ describe('BlockNode', () => {
 
       node.insertText(dataKey, text);
 
-      expect(spy).toHaveBeenCalledWith(text, undefined);
+      expect(spy)
+        .toHaveBeenCalledWith(text, undefined);
+    });
+
+    it('should call .insertText() method of the TextNode in an object', () => {
+      const spy = jest.spyOn(TextNode.prototype, 'insertText');
+
+      node.insertText(createDataKey(`object.${dataKey}`), text);
+
+      expect(spy)
+        .toHaveBeenCalledWith(text, undefined);
+    });
+
+    it('should call .insertText() method of the TextNode in an array in an object', () => {
+      const spy = jest.spyOn(TextNode.prototype, 'insertText');
+
+      node.insertText(createDataKey(`object.array.0`), text);
+
+      expect(spy)
+        .toHaveBeenCalledWith(text, undefined);
+    });
+
+    it('should call .insertText() method of the TextNode in an array', () => {
+      const spy = jest.spyOn(TextNode.prototype, 'insertText');
+
+      node.insertText(createDataKey(`array.0`), text);
+
+      expect(spy)
+        .toHaveBeenCalledWith(text, undefined);
     });
 
     it('should pass start index to the .insertText() method of the TextNode', () => {
@@ -474,13 +593,15 @@ describe('BlockNode', () => {
 
       node.insertText(dataKey, text, start);
 
-      expect(spy).toHaveBeenCalledWith(text, start);
+      expect(spy)
+        .toHaveBeenCalledWith(text, start);
     });
 
     it('should throw an error if node does not exist', () => {
       const key = createDataKey('non-existing-key');
 
-      expect(() => node.insertText(key, text)).toThrow();
+      expect(() => node.insertText(key, text))
+        .toThrow();
     });
 
     it('should throw an error if node is not a TextNode', () => {
@@ -491,7 +612,8 @@ describe('BlockNode', () => {
         },
       });
 
-      expect(() => node.insertText(dataKey, text)).toThrow();
+      expect(() => node.insertText(dataKey, text))
+        .toThrow();
     });
   });
 
@@ -500,13 +622,35 @@ describe('BlockNode', () => {
     const dataKey = createDataKey('text');
 
     beforeEach(() => {
-      node = new BlockNode({ name: createBlockToolName('header'),
+      node = new BlockNode({
+        name: createBlockToolName('header'),
         data: {
           [dataKey]: {
-            $t: BlockChildType.Text,
+            [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
             value: '',
             fragments: [],
           },
+          object: {
+            [dataKey]: {
+              [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+              value: '',
+              fragments: [],
+            },
+            array: [
+              {
+                [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+                value: '',
+                fragments: [],
+              },
+            ],
+          },
+          array: [
+            {
+              [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+              value: '',
+              fragments: [],
+            },
+          ],
         },
       });
     });
@@ -516,7 +660,35 @@ describe('BlockNode', () => {
 
       node.removeText(dataKey);
 
-      expect(spy).toHaveBeenCalledWith(undefined, undefined);
+      expect(spy)
+        .toHaveBeenCalledWith(undefined, undefined);
+    });
+
+    it('should call .removeText() method of the TextNode in an object', () => {
+      const spy = jest.spyOn(TextNode.prototype, 'removeText');
+
+      node.removeText(createDataKey(`object.${dataKey}`));
+
+      expect(spy)
+        .toHaveBeenCalledWith(undefined, undefined);
+    });
+
+    it('should call .removeText() method of the TextNode in an array in an object', () => {
+      const spy = jest.spyOn(TextNode.prototype, 'removeText');
+
+      node.removeText(createDataKey(`object.array.0`));
+
+      expect(spy)
+        .toHaveBeenCalledWith(undefined, undefined);
+    });
+
+    it('should call .removeText() method of the TextNode in an array', () => {
+      const spy = jest.spyOn(TextNode.prototype, 'removeText');
+
+      node.removeText(createDataKey(`array.0`));
+
+      expect(spy)
+        .toHaveBeenCalledWith(undefined, undefined);
     });
 
     it('should pass start index to the .removeText() method of the TextNode', () => {
@@ -525,7 +697,8 @@ describe('BlockNode', () => {
 
       node.removeText(dataKey, start);
 
-      expect(spy).toHaveBeenCalledWith(start, undefined);
+      expect(spy)
+        .toHaveBeenCalledWith(start, undefined);
     });
 
     it('should pass end index to the .removeText() method of the TextNode', () => {
@@ -535,13 +708,15 @@ describe('BlockNode', () => {
 
       node.removeText(dataKey, start, end);
 
-      expect(spy).toHaveBeenCalledWith(start, end);
+      expect(spy)
+        .toHaveBeenCalledWith(start, end);
     });
 
     it('should throw an error if node does not exist', () => {
       const key = createDataKey('non-existing-key');
 
-      expect(() => node.removeText(key)).toThrow();
+      expect(() => node.removeText(key))
+        .toThrow();
     });
 
     it('should throw an error if node is not a TextNode', () => {
@@ -552,7 +727,8 @@ describe('BlockNode', () => {
         },
       });
 
-      expect(() => node.removeText(dataKey)).toThrow();
+      expect(() => node.removeText(dataKey))
+        .toThrow();
     });
   });
 
@@ -564,13 +740,35 @@ describe('BlockNode', () => {
     const end = 10;
 
     beforeEach(() => {
-      node = new BlockNode({ name: createBlockToolName('header'),
+      node = new BlockNode({
+        name: createBlockToolName('header'),
         data: {
           [dataKey]: {
-            $t: BlockChildType.Text,
+            [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
             value: '',
             fragments: [],
           },
+          object: {
+            [dataKey]: {
+              [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+              value: '',
+              fragments: [],
+            },
+            array: [
+              {
+                [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+                value: '',
+                fragments: [],
+              },
+            ],
+          },
+          array: [
+            {
+              [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+              value: '',
+              fragments: [],
+            },
+          ],
         },
       });
     });
@@ -580,7 +778,35 @@ describe('BlockNode', () => {
 
       node.format(dataKey, tool, start, end);
 
-      expect(spy).toHaveBeenCalledWith(tool, start, end, undefined);
+      expect(spy)
+        .toHaveBeenCalledWith(tool, start, end, undefined);
+    });
+
+    it('should call .format() method of the TextNode in an object', () => {
+      const spy = jest.spyOn(TextNode.prototype, 'format');
+
+      node.format(createDataKey(`object.${dataKey}`), tool, start, end);
+
+      expect(spy)
+        .toHaveBeenCalledWith(tool, start, end, undefined);
+    });
+
+    it('should call .format() method of the TextNode in an array in an object', () => {
+      const spy = jest.spyOn(TextNode.prototype, 'format');
+
+      node.format(createDataKey(`object.array.0`), tool, start, end);
+
+      expect(spy)
+        .toHaveBeenCalledWith(tool, start, end, undefined);
+    });
+
+    it('should call .format() method of the TextNode in an array', () => {
+      const spy = jest.spyOn(TextNode.prototype, 'format');
+
+      node.format(createDataKey(`array.0`), tool, start, end);
+
+      expect(spy)
+        .toHaveBeenCalledWith(tool, start, end, undefined);
     });
 
     it('should pass data to the .format() method of the TextNode', () => {
@@ -589,13 +815,15 @@ describe('BlockNode', () => {
 
       node.format(dataKey, tool, start, end, data);
 
-      expect(spy).toHaveBeenCalledWith(tool, start, end, data);
+      expect(spy)
+        .toHaveBeenCalledWith(tool, start, end, data);
     });
 
     it('should throw an error if node does not exist', () => {
       const key = createDataKey('non-existing-key');
 
-      expect(() => node.format(key, tool, start, end)).toThrow();
+      expect(() => node.format(key, tool, start, end))
+        .toThrow();
     });
 
     it('should throw an error if node is not a TextNode', () => {
@@ -606,7 +834,8 @@ describe('BlockNode', () => {
         },
       });
 
-      expect(() => node.format(dataKey, tool, start, end)).toThrow();
+      expect(() => node.format(dataKey, tool, start, end))
+        .toThrow();
     });
   });
 
@@ -618,13 +847,35 @@ describe('BlockNode', () => {
     const end = 10;
 
     beforeEach(() => {
-      node = new BlockNode({ name: createBlockToolName('header'),
+      node = new BlockNode({
+        name: createBlockToolName('header'),
         data: {
           [dataKey]: {
-            $t: BlockChildType.Text,
+            [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
             value: '',
             fragments: [],
           },
+          object: {
+            [dataKey]: {
+              [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+              value: '',
+              fragments: [],
+            },
+            array: [
+              {
+                [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+                value: '',
+                fragments: [],
+              },
+            ],
+          },
+          array: [
+            {
+              [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+              value: '',
+              fragments: [],
+            },
+          ],
         },
       });
     });
@@ -634,13 +885,42 @@ describe('BlockNode', () => {
 
       node.unformat(dataKey, tool, start, end);
 
-      expect(spy).toHaveBeenCalledWith(tool, start, end);
+      expect(spy)
+        .toHaveBeenCalledWith(tool, start, end);
+    });
+
+    it('should call .unformat() method of the TextNode in an object', () => {
+      const spy = jest.spyOn(TextNode.prototype, 'unformat');
+
+      node.unformat(createDataKey(`object.${dataKey}`), tool, start, end);
+
+      expect(spy)
+        .toHaveBeenCalledWith(tool, start, end);
+    });
+
+    it('should call .unformat() method of the TextNode in an array in an object', () => {
+      const spy = jest.spyOn(TextNode.prototype, 'unformat');
+
+      node.unformat(createDataKey(`object.array.0`), tool, start, end);
+
+      expect(spy)
+        .toHaveBeenCalledWith(tool, start, end);
+    });
+
+    it('should call .unformat() method of the TextNode in an array', () => {
+      const spy = jest.spyOn(TextNode.prototype, 'unformat');
+
+      node.unformat(createDataKey('array.0'), tool, start, end);
+
+      expect(spy)
+        .toHaveBeenCalledWith(tool, start, end);
     });
 
     it('should throw an error if node does not exist', () => {
       const key = createDataKey('non-existing-key');
 
-      expect(() => node.unformat(key, tool, start, end)).toThrow();
+      expect(() => node.unformat(key, tool, start, end))
+        .toThrow();
     });
 
     it('should throw an error if node is not a TextNode', () => {
@@ -651,7 +931,8 @@ describe('BlockNode', () => {
         },
       });
 
-      expect(() => node.unformat(dataKey, tool, start, end)).toThrow();
+      expect(() => node.unformat(dataKey, tool, start, end))
+        .toThrow();
     });
   });
 });

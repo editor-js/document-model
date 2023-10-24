@@ -1,5 +1,6 @@
 import { InlineToolData, InlineToolName } from '../FormattingInlineNode';
 import { BlockChildType } from '../../BlockNode/types';
+import { NODE_TYPE_HIDDEN_PROP } from '../../BlockNode/consts';
 
 /**
  * Interface describing abstract InlineNode — common properties and methods for all inline nodes
@@ -13,7 +14,7 @@ export interface InlineNode {
   /**
    * Serialized value of the node
    */
-  readonly serialized: ChildTextNodeSerialized;
+  readonly serialized: InlineTreeNodeSerialized;
 
   /**
    * Returns text value in passed range
@@ -122,12 +123,14 @@ export interface InlineFragment {
 
 /**
  * Serialized Inline Node value
+ *
+ * Interface used for tree nodes except TextNode which is a tree root
  */
-export interface ChildTextNodeSerialized {
+export interface InlineTreeNodeSerialized {
   /**
    * Text value of the node and its subtree
    */
-  text: string;
+  value: string;
 
   /**
    * Fragments which node and its subtree contains
@@ -137,7 +140,9 @@ export interface ChildTextNodeSerialized {
 
 /**
  * Root type representing serialized TextNode data
+ *
+ * Interface used for a tree root
  */
-export interface TextNodeSerialized extends ChildTextNodeSerialized {
-  $t: BlockChildType.Text;
+export interface TextNodeSerialized extends InlineTreeNodeSerialized {
+  [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text;
 }

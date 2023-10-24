@@ -1,5 +1,6 @@
 import { InlineFragment, ParentInlineNode, ParentInlineNodeConstructorOptions, TextNodeSerialized } from '../index';
 import { BlockChildType } from '../../BlockNode/types';
+import { NODE_TYPE_HIDDEN_PROP } from '../../BlockNode/consts';
 
 interface TextNodeConstructorOptions extends ParentInlineNodeConstructorOptions {
   value?: string;
@@ -28,7 +29,7 @@ export class TextNode extends ParentInlineNode {
    * Returns serialized TextNode
    */
   public get serialized(): TextNodeSerialized {
-    return Object.assign({ $t: BlockChildType.Text as const }, super.serialized);
+    return Object.assign({ [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text as const }, super.serialized);
   }
 
   /**

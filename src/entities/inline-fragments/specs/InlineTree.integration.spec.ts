@@ -7,6 +7,7 @@ import {
   TextNodeSerialized
 } from '../index';
 import { BlockChildType } from '../../BlockNode/types';
+import { NODE_TYPE_HIDDEN_PROP } from '../../BlockNode/consts';
 
 describe('Inline fragments tree integration', () => {
   describe('text insertion', () => {
@@ -373,8 +374,8 @@ describe('Inline fragments tree integration', () => {
     tree.unformat(boldTool, ...(pluggable.map((value) => value - removedChars) as [number, number]));
 
     expect(tree.serialized).toStrictEqual({
-      $t: BlockChildType.Text,
-      text: firstFragment + secondFragment.replace(' data', '') + thirdFragment,
+      [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+      value: firstFragment + secondFragment.replace(' data', '') + thirdFragment,
       fragments: [
         {
           tool: boldTool,
@@ -398,8 +399,8 @@ describe('Inline fragments tree integration', () => {
 
   it('should initialize tree with initial text and fragments', () => {
     const data = {
-      $t: BlockChildType.Text,
-      text: 'Editor.js is a block-styled editor. It returns clean output in JSON. Designed to be extendable and pluggable with a simple API.',
+      [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+      value: 'Editor.js is a block-styled editor. It returns clean output in JSON. Designed to be extendable and pluggable with a simple API.',
       fragments: [
         {
           tool: 'bold',
@@ -433,7 +434,7 @@ describe('Inline fragments tree integration', () => {
     } as TextNodeSerialized;
 
     const tree = new TextNode({
-      value: data.text,
+      value: data.value,
       fragments: data.fragments,
     });
 
