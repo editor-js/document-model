@@ -82,7 +82,7 @@ describe('keypath util', () => {
       expect(object.a[0]).toEqual(value);
     });
 
-    it('should insert value into an array by the correct index for numeric key parts when index is ', () => {
+    it('should insert value into an array by the correct index for numeric key parts when index is greater than array length', () => {
       const object: Record<string, any> = {};
 
       set(object, 'a.1', value);
