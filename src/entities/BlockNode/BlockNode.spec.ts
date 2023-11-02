@@ -415,7 +415,7 @@ describe('BlockNode', () => {
         .toHaveBeenCalledWith(value);
     });
 
-    it('should call .update() method of ValueNode when node is inside an object', () => {
+    it('should call .update() method of ValueNode with passed keypath when node is inside an object', () => {
       const dataKey = createDataKey('data-key-1a2b');
       const value = 'Some value';
 
