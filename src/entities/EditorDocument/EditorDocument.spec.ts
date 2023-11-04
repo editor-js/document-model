@@ -1,6 +1,5 @@
 import { EditorDocument } from './index';
 import { BlockNode, BlockToolName, DataKey } from '../BlockNode';
-import { BlockNodeConstructorParameters } from '../BlockNode/types';
 import type { BlockTuneName } from '../BlockTune';
 import { InlineToolData, InlineToolName } from '../inline-fragments';
 
@@ -11,14 +10,16 @@ jest.mock('../BlockNode');
  */
 function createEditorDocumentWithSomeBlocks(): EditorDocument {
   const countOfBlocks = 3;
-  const blocks = new Array(countOfBlocks).fill(undefined)
-    .map(() => new BlockNode({
-      name: 'header' as BlockToolName,
-    }));
+  const document = new EditorDocument({});
 
-  return new EditorDocument({
-    children: blocks,
-  });
+  new Array(countOfBlocks).fill(undefined)
+    .forEach(() => {
+      document.addBlock({
+        name: 'header' as BlockToolName,
+      });
+    });
+
+  return document;
 }
 
 describe('EditorDocument', () => {
@@ -31,7 +32,6 @@ describe('EditorDocument', () => {
       // Arrange
       const blocksCount = 3;
       const document = new EditorDocument({
-        children: [],
         properties: {
           readOnly: false,
         },
@@ -49,7 +49,8 @@ describe('EditorDocument', () => {
       const actual = document.length;
 
       // Assert
-      expect(actual).toBe(blocksCount);
+      expect(actual)
+        .toBe(blocksCount);
     });
   });
 
@@ -66,8 +67,11 @@ describe('EditorDocument', () => {
       const lastBlock = document.getBlock(document.length - 1);
       const blockBeforeAdded = document.getBlock(document.length - 2);
 
-      expect(lastBlockBeforeTest).not.toBe(lastBlock);
-      expect(blockBeforeAdded).toBe(lastBlockBeforeTest);
+      expect(lastBlockBeforeTest)
+        .not
+        .toBe(lastBlock);
+      expect(blockBeforeAdded)
+        .toBe(lastBlockBeforeTest);
     });
 
     it('should add the block to the beginning of the document if index is 0', () => {
@@ -82,8 +86,11 @@ describe('EditorDocument', () => {
       const firstBlock = document.getBlock(0);
       const blockAfterAdded = document.getBlock(1);
 
-      expect(firstBlockBeforeTest).not.toBe(firstBlock);
-      expect(blockAfterAdded).toBe(firstBlockBeforeTest);
+      expect(firstBlockBeforeTest)
+        .not
+        .toBe(firstBlock);
+      expect(blockAfterAdded)
+        .toBe(firstBlockBeforeTest);
     });
 
     it('should add the block to the specified index in the middle of the document', () => {
@@ -99,8 +106,11 @@ describe('EditorDocument', () => {
       const addedBlock = document.getBlock(index);
       const blockAfterAdded = document.getBlock(index + 1);
 
-      expect(blockBeforeTest).not.toBe(addedBlock);
-      expect(blockBeforeTest).toBe(blockAfterAdded);
+      expect(blockBeforeTest)
+        .not
+        .toBe(addedBlock);
+      expect(blockBeforeTest)
+        .toBe(blockAfterAdded);
     });
 
     it('should add the block to the end of the document if the index after the last element is passed', () => {
@@ -115,8 +125,11 @@ describe('EditorDocument', () => {
       const lastBlock = document.getBlock(document.length - 1);
       const blockBeforeAdded = document.getBlock(document.length - 2);
 
-      expect(lastBlockBeforeTest).not.toBe(lastBlock);
-      expect(blockBeforeAdded).toBe(lastBlockBeforeTest);
+      expect(lastBlockBeforeTest)
+        .not
+        .toBe(lastBlock);
+      expect(blockBeforeAdded)
+        .toBe(lastBlockBeforeTest);
     });
 
     it('should throw an error if index is less then 0', () => {
@@ -130,7 +143,8 @@ describe('EditorDocument', () => {
       const action = (): void => document.addBlock(blockData, -1);
 
       // Assert
-      expect(action).toThrowError('Index out of bounds');
+      expect(action)
+        .toThrowError('Index out of bounds');
     });
 
     it('should throw an error if index is greater then document length', () => {
@@ -144,7 +158,8 @@ describe('EditorDocument', () => {
       const action = (): void => document.addBlock(blockData, document.length + 1);
 
       // Assert
-      expect(action).toThrowError('Index out of bounds');
+      expect(action)
+        .toThrowError('Index out of bounds');
     });
   });
 
@@ -158,7 +173,9 @@ describe('EditorDocument', () => {
       document.removeBlock(0);
 
       // Assert
-      expect(document.getBlock(0)).not.toBe(block);
+      expect(document.getBlock(0))
+        .not
+        .toBe(block);
     });
 
     it('should remove the block from the specified index in the middle of the document', () => {
@@ -170,7 +187,9 @@ describe('EditorDocument', () => {
       document.removeBlock(1);
 
       // Assert
-      expect(document.getBlock(1)).not.toBe(block);
+      expect(document.getBlock(1))
+        .not
+        .toBe(block);
     });
 
     it('should remove the block from the end of the document if the last index is passed', () => {
@@ -182,7 +201,8 @@ describe('EditorDocument', () => {
       document.removeBlock(document.length - 1);
 
       // Assert
-      expect(document.length).toBe(documentLengthBeforeRemove - 1);
+      expect(document.length)
+        .toBe(documentLengthBeforeRemove - 1);
     });
 
     it('should throw an error if index is less then 0', () => {
@@ -193,7 +213,8 @@ describe('EditorDocument', () => {
       const action = (): void => document.removeBlock(-1);
 
       // Assert
-      expect(action).toThrowError('Index out of bounds');
+      expect(action)
+        .toThrowError('Index out of bounds');
     });
 
     it('should throw an error if index is greater then document length', () => {
@@ -204,32 +225,33 @@ describe('EditorDocument', () => {
       const action = (): void => document.removeBlock(document.length);
 
       // Assert
-      expect(action).toThrowError('Index out of bounds');
+      expect(action)
+        .toThrowError('Index out of bounds');
     });
   });
 
   describe('.getBlock()', () => {
     it('should return the block from the specific index', () => {
       const countOfBlocks = 5;
-      const blocks = [];
+      const blocksData = [];
+      const document = new EditorDocument();
 
       for (let i = 0; i < countOfBlocks; i++) {
-        const block = new BlockNode({
+        const blockData = {
           name: (`header-${i}`) as BlockToolName,
-        });
+        };
 
-        blocks.push(block);
+        document.addBlock(blockData);
+
+        blocksData.push(blockData);
       }
-
-      const document = new EditorDocument({
-        children: blocks,
-      });
 
       const index = 1;
 
       const block = document.getBlock(index);
 
-      expect(block).toBe(blocks[index]);
+      expect(block)
+        .toBeInstanceOf(BlockNode);
     });
 
     it('should throw an error if index is less then 0', () => {
@@ -240,7 +262,8 @@ describe('EditorDocument', () => {
       const action = (): BlockNode => document.getBlock(-1);
 
       // Assert
-      expect(action).toThrowError('Index out of bounds');
+      expect(action)
+        .toThrowError('Index out of bounds');
     });
 
     it('should throw an error if index is greater then document length', () => {
@@ -251,14 +274,15 @@ describe('EditorDocument', () => {
       const action = (): BlockNode => document.getBlock(document.length);
 
       // Assert
-      expect(action).toThrowError('Index out of bounds');
+      expect(action)
+        .toThrowError('Index out of bounds');
     });
   });
 
   describe('.properties', () => {
     it('should return the properties of the document', () => {
       const properties = {
-        'readOnly' : true,
+        'readOnly': true,
       };
 
       const document = new EditorDocument({
@@ -267,7 +291,8 @@ describe('EditorDocument', () => {
         },
       });
 
-      expect(document.properties).toEqual(properties);
+      expect(document.properties)
+        .toEqual(properties);
     });
   });
 
@@ -283,7 +308,8 @@ describe('EditorDocument', () => {
 
       const actualValue = document.getProperty<boolean>(propertyName);
 
-      expect(actualValue).toBe(expectedValue);
+      expect(actualValue)
+        .toBe(expectedValue);
     });
 
     it('should return undefined if the property does not exist', () => {
@@ -294,7 +320,8 @@ describe('EditorDocument', () => {
 
       const actualValue = document.getProperty<boolean>(propertyName);
 
-      expect(actualValue).toBeUndefined();
+      expect(actualValue)
+        .toBeUndefined();
     });
   });
 
@@ -310,7 +337,8 @@ describe('EditorDocument', () => {
 
       document.setProperty(propertyName, expectedValue);
 
-      expect(document.properties[propertyName]).toBe(expectedValue);
+      expect(document.properties[propertyName])
+        .toBe(expectedValue);
     });
 
     it('should add the property if it does not exist', () => {
@@ -322,7 +350,8 @@ describe('EditorDocument', () => {
 
       document.setProperty(propertyName, expectedValue);
 
-      expect(document.properties[propertyName]).toBe(expectedValue);
+      expect(document.properties[propertyName])
+        .toBe(expectedValue);
     });
   });
 
@@ -332,48 +361,75 @@ describe('EditorDocument', () => {
     });
 
     it('should call .updateValue() method of the BlockNode at the specific index', () => {
-      const blockNodes = [
-        new BlockNode({} as BlockNodeConstructorParameters),
-        new BlockNode({} as BlockNodeConstructorParameters),
-        new BlockNode({} as BlockNodeConstructorParameters),
+      const blocksData = [
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
       ];
+      const document = new EditorDocument({
+        blocks: blocksData,
+      });
 
-      blockNodes.forEach((blockNode) => {
+      blocksData.forEach((_, i) => {
+        const blockNode = document.getBlock(i);
+
         jest
           .spyOn(blockNode, 'updateValue')
           // eslint-disable-next-line @typescript-eslint/no-empty-function -- mock of the method
-          .mockImplementation(() => {});
+          .mockImplementation(() => {
+          });
       });
 
-      const document = new EditorDocument({
-        children: blockNodes,
-      });
       const blockIndexToUpdate = 1;
       const dataKey = 'data-key-1a2b' as DataKey;
       const value = 'Some value';
 
       document.updateValue(blockIndexToUpdate, dataKey, value);
 
-      expect(document.getBlock(blockIndexToUpdate).updateValue).toHaveBeenCalledWith(dataKey, value);
+      expect(document.getBlock(blockIndexToUpdate).updateValue)
+        .toHaveBeenCalledWith(dataKey, value);
     });
 
     it('should not call .updateValue() method of other BlockNodes', () => {
-      const blockNodes = [
-        new BlockNode({} as BlockNodeConstructorParameters),
-        new BlockNode({} as BlockNodeConstructorParameters),
-        new BlockNode({} as BlockNodeConstructorParameters),
+      const blocksData = [
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
       ];
+      const document = new EditorDocument({
+        blocks: blocksData,
+      });
 
-      blockNodes.forEach((blockNode) => {
+      const blockNodes = blocksData.map((_, i) => {
+        const blockNode = document.getBlock(i);
+
         jest
           .spyOn(blockNode, 'updateValue')
           // eslint-disable-next-line @typescript-eslint/no-empty-function -- mock of the method
-          .mockImplementation(() => {});
+          .mockImplementation(() => {
+          });
+
+        return blockNode;
       });
 
-      const document = new EditorDocument({
-        children: blockNodes,
-      });
       const blockIndexToUpdate = 1;
       const dataKey = 'data-key-1a2b' as DataKey;
       const value = 'Some value';
@@ -385,7 +441,9 @@ describe('EditorDocument', () => {
           return;
         }
 
-        expect(blockNode.updateValue).not.toHaveBeenCalled();
+        expect(blockNode.updateValue)
+          .not
+          .toHaveBeenCalled();
       });
     });
 
@@ -397,7 +455,8 @@ describe('EditorDocument', () => {
 
       const action = (): void => document.updateValue(blockIndexOutOfBound, dataKey, expectedValue);
 
-      expect(action).toThrowError('Index out of bounds');
+      expect(action)
+        .toThrowError('Index out of bounds');
     });
   });
 
@@ -407,22 +466,34 @@ describe('EditorDocument', () => {
     });
 
     it('should call .updateTuneData() method of the BlockNode at the specific index', () => {
-      const blockNodes = [
-        new BlockNode({} as BlockNodeConstructorParameters),
-        new BlockNode({} as BlockNodeConstructorParameters),
-        new BlockNode({} as BlockNodeConstructorParameters),
+      const blocksData = [
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
       ];
+      const document = new EditorDocument({
+        blocks: blocksData,
+      });
 
-      blockNodes.forEach((blockNode) => {
+      blocksData.forEach((_, i) => {
+        const blockNode = document.getBlock(i);
+
         jest
           .spyOn(blockNode, 'updateTuneData')
           // eslint-disable-next-line @typescript-eslint/no-empty-function -- mock of the method
-          .mockImplementation(() => {});
+          .mockImplementation(() => {
+          });
       });
 
-      const document = new EditorDocument({
-        children: blockNodes,
-      });
       const blockIndexToUpdate = 1;
       const tuneName = 'blockFormatting' as BlockTuneName;
       const updateData = {
@@ -431,26 +502,41 @@ describe('EditorDocument', () => {
 
       document.updateTuneData(blockIndexToUpdate, tuneName, updateData);
 
-      expect(document.getBlock(blockIndexToUpdate).updateTuneData).toHaveBeenCalledWith(tuneName, updateData);
+      expect(document.getBlock(blockIndexToUpdate).updateTuneData)
+        .toHaveBeenCalledWith(tuneName, updateData);
     });
 
     it('should not call .updateTuneData() method of other BlockNodes', () => {
-      const blockNodes = [
-        new BlockNode({} as BlockNodeConstructorParameters),
-        new BlockNode({} as BlockNodeConstructorParameters),
-        new BlockNode({} as BlockNodeConstructorParameters),
+      const blocksData = [
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
       ];
+      const document = new EditorDocument({
+        blocks: blocksData,
+      });
 
-      blockNodes.forEach((blockNode) => {
+      const blockNodes = blocksData.map((_, i) => {
+        const blockNode = document.getBlock(i);
+
         jest
           .spyOn(blockNode, 'updateTuneData')
           // eslint-disable-next-line @typescript-eslint/no-empty-function -- mock of the method
-          .mockImplementation(() => {});
+          .mockImplementation(() => {
+          });
+
+        return blockNode;
       });
 
-      const document = new EditorDocument({
-        children: blockNodes,
-      });
       const blockIndexToUpdate = 1;
       const tuneName = 'blockFormatting' as BlockTuneName;
       const updateData = {
@@ -464,7 +550,9 @@ describe('EditorDocument', () => {
           return;
         }
 
-        expect(blockNode.updateTuneData).not.toHaveBeenCalled();
+        expect(blockNode.updateTuneData)
+          .not
+          .toHaveBeenCalled();
       });
     });
 
@@ -478,7 +566,8 @@ describe('EditorDocument', () => {
 
       const action = (): void => document.updateTuneData(blockIndexOutOfBound, tuneName, updateData);
 
-      expect(action).toThrowError('Index out of bounds');
+      expect(action)
+        .toThrowError('Index out of bounds');
     });
   });
 
@@ -490,10 +579,16 @@ describe('EditorDocument', () => {
     let block: BlockNode;
 
     beforeEach(() => {
-      block = new BlockNode({} as BlockNodeConstructorParameters);
+      const blockData = {
+        name: 'header' as BlockToolName,
+        data: {},
+      };
+
       document = new EditorDocument({
-        children: [ block ],
+        blocks: [ blockData ],
       });
+
+      block = document.getBlock(0);
     });
 
     it('should call .insertText() method of the BlockNode', () => {
@@ -501,7 +596,8 @@ describe('EditorDocument', () => {
 
       document.insertText(blockIndex, dataKey, text);
 
-      expect(spy).toHaveBeenCalledWith(dataKey, text, undefined);
+      expect(spy)
+        .toHaveBeenCalledWith(dataKey, text, undefined);
     });
 
     it('should pass start index to the .insertText() method of the BlockNode', () => {
@@ -510,11 +606,13 @@ describe('EditorDocument', () => {
 
       document.insertText(blockIndex, dataKey, text, start);
 
-      expect(spy).toHaveBeenCalledWith(dataKey, text, start);
+      expect(spy)
+        .toHaveBeenCalledWith(dataKey, text, start);
     });
 
     it('should throw an error if index is out of bounds', () => {
-      expect(() => document.insertText(document.length + 1, dataKey, text)).toThrowError('Index out of bounds');
+      expect(() => document.insertText(document.length + 1, dataKey, text))
+        .toThrowError('Index out of bounds');
     });
   });
 
@@ -525,10 +623,16 @@ describe('EditorDocument', () => {
     let block: BlockNode;
 
     beforeEach(() => {
-      block = new BlockNode({} as BlockNodeConstructorParameters);
+      const blockData = {
+        name: 'header' as BlockToolName,
+        data: {},
+      };
+
       document = new EditorDocument({
-        children: [ block ],
+        blocks: [ blockData ],
       });
+
+      block = document.getBlock(0);
     });
 
     it('should call .removeText() method of the BlockNode', () => {
@@ -536,7 +640,8 @@ describe('EditorDocument', () => {
 
       document.removeText(blockIndex, dataKey);
 
-      expect(spy).toHaveBeenCalledWith(dataKey, undefined, undefined);
+      expect(spy)
+        .toHaveBeenCalledWith(dataKey, undefined, undefined);
     });
 
     it('should pass start index to the .removeText() method of the BlockNode', () => {
@@ -545,7 +650,8 @@ describe('EditorDocument', () => {
 
       document.removeText(blockIndex, dataKey, start);
 
-      expect(spy).toHaveBeenCalledWith(dataKey, start, undefined);
+      expect(spy)
+        .toHaveBeenCalledWith(dataKey, start, undefined);
     });
 
     it('should pass end index to the .removeText() method of the BlockNode', () => {
@@ -555,11 +661,13 @@ describe('EditorDocument', () => {
 
       document.removeText(blockIndex, dataKey, start, end);
 
-      expect(spy).toHaveBeenCalledWith(dataKey, start, end);
+      expect(spy)
+        .toHaveBeenCalledWith(dataKey, start, end);
     });
 
     it('should throw an error if index is out of bounds', () => {
-      expect(() => document.removeText(document.length + 1, dataKey)).toThrowError('Index out of bounds');
+      expect(() => document.removeText(document.length + 1, dataKey))
+        .toThrowError('Index out of bounds');
     });
   });
 
@@ -573,10 +681,16 @@ describe('EditorDocument', () => {
     let block: BlockNode;
 
     beforeEach(() => {
-      block = new BlockNode({} as BlockNodeConstructorParameters);
+      const blockData = {
+        name: 'header' as BlockToolName,
+        data: {},
+      };
+
       document = new EditorDocument({
-        children: [ block ],
+        blocks: [ blockData ],
       });
+
+      block = document.getBlock(0);
     });
 
     it('should call .format() method of the BlockNode', () => {
@@ -584,7 +698,8 @@ describe('EditorDocument', () => {
 
       document.format(blockIndex, dataKey, tool, start, end);
 
-      expect(spy).toHaveBeenCalledWith(dataKey, tool, start, end, undefined);
+      expect(spy)
+        .toHaveBeenCalledWith(dataKey, tool, start, end, undefined);
     });
 
     it('should pass data to the .format() method of the BlockNode', () => {
@@ -593,11 +708,13 @@ describe('EditorDocument', () => {
 
       document.format(blockIndex, dataKey, tool, start, end, data);
 
-      expect(spy).toHaveBeenCalledWith(dataKey, tool, start, end, data);
+      expect(spy)
+        .toHaveBeenCalledWith(dataKey, tool, start, end, data);
     });
 
     it('should throw an error if index is out of bounds', () => {
-      expect(() => document.format(document.length + 1, dataKey, tool, start, end)).toThrowError('Index out of bounds');
+      expect(() => document.format(document.length + 1, dataKey, tool, start, end))
+        .toThrowError('Index out of bounds');
     });
   });
 
@@ -611,10 +728,16 @@ describe('EditorDocument', () => {
     let block: BlockNode;
 
     beforeEach(() => {
-      block = new BlockNode({} as BlockNodeConstructorParameters);
+      const blockData = {
+        name: 'header' as BlockToolName,
+        data: {},
+      };
+
       document = new EditorDocument({
-        children: [ block ],
+        blocks: [ blockData ],
       });
+
+      block = document.getBlock(0);
     });
 
     it('should call .unformat() method of the BlockNode', () => {
@@ -622,11 +745,36 @@ describe('EditorDocument', () => {
 
       document.unformat(blockIndex, dataKey, tool, start, end);
 
-      expect(spy).toHaveBeenCalledWith(dataKey, tool, start, end);
+      expect(spy)
+        .toHaveBeenCalledWith(dataKey, tool, start, end);
     });
 
     it('should throw an error if index is out of bounds', () => {
-      expect(() => document.unformat(document.length + 1, dataKey, tool, start, end)).toThrowError('Index out of bounds');
+      expect(() => document.unformat(document.length + 1, dataKey, tool, start, end))
+        .toThrowError('Index out of bounds');
+    });
+  });
+
+  describe('.serialized', () => {
+    it('should call .serialized property of the BlockNodes', () => {
+      const spy  = jest.spyOn(BlockNode.prototype, 'serialized', 'get');
+      const document = createEditorDocumentWithSomeBlocks();
+
+      document.serialized;
+
+      expect(spy).toBeCalledTimes(document.length);
+    });
+
+
+    it('should return document properties', () => {
+      const properties = {
+        readOnly: true,
+      };
+      const document = new EditorDocument({
+        properties,
+      });
+
+      expect(document.serialized).toHaveProperty('properties', properties);
     });
   });
 });

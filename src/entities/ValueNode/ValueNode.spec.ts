@@ -1,4 +1,6 @@
 import { ValueNode } from './index';
+import { BlockChildType } from '../BlockNode/types';
+import { NODE_TYPE_HIDDEN_PROP } from '../BlockNode/consts';
 
 describe('ValueNode', () => {
   describe('.update()', () => {
@@ -30,6 +32,17 @@ describe('ValueNode', () => {
 
       // Assert
       expect(serializedLongitude).toStrictEqual(longitude);
+    });
+
+    it('should mark serialized value as value node by using custom hidden property $t  if object returned', () => {
+      const value = { align: 'left' };
+      const longitudeValueNode = new ValueNode({
+        value,
+      });
+
+      const serializedValue = longitudeValueNode.serialized;
+
+      expect(serializedValue).toHaveProperty(NODE_TYPE_HIDDEN_PROP, BlockChildType.Value);
     });
   });
 });

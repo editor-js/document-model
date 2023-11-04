@@ -1,18 +1,17 @@
 import { EditorDocument } from '../../EditorDocument';
-import { BlockTune, BlockTuneName } from '../../BlockTune';
-import { BlockToolName } from './BlockToolName';
-import { BlockNodeData } from './BlockNodeData';
+import { BlockTuneSerialized } from '../../BlockTune';
+import { BlockNodeDataSerialized } from './BlockNodeSerialized';
 
 export interface BlockNodeConstructorParameters {
   /**
    * The name of the tool created a Block
    */
-  name: BlockToolName;
+  name: string;
 
   /**
    * The content of the Block
    */
-  data?: BlockNodeData;
+  data?: BlockNodeDataSerialized;
 
   /**
    * The parent EditorDocument of the BlockNode
@@ -22,5 +21,5 @@ export interface BlockNodeConstructorParameters {
   /**
    * The BlockTunes associated with the BlockNode
    */
-  tunes?: Record<BlockTuneName, BlockTune>;
+  tunes?: Record<string, BlockTuneSerialized>;
 }

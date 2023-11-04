@@ -7,7 +7,8 @@ describe('BlockTune', () => {
     it('should have empty object as default data value', () => {
       const blockTune = new BlockTune({ name: tuneName });
 
-      expect(blockTune.serialized.data).toEqual({});
+      expect(blockTune.serialized)
+        .toEqual({});
     });
   });
 
@@ -23,9 +24,10 @@ describe('BlockTune', () => {
       blockTune.update('align', 'left');
 
       // Assert
-      expect(blockTune.serialized.data).toEqual({
-        align: 'left',
-      });
+      expect(blockTune.serialized)
+        .toEqual({
+          align: 'left',
+        });
     });
 
     it('should update field in data object by key', () => {
@@ -41,9 +43,10 @@ describe('BlockTune', () => {
       blockTune.update('align', 'right');
 
       // Assert
-      expect(blockTune.serialized.data).toEqual({
-        align: 'right',
-      });
+      expect(blockTune.serialized)
+        .toEqual({
+          align: 'right',
+        });
     });
   });
 
@@ -61,14 +64,12 @@ describe('BlockTune', () => {
       const tuneSerialized = tune.serialized;
 
       // Assert
-      expect(tuneSerialized).toEqual(
-        {
-          name: tuneName,
-          data: {
+      expect(tuneSerialized)
+        .toEqual(
+          {
             background: 'transparent',
-          },
-        }
-      );
+          }
+        );
     });
   });
 });

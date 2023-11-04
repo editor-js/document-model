@@ -1,15 +1,24 @@
 import { EditorDocument } from '../EditorDocument';
-import { BlockTune, BlockTuneName } from '../BlockTune';
+import { BlockTune, BlockTuneName, BlockTuneSerialized, createBlockTuneName } from '../BlockTune';
 import {
   BlockNodeConstructorParameters,
   BlockToolName,
   createBlockToolName,
   DataKey,
-  createDataKey, BlockNodeData,
-  BlockNodeSerialized
+  createDataKey,
+  BlockNodeData,
+  BlockNodeSerialized,
+  BlockNodeDataSerialized,
+  BlockNodeDataSerializedValue,
+  BlockChildType,
+  ChildNode,
+  BlockNodeDataValue
 } from './types';
 import { ValueNode } from '../ValueNode';
-import { InlineToolData, InlineToolName, TextNode } from '../inline-fragments';
+import { InlineToolData, InlineToolName, TextNode, TextNodeSerialized } from '../inline-fragments';
+import { get, has } from '../../utils/keypath';
+import { NODE_TYPE_HIDDEN_PROP } from './consts';
+import { mapObject } from '../../utils/mapObject';
 
 /**
  * BlockNode class represents a node in a tree-like structure used to store and manipulate Blocks in an editor document.
@@ -25,7 +34,7 @@ export class BlockNode {
   /**
    * Field representing the content of the Block
    */
-  #data: BlockNodeData;
+  #data: BlockNodeData = {};
 
   /**
    * Field representing the parent EditorDocument of the BlockNode
@@ -46,11 +55,23 @@ export class BlockNode {
    * @param [args.parent] - The parent EditorDocument of the BlockNode.
    * @param [args.tunes] - The BlockTunes associated with the BlockNode.
    */
-  constructor({ name, data = {}, parent, tunes = {} }: BlockNodeConstructorParameters) {
-    this.#name = name;
-    this.#data = data;
+  constructor({
+    name,
+    data = {},
+    parent,
+    tunes = {},
+  }: BlockNodeConstructorParameters) {
+    this.#name = createBlockToolName(name);
     this.#parent = parent ?? null;
-    this.#tunes = tunes;
+    this.#tunes = mapObject(
+      tunes,
+      (tuneData: BlockTuneSerialized, tuneName: string) => new BlockTune({
+        name: createBlockTuneName(tuneName),
+        data: tuneData,
+      })
+    );
+
+    this.#initialize(data);
   }
 
   /**
@@ -64,18 +85,23 @@ export class BlockNode {
    * Returns serialized object representing the BlockNode
    */
   public get serialized(): BlockNodeSerialized {
-    const serializedData = Object.fromEntries(
-      Object
-        .entries(this.#data)
-        .map(([dataKey, value]) => ([dataKey, value.serialized]))
-    );
+    const map = (data: BlockNodeDataValue): BlockNodeDataSerializedValue => {
+      if (Array.isArray(data)) {
+        return data.map(map) as BlockNodeDataSerialized[];
+      }
 
-    const serializedTunes = Object.fromEntries(
-      Object
-        .entries(this.#tunes)
-        .map(
-          ([name, tune]) => ([name, tune.serialized])
-        )
+      if (data instanceof ValueNode || data instanceof TextNode) {
+        return data.serialized;
+      }
+
+      return mapObject(data, map);
+    };
+
+    const serializedData = mapObject(this.#data, map);
+
+    const serializedTunes = mapObject(
+      this.#tunes,
+      (tune) => tune.serialized
     );
 
     return {
@@ -92,9 +118,10 @@ export class BlockNode {
    * @param data - The data to update the BlockTune with
    */
   public updateTuneData(tuneName: BlockTuneName, data: Record<string, unknown>): void {
-    Object.entries(data).forEach(([key, value]) => {
-      this.#tunes[tuneName].update(key, value);
-    });
+    Object.entries(data)
+      .forEach(([key, value]) => {
+        this.#tunes[tuneName].update(key, value);
+      });
   }
 
   /**
@@ -106,7 +133,7 @@ export class BlockNode {
   public updateValue<T = unknown>(dataKey: DataKey, value: T): void {
     this.#validateKey(dataKey, ValueNode);
 
-    const node = this.#data[dataKey] as ValueNode<T>;
+    const node = get(this.#data, dataKey as string) as ValueNode<T>;
 
     node.update(value);
   }
@@ -121,7 +148,7 @@ export class BlockNode {
   public insertText(dataKey: DataKey, text: string, start?: number): void {
     this.#validateKey(dataKey, TextNode);
 
-    const node = this.#data[dataKey] as TextNode;
+    const node = get(this.#data, dataKey as string) as TextNode;
 
     node.insertText(text, start);
   }
@@ -136,7 +163,7 @@ export class BlockNode {
   public removeText(dataKey: DataKey, start?: number, end?: number): string {
     this.#validateKey(dataKey, TextNode);
 
-    const node = this.#data[dataKey] as TextNode;
+    const node = get(this.#data, dataKey as string) as TextNode;
 
     return node.removeText(start, end);
   }
@@ -153,7 +180,7 @@ export class BlockNode {
   public format(dataKey: DataKey, tool: InlineToolName, start: number, end: number, data?: InlineToolData): void {
     this.#validateKey(dataKey, TextNode);
 
-    const node = this.#data[dataKey] as TextNode;
+    const node = get(this.#data, dataKey as string) as TextNode;
 
     node.format(tool, start, end, data);
   }
@@ -169,9 +196,51 @@ export class BlockNode {
   public unformat(key: DataKey, tool: InlineToolName, start: number, end: number): void {
     this.#validateKey(key, TextNode);
 
-    const node = this.#data[key] as TextNode;
+    const node = get(this.#data, key as string) as TextNode;
 
     node.unformat(tool, start, end);
+  }
+
+  /**
+   * Initializes BlockNode with passed block data
+   *
+   * @param data - block data
+   */
+  #initialize(data: BlockNodeDataSerialized): void {
+    /**
+     * Recursively maps serialized data to BlockNodeData
+     *
+     * 1. If value is an object with NODE_TYPE_HIDDEN_PROP, then it's a serialized node.
+     *  a. If NODE_TYPE_HIDDEN_PROP is BlockChildType.Value, then it's a serialized ValueNode
+     *  b. If NODE_TYPE_HIDDEN_PROP is BlockChildType.Text, then it's a serialized TextNode
+     * 2. If value is an array, then it's an array of serialized nodes, so map it recursively
+     * 3. If value is an object without NODE_TYPE_HIDDEN_PROP, then it's a JSON object, so map it recursively
+     * 4. Otherwise, it's a primitive value, so create a ValueNode with it
+     *
+     * @param value - serialized value
+     */
+    const map = (value: BlockNodeDataSerializedValue): BlockNodeData | BlockNodeDataValue => {
+      if (Array.isArray(value)) {
+        return value.map(map) as BlockNodeData[] | ChildNode[];
+      }
+
+      if (typeof value === 'object' && value !== null) {
+        if (NODE_TYPE_HIDDEN_PROP in value) {
+          switch (value[NODE_TYPE_HIDDEN_PROP]) {
+            case BlockChildType.Value:
+              return new ValueNode({ value });
+            case BlockChildType.Text:
+              return new TextNode(value as TextNodeSerialized);
+          }
+        }
+
+        return mapObject(value as BlockNodeDataSerialized, map);
+      }
+
+      return new ValueNode({ value });
+    };
+
+    this.#data = mapObject(data, map);
   }
 
   /**
@@ -182,11 +251,11 @@ export class BlockNode {
    * @private
    */
   #validateKey(key: DataKey, Node?: typeof ValueNode | typeof TextNode): void {
-    if (this.#data[key] === undefined) {
+    if (!has(this.#data, key as string)) {
       throw new Error(`BlockNode: data with key ${key} does not exist`);
     }
 
-    if (Node && !(this.#data[key] instanceof Node)) {
+    if (Node && !(get(this.#data, key as string) instanceof Node)) {
       throw new Error(`BlockNode: data with key ${key} is not a ${Node.name}`);
     }
   }

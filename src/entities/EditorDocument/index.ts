@@ -1,9 +1,10 @@
 import { BlockNode, DataKey } from '../BlockNode';
-import type { BlockNodeData, EditorDocumentConstructorParameters, Properties } from './types';
+import type { EditorDocumentSerialized, EditorDocumentConstructorParameters, Properties } from './types';
 import { BlockTuneName } from '../BlockTune';
 import { InlineToolData, InlineToolName } from '../inline-fragments';
 import { IoCContainer, TOOLS_REGISTRY } from '../../IoC';
 import { ToolsRegistry } from '../../tools';
+import { BlockNodeSerialized } from '../BlockNode/types';
 
 /**
  * EditorDocument class represents the top-level container for a tree-like structure of BlockNodes in an editor document.
@@ -13,7 +14,7 @@ export class EditorDocument {
   /**
    * Private field representing the child BlockNodes of the EditorDocument
    */
-  #children: BlockNode[];
+  #children: BlockNode[] = [];
 
   /**
    * Private field representing the properties of the document
@@ -28,13 +29,14 @@ export class EditorDocument {
    * @param [args.properties] - The properties of the document.
    * @param [args.toolsRegistry] - ToolsRegistry instance for the current document. Defaults to a new ToolsRegistry instance.
    */
-  constructor({ children = [], properties = {}, toolsRegistry = new ToolsRegistry() }: EditorDocumentConstructorParameters = {}) {
-    this.#children = children;
+  constructor({ blocks = [], properties = {}, toolsRegistry = new ToolsRegistry() }: EditorDocumentConstructorParameters = {}) {
     this.#properties = properties;
 
     const container = IoCContainer.of(this);
 
     container.set(TOOLS_REGISTRY, toolsRegistry);
+
+    this.#initialize(blocks);
   }
 
   /**
@@ -52,7 +54,7 @@ export class EditorDocument {
    * @param index - The index at which to add the BlockNode
    * @throws Error if the index is out of bounds
    */
-  public addBlock(blockNodeData: BlockNodeData, index?: number): void {
+  public addBlock(blockNodeData: Pick<BlockNodeSerialized, 'name'> & Partial<Omit<BlockNodeSerialized, 'name'>>, index?: number): void {
     const blockNode = new BlockNode({
       ...blockNodeData,
       parent: this,
@@ -207,6 +209,31 @@ export class EditorDocument {
     this.#checkIndexOutOfBounds(blockIndex, this.length - 1);
 
     this.#children[blockIndex].unformat(key, tool, start, end);
+  }
+
+  /**
+   * Returns serialized data associated with the document
+   *
+   * Data contains:
+   * - blocks - array of serialized blocks
+   * - properties - JSON object with document properties (eg read-only)
+   */
+  public get serialized(): EditorDocumentSerialized {
+    return {
+      blocks: this.#children.map((block) => block.serialized),
+      properties: this.#properties,
+    };
+  }
+
+  /**
+   * Initializes EditorDocument with passed blocks
+   *
+   * @param blocks - document serialized blocks
+   */
+  #initialize(blocks: BlockNodeSerialized[]): void {
+    blocks.forEach((block) => {
+      this.addBlock(block);
+    });
   }
 
   /**

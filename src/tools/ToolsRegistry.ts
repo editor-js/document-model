@@ -1,7 +1,6 @@
 /* eslint-disable jsdoc/require-jsdoc */
 import { BlockToolName, InlineToolName } from '../entities';
-import { BlockToolConstructable } from './types/BlockToolConstructable';
-import { InlineToolConstructable } from './types/InlineToolConstructable';
+import { BlockToolConstructable, InlineToolConstructable } from './types';
 
 /**
  * ToolsRegistry map stores Editor.js Tools by their names

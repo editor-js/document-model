@@ -41,10 +41,7 @@ export class BlockTune {
    * Returns serialized version of the BlockTune.
    */
   public get serialized(): BlockTuneSerialized {
-    return {
-      name: this.#name,
-      data: this.#data,
-    };
+    return this.#data;
   }
 }
 

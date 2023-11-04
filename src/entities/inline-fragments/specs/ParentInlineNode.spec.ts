@@ -59,7 +59,7 @@ describe('ParentInlineNode', () => {
     it('should have correct data format', () => {
       const result = node.serialized;
 
-      expect(result).toHaveProperty('text');
+      expect(result).toHaveProperty('value');
       expect(result).toHaveProperty('fragments');
     });
   });

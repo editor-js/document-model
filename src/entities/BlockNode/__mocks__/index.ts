@@ -43,4 +43,11 @@ export class BlockNode {
   public unformat(): void {
     return;
   }
+
+  /**
+   * Mock getter
+   */
+  public get serialized(): void {
+    return;
+  }
 }
