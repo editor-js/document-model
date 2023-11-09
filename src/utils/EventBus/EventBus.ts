@@ -1,5 +1,7 @@
 import EventEmitter from 'eventemitter3';
 
+/* eslint-disable @typescript-eslint/no-explicit-any -- @todo replace any with event object type */
+
 /**
  * Provides an event bus for using in the document model
  */
