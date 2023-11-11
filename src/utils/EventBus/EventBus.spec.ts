@@ -12,15 +12,20 @@ describe('EventBus', () => {
       expect(listener).toHaveBeenCalled();
     });
 
-    it('should call an event listener with arguments', () => {
+    it('should call an event listener an event that contains payload in detail field', () => {
       const eventBus = new EventBus();
       const listener = jest.fn();
-      const args = [1, 'two', true];
+      const payload = {
+        foo: 'bar',
+        bool: true,
+      };
 
       eventBus.on('test', listener);
-      eventBus.emit('test', ...args);
+      eventBus.emit('test', payload);
 
-      expect(listener).toHaveBeenCalledWith(...args);
+      expect(listener).toHaveBeenCalledWith(expect.objectContaining({
+        detail: payload,
+      }));
     });
   });
 
@@ -65,22 +70,6 @@ describe('EventBus', () => {
       eventBus.emit('test');
 
       expect(listener).not.toHaveBeenCalled();
-    });
-
-    it('should remove only the one-time event listener', () => {
-      const eventBus = new EventBus();
-      const listener = jest.fn();
-
-      eventBus.on('test', listener);
-      eventBus.once('test', listener);
-      eventBus.off('test', listener, undefined, true);
-
-      eventBus.emit('test');
-
-      /**
-       * The listener should be called once because the first event listener added with .on()
-       */
-      expect(listener).toHaveBeenCalledTimes(1);
     });
   });
 });

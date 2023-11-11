@@ -1,5 +1,3 @@
-import EventEmitter from 'eventemitter3';
-
 /* eslint-disable @typescript-eslint/no-explicit-any -- @todo replace any with event object type */
 
 /**
@@ -7,58 +5,60 @@ import EventEmitter from 'eventemitter3';
  */
 export class EventBus {
   /**
-   * The event emitter instance
+   * The event target instance
    */
-  #instance: EventEmitter;
+  #instance: EventTarget;
 
   /**
    * Creates an instance of EventBus
    */
   constructor() {
-    this.#instance = new EventEmitter();
+    this.#instance = new EventTarget();
   }
 
   /**
    * Registers an event listener
    *
-   * @param event - The event name
+   * @param type - The event type
    * @param listener - The event listener
-   * @param [context] - The context to bind the listener to
    */
-  public on(event: string, listener: (...args: any[]) => void, context?: any): void {
-    this.#instance.on(event, listener, context);
+  public on(type: string, listener: (event: Event) => void): void {
+    this.#instance.addEventListener(type, listener);
   }
 
   /**
    * Registers an event listener that is called only once
    *
-   * @param event - The event name
+   * @param type - The event type
    * @param listener - The event listener
-   * @param [context] - The context to bind the listener to
    */
-  public once(event: string, listener: (...args: any[]) => void, context?: any): void {
-    this.#instance.once(event, listener, context);
+  public once(type: string, listener: (event: Event) => void): void {
+    this.#instance.addEventListener(type, listener, {
+      once: true,
+    });
   }
 
   /**
    * Removes an event listener
    *
-   * @param event - The event name
+   * @param type - The event type
    * @param listener - The event listener
-   * @param [context] - The context the listener was bound to
-   * @param [once] - Whether the listener was registered as a one-time listener
    */
-  public off(event: string, listener: (...args: any[]) => void, context?: any, once?: boolean): void {
-    this.#instance.off(event, listener, context, once);
+  public off(type: string, listener: (event: Event) => void): void {
+    this.#instance.removeEventListener(type, listener);
   }
 
   /**
-   * Emits an event
+   * Emits a custom event to the event target
    *
-   * @param event - The event name
-   * @param {...any} args - The event arguments
+   * @param type - The event type
+   * @param payload - The event payload
    */
-  public emit(event: string, ...args: any[]): void {
-    this.#instance.emit(event, ...args);
+  public emit(type: string, payload?: Record<string, any>): void {
+    const customEvent = new CustomEvent(type, {
+      detail: payload,
+    });
+
+    this.#instance.dispatchEvent(customEvent);
   }
 }
