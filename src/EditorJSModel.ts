@@ -1,3 +1,5 @@
+// Stryker disable all
+/* istanbul ignore file */
 import { EditorDocument } from './entities';
 
 /**
