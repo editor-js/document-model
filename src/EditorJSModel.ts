@@ -1,5 +1,5 @@
-// Stryker disable all
-/* istanbul ignore file */
+// Stryker disable all -- we don't count mutation test coverage fot this file as it just proxy calls to EditorDocument
+/* istanbul ignore file -- we don't count test coverage fot this file as it just proxy calls to EditorDocument */
 import { EditorDocument } from './entities';
 
 /**
