@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "build": "tsc --project tsconfig.build.json",
-    "lint": "eslint .",
+    "lint": "eslint ./src",
     "lint:ci": "yarn lint --max-warnings 0",
     "lint:fix": "yarn lint --fix",
     "test": "jest",
