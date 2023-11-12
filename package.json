@@ -4,9 +4,12 @@
   "packageManager": "yarn@4.0.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "workspaces": [
+    "playground"
+  ],
   "scripts": {
     "build": "tsc --project tsconfig.build.json",
-    "lint": "eslint .",
+    "lint": "eslint ./src",
     "lint:ci": "yarn lint --max-warnings 0",
     "lint:fix": "yarn lint --fix",
     "test": "jest",
