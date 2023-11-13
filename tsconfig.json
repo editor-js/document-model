@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
-    "target": "es2021",
-    "module": "commonjs",
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "Node",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
@@ -9,6 +10,7 @@
     "experimentalDecorators": true,
     "types": ["jest"]
   },
+  "include": ["src/**/*"],
   "exclude": [
     "node_modules/**/*",
     "dist/**/*"

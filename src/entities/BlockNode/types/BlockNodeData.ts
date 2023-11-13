@@ -1,6 +1,6 @@
-import { DataKey } from './DataKey';
-import { ValueNode } from '../../ValueNode';
-import { TextNode } from '../../inline-fragments';
+import type { DataKey } from './DataKey';
+import type { ValueNode } from '../../ValueNode';
+import type { TextNode } from '../../inline-fragments';
 
 export type ChildNode = ValueNode | TextNode;
 

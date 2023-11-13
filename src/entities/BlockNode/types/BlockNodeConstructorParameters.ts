@@ -1,6 +1,6 @@
-import { EditorDocument } from '../../EditorDocument';
-import { BlockTuneSerialized } from '../../BlockTune';
-import { BlockNodeDataSerialized } from './BlockNodeSerialized';
+import type { EditorDocument } from '../../EditorDocument';
+import type { BlockTuneSerialized } from '../../BlockTune';
+import type { BlockNodeDataSerialized } from './BlockNodeSerialized';
 
 export interface BlockNodeConstructorParameters {
   /**

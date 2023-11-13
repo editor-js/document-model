@@ -9,6 +9,16 @@ ignorePatterns:
 globals:
   WeakMap: readonly
 
+plugins:
+  - import
+
+rules:
+  import/extensions:
+    - error
+    - always
+  '@typescript-eslint/no-unsafe-declaration-merging':
+    - 0
+
 overrides:
   - files:
       - '**/*.test.ts'

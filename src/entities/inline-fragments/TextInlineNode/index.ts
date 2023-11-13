@@ -1,9 +1,10 @@
-import { FormattingInlineNode, InlineToolName, InlineToolData } from '../index';
-import { TextInlineNodeConstructorParameters } from './types';
-import { InlineNode, InlineTreeNodeSerialized } from '../InlineNode';
-import { ChildNode } from '../mixins/ChildNode';
+import type { InlineToolName, InlineToolData } from '../index';
+import { FormattingInlineNode } from '../index.js';
+import type { TextInlineNodeConstructorParameters } from './types/index';
+import type { InlineNode, InlineTreeNodeSerialized } from '../InlineNode/index';
+import { ChildNode } from '../mixins/ChildNode/index.js';
 
-export * from './types';
+export * from './types/index.js';
 
 export interface TextInlineNode extends ChildNode {}
 

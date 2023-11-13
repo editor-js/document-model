@@ -1,6 +1,6 @@
-import { ChildNode } from '../../mixins/ChildNode';
-import { InlineNode } from '../../InlineNode';
-import { TextInlineNodeConstructorParameters } from '../types';
+import { ChildNode } from '../../mixins/ChildNode/index.js';
+import type { InlineNode } from '../../InlineNode/index';
+import type { TextInlineNodeConstructorParameters } from '../types/index';
 
 export interface TextInlineNode extends ChildNode {}
 

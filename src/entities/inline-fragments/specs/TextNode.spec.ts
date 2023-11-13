@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
-import { TextNode } from '../TextNode';
-import type { InlineToolData, InlineToolName } from '../FormattingInlineNode';
+import { TextNode } from '../TextNode/index.js';
+import type { InlineToolData, InlineToolName } from '../FormattingInlineNode/index';
 
 jest.mock('../mixins/ChildNode');
 jest.mock('../mixins/ParentNode');

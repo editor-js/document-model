@@ -1,1 +1,1 @@
-export { TextInlineNodeConstructorParameters } from './TextInlineNodeConstructorParameters';
+export type { TextInlineNodeConstructorParameters } from './TextInlineNodeConstructorParameters';
