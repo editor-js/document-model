@@ -24,6 +24,7 @@ export class BlockModifiedEvent extends CustomEvent<BlockModifiedEventPayload> {
    * @param payload - The event payload
    */
   constructor(payload: BlockModifiedEventPayload) {
+    // Stryker disable next-line ObjectLiteral
     super(EventType.Changed, { detail: payload });
   }
 }

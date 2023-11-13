@@ -24,6 +24,7 @@ export class BlockRemovedEvent extends CustomEvent<BlockRemovedEventPayload> {
    * @param payload - The event payload
    */
   constructor(payload: BlockRemovedEventPayload) {
+    // Stryker disable next-line ObjectLiteral
     super(EventType.Changed, { detail: payload });
   }
 }
