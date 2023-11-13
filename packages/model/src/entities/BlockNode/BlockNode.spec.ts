@@ -1,8 +1,8 @@
 import { BlockNode, createBlockToolName, createDataKey } from './index.js';
 
 import type { BlockTuneName } from '../BlockTune';
-import { BlockTune } from '../BlockTune.js';
-import { ValueNode } from '../ValueNode.js';
+import { BlockTune } from '../BlockTune/index.js';
+import { ValueNode } from '../ValueNode/index.js';
 
 import type { EditorDocument } from '../EditorDocument';
 import type { ValueNodeConstructorParameters } from '../ValueNode';
