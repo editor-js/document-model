@@ -1,6 +1,6 @@
-import { ValueNode } from './index';
-import { BlockChildType } from '../BlockNode/types';
-import { NODE_TYPE_HIDDEN_PROP } from '../BlockNode/consts';
+import { ValueNode } from './index.js';
+import { BlockChildType } from '../BlockNode/types/index.js';
+import { NODE_TYPE_HIDDEN_PROP } from '../BlockNode/consts.js';
 
 describe('ValueNode', () => {
   describe('.update()', () => {

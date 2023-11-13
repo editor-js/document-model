@@ -1,7 +1,8 @@
-import { EditorDocument } from './index';
-import { BlockNode, BlockToolName, DataKey } from '../BlockNode';
-import type { BlockTuneName } from '../BlockTune';
-import { InlineToolData, InlineToolName } from '../inline-fragments';
+import { EditorDocument } from './index.js';
+import type { BlockToolName, DataKey } from '../BlockNode/index';
+import { BlockNode } from '../BlockNode/index.js';
+import type { BlockTuneName } from '../BlockTune/index';
+import type { InlineToolData, InlineToolName } from '../inline-fragments/index';
 
 jest.mock('../BlockNode');
 

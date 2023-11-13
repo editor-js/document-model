@@ -1,5 +1,5 @@
-import { ChildNode } from '../ChildNode';
-import { InlineNode } from '../../InlineNode';
+import type { ChildNode } from '../ChildNode';
+import type { InlineNode } from '../../InlineNode';
 
 /**
  * Abstract parent node interface
@@ -171,7 +171,7 @@ export function ParentNode<C extends { new(...args: any[]): InlineNode }>(constr
       }
 
       children.reduce((prev, child) => {
-        if (prev && prev.isEqual(child)) {
+        if (prev !== undefined && prev.isEqual(child)) {
           prev.mergeWith(child);
 
           return prev;

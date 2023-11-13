@@ -1,5 +1,5 @@
-import { ToolsRegistry } from './ToolsRegistry';
-import type { BlockToolName } from '../entities';
+import { ToolsRegistry } from './ToolsRegistry.js';
+import type { BlockToolName } from '../entities/index';
 
 describe('ToolsRegistry', () => {
   describe('get()', () => {

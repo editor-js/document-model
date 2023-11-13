@@ -9,7 +9,7 @@ export function get<T = unknown>(data: Record<string | number | symbol, any>, ke
   const parsedKeys  = Array.isArray(keys) ? keys : keys.split('.');
   const key = parsedKeys.shift();
 
-  if (!key) {
+  if (key === undefined) {
     return data as T;
   }
 
@@ -31,7 +31,7 @@ export function set<T = unknown>(data: Record<string, unknown>, keys: string | s
   const parsedKeys  = Array.isArray(keys) ? keys : keys.split('.');
   const key = parsedKeys.shift();
 
-  if (!key) {
+  if (key === undefined) {
     return;
   }
 

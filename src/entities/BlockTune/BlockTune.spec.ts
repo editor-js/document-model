@@ -1,4 +1,4 @@
-import { BlockTune, createBlockTuneName } from './index';
+import { BlockTune, createBlockTuneName } from './index.js';
 
 describe('BlockTune', () => {
   const tuneName = createBlockTuneName('alignment');

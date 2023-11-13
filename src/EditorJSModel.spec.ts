@@ -1,4 +1,4 @@
-import { EditorJSModel } from './EditorJSModel';
+import { EditorJSModel } from './EditorJSModel.js';
 
 describe('EditorJSModel', () => {
   it('should expose only the public API', () => {

@@ -1,6 +1,6 @@
-import { BlockTuneSerialized } from '../../BlockTune';
-import { ValueSerialized } from '../../ValueNode/types';
-import { TextNodeSerialized } from '../../inline-fragments';
+import type { BlockTuneSerialized } from '../../BlockTune';
+import type { ValueSerialized } from '../../ValueNode/types';
+import type { TextNodeSerialized } from '../../inline-fragments';
 
 /**
  * Union type of serialized BlockNode child nodes

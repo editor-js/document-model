@@ -1,2 +1,2 @@
-export * from './ToolsRegistry';
-export * from './types';
+export * from './ToolsRegistry.js';
+export * from './types/index.js';

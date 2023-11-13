@@ -1,5 +1,5 @@
-import { ChildNode } from '../mixins/ChildNode';
-import { ParentNode } from '../mixins/ParentNode';
+import { ChildNode } from '../mixins/ChildNode/index.js';
+import { ParentNode } from '../mixins/ParentNode/index.js';
 
 jest.mock('../mixins/ParentNode');
 

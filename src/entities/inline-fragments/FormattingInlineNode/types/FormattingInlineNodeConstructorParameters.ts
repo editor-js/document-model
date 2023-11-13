@@ -1,5 +1,5 @@
-import { InlineToolName } from './InlineToolName';
-import { InlineToolData } from './InlineToolData';
+import type { InlineToolName } from './InlineToolName';
+import type { InlineToolData } from './InlineToolData';
 import type { ChildNodeConstructorOptions } from '../../mixins/ChildNode';
 import type { ParentNodeConstructorOptions } from '../../mixins/ParentNode';
 

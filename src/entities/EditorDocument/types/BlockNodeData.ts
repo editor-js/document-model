@@ -1,4 +1,4 @@
-import { BlockNodeConstructorParameters } from '../../BlockNode/types';
+import type { BlockNodeConstructorParameters } from '../../BlockNode/types';
 
 /**
  * Block node data uses for creating a new BlockNode instance

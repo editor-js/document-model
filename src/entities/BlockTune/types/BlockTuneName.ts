@@ -1,4 +1,5 @@
-import { Nominal, create } from '../../../utils/Nominal';
+import type { Nominal } from '../../../utils/Nominal';
+import { create } from '../../../utils/Nominal.js';
 
 /**
  * Base type of the block tune name field

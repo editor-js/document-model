@@ -1,2 +1,2 @@
-export { ValueNodeConstructorParameters } from './ValueNodeConstructorParameters';
-export { ValueSerialized } from './ValueSerialized';
+export type { ValueNodeConstructorParameters } from './ValueNodeConstructorParameters';
+export type { ValueSerialized } from './ValueSerialized';

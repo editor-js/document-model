@@ -1,6 +1,6 @@
-import { InlineToolData, InlineToolName } from '../FormattingInlineNode';
-import { BlockChildType } from '../../BlockNode/types';
-import { NODE_TYPE_HIDDEN_PROP } from '../../BlockNode/consts';
+import type { InlineToolData, InlineToolName } from '../FormattingInlineNode';
+import type { BlockChildType } from '../../BlockNode/types';
+import type { NODE_TYPE_HIDDEN_PROP } from '../../BlockNode/consts';
 
 /**
  * Interface describing abstract InlineNode — common properties and methods for all inline nodes
