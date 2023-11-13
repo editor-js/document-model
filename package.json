@@ -4,6 +4,7 @@
   "packageManager": "yarn@4.0.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "type": "module",
   "workspaces": [
     "playground"
   ],
