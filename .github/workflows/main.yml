@@ -25,7 +25,7 @@ jobs:
       - name: Run unit tests
         uses: ArtiomTr/jest-coverage-report-action@v2
         with:
-          working-directory: .packages/model
+          working-directory: ./packages/model
           test-script: yarn test
           package-manager: yarn
 
