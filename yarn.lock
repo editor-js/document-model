@@ -560,9 +560,32 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@editorjs/document-model@workspace:., @editorjs/document-model@workspace:^":
+"@editorjs/document-playground@workspace:packages/playground":
   version: 0.0.0-use.local
-  resolution: "@editorjs/document-model@workspace:."
+  resolution: "@editorjs/document-playground@workspace:packages/playground"
+  dependencies:
+    "@editorjs/model": "workspace:^"
+    "@types/eslint": "npm:^8"
+    "@vitejs/plugin-vue": "npm:^4.2.3"
+    eslint: "npm:^8.53.0"
+    eslint-config-codex: "npm:^1.9.1"
+    eslint-plugin-vue: "npm:^9.18.1"
+    typescript: "npm:^5.0.2"
+    vite: "npm:^4.4.5"
+    vue: "npm:^3.3.4"
+    vue-tsc: "npm:^1.8.5"
+  languageName: unknown
+  linkType: soft
+
+"@editorjs/document@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "@editorjs/document@workspace:."
+  languageName: unknown
+  linkType: soft
+
+"@editorjs/model@workspace:^, @editorjs/model@workspace:packages/model":
+  version: 0.0.0-use.local
+  resolution: "@editorjs/model@workspace:packages/model"
   dependencies:
     "@jest/globals": "npm:^29.7.0"
     "@stryker-mutator/core": "npm:^7.0.2"
@@ -578,23 +601,6 @@ __metadata:
     ts-jest: "npm:^29.1.0"
     ts-node: "npm:^10.9.1"
     typescript: "npm:^5.2.2"
-  languageName: unknown
-  linkType: soft
-
-"@editorjs/document-playground@workspace:playground":
-  version: 0.0.0-use.local
-  resolution: "@editorjs/document-playground@workspace:playground"
-  dependencies:
-    "@editorjs/document-model": "workspace:^"
-    "@types/eslint": "npm:^8"
-    "@vitejs/plugin-vue": "npm:^4.2.3"
-    eslint: "npm:^8.53.0"
-    eslint-config-codex: "npm:^1.9.1"
-    eslint-plugin-vue: "npm:^9.18.1"
-    typescript: "npm:^5.0.2"
-    vite: "npm:^4.4.5"
-    vue: "npm:^3.3.4"
-    vue-tsc: "npm:^1.8.5"
   languageName: unknown
   linkType: soft
 

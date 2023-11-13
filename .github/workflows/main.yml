@@ -12,7 +12,7 @@ jobs:
           node-version-file: .nvmrc
       - uses: ./.github/actions/setup
       - name: Run ESLint check
-        run: yarn lint:ci
+        run: yarn workspace @editorjs/model lint:ci
 
   tests:
     runs-on: ubuntu-latest
@@ -25,7 +25,7 @@ jobs:
       - name: Run unit tests
         uses: ArtiomTr/jest-coverage-report-action@v2
         with:
-          test-script: "yarn test"
+          test-script: "yarn workspace @editorjs/model test"
           package-manager: yarn
 
   mutation-tests:
@@ -55,7 +55,7 @@ jobs:
       - name: Run mutation tests
         if: steps.changed-files.outputs.src_any_changed == 'true'
         id: run-mutation-tests
-        run: yarn test:mutations --mutate ${{format('''{0}''', steps.changed-files.outputs.src_all_changed_files)}}
+        run: yarn workspace @editorjs/model test:mutations --mutate ${{format('''{0}''', steps.changed-files.outputs.src_all_changed_files)}}
         continue-on-error: true
 
       - name: Comment on successful mutation testing
@@ -113,4 +113,4 @@ jobs:
           node-version-file: .nvmrc
       - uses: ./.github/actions/setup
       - name: Build the package
-        run: yarn build
+        run: yarn workspace @editorjs/model build
