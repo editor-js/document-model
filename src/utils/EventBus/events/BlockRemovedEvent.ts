@@ -1,7 +1,7 @@
-import { EventAction } from '../types/EventAction.js';
-import { BlockNodeSerialized } from '../../../entities/BlockNode/types/index.js';
-import { EventPayloadBase } from '../types/EventPayloadBase.js';
-import { BlockIndex } from '../types/indexing.js';
+import type { EventAction } from '../types/EventAction.js';
+import type { BlockNodeSerialized } from '../../../entities/BlockNode/types/index.js';
+import type { EventPayloadBase } from '../types/EventPayloadBase.js';
+import type { BlockIndex } from '../types/indexing.js';
 import { EventType } from '../types/EventType.js';
 
 /**
@@ -24,6 +24,6 @@ export class BlockRemovedEvent extends CustomEvent<BlockRemovedEventPayload> {
    * @param payload - The event payload
    */
   constructor(payload: BlockRemovedEventPayload) {
-    super(EventType.CHANGED, { detail: payload });
+    super(EventType.Changed, { detail: payload });
   }
 }

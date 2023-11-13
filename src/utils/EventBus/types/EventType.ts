@@ -5,5 +5,5 @@ export enum EventType {
   /**
    * The document model has been changed
    */
-  CHANGED = 'changed',
+  Changed = 'changed',
 }

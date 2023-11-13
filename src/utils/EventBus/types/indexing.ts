@@ -1,4 +1,4 @@
-import { BlockTuneName, DataKey } from '../../../entities/index.js';
+import type { BlockTuneName, DataKey } from '../../../entities/index.js';
 
 /**
  * Alias for a document id
