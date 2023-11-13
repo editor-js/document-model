@@ -1,4 +1,4 @@
-import type { EditorDocument } from '../entities.js';
+import type { EditorDocument } from '../entities/index.js';
 
 /**
  * Type for IoC Container instance — simple map with symbol keys
