@@ -1,4 +1,4 @@
-name: Main workflow runner
+name: Model package workflow runner
 on:
   pull_request:
 

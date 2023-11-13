@@ -1,4 +1,4 @@
-name: Merge queue workflow runner
+name: Merge queue workflow runner for model package
 on:
   merge_group:
 
@@ -25,7 +25,8 @@ jobs:
       - name: Run unit tests
         uses: ArtiomTr/jest-coverage-report-action@v2
         with:
-          test-script: "yarn test"
+          working-directory: ./packages/model
+          test-script: yarn test
           package-manager: yarn
 
   mutation-tests:
@@ -42,7 +43,7 @@ jobs:
 
       - name: Run mutation tests
         id: run-mutation-tests
-        run: yarn test:mutations --dashboard.version main
+        run: yarn workspace @editorjs/model test:mutations --dashboard.version main
 
 
   build:
@@ -54,4 +55,4 @@ jobs:
           node-version-file: .nvmrc
       - uses: ./.github/actions/setup
       - name: Build the package
-        run: yarn build
+        run: yarn workspace @editorjs/model build
