@@ -1,6 +1,6 @@
 // Stryker disable all -- we don't count mutation test coverage fot this file as it just proxy calls to EditorDocument
 /* istanbul ignore file -- we don't count test coverage fot this file as it just proxy calls to EditorDocument */
-import { EditorDocument } from './entities';
+import { EditorDocument } from './entities.js';
 
 /**
  * EditorJSModel is a wrapper around EditorDocument that prevent access to  internal structures

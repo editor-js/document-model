@@ -7,9 +7,9 @@ import {
   TextNode,
   createInlineToolData,
   createInlineToolName
-} from '../index';
-import { BlockChildType } from '../../BlockNode/types';
-import { NODE_TYPE_HIDDEN_PROP } from '../../BlockNode/consts';
+} from '../index.js';
+import { BlockChildType } from '../../BlockNode/types/index.js';
+import { NODE_TYPE_HIDDEN_PROP } from '../../BlockNode/consts.js';
 
 describe('Inline fragments tree integration', () => {
   describe('text insertion', () => {

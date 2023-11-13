@@ -1,6 +1,6 @@
-import { EditorDocument } from './index';
+import { EditorDocument } from './index.js';
 import type { BlockToolName, DataKey } from '../BlockNode';
-import { BlockNode } from '../BlockNode';
+import { BlockNode } from '../BlockNode/index.js';
 import type { BlockTuneName } from '../BlockTune';
 import type { InlineToolData, InlineToolName } from '../inline-fragments';
 

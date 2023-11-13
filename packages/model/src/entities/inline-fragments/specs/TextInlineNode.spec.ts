@@ -1,6 +1,6 @@
-import { TextInlineNode } from '../TextInlineNode';
+import { TextInlineNode } from '../TextInlineNode/index.js';
 import type { InlineToolName } from '../FormattingInlineNode';
-import { FormattingInlineNode } from '../FormattingInlineNode';
+import { FormattingInlineNode } from '../FormattingInlineNode/index.js';
 import type { ParentNode } from '../mixins/ParentNode';
 import type { InlineNode } from '../InlineNode';
 

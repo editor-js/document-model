@@ -1,16 +1,16 @@
-import { BlockNode, createBlockToolName, createDataKey } from './index';
+import { BlockNode, createBlockToolName, createDataKey } from './index.js';
 
 import type { BlockTuneName } from '../BlockTune';
-import { BlockTune } from '../BlockTune';
-import { ValueNode } from '../ValueNode';
+import { BlockTune } from '../BlockTune.js';
+import { ValueNode } from '../ValueNode.js';
 
 import type { EditorDocument } from '../EditorDocument';
 import type { ValueNodeConstructorParameters } from '../ValueNode';
 import type { InlineToolData, InlineToolName } from '../inline-fragments';
-import { TextNode } from '../inline-fragments';
+import { TextNode } from '../inline-fragments/index.js';
 import type { BlockNodeDataSerialized } from './types';
-import { BlockChildType } from './types';
-import { NODE_TYPE_HIDDEN_PROP } from './consts';
+import { BlockChildType } from './types/index.js';
+import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
 
 jest.mock('../BlockTune');
 

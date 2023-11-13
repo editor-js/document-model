@@ -1,4 +1,4 @@
-import { ChildNode } from '../../mixins/ChildNode';
+import { ChildNode } from '../../mixins/ChildNode/index.js';
 import type { InlineNode } from '../../InlineNode';
 import type { TextInlineNodeConstructorParameters } from '../types';
 

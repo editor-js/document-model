@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { get, has, set } from './keypath';
+import { get, has, set } from './keypath.js';
 
 describe('keypath util', () => {
   const value = 'value';

@@ -1,4 +1,4 @@
-import { createBlockTuneName } from '../types';
+import { createBlockTuneName } from '../types/index.js';
 
 /**
  * Mock for BlockTune class

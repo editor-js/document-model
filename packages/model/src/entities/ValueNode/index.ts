@@ -1,6 +1,6 @@
 import type { ValueNodeConstructorParameters, ValueSerialized } from './types';
-import { BlockChildType } from '../BlockNode/types';
-import { NODE_TYPE_HIDDEN_PROP } from '../BlockNode/consts';
+import { BlockChildType } from '../BlockNode/types/index.js';
+import { NODE_TYPE_HIDDEN_PROP } from '../BlockNode/consts.js';
 
 /**
  * ValueNode class represents a node in a tree-like structure, used to store and manipulate data associated with a BlockNode.

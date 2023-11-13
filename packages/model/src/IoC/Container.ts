@@ -1,4 +1,4 @@
-import type { EditorDocument } from '../entities';
+import type { EditorDocument } from '../entities.js';
 
 /**
  * Type for IoC Container instance — simple map with symbol keys
@@ -12,7 +12,7 @@ type Container = Map<symbol, unknown>;
  *
  * @example
  * ```ts
- * import { IoCContainer } from './IoCContainer';
+ * import { IoCContainer } from './IoCContainer.js';
  *
  * const container = IoCContainer.of(document);
  *

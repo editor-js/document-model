@@ -1,9 +1,9 @@
 import type { InlineFragment, InlineNode, InlineTreeNodeSerialized } from '../InlineNode';
 import type { ParentNodeConstructorOptions } from '../mixins/ParentNode';
-import { ParentNode } from '../mixins/ParentNode';
+import { ParentNode } from '../mixins/ParentNode/index.js';
 import type { ChildNode } from '../mixins/ChildNode';
 import type { InlineToolData, InlineToolName } from '../FormattingInlineNode';
-import { TextInlineNode } from '../index';
+import { TextInlineNode } from '../index.js';
 
 /**
  * We need to extend ParentInlineNode interface with ParentNode ones to use the methods from mixins

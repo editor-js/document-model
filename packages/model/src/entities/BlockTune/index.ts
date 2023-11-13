@@ -1,5 +1,5 @@
 import type { BlockTuneConstructorParameters, BlockTuneSerialized, BlockTuneName } from './types';
-import { createBlockTuneName } from './types';
+import { createBlockTuneName } from './types/index.js';
 
 /**
  * BlockTune class represents a set of additional information associated with a BlockNode.

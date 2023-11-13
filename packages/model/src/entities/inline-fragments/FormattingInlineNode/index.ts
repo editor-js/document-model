@@ -4,11 +4,11 @@ import type {
   InlineToolData
 } from './types';
 import type { InlineFragment, InlineNode } from '../InlineNode';
-import { ParentNode } from '../mixins/ParentNode';
-import { ChildNode } from '../mixins/ChildNode';
-import { ParentInlineNode } from '../ParentInlineNode';
+import { ParentNode } from '../mixins/ParentNode/index.js';
+import { ChildNode } from '../mixins/ChildNode/index.js';
+import { ParentInlineNode } from '../ParentInlineNode/index.js';
 
-export * from './types';
+export * from './types/index.js';
 
 /**
  * We need to extend FormattingInlineNode interface with ChildNode and ParentNode ones to use the methods from mixins

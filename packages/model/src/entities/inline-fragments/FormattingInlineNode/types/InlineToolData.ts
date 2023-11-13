@@ -1,5 +1,5 @@
 import type { Nominal } from '../../../../utils/Nominal';
-import { create } from '../../../../utils/Nominal';
+import { create } from '../../../../utils/Nominal.js';
 
 /**
  * Base type for Inline Tool data

@@ -2,7 +2,7 @@ import type { EventAction } from '../types/EventAction';
 import type { BlockNodeSerialized } from '../../../entities/BlockNode/types';
 import type { EventPayloadBase } from '../types/EventPayloadBase';
 import type { BlockIndex } from '../types/indexing';
-import { EventType } from '../types/EventType';
+import { EventType } from '../types/EventType.js';
 
 /**
  * Remove Block Event Payload

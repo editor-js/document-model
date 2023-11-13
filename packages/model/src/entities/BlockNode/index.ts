@@ -1,6 +1,6 @@
 import type { EditorDocument } from '../EditorDocument';
 import type { BlockTuneName, BlockTuneSerialized } from '../BlockTune';
-import { BlockTune, createBlockTuneName } from '../BlockTune';
+import { BlockTune, createBlockTuneName } from '../BlockTune/index.js';
 import type {
   BlockNodeConstructorParameters,
   BlockNodeData,
@@ -16,13 +16,13 @@ import {
   createBlockToolName,
   createDataKey,
   BlockChildType
-} from './types';
-import { ValueNode } from '../ValueNode';
+} from './types/index.js';
+import { ValueNode } from '../ValueNode/index.js';
 import type { InlineToolData, InlineToolName, TextNodeSerialized } from '../inline-fragments';
-import { TextNode } from '../inline-fragments';
-import { get, has } from '../../utils/keypath';
-import { NODE_TYPE_HIDDEN_PROP } from './consts';
-import { mapObject } from '../../utils/mapObject';
+import { TextNode } from '../inline-fragments/index.js';
+import { get, has } from '../../utils/keypath.js';
+import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
+import { mapObject } from '../../utils/mapObject.js';
 
 /**
  * BlockNode class represents a node in a tree-like structure used to store and manipulate Blocks in an editor document.
