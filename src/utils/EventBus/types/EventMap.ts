@@ -1,7 +1,7 @@
-import { EventType } from './EventType';
-import { BlockAddedEvent } from '../events/BlockAddedEvent';
-import { BlockModifiedEvent } from '../events/BlockModifiedEvent';
-import { BlockRemovedEvent } from '../events/BlockRemovedEvent';
+import { EventType } from './EventType.js';
+import { BlockAddedEvent } from '../events/BlockAddedEvent.js';
+import { BlockModifiedEvent } from '../events/BlockModifiedEvent.js';
+import { BlockRemovedEvent } from '../events/BlockRemovedEvent.js';
 
 /**
  * Alias for all block events

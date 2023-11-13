@@ -1,4 +1,4 @@
-import { EventMap } from './EventMap';
+import { EventMap } from './EventMap.js';
 
 /**
  * Augment EventTarget's addEventListener method to accept CustomEvent

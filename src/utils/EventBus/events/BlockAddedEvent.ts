@@ -1,8 +1,8 @@
-import { BlockNodeSerialized } from '../../../entities/BlockNode/types';
-import { EventAction } from '../types/EventAction';
-import { EventPayloadBase } from '../types/EventPayloadBase';
-import { BlockIndex } from '../types/indexing';
-import { EventType } from '../types/EventType';
+import { BlockNodeSerialized } from '../../../entities/BlockNode/types/index.js';
+import { EventAction } from '../types/EventAction.js';
+import { EventPayloadBase } from '../types/EventPayloadBase.js';
+import { BlockIndex } from '../types/indexing.js';
+import { EventType } from '../types/EventType.js';
 
 /**
  * Add Block Event Payload

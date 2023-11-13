@@ -1,4 +1,4 @@
-import { BlockTuneName, DataKey } from '../../../entities';
+import { BlockTuneName, DataKey } from '../../../entities/index.js';
 
 /**
  * Alias for a document id
@@ -33,7 +33,7 @@ export type DataIndex = `${BlockIndex}:data@${DataKey}:${StartIndex}`;
 /**
  * Index for tune changes in block node
  */
-export type TuneIndex = `${BlockIndex}:tune@${BlockTuneName}:${StartIndex}`;
+export type TuneIndex = `${BlockIndex}:tune@${BlockTuneName}`;
 
 /**
  * Possible index types
