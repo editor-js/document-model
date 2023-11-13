@@ -6,7 +6,7 @@
 <template>
   <div :class="$style.title">
     <img
-      src="assets/editorjs.svg"
+      src="./assets/editorjs.svg"
       alt="Editor.js logo"
     >
     Editor.js Document Playground
