@@ -7,7 +7,7 @@ import { EventType } from '../types/EventType';
 /**
  * Modify Block Event Payload
  */
-interface ModifyBlockEventPayload extends EventPayloadBase<BlockIndex, EventAction.Modified> {
+interface BlockModifiedEventPayload extends EventPayloadBase<BlockIndex, EventAction.Modified> {
   /**
    * The data of the modified block
    */
@@ -17,13 +17,13 @@ interface ModifyBlockEventPayload extends EventPayloadBase<BlockIndex, EventActi
 /**
  * Modify Block Custom Event
  */
-export class ModifyBlockEvent extends CustomEvent<ModifyBlockEventPayload> {
+export class BlockModifiedEvent extends CustomEvent<BlockModifiedEventPayload> {
   /**
    * Constructor
    *
    * @param payload - The event payload
    */
-  constructor(payload: ModifyBlockEventPayload) {
+  constructor(payload: BlockModifiedEventPayload) {
     super(EventType.CHANGED, { detail: payload });
   }
 }

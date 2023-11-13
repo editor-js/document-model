@@ -7,7 +7,7 @@ import { EventType } from '../types/EventType';
 /**
  * Remove Block Event Payload
  */
-interface RemoveBlockEventPayload extends EventPayloadBase<BlockIndex, EventAction.Removed> {
+interface BlockRemovedEventPayload extends EventPayloadBase<BlockIndex, EventAction.Removed> {
   /**
    * The data of the removed block
    */
@@ -17,13 +17,13 @@ interface RemoveBlockEventPayload extends EventPayloadBase<BlockIndex, EventActi
 /**
  * Remove Block Custom Event
  */
-export class RemoveBlockEvent extends CustomEvent<RemoveBlockEventPayload> {
+export class BlockRemovedEvent extends CustomEvent<BlockRemovedEventPayload> {
   /**
    * Constructor
    *
    * @param payload - The event payload
    */
-  constructor(payload: RemoveBlockEventPayload) {
+  constructor(payload: BlockRemovedEventPayload) {
     super(EventType.CHANGED, { detail: payload });
   }
 }

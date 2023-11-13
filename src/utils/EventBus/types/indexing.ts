@@ -6,9 +6,9 @@ import { BlockTuneName, DataKey } from '../../../entities';
 type DocumentId = string;
 
 /**
- * Alias for a block id
+ * Numeric id for a block node
  */
-type BlockId = string;
+type BlockIndexAlias = number;
 
 /**
  * Index for a document node
@@ -18,7 +18,7 @@ export type DocumentIndex = DocumentId;
 /**
  * Index for a block node
  */
-export type BlockIndex = `${DocumentIndex}:${BlockId}`;
+export type BlockIndex = `${DocumentIndex}:${BlockIndexAlias}`;
 
 /**
  * Numeric index for data or tune changes in block node

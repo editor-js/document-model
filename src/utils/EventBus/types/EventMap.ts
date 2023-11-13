@@ -1,12 +1,12 @@
 import { EventType } from './EventType';
-import { AddBlockEvent } from '../events/AddBlockEvent';
-import { ModifyBlockEvent } from '../events/ModifyBlockEvent';
-import { RemoveBlockEvent } from '../events/RemoveBlockEvent';
+import { BlockAddedEvent } from '../events/BlockAddedEvent';
+import { BlockModifiedEvent } from '../events/BlockModifiedEvent';
+import { BlockRemovedEvent } from '../events/BlockRemovedEvent';
 
 /**
  * Alias for all block events
  */
-type BlockEvents = AddBlockEvent | ModifyBlockEvent | RemoveBlockEvent;
+type BlockEvents = BlockAddedEvent | BlockModifiedEvent | BlockRemovedEvent;
 
 /**
  * Map of all events that can be emitted inside the DocumentModel

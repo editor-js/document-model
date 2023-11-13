@@ -7,7 +7,7 @@ import { EventType } from '../types/EventType';
 /**
  * Add Block Event Payload
  */
-interface AddBlockEventPayload extends EventPayloadBase<BlockIndex, EventAction.Added> {
+interface BlockAddedEventPayload extends EventPayloadBase<BlockIndex, EventAction.Added> {
   /**
    * The data of the added block
    */
@@ -17,13 +17,13 @@ interface AddBlockEventPayload extends EventPayloadBase<BlockIndex, EventAction.
 /**
  * Add Block Custom Event
  */
-export class AddBlockEvent extends CustomEvent<AddBlockEventPayload> {
+export class BlockAddedEvent extends CustomEvent<BlockAddedEventPayload> {
   /**
    * Constructor
    *
    * @param payload - The event payload
    */
-  constructor(payload: AddBlockEventPayload) {
+  constructor(payload: BlockAddedEventPayload) {
     super(EventType.CHANGED, { detail: payload });
   }
 }
