@@ -25,6 +25,10 @@ const config = {
   checkers: ["typescript"],
   timeoutMS: 10000,
   mutate: ["./src/**/*.ts", "!./src/**/__mocks__/*.ts", "!./src/**/*.spec.ts"],
+  /*
+   * In some cases PRs might not have any unit-tests
+   */
+  allowEmpty: true,
 };
 
 export default config;
