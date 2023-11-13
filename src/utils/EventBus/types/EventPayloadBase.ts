@@ -14,4 +14,9 @@ export interface EventPayloadBase<Index extends IndexType, Action extends EventA
    * The action that was performed on the information
    */
   action: Action;
+
+  /**
+   * The data of the changed information
+   */
+  data: unknown;
 }
