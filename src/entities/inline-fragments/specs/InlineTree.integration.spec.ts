@@ -1,13 +1,15 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
+import type {
+  TextNodeSerialized
+} from '../index.js';
 import {
   TextInlineNode,
   TextNode,
   createInlineToolData,
-  createInlineToolName,
-  TextNodeSerialized
-} from '../index';
-import { BlockChildType } from '../../BlockNode/types';
-import { NODE_TYPE_HIDDEN_PROP } from '../../BlockNode/consts';
+  createInlineToolName
+} from '../index.js';
+import { BlockChildType } from '../../BlockNode/types/index.js';
+import { NODE_TYPE_HIDDEN_PROP } from '../../BlockNode/consts.js';
 
 describe('Inline fragments tree integration', () => {
   describe('text insertion', () => {

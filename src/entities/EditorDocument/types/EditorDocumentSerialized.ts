@@ -1,5 +1,5 @@
-import { BlockNodeSerialized } from '../../BlockNode/types';
-import { Properties } from './Properties';
+import type { BlockNodeSerialized } from '../../BlockNode/types';
+import type { Properties } from './Properties';
 
 /**
  * Type representing serialized EditorDocument

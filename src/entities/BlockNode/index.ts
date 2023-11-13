@@ -1,24 +1,28 @@
-import { EditorDocument } from '../EditorDocument';
-import { BlockTune, BlockTuneName, BlockTuneSerialized, createBlockTuneName } from '../BlockTune';
-import {
+import type { EditorDocument } from '../EditorDocument/index';
+import type { BlockTuneName, BlockTuneSerialized } from '../BlockTune/index';
+import { BlockTune, createBlockTuneName } from '../BlockTune/index.js';
+import type {
   BlockNodeConstructorParameters,
-  BlockToolName,
-  createBlockToolName,
-  DataKey,
-  createDataKey,
   BlockNodeData,
   BlockNodeSerialized,
   BlockNodeDataSerialized,
   BlockNodeDataSerializedValue,
-  BlockChildType,
   ChildNode,
-  BlockNodeDataValue
-} from './types';
-import { ValueNode } from '../ValueNode';
-import { InlineToolData, InlineToolName, TextNode, TextNodeSerialized } from '../inline-fragments';
-import { get, has } from '../../utils/keypath';
-import { NODE_TYPE_HIDDEN_PROP } from './consts';
-import { mapObject } from '../../utils/mapObject';
+  BlockNodeDataValue,
+  BlockToolName,
+  DataKey
+} from './types/index';
+import {
+  createBlockToolName,
+  createDataKey,
+  BlockChildType
+} from './types/index.js';
+import { ValueNode } from '../ValueNode/index.js';
+import type { InlineToolData, InlineToolName, TextNodeSerialized } from '../inline-fragments/index';
+import { TextNode } from '../inline-fragments/index.js';
+import { get, has } from '../../utils/keypath.js';
+import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
+import { mapObject } from '../../utils/mapObject.js';
 
 /**
  * BlockNode class represents a node in a tree-like structure used to store and manipulate Blocks in an editor document.
@@ -261,9 +265,5 @@ export class BlockNode {
   }
 }
 
-export {
-  BlockToolName,
-  createBlockToolName,
-  DataKey,
-  createDataKey
-};
+export type { BlockToolName, DataKey };
+export { createBlockToolName, createDataKey };

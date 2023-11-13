@@ -1,4 +1,4 @@
-import { InlineNode } from '../../../InlineNode';
+import type { InlineNode } from '../../../InlineNode';
 
 /**
  * Mock for ParentNode decorator

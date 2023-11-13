@@ -1,10 +1,11 @@
-import { BlockNode, DataKey } from '../BlockNode';
-import type { EditorDocumentSerialized, EditorDocumentConstructorParameters, Properties } from './types';
-import { BlockTuneName } from '../BlockTune';
-import { InlineToolData, InlineToolName } from '../inline-fragments';
-import { IoCContainer, TOOLS_REGISTRY } from '../../IoC';
-import { ToolsRegistry } from '../../tools';
-import { BlockNodeSerialized } from '../BlockNode/types';
+import type { DataKey } from '../BlockNode/index';
+import { BlockNode } from '../BlockNode/index.js';
+import type { EditorDocumentSerialized, EditorDocumentConstructorParameters, Properties } from './types/index';
+import type { BlockTuneName } from '../BlockTune/index';
+import type { InlineToolData, InlineToolName } from '../inline-fragments/index';
+import { IoCContainer, TOOLS_REGISTRY } from '../../IoC/index.js';
+import { ToolsRegistry } from '../../tools/index.js';
+import type { BlockNodeSerialized } from '../BlockNode/types/index';
 
 /**
  * EditorDocument class represents the top-level container for a tree-like structure of BlockNodes in an editor document.

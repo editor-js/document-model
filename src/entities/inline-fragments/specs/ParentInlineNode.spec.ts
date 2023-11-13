@@ -1,6 +1,7 @@
-import { TextInlineNode, FormattingInlineNode, InlineToolName, ChildNode } from '../index';
-import { ParentInlineNode } from '../ParentInlineNode';
-import { InlineNode } from '../InlineNode';
+import type { InlineToolName, ChildNode } from '../index';
+import { TextInlineNode, FormattingInlineNode } from '../index.js';
+import { ParentInlineNode } from '../ParentInlineNode/index.js';
+import type { InlineNode } from '../InlineNode/index';
 
 jest.mock('../TextInlineNode');
 jest.mock('../FormattingInlineNode');

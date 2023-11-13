@@ -1,6 +1,6 @@
-import { BlockNode, createDataKey } from './index';
-import { BlockChildType } from './types';
-import { NODE_TYPE_HIDDEN_PROP } from './consts';
+import { BlockNode, createDataKey } from './index.js';
+import { BlockChildType } from './types/index.js';
+import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
 
 describe('BlockNode integration tests', () => {
   it('should create ValueNode by primitive value', () => {

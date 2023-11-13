@@ -1,5 +1,5 @@
-import { ParentNode } from '../mixins/ParentNode';
-import { ChildNode } from '../mixins/ChildNode';
+import { ParentNode } from '../mixins/ParentNode/index.js';
+import { ChildNode } from '../mixins/ChildNode/index.js';
 
 interface DummyParent extends ParentNode {}
 

@@ -1,4 +1,4 @@
-import { mapObject } from './mapObject';
+import { mapObject } from './mapObject.js';
 
 describe('mapObject()', () => {
   it('should map through passed object', () => {

@@ -1,8 +1,9 @@
-import { InlineFragment, InlineNode, InlineTreeNodeSerialized } from '../InlineNode';
-import { ParentNode, ParentNodeConstructorOptions } from '../mixins/ParentNode';
-import { ChildNode } from '../mixins/ChildNode';
-import type { InlineToolData, InlineToolName } from '../FormattingInlineNode';
-import { TextInlineNode } from '../index';
+import type { InlineFragment, InlineNode, InlineTreeNodeSerialized } from '../InlineNode/index';
+import type { ParentNodeConstructorOptions } from '../mixins/ParentNode/index';
+import { ParentNode } from '../mixins/ParentNode/index.js';
+import type { ChildNode } from '../mixins/ChildNode/index';
+import type { InlineToolData, InlineToolName } from '../FormattingInlineNode/index';
+import { TextInlineNode } from '../index.js';
 
 /**
  * We need to extend ParentInlineNode interface with ParentNode ones to use the methods from mixins
@@ -137,7 +138,7 @@ export class ParentInlineNode implements InlineNode {
           /**
            * @todo compare data
            */
-          if (!previousFragment || previousFragment.tool !== fragment.tool || previousFragment.range[1] !== fragment.range[0]) {
+          if (previousFragment === undefined || previousFragment.tool !== fragment.tool || previousFragment.range[1] !== fragment.range[0]) {
             normalized.push(fragment);
 
             return normalized;

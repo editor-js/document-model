@@ -1,6 +1,6 @@
 import type { Properties } from './Properties';
-import { ToolsRegistry } from '../../../tools/ToolsRegistry';
-import { BlockNodeSerialized } from '../../BlockNode/types';
+import type { ToolsRegistry } from '../../../tools/ToolsRegistry';
+import type { BlockNodeSerialized } from '../../BlockNode/types';
 
 export interface EditorDocumentConstructorParameters {
   /**
