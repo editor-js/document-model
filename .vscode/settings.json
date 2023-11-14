@@ -1,6 +1,6 @@
 {
   "eslint.workingDirectories": [
-    "./",
-    "./playground"
+    "./packages/model",
+    "./packages/playground"
   ]
 }

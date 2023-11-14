@@ -26,7 +26,7 @@ export class EditorDocument {
    * Constructor for EditorDocument class.
    *
    * @param [args] - EditorDocument constructor arguments.
-   * @param [args.children] - The child BlockNodes of the EditorDocument.
+   * @param [args.blocks] - List of blocks to initialize the document with.
    * @param [args.properties] - The properties of the document.
    * @param [args.toolsRegistry] - ToolsRegistry instance for the current document. Defaults to a new ToolsRegistry instance.
    */
