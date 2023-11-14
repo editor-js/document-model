@@ -1,19 +1,18 @@
+import type { TextNodeInDocumentIndex, TextNodeInBlockIndex, TextRangeIndex, TextStartIndex } from '../types/indexing';
 import type { EventPayloadBase } from '../types/EventPayloadBase';
 import { EventAction } from '../types/EventAction.js';
 import { EventType } from '../types/EventType.js';
-import type { TextNodeInDocumentIndex, TextNodeInBlockIndex, TextRangeIndex } from '../types/indexing';
 
 type Index = TextRangeIndex | TextNodeInBlockIndex | TextNodeInDocumentIndex;
 
-
-interface TextRemovedEventPayload extends EventPayloadBase<Index, EventAction.Removed> {
+interface TextAddedEventPayload extends EventPayloadBase<Index, EventAction.Added> {
   data: string;
 }
 
 /**
  *
  */
-export class TextRemovedEvent extends CustomEvent<TextRemovedEventPayload> {
+export class TextAddedEvent extends CustomEvent<TextAddedEventPayload> {
   /**
    *
    * @param index
@@ -22,7 +21,7 @@ export class TextRemovedEvent extends CustomEvent<TextRemovedEventPayload> {
   constructor(index: Index, text: string) {
     super(EventType.Changed, {
       detail: {
-        action: EventAction.Removed,
+        action: EventAction.Added,
         index,
         data: text,
       },

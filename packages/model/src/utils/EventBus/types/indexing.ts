@@ -1,9 +1,10 @@
 import type { BlockTuneName, DataKey } from '../../../entities';
+import type { Nominal } from '../../Nominal';
 
 /**
  * Alias for a document id
  */
-type DocumentId = string;
+type DocumentId = Nominal<string, 'DocumentId'>;
 
 /**
  * Numeric id for a block node
@@ -23,25 +24,52 @@ export type BlockIndex = BlockIndexAlias;
 /**
  * Numeric index for data or tune changes in block node
  */
-export type StartIndex = number;
+export type TextStartIndex = number;
 
-export type EndIndex = number;
+export type TextEndIndex = number;
 
-export type RangeIndex = `${StartIndex}:${EndIndex}`;
+export type TextRangeIndex = `${TextStartIndex}:${TextEndIndex}`;
+
+export type TextNodeInBlockIndex = `data@${DataKey}:${TextRangeIndex}`;
+
+export type TextNodeInDocumentIndex = `${BlockIndex}:${TextNodeInBlockIndex}`;
+
 
 /**
- * Index for data changes in block node
+ * ValueNodes don't have own indexes, so we just put an empty string
+ *
+ * @example
+ *
  */
-export type DataIndex = `data@${DataKey}` | `data@${DataKey}:${StartIndex}` | `data@${DataKey}:${StartIndex}:${EndIndex}`;
+export type ValueIndex = '';
+
+export type ValueNodeInBlockIndex = `data@${DataKey}`;
+
+export type ValueNodeInDocumentIndex = `${BlockIndex}:${ValueNodeInBlockIndex}`;
 
 /**
  * Index for tune changes in block node
  */
-export type TuneIndex = `tune@${BlockTuneName}`;
+export type TuneIndex = Nominal<string, 'TuneIndex'>;
+
+export type TuneInBlockIndex = `tune@${BlockTuneName}:${string}`;
+
+export type TuneInDocumentIndex = `${BlockIndex}:${TuneInBlockIndex}`;
 
 export type PropertyIndex = `property@${string}`;
 
 /**
  * Possible index types
  */
-export type Index = DocumentIndex | BlockIndex | DataIndex | TuneIndex | StartIndex | EndIndex | RangeIndex;
+export type Index = ''
+  | DocumentIndex
+  | BlockIndex
+  | TextRangeIndex
+  | TextNodeInBlockIndex
+  | TextNodeInDocumentIndex
+  | ValueNodeInBlockIndex
+  | ValueNodeInDocumentIndex
+  | TuneIndex
+  | TuneInBlockIndex
+  | TuneInDocumentIndex
+  | PropertyIndex;

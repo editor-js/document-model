@@ -2,7 +2,7 @@ import type { ValueNodeConstructorParameters, ValueSerialized } from './types';
 import { BlockChildType } from '../BlockNode/types/index.js';
 import { NODE_TYPE_HIDDEN_PROP } from '../BlockNode/consts.js';
 import { EventBus } from '../../utils/EventBus/EventBus.js';
-import { ValueUpdatedEvent } from '../../utils/EventBus/events/ValueUpdatedEvent.js';
+import { ValueModifiedEvent } from '../../utils/EventBus/events/ValueModifiedEvent.js';
 
 /**
  * ValueNode class represents a node in a tree-like structure, used to store and manipulate data associated with a BlockNode.
@@ -37,7 +37,7 @@ export class ValueNode<ValueType = unknown> extends EventBus {
 
     this.#value = value;
 
-    this.dispatchEvent(new ValueUpdatedEvent('', this.#value, previousValue));
+    this.dispatchEvent(new ValueModifiedEvent('', this.#value, previousValue));
   }
 
   /**

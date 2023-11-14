@@ -1,23 +1,23 @@
 import type { EventPayloadBase, ModifiedEventData } from '../types/EventPayloadBase';
-import type { TuneIndex } from '../types/indexing';
 import { EventAction } from '../types/EventAction.js';
 import { EventType } from '../types/EventType.js';
+import type { PropertyIndex } from '../types/indexing';
 
-interface TuneUpdatedEventPayload<T = unknown> extends EventPayloadBase<'' | TuneIndex, EventAction.Modified> {
-  data: ModifiedEventData<T>;
+interface PropertyModifiedEventPayload<P = unknown> extends EventPayloadBase<PropertyIndex, EventAction.Modified> {
+  data: ModifiedEventData<P>;
 }
 
 /**
  *
  */
-export class TuneUpdatedEvent<T = unknown> extends CustomEvent<TuneUpdatedEventPayload<T>> {
+export class PropertyModifiedEvent<P = unknown> extends CustomEvent<PropertyModifiedEventPayload<P>> {
   /**
    *
    * @param index
    * @param value
    * @param previous
    */
-  constructor(index: '' | TuneIndex, value: T, previous: T) {
+  constructor(index: PropertyIndex, value: P, previous: P) {
     super(EventType.Changed, {
       detail: {
         action: EventAction.Modified,

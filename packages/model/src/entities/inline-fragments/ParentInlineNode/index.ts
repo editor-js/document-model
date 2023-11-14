@@ -4,11 +4,8 @@ import { ParentNode } from '../mixins/ParentNode/index.js';
 import type { ChildNode } from '../mixins/ChildNode';
 import type { InlineToolData, InlineToolName } from '../FormattingInlineNode';
 import { TextInlineNode } from '../index.js';
-import { EventBus } from '../../../utils/EventBus/EventBus';
-import { TextInsertedEvent } from '../../../utils/EventBus/events/TextInsertedEvent';
-import { TextRemovedEvent } from '../../../utils/EventBus/events/TextRemovedEvent';
-import { TextFormattedEvent } from '../../../utils/EventBus/events/TextFormattedEvent';
-import { TextUnformattedEvent } from '../../../utils/EventBus/events/TextUnformattedEvent';
+import { EventBus } from '../../../utils/EventBus/EventBus.js';
+import { TextAddedEvent, TextRemovedEvent, TextFormattedEvent, TextUnformattedEvent } from '../../../utils/EventBus/events/index.js';
 
 /**
  * We need to extend ParentInlineNode interface with ParentNode ones to use the methods from mixins
@@ -65,7 +62,7 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
     this.normalize();
 
-    this.dispatchEvent(new TextInsertedEvent(index, text));
+    this.dispatchEvent(new TextAddedEvent(`${index}:${text.length}`, text));
   }
 
   /**
@@ -89,7 +86,7 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
     this.normalize();
 
-    this.dispatchEvent(new TextRemovedEvent(start, removedText));
+    this.dispatchEvent(new TextRemovedEvent(`${start}:${end}`, removedText));
 
     return removedText;
   }

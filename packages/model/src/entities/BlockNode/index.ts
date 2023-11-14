@@ -23,15 +23,20 @@ import { TextNode } from '../inline-fragments/index.js';
 import { get, has } from '../../utils/keypath.js';
 import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
 import { mapObject } from '../../utils/mapObject.js';
-import type { TextInsertedEvent } from '../../utils/EventBus/events/TextInsertedEvent';
-import type { TextRemovedEvent } from '../../utils/EventBus/events/TextRemovedEvent';
-import type { TextFormattedEvent } from '../../utils/EventBus/events/TextFormattedEvent';
-import type { TextUnformattedEvent } from '../../utils/EventBus/events/TextUnformattedEvent';
-import type { RangeIndex, StartIndex } from '../../utils/EventBus/types/indexing';
 import { EventBus } from '../../utils/EventBus/EventBus.js';
 import { EventType } from '../../utils/EventBus/types/EventType.js';
-import type { ValueUpdatedEvent } from '../../utils/EventBus/events/ValueUpdatedEvent';
-import type { TuneUpdatedEvent } from '../../utils/EventBus/events/TuneUpdatedEvent';
+import type {
+  ModelEvents
+} from '../../utils/EventBus/types/EventMap';
+import type { TextRangeIndex } from '../../utils/EventBus/types/indexing';
+import {
+  TextAddedEvent,
+  TextFormattedEvent,
+  TextRemovedEvent,
+  TextUnformattedEvent,
+  TuneModifiedEvent,
+  ValueModifiedEvent
+} from '../../utils/EventBus/events/index.js';
 
 /**
  * BlockNode class represents a node in a tree-like structure used to store and manipulate Blocks in an editor document.
@@ -86,7 +91,7 @@ export class BlockNode extends EventBus {
           data: tuneData,
         });
 
-        this.#redispatchTuneEvent(tune, tuneName as BlockTuneName);
+        this.#listenAndBubbleTuneEvent(tune, tuneName as BlockTuneName);
 
         return tune;
       }
@@ -239,11 +244,11 @@ export class BlockNode extends EventBus {
      * 4. Otherwise, it's a primitive value, so create a ValueNode with it
      *
      * @param value - serialized value
-     * @param key
+     * @param key - keypath of the current value
      */
-    const map = (value: BlockNodeDataSerializedValue, key: string): BlockNodeData | BlockNodeDataValue => {
+    const mapSerializedToNodes = (value: BlockNodeDataSerializedValue, key: string): BlockNodeData | BlockNodeDataValue => {
       if (Array.isArray(value)) {
-        return value.map((v, i) => map(v, `${key}.${i}`)) as BlockNodeData[] | ChildNode[];
+        return value.map((v, i) => mapSerializedToNodes(v, `${key}.${i}`)) as BlockNodeData[] | ChildNode[];
       }
 
       if (typeof value === 'object' && value !== null) {
@@ -252,27 +257,27 @@ export class BlockNode extends EventBus {
             case BlockChildType.Value: {
               const node = new ValueNode({ value });
 
-              this.#redispatchValueNodeEvent(node, key as DataKey);
+              this.#listenAndBubbleValueNodeEvent(node, key as DataKey);
 
               return node;
             }
             case BlockChildType.Text: {
               const node = new TextNode(value as TextNodeSerialized);
 
-              this.#redispatchTextNodeEvent(node, key as DataKey);
+              this.#listenAndBubbleTextNodeEvent(node, key as DataKey);
 
               return node;
             }
           }
         }
 
-        return mapObject(value as BlockNodeDataSerialized, (v, k) => map(v, `${key}.${k}`));
+        return mapObject(value as BlockNodeDataSerialized, (v, k) => mapSerializedToNodes(v, `${key}.${k}`));
       }
 
       return new ValueNode({ value });
     };
 
-    this.#data = mapObject(data, map);
+    this.#data = mapObject(data, mapSerializedToNodes);
   }
 
   /**
@@ -297,11 +302,17 @@ export class BlockNode extends EventBus {
    * @param node
    * @param key
    */
-  #redispatchTextNodeEvent(node: TextNode, key: DataKey): void {
+  #listenAndBubbleTextNodeEvent(node: TextNode, key: DataKey): void {
     node.addEventListener(
       EventType.Changed,
-      (event: TextInsertedEvent | TextRemovedEvent | TextFormattedEvent | TextUnformattedEvent): void => {
-        event.detail.index = `data@${key}:${event.detail.index as StartIndex | RangeIndex}`;
+      (event: ModelEvents): void => {
+        const textNodeEvents = [TextAddedEvent, TextRemovedEvent, TextFormattedEvent, TextUnformattedEvent];
+
+        if (!textNodeEvents.some((eventClass) => event instanceof eventClass)) {
+          throw new Error('BlockNode: TextNode should only emit TextNodeEvents');
+        }
+
+        event.detail.index = `data@${key}:${event.detail.index as TextRangeIndex}`;
 
         this.dispatchEvent(event);
       }
@@ -313,10 +324,14 @@ export class BlockNode extends EventBus {
    * @param node
    * @param key
    */
-  #redispatchValueNodeEvent(node: ValueNode, key: DataKey): void {
+  #listenAndBubbleValueNodeEvent(node: ValueNode, key: DataKey): void {
     node.addEventListener(
       EventType.Changed,
-      (event: ValueUpdatedEvent): void => {
+      (event: ModelEvents): void => {
+        if (!(event instanceof ValueModifiedEvent)) {
+          throw new Error('BlockNode: ValueNode should only emit ValueModifiedEvent');
+        }
+
         event.detail.index = `data@${key}`;
 
         this.dispatchEvent(event);
@@ -329,11 +344,15 @@ export class BlockNode extends EventBus {
    * @param tune
    * @param name
    */
-  #redispatchTuneEvent(tune: BlockTune, name: BlockTuneName): void {
+  #listenAndBubbleTuneEvent(tune: BlockTune, name: BlockTuneName): void {
     tune.addEventListener(
       EventType.Changed,
-      (event: TuneUpdatedEvent): void => {
-        event.detail.index = `tune@${name}`;
+      (event: ModelEvents): void => {
+        if (!(event instanceof TuneModifiedEvent)) {
+          throw new Error('BlockNode: BlockTune should only emit TuneModifiedEvent');
+        }
+
+        event.detail.index = `tune@${name}:${event.detail.index}`;
 
         this.dispatchEvent(event);
       }

@@ -1,23 +1,25 @@
 import type { EventPayloadBase, ModifiedEventData } from '../types/EventPayloadBase';
 import { EventAction } from '../types/EventAction.js';
+import type { ValueNodeInDocumentIndex, ValueIndex, ValueNodeInBlockIndex } from '../types/indexing';
 import { EventType } from '../types/EventType.js';
-import type { PropertyIndex } from '../types/indexing';
 
-interface PropertyUpdatedEventPayload<P = unknown> extends EventPayloadBase<PropertyIndex, EventAction.Modified> {
-  data: ModifiedEventData<P>;
+type Index = ValueIndex | ValueNodeInBlockIndex | ValueNodeInDocumentIndex;
+
+interface ValueModifiedEventPayload<V = unknown> extends EventPayloadBase<Index, EventAction.Modified> {
+  data: ModifiedEventData<V>;
 }
 
 /**
  *
  */
-export class PropertyUpdatedEvent<P = unknown> extends CustomEvent<PropertyUpdatedEventPayload<P>> {
+export class ValueModifiedEvent<V = unknown> extends CustomEvent<ValueModifiedEventPayload<V>> {
   /**
    *
    * @param index
    * @param value
    * @param previous
    */
-  constructor(index: PropertyIndex, value: P, previous: P) {
+  constructor(index: Index, value: V, previous: V) {
     super(EventType.Changed, {
       detail: {
         action: EventAction.Modified,

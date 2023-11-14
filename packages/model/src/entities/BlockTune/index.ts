@@ -1,6 +1,8 @@
 import type { BlockTuneConstructorParameters, BlockTuneSerialized, BlockTuneName } from './types';
 import { createBlockTuneName } from './types/index.js';
 import { EventBus } from '../../utils/EventBus/EventBus.js';
+import { TuneModifiedEvent } from '../../utils/EventBus/events/index.js';
+import type { TuneIndex } from '../../utils/EventBus/types/indexing.js';
 
 /**
  * BlockTune class represents a set of additional information associated with a BlockNode.
@@ -38,7 +40,11 @@ export class BlockTune extends EventBus {
    * @param value - The value to update the data with
    */
   public update(key: string, value: unknown): void {
+    const previousValue = this.#data[key];
+
     this.#data[key] = value;
+
+    this.dispatchEvent(new TuneModifiedEvent(key as TuneIndex, this.#data, previousValue));
   }
 
   /**

@@ -6,12 +6,16 @@ import type { InlineToolData, InlineToolName } from '../inline-fragments';
 import { IoCContainer, TOOLS_REGISTRY } from '../../IoC/index.js';
 import { ToolsRegistry } from '../../tools/index.js';
 import type { BlockNodeSerialized } from '../BlockNode/types';
-import { EventBus } from '../../utils/EventBus/EventBus';
-import { EventType } from '../../utils/EventBus/types/EventType';
-import type { BlockTuneEvents, TextNodeEvents, ValueNodeEvents } from '../../utils/EventBus/types/EventMap';
-import { BlockAddedEvent } from '../../utils/EventBus/events/BlockAddedEvent';
-import { BlockRemovedEvent } from '../../utils/EventBus/events/BlockRemovedEvent';
-import { PropertyUpdatedEvent } from '../../utils/EventBus/events/PropertyUpdatedEvent';
+import { EventBus } from '../../utils/EventBus/EventBus.js';
+import { EventType } from '../../utils/EventBus/types/EventType.js';
+import type { ModelEvents } from '../../utils/EventBus/types/EventMap';
+import {
+  BlockAddedEvent,
+  BlockRemovedEvent,
+  PropertyModifiedEvent, TextAddedEvent, TextFormattedEvent, TextRemovedEvent, TextUnformattedEvent, TuneModifiedEvent,
+  ValueModifiedEvent
+} from '../../utils/EventBus/events/index.js';
+import type { TextNodeInBlockIndex, TuneInBlockIndex, ValueNodeInBlockIndex } from '../../utils/EventBus/types/indexing.js';
 
 /**
  * EditorDocument class represents the top-level container for a tree-like structure of BlockNodes in an editor document.
@@ -36,7 +40,11 @@ export class EditorDocument extends EventBus {
    * @param [args.properties] - The properties of the document.
    * @param [args.toolsRegistry] - ToolsRegistry instance for the current document. Defaults to a new ToolsRegistry instance.
    */
-  constructor({ blocks = [], properties = {}, toolsRegistry = new ToolsRegistry() }: EditorDocumentConstructorParameters = {}) {
+  constructor({
+    blocks = [],
+    properties = {},
+    toolsRegistry = new ToolsRegistry()
+  }: EditorDocumentConstructorParameters = {}) {
     super();
 
     this.#properties = properties;
@@ -80,7 +88,7 @@ export class EditorDocument extends EventBus {
       this.#children.splice(index, 0, blockNode);
     }
 
-    this.#redispatchBlockEvent(blockNode, index);
+    this.#listenAndBubbleBlockEvent(blockNode, index);
 
     this.dispatchEvent(new BlockAddedEvent(index, blockNode.serialized));
   }
@@ -94,7 +102,7 @@ export class EditorDocument extends EventBus {
   public removeBlock(index: number): void {
     this.#checkIndexOutOfBounds(index, this.length - 1);
 
-    const [ blockNode ] = this.#children.splice(index, 1);
+    const [blockNode] = this.#children.splice(index, 1);
 
     this.dispatchEvent(new BlockRemovedEvent(index, blockNode.serialized));
   }
@@ -141,7 +149,7 @@ export class EditorDocument extends EventBus {
 
     this.#properties[name] = value;
 
-    this.dispatchEvent(new PropertyUpdatedEvent(`property@${name}`, value, previousValue));
+    this.dispatchEvent(new PropertyModifiedEvent(`property@${name}`, value, previousValue));
   }
 
   /**
@@ -250,9 +258,22 @@ export class EditorDocument extends EventBus {
    * @param block
    * @param index
    */
-  #redispatchBlockEvent(block: BlockNode, index: number): void {
-    block.addEventListener(EventType.Changed, (event: TextNodeEvents | ValueNodeEvents | BlockTuneEvents)  => {
-      event.detail.index = `${index}:${event.detail.index}`;
+  #listenAndBubbleBlockEvent(block: BlockNode, index: number): void {
+    block.addEventListener(EventType.Changed, (event: ModelEvents) => {
+      const blockEvents = [
+        TuneModifiedEvent,
+        ValueModifiedEvent,
+        TextAddedEvent,
+        TextRemovedEvent,
+        TextFormattedEvent,
+        TextUnformattedEvent,
+      ];
+
+      if (!blockEvents.some((blockEvent) => event instanceof blockEvent)) {
+        throw new Error('EditorDocument: BlockNode should only emit TextNodeEvents, ValueNodeEvents or TuneModifiedEvent');
+      }
+
+      event.detail.index = `${index}:${event.detail.index as TextNodeInBlockIndex | TuneInBlockIndex | ValueNodeInBlockIndex}`;
 
       this.dispatchEvent(event);
     });

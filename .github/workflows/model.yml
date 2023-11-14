@@ -48,9 +48,9 @@ jobs:
         with:
           files_yaml: |
             src:
-              - 'src/**/*.ts'
-              - '!src/**/*.spec.ts'
-              - '!src/**/__mocks__/**'
+              - 'packages/model/src/**/*.ts'
+              - '!packages/model/src/**/*.spec.ts'
+              - '!packages/model/src/**/__mocks__/**'
           separator: "','"
 
       - name: Run mutation tests

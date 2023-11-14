@@ -1,28 +1,33 @@
 import type { EventType } from './EventType';
-import type { BlockAddedEvent } from '../events/BlockAddedEvent';
-import type { BlockModifiedEvent } from '../events/BlockModifiedEvent';
-import type { BlockRemovedEvent } from '../events/BlockRemovedEvent';
-import type { TextInsertedEvent } from '../events/TextInsertedEvent';
-import type { TextRemovedEvent } from '../events/TextRemovedEvent';
-import type { TextFormattedEvent } from '../events/TextFormattedEvent';
-import type { TextUnformattedEvent } from '../events/TextUnformattedEvent';
-import type { ValueUpdatedEvent } from '../events/ValueUpdatedEvent';
-import type { TuneUpdatedEvent } from '../events/TuneUpdatedEvent';
+import type {
+  BlockAddedEvent,
+  BlockRemovedEvent,
+  TextAddedEvent,
+  TextRemovedEvent,
+  TextUnformattedEvent,
+  TextFormattedEvent,
+  ValueModifiedEvent,
+  TuneModifiedEvent,
+  PropertyModifiedEvent
+} from '../events';
 
 /**
  * Alias for all block events
  */
-export type BlockEvents = BlockAddedEvent | BlockModifiedEvent | BlockRemovedEvent;
+export type BlockEvents = BlockAddedEvent | BlockRemovedEvent;
 
-export type TextNodeEvents = TextInsertedEvent | TextRemovedEvent | TextFormattedEvent | TextUnformattedEvent;
+export type TextNodeEvents = TextAddedEvent | TextRemovedEvent | TextFormattedEvent | TextUnformattedEvent;
 
-export type ValueNodeEvents = ValueUpdatedEvent;
+export type ValueNodeEvents = ValueModifiedEvent;
 
-export type BlockTuneEvents = TuneUpdatedEvent;
+export type BlockTuneEvents = TuneModifiedEvent;
 
+export type DocumentEvents = PropertyModifiedEvent;
+
+export type ModelEvents = BlockEvents | TextNodeEvents | ValueNodeEvents | BlockTuneEvents | DocumentEvents;
 /**
  * Map of all events that can be emitted inside the DocumentModel
  */
 export type EventMap = {
-  [EventType.Changed]: BlockEvents | TextNodeEvents | ValueNodeEvents | BlockTuneEvents;
+  [EventType.Changed]: ModelEvents;
 };

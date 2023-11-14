@@ -1,10 +1,14 @@
-import type { DataIndex, RangeIndex } from '../types/indexing';
+import type { TextRangeIndex } from '../types/indexing';
 import type { EventPayloadBase } from '../types/EventPayloadBase';
 import { EventAction } from '../types/EventAction.js';
 import { EventType } from '../types/EventType.js';
 import type { InlineToolData, InlineToolName } from '../../../entities';
+import type { TextNodeInDocumentIndex, TextNodeInBlockIndex } from '../types/indexing';
 
-interface TextFormattedEventPayload extends EventPayloadBase<RangeIndex | DataIndex, EventAction.Removed> {
+type Index = TextRangeIndex | TextNodeInBlockIndex | TextNodeInDocumentIndex;
+
+
+interface TextFormattedEventPayload extends EventPayloadBase<Index, EventAction.Removed> {
   data: {
     tool: InlineToolName,
     data?: InlineToolData,
@@ -21,7 +25,7 @@ export class TextFormattedEvent extends CustomEvent<TextFormattedEventPayload> {
    * @param tool
    * @param data
    */
-  constructor(index: RangeIndex | DataIndex, tool: InlineToolName, data?: InlineToolData) {
+  constructor(index: Index, tool: InlineToolName, data?: InlineToolData) {
     const eventData: TextFormattedEventPayload['data'] = {
       tool,
     };
