@@ -23,13 +23,22 @@ import { TextNode } from '../inline-fragments/index.js';
 import { get, has } from '../../utils/keypath.js';
 import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
 import { mapObject } from '../../utils/mapObject.js';
+import type { TextInsertedEvent } from '../../utils/EventBus/events/TextInsertedEvent';
+import type { TextRemovedEvent } from '../../utils/EventBus/events/TextRemovedEvent';
+import type { TextFormattedEvent } from '../../utils/EventBus/events/TextFormattedEvent';
+import type { TextUnformattedEvent } from '../../utils/EventBus/events/TextUnformattedEvent';
+import type { RangeIndex, StartIndex } from '../../utils/EventBus/types/indexing';
+import { EventBus } from '../../utils/EventBus/EventBus.js';
+import { EventType } from '../../utils/EventBus/types/EventType.js';
+import type { ValueUpdatedEvent } from '../../utils/EventBus/events/ValueUpdatedEvent';
+import type { TuneUpdatedEvent } from '../../utils/EventBus/events/TuneUpdatedEvent';
 
 /**
  * BlockNode class represents a node in a tree-like structure used to store and manipulate Blocks in an editor document.
  * A BlockNode can contain one or more child nodes of type TextNode or ValueNode.
  * It can also be associated with one or more BlockTunes, which can modify the behavior of the BlockNode.
  */
-export class BlockNode {
+export class BlockNode extends EventBus {
   /**
    * Field representing a name of the Tool created this Block
    */
@@ -65,14 +74,22 @@ export class BlockNode {
     parent,
     tunes = {},
   }: BlockNodeConstructorParameters) {
+    super();
+
     this.#name = createBlockToolName(name);
     this.#parent = parent ?? null;
     this.#tunes = mapObject(
       tunes,
-      (tuneData: BlockTuneSerialized, tuneName: string) => new BlockTune({
-        name: createBlockTuneName(tuneName),
-        data: tuneData,
-      })
+      (tuneData: BlockTuneSerialized, tuneName: string) => {
+        const tune = new BlockTune({
+          name: createBlockTuneName(tuneName),
+          data: tuneData,
+        });
+
+        this.#redispatchTuneEvent(tune, tuneName as BlockTuneName);
+
+        return tune;
+      }
     );
 
     this.#initialize(data);
@@ -222,23 +239,34 @@ export class BlockNode {
      * 4. Otherwise, it's a primitive value, so create a ValueNode with it
      *
      * @param value - serialized value
+     * @param key
      */
-    const map = (value: BlockNodeDataSerializedValue): BlockNodeData | BlockNodeDataValue => {
+    const map = (value: BlockNodeDataSerializedValue, key: string): BlockNodeData | BlockNodeDataValue => {
       if (Array.isArray(value)) {
-        return value.map(map) as BlockNodeData[] | ChildNode[];
+        return value.map((v, i) => map(v, `${key}.${i}`)) as BlockNodeData[] | ChildNode[];
       }
 
       if (typeof value === 'object' && value !== null) {
         if (NODE_TYPE_HIDDEN_PROP in value) {
           switch (value[NODE_TYPE_HIDDEN_PROP]) {
-            case BlockChildType.Value:
-              return new ValueNode({ value });
-            case BlockChildType.Text:
-              return new TextNode(value as TextNodeSerialized);
+            case BlockChildType.Value: {
+              const node = new ValueNode({ value });
+
+              this.#redispatchValueNodeEvent(node, key as DataKey);
+
+              return node;
+            }
+            case BlockChildType.Text: {
+              const node = new TextNode(value as TextNodeSerialized);
+
+              this.#redispatchTextNodeEvent(node, key as DataKey);
+
+              return node;
+            }
           }
         }
 
-        return mapObject(value as BlockNodeDataSerialized, map);
+        return mapObject(value as BlockNodeDataSerialized, (v, k) => map(v, `${key}.${k}`));
       }
 
       return new ValueNode({ value });
@@ -262,6 +290,54 @@ export class BlockNode {
     if (Node && !(get(this.#data, key as string) instanceof Node)) {
       throw new Error(`BlockNode: data with key ${key} is not a ${Node.name}`);
     }
+  }
+
+  /**
+   *
+   * @param node
+   * @param key
+   */
+  #redispatchTextNodeEvent(node: TextNode, key: DataKey): void {
+    node.addEventListener(
+      EventType.Changed,
+      (event: TextInsertedEvent | TextRemovedEvent | TextFormattedEvent | TextUnformattedEvent): void => {
+        event.detail.index = `data@${key}:${event.detail.index as StartIndex | RangeIndex}`;
+
+        this.dispatchEvent(event);
+      }
+    );
+  }
+
+  /**
+   *
+   * @param node
+   * @param key
+   */
+  #redispatchValueNodeEvent(node: ValueNode, key: DataKey): void {
+    node.addEventListener(
+      EventType.Changed,
+      (event: ValueUpdatedEvent): void => {
+        event.detail.index = `data@${key}`;
+
+        this.dispatchEvent(event);
+      }
+    );
+  }
+
+  /**
+   *
+   * @param tune
+   * @param name
+   */
+  #redispatchTuneEvent(tune: BlockTune, name: BlockTuneName): void {
+    tune.addEventListener(
+      EventType.Changed,
+      (event: TuneUpdatedEvent): void => {
+        event.detail.index = `tune@${name}`;
+
+        this.dispatchEvent(event);
+      }
+    );
   }
 }
 

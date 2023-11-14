@@ -1,11 +1,12 @@
 import type { BlockTuneConstructorParameters, BlockTuneSerialized, BlockTuneName } from './types';
 import { createBlockTuneName } from './types/index.js';
+import { EventBus } from '../../utils/EventBus/EventBus.js';
 
 /**
  * BlockTune class represents a set of additional information associated with a BlockNode.
  * This information can be used by a BlockTool to modify the behavior of the BlockNode.
  */
-export class BlockTune {
+export class BlockTune extends EventBus {
   /**
    * Private field representing the name of the tune
    */
@@ -24,6 +25,8 @@ export class BlockTune {
    * @param args.data - Any additional data associated with the tune.
    */
   constructor({ name, data = {} }: BlockTuneConstructorParameters) {
+    super();
+
     this.#name = name;
     this.#data = data;
   }

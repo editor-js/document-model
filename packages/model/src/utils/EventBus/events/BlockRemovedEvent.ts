@@ -1,4 +1,4 @@
-import type { EventAction } from '../types/EventAction';
+import { EventAction } from '../types/EventAction.js';
 import type { BlockNodeSerialized } from '../../../entities/BlockNode/types';
 import type { EventPayloadBase } from '../types/EventPayloadBase';
 import type { BlockIndex } from '../types/indexing';
@@ -21,10 +21,17 @@ export class BlockRemovedEvent extends CustomEvent<BlockRemovedEventPayload> {
   /**
    * Constructor
    *
-   * @param payload - The event payload
+   * @param index
+   * @param data
    */
-  constructor(payload: BlockRemovedEventPayload) {
+  constructor(index: BlockIndex, data: BlockNodeSerialized) {
     // Stryker disable next-line ObjectLiteral
-    super(EventType.Changed, { detail: payload });
+    super(EventType.Changed, {
+      detail: {
+        action: EventAction.Removed,
+        index,
+        data,
+      },
+    });
   }
 }

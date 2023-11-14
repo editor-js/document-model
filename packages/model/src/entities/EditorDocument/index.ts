@@ -6,12 +6,18 @@ import type { InlineToolData, InlineToolName } from '../inline-fragments';
 import { IoCContainer, TOOLS_REGISTRY } from '../../IoC/index.js';
 import { ToolsRegistry } from '../../tools/index.js';
 import type { BlockNodeSerialized } from '../BlockNode/types';
+import { EventBus } from '../../utils/EventBus/EventBus';
+import { EventType } from '../../utils/EventBus/types/EventType';
+import type { BlockTuneEvents, TextNodeEvents, ValueNodeEvents } from '../../utils/EventBus/types/EventMap';
+import { BlockAddedEvent } from '../../utils/EventBus/events/BlockAddedEvent';
+import { BlockRemovedEvent } from '../../utils/EventBus/events/BlockRemovedEvent';
+import { PropertyUpdatedEvent } from '../../utils/EventBus/events/PropertyUpdatedEvent';
 
 /**
  * EditorDocument class represents the top-level container for a tree-like structure of BlockNodes in an editor document.
  * It contains an array of BlockNodes representing the root-level nodes of the document.
  */
-export class EditorDocument {
+export class EditorDocument extends EventBus {
   /**
    * Private field representing the child BlockNodes of the EditorDocument
    */
@@ -31,6 +37,8 @@ export class EditorDocument {
    * @param [args.toolsRegistry] - ToolsRegistry instance for the current document. Defaults to a new ToolsRegistry instance.
    */
   constructor({ blocks = [], properties = {}, toolsRegistry = new ToolsRegistry() }: EditorDocumentConstructorParameters = {}) {
+    super();
+
     this.#properties = properties;
 
     const container = IoCContainer.of(this);
@@ -61,15 +69,20 @@ export class EditorDocument {
       parent: this,
     });
 
+
     if (index === undefined) {
       this.#children.push(blockNode);
 
-      return;
+      index = this.length - 1;
+    } else {
+      this.#checkIndexOutOfBounds(index);
+
+      this.#children.splice(index, 0, blockNode);
     }
 
-    this.#checkIndexOutOfBounds(index);
+    this.#redispatchBlockEvent(blockNode, index);
 
-    this.#children.splice(index, 0, blockNode);
+    this.dispatchEvent(new BlockAddedEvent(index, blockNode.serialized));
   }
 
   /**
@@ -81,7 +94,9 @@ export class EditorDocument {
   public removeBlock(index: number): void {
     this.#checkIndexOutOfBounds(index, this.length - 1);
 
-    this.#children.splice(index, 1);
+    const [ blockNode ] = this.#children.splice(index, 1);
+
+    this.dispatchEvent(new BlockRemovedEvent(index, blockNode.serialized));
   }
 
   /**
@@ -122,7 +137,11 @@ export class EditorDocument {
    * @param value - The value to update the property with
    */
   public setProperty<T = unknown>(name: keyof Properties, value: T): void {
+    const previousValue = this.getProperty(name);
+
     this.#properties[name] = value;
+
+    this.dispatchEvent(new PropertyUpdatedEvent(`property@${name}`, value, previousValue));
   }
 
   /**
@@ -224,6 +243,19 @@ export class EditorDocument {
       blocks: this.#children.map((block) => block.serialized),
       properties: this.#properties,
     };
+  }
+
+  /**
+   *
+   * @param block
+   * @param index
+   */
+  #redispatchBlockEvent(block: BlockNode, index: number): void {
+    block.addEventListener(EventType.Changed, (event: TextNodeEvents | ValueNodeEvents | BlockTuneEvents)  => {
+      event.detail.index = `${index}:${event.detail.index}`;
+
+      this.dispatchEvent(event);
+    });
   }
 
   /**

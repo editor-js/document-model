@@ -18,24 +18,30 @@ export type DocumentIndex = DocumentId;
 /**
  * Index for a block node
  */
-export type BlockIndex = `${DocumentIndex}:${BlockIndexAlias}`;
+export type BlockIndex = BlockIndexAlias;
 
 /**
  * Numeric index for data or tune changes in block node
  */
-type StartIndex = number;
+export type StartIndex = number;
+
+export type EndIndex = number;
+
+export type RangeIndex = `${StartIndex}:${EndIndex}`;
 
 /**
  * Index for data changes in block node
  */
-export type DataIndex = `${BlockIndex}:data@${DataKey}:${StartIndex}`;
+export type DataIndex = `data@${DataKey}` | `data@${DataKey}:${StartIndex}` | `data@${DataKey}:${StartIndex}:${EndIndex}`;
 
 /**
  * Index for tune changes in block node
  */
-export type TuneIndex = `${BlockIndex}:tune@${BlockTuneName}`;
+export type TuneIndex = `tune@${BlockTuneName}`;
+
+export type PropertyIndex = `property@${string}`;
 
 /**
  * Possible index types
  */
-export type Index = DocumentIndex | BlockIndex | DataIndex | TuneIndex;
+export type Index = DocumentIndex | BlockIndex | DataIndex | TuneIndex | StartIndex | EndIndex | RangeIndex;
