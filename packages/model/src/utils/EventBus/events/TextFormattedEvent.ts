@@ -16,20 +16,24 @@ interface TextFormattedEventPayload extends EventPayloadBase<Index, EventAction.
 }
 
 /**
- *
+ * TextFormatted Custom Event
  */
 export class TextFormattedEvent extends CustomEvent<TextFormattedEventPayload> {
   /**
+   * TextFormattedEvent class constructor
    *
-   * @param index
-   * @param tool
-   * @param data
+   * @param index - index of formatted fragment in the document
+   * @param tool - name of the InlineTool that was used to format the fragment
+   * @param data - data of the InlineTool that was used to format the fragment. Optional
    */
   constructor(index: Index, tool: InlineToolName, data?: InlineToolData) {
     const eventData: TextFormattedEventPayload['data'] = {
       tool,
     };
 
+    /**
+     * Add data if it is passed
+     */
     if (data) {
       eventData.data = data;
     }

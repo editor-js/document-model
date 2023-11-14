@@ -11,13 +11,14 @@ interface TextRemovedEventPayload extends EventPayloadBase<Index, EventAction.Re
 }
 
 /**
- *
+ * TextRemoved Custom Event
  */
 export class TextRemovedEvent extends CustomEvent<TextRemovedEventPayload> {
   /**
+   * TextRemovedEvent class constructor
    *
-   * @param index
-   * @param text
+   * @param index - index of the removed text in the document
+   * @param text - removed text
    */
   constructor(index: Index, text: string) {
     super(EventType.Changed, {

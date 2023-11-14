@@ -15,14 +15,14 @@ interface BlockRemovedEventPayload extends EventPayloadBase<BlockIndex, EventAct
 }
 
 /**
- * Remove Block Custom Event
+ * BlockRemoved Custom Event
  */
 export class BlockRemovedEvent extends CustomEvent<BlockRemovedEventPayload> {
   /**
-   * Constructor
+   * BlockRemovedEvent class constructor
    *
-   * @param index
-   * @param data
+   * @param index - index of the removed BlockNode in the document
+   * @param data - removed BlockNode serialized data
    */
   constructor(index: BlockIndex, data: BlockNodeSerialized) {
     // Stryker disable next-line ObjectLiteral

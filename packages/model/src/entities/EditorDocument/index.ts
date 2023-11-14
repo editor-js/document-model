@@ -43,7 +43,7 @@ export class EditorDocument extends EventBus {
   constructor({
     blocks = [],
     properties = {},
-    toolsRegistry = new ToolsRegistry()
+    toolsRegistry = new ToolsRegistry(),
   }: EditorDocumentConstructorParameters = {}) {
     super();
 
@@ -102,7 +102,7 @@ export class EditorDocument extends EventBus {
   public removeBlock(index: number): void {
     this.#checkIndexOutOfBounds(index, this.length - 1);
 
-    const [blockNode] = this.#children.splice(index, 1);
+    const [ blockNode ] = this.#children.splice(index, 1);
 
     this.dispatchEvent(new BlockRemovedEvent(index, blockNode.serialized));
   }
@@ -254,9 +254,10 @@ export class EditorDocument extends EventBus {
   }
 
   /**
+   * Listens to BlockNode events and bubbles them to the EditorDocument
    *
-   * @param block
-   * @param index
+   * @param block - BlockNode to listen to
+   * @param index - index of the BlockNode
    */
   #listenAndBubbleBlockEvent(block: BlockNode, index: number): void {
     block.addEventListener(EventType.Changed, (event: ModelEvents) => {

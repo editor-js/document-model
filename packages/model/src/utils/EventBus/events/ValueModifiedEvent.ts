@@ -10,14 +10,15 @@ interface ValueModifiedEventPayload<V = unknown> extends EventPayloadBase<Index,
 }
 
 /**
- *
+ * ValueModified Custom Event
  */
 export class ValueModifiedEvent<V = unknown> extends CustomEvent<ValueModifiedEventPayload<V>> {
   /**
+   * ValueModifiedEvent class constructor
    *
-   * @param index
-   * @param value
-   * @param previous
+   * @param index - index of the modified value in the document
+   * @param value - new value
+   * @param previous - previous value
    */
   constructor(index: Index, value: V, previous: V) {
     super(EventType.Changed, {

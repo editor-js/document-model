@@ -15,15 +15,14 @@ interface BlockAddedEventPayload extends EventPayloadBase<BlockIndex, EventActio
 }
 
 /**
- * Add Block Custom Event
+ * BlockAdded Custom Event
  */
 export class BlockAddedEvent extends CustomEvent<BlockAddedEventPayload> {
   /**
-   * Constructor
+   * BlockAddedEvent class constructor
    *
-   * @param payload - The event payload
-   * @param index
-   * @param data
+   * @param index - index of the added BlockNode in the document
+   * @param data - BlockNode serialized data
    */
   constructor(index: BlockIndex, data: BlockNodeSerialized) {
     // Stryker disable next-line ObjectLiteral

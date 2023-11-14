@@ -298,9 +298,10 @@ export class BlockNode extends EventBus {
   }
 
   /**
+   * Listens to TextNode events and bubbles them to the BlockNode
    *
-   * @param node
-   * @param key
+   * @param node - TextNode to listen to
+   * @param key - TextNode key in the BlockNode data
    */
   #listenAndBubbleTextNodeEvent(node: TextNode, key: DataKey): void {
     node.addEventListener(
@@ -320,9 +321,10 @@ export class BlockNode extends EventBus {
   }
 
   /**
+   * Listens to ValueNode events and bubbles them to the BlockNode
    *
-   * @param node
-   * @param key
+   * @param node - ValueNode to listen to
+   * @param key - ValueNode key in the BlockNode data
    */
   #listenAndBubbleValueNodeEvent(node: ValueNode, key: DataKey): void {
     node.addEventListener(
@@ -340,9 +342,10 @@ export class BlockNode extends EventBus {
   }
 
   /**
+   * Listens to BlockTune events and bubbles them to the BlockNode
    *
-   * @param tune
-   * @param name
+   * @param tune - BlockTune to listen to
+   * @param name - BlockTune name in the BlockNode data
    */
   #listenAndBubbleTuneEvent(tune: BlockTune, name: BlockTuneName): void {
     tune.addEventListener(

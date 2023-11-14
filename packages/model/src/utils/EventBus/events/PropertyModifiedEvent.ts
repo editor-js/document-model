@@ -8,14 +8,15 @@ interface PropertyModifiedEventPayload<P = unknown> extends EventPayloadBase<Pro
 }
 
 /**
- *
+ * PropertyModified Custom Event
  */
 export class PropertyModifiedEvent<P = unknown> extends CustomEvent<PropertyModifiedEventPayload<P>> {
   /**
+   * PropertyModifiedEvent class constructor
    *
-   * @param index
-   * @param value
-   * @param previous
+   * @param index - index of the modified property in the document
+   * @param value - new value of the property
+   * @param previous - previous value of the property
    */
   constructor(index: PropertyIndex, value: P, previous: P) {
     super(EventType.Changed, {
