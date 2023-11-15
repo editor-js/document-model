@@ -67,7 +67,7 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
     this.normalize();
 
-    this.dispatchEvent(new TextAddedEvent([index, index + text.length], text));
+    this.dispatchEvent(new TextAddedEvent([[index, index + text.length]], text));
   }
 
   /**
@@ -91,7 +91,7 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
     this.normalize();
 
-    this.dispatchEvent(new TextRemovedEvent([start, end], removedText));
+    this.dispatchEvent(new TextRemovedEvent([[start, end]], removedText));
 
     return removedText;
   }
@@ -191,7 +191,7 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
     this.dispatchEvent(
       new TextFormattedEvent(
-        [start, end],
+        [[start, end]],
         {
           tool,
           data,
@@ -233,7 +233,7 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
     this.normalize();
 
-    this.dispatchEvent(new TextUnformattedEvent([start, end], { tool }));
+    this.dispatchEvent(new TextUnformattedEvent([[start, end]], { tool }));
 
     return newNodes;
   }

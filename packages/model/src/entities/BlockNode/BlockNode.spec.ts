@@ -1029,7 +1029,7 @@ describe('BlockNode', () => {
 
       node.addEventListener(EventType.Changed, handler);
 
-      textNode.dispatchEvent(new TextAddedEvent(range, 'Hello'));
+      textNode.dispatchEvent(new TextAddedEvent([ range ], 'Hello'));
 
       expect(handler)
         .toHaveBeenCalledWith(expect.any(TextAddedEvent));
@@ -1044,11 +1044,11 @@ describe('BlockNode', () => {
 
       node.addEventListener(EventType.Changed, handler);
 
-      textNode.dispatchEvent(new TextAddedEvent(range, 'Hello'));
+      textNode.dispatchEvent(new TextAddedEvent([ range ], 'Hello'));
 
       expect(event)
         .toHaveProperty('detail', expect.objectContaining({
-          index: [...range, `data@${dataKey}`],
+          index: [range, `data@${dataKey}`],
         }));
     });
 

@@ -237,7 +237,7 @@ describe('ParentInlineNode', () => {
 
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Added,
-        index: [index, index + newText.length],
+        index: [[index, index + newText.length]],
         data: newText,
       }));
     });
@@ -328,7 +328,7 @@ describe('ParentInlineNode', () => {
 
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Removed,
-        index: [start, end],
+        index: [[start, end]],
       }));
     });
   });
@@ -515,7 +515,7 @@ describe('ParentInlineNode', () => {
 
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Modified,
-        index: [start, end],
+        index: [[start, end]],
         data: {
           tool,
           data,
@@ -588,7 +588,7 @@ describe('ParentInlineNode', () => {
 
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Modified,
-        index: [start, end],
+        index: [[start, end]],
         data: {
           tool,
         },

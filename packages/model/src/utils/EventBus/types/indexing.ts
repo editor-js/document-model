@@ -34,7 +34,7 @@ type DataIndex<Type extends 'data' | 'tune'> = [`${Type}@${Type extends 'data' ?
 /**
  * TextNode index. It consists of a range of characters and an optional index of a block node
  */
-export type TextIndex = [...TextRange, ...Partial<DataIndex<'data'>>];
+export type TextIndex = [TextRange, ...Partial<DataIndex<'data'>>];
 
 /**
  * ValueNode index
