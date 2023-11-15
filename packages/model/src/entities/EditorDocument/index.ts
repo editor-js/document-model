@@ -41,6 +41,13 @@ export class EditorDocument {
   }
 
   /**
+   * Allows accessing Document child nodes
+   */
+  public get children(): ReadonlyArray<BlockNode> {
+    return this.#children;
+  }
+
+  /**
    * Returns count of child BlockNodes of the EditorDocument.
    */
   public get length(): number {

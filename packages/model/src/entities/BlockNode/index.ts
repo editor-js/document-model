@@ -79,6 +79,21 @@ export class BlockNode {
   }
 
   /**
+   * Allows accessing Block name
+   */
+  public get name(): string {
+    return this.#name;
+  }
+
+  /**
+   * Allows accessing Block data
+   */
+  public get data(): BlockNodeData {
+    return this.#data;
+  }
+
+
+  /**
    * Getter to access BlockNode parent
    */
   public get parent(): EditorDocument | null {

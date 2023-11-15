@@ -44,6 +44,13 @@ export class ValueNode<ValueType = unknown> {
 
     return value as ValueSerialized<ValueType>;
   }
+
+  /**
+   * Returns the data associated with this value node.
+   */
+  public get value(): ValueType {
+    return this.#value;
+  }
 }
 
 export type {

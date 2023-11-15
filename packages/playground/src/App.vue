@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { Node } from './components';
 import { EditorDocument } from '@editorjs/model';
 
-console.log('EditorDocument', new EditorDocument({
+
+const document = new EditorDocument({
   blocks: [
     {
       // id: 'zcKCF1S7X8',
@@ -48,36 +50,58 @@ console.log('EditorDocument', new EditorDocument({
       },
     },
   ],
-}));
+});
 
-
+console.log('document', document);
 </script>
 
 <template>
-  <div :class="$style.title">
-    <img
-      src="./assets/editorjs.svg"
-      alt="Editor.js logo"
-    >
-    Editor.js Document Playground
+  <div
+    :class="$style.container"
+  >
+    <div :class="$style.header">
+      <img
+        src="./assets/editorjs.svg"
+        alt="Editor.js logo"
+      >
+      Editor.js Document Playground
+    </div>
+    <div :class="$style.body">
+      <Node
+        :node="document"
+      />
+    </div>
   </div>
 </template>
 
 <style module>
 
-.title {
+.container {
+  height: 100%;
+}
+
+.body {
+  padding: 16px;
+}
+
+.header {
   font-weight: 500;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  background: var(--background);
 }
 
-.title img {
-  height: 30px;
-  margin-right: 0.5em;
-  vertical-align: middle;
-  will-change: filter;
-  transition: filter 300ms;
+.header img {
+  height: 20px;
+  margin-right: 0.6em;
 }
 
-.title img:hover {
-  filter: drop-shadow(0 0 20px #1CADFFaa);
+.property {
+  font-family: var(--rounded-family);
+  font-size: 14px;
+  font-weight: 450;
 }
 </style>

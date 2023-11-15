@@ -8,7 +8,8 @@
     "strict": true,
     "skipLibCheck": true,
     "experimentalDecorators": true,
-    "types": ["jest"]
+    "types": ["jest"],
+    "composite": true
   },
   "include": ["src/**/*"],
   "exclude": [
