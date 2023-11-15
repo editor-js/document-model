@@ -77,6 +77,7 @@ export class EditorDocument {
    *
    * @param from - The index of the BlockNode to move
    * @param to - The index to move the BlockNode to
+   * @throws Error if the index is out of bounds
    */
   public moveBlock(from: number, to: number): void {
     this.#checkIndexOutOfBounds(from);
