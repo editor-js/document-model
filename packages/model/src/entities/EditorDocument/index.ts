@@ -7,12 +7,26 @@ import { IoCContainer, TOOLS_REGISTRY } from '../../IoC/index.js';
 import { ToolsRegistry } from '../../tools/index.js';
 import type { BlockNodeSerialized } from '../BlockNode/types';
 import type { DeepReadonly } from '../../utils/DeepReadonly';
+import { EventBus } from '../../utils/EventBus/EventBus.js';
+import { EventType } from '../../utils/EventBus/types/EventType.js';
+import type {
+  BlockTuneEvents,
+  TextNodeEvents,
+  ValueNodeEvents
+} from '../../utils/EventBus/types/EventMap';
+import {
+  BlockAddedEvent,
+  BlockRemovedEvent,
+  PropertyModifiedEvent
+} from '../../utils/EventBus/events/index.js';
+import type { Constructor } from '../../utils/types.js';
+import { BaseDocumentEvent } from '../../utils/EventBus/events/BaseEvent.js';
 
 /**
  * EditorDocument class represents the top-level container for a tree-like structure of BlockNodes in an editor document.
  * It contains an array of BlockNodes representing the root-level nodes of the document.
  */
-export class EditorDocument {
+export class EditorDocument extends EventBus {
   /**
    * Private field representing the child BlockNodes of the EditorDocument
    */
@@ -31,7 +45,13 @@ export class EditorDocument {
    * @param [args.properties] - The properties of the document.
    * @param [args.toolsRegistry] - ToolsRegistry instance for the current document. Defaults to a new ToolsRegistry instance.
    */
-  constructor({ blocks = [], properties = {}, toolsRegistry = new ToolsRegistry() }: EditorDocumentConstructorParameters = {}) {
+  constructor({
+    blocks = [],
+    properties = {},
+    toolsRegistry = new ToolsRegistry(),
+  }: EditorDocumentConstructorParameters = {}) {
+    super();
+
     this.#properties = properties;
 
     const container = IoCContainer.of(this);
@@ -69,15 +89,20 @@ export class EditorDocument {
       parent: this,
     });
 
+
     if (index === undefined) {
       this.#children.push(blockNode);
 
-      return;
+      index = this.length - 1;
+    } else {
+      this.#checkIndexOutOfBounds(index);
+
+      this.#children.splice(index, 0, blockNode);
     }
 
-    this.#checkIndexOutOfBounds(index);
+    this.#listenAndBubbleBlockEvent(blockNode, index);
 
-    this.#children.splice(index, 0, blockNode);
+    this.dispatchEvent(new BlockAddedEvent([ index ], blockNode.serialized));
   }
 
   /**
@@ -105,7 +130,9 @@ export class EditorDocument {
   public removeBlock(index: number): void {
     this.#checkIndexOutOfBounds(index, this.length - 1);
 
-    this.#children.splice(index, 1);
+    const [ blockNode ] = this.#children.splice(index, 1);
+
+    this.dispatchEvent(new BlockRemovedEvent([ index ], blockNode.serialized));
   }
 
   /**
@@ -146,7 +173,18 @@ export class EditorDocument {
    * @param value - The value to update the property with
    */
   public setProperty<T = unknown>(name: keyof Properties, value: T): void {
+    const previousValue = this.getProperty(name);
+
     this.#properties[name] = value;
+
+    this.dispatchEvent(
+      new PropertyModifiedEvent(
+        [name, 'property'],
+        {
+          value,
+          previous: previousValue,
+        })
+    );
   }
 
   /**
@@ -248,6 +286,30 @@ export class EditorDocument {
       blocks: this.#children.map((block) => block.serialized),
       properties: this.#properties,
     };
+  }
+
+  /**
+   * Listens to BlockNode events and bubbles them to the EditorDocument
+   *
+   * @param block - BlockNode to listen to
+   * @param index - index of the BlockNode
+   */
+  #listenAndBubbleBlockEvent(block: BlockNode, index: number): void {
+    block.addEventListener(EventType.Changed, (event: Event) => {
+      if (!(event instanceof BaseDocumentEvent)) {
+        // Stryker disable next-line StringLiteral
+        console.error('EditorDocument: BlockNode should only emit BaseDocumentEvent objects');
+
+        return;
+      }
+
+      this.dispatchEvent(
+        new (event.constructor as Constructor<TextNodeEvents | ValueNodeEvents | BlockTuneEvents>)(
+          [...event.detail.index, index],
+          event.detail.data
+        )
+      );
+    });
   }
 
   /**

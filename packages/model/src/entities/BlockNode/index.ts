@@ -24,13 +24,23 @@ import { get, has } from '../../utils/keypath.js';
 import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
 import { mapObject } from '../../utils/mapObject.js';
 import type { DeepReadonly } from '../../utils/DeepReadonly';
+import { EventBus } from '../../utils/EventBus/EventBus.js';
+import { EventType } from '../../utils/EventBus/types/EventType.js';
+import {
+  TuneModifiedEvent,
+  ValueModifiedEvent
+} from '../../utils/EventBus/events/index.js';
+import type { Constructor } from '../../utils/types.js';
+import type { TextNodeEvents } from '../../utils/EventBus/types/EventMap';
+import type { TuneIndex } from '../../utils/EventBus/types/indexing.js';
+import { BaseDocumentEvent } from '../../utils/EventBus/events/BaseEvent.js';
 
 /**
  * BlockNode class represents a node in a tree-like structure used to store and manipulate Blocks in an editor document.
  * A BlockNode can contain one or more child nodes of type TextNode or ValueNode.
  * It can also be associated with one or more BlockTunes, which can modify the behavior of the BlockNode.
  */
-export class BlockNode {
+export class BlockNode extends EventBus {
   /**
    * Field representing a name of the Tool created this Block
    */
@@ -66,14 +76,22 @@ export class BlockNode {
     parent,
     tunes = {},
   }: BlockNodeConstructorParameters) {
+    super();
+
     this.#name = createBlockToolName(name);
     this.#parent = parent ?? null;
     this.#tunes = mapObject(
       tunes,
-      (tuneData: BlockTuneSerialized, tuneName: string) => new BlockTune({
-        name: createBlockTuneName(tuneName),
-        data: tuneData,
-      })
+      (tuneData: BlockTuneSerialized, tuneName: string) => {
+        const tune = new BlockTune({
+          name: createBlockTuneName(tuneName),
+          data: tuneData,
+        });
+
+        this.#listenAndBubbleTuneEvent(tune, tuneName as BlockTuneName);
+
+        return tune;
+      }
     );
 
     this.#initialize(data);
@@ -92,7 +110,6 @@ export class BlockNode {
   public get data(): DeepReadonly<BlockNodeData> {
     return this.#data;
   }
-
 
   /**
    * Getter to access BlockNode parent
@@ -238,29 +255,44 @@ export class BlockNode {
      * 4. Otherwise, it's a primitive value, so create a ValueNode with it
      *
      * @param value - serialized value
+     * @param key - keypath of the current value
      */
-    const map = (value: BlockNodeDataSerializedValue): BlockNodeData | BlockNodeDataValue => {
+    const mapSerializedToNodes = (value: BlockNodeDataSerializedValue, key: string): BlockNodeData | BlockNodeDataValue => {
       if (Array.isArray(value)) {
-        return value.map(map) as BlockNodeData[] | ChildNode[];
+        return value.map((v, i) => mapSerializedToNodes(v, `${key}.${i}`)) as BlockNodeData[] | ChildNode[];
       }
 
       if (typeof value === 'object' && value !== null) {
         if (NODE_TYPE_HIDDEN_PROP in value) {
           switch (value[NODE_TYPE_HIDDEN_PROP]) {
-            case BlockChildType.Value:
-              return new ValueNode({ value });
-            case BlockChildType.Text:
-              return new TextNode(value as TextNodeSerialized);
+            case BlockChildType.Value: {
+              const node = new ValueNode({ value });
+
+              this.#listenAndBubbleValueNodeEvent(node, key as DataKey);
+
+              return node;
+            }
+            case BlockChildType.Text: {
+              const node = new TextNode(value as TextNodeSerialized);
+
+              this.#listenAndBubbleTextNodeEvent(node, key as DataKey);
+
+              return node;
+            }
           }
         }
 
-        return mapObject(value as BlockNodeDataSerialized, map);
+        return mapObject(value as BlockNodeDataSerialized, (v, k) => mapSerializedToNodes(v, `${key}.${k}`));
       }
 
-      return new ValueNode({ value });
+      const node =  new ValueNode({ value });
+
+      this.#listenAndBubbleValueNodeEvent(node, key as DataKey);
+
+      return node;
     };
 
-    this.#data = mapObject(data, map);
+    this.#data = mapObject(data, mapSerializedToNodes);
   }
 
   /**
@@ -278,6 +310,89 @@ export class BlockNode {
     if (Node && !(get(this.#data, key as string) instanceof Node)) {
       throw new Error(`BlockNode: data with key ${key} is not a ${Node.name}`);
     }
+  }
+
+  /**
+   * Listens to TextNode events and bubbles them to the BlockNode
+   *
+   * @param node - TextNode to listen to
+   * @param key - TextNode key in the BlockNode data
+   */
+  #listenAndBubbleTextNodeEvent(node: TextNode, key: DataKey): void {
+    node.addEventListener(
+      EventType.Changed,
+      (event: Event): void => {
+        if (!(event instanceof BaseDocumentEvent)) {
+          // Stryker disable next-line StringLiteral
+          console.error('BlockNode: TextNode should only emit BaseDocumentEvent');
+
+          return;
+        }
+
+        this.dispatchEvent(
+          new (event.constructor as Constructor<TextNodeEvents>)(
+            [...event.detail.index, `data@${key}`],
+            event.detail.data
+          )
+        );
+      }
+    );
+  }
+
+  /**
+   * Listens to ValueNode events and bubbles them to the BlockNode
+   *
+   * @param node - ValueNode to listen to
+   * @param key - ValueNode key in the BlockNode data
+   */
+  #listenAndBubbleValueNodeEvent(node: ValueNode, key: DataKey): void {
+    node.addEventListener(
+      EventType.Changed,
+      (event: Event): void => {
+        if (!(event instanceof BaseDocumentEvent)) {
+          // Stryker disable next-line StringLiteral
+          console.error('BlockNode: ValueNode should only emit BaseDocumentEvent');
+
+          return;
+        }
+
+
+        this.dispatchEvent(
+          new ValueModifiedEvent(
+            [ `data@${key}` ],
+            event.detail.data
+          )
+        );
+      }
+    );
+  }
+
+  /**
+   * Listens to BlockTune events and bubbles them to the BlockNode
+   *
+   * @param tune - BlockTune to listen to
+   * @param name - BlockTune name in the BlockNode data
+   */
+  #listenAndBubbleTuneEvent(tune: BlockTune, name: BlockTuneName): void {
+    tune.addEventListener(
+      EventType.Changed,
+      (event: Event): void => {
+        if (!(event instanceof BaseDocumentEvent)) {
+          // Stryker disable next-line StringLiteral
+          console.error('BlockNode: BlockTune should only emit BaseDocumentEvent');
+
+          return;
+        }
+
+        this.dispatchEvent(
+          new TuneModifiedEvent(
+            // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+            [...(event.detail.index as [TuneIndex[0]]), `tune@${name}`],
+            event.detail.data
+          )
+        );
+      }
+    );
   }
 }
 
