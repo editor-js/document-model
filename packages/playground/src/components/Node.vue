@@ -24,15 +24,17 @@ type PropsList<Obj> = Array<keyof Obj>
 
 /**
  * Returns the properties of a class instance
- * 
+ *
  * @param object - The object to get the properties of
  */
 function getClassProperties<T extends object>(object: T): PropsList<T> {
   const descriptors = Object.getOwnPropertyDescriptors(object);
 
-  return Object.entries(descriptors).filter(([name, descriptor]) => {
-    return descriptor.get !== undefined;
-  })
+  return Object.entries(descriptors)
+    // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
+    .filter(([_name, descriptor]) => {
+      return descriptor.get !== undefined;
+    })
     .map(([ name ]) => {
       return name as keyof typeof props.node;
     });
@@ -61,8 +63,18 @@ const properties = computed<PropsList<typeof props.node>>(() => {
   return [
     ...ownProperties,
     ...prototypeProperties,
-  ];
+  ] as PropsList<typeof props.node>;
 });
+
+/**
+ * Returns the name of the parent object
+ *
+ * @param object - The object to get the parent name of
+ */
+function getParentObjectName(object: object): string {
+  // @ts-expect-error TS does not support __proto__
+  return object.constructor.name || object.__proto__.constructor.name;
+}
 </script>
 
 <template>
@@ -85,7 +97,7 @@ const properties = computed<PropsList<typeof props.node>>(() => {
             :value="node[property]"
           />
           <template v-else>
-            ꩜ {{ node[property].constructor.name || node[property].__proto__.constructor.name }}
+            ꩜ {{ getParentObjectName(node[property]) }}
           </template>
         </Indent>
       </Indent>

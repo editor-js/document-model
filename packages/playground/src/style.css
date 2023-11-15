@@ -1,16 +1,16 @@
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  font-weight: 400;
-  font-size: 14px;
-
-  color-scheme: dark;
-
   --family: system-ui, Inter, Avenir, Helvetica, Arial, sans-serif;
   --rounded-family: SF Pro Rounded, "ui-rounded", system-ui;
 
   --background: #242424;
   --foreground: rgba(255, 255, 255, 0.87);
   
+  font-family: var(--family);
+  font-weight: 400;
+  font-size: 14px;
+
+  color-scheme: dark;
+
   background-color: var(--background);
   color: var(--foreground);
 

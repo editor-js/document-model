@@ -18,5 +18,7 @@ module.exports = {
   rules: {
     'jsdoc/require-returns': 'off',
     'jsdoc/require-param-type': 'off',
+    'vue/multi-word-component-names': 'off',
+
   },
 };
