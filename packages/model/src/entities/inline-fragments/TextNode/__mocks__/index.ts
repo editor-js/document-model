@@ -36,4 +36,11 @@ export class TextNode {
   public unformat(): void {
     return;
   }
+
+  /**
+   * Mock method
+   */
+  public getFragments(): void {
+    return;
+  }
 }

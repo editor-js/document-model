@@ -6,7 +6,7 @@ import { ValueNode } from '../ValueNode/index.js';
 
 import type { EditorDocument } from '../EditorDocument';
 import type { ValueNodeConstructorParameters } from '../ValueNode';
-import type { InlineToolData, InlineToolName } from '../inline-fragments';
+import type { InlineFragment, InlineToolData, InlineToolName } from '../inline-fragments';
 import { TextNode } from '../inline-fragments/index.js';
 import type { BlockNodeDataSerialized } from './types';
 import { BlockChildType } from './types/index.js';
@@ -997,6 +997,98 @@ describe('BlockNode', () => {
 
       expect(() => node.unformat(dataKey, tool, start, end))
         .toThrow();
+    });
+  });
+
+  describe('.getFragments()', () => {
+    it('should call .getFragments() method of the TextNode', () => {
+      const spy = jest.spyOn(TextNode.prototype, 'getFragments');
+      const node = createBlockNodeWithData({
+        text: {
+          [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+          value: '',
+          fragments: [],
+        },
+      });
+
+      node.getFragments(createDataKey('text'), 0, 0);
+
+      expect(spy)
+        .toHaveBeenCalledWith(0, 0);
+    });
+
+    it('should return all fragments if tool parameter is not passed', () => {
+      const boldFragmentStart = 0;
+      const boldFragmentEnd = 5;
+      const italicFragmentStart = 3;
+      const italicFragmentEnd = 10;
+
+      const testRangeStart = 2;
+      const testRangeEnd = 7;
+
+      const fragments: InlineFragment[] = [
+        {
+          tool: 'bold' as InlineToolName,
+          range: [boldFragmentStart, boldFragmentEnd],
+        },
+        {
+          tool: 'italic' as InlineToolName,
+          range: [italicFragmentStart, italicFragmentEnd],
+        },
+      ];
+
+      jest.spyOn(TextNode.prototype, 'getFragments')
+        .mockImplementation(() => fragments);
+
+      const node = createBlockNodeWithData({
+        text: {
+          [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+          value: 'Test text for checking the fragments',
+          fragments,
+        },
+      });
+
+      const result = node.getFragments(createDataKey('text'), testRangeStart, testRangeEnd);
+
+      expect(result)
+        .toEqual(fragments);
+    });
+
+    it('should return fragments of the specified tool', () => {
+      const boldFragmentStart = 0;
+      const boldFragmentEnd = 5;
+      const italicFragmentStart = 3;
+      const italicFragmentEnd = 10;
+
+      const testRangeStart = 2;
+      const testRangeEnd = 7;
+
+      const fragments: InlineFragment[] = [
+        {
+          tool: 'bold' as InlineToolName,
+          range: [boldFragmentStart, boldFragmentEnd],
+        },
+        {
+          tool: 'italic' as InlineToolName,
+          range: [italicFragmentStart, italicFragmentEnd],
+        },
+      ];
+
+      jest.spyOn(TextNode.prototype, 'getFragments')
+        .mockImplementation(() => fragments);
+
+      const node = createBlockNodeWithData({
+        text: {
+          [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+          value: 'Test text for checking the fragments',
+          fragments,
+        },
+      });
+
+      const result = node.getFragments(createDataKey('text'), testRangeStart, testRangeEnd, 'bold' as InlineToolName);
+
+      expect(result)
+        .toEqual([ fragments[0] ]);
     });
   });
 });
