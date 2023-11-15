@@ -93,6 +93,18 @@ export class EditorJSModel extends EventBus {
     return this.#document.addBlock(...parameters);
   }
 
+  /**
+   * Moves a BlockNode from one index to another
+   *
+   * @param parameters = moveBlock method parameters
+   * @param parameters.from - The index of the BlockNode to move
+   * @param parameters.to - The index to move the BlockNode to
+   * @throws Error if the index is out of bounds
+   */
+  public moveBlock(...parameters: Parameters<EditorDocument['moveBlock']>): ReturnType<EditorDocument['moveBlock']> {
+    return this.#document.moveBlock(...parameters);
+  }
+
 
   /**
    * Removes a BlockNode from the EditorDocument at the specified index.

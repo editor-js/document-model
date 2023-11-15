@@ -173,23 +173,7 @@ describe('EditorDocument', () => {
         .toThrowError('Index out of bounds');
     });
 
-    it('should emit BlockAddedEvent', () => {
-      const document = createEditorDocumentWithSomeBlocks();
-      const index = 1;
-      const blockData = {
-        name: 'header-1a2b' as BlockToolName,
-      };
-
-      const handler = jest.fn();
-
-      document.addEventListener(EventType.Changed, handler);
-
-      document.addBlock(blockData, index);
-
-      expect(handler).toBeCalledWith(expect.any(BlockAddedEvent));
-    });
-
-    it('should emit BlockAddedEvent with correct details', () => {
+    it('should emit BlockAddedEvent with block node data in details and block index', () => {
       const document = createEditorDocumentWithSomeBlocks();
       const index = 1;
       const blockData = {
@@ -211,11 +195,44 @@ describe('EditorDocument', () => {
 
       document.addBlock(blockData, index);
 
+      expect(event).toBeInstanceOf(BlockAddedEvent);
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Added,
         index: [ index ],
         data: blockData,
       }));
+    });
+  });
+
+  describe('.moveBlock()', () => {
+    it('should move block from passed index to passed index', () => {
+      const document = createEditorDocumentWithSomeBlocks();
+      const block = document.getBlock(0);
+
+      document.moveBlock(0, 1);
+
+      expect(document.getBlock(1))
+        .toBe(block);
+    });
+
+    it('should not change the block before moved block if moving to the end of the document', () => {
+      const document = createEditorDocumentWithSomeBlocks();
+      const blockBeforeMoved = document.getBlock(0);
+
+      document.moveBlock(1, document.length);
+
+      expect(document.getBlock(0))
+        .toBe(blockBeforeMoved);
+    });
+
+    it('should not change the block after moved block if moving to the beginning of the document', () => {
+      const document = createEditorDocumentWithSomeBlocks();
+      const blockAfterMoved = document.getBlock(2);
+
+      document.moveBlock(1, 0);
+
+      expect(document.getBlock(2))
+        .toBe(blockAfterMoved);
     });
   });
 
@@ -285,20 +302,7 @@ describe('EditorDocument', () => {
         .toThrowError('Index out of bounds');
     });
 
-    it('should emit BlockRemovedEvent', () => {
-      const document = createEditorDocumentWithSomeBlocks();
-      const index = 1;
-
-      const handler = jest.fn();
-
-      document.addEventListener(EventType.Changed, handler);
-
-      document.removeBlock(index);
-
-      expect(handler).toBeCalledWith(expect.any(BlockRemovedEvent));
-    });
-
-    it('should emit BlockRemovedEvent with correct details', () => {
+    it('should emit BlockRemovedEvent with block node data in details and block index', () => {
       const document = createEditorDocumentWithSomeBlocks();
       const index = 1;
 
@@ -316,6 +320,7 @@ describe('EditorDocument', () => {
       document.addEventListener(EventType.Changed, e => event = e as BlockRemovedEvent);
       document.removeBlock(index);
 
+      expect(event).toBeInstanceOf(BlockRemovedEvent);
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Removed,
         index: [ index ],
