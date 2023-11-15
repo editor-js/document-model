@@ -1,4 +1,7 @@
 import { BlockTune, createBlockTuneName } from './index.js';
+import { EventType } from '../../utils/EventBus/types/EventType.js';
+import { TuneModifiedEvent } from '../../utils/EventBus/events/index.js';
+import { EventAction } from '../../utils/EventBus/types/EventAction.js';
 
 describe('BlockTune', () => {
   const tuneName = createBlockTuneName('alignment');
@@ -47,6 +50,34 @@ describe('BlockTune', () => {
         .toEqual({
           align: 'right',
         });
+    });
+
+    it('should emit TuneModifiedEvent with the new and previous values in details and tune name in index', () => {
+      const name = 'align';
+      const value = 'center';
+      const blockTune = new BlockTune({
+        name: tuneName,
+        data: {
+          [name]: value,
+        },
+      });
+      const updatedValue = 'right';
+
+      let event: TuneModifiedEvent | null = null;
+
+      blockTune.addEventListener(EventType.Changed, e => event = e as TuneModifiedEvent);
+
+      blockTune.update(name, updatedValue);
+
+      expect(event).toBeInstanceOf(TuneModifiedEvent);
+      expect(event).toHaveProperty('detail', expect.objectContaining({
+        action: EventAction.Modified,
+        index: [ name ],
+        data: {
+          value: updatedValue,
+          previous: value,
+        },
+      }));
     });
   });
 

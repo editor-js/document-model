@@ -1,7 +1,9 @@
+import { EventBus } from '../../../../utils/EventBus/EventBus.js';
+
 /**
  * Mock for TextNode class
  */
-export class TextNode {
+export class TextNode extends EventBus {
   /**
    * Mock getter
    */
