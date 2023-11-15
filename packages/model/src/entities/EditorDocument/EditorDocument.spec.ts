@@ -11,7 +11,6 @@ import {
   TuneModifiedEvent
 } from '../../utils/EventBus/events/index.js';
 import { EventAction } from '../../utils/EventBus/types/EventAction.js';
-import { BlockTune, createBlockTuneName } from '../BlockTune';
 
 jest.mock('../BlockNode');
 

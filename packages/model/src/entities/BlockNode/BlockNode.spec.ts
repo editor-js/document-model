@@ -1008,6 +1008,9 @@ describe('BlockNode', () => {
     let node: BlockNode;
     let textNode: TextNode;
     const dataKey = createDataKey('text');
+    const start = 0;
+    const end = 5;
+    const range: [number, number] = [start, end];
 
     beforeEach(() => {
       node = createBlockNodeWithData({
@@ -1026,7 +1029,7 @@ describe('BlockNode', () => {
 
       node.addEventListener(EventType.Changed, handler);
 
-      textNode.dispatchEvent(new TextAddedEvent([0, 5], 'Hello'));
+      textNode.dispatchEvent(new TextAddedEvent(range, 'Hello'));
 
       expect(handler)
         .toHaveBeenCalledWith(expect.any(TextAddedEvent));
@@ -1041,11 +1044,11 @@ describe('BlockNode', () => {
 
       node.addEventListener(EventType.Changed, handler);
 
-      textNode.dispatchEvent(new TextAddedEvent([0, 5], 'Hello'));
+      textNode.dispatchEvent(new TextAddedEvent(range, 'Hello'));
 
       expect(event)
         .toHaveProperty('detail', expect.objectContaining({
-          index: [0, 5, `data@${dataKey}`],
+          index: [...range, `data@${dataKey}`],
         }));
     });
 

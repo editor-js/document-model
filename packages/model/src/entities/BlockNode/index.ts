@@ -25,9 +25,6 @@ import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
 import { mapObject } from '../../utils/mapObject.js';
 import { EventBus } from '../../utils/EventBus/EventBus.js';
 import { EventType } from '../../utils/EventBus/types/EventType.js';
-import type {
-  ModelEvents
-} from '../../utils/EventBus/types/EventMap';
 import {
   TuneModifiedEvent,
   ValueModifiedEvent
