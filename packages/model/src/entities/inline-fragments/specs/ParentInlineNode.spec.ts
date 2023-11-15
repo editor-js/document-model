@@ -218,23 +218,14 @@ describe('ParentInlineNode', () => {
       expect(spy).toBeCalled();
     });
 
-    it('should emit TextAddedEvent', () => {
-      const handler = jest.fn();
-
-      node.addEventListener(EventType.Changed, handler);
-
-      node.insertText(newText, index);
-
-      expect(handler).toBeCalledWith(expect.any(TextAddedEvent));
-    });
-
-    it('should emit TextAddedEvent with correct details', () => {
+    it('should emit TextAddedEvent with correct text as data and text range as index', () => {
       let event: TextAddedEvent | null = null;
 
       node.addEventListener(EventType.Changed, e => event = e as TextAddedEvent);
 
       node.insertText(newText, index);
 
+      expect(event).toBeInstanceOf(TextAddedEvent);
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Added,
         index: [ [index, index + newText.length] ],
@@ -309,23 +300,14 @@ describe('ParentInlineNode', () => {
       expect(spy).toBeCalled();
     });
 
-    it('should emit TextRemovedEvent', () => {
-      const handler = jest.fn();
-
-      node.addEventListener(EventType.Changed, handler);
-
-      node.removeText(start, end);
-
-      expect(handler).toBeCalledWith(expect.any(TextRemovedEvent));
-    });
-
-    it('should emit TextRemovedEvent with correct details', () => {
+    it('should emit TextRemovedEvent with removed text as data and range as index', () => {
       let event: TextRemovedEvent | null = null;
 
       node.addEventListener(EventType.Changed, e => event = e as TextRemovedEvent);
 
       node.removeText(start, end);
 
+      expect(event).toBeInstanceOf(TextRemovedEvent);
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Removed,
         index: [ [start, end] ],
@@ -493,17 +475,7 @@ describe('ParentInlineNode', () => {
       expect(spy).toBeCalled();
     });
 
-    it('should emit TextFormattedEvent', () => {
-      const handler = jest.fn();
-
-      node.addEventListener(EventType.Changed, handler);
-
-      node.format(tool, start, end);
-
-      expect(handler).toBeCalledWith(expect.any(TextFormattedEvent));
-    });
-
-    it('should emit TextFormattedEvent with correct details', () => {
+    it('should emit TextFormattedEvent with inline fragment as data and affected range as index', () => {
       let event: TextFormattedEvent | null = null;
       const data = createInlineToolData({
         url: 'https://editorjs.io',
@@ -513,6 +485,7 @@ describe('ParentInlineNode', () => {
 
       node.format(tool, start, end, data);
 
+      expect(event).toBeInstanceOf(TextFormattedEvent);
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Modified,
         index: [ [start, end] ],
@@ -569,23 +542,14 @@ describe('ParentInlineNode', () => {
       expect(spy).toBeCalled();
     });
 
-    it('should emit TextUnformattedEvent', () => {
-      const handler = jest.fn();
-
-      node.addEventListener(EventType.Changed, handler);
-
-      node.unformat(tool, start, end);
-
-      expect(handler).toBeCalledWith(expect.any(TextUnformattedEvent));
-    });
-
-    it('should emit TextUnformattedEvent with correct details', () => {
+    it('should emit TextUnformattedEvent with inline fragment as data and range as index', () => {
       let event: TextUnformattedEvent | null = null;
 
       node.addEventListener(EventType.Changed, e => event = e as TextUnformattedEvent);
 
       node.unformat(tool, start, end);
 
+      expect(event).toBeInstanceOf(TextUnformattedEvent);
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Modified,
         index: [ [start, end] ],

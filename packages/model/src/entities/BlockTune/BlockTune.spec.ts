@@ -52,26 +52,7 @@ describe('BlockTune', () => {
         });
     });
 
-    it('should emit TuneModifiedEvent', () => {
-      const name = 'align';
-      const value = 'center';
-      const blockTune = new BlockTune({
-        name: tuneName,
-        data: {
-          [name]: value,
-        },
-      });
-      const updatedValue = 'right';
-      const handler = jest.fn();
-
-      blockTune.addEventListener(EventType.Changed, handler);
-
-      blockTune.update(name, updatedValue);
-
-      expect(handler).toBeCalledWith(expect.any(TuneModifiedEvent));
-    });
-
-    it('should emit TuneModifiedEvent with correct details', () => {
+    it('should emit TuneModifiedEvent with the new and previous values in details and tune name in index', () => {
       const name = 'align';
       const value = 'center';
       const blockTune = new BlockTune({
@@ -88,6 +69,7 @@ describe('BlockTune', () => {
 
       blockTune.update(name, updatedValue);
 
+      expect(event).toBeInstanceOf(TuneModifiedEvent);
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Modified,
         index: [ name ],

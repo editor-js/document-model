@@ -202,6 +202,9 @@ describe('EditorDocument', () => {
 
       let event: BlockAddedEvent | null = null;
 
+      /**
+       * As BlockNode class is mocked here, we need to implement the serialized getter (it returns undefined in the mock)
+       */
       jest.spyOn(BlockNode.prototype, 'serialized', 'get').mockImplementation(() => blockData);
 
       document.addEventListener(EventType.Changed, e => event = e as BlockAddedEvent);
@@ -213,14 +216,6 @@ describe('EditorDocument', () => {
         index: [ index ],
         data: blockData,
       }));
-    });
-
-    it('should not emit BlockAddedEvent on initialization', () => {
-      const spy = jest.spyOn(EditorDocument.prototype, 'dispatchEvent');
-
-      createEditorDocumentWithSomeBlocks();
-
-      expect(spy).not.toHaveBeenCalled();
     });
   });
 
@@ -453,21 +448,7 @@ describe('EditorDocument', () => {
         .toBe(expectedValue);
     });
 
-    it('should emit PropertyModifiedEvent', () => {
-      const document = createEditorDocumentWithSomeBlocks();
-      const propertyName = 'readOnly';
-      const value = true;
-
-      const handler = jest.fn();
-
-      document.addEventListener(EventType.Changed, handler);
-
-      document.setProperty(propertyName, value);
-
-      expect(handler).toBeCalledWith(expect.any(PropertyModifiedEvent));
-    });
-
-    it('should emit PropertyModifiedEvent with correct details', () => {
+    it('should emit PropertyModifiedEvent with new and previous values in event data and property name in index', () => {
       const document = createEditorDocumentWithSomeBlocks();
       const propertyName = 'readOnly';
       const value = true;
@@ -478,6 +459,7 @@ describe('EditorDocument', () => {
       document.addEventListener(EventType.Changed, e => event = e as PropertyModifiedEvent);
       document.setProperty(propertyName, value);
 
+      expect(event).toBeInstanceOf(PropertyModifiedEvent);
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Modified,
         index: [propertyName, 'property'],
@@ -891,8 +873,8 @@ describe('EditorDocument', () => {
 
   describe('.serialized', () => {
     it('should call .serialized property of the BlockNodes', () => {
-      const spy = jest.spyOn(BlockNode.prototype, 'serialized', 'get');
       const document = createEditorDocumentWithSomeBlocks();
+      const spy = jest.spyOn(BlockNode.prototype, 'serialized', 'get');
 
       document.serialized;
 
@@ -914,7 +896,7 @@ describe('EditorDocument', () => {
     });
   });
 
-  describe('BlockNode events', () => {
+  describe('working with BlockNode events', () => {
     let document: EditorDocument;
     let blockNode: BlockNode;
     const index = 0;
@@ -968,7 +950,7 @@ describe('EditorDocument', () => {
         }));
     });
 
-    it('should not re-emit an error if ValueNode emits not a BaseDocumentEvent', () => {
+    it('should not emit Change event if ValueNode dispatched an event that is not a BaseDocumentEvent', () => {
       const handler = jest.fn();
 
       document.addEventListener(EventType.Changed, handler);

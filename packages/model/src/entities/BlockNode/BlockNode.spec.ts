@@ -1004,7 +1004,7 @@ describe('BlockNode', () => {
     });
   });
 
-  describe('TextNode events', () => {
+  describe('working with TextNode events', () => {
     let node: BlockNode;
     let textNode: TextNode;
     const dataKey = createDataKey('text');
@@ -1024,18 +1024,7 @@ describe('BlockNode', () => {
       textNode = node.data[dataKey] as TextNode;
     });
 
-    it('should re-emit events from the TextNode', () => {
-      const handler = jest.fn();
-
-      node.addEventListener(EventType.Changed, handler);
-
-      textNode.dispatchEvent(new TextAddedEvent([ range ], 'Hello'));
-
-      expect(handler)
-        .toHaveBeenCalledWith(expect.any(TextAddedEvent));
-    });
-
-    it('should re-emit events from the TextNode with updated index', () => {
+    it('should re-emit events from the TextNode adding index in Block', () => {
       let event: TextAddedEvent | null = null;
 
       const handler = (e: Event): void => {
@@ -1046,13 +1035,14 @@ describe('BlockNode', () => {
 
       textNode.dispatchEvent(new TextAddedEvent([ range ], 'Hello'));
 
+      expect(event).toBeInstanceOf(TextAddedEvent);
       expect(event)
         .toHaveProperty('detail', expect.objectContaining({
           index: [range, `data@${dataKey}`],
         }));
     });
 
-    it('should throw an error if TextNode emits not a BaseDocumentEvent', () => {
+    it('should not emit Changed event if TextNode dispatched event that is not a BaseDocumentEvent', () => {
       const handler = jest.fn();
 
       node.addEventListener(EventType.Changed, handler);
@@ -1065,7 +1055,7 @@ describe('BlockNode', () => {
     });
   });
 
-  describe('ValueNode events', () => {
+  describe('working with ValueNode events', () => {
     let node: BlockNode;
     let valueNode: ValueNode;
     const parentDataKey = createDataKey('parent');
@@ -1083,26 +1073,7 @@ describe('BlockNode', () => {
       valueNode = (node.data[parentDataKey] as BlockNodeData)[dataKey] as ValueNode;
     });
 
-    it('should re-emit events from the ValueNode', () => {
-      const handler = jest.fn();
-
-      node.addEventListener(EventType.Changed, handler);
-
-      valueNode.dispatchEvent(
-        new ValueModifiedEvent(
-          [],
-          {
-            value: newValue,
-            previous: value,
-          }
-        )
-      );
-
-      expect(handler)
-        .toHaveBeenCalledWith(expect.any(ValueModifiedEvent));
-    });
-
-    it('should re-emit events from the ValueNode with updated index', () => {
+    it('should re-emit events from the ValueNode adding index in Block', () => {
       let event: ValueModifiedEvent | null = null;
       const handler = (e: Event): void => {
         event = e as ValueModifiedEvent;
@@ -1121,12 +1092,14 @@ describe('BlockNode', () => {
       );
 
       expect(event)
+        .toBeInstanceOf(ValueModifiedEvent);
+      expect(event)
         .toHaveProperty('detail', expect.objectContaining({
           index: [ `data@${parentDataKey}.${dataKey}` ],
         }));
     });
 
-    it('should not re-emit an error if ValueNode emits not a BaseDocumentEvent', () => {
+    it('should not emit Changed event if ValueNode dispatched event that is not a BaseDocumentEvent', () => {
       const handler = jest.fn();
 
       node.addEventListener(EventType.Changed, handler);
@@ -1139,7 +1112,7 @@ describe('BlockNode', () => {
     });
   });
 
-  describe('BlockTune events', () => {
+  describe('working with BlockTune events', () => {
     let node: BlockNode;
     let tune: BlockTune;
     const tuneName = createBlockTuneName('tune');
@@ -1158,26 +1131,7 @@ describe('BlockNode', () => {
       tune = node.tunes[tuneName] as BlockTune;
     });
 
-    it('should re-emit events from the BlockTune', () => {
-      const handler = jest.fn();
-
-      node.addEventListener(EventType.Changed, handler);
-
-      tune.dispatchEvent(
-        new TuneModifiedEvent(
-          [ key ],
-          {
-            value: newValue,
-            previous: value,
-          }
-        )
-      );
-
-      expect(handler)
-        .toHaveBeenCalledWith(expect.any(TuneModifiedEvent));
-    });
-
-    it('should re-emit events from the BlockTune with updated index', () => {
+    it('should re-emit event from the BlockTune adding index in Block', () => {
       let event: TuneModifiedEvent | null = null;
       const handler = (e: Event): void => {
         event = e as TuneModifiedEvent;
@@ -1196,12 +1150,14 @@ describe('BlockNode', () => {
       );
 
       expect(event)
+        .toBeInstanceOf(TuneModifiedEvent);
+      expect(event)
         .toHaveProperty('detail', expect.objectContaining({
           index: [key, `tune@${tuneName}`],
         }));
     });
 
-    it('should not re-emit an error if ValueNode emits not a BaseDocumentEvent', () => {
+    it('should not emit Changed event if ValueNode dispatched event that is not a BaseDocumentEvent', () => {
       const handler = jest.fn();
 
       node.addEventListener(EventType.Changed, handler);

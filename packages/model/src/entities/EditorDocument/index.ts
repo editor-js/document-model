@@ -37,11 +37,6 @@ export class EditorDocument extends EventBus {
   #properties: Properties;
 
   /**
-   * Private field representing whether the EditorDocument has been initialized
-   */
-  #isInitialized = false;
-
-  /**
    * Constructor for EditorDocument class.
    *
    * @param [args] - EditorDocument constructor arguments.
@@ -63,8 +58,6 @@ export class EditorDocument extends EventBus {
     container.set(TOOLS_REGISTRY, toolsRegistry);
 
     this.#initialize(blocks);
-
-    this.#isInitialized = true;
   }
 
   /**
@@ -101,9 +94,7 @@ export class EditorDocument extends EventBus {
 
     this.#listenAndBubbleBlockEvent(blockNode, index);
 
-    if (this.#isInitialized) {
-      this.dispatchEvent(new BlockAddedEvent([ index ], blockNode.serialized));
-    }
+    this.dispatchEvent(new BlockAddedEvent([ index ], blockNode.serialized));
   }
 
   /**
