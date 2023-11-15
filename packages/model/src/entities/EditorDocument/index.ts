@@ -6,6 +6,7 @@ import type { InlineToolData, InlineToolName } from '../inline-fragments';
 import { IoCContainer, TOOLS_REGISTRY } from '../../IoC/index.js';
 import { ToolsRegistry } from '../../tools/index.js';
 import type { BlockNodeSerialized } from '../BlockNode/types';
+import type { DeepReadonly } from '../../utils/DeepReadonly';
 
 /**
  * EditorDocument class represents the top-level container for a tree-like structure of BlockNodes in an editor document.
@@ -43,7 +44,7 @@ export class EditorDocument {
   /**
    * Allows accessing Document child nodes
    */
-  public get children(): ReadonlyArray<BlockNode> {
+  public get children(): ReadonlyArray<DeepReadonly<BlockNode>> {
     return this.#children;
   }
 

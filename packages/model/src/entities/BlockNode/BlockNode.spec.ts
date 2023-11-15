@@ -368,6 +368,21 @@ describe('BlockNode', () => {
     });
   });
 
+  describe('.name', () => {
+    it('should return a name of a tool that created a BlockNode', () => {
+      const blockNodeName = createBlockToolName('paragraph');
+
+      const blockNode = new BlockNode({
+        name: blockNodeName,
+        data: {},
+        parent: {} as EditorDocument,
+      });
+
+      expect(blockNode.name)
+        .toEqual(blockNodeName);
+    });
+  });
+
   describe('.updateTuneData()', () => {
     afterEach(() => {
       jest.clearAllMocks();

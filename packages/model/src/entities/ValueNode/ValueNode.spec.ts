@@ -45,4 +45,20 @@ describe('ValueNode', () => {
       expect(serializedValue).toHaveProperty(NODE_TYPE_HIDDEN_PROP, BlockChildType.Value);
     });
   });
+
+  describe('.value', () => {
+    it('should return the value associated with this value node', () => {
+      // Arrange
+      const longitude = 23.123;
+      const longitudeValueNode = new ValueNode({
+        value: longitude,
+      });
+
+      // Act
+      const serializedLongitude = longitudeValueNode.value;
+
+      // Assert
+      expect(serializedLongitude).toStrictEqual(longitude);
+    });
+  });
 });

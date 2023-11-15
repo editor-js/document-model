@@ -55,6 +55,38 @@ describe('EditorDocument', () => {
     });
   });
 
+  describe('.children', () => {
+    it('should return an array of the blocks of the document', () => {
+      // Arrange
+      const blocksCount = 3;
+      const document = new EditorDocument({
+        properties: {
+          readOnly: false,
+        },
+      });
+
+      for (let i = 0; i < blocksCount; i++) {
+        const blockData = {
+          name: 'header' as BlockToolName,
+        };
+
+        document.addBlock(blockData);
+      }
+
+      // Act
+      const actual = document.children;
+
+      // Assert
+      expect(actual)
+        .toHaveLength(blocksCount);
+
+      actual.forEach((block) => {
+        expect(block)
+          .toBeInstanceOf(BlockNode);
+      });
+    });
+  });
+
   describe('.addBlock()', () => {
     it('should add the block to the end of the document if index is not provided', () => {
       const document = createEditorDocumentWithSomeBlocks();

@@ -23,6 +23,7 @@ import { TextNode } from '../inline-fragments/index.js';
 import { get, has } from '../../utils/keypath.js';
 import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
 import { mapObject } from '../../utils/mapObject.js';
+import type { DeepReadonly } from '../../utils/DeepReadonly';
 
 /**
  * BlockNode class represents a node in a tree-like structure used to store and manipulate Blocks in an editor document.
@@ -88,7 +89,7 @@ export class BlockNode {
   /**
    * Allows accessing Block data
    */
-  public get data(): Readonly<BlockNodeData> {
+  public get data(): DeepReadonly<BlockNodeData> {
     return this.#data;
   }
 
