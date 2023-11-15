@@ -173,23 +173,7 @@ describe('EditorDocument', () => {
         .toThrowError('Index out of bounds');
     });
 
-    it('should emit BlockAddedEvent', () => {
-      const document = createEditorDocumentWithSomeBlocks();
-      const index = 1;
-      const blockData = {
-        name: 'header-1a2b' as BlockToolName,
-      };
-
-      const handler = jest.fn();
-
-      document.addEventListener(EventType.Changed, handler);
-
-      document.addBlock(blockData, index);
-
-      expect(handler).toBeCalledWith(expect.any(BlockAddedEvent));
-    });
-
-    it('should emit BlockAddedEvent with correct details', () => {
+    it('should emit BlockAddedEvent with block node data in details and block index', () => {
       const document = createEditorDocumentWithSomeBlocks();
       const index = 1;
       const blockData = {
@@ -211,6 +195,7 @@ describe('EditorDocument', () => {
 
       document.addBlock(blockData, index);
 
+      expect(event).toBeInstanceOf(BlockAddedEvent);
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Added,
         index: [ index ],
@@ -285,20 +270,7 @@ describe('EditorDocument', () => {
         .toThrowError('Index out of bounds');
     });
 
-    it('should emit BlockRemovedEvent', () => {
-      const document = createEditorDocumentWithSomeBlocks();
-      const index = 1;
-
-      const handler = jest.fn();
-
-      document.addEventListener(EventType.Changed, handler);
-
-      document.removeBlock(index);
-
-      expect(handler).toBeCalledWith(expect.any(BlockRemovedEvent));
-    });
-
-    it('should emit BlockRemovedEvent with correct details', () => {
+    it('should emit BlockRemovedEvent with block node data in details and block index', () => {
       const document = createEditorDocumentWithSomeBlocks();
       const index = 1;
 
@@ -316,6 +288,7 @@ describe('EditorDocument', () => {
       document.addEventListener(EventType.Changed, e => event = e as BlockRemovedEvent);
       document.removeBlock(index);
 
+      expect(event).toBeInstanceOf(BlockRemovedEvent);
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Removed,
         index: [ index ],
