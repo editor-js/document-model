@@ -50,4 +50,11 @@ export class BlockNode {
   public get serialized(): void {
     return;
   }
+
+  /**
+   * Mock method
+   */
+  public getFragments(): void {
+    return;
+  }
 }
