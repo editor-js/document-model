@@ -8,7 +8,7 @@ import type { EditorDocument } from '../EditorDocument';
 import type { ValueNodeConstructorParameters } from '../ValueNode';
 import type { InlineToolData, InlineToolName } from '../inline-fragments';
 import { TextNode } from '../inline-fragments/index.js';
-import type { BlockNodeDataSerialized } from './types';
+import type { BlockNodeData, BlockNodeDataSerialized } from './types';
 import { BlockChildType } from './types/index.js';
 import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
 import { TextAddedEvent, TuneModifiedEvent, ValueModifiedEvent } from '../../utils/EventBus/events/index.js';
@@ -1068,16 +1068,19 @@ describe('BlockNode', () => {
   describe('ValueNode events', () => {
     let node: BlockNode;
     let valueNode: ValueNode;
+    const parentDataKey = createDataKey('parent');
     const dataKey = createDataKey('value');
     const value = 'value';
     const newValue = 'new-value';
 
     beforeEach(() => {
       node = createBlockNodeWithData({
-        [dataKey]: value,
+        [parentDataKey]: {
+          [dataKey]: value,
+        },
       });
 
-      valueNode = node.data[dataKey] as ValueNode;
+      valueNode = (node.data[parentDataKey] as BlockNodeData)[dataKey] as ValueNode;
     });
 
     it('should re-emit events from the ValueNode', () => {
@@ -1119,7 +1122,7 @@ describe('BlockNode', () => {
 
       expect(event)
         .toHaveProperty('detail', expect.objectContaining({
-          index: [ `data@${dataKey}` ],
+          index: [ `data@${parentDataKey}.${dataKey}` ],
         }));
     });
 

@@ -117,9 +117,7 @@ export class EditorDocument extends EventBus {
 
     const [ blockNode ] = this.#children.splice(index, 1);
 
-    if (this.#isInitialized) {
-      this.dispatchEvent(new BlockRemovedEvent([ index ], blockNode.serialized));
-    }
+    this.dispatchEvent(new BlockRemovedEvent([ index ], blockNode.serialized));
   }
 
   /**
@@ -164,16 +162,14 @@ export class EditorDocument extends EventBus {
 
     this.#properties[name] = value;
 
-    if (this.#isInitialized) {
-      this.dispatchEvent(
-        new PropertyModifiedEvent(
-          [name, 'property'],
-          {
-            value,
-            previous: previousValue,
-          })
-      );
-    }
+    this.dispatchEvent(
+      new PropertyModifiedEvent(
+        [name, 'property'],
+        {
+          value,
+          previous: previousValue,
+        })
+    );
   }
 
   /**
@@ -286,6 +282,7 @@ export class EditorDocument extends EventBus {
   #listenAndBubbleBlockEvent(block: BlockNode, index: number): void {
     block.addEventListener(EventType.Changed, (event: Event) => {
       if (!(event instanceof BaseDocumentEvent)) {
+        // Stryker disable next-line StringLiteral
         console.error('EditorDocument: BlockNode should only emit BaseDocumentEvent objects');
 
         return;

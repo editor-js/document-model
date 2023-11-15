@@ -214,6 +214,14 @@ describe('EditorDocument', () => {
         data: blockData,
       }));
     });
+
+    it('should not emit BlockAddedEvent on initialization', () => {
+      const spy = jest.spyOn(EditorDocument.prototype, 'dispatchEvent');
+
+      createEditorDocumentWithSomeBlocks();
+
+      expect(spy).not.toHaveBeenCalled();
+    });
   });
 
   describe('.removeBlock()', () => {

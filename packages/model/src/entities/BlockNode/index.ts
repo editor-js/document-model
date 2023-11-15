@@ -323,6 +323,7 @@ export class BlockNode extends EventBus {
       EventType.Changed,
       (event: Event): void => {
         if (!(event instanceof BaseDocumentEvent)) {
+          // Stryker disable next-line StringLiteral
           console.error('BlockNode: TextNode should only emit BaseDocumentEvent');
 
           return;
@@ -349,6 +350,7 @@ export class BlockNode extends EventBus {
       EventType.Changed,
       (event: Event): void => {
         if (!(event instanceof BaseDocumentEvent)) {
+          // Stryker disable next-line StringLiteral
           console.error('BlockNode: ValueNode should only emit BaseDocumentEvent');
 
           return;
@@ -376,6 +378,7 @@ export class BlockNode extends EventBus {
       EventType.Changed,
       (event: Event): void => {
         if (!(event instanceof BaseDocumentEvent)) {
+          // Stryker disable next-line StringLiteral
           console.error('BlockNode: BlockTune should only emit BaseDocumentEvent');
 
           return;
