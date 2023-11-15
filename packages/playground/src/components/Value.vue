@@ -1,18 +1,10 @@
 <script setup lang="ts">
 import { Node, Value } from '@/components';
+import { isObject } from '@/utils/isObject';
 
 defineProps<{
   value: object | null | number | string | boolean | Array<unknown>;
 }>();
-
-/**
- * Returns whether the value is an object
- *
- * @param value - The value to check
- */
-function isObject(value: unknown): value is object {
-  return Array.isArray(value) === false && typeof value === 'object' && value !== null;
-}
 </script>
 
 <template>

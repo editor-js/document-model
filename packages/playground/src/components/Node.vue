@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Indent, Value } from '@/components';
+import { isObject } from '@/utils/isObject';
 import { computed } from 'vue';
 
 const props = defineProps<{
@@ -62,15 +63,6 @@ const properties = computed<PropsList<typeof props.node>>(() => {
     ...prototypeProperties,
   ];
 });
-
-/**
- * Returns whether the value is an object
- *
- * @param value - The value to check
- */
-function isObject(value: unknown): value is object {
-  return Array.isArray(value) === false && typeof value === 'object' && value !== null;
-}
 </script>
 
 <template>
