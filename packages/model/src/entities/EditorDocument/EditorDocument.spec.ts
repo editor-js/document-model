@@ -872,6 +872,10 @@ describe('EditorDocument', () => {
   });
 
   describe('.serialized', () => {
+    beforeEach(() => {
+      jest.restoreAllMocks();
+    });
+
     it('should call .serialized property of the BlockNodes', () => {
       const document = createEditorDocumentWithSomeBlocks();
       const spy = jest.spyOn(BlockNode.prototype, 'serialized', 'get');
