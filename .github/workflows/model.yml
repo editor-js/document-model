@@ -52,6 +52,7 @@ jobs:
               - '!src/**/*.spec.ts'
               - '!src/**/__mocks__/**'
           separator: "','"
+          path: packages/model
 
       - name: Run mutation tests
         if: steps.changed-files.outputs.src_any_changed == 'true'

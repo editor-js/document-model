@@ -73,6 +73,22 @@ export class EditorDocument {
   }
 
   /**
+   * Moves a BlockNode from one index to another
+   *
+   * @param from - The index of the BlockNode to move
+   * @param to - The index to move the BlockNode to
+   * @throws Error if the index is out of bounds
+   */
+  public moveBlock(from: number, to: number): void {
+    this.#checkIndexOutOfBounds(from);
+    this.#checkIndexOutOfBounds(to);
+
+    const blockToMove = this.#children.splice(from, 1)[0];
+
+    this.#children.splice(to, 0, blockToMove);
+  }
+
+  /**
    * Removes a BlockNode from the EditorDocument at the specified index.
    *
    * @param index - The index of the BlockNode to remove
