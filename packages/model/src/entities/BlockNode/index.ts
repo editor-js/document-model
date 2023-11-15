@@ -35,6 +35,7 @@ import {
 import type { Constructor } from '../../utils/types.js';
 import type { TextNodeEvents } from '../../utils/EventBus/types/EventMap';
 import type { TuneIndex } from '../../utils/EventBus/types/indexing.js';
+import { BaseDocumentEvent } from '../../utils/EventBus/events/BaseEvent.js';
 
 /**
  * BlockNode class represents a node in a tree-like structure used to store and manipulate Blocks in an editor document.
@@ -96,6 +97,21 @@ export class BlockNode extends EventBus {
     );
 
     this.#initialize(data);
+  }
+
+  /**
+   * Getter to access BlockNode data
+   */
+  public get data(): Readonly<BlockNodeData> {
+    return this.#data;
+  }
+
+
+  /**
+   * Getter to access BlockNode data
+   */
+  public get tunes(): Readonly<Record<string, BlockTune>> {
+    return this.#tunes;
   }
 
   /**
@@ -272,7 +288,11 @@ export class BlockNode extends EventBus {
         return mapObject(value as BlockNodeDataSerialized, (v, k) => mapSerializedToNodes(v, `${key}.${k}`));
       }
 
-      return new ValueNode({ value });
+      const node =  new ValueNode({ value });
+
+      this.#listenAndBubbleValueNodeEvent(node, key as DataKey);
+
+      return node;
     };
 
     this.#data = mapObject(data, mapSerializedToNodes);
@@ -304,7 +324,13 @@ export class BlockNode extends EventBus {
   #listenAndBubbleTextNodeEvent(node: TextNode, key: DataKey): void {
     node.addEventListener(
       EventType.Changed,
-      (event: ModelEvents): void => {
+      (event: Event): void => {
+        if (!(event instanceof BaseDocumentEvent)) {
+          console.error('BlockNode: TextNode should only emit BaseDocumentEvent');
+
+          return;
+        }
+
         this.dispatchEvent(
           new (event.constructor as Constructor<TextNodeEvents>)(
             [...event.detail.index, `data@${key}`],
@@ -324,9 +350,11 @@ export class BlockNode extends EventBus {
   #listenAndBubbleValueNodeEvent(node: ValueNode, key: DataKey): void {
     node.addEventListener(
       EventType.Changed,
-      (event: ModelEvents): void => {
-        if (!(event instanceof ValueModifiedEvent)) {
-          throw new Error('BlockNode: ValueNode should only emit ValueModifiedEvent');
+      (event: Event): void => {
+        if (!(event instanceof BaseDocumentEvent)) {
+          console.error('BlockNode: ValueNode should only emit BaseDocumentEvent');
+
+          return;
         }
 
 
@@ -349,9 +377,11 @@ export class BlockNode extends EventBus {
   #listenAndBubbleTuneEvent(tune: BlockTune, name: BlockTuneName): void {
     tune.addEventListener(
       EventType.Changed,
-      (event: ModelEvents): void => {
-        if (!(event instanceof TuneModifiedEvent)) {
-          throw new Error('BlockNode: BlockTune should only emit TuneModifiedEvent');
+      (event: Event): void => {
+        if (!(event instanceof BaseDocumentEvent)) {
+          console.error('BlockNode: BlockTune should only emit BaseDocumentEvent');
+
+          return;
         }
 
         this.dispatchEvent(

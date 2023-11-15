@@ -4,8 +4,14 @@ import { BlockNode } from '../BlockNode/index.js';
 import type { BlockTuneName } from '../BlockTune';
 import type { InlineToolData, InlineToolName } from '../inline-fragments';
 import { EventType } from '../../utils/EventBus/types/EventType.js';
-import { BlockAddedEvent, BlockRemovedEvent, PropertyModifiedEvent } from '../../utils/EventBus/events/index.js';
+import {
+  BlockAddedEvent,
+  BlockRemovedEvent,
+  PropertyModifiedEvent,
+  TuneModifiedEvent
+} from '../../utils/EventBus/events/index.js';
 import { EventAction } from '../../utils/EventBus/types/EventAction.js';
+import { BlockTune, createBlockTuneName } from '../BlockTune';
 
 jest.mock('../BlockNode');
 
@@ -898,6 +904,73 @@ describe('EditorDocument', () => {
 
       expect(document.serialized)
         .toHaveProperty('properties', properties);
+    });
+  });
+
+  describe('BlockNode events', () => {
+    let document: EditorDocument;
+    let blockNode: BlockNode;
+    const index = 0;
+
+    beforeEach(() => {
+      document = createEditorDocumentWithSomeBlocks();
+
+      blockNode = document.getBlock(index);
+    });
+
+    it('should re-emit events from the BlockNode', () => {
+      const handler = jest.fn();
+
+      document.addEventListener(EventType.Changed, handler);
+
+      blockNode.dispatchEvent(
+        new TuneModifiedEvent(
+          ['value', `tune@${'tune' as BlockTuneName}`],
+          {
+            value: 'value',
+            previous: 'previous',
+          }
+        )
+      );
+
+      expect(handler)
+        .toHaveBeenCalledWith(expect.any(TuneModifiedEvent));
+    });
+
+    it('should re-emit events from the BlockNode with updated index', () => {
+      let event: TuneModifiedEvent | null = null;
+      const handler = (e: Event): void => {
+        event = e as TuneModifiedEvent;
+      };
+
+      document.addEventListener(EventType.Changed, handler);
+
+      blockNode.dispatchEvent(
+        new TuneModifiedEvent(
+          ['value', `tune@${'tune' as BlockTuneName}`],
+          {
+            value: 'value',
+            previous: 'previous',
+          }
+        )
+      );
+
+      expect(event)
+        .toHaveProperty('detail', expect.objectContaining({
+          index: ['value', `tune@${'tune' as BlockTuneName}`, index],
+        }));
+    });
+
+    it('should not re-emit an error if ValueNode emits not a BaseDocumentEvent', () => {
+      const handler = jest.fn();
+
+      document.addEventListener(EventType.Changed, handler);
+
+      blockNode.dispatchEvent(new Event(EventType.Changed));
+
+      expect(handler)
+        .not
+        .toHaveBeenCalled();
     });
   });
 });

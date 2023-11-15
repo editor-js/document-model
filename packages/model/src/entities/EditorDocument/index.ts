@@ -10,7 +10,6 @@ import { EventBus } from '../../utils/EventBus/EventBus.js';
 import { EventType } from '../../utils/EventBus/types/EventType.js';
 import type {
   BlockTuneEvents,
-  ModelEvents,
   TextNodeEvents,
   ValueNodeEvents
 } from '../../utils/EventBus/types/EventMap';
@@ -20,6 +19,7 @@ import {
   PropertyModifiedEvent
 } from '../../utils/EventBus/events/index.js';
 import type { Constructor } from '../../utils/types.js';
+import { BaseDocumentEvent } from '../../utils/EventBus/events/BaseEvent.js';
 
 /**
  * EditorDocument class represents the top-level container for a tree-like structure of BlockNodes in an editor document.
@@ -284,7 +284,13 @@ export class EditorDocument extends EventBus {
    * @param index - index of the BlockNode
    */
   #listenAndBubbleBlockEvent(block: BlockNode, index: number): void {
-    block.addEventListener(EventType.Changed, (event: ModelEvents) => {
+    block.addEventListener(EventType.Changed, (event: Event) => {
+      if (!(event instanceof BaseDocumentEvent)) {
+        console.error('EditorDocument: BlockNode should only emit BaseDocumentEvent objects');
+
+        return;
+      }
+
       this.dispatchEvent(
         new (event.constructor as Constructor<TextNodeEvents | ValueNodeEvents | BlockTuneEvents>)(
           [...event.detail.index, index],
