@@ -31,8 +31,7 @@ function getClassProperties<T extends object>(object: T): PropsList<T> {
   const descriptors = Object.getOwnPropertyDescriptors(object);
 
   return Object.entries(descriptors)
-    // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
-    .filter(([_name, descriptor]) => {
+    .filter(([, descriptor]) => {
       return descriptor.get !== undefined;
     })
     .map(([ name ]) => {
