@@ -65,7 +65,7 @@ export class FormattingInlineNode extends ParentInlineNode implements InlineNode
 
   /**
    * Returns inline fragments for node from the specified character range
-   * Always return fragments with whole range even if it's not fully covered by the passed range
+   * Always return full fragments even if one is not fully covered by the passed range
    *
    * @param [start] - start char index of the range, by default 0
    * @param [end] - end char index of the range, by default length of the text value
