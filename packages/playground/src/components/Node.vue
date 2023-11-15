@@ -22,6 +22,22 @@ const prototype = computed(() => {
 type PropsList<Obj> = Array<keyof Obj>
 
 /**
+ * Returns the properties of a class instance
+ * 
+ * @param object - The object to get the properties of
+ */
+function getClassProperties<T extends object>(object: T): PropsList<T> {
+  const descriptors = Object.getOwnPropertyDescriptors(object);
+
+  return Object.entries(descriptors).filter(([name, descriptor]) => {
+    return descriptor.get !== undefined;
+  })
+    .map(([ name ]) => {
+      return name as keyof typeof props.node;
+    });
+}
+
+/**
  * Returns the properties of an object
  *
  * @param object - The object to get the properties of
@@ -38,14 +54,13 @@ const properties = computed<PropsList<typeof props.node>>(() => {
    * For some class instances we need to get the properties from the prototype
    */
   const object = prototype.value;
-  const descriptors = Object.getOwnPropertyDescriptors(object);
+  const ownProperties = getClassProperties(object);
+  const prototypeProperties = object.__proto__.constructor.name !== 'Object' ? getClassProperties(object.__proto__) : [];
 
-  return Object.entries(descriptors).filter(([name, descriptor]) => {
-    return descriptor.get !== undefined;
-  })
-    .map(([ name ]) => {
-      return name as keyof typeof props.node;
-    });
+  return [
+    ...ownProperties,
+    ...prototypeProperties,
+  ];
 });
 
 /**
@@ -78,7 +93,7 @@ function isObject(value: unknown): value is object {
             :value="node[property]"
           />
           <template v-else>
-            ꩜ {{ node[property].constructor.name }}
+            ꩜ {{ node[property].constructor.name || node[property].__proto__.constructor.name }}
           </template>
         </Indent>
       </Indent>

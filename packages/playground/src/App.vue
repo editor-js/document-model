@@ -17,7 +17,31 @@ const document = new EditorDocument({
       // id: 'b6ji-DvaKb',
       name: 'paragraph',
       data: {
-        text: 'Hey. Meet the new Editor. On this page you can see it in action — try to edit this text. Source code of the page contains the example of connection and configuration.',
+        text: {
+          $t: 't',
+          value: 'Hey. Meet the new Editor. On this page you can see it in action — try to edit this text. Source code of the page contains the example of connection and configuration.',
+          fragments: [
+            {
+              range: [18, 24],
+              tool: 'link',
+              data: {
+                href: 'https://editorjs.io',
+              },
+            },
+            {
+              range: [26, 40],
+              tool: 'bold',
+              data: {
+              },
+            },
+            {
+              range: [34, 38],
+              tool: 'italic',
+              data: {
+              },
+            },
+          ],
+        },
       },
     },
     {
