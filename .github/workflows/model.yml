@@ -48,10 +48,11 @@ jobs:
         with:
           files_yaml: |
             src:
-              - 'packages/model/src/**/*.ts'
-              - '!packages/model/src/**/*.spec.ts'
-              - '!packages/model/src/**/__mocks__/**'
+              - 'src/**/*.ts'
+              - '!src/**/*.spec.ts'
+              - '!src/**/__mocks__/**'
           separator: "','"
+          path: packages/model
 
       - name: Run mutation tests
         if: steps.changed-files.outputs.src_any_changed == 'true'
