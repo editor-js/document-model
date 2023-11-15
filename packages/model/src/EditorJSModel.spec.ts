@@ -1,7 +1,4 @@
 import { EditorJSModel } from './EditorJSModel.js';
-import { BlockNode, BlockTuneName, EditorDocument } from './entities/index.js';
-import { EventType } from './utils/EventBus/types/EventType.js';
-import { TuneModifiedEvent } from './utils/EventBus/events/index.js';
 
 describe('EditorJSModel', () => {
   it('should expose only the public API', () => {
