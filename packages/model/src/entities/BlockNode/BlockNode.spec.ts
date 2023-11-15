@@ -387,6 +387,37 @@ describe('BlockNode', () => {
     });
   });
 
+  describe('.tunes', () => {
+    it('should return an object with tunes associated with the BlockNode', () => {
+      const blockTunesNames = [
+        'align' as BlockTuneName,
+        'font-size' as BlockTuneName,
+        'font-weight' as BlockTuneName,
+      ];
+
+      const blockTunes = blockTunesNames.reduce((acc, name) => ({
+        ...acc,
+        [name]: {},
+      }), {});
+
+      const blockNode = new BlockNode({
+        name: createBlockToolName('paragraph'),
+        data: {},
+        parent: {} as EditorDocument,
+        tunes: blockTunes,
+      });;
+
+      const tunes = Object.entries(blockNode.tunes);
+
+      tunes.forEach(([name, tune]) => {
+        expect(name)
+          .toEqual(createBlockTuneName(name));
+        expect(tune)
+          .toBeInstanceOf(BlockTune);
+      });
+    });
+  });
+
   describe('.updateTuneData()', () => {
     afterEach(() => {
       jest.clearAllMocks();

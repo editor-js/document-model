@@ -119,6 +119,13 @@ export class BlockNode extends EventBus {
   }
 
   /**
+   * Getter to access BlockNode data
+   */
+  public get tunes(): Readonly<Record<string, BlockTune>> {
+    return this.#tunes;
+  }
+
+  /**
    * Returns serialized object representing the BlockNode
    */
   public get serialized(): BlockNodeSerialized {
