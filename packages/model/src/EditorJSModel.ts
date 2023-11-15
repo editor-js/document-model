@@ -1,11 +1,19 @@
 // Stryker disable all -- we don't count mutation test coverage fot this file as it just proxy calls to EditorDocument
 /* istanbul ignore file -- we don't count test coverage fot this file as it just proxy calls to EditorDocument */
 import { EditorDocument } from './entities/index.js';
+import { EventBus } from './utils/EventBus/EventBus.js';
+import { EventType } from './utils/EventBus/types/EventType.js';
+import type { ModelEvents } from './utils/EventBus/types/EventMap.js';
+import { BaseDocumentEvent } from './utils/EventBus/events/BaseEvent.js';
+import type { Constructor } from './utils/types.js';
 
 /**
  * EditorJSModel is a wrapper around EditorDocument that prevent access to  internal structures
  */
-export class EditorJSModel {
+export class EditorJSModel extends EventBus {
+  /**
+   * EditorDocument instance
+   */
   #document: EditorDocument;
 
   /**
@@ -42,7 +50,11 @@ export class EditorJSModel {
    * @param [parameters.toolsRegistry] - ToolsRegistry instance for the current document. Defaults to a new ToolsRegistry instance.
    */
   constructor(...parameters: ConstructorParameters<typeof EditorDocument>) {
+    super();
+
     this.#document = new EditorDocument(...parameters);
+
+    this.#listenAndBubbleDocumentEvents(this.#document);
   }
 
   /**
@@ -172,5 +184,31 @@ export class EditorJSModel {
    */
   public unformat(...parameters: Parameters<EditorDocument['unformat']>): ReturnType<EditorDocument['unformat']> {
     return this.#document.unformat(...parameters);
+  }
+
+  /**
+   * Listens to BlockNode events and bubbles re-emits them from the EditorJSModel instance
+   *
+   * @param document - EditorDocument instance to listen to
+   */
+  #listenAndBubbleDocumentEvents(document: EditorDocument): void {
+    document.addEventListener(
+      EventType.Changed,
+      (event: Event) => {
+        if (!(event instanceof BaseDocumentEvent)) {
+          console.error('EditorJSModel: EditorDocument should only emit BaseDocumentEvent objects');
+
+          return;
+        }
+
+        /**
+         * Here could be any logic to filter EditorDocument events;
+         */
+
+        this.dispatchEvent(
+          new (event.constructor as Constructor<ModelEvents>)(event.detail.index, event.detail.data)
+        );
+      }
+    );
   }
 }
