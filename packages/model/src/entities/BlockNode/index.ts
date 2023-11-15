@@ -88,7 +88,7 @@ export class BlockNode {
   /**
    * Allows accessing Block data
    */
-  public get data(): BlockNodeData {
+  public get data(): Readonly<BlockNodeData> {
     return this.#data;
   }
 

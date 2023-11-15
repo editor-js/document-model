@@ -48,7 +48,7 @@ export class ValueNode<ValueType = unknown> {
   /**
    * Returns the data associated with this value node.
    */
-  public get value(): ValueType {
+  public get value(): Readonly<ValueType> {
     return this.#value;
   }
 }

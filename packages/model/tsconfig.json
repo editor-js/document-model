@@ -9,7 +9,8 @@
     "skipLibCheck": true,
     "experimentalDecorators": true,
     "types": ["jest"],
-    "composite": true
+    "composite": true,
+    "rootDir": "src/"
   },
   "include": ["src/**/*"],
   "exclude": [
