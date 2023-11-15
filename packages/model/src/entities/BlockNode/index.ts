@@ -366,7 +366,7 @@ export class BlockNode extends EventBus {
         this.dispatchEvent(
           new TuneModifiedEvent(
             `tune@${name}:${event.detail.index}`,
-            event.detail.data,
+            event.detail.data
           )
         );
       }

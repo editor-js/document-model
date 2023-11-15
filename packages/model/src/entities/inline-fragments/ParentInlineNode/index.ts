@@ -5,7 +5,12 @@ import type { ChildNode } from '../mixins/ChildNode';
 import type { InlineToolData, InlineToolName } from '../FormattingInlineNode';
 import { TextInlineNode } from '../index.js';
 import { EventBus } from '../../../utils/EventBus/EventBus.js';
-import { TextAddedEvent, TextRemovedEvent, TextFormattedEvent, TextUnformattedEvent } from '../../../utils/EventBus/events/index.js';
+import {
+  TextAddedEvent,
+  TextRemovedEvent,
+  TextFormattedEvent,
+  TextUnformattedEvent
+} from '../../../utils/EventBus/events/index.js';
 
 /**
  * We need to extend ParentInlineNode interface with ParentNode ones to use the methods from mixins
@@ -184,7 +189,15 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
     this.normalize();
 
-    this.dispatchEvent(new TextFormattedEvent(`${start}:${end}`, { tool, data }));
+    this.dispatchEvent(
+      new TextFormattedEvent(
+        `${start}:${end}`,
+        {
+          tool,
+          data,
+        }
+      )
+    );
 
     return newNodes;
   }
