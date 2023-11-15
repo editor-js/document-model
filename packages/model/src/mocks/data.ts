@@ -1,3 +1,4 @@
+// Stryker disable all
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import type { EditorDocumentSerialized } from '../entities/EditorDocument/types/index.js';
 
