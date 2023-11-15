@@ -119,7 +119,7 @@ describe('BlockNode integration tests', () => {
         },
       });
 
-      const fragments= node.getFragments(
+      const fragments = node.getFragments(
         dataKey,
         testRangeStart,
         testRangeEnd,
