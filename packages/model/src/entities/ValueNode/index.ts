@@ -37,7 +37,12 @@ export class ValueNode<ValueType = unknown> extends EventBus {
 
     this.#value = value;
 
-    this.dispatchEvent(new ValueModifiedEvent('', this.#value, previousValue));
+    this.dispatchEvent(
+      new ValueModifiedEvent('', {
+        value: this.#value,
+        previous: previousValue,
+      })
+    );
   }
 
   /**

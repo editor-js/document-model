@@ -17,18 +17,14 @@ export class TuneModifiedEvent<T = unknown> extends CustomEvent<TuneModifiedEven
    * TuneModifiedEvent class constructor
    *
    * @param index - index of the modified tune in the document
-   * @param value - new tune value
-   * @param previous - previous tune value
+   * @param data - event data with new and previous values
    */
-  constructor(index: Index, value: T, previous: T) {
+  constructor(index: Index, data: ModifiedEventData<T>) {
     super(EventType.Changed, {
       detail: {
         action: EventAction.Modified,
         index,
-        data: {
-          value,
-          previous,
-        },
+        data,
       },
     });
   }

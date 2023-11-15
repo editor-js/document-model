@@ -8,7 +8,7 @@ import type { TextNodeInDocumentIndex, TextNodeInBlockIndex } from '../types/ind
 type Index = TextRangeIndex | TextNodeInBlockIndex | TextNodeInDocumentIndex;
 
 
-interface TextFormattedEventPayload extends EventPayloadBase<Index, EventAction.Removed> {
+interface TextFormattedEventPayload extends EventPayloadBase<Index, EventAction.Modified> {
   data: {
     tool: InlineToolName,
     data?: InlineToolData,
@@ -23,26 +23,14 @@ export class TextFormattedEvent extends CustomEvent<TextFormattedEventPayload> {
    * TextFormattedEvent class constructor
    *
    * @param index - index of formatted fragment in the document
-   * @param tool - name of the InlineTool that was used to format the fragment
    * @param data - data of the InlineTool that was used to format the fragment. Optional
    */
-  constructor(index: Index, tool: InlineToolName, data?: InlineToolData) {
-    const eventData: TextFormattedEventPayload['data'] = {
-      tool,
-    };
-
-    /**
-     * Add data if it is passed
-     */
-    if (data) {
-      eventData.data = data;
-    }
-
+  constructor(index: Index, data: TextFormattedEventPayload['data']) {
     super(EventType.Changed, {
       detail: {
-        action: EventAction.Removed,
+        action: EventAction.Modified,
         index,
-        data: eventData,
+        data,
       },
     });
   }

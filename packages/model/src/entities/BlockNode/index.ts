@@ -313,9 +313,13 @@ export class BlockNode extends EventBus {
           throw new Error('BlockNode: TextNode should only emit TextNodeEvents');
         }
 
-        event.detail.index = `data@${key}:${event.detail.index as TextRangeIndex}`;
-
-        this.dispatchEvent(event);
+        this.dispatchEvent(
+          // @ts-expect-error -- no way to infer the type of the event
+          new event.constructor(
+            `data@${key}:${event.detail.index as TextRangeIndex}`,
+            event.detail.data
+          )
+        );
       }
     );
   }
@@ -334,9 +338,13 @@ export class BlockNode extends EventBus {
           throw new Error('BlockNode: ValueNode should only emit ValueModifiedEvent');
         }
 
-        event.detail.index = `data@${key}`;
 
-        this.dispatchEvent(event);
+        this.dispatchEvent(
+          new ValueModifiedEvent(
+            `data@${key}`,
+            event.detail.data
+          )
+        );
       }
     );
   }
@@ -355,9 +363,12 @@ export class BlockNode extends EventBus {
           throw new Error('BlockNode: BlockTune should only emit TuneModifiedEvent');
         }
 
-        event.detail.index = `tune@${name}:${event.detail.index}`;
-
-        this.dispatchEvent(event);
+        this.dispatchEvent(
+          new TuneModifiedEvent(
+            `tune@${name}:${event.detail.index}`,
+            event.detail.data,
+          )
+        );
       }
     );
   }

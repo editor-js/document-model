@@ -3,6 +3,9 @@ import type { BlockToolName, DataKey } from '../BlockNode';
 import { BlockNode } from '../BlockNode/index.js';
 import type { BlockTuneName } from '../BlockTune';
 import type { InlineToolData, InlineToolName } from '../inline-fragments';
+import { EventType } from '../../utils/EventBus/types/EventType.js';
+import { BlockAddedEvent, BlockRemovedEvent, PropertyModifiedEvent } from '../../utils/EventBus/events/index.js';
+import { EventAction } from '../../utils/EventBus/types/EventAction.js';
 
 jest.mock('../BlockNode');
 
@@ -11,16 +14,18 @@ jest.mock('../BlockNode');
  */
 function createEditorDocumentWithSomeBlocks(): EditorDocument {
   const countOfBlocks = 3;
-  const document = new EditorDocument({});
 
-  new Array(countOfBlocks).fill(undefined)
-    .forEach(() => {
-      document.addBlock({
-        name: 'header' as BlockToolName,
-      });
-    });
-
-  return document;
+  return new EditorDocument({
+    properties: {
+      readOnly: false,
+    },
+    blocks:
+      new Array(countOfBlocks).fill(undefined)
+        .map(() => ({
+          name: 'header' as BlockToolName,
+          data: {},
+        })),
+  });
 }
 
 describe('EditorDocument', () => {
@@ -162,6 +167,48 @@ describe('EditorDocument', () => {
       expect(action)
         .toThrowError('Index out of bounds');
     });
+
+    it('should emit BlockAddedEvent', () => {
+      const document = createEditorDocumentWithSomeBlocks();
+      const index = 1;
+      const blockData = {
+        name: 'header-1a2b' as BlockToolName,
+      };
+
+      const handler = jest.fn();
+
+      document.addEventListener(EventType.Changed, handler);
+
+      document.addBlock(blockData, index);
+
+      expect(handler).toBeCalledWith(expect.any(BlockAddedEvent));
+    });
+
+    it('should emit BlockAddedEvent with correct details', () => {
+      const document = createEditorDocumentWithSomeBlocks();
+      const index = 1;
+      const blockData = {
+        name: 'header-1a2b' as BlockToolName,
+        data: {
+          level: 1,
+        },
+      };
+
+
+      let event: BlockAddedEvent | null = null;
+
+      jest.spyOn(BlockNode.prototype, 'serialized', 'get').mockImplementation(() => blockData);
+
+      document.addEventListener(EventType.Changed, e => event = e as BlockAddedEvent);
+
+      document.addBlock(blockData, index);
+
+      expect(event).toHaveProperty('detail', expect.objectContaining({
+        action: EventAction.Added,
+        index,
+        data: blockData,
+      }));
+    });
   });
 
   describe('.removeBlock()', () => {
@@ -228,6 +275,44 @@ describe('EditorDocument', () => {
       // Assert
       expect(action)
         .toThrowError('Index out of bounds');
+    });
+
+    it('should emit BlockRemovedEvent', () => {
+      const document = createEditorDocumentWithSomeBlocks();
+      const index = 1;
+
+      const handler = jest.fn();
+
+      document.addEventListener(EventType.Changed, handler);
+
+      document.removeBlock(index);
+
+      expect(handler).toBeCalledWith(expect.any(BlockRemovedEvent));
+    });
+
+    it('should emit BlockRemovedEvent with correct details', () => {
+      const document = createEditorDocumentWithSomeBlocks();
+      const index = 1;
+
+      const blockData  = {
+        name: 'header' as BlockToolName,
+        data: {
+          level: 1,
+        },
+      };
+
+      jest.spyOn(BlockNode.prototype, 'serialized', 'get').mockImplementation(() => blockData);
+
+      let event: BlockRemovedEvent | null = null;
+
+      document.addEventListener(EventType.Changed, e => event = e as BlockRemovedEvent);
+      document.removeBlock(index);
+
+      expect(event).toHaveProperty('detail', expect.objectContaining({
+        action: EventAction.Removed,
+        index,
+        data: blockData,
+      }));
     });
   });
 
@@ -353,6 +438,41 @@ describe('EditorDocument', () => {
 
       expect(document.properties[propertyName])
         .toBe(expectedValue);
+    });
+
+    it('should emit PropertyModifiedEvent', () => {
+      const document = createEditorDocumentWithSomeBlocks();
+      const propertyName = 'readOnly';
+      const value = true;
+
+      const handler = jest.fn();
+
+      document.addEventListener(EventType.Changed, handler);
+
+      document.setProperty(propertyName, value);
+
+      expect(handler).toBeCalledWith(expect.any(PropertyModifiedEvent));
+    });
+
+    it('should emit PropertyModifiedEvent with correct details', () => {
+      const document = createEditorDocumentWithSomeBlocks();
+      const propertyName = 'readOnly';
+      const value = true;
+      const previous = document.getProperty(propertyName);
+
+      let event: PropertyModifiedEvent | null = null;
+
+      document.addEventListener(EventType.Changed, e => event = e as PropertyModifiedEvent);
+      document.setProperty(propertyName, value);
+
+      expect(event).toHaveProperty('detail', expect.objectContaining({
+        action: EventAction.Modified,
+        index: `property@${propertyName}`,
+        data: {
+          value,
+          previous,
+        },
+      }));
     });
   });
 
@@ -758,12 +878,13 @@ describe('EditorDocument', () => {
 
   describe('.serialized', () => {
     it('should call .serialized property of the BlockNodes', () => {
-      const spy  = jest.spyOn(BlockNode.prototype, 'serialized', 'get');
+      const spy = jest.spyOn(BlockNode.prototype, 'serialized', 'get');
       const document = createEditorDocumentWithSomeBlocks();
 
       document.serialized;
 
-      expect(spy).toBeCalledTimes(document.length);
+      expect(spy)
+        .toBeCalledTimes(document.length);
     });
 
 
@@ -775,7 +896,8 @@ describe('EditorDocument', () => {
         properties,
       });
 
-      expect(document.serialized).toHaveProperty('properties', properties);
+      expect(document.serialized)
+        .toHaveProperty('properties', properties);
     });
   });
 });

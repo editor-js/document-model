@@ -2,6 +2,15 @@ import type { InlineToolName, ChildNode } from '../index';
 import { TextInlineNode, FormattingInlineNode } from '../index.js';
 import { ParentInlineNode } from '../ParentInlineNode/index.js';
 import type { InlineNode } from '../InlineNode';
+import { EventType } from '../../../utils/EventBus/types/EventType.js';
+import {
+  TextAddedEvent,
+  TextFormattedEvent,
+  TextRemovedEvent,
+  TextUnformattedEvent
+} from '../../../utils/EventBus/events/index.js';
+import { EventAction } from '../../../utils/EventBus/types/EventAction.js';
+import { createInlineToolData } from '../index.js';
 
 jest.mock('../TextInlineNode');
 jest.mock('../FormattingInlineNode');
@@ -208,6 +217,30 @@ describe('ParentInlineNode', () => {
 
       expect(spy).toBeCalled();
     });
+
+    it('should emit TextAddedEvent', () => {
+      const handler = jest.fn();
+
+      node.addEventListener(EventType.Changed, handler);
+
+      node.insertText(newText, index);
+
+      expect(handler).toBeCalledWith(expect.any(TextAddedEvent));
+    });
+
+    it('should emit TextAddedEvent with correct details', () => {
+      let event: TextAddedEvent | null = null;
+
+      node.addEventListener(EventType.Changed, e => event = e as TextAddedEvent);
+
+      node.insertText(newText, index);
+
+      expect(event).toHaveProperty('detail', expect.objectContaining({
+        action: EventAction.Added,
+        index: `${index}:${index + newText.length}`,
+        data: newText,
+      }));
+    });
   });
 
   describe('.removeText()', () => {
@@ -274,6 +307,29 @@ describe('ParentInlineNode', () => {
       node.removeText();
 
       expect(spy).toBeCalled();
+    });
+
+    it('should emit TextRemovedEvent', () => {
+      const handler = jest.fn();
+
+      node.addEventListener(EventType.Changed, handler);
+
+      node.removeText(start, end);
+
+      expect(handler).toBeCalledWith(expect.any(TextRemovedEvent));
+    });
+
+    it('should emit TextRemovedEvent with correct details', () => {
+      let event: TextRemovedEvent | null = null;
+
+      node.addEventListener(EventType.Changed, e => event = e as TextRemovedEvent);
+
+      node.removeText(start, end);
+
+      expect(event).toHaveProperty('detail', expect.objectContaining({
+        action: EventAction.Removed,
+        index: `${start}:${end}`,
+      }));
     });
   });
 
@@ -436,6 +492,36 @@ describe('ParentInlineNode', () => {
 
       expect(spy).toBeCalled();
     });
+
+    it('should emit TextFormattedEvent', () => {
+      const handler = jest.fn();
+
+      node.addEventListener(EventType.Changed, handler);
+
+      node.format(tool, start, end);
+
+      expect(handler).toBeCalledWith(expect.any(TextFormattedEvent));
+    });
+
+    it('should emit TextFormattedEvent with correct details', () => {
+      let event: TextUnformattedEvent | null = null;
+      const data = createInlineToolData({
+        url: 'https://editorjs.io',
+      });
+
+      node.addEventListener(EventType.Changed, e => event = e as TextUnformattedEvent);
+
+      node.format(tool, start, end, data);
+
+      expect(event).toHaveProperty('detail', expect.objectContaining({
+        action: EventAction.Modified,
+        index: `${start}:${end}`,
+        data: {
+          tool,
+          data,
+        },
+      }));
+    });
   });
 
   describe('.unformat()', () => {
@@ -481,6 +567,32 @@ describe('ParentInlineNode', () => {
       node.unformat(tool, start, end);
 
       expect(spy).toBeCalled();
+    });
+
+    it('should emit TextUnformattedEvent', () => {
+      const handler = jest.fn();
+
+      node.addEventListener(EventType.Changed, handler);
+
+      node.unformat(tool, start, end);
+
+      expect(handler).toBeCalledWith(expect.any(TextUnformattedEvent));
+    });
+
+    it('should emit TextUnformattedEvent with correct details', () => {
+      let event: TextAddedEvent | null = null;
+
+      node.addEventListener(EventType.Changed, e => event = e as TextAddedEvent);
+
+      node.unformat(tool, start, end);
+
+      expect(event).toHaveProperty('detail', expect.objectContaining({
+        action: EventAction.Removed,
+        index: `${start}:${end}`,
+        data: {
+          tool,
+        },
+      }));
     });
   });
 

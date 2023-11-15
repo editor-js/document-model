@@ -21,26 +21,14 @@ export class TextUnformattedEvent extends CustomEvent<TextUnformattedEventPayloa
    * TextUnformattedEvent class constructor
    *
    * @param index - index of formatted fragment in the document
-   * @param tool - name of the InlineTool that was used to format the fragment
-   * @param [data] - data of the InlineTool that was used to format the fragment. Optional
+   * @param data - data of the InlineTool that was used to format the fragment. Optional
    */
-  constructor(index: Index, tool: InlineToolName, data?: InlineToolData) {
-    const eventData: TextUnformattedEventPayload['data'] = {
-      tool,
-    };
-
-    /**
-     * Add data if it is passed
-     */
-    if (data) {
-      eventData.data = data;
-    }
-
+  constructor(index: Index, data: TextUnformattedEventPayload['data']) {
     super(EventType.Changed, {
       detail: {
         action: EventAction.Removed,
         index,
-        data: eventData,
+        data,
       },
     });
   }

@@ -1,6 +1,9 @@
 import { ValueNode } from './index.js';
 import { BlockChildType } from '../BlockNode/types/index.js';
 import { NODE_TYPE_HIDDEN_PROP } from '../BlockNode/consts.js';
+import { EventType } from '../../utils/EventBus/types/EventType.js';
+import { ValueModifiedEvent } from '../../utils/EventBus/events/index.js';
+import { EventAction } from '../../utils/EventBus/types/EventAction.js';
 
 describe('ValueNode', () => {
   describe('.update()', () => {
@@ -16,6 +19,44 @@ describe('ValueNode', () => {
 
       // Assert
       expect(longitudeValueNode.serialized).toBe(updatedLongitude);
+    });
+
+    it('should emit ValueModifiedEvent', () => {
+      const value = 23.123;
+      const longitudeValueNode = new ValueNode({
+        value,
+      });
+      const updatedLongitude = 23.456;
+
+      const handler = jest.fn();
+
+      longitudeValueNode.addEventListener(EventType.Changed, handler);
+
+      longitudeValueNode.update(updatedLongitude);
+
+      expect(handler).toBeCalledWith(expect.any(ValueModifiedEvent));
+    });
+
+    it('should emit ValueModifiedEvent with correct details', () => {
+      const value = 23.123;
+      const longitudeValueNode = new ValueNode({
+        value,
+      });
+      const updatedLongitude = 23.456;
+      let event: ValueModifiedEvent | null = null;
+
+      longitudeValueNode.addEventListener(EventType.Changed, e => event = e as ValueModifiedEvent);
+
+      longitudeValueNode.update(updatedLongitude);
+
+      expect(event).toHaveProperty('detail', expect.objectContaining({
+        action: EventAction.Modified,
+        index: '',
+        data: {
+          value: updatedLongitude,
+          previous: value,
+        },
+      }));
     });
   });
 

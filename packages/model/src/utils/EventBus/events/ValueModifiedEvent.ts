@@ -17,18 +17,14 @@ export class ValueModifiedEvent<V = unknown> extends CustomEvent<ValueModifiedEv
    * ValueModifiedEvent class constructor
    *
    * @param index - index of the modified value in the document
-   * @param value - new value
-   * @param previous - previous value
+   * @param data - event data with new and previous values
    */
-  constructor(index: Index, value: V, previous: V) {
+  constructor(index: Index, data: ModifiedEventData<V>) {
     super(EventType.Changed, {
       detail: {
         action: EventAction.Modified,
         index,
-        data: {
-          value,
-          previous,
-        },
+        data,
       },
     });
   }

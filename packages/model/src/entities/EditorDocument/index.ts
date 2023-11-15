@@ -33,6 +33,11 @@ export class EditorDocument extends EventBus {
   #properties: Properties;
 
   /**
+   * Private field representing whether the EditorDocument has been initialized
+   */
+  #isInitialized = false;
+
+  /**
    * Constructor for EditorDocument class.
    *
    * @param [args] - EditorDocument constructor arguments.
@@ -54,6 +59,8 @@ export class EditorDocument extends EventBus {
     container.set(TOOLS_REGISTRY, toolsRegistry);
 
     this.#initialize(blocks);
+
+    this.#isInitialized = true;
   }
 
   /**
@@ -90,7 +97,9 @@ export class EditorDocument extends EventBus {
 
     this.#listenAndBubbleBlockEvent(blockNode, index);
 
-    this.dispatchEvent(new BlockAddedEvent(index, blockNode.serialized));
+    if (this.#isInitialized) {
+      this.dispatchEvent(new BlockAddedEvent(index, blockNode.serialized));
+    }
   }
 
   /**
@@ -104,7 +113,9 @@ export class EditorDocument extends EventBus {
 
     const [ blockNode ] = this.#children.splice(index, 1);
 
-    this.dispatchEvent(new BlockRemovedEvent(index, blockNode.serialized));
+    if (this.#isInitialized) {
+      this.dispatchEvent(new BlockRemovedEvent(index, blockNode.serialized));
+    }
   }
 
   /**
@@ -149,7 +160,9 @@ export class EditorDocument extends EventBus {
 
     this.#properties[name] = value;
 
-    this.dispatchEvent(new PropertyModifiedEvent(`property@${name}`, value, previousValue));
+    if (this.#isInitialized) {
+      this.dispatchEvent(new PropertyModifiedEvent(`property@${name}`, value, previousValue));
+    }
   }
 
   /**
@@ -274,9 +287,13 @@ export class EditorDocument extends EventBus {
         throw new Error('EditorDocument: BlockNode should only emit TextNodeEvents, ValueNodeEvents or TuneModifiedEvent');
       }
 
-      event.detail.index = `${index}:${event.detail.index as TextNodeInBlockIndex | TuneInBlockIndex | ValueNodeInBlockIndex}`;
-
-      this.dispatchEvent(event);
+      this.dispatchEvent(
+        // @ts-expect-error -- no way to infer the type of the event
+        new event.constructor(
+          `${index}:${event.detail.index as TextNodeInBlockIndex | TuneInBlockIndex | ValueNodeInBlockIndex}`,
+          event.detail.data
+        )
+      );
     });
   }
 
