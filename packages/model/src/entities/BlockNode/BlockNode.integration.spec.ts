@@ -2,7 +2,7 @@ import { BlockNode, createDataKey } from './index.js';
 import { BlockChildType } from './types/index.js';
 import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
 import type { InlineFragment } from '../inline-fragments/index.js';
-import { createInlineToolName, InlineToolName, TextNode } from '../inline-fragments/index.js';
+import { createInlineToolName } from '../inline-fragments/index.js';
 
 describe('BlockNode integration tests', () => {
   it('should create ValueNode by primitive value', () => {
