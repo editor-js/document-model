@@ -164,6 +164,38 @@ describe('EditorDocument', () => {
     });
   });
 
+  describe('.moveBlock()', () => {
+    it('should move block from passed index to passed index', () => {
+      const document = createEditorDocumentWithSomeBlocks();
+      const block = document.getBlock(0);
+
+      document.moveBlock(0, 1);
+
+      expect(document.getBlock(1))
+        .toBe(block);
+    });
+
+    it('should not change the block before moved block if moving to the end of the document', () => {
+      const document = createEditorDocumentWithSomeBlocks();
+      const blockBeforeMoved = document.getBlock(0);
+
+      document.moveBlock(1, document.length);
+
+      expect(document.getBlock(0))
+        .toBe(blockBeforeMoved);
+    });
+
+    it('should not change the block after moved block if moving to the beginning of the document', () => {
+      const document = createEditorDocumentWithSomeBlocks();
+      const blockAfterMoved = document.getBlock(2);
+
+      document.moveBlock(1, 0);
+
+      expect(document.getBlock(2))
+        .toBe(blockAfterMoved);
+    });
+  });
+
   describe('.removeBlock()', () => {
     it('should remove the block from the beginning of the document if index 0 is passed', () => {
       // Arrange
