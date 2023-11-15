@@ -1,23 +1,13 @@
 import type { BlockNodeSerialized } from '../../../entities/BlockNode/types';
 import { EventAction } from '../types/EventAction.js';
-import type { EventPayloadBase } from '../types/EventPayloadBase';
 import type { BlockIndex } from '../types/indexing';
-import { EventType } from '../types/EventType.js';
+import { BaseDocumentEvent } from './BaseEvent.js';
 
-/**
- * Add Block Event Payload
- */
-interface BlockAddedEventPayload extends EventPayloadBase<BlockIndex, EventAction.Added> {
-  /**
-   * The data of the added block
-   */
-  data: BlockNodeSerialized;
-}
 
 /**
  * BlockAdded Custom Event
  */
-export class BlockAddedEvent extends CustomEvent<BlockAddedEventPayload> {
+export class BlockAddedEvent extends BaseDocumentEvent<BlockIndex, EventAction.Added, BlockNodeSerialized> {
   /**
    * BlockAddedEvent class constructor
    *
@@ -26,12 +16,6 @@ export class BlockAddedEvent extends CustomEvent<BlockAddedEventPayload> {
    */
   constructor(index: BlockIndex, data: BlockNodeSerialized) {
     // Stryker disable next-line ObjectLiteral
-    super(EventType.Changed, {
-      detail: {
-        action: EventAction.Added,
-        index,
-        data,
-      },
-    });
+    super(index, EventAction.Added, data);
   }
 }

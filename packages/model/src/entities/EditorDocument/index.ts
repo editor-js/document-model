@@ -8,14 +8,18 @@ import { ToolsRegistry } from '../../tools/index.js';
 import type { BlockNodeSerialized } from '../BlockNode/types';
 import { EventBus } from '../../utils/EventBus/EventBus.js';
 import { EventType } from '../../utils/EventBus/types/EventType.js';
-import type { ModelEvents } from '../../utils/EventBus/types/EventMap';
+import type {
+  BlockTuneEvents,
+  ModelEvents,
+  TextNodeEvents,
+  ValueNodeEvents
+} from '../../utils/EventBus/types/EventMap';
 import {
   BlockAddedEvent,
   BlockRemovedEvent,
-  PropertyModifiedEvent, TextAddedEvent, TextFormattedEvent, TextRemovedEvent, TextUnformattedEvent, TuneModifiedEvent,
-  ValueModifiedEvent
+  PropertyModifiedEvent
 } from '../../utils/EventBus/events/index.js';
-import type { TextNodeInBlockIndex, TuneInBlockIndex, ValueNodeInBlockIndex } from '../../utils/EventBus/types/indexing.js';
+import type { Constructor } from '../../utils/types.js';
 
 /**
  * EditorDocument class represents the top-level container for a tree-like structure of BlockNodes in an editor document.
@@ -98,7 +102,7 @@ export class EditorDocument extends EventBus {
     this.#listenAndBubbleBlockEvent(blockNode, index);
 
     if (this.#isInitialized) {
-      this.dispatchEvent(new BlockAddedEvent(index, blockNode.serialized));
+      this.dispatchEvent(new BlockAddedEvent([ index ], blockNode.serialized));
     }
   }
 
@@ -114,7 +118,7 @@ export class EditorDocument extends EventBus {
     const [ blockNode ] = this.#children.splice(index, 1);
 
     if (this.#isInitialized) {
-      this.dispatchEvent(new BlockRemovedEvent(index, blockNode.serialized));
+      this.dispatchEvent(new BlockRemovedEvent([ index ], blockNode.serialized));
     }
   }
 
@@ -161,7 +165,14 @@ export class EditorDocument extends EventBus {
     this.#properties[name] = value;
 
     if (this.#isInitialized) {
-      this.dispatchEvent(new PropertyModifiedEvent(`property@${name}`, value, previousValue));
+      this.dispatchEvent(
+        new PropertyModifiedEvent(
+          [name, 'property'],
+          {
+            value,
+            previous: previousValue,
+          })
+      );
     }
   }
 
@@ -274,23 +285,9 @@ export class EditorDocument extends EventBus {
    */
   #listenAndBubbleBlockEvent(block: BlockNode, index: number): void {
     block.addEventListener(EventType.Changed, (event: ModelEvents) => {
-      const blockEvents = [
-        TuneModifiedEvent,
-        ValueModifiedEvent,
-        TextAddedEvent,
-        TextRemovedEvent,
-        TextFormattedEvent,
-        TextUnformattedEvent,
-      ];
-
-      if (!blockEvents.some((blockEvent) => event instanceof blockEvent)) {
-        throw new Error('EditorDocument: BlockNode should only emit TextNodeEvents, ValueNodeEvents or TuneModifiedEvent');
-      }
-
       this.dispatchEvent(
-        // @ts-expect-error -- no way to infer the type of the event
-        new event.constructor(
-          `${index}:${event.detail.index as TextNodeInBlockIndex | TuneInBlockIndex | ValueNodeInBlockIndex}`,
+        new (event.constructor as Constructor<TextNodeEvents | ValueNodeEvents | BlockTuneEvents>)(
+          [...event.detail.index, index],
           event.detail.data
         )
       );

@@ -237,7 +237,7 @@ describe('ParentInlineNode', () => {
 
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Added,
-        index: `${index}:${index + newText.length}`,
+        index: [index, index + newText.length],
         data: newText,
       }));
     });
@@ -328,7 +328,7 @@ describe('ParentInlineNode', () => {
 
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Removed,
-        index: `${start}:${end}`,
+        index: [start, end],
       }));
     });
   });
@@ -504,18 +504,18 @@ describe('ParentInlineNode', () => {
     });
 
     it('should emit TextFormattedEvent with correct details', () => {
-      let event: TextUnformattedEvent | null = null;
+      let event: TextFormattedEvent | null = null;
       const data = createInlineToolData({
         url: 'https://editorjs.io',
       });
 
-      node.addEventListener(EventType.Changed, e => event = e as TextUnformattedEvent);
+      node.addEventListener(EventType.Changed, e => event = e as TextFormattedEvent);
 
       node.format(tool, start, end, data);
 
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Modified,
-        index: `${start}:${end}`,
+        index: [start, end],
         data: {
           tool,
           data,
@@ -580,15 +580,15 @@ describe('ParentInlineNode', () => {
     });
 
     it('should emit TextUnformattedEvent with correct details', () => {
-      let event: TextAddedEvent | null = null;
+      let event: TextUnformattedEvent | null = null;
 
-      node.addEventListener(EventType.Changed, e => event = e as TextAddedEvent);
+      node.addEventListener(EventType.Changed, e => event = e as TextUnformattedEvent);
 
       node.unformat(tool, start, end);
 
       expect(event).toHaveProperty('detail', expect.objectContaining({
-        action: EventAction.Removed,
-        index: `${start}:${end}`,
+        action: EventAction.Modified,
+        index: [start, end],
         data: {
           tool,
         },

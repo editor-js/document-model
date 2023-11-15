@@ -51,7 +51,7 @@ describe('ValueNode', () => {
 
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Modified,
-        index: '',
+        index: [],
         data: {
           value: updatedLongitude,
           previous: value,

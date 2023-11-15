@@ -28,15 +28,13 @@ import { EventType } from '../../utils/EventBus/types/EventType.js';
 import type {
   ModelEvents
 } from '../../utils/EventBus/types/EventMap';
-import type { TextRangeIndex } from '../../utils/EventBus/types/indexing';
 import {
-  TextAddedEvent,
-  TextFormattedEvent,
-  TextRemovedEvent,
-  TextUnformattedEvent,
   TuneModifiedEvent,
   ValueModifiedEvent
 } from '../../utils/EventBus/events/index.js';
+import type { Constructor } from '../../utils/types.js';
+import type { TextNodeEvents } from '../../utils/EventBus/types/EventMap';
+import type { TuneIndex } from '../../utils/EventBus/types/indexing.js';
 
 /**
  * BlockNode class represents a node in a tree-like structure used to store and manipulate Blocks in an editor document.
@@ -307,16 +305,9 @@ export class BlockNode extends EventBus {
     node.addEventListener(
       EventType.Changed,
       (event: ModelEvents): void => {
-        const textNodeEvents = [TextAddedEvent, TextRemovedEvent, TextFormattedEvent, TextUnformattedEvent];
-
-        if (!textNodeEvents.some((eventClass) => event instanceof eventClass)) {
-          throw new Error('BlockNode: TextNode should only emit TextNodeEvents');
-        }
-
         this.dispatchEvent(
-          // @ts-expect-error -- no way to infer the type of the event
-          new event.constructor(
-            `data@${key}:${event.detail.index as TextRangeIndex}`,
+          new (event.constructor as Constructor<TextNodeEvents>)(
+            [...event.detail.index, `data@${key}`],
             event.detail.data
           )
         );
@@ -341,7 +332,7 @@ export class BlockNode extends EventBus {
 
         this.dispatchEvent(
           new ValueModifiedEvent(
-            `data@${key}`,
+            [ `data@${key}` ],
             event.detail.data
           )
         );
@@ -365,7 +356,8 @@ export class BlockNode extends EventBus {
 
         this.dispatchEvent(
           new TuneModifiedEvent(
-            `tune@${name}:${event.detail.index}`,
+            // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+            [...(event.detail.index as [TuneIndex[0]]), `tune@${name}`],
             event.detail.data
           )
         );

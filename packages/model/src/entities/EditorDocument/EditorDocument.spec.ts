@@ -205,7 +205,7 @@ describe('EditorDocument', () => {
 
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Added,
-        index,
+        index: [ index ],
         data: blockData,
       }));
     });
@@ -310,7 +310,7 @@ describe('EditorDocument', () => {
 
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Removed,
-        index,
+        index: [ index ],
         data: blockData,
       }));
     });
@@ -467,7 +467,7 @@ describe('EditorDocument', () => {
 
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Modified,
-        index: `property@${propertyName}`,
+        index: [propertyName, 'property'],
         data: {
           value,
           previous,

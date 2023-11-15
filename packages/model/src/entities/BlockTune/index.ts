@@ -45,7 +45,7 @@ export class BlockTune extends EventBus {
     this.#data[key] = value;
 
     this.dispatchEvent(
-      new TuneModifiedEvent(key as TuneIndex, {
+      new TuneModifiedEvent([ key ] as TuneIndex, {
         value: this.#data[key],
         previous: previousValue,
       })
