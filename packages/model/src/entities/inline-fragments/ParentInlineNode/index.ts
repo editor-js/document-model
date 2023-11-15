@@ -4,6 +4,13 @@ import { ParentNode } from '../mixins/ParentNode/index.js';
 import type { ChildNode } from '../mixins/ChildNode';
 import type { InlineToolData, InlineToolName } from '../FormattingInlineNode';
 import { TextInlineNode } from '../index.js';
+import { EventBus } from '../../../utils/EventBus/EventBus.js';
+import {
+  TextAddedEvent,
+  TextRemovedEvent,
+  TextFormattedEvent,
+  TextUnformattedEvent
+} from '../../../utils/EventBus/events/index.js';
 
 /**
  * We need to extend ParentInlineNode interface with ParentNode ones to use the methods from mixins
@@ -18,7 +25,7 @@ export interface ParentInlineNodeConstructorOptions extends ParentNodeConstructo
  * ParentInlineNode is a class that contains common attributes for inline nodes that may have children. For example, TextInlineNode or FormattingInlineNode
  */
 @ParentNode
-export class ParentInlineNode implements InlineNode {
+export class ParentInlineNode extends EventBus implements InlineNode {
   /**
    * Empty constructor to support types
    *
@@ -26,6 +33,7 @@ export class ParentInlineNode implements InlineNode {
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars,@typescript-eslint/no-empty-function,no-unused-vars
   constructor(options?: ParentInlineNodeConstructorOptions) {
+    super();
   }
 
   /**
@@ -58,6 +66,8 @@ export class ParentInlineNode implements InlineNode {
     child.insertText(text, index - offset);
 
     this.normalize();
+
+    this.dispatchEvent(new TextAddedEvent([ [index, index + text.length] ], text));
   }
 
   /**
@@ -80,6 +90,8 @@ export class ParentInlineNode implements InlineNode {
     );
 
     this.normalize();
+
+    this.dispatchEvent(new TextRemovedEvent([ [start, end] ], removedText));
 
     return removedText;
   }
@@ -177,6 +189,16 @@ export class ParentInlineNode implements InlineNode {
 
     this.normalize();
 
+    this.dispatchEvent(
+      new TextFormattedEvent(
+        [ [start, end] ],
+        {
+          tool,
+          data,
+        }
+      )
+    );
+
     return newNodes;
   }
 
@@ -210,6 +232,8 @@ export class ParentInlineNode implements InlineNode {
     );
 
     this.normalize();
+
+    this.dispatchEvent(new TextUnformattedEvent([ [start, end] ], { tool }));
 
     return newNodes;
   }

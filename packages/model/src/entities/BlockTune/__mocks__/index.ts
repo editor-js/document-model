@@ -1,9 +1,10 @@
 import { createBlockTuneName } from '../types/index.js';
+import { EventBus } from '../../../utils/EventBus/EventBus.js';
 
 /**
  * Mock for BlockTune class
  */
-export class BlockTune {
+export class BlockTune extends EventBus {
   /**
    * Mock getter
    */

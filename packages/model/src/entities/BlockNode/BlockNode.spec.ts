@@ -1,6 +1,6 @@
 import { BlockNode, createBlockToolName, createDataKey } from './index.js';
 
-import type { BlockTuneName } from '../BlockTune';
+import type { BlockTuneName, BlockTuneSerialized } from '../BlockTune';
 import { BlockTune } from '../BlockTune/index.js';
 import { ValueNode } from '../ValueNode/index.js';
 
@@ -8,9 +8,12 @@ import type { EditorDocument } from '../EditorDocument';
 import type { ValueNodeConstructorParameters } from '../ValueNode';
 import type { InlineFragment, InlineToolData, InlineToolName } from '../inline-fragments';
 import { TextNode } from '../inline-fragments/index.js';
-import type { BlockNodeDataSerialized } from './types';
+import type { BlockNodeData, BlockNodeDataSerialized } from './types';
 import { BlockChildType } from './types/index.js';
 import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
+import { TextAddedEvent, TuneModifiedEvent, ValueModifiedEvent } from '../../utils/EventBus/events/index.js';
+import { EventType } from '../../utils/EventBus/types/EventType.js';
+import { createBlockTuneName } from '../BlockTune/index.js';
 
 jest.mock('../BlockTune');
 
@@ -18,10 +21,11 @@ jest.mock('../inline-fragments/TextNode');
 
 jest.mock('../ValueNode');
 
-const createBlockNodeWithData = (data: BlockNodeDataSerialized): BlockNode => {
+const createBlockNodeWithData = (data: BlockNodeDataSerialized, tunes: Record<string, BlockTuneSerialized> = {}): BlockNode => {
   return new BlockNode({
     name: createBlockToolName('header'),
     data,
+    tunes,
   });
 };
 
@@ -1052,6 +1056,172 @@ describe('BlockNode', () => {
 
       expect(result)
         .toEqual(fragments);
+    });
+  });
+
+  describe('working with TextNode events', () => {
+    let node: BlockNode;
+    let textNode: TextNode;
+    const dataKey = createDataKey('text');
+    const start = 0;
+    const end = 5;
+    const range: [number, number] = [start, end];
+
+    beforeEach(() => {
+      node = createBlockNodeWithData({
+        [dataKey]: {
+          [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+          value: '',
+          fragments: [],
+        },
+      });
+
+      textNode = node.data[dataKey] as TextNode;
+    });
+
+    it('should re-emit events from the TextNode adding index in Block', () => {
+      let event: TextAddedEvent | null = null;
+
+      const handler = (e: Event): void => {
+        event = e as TextAddedEvent;
+      };
+
+      node.addEventListener(EventType.Changed, handler);
+
+      textNode.dispatchEvent(new TextAddedEvent([ range ], 'Hello'));
+
+      expect(event).toBeInstanceOf(TextAddedEvent);
+      expect(event)
+        .toHaveProperty('detail', expect.objectContaining({
+          index: [range, `data@${dataKey}`],
+        }));
+    });
+
+    it('should not emit Changed event if TextNode dispatched event that is not a BaseDocumentEvent', () => {
+      const handler = jest.fn();
+
+      node.addEventListener(EventType.Changed, handler);
+
+      textNode.dispatchEvent(new Event(EventType.Changed));
+
+      expect(handler)
+        .not
+        .toHaveBeenCalled();
+    });
+  });
+
+  describe('working with ValueNode events', () => {
+    let node: BlockNode;
+    let valueNode: ValueNode;
+    const parentDataKey = createDataKey('parent');
+    const dataKey = createDataKey('value');
+    const value = 'value';
+    const newValue = 'new-value';
+
+    beforeEach(() => {
+      node = createBlockNodeWithData({
+        [parentDataKey]: {
+          [dataKey]: value,
+        },
+      });
+
+      valueNode = (node.data[parentDataKey] as BlockNodeData)[dataKey] as ValueNode;
+    });
+
+    it('should re-emit events from the ValueNode adding index in Block', () => {
+      let event: ValueModifiedEvent | null = null;
+      const handler = (e: Event): void => {
+        event = e as ValueModifiedEvent;
+      };
+
+      node.addEventListener(EventType.Changed, handler);
+
+      valueNode.dispatchEvent(
+        new ValueModifiedEvent(
+          [],
+          {
+            value: newValue,
+            previous: value,
+          }
+        )
+      );
+
+      expect(event)
+        .toBeInstanceOf(ValueModifiedEvent);
+      expect(event)
+        .toHaveProperty('detail', expect.objectContaining({
+          index: [ `data@${parentDataKey}.${dataKey}` ],
+        }));
+    });
+
+    it('should not emit Changed event if ValueNode dispatched event that is not a BaseDocumentEvent', () => {
+      const handler = jest.fn();
+
+      node.addEventListener(EventType.Changed, handler);
+
+      valueNode.dispatchEvent(new Event(EventType.Changed));
+
+      expect(handler)
+        .not
+        .toHaveBeenCalled();
+    });
+  });
+
+  describe('working with BlockTune events', () => {
+    let node: BlockNode;
+    let tune: BlockTune;
+    const tuneName = createBlockTuneName('tune');
+    const key = 'key';
+    const value = 'value';
+    const newValue = 'new-value';
+
+    beforeEach(() => {
+      node = createBlockNodeWithData(
+        {},
+        {
+          [tuneName]: { [key]: value },
+        }
+      );
+
+      tune = node.tunes[tuneName] as BlockTune;
+    });
+
+    it('should re-emit event from the BlockTune adding index in Block', () => {
+      let event: TuneModifiedEvent | null = null;
+      const handler = (e: Event): void => {
+        event = e as TuneModifiedEvent;
+      };
+
+      node.addEventListener(EventType.Changed, handler);
+
+      tune.dispatchEvent(
+        new TuneModifiedEvent(
+          [ key ],
+          {
+            value: newValue,
+            previous: value,
+          }
+        )
+      );
+
+      expect(event)
+        .toBeInstanceOf(TuneModifiedEvent);
+      expect(event)
+        .toHaveProperty('detail', expect.objectContaining({
+          index: [key, `tune@${tuneName}`],
+        }));
+    });
+
+    it('should not emit Changed event if ValueNode dispatched event that is not a BaseDocumentEvent', () => {
+      const handler = jest.fn();
+
+      node.addEventListener(EventType.Changed, handler);
+
+      tune.dispatchEvent(new Event(EventType.Changed));
+
+      expect(handler)
+        .not
+        .toHaveBeenCalled();
     });
   });
 });

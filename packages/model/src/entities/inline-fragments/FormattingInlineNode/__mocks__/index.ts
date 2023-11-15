@@ -2,6 +2,8 @@ import { ParentNode } from '../../mixins/ParentNode/index.js';
 import { ChildNode } from '../../mixins/ChildNode/index.js';
 import type { InlineFragment } from '../../InlineNode';
 
+export * from '../types/InlineToolData.js';
+
 export interface FormattingInlineNode extends ParentNode, ChildNode {}
 
 /**

@@ -1,7 +1,9 @@
+import { EventBus } from '../../../utils/EventBus/EventBus.js';
+
 /**
  * Mock for BlockNode class
  */
-export class BlockNode {
+export class BlockNode extends EventBus {
   /**
    * Mock method
    */
