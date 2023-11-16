@@ -14,7 +14,7 @@ describe('[Integration tests] EditorJSModel', () => {
     /**
      * @todo add more cases for other events
      */
-    it('should re-emit AddBlockEvent', () => {
+    it('should emit AddBlockEvent when new block added', () => {
       const handler = jest.fn();
 
       model.addEventListener(EventType.Changed, handler);
