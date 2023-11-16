@@ -24,7 +24,7 @@ const config = {
   tsconfigFile: "tsconfig.json",
   checkers: ["typescript"],
   timeoutMS: 10000,
-  mutate: ["./src/**/*.ts", "!./src/**/__mocks__/*.ts", "!./src/**/*.spec.ts"],
+  mutate: ["./src/**/*.ts", "!./src/**/mocks/*.ts", "!./src/**/__mocks__/*.ts", "!./src/**/*.spec.ts"],
   /*
    * In some cases PRs might not have any unit-tests
    */
