@@ -405,7 +405,7 @@ describe('BlockNode', () => {
         data: {},
         parent: {} as EditorDocument,
         tunes: blockTunes,
-      });;
+      });
 
       const tunes = Object.entries(blockNode.tunes);
 
