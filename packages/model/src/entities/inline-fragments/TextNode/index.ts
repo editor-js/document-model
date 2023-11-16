@@ -1,4 +1,4 @@
-import type { InlineFragment, ParentInlineNodeConstructorOptions, TextNodeSerialized } from '../index';
+import type { InlineFragment, InlineToolName, ParentInlineNodeConstructorOptions, TextNodeSerialized } from '../index';
 import { ParentInlineNode } from '../index.js';
 import { BlockChildType } from '../../BlockNode/types/index.js';
 import { NODE_TYPE_HIDDEN_PROP } from '../../BlockNode/consts.js';
@@ -31,6 +31,24 @@ export class TextNode extends ParentInlineNode {
    */
   public get serialized(): TextNodeSerialized {
     return Object.assign({ [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text as const }, super.serialized);
+  }
+
+  /**
+   * Overridden method to get fragments of the TextNode
+   * Returns all fragments if no tool is specified
+   *
+   * @param [start] - start char index of the range
+   * @param [end] - end char index of the range
+   * @param [tool] - name of the Inline Tool
+   */
+  public getFragments(start?: number, end?: number, tool?: InlineToolName): InlineFragment[] {
+    let fragments = super.getFragments(start, end);
+
+    if (tool) {
+      fragments = fragments.filter((fragment) => fragment.tool === tool);
+    }
+
+    return fragments;
   }
 
   /**

@@ -84,7 +84,7 @@ describe('FormattingInlineNode', () => {
       expect(spy).toBeCalledWith(start, end);
     });
 
-    it('should add own data as first fragment within passed start and end', () => {
+    it('should return fragment with the range from 0 to the length of formatting node', () => {
       const start = 0;
       const end = 3;
 
@@ -92,7 +92,7 @@ describe('FormattingInlineNode', () => {
 
       expect(result[0]).toEqual(expect.objectContaining({
         tool: node.tool,
-        range: [start, end],
+        range: [0, node.length],
       }));
     });
 

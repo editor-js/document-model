@@ -4,21 +4,17 @@ import { BlockTune, createBlockTuneName } from '../BlockTune/index.js';
 import type {
   BlockNodeConstructorParameters,
   BlockNodeData,
-  BlockNodeSerialized,
   BlockNodeDataSerialized,
   BlockNodeDataSerializedValue,
-  ChildNode,
   BlockNodeDataValue,
+  BlockNodeSerialized,
   BlockToolName,
+  ChildNode,
   DataKey
 } from './types';
-import {
-  createBlockToolName,
-  createDataKey,
-  BlockChildType
-} from './types/index.js';
+import { BlockChildType, createBlockToolName, createDataKey } from './types/index.js';
 import { ValueNode } from '../ValueNode/index.js';
-import type { InlineToolData, InlineToolName, TextNodeSerialized } from '../inline-fragments';
+import type { InlineFragment, InlineToolData, InlineToolName, TextNodeSerialized } from '../inline-fragments';
 import { TextNode } from '../inline-fragments/index.js';
 import { get, has } from '../../utils/keypath.js';
 import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
@@ -243,6 +239,24 @@ export class BlockNode extends EventBus {
     const node = get(this.#data, key as string) as TextNode;
 
     node.unformat(tool, start, end);
+  }
+
+  /**
+   * Returns all fragments of the text node by range
+   * If the name of the Inline Tool is passed, then only fragments of this Inline Tool will be returned
+   *
+   * @param dataKey - key of the data
+   * @param [start] - start char index of the range
+   * @param [end] - end char index of the range
+   * @param [tool] - name of the Inline Tool
+   * @throws {Error} if data with passed key does not exist
+   */
+  public getFragments(dataKey: DataKey, start?: number, end?: number, tool?: InlineToolName): InlineFragment[] {
+    this.#validateKey(dataKey, TextNode);
+
+    const node = get<TextNode>(this.#data, dataKey as string)!;
+
+    return node.getFragments(start, end, tool);
   }
 
   /**

@@ -1003,4 +1003,20 @@ describe('EditorDocument', () => {
         .toHaveBeenCalled();
     });
   });
+
+  describe('.getFragments()', () => {
+    it('should call BlockNode method with passed parameters', () => {
+      const document = createEditorDocumentWithSomeBlocks();
+      const blockIndex = 1;
+      const dataKey = 'text' as DataKey;
+      const start = 5;
+      const end = 10;
+      const tool = 'bold' as InlineToolName;
+      const spy = jest.spyOn(document.getBlock(blockIndex), 'getFragments');
+
+      document.getFragments(blockIndex, dataKey, start, end, tool);
+
+      expect(spy).toHaveBeenCalledWith(dataKey, start, end, tool);
+    });
+  });
 });
