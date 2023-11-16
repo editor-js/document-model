@@ -12,7 +12,7 @@ jobs:
           node-version-file: .nvmrc
       - uses: ./.github/actions/setup
       - name: Run ESLint check
-        run: yarn lint:ci
+        run: yarn workspace @editorjs/model lint:ci
 
   tests:
     runs-on: ubuntu-latest
@@ -26,7 +26,7 @@ jobs:
         uses: ArtiomTr/jest-coverage-report-action@v2
         with:
           working-directory: ./packages/model
-          test-script: yarn test
+          test-script: yarn workspace @editorjs/model test
           package-manager: yarn
 
   mutation-tests:
