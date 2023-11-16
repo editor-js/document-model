@@ -1,6 +1,7 @@
 import { BlockNode, createDataKey } from './index.js';
 import { BlockChildType } from './types/index.js';
 import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
+import { ValueNode } from '../ValueNode/index.js';
 
 describe('BlockNode integration tests', () => {
   it('should create ValueNode by primitive value', () => {
@@ -98,6 +99,31 @@ describe('BlockNode integration tests', () => {
           [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
         },
       ],
+    });
+  });
+
+  describe('.data', () => {
+    it('should return the data associated with this block node', () => {
+      // Arrange
+      const initData = {
+        key: 'value',
+      };
+      const blockNode = new BlockNode({
+        name: 'blockNode',
+        data: initData,
+      });
+
+      // Act
+      const data = blockNode.data;
+
+      // Assert
+      expect(data).toHaveProperty('key');
+
+      const valueNode = (data as {key: ValueNode}).key;
+
+      expect(valueNode).toBeInstanceOf(ValueNode);
+      expect(valueNode.serialized)
+        .toEqual(initData.key);
     });
   });
 });

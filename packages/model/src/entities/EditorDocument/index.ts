@@ -6,6 +6,7 @@ import type { InlineToolData, InlineToolName } from '../inline-fragments';
 import { IoCContainer, TOOLS_REGISTRY } from '../../IoC/index.js';
 import { ToolsRegistry } from '../../tools/index.js';
 import type { BlockNodeSerialized } from '../BlockNode/types';
+import type { DeepReadonly } from '../../utils/DeepReadonly';
 import { EventBus } from '../../utils/EventBus/EventBus.js';
 import { EventType } from '../../utils/EventBus/types/EventType.js';
 import type {
@@ -58,6 +59,13 @@ export class EditorDocument extends EventBus {
     container.set(TOOLS_REGISTRY, toolsRegistry);
 
     this.#initialize(blocks);
+  }
+
+  /**
+   * Allows accessing Document child nodes
+   */
+  public get children(): ReadonlyArray<DeepReadonly<BlockNode>> {
+    return this.#children;
   }
 
   /**

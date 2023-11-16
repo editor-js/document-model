@@ -23,6 +23,7 @@ import { TextNode } from '../inline-fragments/index.js';
 import { get, has } from '../../utils/keypath.js';
 import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
 import { mapObject } from '../../utils/mapObject.js';
+import type { DeepReadonly } from '../../utils/DeepReadonly';
 import { EventBus } from '../../utils/EventBus/EventBus.js';
 import { EventType } from '../../utils/EventBus/types/EventType.js';
 import {
@@ -97,18 +98,17 @@ export class BlockNode extends EventBus {
   }
 
   /**
-   * Getter to access BlockNode data
+   * Allows accessing Block name
    */
-  public get data(): Readonly<BlockNodeData> {
-    return this.#data;
+  public get name(): string {
+    return this.#name;
   }
 
-
   /**
-   * Getter to access BlockNode data
+   * Allows accessing Block data
    */
-  public get tunes(): Readonly<Record<string, BlockTune>> {
-    return this.#tunes;
+  public get data(): DeepReadonly<BlockNodeData> {
+    return this.#data;
   }
 
   /**
@@ -116,6 +116,13 @@ export class BlockNode extends EventBus {
    */
   public get parent(): EditorDocument | null {
     return this.#parent;
+  }
+
+  /**
+   * Getter to access BlockNode data
+   */
+  public get tunes(): Readonly<Record<string, BlockTune>> {
+    return this.#tunes;
   }
 
   /**
