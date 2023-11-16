@@ -57,6 +57,13 @@ export class ValueNode<ValueType = unknown> extends EventBus {
 
     return value as ValueSerialized<ValueType>;
   }
+
+  /**
+   * Returns the data associated with this value node.
+   */
+  public get value(): Readonly<ValueType> {
+    return this.#value;
+  }
 }
 
 export type {

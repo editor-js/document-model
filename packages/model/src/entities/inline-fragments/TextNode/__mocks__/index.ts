@@ -38,4 +38,11 @@ export class TextNode extends EventBus {
   public unformat(): void {
     return;
   }
+
+  /**
+   * Mock method
+   */
+  public getFragments(): void {
+    return;
+  }
 }

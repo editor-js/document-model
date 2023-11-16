@@ -199,6 +199,20 @@ export class EditorJSModel extends EventBus {
   }
 
   /**
+   * Returns fragments for the specified block, range, and inline tool
+   *
+   * @param parameters - getFragments method parameters
+   * @param parameters.blockIndex - index of the block
+   * @param parameters.dataKey - key of the data
+   * @param [parameters.tool] - name of the Inline Tool to remove
+   * @param [parameters.start] - start char index of the range
+   * @param [parameters.end] - end char index of the range
+   */
+  public getFragments(...parameters: Parameters<EditorDocument['getFragments']>): ReturnType<EditorDocument['getFragments']> {
+    return this.#document.getFragments(...parameters);
+  }
+
+  /**
    * Listens to BlockNode events and bubbles re-emits them from the EditorJSModel instance
    *
    * @param document - EditorDocument instance to listen to

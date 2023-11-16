@@ -16,5 +16,9 @@ module.exports = {
   },
   parser: 'vue-eslint-parser',
   rules: {
+    'jsdoc/require-returns': 'off',
+    'jsdoc/require-param-type': 'off',
+    'vue/multi-word-component-names': 'off',
+
   },
 };

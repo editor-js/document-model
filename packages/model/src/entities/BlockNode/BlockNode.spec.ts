@@ -6,7 +6,7 @@ import { ValueNode } from '../ValueNode/index.js';
 
 import type { EditorDocument } from '../EditorDocument';
 import type { ValueNodeConstructorParameters } from '../ValueNode';
-import type { InlineToolData, InlineToolName } from '../inline-fragments';
+import type { InlineFragment, InlineToolData, InlineToolName } from '../inline-fragments';
 import { TextNode } from '../inline-fragments/index.js';
 import type { BlockNodeData, BlockNodeDataSerialized } from './types';
 import { BlockChildType } from './types/index.js';
@@ -369,6 +369,52 @@ describe('BlockNode', () => {
 
       expect(spy)
         .toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('.name', () => {
+    it('should return a name of a tool that created a BlockNode', () => {
+      const blockNodeName = createBlockToolName('paragraph');
+
+      const blockNode = new BlockNode({
+        name: blockNodeName,
+        data: {},
+        parent: {} as EditorDocument,
+      });
+
+      expect(blockNode.name)
+        .toEqual(blockNodeName);
+    });
+  });
+
+  describe('.tunes', () => {
+    it('should return an object with tunes associated with the BlockNode', () => {
+      const blockTunesNames = [
+        'align' as BlockTuneName,
+        'font-size' as BlockTuneName,
+        'font-weight' as BlockTuneName,
+      ];
+
+      const blockTunes = blockTunesNames.reduce((acc, name) => ({
+        ...acc,
+        [name]: {},
+      }), {});
+
+      const blockNode = new BlockNode({
+        name: createBlockToolName('paragraph'),
+        data: {},
+        parent: {} as EditorDocument,
+        tunes: blockTunes,
+      });
+
+      const tunes = Object.entries(blockNode.tunes);
+
+      tunes.forEach(([name, tune]) => {
+        expect(name)
+          .toEqual(createBlockTuneName(name));
+        expect(tune)
+          .toBeInstanceOf(BlockTune);
+      });
     });
   });
 
@@ -1001,6 +1047,61 @@ describe('BlockNode', () => {
 
       expect(() => node.unformat(dataKey, tool, start, end))
         .toThrow();
+    });
+  });
+
+  describe('.getFragments()', () => {
+    it('should call .getFragments() method of the TextNode', () => {
+      const spy = jest.spyOn(TextNode.prototype, 'getFragments');
+      const node = createBlockNodeWithData({
+        text: {
+          [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+          value: '',
+          fragments: [],
+        },
+      });
+
+      node.getFragments(createDataKey('text'), 0, 0, 'bold' as InlineToolName);
+
+      expect(spy)
+        .toHaveBeenCalledWith(0, 0, 'bold' as InlineToolName);
+    });
+
+    it('should return all fragments for the passed range', () => {
+      const boldFragmentStart = 0;
+      const boldFragmentEnd = 5;
+      const italicFragmentStart = 3;
+      const italicFragmentEnd = 10;
+
+      const testRangeStart = 2;
+      const testRangeEnd = 7;
+
+      const fragments: InlineFragment[] = [
+        {
+          tool: 'bold' as InlineToolName,
+          range: [boldFragmentStart, boldFragmentEnd],
+        },
+        {
+          tool: 'italic' as InlineToolName,
+          range: [italicFragmentStart, italicFragmentEnd],
+        },
+      ];
+
+      jest.spyOn(TextNode.prototype, 'getFragments')
+        .mockImplementation(() => fragments);
+
+      const node = createBlockNodeWithData({
+        text: {
+          [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+          value: 'Test text for checking the fragments',
+          fragments,
+        },
+      });
+
+      const result = node.getFragments(createDataKey('text'), testRangeStart, testRangeEnd);
+
+      expect(result)
+        .toEqual(fragments);
     });
   });
 

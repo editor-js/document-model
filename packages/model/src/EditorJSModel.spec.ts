@@ -18,6 +18,7 @@ describe('EditorJSModel', () => {
       'removeText',
       'format',
       'unformat',
+      'getFragments',
     ];
     const ownProperties = Object.getOwnPropertyNames(EditorJSModel.prototype);
 

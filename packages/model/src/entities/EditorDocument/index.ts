@@ -2,10 +2,11 @@ import type { DataKey } from '../BlockNode';
 import { BlockNode } from '../BlockNode/index.js';
 import type { EditorDocumentSerialized, EditorDocumentConstructorParameters, Properties } from './types';
 import type { BlockTuneName } from '../BlockTune';
-import type { InlineToolData, InlineToolName } from '../inline-fragments';
+import type { InlineFragment, InlineToolData, InlineToolName } from '../inline-fragments';
 import { IoCContainer, TOOLS_REGISTRY } from '../../IoC/index.js';
 import { ToolsRegistry } from '../../tools/index.js';
 import type { BlockNodeSerialized } from '../BlockNode/types';
+import type { DeepReadonly } from '../../utils/DeepReadonly';
 import { EventBus } from '../../utils/EventBus/EventBus.js';
 import { EventType } from '../../utils/EventBus/types/EventType.js';
 import type {
@@ -58,6 +59,13 @@ export class EditorDocument extends EventBus {
     container.set(TOOLS_REGISTRY, toolsRegistry);
 
     this.#initialize(blocks);
+  }
+
+  /**
+   * Allows accessing Document child nodes
+   */
+  public get children(): ReadonlyArray<DeepReadonly<BlockNode>> {
+    return this.#children;
   }
 
   /**
@@ -278,6 +286,19 @@ export class EditorDocument extends EventBus {
       blocks: this.#children.map((block) => block.serialized),
       properties: this.#properties,
     };
+  }
+
+  /**
+   * Returns array of InlineFragment objects for the specified range
+   *
+   * @param blockIndex - index of the block
+   * @param dataKey - key of the data
+   * @param [start] - start char index of the range
+   * @param [end] - end char index of the range
+   * @param [tool] - name of the Inline Tool to filter by
+   */
+  public getFragments(blockIndex: number, dataKey: DataKey, start?: number, end?: number, tool?: InlineToolName): InlineFragment[] {
+    return this.#children[blockIndex].getFragments(dataKey, start, end, tool);
   }
 
   /**

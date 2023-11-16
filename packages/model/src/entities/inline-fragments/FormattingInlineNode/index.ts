@@ -65,8 +65,7 @@ export class FormattingInlineNode extends ParentInlineNode implements InlineNode
 
   /**
    * Returns inline fragments for node from the specified character range
-   *
-   * If start and/or end is specified, method will return partial fragments for the specified range
+   * Always return full fragments even if one is not fully covered by the passed range
    *
    * @param [start] - start char index of the range, by default 0
    * @param [end] - end char index of the range, by default length of the text value
@@ -76,7 +75,7 @@ export class FormattingInlineNode extends ParentInlineNode implements InlineNode
 
     const currentFragment: InlineFragment = {
       tool: this.tool,
-      range: [start, end],
+      range: [0, this.length],
     };
 
     if (this.data) {

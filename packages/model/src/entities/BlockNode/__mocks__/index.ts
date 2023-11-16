@@ -52,4 +52,11 @@ export class BlockNode extends EventBus {
   public get serialized(): void {
     return;
   }
+
+  /**
+   * Mock method
+   */
+  public getFragments(): void {
+    return;
+  }
 }

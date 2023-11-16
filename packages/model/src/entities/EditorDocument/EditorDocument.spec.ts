@@ -65,6 +65,38 @@ describe('EditorDocument', () => {
     });
   });
 
+  describe('.children', () => {
+    it('should return an array of the blocks of the document', () => {
+      // Arrange
+      const blocksCount = 3;
+      const document = new EditorDocument({
+        properties: {
+          readOnly: false,
+        },
+      });
+
+      for (let i = 0; i < blocksCount; i++) {
+        const blockData = {
+          name: 'header' as BlockToolName,
+        };
+
+        document.addBlock(blockData);
+      }
+
+      // Act
+      const actual = document.children;
+
+      // Assert
+      expect(actual)
+        .toHaveLength(blocksCount);
+
+      actual.forEach((block) => {
+        expect(block)
+          .toBeInstanceOf(BlockNode);
+      });
+    });
+  });
+
   describe('.addBlock()', () => {
     it('should add the block to the end of the document if index is not provided', () => {
       const document = createEditorDocumentWithSomeBlocks();
@@ -969,6 +1001,22 @@ describe('EditorDocument', () => {
       expect(handler)
         .not
         .toHaveBeenCalled();
+    });
+  });
+
+  describe('.getFragments()', () => {
+    it('should call BlockNode method with passed parameters', () => {
+      const document = createEditorDocumentWithSomeBlocks();
+      const blockIndex = 1;
+      const dataKey = 'text' as DataKey;
+      const start = 5;
+      const end = 10;
+      const tool = 'bold' as InlineToolName;
+      const spy = jest.spyOn(document.getBlock(blockIndex), 'getFragments');
+
+      document.getFragments(blockIndex, dataKey, start, end, tool);
+
+      expect(spy).toHaveBeenCalledWith(dataKey, start, end, tool);
     });
   });
 });
