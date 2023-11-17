@@ -90,7 +90,9 @@ function getParentObjectName(object: object): string {
         <div :class="$style.property">
           {{ property }}
         </div>
-        <Indent>
+        <Indent
+          :collapsed="property === 'serialized'"
+        >
           <Value
             v-if="property !== 'parent'"
             :value="node[property]"
