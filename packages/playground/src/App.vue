@@ -1,80 +1,9 @@
 <script setup lang="ts">
 import { Node } from './components';
 import { EditorDocument } from '@editorjs/model';
+import { data } from '../../model/src/mocks/data.ts';
 
-
-const document = new EditorDocument({
-  blocks: [
-    {
-      // id: 'zcKCF1S7X8',
-      name: 'header',
-      data: {
-        text: 'Editor.js',
-        level: 1,
-      },
-    },
-    {
-      // id: 'b6ji-DvaKb',
-      name: 'paragraph',
-      data: {
-        text: {
-          $t: 't',
-          value: 'Hey. Meet the new Editor. On this page you can see it in action — try to edit this text. Source code of the page contains the example of connection and configuration.',
-          fragments: [
-            {
-              range: [18, 24],
-              tool: 'link',
-              data: {
-                href: 'https://editorjs.io',
-              },
-            },
-            {
-              range: [26, 40],
-              tool: 'bold',
-              data: {
-              },
-            },
-            {
-              range: [34, 38],
-              tool: 'italic',
-              data: {
-              },
-            },
-          ],
-        },
-      },
-    },
-    {
-      // id: '7ItVl5biRo',
-      name: 'header',
-      data: {
-        text: 'Key features',
-        level: 2,
-      },
-    },
-    {
-      // id: 'SSBSguGvP7',
-      name : 'list',
-      data : {
-        items : [
-          {
-            content: 'It is a block-styled editor',
-            items: [],
-          },
-          {
-            content: 'It returns clean data output in JSON',
-            items: [],
-          },
-          {
-            content: 'Designed to be extendable and pluggable with a simple API',
-            items: [],
-          },
-        ],
-        style: 'unordered',
-      },
-    },
-  ],
-});
+const document = new EditorDocument(data);
 
 console.log('document', document);
 </script>
@@ -91,9 +20,14 @@ console.log('document', document);
       Editor.js Document Playground
     </div>
     <div :class="$style.body">
-      <Node
-        :node="document"
-      />
+      <div :class="$style.input">
+        <pre>{{ data }}</pre>
+      </div>
+      <div :class="$style.output">
+        <Node
+          :node="document"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -106,6 +40,21 @@ console.log('document', document);
 
 .body {
   padding: 16px;
+  display: grid;
+  grid-template-columns: 50% 50%;
+  grid-gap: 16px;
+}
+
+.input {
+  max-width: 100%;
+  overflow: auto;
+  font-size: 12px;
+  line-height: 1.5;
+  font-family: var(--rounded-family);
+}
+
+.output {
+
 }
 
 .header {
