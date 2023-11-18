@@ -2,6 +2,8 @@
   "compilerOptions": {
     "composite": true,
     "target": "esnext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "downlevelIteration": true,
     "module": "esnext",
     "moduleResolution": "Node",
     "esModuleInterop": true,

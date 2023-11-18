@@ -1,5 +1,5 @@
 import type { EditorJSModel, TextRange } from '@editorjs/model';
-import { useSelectionChange, type Subscriber  } from './utils/useSelectionChange.js';
+import { useSelectionChange, type Subscriber, type InputWithCaret  } from './utils/useSelectionChange.js';
 import { getAbsoluteRangeOffset } from './utils/absoluteOffset.js';
 
 /**
@@ -23,38 +23,37 @@ export class CaretAdapter extends EventTarget {
   /**
    * Input element
    */
-  #input: null | HTMLElement = null;
+  #input: null | InputWithCaret = null;
+
+  /**
+   * EditorJSModel instance
+   */
+  #model: EditorJSModel;
+
+  /**
+   * Index of a block that contains input
+   */
+  #blockIndex: number;
 
   /**
    * Method for subscribing on document selection change
    */
-  #onSelectionChange: (callback: Subscriber) => void;
+  #onSelectionChange: (input: InputWithCaret, callback: Subscriber['callback'], context: Subscriber['context']) => void;
 
   /**
    * Method for unsubscribing from document selection change
    */
-  #offSelectionChange: (callback: Subscriber) => void;
-
-  /**
-   * Callback that will be called on document selection change
-   * Stored as a class property to be able to unsubscribe from document selection change
-   *
-   * @param selection - changed document selection
-   */
-  #onDocumentSelectionChange = (selection: Selection | null): void => {
-    if (!this.#isSelectionRelatedToInput(selection)) {
-      return;
-    }
-
-    this.#updateIndex(selection);
-  };
+  #offSelectionChange: (input: InputWithCaret) => void;
 
   /**
    * @param model - EditorJSModel instance
    * @param blockIndex - index of a block that contains input
    */
-  constructor(private readonly model: EditorJSModel, private readonly blockIndex: number) {
+  constructor(model: EditorJSModel, blockIndex: number) {
     super();
+
+    this.#model = model;
+    this.#blockIndex = blockIndex;
 
     const { on, off } = useSelectionChange();
 
@@ -72,30 +71,29 @@ export class CaretAdapter extends EventTarget {
   public attachInput(input: HTMLElement, dataKey: string): void {
     this.#input = input;
 
-    this.#onSelectionChange(this.#onDocumentSelectionChange);
+    this.#onSelectionChange(this.#input, this.#onDocumentSelectionChange, this);
   }
 
   /**
    * Unsubscribes from input caret change
    */
   public detachInput(): void {
-    this.#offSelectionChange(this.#onDocumentSelectionChange);
+    if (!this.#input) {
+      return;
+    }
+
+    this.#offSelectionChange(this.#input);
+    this.#input = null;
   }
 
   /**
-   * Checks if selection is related to input
+   * Callback that will be called on document selection change
    *
    * @param selection - changed document selection
    */
-  #isSelectionRelatedToInput(selection: Selection | null): boolean {
-    if (!selection) {
-      return false;
-    }
-
-    const range = selection.getRangeAt(0);
-
-    return this.#input?.contains(range.startContainer) ?? false;
-  }
+  #onDocumentSelectionChange(selection: Selection | null): void {
+    this.#updateIndex(selection);
+  };
 
   /**
    * Returns absolute caret index related to input
