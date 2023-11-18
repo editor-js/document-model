@@ -1,6 +1,10 @@
 {
   "eslint.workingDirectories": [
+    "./packages/dom-adapters",
     "./packages/model",
-    "./packages/playground"
+    "./packages/playground",
+  ],
+  "cSpell.words": [
+    "Singletone"
   ]
 }

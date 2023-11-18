@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { Node } from './components';
-import { EditorDocument } from '@editorjs/model';
+import { Node, Input } from './components';
+import { EditorDocument, EditorJSModel } from '@editorjs/model';
 import { data } from '../../model/src/mocks/data.ts';
 
 const document = new EditorDocument(data);
+const model = new EditorJSModel(data);
 
-console.log('document', document);
 </script>
 
 <template>
@@ -20,7 +20,10 @@ console.log('document', document);
       Editor.js Document Playground
     </div>
     <div :class="$style.body">
-      <div :class="$style.input">
+      <div :class="$style.playground">
+        <Input
+          :model="model"
+        />
         <pre>{{ data }}</pre>
       </div>
       <div :class="$style.output">
@@ -45,7 +48,7 @@ console.log('document', document);
   grid-gap: 16px;
 }
 
-.input {
+.playground {
   max-width: 100%;
   overflow: auto;
   font-size: 12px;
