@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { Ref, onMounted, ref } from 'vue';
-import { CaretAdapter, type CaretIndex } from '../../../dom-adapters/src/caret/CaretAdapter';
-import { type EditorJSModel } from '@editorjs/model';
+import { onMounted, ref } from 'vue';
+import { CaretAdapter } from '../../../dom-adapters/src/caret/CaretAdapter';
+import { type EditorJSModel, TextRange } from '@editorjs/model';
 
 const input = ref<HTMLElement | null>(null);
-const index = ref<CaretIndex>([0, 0]);
+const index = ref<TextRange>([0, 0]);
 
 const props = defineProps<{
   /**
@@ -20,7 +20,7 @@ onMounted(() => {
     adapter.attachInput(input.value, 'text');
 
     adapter.addEventListener('change', (event) => {
-      index.value = (event as CustomEvent<{ index: CaretIndex}>).detail.index;
+      index.value = (event as CustomEvent<{ index: TextRange }>).detail.index;
     });
   }
 });

@@ -1,11 +1,6 @@
-import type { EditorJSModel } from '@editorjs/model';
+import type { EditorJSModel, TextRange } from '@editorjs/model';
 import { useSelectionChange, type Subscriber  } from './utils/useSelectionChange.js';
 import { getAbsoluteRangeOffset } from './utils/absoluteOffset.js';
-
-/**
- * Caret index is a tuple of start and end offset of a caret
- */
-export type CaretIndex = [number, number];
 
 /**
  * Caret adapter watches input caret change and passes it to the model
@@ -23,7 +18,7 @@ export class CaretAdapter extends EventTarget {
   /**
    * Index stores start and end offset of a caret depending on a root of input
    */
-  #index: CaretIndex = [0, 0];
+  #index: TextRange = [0, 0];
 
   /**
    * Input element
@@ -105,7 +100,7 @@ export class CaretAdapter extends EventTarget {
   /**
    * Returns absolute caret index related to input
    */
-  public get index(): CaretIndex {
+  public get index(): TextRange {
     return this.#index;
   }
 
