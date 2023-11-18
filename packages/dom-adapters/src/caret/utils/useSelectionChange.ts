@@ -1,7 +1,7 @@
-import { createSingletone } from './singletone.js';
+import { createSingleton } from './singleton.js';
 
 /**
- * Singletone that watches for document "selection change" event and delegates the provided callbacks to subscribers.
+ * Singleton that watches for document "selection change" event and delegates the provided callbacks to subscribers.
  */
 export interface Subscriber {
   /**
@@ -13,9 +13,9 @@ export interface Subscriber {
 }
 
 /**
- * const should contain a function that will return on and off methods.
+ * Utility composable that watches for document "selection change" event and delegates the provided callbacks to subscribers.
  */
-export const useSelectionChange = createSingletone(() => {
+export const useSelectionChange = createSingleton(() => {
   const subscribers = new Set<Subscriber>();
 
   document.addEventListener('selectionchange', () => {

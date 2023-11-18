@@ -1,8 +1,8 @@
 /**
- * Creates a singletone factory.
+ * Creates a singleton factory.
  *
  * @example
- *   const useFoo = createSingletone(() => {
+ *   const useFoo = createSingleton(() => {
  *      const foo = 'bar';
  *
  *     return {
@@ -12,7 +12,7 @@
  *
  * @param factory - factory function that will be called only once
  */
-export function createSingletone<T>(factory: () => T): () => T {
+export function createSingleton<T>(factory: () => T): () => T {
   let instance: T | null = null;
 
   return () => {
