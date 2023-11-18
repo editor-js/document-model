@@ -71,7 +71,7 @@ export class CaretAdapter extends EventTarget {
   public attachInput(input: HTMLElement, dataKey: string): void {
     this.#input = input;
 
-    this.#onSelectionChange(this.#input, this.#onDocumentSelectionChange, this);
+    this.#onSelectionChange(this.#input, this.#onInputSelectionChange, this);
   }
 
   /**
@@ -91,7 +91,7 @@ export class CaretAdapter extends EventTarget {
    *
    * @param selection - changed document selection
    */
-  #onDocumentSelectionChange(selection: Selection | null): void {
+  #onInputSelectionChange(selection: Selection | null): void {
     this.#updateIndex(selection);
   };
 
