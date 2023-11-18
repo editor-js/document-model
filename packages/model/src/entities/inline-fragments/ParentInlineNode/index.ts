@@ -189,15 +189,17 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
     this.normalize();
 
-    this.dispatchEvent(
-      new TextFormattedEvent(
-        [ [start, end] ],
-        {
-          tool,
-          data,
-        }
-      )
-    );
+    if (newNodes.length) {
+      this.dispatchEvent(
+        new TextFormattedEvent(
+          [ [start, end] ],
+          {
+            tool,
+            data,
+          }
+        )
+      );
+    }
 
     return newNodes;
   }

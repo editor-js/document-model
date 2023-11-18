@@ -48,15 +48,14 @@ export class EditorDocument extends EventBus {
   constructor({
     blocks = [],
     properties = {},
-    toolsRegistry = new ToolsRegistry(),
   }: EditorDocumentConstructorParameters = {}) {
     super();
 
     this.#properties = properties;
 
-    const container = IoCContainer.of(this);
+    // const container = IoCContainer.of(this);
 
-    container.set(TOOLS_REGISTRY, toolsRegistry);
+    // container.set(TOOLS_REGISTRY, toolsRegistry);
 
     this.#initialize(blocks);
   }

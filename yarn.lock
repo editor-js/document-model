@@ -564,6 +564,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@editorjs/document-playground@workspace:packages/playground"
   dependencies:
+    "@editorjs/dom-adapters": "workspace:^"
     "@editorjs/model": "workspace:^"
     "@types/eslint": "npm:^8"
     "@vitejs/plugin-vue": "npm:^4.2.3"
@@ -583,7 +584,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@editorjs/dom-adapters@workspace:packages/dom-adapters":
+"@editorjs/dom-adapters@workspace:^, @editorjs/dom-adapters@workspace:packages/dom-adapters":
   version: 0.0.0-use.local
   resolution: "@editorjs/dom-adapters@workspace:packages/dom-adapters"
   dependencies:

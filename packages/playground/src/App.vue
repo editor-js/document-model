@@ -1,11 +1,62 @@
 <script setup lang="ts">
 import { Node } from './components';
-import { EditorDocument } from '@editorjs/model';
+import { EditorDocument, EditorJSModel } from '@editorjs/model';
 import { data } from '../../model/src/mocks/data.ts';
+import { InlineToolAdapter } from '@editorjs/dom-adapters';
+import { onMounted, ref } from 'vue';
 
-const document = new EditorDocument(data);
 
-console.log('document', document);
+const dataRef = ref({ blocks: [ data.blocks[1] ] });
+
+const input = ref<HTMLElement | null>(null);
+let adapterRef: InlineToolAdapter;
+const documentRef = ref<EditorDocument | null>(new EditorDocument(dataRef.value));
+
+const onFormat = (tool: string) => {
+  adapterRef?.format(tool);
+};
+const onUnformat = (tool: string) => {
+  adapterRef?.unformat(tool);
+};
+
+onMounted(() => {
+  const model = new EditorJSModel(dataRef.value);
+
+  model.addEventListener('changed', () => {
+    dataRef.value = model.serialized;
+
+    documentRef.value = new EditorDocument(dataRef.value);
+    window.doc = documentRef.value;
+  });
+
+  const adapter = new InlineToolAdapter(model, 0, 'text', input.value);
+
+  const tool1 = {
+    name: 'bold',
+    create() {
+      return window.document.createElement('b');
+    },
+  };
+  const tool2 = {
+    name: 'italic',
+    create() {
+      return window.document.createElement('i');
+    },
+  };
+
+  adapter.attachTool(tool1);
+  adapter.attachTool(tool2);
+
+  adapterRef = adapter;
+
+  // adapter.format('bold', 10, 90);
+  // adapter.format('italic', 20, 80);
+  // adapter.unformat('bold', 30, 70);
+
+  window.model = model;
+  window.adapter = adapter;
+  window.doc = documentRef.value;
+});
 </script>
 
 <template>
@@ -21,11 +72,30 @@ console.log('document', document);
     </div>
     <div :class="$style.body">
       <div :class="$style.input">
-        <pre>{{ data }}</pre>
+        <div
+          ref="input"
+          contenteditable="true"
+          style="font-size: 20px"
+        >
+          {{ data.blocks[1].data.text.value }}
+        </div>
+        <button @click="onFormat('bold')">
+          Format Bold
+        </button>
+        <button @click="onFormat('italic')">
+          Format Italic
+        </button>
+        <button @click="onUnformat('bold')">
+          Unformat Bold
+        </button>
+        <button @click="onUnformat('italic')">
+          Unformat Italic
+        </button>
+        <pre>{{ dataRef }}</pre>
       </div>
       <div :class="$style.output">
         <Node
-          :node="document"
+          :node="documentRef"
         />
       </div>
     </div>

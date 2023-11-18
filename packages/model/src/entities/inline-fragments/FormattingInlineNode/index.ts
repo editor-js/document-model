@@ -166,7 +166,7 @@ export class FormattingInlineNode extends ParentInlineNode implements InlineNode
        * If start > 0, then there is a middle node, so we'll need to append its children to the parent
        */
       if (middleNode) {
-        result.push(this, ...middleNode.children);
+        result.push(...middleNode.children);
       /**
        * Else we'll need to append current nodes children to the parent
        */

@@ -11,6 +11,7 @@
     "lint:fix": "yarn lint --fix"
   },
   "dependencies": {
+    "@editorjs/dom-adapters": "workspace:^",
     "@editorjs/model": "workspace:^",
     "vue": "^3.3.4"
   },
