@@ -4,7 +4,7 @@ import { CaretAdapter } from '../../../dom-adapters/src/caret/CaretAdapter';
 import { type EditorJSModel, TextRange } from '@editorjs/model';
 
 const input = ref<HTMLElement | null>(null);
-const index = ref<TextRange>([0, 0]);
+const index = ref<TextRange | null>(null);
 
 const props = defineProps<{
   /**
@@ -35,7 +35,10 @@ onMounted(() => {
       :class="$style.input"
       v-html="`Some words <b>inside</b> the input`"
     />
-    <div :class="$style.counter">
+    <div
+      v-if="index !== null"
+      :class="$style.counter"
+    >
       {{ index }}
     </div>
   </div>

@@ -18,7 +18,7 @@ export class CaretAdapter extends EventTarget {
   /**
    * Index stores start and end offset of a caret depending on a root of input
    */
-  #index: TextRange = [0, 0];
+  #index: TextRange | null = null;
 
   /**
    * Input element
