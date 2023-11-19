@@ -1,4 +1,3 @@
-import type { CaretAdapter } from '../CaretAdapter.js';
 import { createSingleton } from './singleton.js';
 
 /**
@@ -15,7 +14,7 @@ export interface Subscriber {
   /**
    * Used to save context of the callback.
    */
-  context: CaretAdapter;
+  context: unknown;
 }
 
 /**
@@ -33,7 +32,7 @@ export type InputWithCaret = HTMLElement;
  */
 export const useSelectionChange = createSingleton(() => {
   /**
-   * User to iterate over all inputs and check if selection is related to them.
+   * Used to iterate over all inputs and check if selection is related to them.
    */
   const inputsWatched: InputWithCaret[] = [];
 
@@ -55,7 +54,10 @@ export const useSelectionChange = createSingleton(() => {
 
     const range = selection.getRangeAt(0);
 
-    return input.contains(range.startContainer) ?? false;
+    /**
+     * @todo think of cross-block selection
+     */
+    return range.intersectsNode(input);
   }
 
   /**
@@ -138,6 +140,7 @@ export const useSelectionChange = createSingleton(() => {
   return {
     on,
     off,
+    init,
     destroy,
   };
 });

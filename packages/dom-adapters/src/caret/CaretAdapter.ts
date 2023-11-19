@@ -66,9 +66,9 @@ export class CaretAdapter extends EventTarget {
    * - Composes caret index by selection position related to start of input
    *
    * @param input - input to watch caret change
-   * @param dataKey - key of data property in block's data that contains input's value
+   * @param _dataKey - key of data property in block's data that contains input's value
    */
-  public attachInput(input: HTMLElement, dataKey: string): void {
+  public attachInput(input: HTMLElement, _dataKey: string): void {
     this.#input = input;
 
     this.#onSelectionChange(this.#input, this.#onInputSelectionChange, this);
@@ -94,13 +94,6 @@ export class CaretAdapter extends EventTarget {
   #onInputSelectionChange(selection: Selection | null): void {
     this.#updateIndex(selection);
   };
-
-  /**
-   * Returns absolute caret index related to input
-   */
-  public get index(): TextRange {
-    return this.#index;
-  }
 
   /**
    * Updates caret index
