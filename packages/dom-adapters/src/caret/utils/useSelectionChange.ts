@@ -86,6 +86,10 @@ export const useSelectionChange = createSingleton(() => {
    * @param context - context of the callback
    */
   function on(input: InputWithCaret, callback: Subscriber['callback'], context: Subscriber['context']): void {
+    if (subscribers.has(input)) {
+      throw new Error('Input is already subscribed to "selection change" event.');
+    }
+
     /**
      * Add input to the list of watched inputs.
      */
