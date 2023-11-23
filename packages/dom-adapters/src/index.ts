@@ -1,1 +1,1 @@
-console.log('dom-adapters');
+export * from './caret/CaretAdapter.js';

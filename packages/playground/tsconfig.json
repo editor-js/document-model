@@ -32,5 +32,8 @@
     { 
       "path": "../model" 
     },
+    {
+      "path": "../dom-adapters"
+    }
   ]
 }
