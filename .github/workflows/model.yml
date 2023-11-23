@@ -1,5 +1,6 @@
-name: Model package workflow runner
+name: Merge queue workflow runner for model package
 on:
+  push:
   merge_group:
 
 jobs:
@@ -7,113 +8,45 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: .nvmrc
-      - uses: ./.github/actions/setup
       - name: Run ESLint check
-        run: yarn workspace @editorjs/model lint:ci
-
+        uses: ./.github/actions/lint
+        with:
+          package-name: model
+    
   tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: .nvmrc
-      - uses: ./.github/actions/setup
+      
       - name: Run unit tests
-        uses: ArtiomTr/jest-coverage-report-action@v2
+        uses: ./.github/actions/unit-tests
         with:
-          working-directory: ./packages/model
-          test-script: yarn test
-          package-manager: yarn
+          package-name: model     
 
   mutation-tests:
     runs-on: ubuntu-latest
-    env:
-      STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
+
+      - name: Run mutation tests for changed files
+        if: ${{ github.event_name == 'push' }}
+        uses: ./.github/actions/mutation-tests-changed-files
         with:
-          node-version-file: .nvmrc
+          package-name: model
+          stryker_dashboard_api_key: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
 
-      - name: Setup environment
-        uses: ./.github/actions/setup
-
-      - name: Get changed files
-        uses: tj-actions/changed-files@v39.0.0
-        id: changed-files
+      - name: Run mutation tests for all files
+        if: ${{ github.event_name == 'merge_group' }}
+        uses: ./.github/actions/mutation-tests-all-files
         with:
-          files_yaml: |
-            src:
-              - 'src/**/*.ts'
-              - '!src/**/*.spec.ts'
-              - '!src/**/__mocks__/**'
-          separator: "','"
-          path: packages/model
-
-      - name: Run mutation tests
-        if: steps.changed-files.outputs.src_any_changed == 'true'
-        id: run-mutation-tests
-        run: yarn workspace @editorjs/model test:mutations --mutate ${{format('''{0}''', steps.changed-files.outputs.src_all_changed_files)}}
-        continue-on-error: true
-
-      - name: Comment on successful mutation testing
-        uses: thollander/actions-comment-pull-request@v2
-        if: steps.changed-files.outputs.src_any_changed == 'true' && steps.run-mutation-tests.outcome == 'success'
-        with:
-          message: |
-            ## ✅ Mutation testing passed
-
-            Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${{ github.event.number }}
-            
-            <details>
-              <summary>Mutated files</summary>
-              <pre>
-            ${{ join(fromJson(format('[{0}]', format('''{0}''', steps.changed-files.outputs.src_all_changed_files))), '<br />') }}
-              </pre>
-            </details>
-          comment_tag: mutation-tests
-
-      - name: Comment on failed mutation testing
-        uses: thollander/actions-comment-pull-request@v2
-        if: steps.changed-files.outputs.src_any_changed == 'true' && steps.run-mutation-tests.outcome == 'failure'
-        with:
-          message: |
-            ## ❌ Mutation testing hasn't passed score threshold
-
-            Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${{ github.event.number }}
-            
-            <details>
-              <summary>Mutated files</summary>
-              <pre>
-            ${{ join(fromJson(format('[{0}]', format('''{0}''', steps.changed-files.outputs.src_all_changed_files))), '<br />') }}
-              </pre>
-            </details>
-          comment_tag: mutation-tests
-
-      - name: Comment on empty changes
-        uses: thollander/actions-comment-pull-request@v2
-        if: steps.changed-files.outputs.src_any_changed == 'false'
-        with:
-          message: |
-            ## ⏭️ No files to mutate
-
-          comment_tag: mutation-tests
-          #pr_number: ${{ github.event.number }}
-
-      - if: steps.changed-files.outputs.src_any_changed == 'true' && steps.run-mutation-tests.outcome == 'failure'
-        run: exit 1
+          package-name: model
+          stryker_dashboard_api_key: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
 
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: .nvmrc
-      - uses: ./.github/actions/setup
       - name: Build the package
-        run: yarn workspace @editorjs/model build
+        uses: ./.github/actions/build
+        with:
+          package-name: model
