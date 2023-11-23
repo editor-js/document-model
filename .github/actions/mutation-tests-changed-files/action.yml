@@ -1,40 +1,14 @@
-name: Model package workflow runner
-on:
-  merge_group:
-
-jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: .nvmrc
-      - uses: ./.github/actions/setup
-      - name: Run ESLint check
-        run: yarn workspace @editorjs/model lint:ci
-
-  tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: .nvmrc
-      - uses: ./.github/actions/setup
-      - name: Run unit tests
-        uses: ArtiomTr/jest-coverage-report-action@v2
-        with:
-          working-directory: ./packages/model
-          test-script: yarn test
-          package-manager: yarn
-
-  mutation-tests:
-    runs-on: ubuntu-latest
-    env:
-      STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
-    steps:
-      - uses: actions/checkout@v4
+name: Run mutation tests for changed files only 
+inputs:
+  package-name:
+    description: 'Name of the package'
+    required: true
+  stryker_dashboard_api_key:
+    description: 'Stryker dashboard api key'
+    required: true
+runs:
+  using: "composite"
+  steps:
       - uses: actions/setup-node@v3
         with:
           node-version-file: .nvmrc
@@ -52,17 +26,24 @@ jobs:
               - '!src/**/*.spec.ts'
               - '!src/**/__mocks__/**'
           separator: "','"
-          path: packages/model
+          path: packages/${{ inputs.package-name }}
 
       - name: Run mutation tests
         if: steps.changed-files.outputs.src_any_changed == 'true'
+        shell: bash
         id: run-mutation-tests
-        run: yarn workspace @editorjs/model test:mutations --mutate ${{format('''{0}''', steps.changed-files.outputs.src_all_changed_files)}}
+        run: yarn workspace @editorjs/${{ inputs.package-name }} test:mutations --mutate ${{format('''{0}''', steps.changed-files.outputs.src_all_changed_files)}}
         continue-on-error: true
+
+      - name: Find current PR's number
+        uses: jwalton/gh-find-current-pr@v1
+        id: findPr
 
       - name: Comment on successful mutation testing
         uses: thollander/actions-comment-pull-request@v2
-        if: steps.changed-files.outputs.src_any_changed == 'true' && steps.run-mutation-tests.outcome == 'success'
+        env:
+          STRYKER_DASHBOARD_API_KEY: ${{ inputs.stryker_dashboard_api_key }}
+        if: steps.changed-files.outputs.src_any_changed == 'true' && steps.run-mutation-tests.outcome == 'success' && ${{ steps.findPr.outputs.number != '' }}
         with:
           message: |
             ## ✅ Mutation testing passed
@@ -76,10 +57,13 @@ jobs:
               </pre>
             </details>
           comment_tag: mutation-tests
+          pr_number: ${{ steps.findPr.outputs.number != '' && steps.findPr.outputs.number || '1'}}
 
       - name: Comment on failed mutation testing
         uses: thollander/actions-comment-pull-request@v2
-        if: steps.changed-files.outputs.src_any_changed == 'true' && steps.run-mutation-tests.outcome == 'failure'
+        env:
+          STRYKER_DASHBOARD_API_KEY: ${{ inputs.stryker_dashboard_api_key }}
+        if: steps.changed-files.outputs.src_any_changed == 'true' && steps.run-mutation-tests.outcome == 'failure' && ${{ steps.findPr.outputs.number != '' }}
         with:
           message: |
             ## ❌ Mutation testing hasn't passed score threshold
@@ -93,27 +77,20 @@ jobs:
               </pre>
             </details>
           comment_tag: mutation-tests
+          pr_number: ${{ steps.findPr.outputs.number != '' && steps.findPr.outputs.number || '1'}}
 
       - name: Comment on empty changes
         uses: thollander/actions-comment-pull-request@v2
-        if: steps.changed-files.outputs.src_any_changed == 'false'
+        env:
+          STRYKER_DASHBOARD_API_KEY: ${{ inputs.stryker_dashboard_api_key }}
+        if: steps.changed-files.outputs.src_any_changed == 'false' && ${{ steps.findPr.outputs.number != '' }}
         with:
           message: |
             ## ⏭️ No files to mutate
 
           comment_tag: mutation-tests
-          #pr_number: ${{ github.event.number }}
+          pr_number: ${{ steps.findPr.outputs.number != '' && steps.findPr.outputs.number || '1'}}
 
       - if: steps.changed-files.outputs.src_any_changed == 'true' && steps.run-mutation-tests.outcome == 'failure'
+        shell: bash
         run: exit 1
-
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v3
-        with:
-          node-version-file: .nvmrc
-      - uses: ./.github/actions/setup
-      - name: Build the package
-        run: yarn workspace @editorjs/model build

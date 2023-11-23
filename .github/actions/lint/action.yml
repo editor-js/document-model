@@ -1,0 +1,19 @@
+name: "Lint"
+inputs:
+  package-name:
+    description: 'Name of the package'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version-file: .nvmrc
+
+    - name: Setup environment
+      uses: ./.github/actions/setup
+
+    - name: Run ESLint check
+      shell: bash
+      run: yarn workspace @editorjs/${{ inputs.package-name }} lint:ci

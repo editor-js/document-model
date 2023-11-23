@@ -1,0 +1,21 @@
+name: "Build"
+inputs:
+  package-name:
+    description: 'Name of the package'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version-file: .nvmrc
+
+    - name: Setup environment
+      uses: ./.github/actions/setup
+
+    - name: Build the package with dependencies
+      env:
+            STRYKER_DASHBOARD_API_KEY: ${{ inputs.stryker_dashboard_api_key }}
+      shell: bash
+      run: yarn workspaces foreach -Rpt --from '@editorjs/${{ inputs.package-name }}' run build

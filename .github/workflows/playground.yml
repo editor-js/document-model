@@ -1,0 +1,24 @@
+name: Playground package workflow runner
+on:
+  push:
+  merge_group:
+
+jobs:
+  # lint:ci не настроен для playground
+  # lint:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Run ESLint check
+  #       uses: ./.github/actions/lint
+  #       with:
+  #         package-name: document-playground
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the package
+        uses: ./.github/actions/build
+        with:
+          package-name: document-playground

@@ -1,7 +1,6 @@
-name: Merge queue workflow runner for model package
+name: Dom-adapters package workflow runner
 on:
   push:
-  merge_group:
 
 jobs:
   lint:
@@ -11,17 +10,16 @@ jobs:
       - name: Run ESLint check
         uses: ./.github/actions/lint
         with:
-          package-name: model
+          package-name: dom-adapters
     
   tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - name: Run unit tests
         uses: ./.github/actions/unit-tests
         with:
-          package-name: model     
+          package-name: dom-adapters     
 
   mutation-tests:
     runs-on: ubuntu-latest
@@ -32,14 +30,14 @@ jobs:
         if: ${{ github.event_name == 'push' }}
         uses: ./.github/actions/mutation-tests-changed-files
         with:
-          package-name: model
+          package-name: dom-adapters
           stryker_dashboard_api_key: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
 
       - name: Run mutation tests for all files
         if: ${{ github.event_name == 'merge_group' }}
         uses: ./.github/actions/mutation-tests-all-files
         with:
-          package-name: model
+          package-name: dom-adapters
           stryker_dashboard_api_key: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
 
   build:
@@ -49,4 +47,4 @@ jobs:
       - name: Build the package
         uses: ./.github/actions/build
         with:
-          package-name: model
+          package-name: dom-adapters

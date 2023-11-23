@@ -1,0 +1,22 @@
+name: Run mutation tests for all files
+inputs:
+  package-name:
+    description: 'Name of the package'
+    required: true
+  stryker_dashboard_api_key:
+    description: 'Stryker dashboard api key'
+    required: true
+runs:
+  using: "composite"
+  steps:
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: .nvmrc
+        
+      - name: Setup environment
+        uses: ./.github/actions/setup
+
+      - name: Run mutation tests
+        shell: bash
+        id: run-mutation-tests
+        run: yarn workspace @editorjs/${{ inputs.package-name }} test:mutations --dashboard.version main
