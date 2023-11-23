@@ -18,8 +18,8 @@ const isHidden = ref(props.collapsed ?? true);
     <template v-if="!isHidden">
       <slot />
     </template>
-    <div 
-      v-else 
+    <div
+      v-else
       :class="$style.collapsed"
       @click="isHidden = false"
     >
