@@ -1,0 +1,99 @@
+name: Mutation tests for changed files
+inputs:
+  working-directory:
+    description: 'Path to the ./packages/name_of_your_package_folder'
+    required: true
+  package-name:
+    description: 'A full name of the package'
+    required: true
+  stryker_dashboard_api_key:
+    description: 'Stryker dashboard api key'
+    required: true
+runs:
+  using: "composite"
+  steps:
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: .nvmrc
+
+      - name: Setup environment
+        uses: ./.github/actions/setup
+
+      - name: Get changed files
+        uses: tj-actions/changed-files@v39.0.0
+        id: changed-files
+        with:
+          files_yaml: |
+            src:
+              - 'src/**/*.ts'
+              - '!src/**/*.spec.ts'
+              - '!src/**/__mocks__/**'
+          separator: "','"
+          path: ${{ inputs.working-directory }}
+
+      - name: Run mutation tests
+        if: steps.changed-files.outputs.src_any_changed == 'true'
+        shell: bash
+        id: run-mutation-tests
+        run: yarn workspace ${{ inputs.package-name }} test:mutations --mutate ${{format('''{0}''', steps.changed-files.outputs.src_all_changed_files)}}
+        continue-on-error: true
+
+      - name: Find current PR's number
+        uses: jwalton/gh-find-current-pr@v1
+        id: findPr
+
+      - name: Comment on successful mutation testing
+        uses: thollander/actions-comment-pull-request@v2
+        env:
+          STRYKER_DASHBOARD_API_KEY: ${{ inputs.stryker_dashboard_api_key }}
+        if: steps.changed-files.outputs.src_any_changed == 'true' && steps.run-mutation-tests.outcome == 'success' && ${{ steps.findPr.outputs.number != '' }}
+        with:
+          message: |
+            ✅ Mutation testing passed for `${{ inputs.working-directory }}`
+
+            Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${{ github.event.number }}
+            
+            <details>
+              <summary>Mutated files</summary>
+              <pre>
+            ${{ join(fromJson(format('[{0}]', format('''{0}''', steps.changed-files.outputs.src_all_changed_files))), '<br />') }}
+              </pre>
+            </details>
+          comment_tag: mutation-tests for `${{ inputs.working-directory }}`
+          pr_number: ${{ steps.findPr.outputs.number != '' && steps.findPr.outputs.number || '1'}}
+
+      - name: Comment on failed mutation testing
+        uses: thollander/actions-comment-pull-request@v2
+        env:
+          STRYKER_DASHBOARD_API_KEY: ${{ inputs.stryker_dashboard_api_key }}
+        if: steps.changed-files.outputs.src_any_changed == 'true' && steps.run-mutation-tests.outcome == 'failure' && ${{ steps.findPr.outputs.number != '' }}
+        with:
+          message: |
+            ❌ Mutation testing hasn't passed score threshold for `${{ inputs.working-directory }}`
+
+            Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${{ github.event.number }}
+            
+            <details>
+              <summary>Mutated files</summary>
+              <pre>
+            ${{ join(fromJson(format('[{0}]', format('''{0}''', steps.changed-files.outputs.src_all_changed_files))), '<br />') }}
+              </pre>
+            </details>
+          comment_tag: mutation-tests for `${{ inputs.working-directory }}`
+          pr_number: ${{ steps.findPr.outputs.number != '' && steps.findPr.outputs.number || '1'}}
+
+      - name: Comment on empty changes
+        uses: thollander/actions-comment-pull-request@v2
+        env:
+          STRYKER_DASHBOARD_API_KEY: ${{ inputs.stryker_dashboard_api_key }}
+        if: steps.changed-files.outputs.src_any_changed == 'false' && ${{ steps.findPr.outputs.number != '' }}
+        with:
+          message: |
+            ⏭️ No files to mutate for `${{ inputs.working-directory }}`
+
+          comment_tag: mutation-tests for `${{ inputs.working-directory }}`
+          pr_number: ${{ steps.findPr.outputs.number != '' && steps.findPr.outputs.number || '1'}}
+
+      - if: steps.changed-files.outputs.src_any_changed == 'true' && steps.run-mutation-tests.outcome == 'failure'
+        shell: bash
+        run: exit 1
