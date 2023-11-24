@@ -68,6 +68,7 @@ export class CaretAdapter extends EventTarget {
    * @param input - input to watch caret change
    * @param _dataKey - key of data property in block's data that contains input's value
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars,no-unused-vars -- unused parameter for now
   public attachInput(input: HTMLElement, _dataKey: string): void {
     this.#input = input;
 
