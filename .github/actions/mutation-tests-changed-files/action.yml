@@ -1,7 +1,10 @@
-name: Run mutation tests for changed files only 
+name: Mutation tests for changed files
 inputs:
+  working-directory:
+    description: 'Path to the ./packages/name_of_your_package_folder'
+    required: true
   package-name:
-    description: 'Name of the package'
+    description: 'A full name of the package'
     required: true
   stryker_dashboard_api_key:
     description: 'Stryker dashboard api key'
@@ -26,13 +29,13 @@ runs:
               - '!src/**/*.spec.ts'
               - '!src/**/__mocks__/**'
           separator: "','"
-          path: packages/${{ inputs.package-name }}
+          path: ${{ inputs.working-directory }}
 
       - name: Run mutation tests
         if: steps.changed-files.outputs.src_any_changed == 'true'
         shell: bash
         id: run-mutation-tests
-        run: yarn workspace @editorjs/${{ inputs.package-name }} test:mutations --mutate ${{format('''{0}''', steps.changed-files.outputs.src_all_changed_files)}}
+        run: yarn workspace ${{ inputs.package-name }} test:mutations --mutate ${{format('''{0}''', steps.changed-files.outputs.src_all_changed_files)}}
         continue-on-error: true
 
       - name: Find current PR's number
@@ -46,7 +49,7 @@ runs:
         if: steps.changed-files.outputs.src_any_changed == 'true' && steps.run-mutation-tests.outcome == 'success' && ${{ steps.findPr.outputs.number != '' }}
         with:
           message: |
-            ## ✅ Mutation testing passed
+            ✅ Mutation testing passed for `${{ inputs.working-directory }}`
 
             Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${{ github.event.number }}
             
@@ -66,7 +69,7 @@ runs:
         if: steps.changed-files.outputs.src_any_changed == 'true' && steps.run-mutation-tests.outcome == 'failure' && ${{ steps.findPr.outputs.number != '' }}
         with:
           message: |
-            ## ❌ Mutation testing hasn't passed score threshold
+            ❌ Mutation testing hasn't passed score threshold for `${{ inputs.working-directory }}`
 
             Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${{ github.event.number }}
             
@@ -86,7 +89,7 @@ runs:
         if: steps.changed-files.outputs.src_any_changed == 'false' && ${{ steps.findPr.outputs.number != '' }}
         with:
           message: |
-            ## ⏭️ No files to mutate
+            ⏭️ No files to mutate for `${{ inputs.working-directory }}`
 
           comment_tag: mutation-tests
           pr_number: ${{ steps.findPr.outputs.number != '' && steps.findPr.outputs.number || '1'}}

@@ -11,7 +11,7 @@ jobs:
       - name: Run ESLint check
         uses: ./.github/actions/lint
         with:
-          package-name: document-playground
+          package-name: '@editorjs/document-playground'
 
   build:
     runs-on: ubuntu-latest
@@ -20,4 +20,4 @@ jobs:
       - name: Build the package
         uses: ./.github/actions/build
         with:
-          package-name: document-playground
+          package-name: '@editorjs/document-playground'

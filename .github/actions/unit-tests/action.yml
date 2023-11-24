@@ -1,7 +1,10 @@
-name: Run unit test
+name: Unit tests
 inputs:
+  working-directory:
+    description: 'Path to the ./packages/name_of_your_package_folder'
+    required: true
   package-name:
-    description: 'Name of the package'
+    description: 'A full name of the package'
     required: true
 
 runs:
@@ -19,7 +22,7 @@ runs:
     - name: Run unit tests
       uses: ArtiomTr/jest-coverage-report-action@v2
       with:
-        working-directory: ./packages/${{ inputs.package-name }}
-        test-script: yarn workspace @editorjs/${{ inputs.package-name }} test
+        working-directory: ${{ inputs.working-directory }}
+        test-script: yarn workspace ${{ inputs.package-name }} test
         package-manager: yarn
         prnumber: ${{ steps.findPr.outputs.number }}

@@ -19,4 +19,4 @@ runs:
       - name: Run mutation tests
         shell: bash
         id: run-mutation-tests
-        run: yarn workspace @editorjs/${{ inputs.package-name }} test:mutations --dashboard.version main
+        run: yarn workspace ${{ inputs.package-name }} test:mutations --dashboard.version main

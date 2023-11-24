@@ -16,4 +16,4 @@ runs:
 
     - name: Run ESLint check
       shell: bash
-      run: yarn workspace @editorjs/${{ inputs.package-name }} lint:ci
+      run: yarn workspace ${{ inputs.package-name }} lint:ci

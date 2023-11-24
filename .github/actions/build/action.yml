@@ -18,4 +18,4 @@ runs:
       env:
             STRYKER_DASHBOARD_API_KEY: ${{ inputs.stryker_dashboard_api_key }}
       shell: bash
-      run: yarn workspaces foreach -Rpt --from '@editorjs/${{ inputs.package-name }}' run build
+      run: yarn workspaces foreach -Rpt --from '${{ inputs.package-name }}' run build
