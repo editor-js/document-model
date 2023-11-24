@@ -22,7 +22,7 @@ runs:
     - name: Run unit tests
       uses: ArtiomTr/jest-coverage-report-action@v2
       with:
-        custom-title: Coverage report for ${{ inputs.working-directory }}
+        custom-title: Coverage report for `${{ inputs.working-directory }}`
         working-directory: ${{ inputs.working-directory }}
         test-script: yarn workspace ${{ inputs.package-name }} test
         package-manager: yarn
