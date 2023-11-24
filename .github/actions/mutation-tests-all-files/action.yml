@@ -1,4 +1,4 @@
-name: Run mutation tests for all files
+name: Mutation tests for all files
 inputs:
   package-name:
     description: 'Name of the package'

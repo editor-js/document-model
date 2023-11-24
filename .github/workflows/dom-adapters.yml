@@ -1,4 +1,4 @@
-name: Dom-adapters package workflow runner
+name: Dom-adapters check
 on:
   push:
 

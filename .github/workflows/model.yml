@@ -1,4 +1,4 @@
-name: Model package workflow runner
+name: Model check
 on:
   push:
   merge_group:

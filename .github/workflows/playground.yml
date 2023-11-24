@@ -1,4 +1,4 @@
-name: Playground package workflow runner
+name: Playground check
 on:
   push:
   merge_group:
