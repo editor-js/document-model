@@ -1,4 +1,4 @@
-name: Merge queue workflow runner for model package
+name: Model package workflow runner
 on:
   push:
   merge_group:
