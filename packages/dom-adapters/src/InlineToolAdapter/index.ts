@@ -1,7 +1,26 @@
-import type { DataKey, EditorJSModel, InlineToolData, InlineToolName, ModelEvents } from '@editorjs/model';
+import type {
+  DataKey,
+  EditorJSModel,
+  InlineFragment,
+  InlineToolData,
+  InlineToolName,
+  ModelEvents,
+  TextRange
+} from '@editorjs/model';
 import { EventType, TextFormattedEvent, TextUnformattedEvent } from '@editorjs/model';
-import { getAbsoluteOffset, getRange, normalize, unwrapByToolType } from '../utils/helpers.js';
+import { unwrapByToolType, createRange, normalizeNode } from '../utils/index.js';
+import type { CaretAdapter } from '../caret/CaretAdapter.js';
 
+export interface InlineTool {
+  name: InlineToolName;
+  create(data?: InlineToolData): HTMLElement;
+  getAction(index: TextRange, fragments: InlineFragment[], data?: InlineToolData): { action: FormattingAction; range: TextRange };
+}
+
+export enum FormattingAction {
+  Format = 'format',
+  Unformat = 'unformat',
+}
 
 /**
  * InlineToolAdapter class is used to connect InlineTools with the EditorJS model and apply changes into the DOM
@@ -14,7 +33,7 @@ export class InlineToolAdapter {
    *
    * @todo Replace any with InlineTool type
    */
-  #tools: Map<InlineToolName, any> = new Map();
+  #tools: Map<InlineToolName, InlineTool> = new Map();
 
   /**
    * EditorJS model
@@ -45,6 +64,11 @@ export class InlineToolAdapter {
   #input: HTMLElement;
 
   /**
+   * Caret adapter instance for the input
+   */
+  #caretAdapter: CaretAdapter;
+
+  /**
    * InlineToolAdapter constructor
    *
    * @param model - EditorJS model
@@ -52,11 +76,12 @@ export class InlineToolAdapter {
    * @param dataKey - key of the data in the BlockNode inline tool is related to
    * @param input - input element inline tool is related to
    */
-  constructor(model: EditorJSModel, blockIndex: number, dataKey: DataKey, input: HTMLElement) {
+  constructor(model: EditorJSModel, blockIndex: number, dataKey: DataKey, input: HTMLElement, caretAdapter: CaretAdapter) {
     this.#model = model;
     this.#blockIndex = blockIndex;
     this.#dataKey = dataKey;
     this.#input = input;
+    this.#caretAdapter = caretAdapter;
 
     this.#subscribe();
   }
@@ -69,7 +94,7 @@ export class InlineToolAdapter {
    *
    * @todo Replace any with InlineTool type
    */
-  public attachTool(tool: any): void {
+  public attachTool(tool: InlineTool): void {
     this.#tools.set(tool.name, tool);
   }
 
@@ -78,114 +103,41 @@ export class InlineToolAdapter {
    *
    * @param tool - tool to detach
    */
-  public detachTool(tool: any): void {
+  public detachTool(tool: InlineTool): void {
     this.#tools.delete(tool.name);
   }
 
-  /**
-   * Applies formatting to the input using current selection
-   *
-   * @param tool - name of the tool to apply
-   * @param [data] - inline tool data if applicable
-   */
-  public format(tool: InlineToolName, data?: InlineToolData): void;
-  /**
-   * Applies formatting to the input using specified range
-   *
-   * @param tool - name of the tool to apply
-   * @param start - char start index of the range
-   * @param end - char end index of the range
-   * @param [data] - inline tool data if applicable
-   */
-  public format(tool: InlineToolName, start: number, end: number, data?: InlineToolData): void;
-  /**
-   * General declaration
-   *
-   * @param args - arguments
-   */
-  public format(...args: [InlineToolName, number | InlineToolData | undefined, number?, InlineToolData?]): void {
-    let tool: InlineToolName, start: number, end: number, data: InlineToolData | undefined;
+  public applyFormat(toolName: InlineToolName, data: InlineToolData): void {
+    const index = this.#caretAdapter.getIndex();
 
-    if (args.length < 3) {
-      tool = args[0];
-      data = args[1] as InlineToolData | undefined;
+    if (index === null) {
+      console.warn('InlineToolAdapter: caret index is outside of the input');
 
-      const selection = window.getSelection();
-
-      if (!selection || selection.rangeCount === 0) {
-        return;
-      }
-
-      const range = selection?.getRangeAt(0);
-
-      const comparison = range.compareBoundaryPoints(Range.START_TO_END, range);
-
-      if (comparison >= 0) {
-        start = getAbsoluteOffset(this.#input, range.startContainer, range.startOffset);
-        end = getAbsoluteOffset(this.#input, range.endContainer, range.endOffset);
-      } else {
-        start = getAbsoluteOffset(this.#input, range.endContainer, range.endOffset);
-        end = getAbsoluteOffset(this.#input, range.startContainer, range.startOffset);
-      }
-    } else {
-      tool = args[0];
-      start = args[1] as number;
-      end = args[2] as number;
-      data = args[3] as InlineToolData | undefined;
+      return;
     }
 
+    const tool = this.#tools.get(toolName);
 
-    this.#model.format(this.#blockIndex, this.#dataKey, tool, start, end, data);
-  }
+    if (!tool) {
+      console.warn(`InlineToolAdapter: tool ${toolName} is not attached`);
 
-  /**
-   *  Removes formatting from the input using current selection
-   *
-   * @param tool - name of the tool to remove formatting for
-   */
-  public unformat(tool: InlineToolName): void;
-  /**
-   * Removes formatting from the input using specified range
-   *
-   * @param tool - name of the tool to remove formatting for
-   * @param start - char start index of the range
-   * @param end - char end index of the range
-   */
-  public unformat(tool: InlineToolName, start: number, end: number): void;
-  /**
-   * General declaration
-   * @param args - arguments
-   */
-  public unformat(...args: [InlineToolName, number?, number?]): void {
-    let tool: InlineToolName, start: number, end: number;
-
-    if (args.length === 1) {
-      tool = args[0];
-
-      const selection = window.getSelection();
-
-      if (!selection || selection.rangeCount === 0) {
-        return;
-      }
-
-      const range = selection?.getRangeAt(0);
-
-      const comparison = range.compareBoundaryPoints(Range.START_TO_END, range);
-
-      if (comparison >= 0) {
-        start = getAbsoluteOffset(this.#input, range.startContainer, range.startOffset);
-        end = getAbsoluteOffset(this.#input, range.endContainer, range.endOffset);
-      } else {
-        start = getAbsoluteOffset(this.#input, range.endContainer, range.endOffset);
-        end = getAbsoluteOffset(this.#input, range.startContainer, range.startOffset);
-      }
-    } else {
-      tool = args[0];
-      start = args[1] as number;
-      end = args[2] as number;
+      return;
     }
 
-    this.#model.unformat(this.#blockIndex, this.#dataKey, tool, start, end);
+    const fragments = this.#model.getFragments(this.#blockIndex, this.#dataKey, ...index, toolName);
+
+    const { action, range } = tool.getAction(index, fragments, data);
+
+    switch (action) {
+      case FormattingAction.Format:
+        this.#model.format(this.#blockIndex, this.#dataKey, toolName, ...range, data);
+
+        break;
+      case FormattingAction.Unformat:
+        this.#model.unformat(this.#blockIndex, this.#dataKey, toolName, ...range);
+
+        break;
+    }
   }
 
   /**
@@ -206,14 +158,14 @@ export class InlineToolAdapter {
         return;
       }
 
-      const tool = this.#tools.get(data.tool);
+      const tool = this.#tools.get(data.tool)!;
       const wrappedTool = tool.create(data.data);
 
       wrappedTool.dataset.tool = data.tool;
 
       const [start, end] = index[0];
 
-      const range = getRange(this.#input, start, end);
+      const range = createRange(this.#input, start, end);
 
       /**
        * Apply formatting to the input
@@ -233,7 +185,7 @@ export class InlineToolAdapter {
         unwrapByToolType(range, data.tool);
       }
 
-      normalize(this.#input);
+      normalizeNode(this.#input);
       this.#input.normalize();
     });
   }

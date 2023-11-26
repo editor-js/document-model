@@ -1,3 +1,5 @@
+import { getNodeTextLength } from './getNodeTextLength.js';
+
 /**
  * Returns true if node is a line break
  *
@@ -28,7 +30,10 @@ export function getAbsoluteRangeOffset(parent: Node, initialNode: Node, initialO
     throw new Error('Range is not contained by the parent node');
   }
 
-  while (node !== parent) {
+  /**
+   * Iterate over all parents and compute offset
+   */
+  do {
     const childNodes = Array.from(node.parentNode!.childNodes);
     const index = childNodes.indexOf(node as ChildNode);
 
@@ -47,11 +52,11 @@ export function getAbsoluteRangeOffset(parent: Node, initialNode: Node, initialO
         /**
          * Compute offset with text length of left siblings
          */
-        return acc + child.textContent!.length;
-      }, offset);
+        return acc + getNodeTextLength(child);
+      }, initialNode instanceof Text ? offset : 0);
 
     node = node.parentNode!;
-  }
+  } while (node !== parent);
 
   return offset;
 }
