@@ -1,0 +1,29 @@
+name: Unit tests
+inputs:
+  working-directory:
+    description: 'Path to the ./packages/name_of_your_package_folder'
+    required: true
+  package-name:
+    description: 'A full name of the package'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-node@v3
+      with:
+        node-version-file: .nvmrc
+    - uses: ./.github/actions/setup
+
+    # Find current PR's number
+    - uses: jwalton/gh-find-current-pr@v1
+      id: findPr
+
+    - name: Run unit tests
+      uses: ArtiomTr/jest-coverage-report-action@v2
+      with:
+        custom-title: Coverage report for `${{ inputs.working-directory }}`
+        working-directory: ${{ inputs.working-directory }}
+        test-script: yarn workspace ${{ inputs.package-name }} test
+        package-manager: yarn
+        prnumber: ${{ steps.findPr.outputs.number }}
