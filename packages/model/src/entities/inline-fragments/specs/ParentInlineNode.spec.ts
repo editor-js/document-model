@@ -483,7 +483,12 @@ describe('ParentInlineNode', () => {
 
       node.addEventListener(EventType.Changed, e => event = e as TextFormattedEvent);
 
-      jest.spyOn(TextInlineNode.prototype, 'format').mockImplementationOnce(() => [ new FormattingInlineNode({ tool, data }) ])
+      jest.spyOn(TextInlineNode.prototype, 'format').mockImplementationOnce(() => [
+        new FormattingInlineNode({
+          tool,
+          data,
+        }),
+      ]);
 
       node.format(tool, start, end, data);
 
