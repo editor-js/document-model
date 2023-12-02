@@ -483,6 +483,8 @@ describe('ParentInlineNode', () => {
 
       node.addEventListener(EventType.Changed, e => event = e as TextFormattedEvent);
 
+      jest.spyOn(TextInlineNode.prototype, 'format').mockImplementationOnce(() => [ new FormattingInlineNode({ tool, data }) ])
+
       node.format(tool, start, end, data);
 
       expect(event).toBeInstanceOf(TextFormattedEvent);
@@ -494,6 +496,19 @@ describe('ParentInlineNode', () => {
           data,
         },
       }));
+    });
+
+    it('should not emit TextFormattedEvent if no changes to the tree appeared', () => {
+      let event: TextFormattedEvent | null = null;
+      const data = createInlineToolData({
+        url: 'https://editorjs.io',
+      });
+
+      node.addEventListener(EventType.Changed, e => event = e as TextFormattedEvent);
+
+      node.format(tool, start, start, data);
+
+      expect(event).toBeNull();
     });
   });
 

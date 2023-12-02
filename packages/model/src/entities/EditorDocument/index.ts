@@ -3,8 +3,6 @@ import { BlockNode } from '../BlockNode/index.js';
 import type { EditorDocumentSerialized, EditorDocumentConstructorParameters, Properties } from './types';
 import type { BlockTuneName } from '../BlockTune';
 import type { InlineFragment, InlineToolData, InlineToolName } from '../inline-fragments';
-import { IoCContainer, TOOLS_REGISTRY } from '../../IoC/index.js';
-import { ToolsRegistry } from '../../tools/index.js';
 import type { BlockNodeSerialized } from '../BlockNode/types';
 import type { DeepReadonly } from '../../utils/DeepReadonly';
 import { EventBus } from '../../utils/EventBus/EventBus.js';
