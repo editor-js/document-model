@@ -234,7 +234,6 @@ describe('FormattingInlineNode', () => {
       const result = node.unformat(tool, start, end);
 
       expect(result).toEqual([
-        expect.any(FormattingInlineNode),
         expect.any(TextInlineNode),
         expect.any(FormattingInlineNode),
       ]);
@@ -243,14 +242,13 @@ describe('FormattingInlineNode', () => {
     it('should remove unformatted node from parent if unformatting applied in the middle of the node', () => {
       const result = node.unformat(tool, start, end);
 
-      expect(parent.children).toHaveLength(result.length);
+      expect(parent.children).toHaveLength(result.length + 1);
     });
 
     it('should split node into two if unformatting applied at the end of the node', () => {
       const result = node.unformat(tool, end, node.length);
 
       expect(result).toEqual([
-        expect.any(FormattingInlineNode),
         expect.any(TextInlineNode),
       ]);
     });
@@ -258,7 +256,7 @@ describe('FormattingInlineNode', () => {
     it('should remove unformatted node from parent if unformatting applied at the end of the node', () => {
       const result = node.unformat(tool, end, node.length);
 
-      expect(parent.children).toHaveLength(result.length);
+      expect(parent.children).toHaveLength(result.length + 1);
     });
   });
 

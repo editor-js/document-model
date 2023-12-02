@@ -72,8 +72,12 @@ export const useSelectionChange = createSingleton(() => {
     inputsWatched.forEach((input) => {
       const subscriber = subscribers.get(input);
 
-      if (subscriber && isSelectionRelatedToInput(selection, input)) {
-        subscriber.callback.call(subscriber.context, selection);
+      if (subscriber) {
+        if (isSelectionRelatedToInput(selection, input)) {
+          subscriber.callback.call(subscriber.context, selection);
+        } else {
+          subscriber.callback.call(subscriber.context, null);
+        }
       }
     });
   }

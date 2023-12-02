@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import { CaretAdapter } from '@editorjs/dom-adapters';
-import { type EditorJSModel, TextRange } from '@editorjs/model';
+import { CaretAdapter, FormattingAction, InlineTool, InlineToolAdapter } from '@editorjs/dom-adapters';
+import { createDataKey, createInlineToolName, type EditorJSModel, InlineFragment, TextRange } from '@editorjs/model';
 
 const input = ref<HTMLElement | null>(null);
 const index = ref<TextRange | null>(null);
@@ -13,13 +13,61 @@ const props = defineProps<{
   model: EditorJSModel;
 }>();
 
+const boldTool = {
+  name: createInlineToolName('bold'),
+  create() {
+    return document.createElement('b');
+  },
+  getAction(range: TextRange, fragments: InlineFragment[]) {
+    const action = fragments.length === 0 ? FormattingAction.Format : FormattingAction.Unformat;
+
+    return {
+      action,
+      range,
+    };
+  },
+} satisfies InlineTool;
+
+const italicTool = {
+  name: createInlineToolName('italic'),
+  create() {
+    return document.createElement('i');
+  },
+  getAction(range: TextRange, fragments: InlineFragment[]) {
+    const action = fragments.length === 0 ? FormattingAction.Format : FormattingAction.Unformat;
+
+    return {
+      action,
+      range,
+    };
+  },
+} satisfies InlineTool;
+
 onMounted(() => {
-  const adapter = new CaretAdapter(props.model, 0);
+  console.log('mounted');
+  props.model.addBlock({
+    name: 'paragraph',
+    data: {
+      text: {
+        $t: 't',
+        value: 'Some words inside the input'
+      },
+    },
+  });
+
+  const caretAdapter = new CaretAdapter(props.model, 0);
 
   if (input.value !== null) {
-    adapter.attachInput(input.value, 'text');
+    caretAdapter.attachInput(input.value, 'text');
 
-    adapter.addEventListener('change', (event) => {
+    const inlineToolAdapter = new InlineToolAdapter(props.model, 0, createDataKey('text'), input.value, caretAdapter);
+
+    inlineToolAdapter.attachTool(boldTool);
+    inlineToolAdapter.attachTool(italicTool);
+
+    window.inlineToolAdapter = inlineToolAdapter;
+
+    caretAdapter.addEventListener('change', (event) => {
       index.value = (event as CustomEvent<{ index: TextRange }>).detail.index;
     });
   }
@@ -33,7 +81,7 @@ onMounted(() => {
       contenteditable
       type="text"
       :class="$style.input"
-      v-html="`Some words <b>inside</b> the input`"
+      v-html="`Some words inside the input`"
     />
     <div
       v-if="index !== null"

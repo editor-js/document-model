@@ -1,7 +1,5 @@
 import type { EditorJSModel, TextRange } from '@editorjs/model';
-import { useSelectionChange, type Subscriber, type InputWithCaret  } from './utils/useSelectionChange.js';
-import { getAbsoluteRangeOffset } from './utils/absoluteOffset.js';
-
+import { useSelectionChange, type Subscriber, type InputWithCaret, getAbsoluteRangeOffset  } from '../utils/index.js';
 /**
  * Caret adapter watches input caret change and passes it to the model
  *
@@ -88,6 +86,13 @@ export class CaretAdapter extends EventTarget {
   }
 
   /**
+   * Returns caret index
+   */
+  public getIndex(): TextRange | null {
+    return this.#index;
+  }
+
+  /**
    * Callback that will be called on document selection change
    *
    * @param selection - changed document selection
@@ -102,9 +107,21 @@ export class CaretAdapter extends EventTarget {
    * @param selection - changed document selection
    */
   #updateIndex(selection: Selection | null): void {
-    const range = selection?.getRangeAt(0);
+    if (selection === null) {
+      this.#index = null;
 
-    if (!range || !this.#input) {
+      this.dispatchEvent(new CustomEvent('change', {
+        detail: {
+          index: this.#index,
+        },
+      }));
+
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+
+    if (!this.#input) {
       return;
     }
 
