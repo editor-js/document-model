@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import { CaretAdapter } from '@editorjs/dom-adapters/dist/caret/CaretAdapter.js';
+import { CaretAdapter } from '@editorjs/dom-adapters';
 import { type EditorJSModel, TextRange } from '@editorjs/model';
 
 const input = ref<HTMLElement | null>(null);

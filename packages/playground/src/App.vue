@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Node, Input } from './components';
 import { EditorDocument, EditorJSModel } from '@editorjs/model';
-import { data } from '../../model/src/mocks/data.ts';
+import { data } from '@editorjs/model/dist/mocks/data.js';
 
 const document = new EditorDocument(data);
 const model = new EditorJSModel(data);
