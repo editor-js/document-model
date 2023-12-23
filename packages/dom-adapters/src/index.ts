@@ -1,1 +1,1 @@
-console.log('dom-adapters');
+export { BlockToolAdapter } from './BlockToolAdapter/index.js';
