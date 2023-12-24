@@ -6,6 +6,7 @@ import { EventType } from './utils/EventBus/types/EventType.js';
 import type { ModelEvents } from './utils/EventBus/types/EventMap.js';
 import { BaseDocumentEvent } from './utils/EventBus/events/BaseEvent.js';
 import type { Constructor } from './utils/types.js';
+import { CaretManager } from './caret/CaretManager.js';
 
 /**
  * EditorJSModel is a wrapper around EditorDocument that prevent access to  internal structures
@@ -15,6 +16,8 @@ export class EditorJSModel extends EventBus {
    * EditorDocument instance
    */
   #document: EditorDocument;
+
+  #caretManager: CaretManager;
 
   /**
    * Returns serialized data associated with the document
@@ -53,8 +56,27 @@ export class EditorJSModel extends EventBus {
     super();
 
     this.#document = new EditorDocument(...parameters);
+    this.#caretManager = new CaretManager(this);
+
+    this.#caretManager.addEventListener(
+      EventType.CaretUpdated,
+      (event: CustomEvent) => {
+        this.dispatchEvent(new CustomEvent(EventType.CaretUpdated, { detail: event.detail }));
+      }
+    );
 
     this.#listenAndBubbleDocumentEvents(this.#document);
+  }
+
+  public updateCaret(...parameters: Parameters<CaretManager['updateCaret']>): ReturnType<CaretManager['updateCaret']> {
+    return this.#caretManager.updateCaret(...parameters);
+  }
+
+  /**
+   *
+   */
+  public createCaret(...parameters: Parameters<CaretManager['createCaret']>): ReturnType<CaretManager['createCaret']> {
+    return this.#caretManager.createCaret(...parameters);
   }
 
   /**

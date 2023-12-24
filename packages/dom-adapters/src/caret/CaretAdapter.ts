@@ -1,6 +1,7 @@
-import type { EditorJSModel, TextRange } from '@editorjs/model';
-import { useSelectionChange, type Subscriber, type InputWithCaret  } from './utils/useSelectionChange.js';
-import { getAbsoluteRangeOffset } from './utils/absoluteOffset.js';
+import type { DataKey, EditorJSModel, TextRange, Caret, TextIndex, CaretUpdatedEvent } from '@editorjs/model';
+import { useSelectionChange, type Subscriber, type InputWithCaret } from './utils/useSelectionChange.js';
+import { getAbsoluteRangeOffset, getRelativeRangeIndex } from '../utils/index.js';
+import { EventType } from '@editorjs/model';
 
 /**
  * Caret adapter watches input caret change and passes it to the model
@@ -25,6 +26,8 @@ export class CaretAdapter extends EventTarget {
    */
   #input: null | InputWithCaret = null;
 
+  #caret: Caret;
+
   /**
    * EditorJSModel instance
    */
@@ -45,32 +48,32 @@ export class CaretAdapter extends EventTarget {
    */
   #offSelectionChange: (input: InputWithCaret) => void;
 
+  #dataIndex: DataKey;
+
   /**
+   * @param input
    * @param model - EditorJSModel instance
    * @param blockIndex - index of a block that contains input
+   * @param dataIndex
    */
-  constructor(model: EditorJSModel, blockIndex: number) {
+  constructor(input: HTMLElement, model: EditorJSModel, blockIndex: number, dataIndex: DataKey) {
     super();
 
+    this.#input = input;
     this.#model = model;
     this.#blockIndex = blockIndex;
+    this.#dataIndex = dataIndex;
+    this.#caret = this.#model.createCaret();
 
-    const { on, off } = useSelectionChange();
+    const {
+      on,
+      off,
+    } = useSelectionChange();
 
     this.#onSelectionChange = on;
     this.#offSelectionChange = off;
-  }
 
-  /**
-   * - Subscribes on input caret change
-   * - Composes caret index by selection position related to start of input
-   *
-   * @param input - input to watch caret change
-   * @param _dataKey - key of data property in block's data that contains input's value
-   */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars,no-unused-vars -- unused parameter for now
-  public attachInput(input: HTMLElement, _dataKey: string): void {
-    this.#input = input;
+    this.#model.addEventListener(EventType.CaretUpdated, this.#onModelUpdate.bind(this));
 
     this.#onSelectionChange(this.#input, this.#onInputSelectionChange, this);
   }
@@ -78,7 +81,7 @@ export class CaretAdapter extends EventTarget {
   /**
    * Unsubscribes from input caret change
    */
-  public detachInput(): void {
+  public destruct(): void {
     if (!this.#input) {
       return;
     }
@@ -97,6 +100,14 @@ export class CaretAdapter extends EventTarget {
   };
 
   /**
+   *
+   * @param index
+   */
+  public updateIndex(index: TextRange): void {
+    this.#caret.update([index, this.#dataIndex, this.#blockIndex] as TextIndex);
+  }
+
+  /**
    * Updates caret index
    *
    * @param selection - changed document selection
@@ -111,17 +122,54 @@ export class CaretAdapter extends EventTarget {
     this.#index = [
       getAbsoluteRangeOffset(this.#input, range.startContainer, range.startOffset),
       getAbsoluteRangeOffset(this.#input, range.endContainer, range.endOffset),
-    ];
+    ] as TextRange;
 
-    /**
-     * @todo
-     */
-    // this.#model.updateCaret(this.blockIndex, this.#index);
+    this.updateIndex(this.#index);
+  }
 
-    this.dispatchEvent(new CustomEvent('change', {
-      detail: {
-        index: this.#index,
-      },
-    }));
+  /**
+   *
+   * @param event
+   */
+  #onModelUpdate(event: CaretUpdatedEvent): void {
+    if (event.detail.index === null) {
+      return;
+    }
+
+    const [textIndex, dataIndex, blockIndex] = event.detail.index as TextIndex;
+    const caretId = event.detail.id;
+
+
+    if (caretId !== this.#caret.id) {
+      /**
+       * @Todo handle other carets
+       */
+      return;
+    }
+
+    if (blockIndex !== this.#blockIndex) {
+      return;
+    }
+
+    if (dataIndex !== this.#dataIndex) {
+      return;
+    }
+
+    if (textIndex[0] === this.#index?.[0] && textIndex[1] === this.#index?.[1]) {
+      return;
+    }
+
+    const start = getRelativeRangeIndex(this.#input!, textIndex[0]);
+    const end = getRelativeRangeIndex(this.#input!, textIndex[1]);
+
+    const selection = document.getSelection()!;
+    const range = new Range();
+
+    range.setStart(...start);
+    range.setEnd(...end);
+
+    selection.removeAllRanges();
+
+    selection.addRange(range);
   }
 }

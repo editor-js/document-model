@@ -6,4 +6,6 @@ export enum EventType {
    * The document model has been changed
    */
   Changed = 'changed',
+
+  CaretUpdated = 'caret-updated',
 }

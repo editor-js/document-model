@@ -8,8 +8,11 @@ import type {
   TextFormattedEvent,
   ValueModifiedEvent,
   TuneModifiedEvent,
-  PropertyModifiedEvent
+  PropertyModifiedEvent,
+  CaretUpdatedEvent,
 } from '../events';
+
+export { CaretUpdatedEvent };
 
 /**
  * Alias for all block events
@@ -30,4 +33,5 @@ export type ModelEvents = BlockEvents | TextNodeEvents | ValueNodeEvents | Block
  */
 export type EventMap = {
   [EventType.Changed]: ModelEvents;
+  [EventType.CaretUpdated]: CaretUpdatedEvent;
 };

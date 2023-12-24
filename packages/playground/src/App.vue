@@ -1,10 +1,30 @@
 <script setup lang="ts">
 import { Node, Input } from './components';
 import { EditorDocument, EditorJSModel } from '@editorjs/model';
-import { data } from '@editorjs/model/dist/mocks/data.js';
+// import { data } from '@editorjs/model/dist/mocks/data.js';
+import { ref } from 'vue';
 
-const document = new EditorDocument(data);
-const model = new EditorJSModel(data);
+const model = new EditorJSModel({
+  blocks: [{
+    name: 'paragraph',
+    data: {
+      text: {
+        value: '',
+        $t: 't',
+      },
+    },
+  }],
+});
+const document = ref(new EditorDocument(model.serialized));
+
+const serialized = ref(model.serialized);
+
+model.addEventListener('changed', () => {
+  serialized.value = model.serialized;
+  document.value = new EditorDocument(model.serialized);
+});
+
+window.model = model;
 
 </script>
 
@@ -24,7 +44,7 @@ const model = new EditorJSModel(data);
         <Input
           :model="model"
         />
-        <pre>{{ data }}</pre>
+        <pre>{{ serialized }}</pre>
       </div>
       <div :class="$style.output">
         <Node
