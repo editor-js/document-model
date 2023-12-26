@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { BlockToolAdapter } from '@editorjs/dom-adapters';
-import { CaretUpdatedEvent, createDataKey, type EditorJSModel, type TextIndex, type TextRange } from '@editorjs/model';
+import {
+  CaretUpdatedEvent,
+  createDataKey,
+  type EditorJSModel,
+  EventType,
+  type TextIndex,
+  type TextRange
+} from '@editorjs/model';
 
 const input = ref<HTMLElement | null>(null);
 const index = ref<TextRange | null>(null);
@@ -19,7 +26,7 @@ onMounted(() => {
   if (input.value !== null) {
     blockToolAdapter.attachInput(createDataKey('text'), input.value);
 
-    props.model.addEventListener('caret-updated', (evt: CaretUpdatedEvent) => {
+    props.model.addEventListener(EventType.CaretUpdated, (evt: CaretUpdatedEvent) => {
       index.value = (evt.detail.index as TextIndex)[0];
     });
   }

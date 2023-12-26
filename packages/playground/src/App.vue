@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Node, Input } from './components';
-import { EditorDocument, EditorJSModel } from '@editorjs/model';
+import { EditorDocument, EditorJSModel, EventType } from '@editorjs/model';
 // import { data } from '@editorjs/model/dist/mocks/data.js';
 import { ref } from 'vue';
 
@@ -19,12 +19,10 @@ const document = ref(new EditorDocument(model.serialized));
 
 const serialized = ref(model.serialized);
 
-model.addEventListener('changed', () => {
+model.addEventListener(EventType.Changed, () => {
   serialized.value = model.serialized;
   document.value = new EditorDocument(model.serialized);
 });
-
-window.model = model;
 
 </script>
 

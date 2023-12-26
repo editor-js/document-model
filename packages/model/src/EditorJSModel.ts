@@ -7,6 +7,11 @@ import { BaseDocumentEvent } from './utils/EventBus/events/BaseEvent.js';
 import type { Constructor } from './utils/types.js';
 import { CaretManager } from './caret/index.js';
 
+export interface EditorJSModel {
+  addEventListener<K extends keyof ModelEvents>(type: EventType.Changed, listener: (event: ModelEvents[K]) => void): void;
+  addEventListener(type: EventType.CaretUpdated, listener: (event: CaretUpdatedEvent) => void): void;
+}
+
 /**
  * EditorJSModel is a wrapper around EditorDocument that prevent access to  internal structures
  */
