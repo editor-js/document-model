@@ -7,8 +7,18 @@ import { BaseDocumentEvent } from './utils/EventBus/events/BaseEvent.js';
 import type { Constructor } from './utils/types.js';
 import { CaretManager } from './caret/index.js';
 
+/**
+ * Extends EditorJSModel with addEventListener overloads
+ */
 export interface EditorJSModel {
-  addEventListener<K extends keyof ModelEvents>(type: EventType.Changed, listener: (event: ModelEvents[K]) => void): void;
+  /**
+   * Overload for EditorDocument events
+   */
+  addEventListener<K extends ModelEvents>(type: EventType.Changed, listener: (event: K) => void): void;
+
+  /**
+   * Overload for CaretManager events
+   */
   addEventListener(type: EventType.CaretUpdated, listener: (event: CaretUpdatedEvent) => void): void;
 }
 
