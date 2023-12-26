@@ -1,7 +1,8 @@
 /**
+ * Finds the child node and offset by the given absolute offset
  *
- * @param root
- * @param initialOffset
+ * @param root - root node
+ * @param initialOffset - absolute offset
  */
 export function getRelativeRangeIndex(root: Node, initialOffset: number): [Text, number] {
   let offset = initialOffset;

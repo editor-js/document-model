@@ -9,7 +9,7 @@ import type {
   ValueModifiedEvent,
   TuneModifiedEvent,
   PropertyModifiedEvent,
-  CaretUpdatedEvent,
+  CaretUpdatedEvent
 } from '../events';
 
 export { CaretUpdatedEvent };

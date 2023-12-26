@@ -11,6 +11,7 @@ import { EventType } from '@editorjs/model';
  * - pass caret position to model —  model.updateCaret()
  * - subscribe on model's ‘caret change’ event (index) => {}), by filtering events only related with current input and set caret position
  *
+ * @todo make CaretAdapter a global instance
  * @todo add support for native inputs
  * @todo debug problem when document "selectionchange" is not fired on Enter press
  * @todo debug problem when offset at the end of line and at the beginning of the next line is the same
@@ -26,6 +27,9 @@ export class CaretAdapter extends EventTarget {
    */
   #input: null | InputWithCaret = null;
 
+  /**
+   * Current caret instance
+   */
   #caret: Caret;
 
   /**
@@ -51,10 +55,12 @@ export class CaretAdapter extends EventTarget {
   #dataIndex: DataKey;
 
   /**
-   * @param input
+   * CaretAdapter constructor
+   *
+   * @param input - input element to attach caret adapter to
    * @param model - EditorJSModel instance
    * @param blockIndex - index of a block that contains input
-   * @param dataIndex
+   * @param dataIndex - data key to attach input to
    */
   constructor(input: HTMLElement, model: EditorJSModel, blockIndex: number, dataIndex: DataKey) {
     super();
@@ -100,15 +106,16 @@ export class CaretAdapter extends EventTarget {
   };
 
   /**
+   * Updates caret index in the model
    *
-   * @param index
+   * @param index - caret index
    */
   public updateIndex(index: TextRange): void {
     this.#caret.update([index, this.#dataIndex, this.#blockIndex] as TextIndex);
   }
 
   /**
-   * Updates caret index
+   * Updates caret index form selection
    *
    * @param selection - changed document selection
    */
@@ -128,8 +135,9 @@ export class CaretAdapter extends EventTarget {
   }
 
   /**
+   * Handles model's caret update event
    *
-   * @param event
+   * @param event - model's caret update event
    */
   #onModelUpdate(event: CaretUpdatedEvent): void {
     if (event.detail.index === null) {
@@ -142,7 +150,7 @@ export class CaretAdapter extends EventTarget {
 
     if (caretId !== this.#caret.id) {
       /**
-       * @Todo handle other carets
+       * @todo handle other carets
        */
       return;
     }

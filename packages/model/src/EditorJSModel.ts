@@ -1,12 +1,11 @@
 // Stryker disable all -- we don't count mutation test coverage fot this file as it just proxy calls to EditorDocument
 /* istanbul ignore file -- we don't count test coverage fot this file as it just proxy calls to EditorDocument */
 import { EditorDocument } from './entities/index.js';
-import { EventBus } from './utils/EventBus/EventBus.js';
-import { EventType } from './utils/EventBus/types/EventType.js';
-import type { ModelEvents } from './utils/EventBus/types/EventMap.js';
+import { EventBus, EventType } from './utils/index.js';
+import type { ModelEvents, CaretUpdatedEvent } from './utils/index.js';
 import { BaseDocumentEvent } from './utils/EventBus/events/BaseEvent.js';
 import type { Constructor } from './utils/types.js';
-import { CaretManager } from './caret/CaretManager.js';
+import { CaretManager } from './caret/index.js';
 
 /**
  * EditorJSModel is a wrapper around EditorDocument that prevent access to  internal structures
@@ -61,22 +60,33 @@ export class EditorJSModel extends EventBus {
     this.#caretManager.addEventListener(
       EventType.CaretUpdated,
       (event: CustomEvent) => {
-        this.dispatchEvent(new CustomEvent(EventType.CaretUpdated, { detail: event.detail }));
+        this.dispatchEvent(
+          new (event.constructor as Constructor<CaretUpdatedEvent>)(event.detail)
+        );
       }
     );
 
     this.#listenAndBubbleDocumentEvents(this.#document);
   }
 
-  public updateCaret(...parameters: Parameters<CaretManager['updateCaret']>): ReturnType<CaretManager['updateCaret']> {
-    return this.#caretManager.updateCaret(...parameters);
-  }
-
   /**
+   *  Creates a new Caret instance in the model
    *
+   *  @param parameters - createCaret method parameters
+   *  @param [parameters.index] - initial caret index
    */
   public createCaret(...parameters: Parameters<CaretManager['createCaret']>): ReturnType<CaretManager['createCaret']> {
     return this.#caretManager.createCaret(...parameters);
+  }
+
+  /**
+   * Updates caret instance in the model
+   *
+   * @param parameters - updateCaret method parameters
+   * @param parameters.caret - Caret instance to update
+   */
+  public updateCaret(...parameters: Parameters<CaretManager['updateCaret']>): ReturnType<CaretManager['updateCaret']> {
+    return this.#caretManager.updateCaret(...parameters);
   }
 
   /**

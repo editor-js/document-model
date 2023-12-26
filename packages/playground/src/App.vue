@@ -5,7 +5,7 @@ import { EditorDocument, EditorJSModel } from '@editorjs/model';
 import { ref } from 'vue';
 
 const model = new EditorJSModel({
-  blocks: [{
+  blocks: [ {
     name: 'paragraph',
     data: {
       text: {
@@ -13,7 +13,7 @@ const model = new EditorJSModel({
         $t: 't',
       },
     },
-  }],
+  } ],
 });
 const document = ref(new EditorDocument(model.serialized));
 

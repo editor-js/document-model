@@ -30,9 +30,10 @@ export class BlockToolAdapter {
   #blockIndex: number;
 
   /**
+   * BlockToolAdapter constructor
    *
-   * @param model
-   * @param blockIndex
+   * @param model - EditorJSModel instance
+   * @param blockIndex - index of the block that this adapter is connected to
    */
   constructor(model: EditorJSModel, blockIndex: number) {
     this.#model = model;
@@ -43,8 +44,8 @@ export class BlockToolAdapter {
    * Attaches input to the model using key
    * It handles beforeinput events and updates model data
    *
-   * @param key
-   * @param input
+   * @param key - data key to attach input to
+   * @param input - input element
    */
   public attachInput(key: DataKey, input: HTMLElement): void {
     const caretAdapter = new CaretAdapter(input, this.#model, this.#blockIndex, key);
@@ -60,6 +61,15 @@ export class BlockToolAdapter {
     this.#model.addEventListener(EventType.Changed, (event: ModelEvents) => this.#handleModelUpdate(event, input, key, caretAdapter));
   }
 
+  /**
+   * Handles beforeinput event from user input and updates model data
+   *
+   * We prevent beforeinput event of any type to handle it manually via model update
+   *
+   * @param event - beforeinput event
+   * @param input - input element
+   * @param key - data key input is attached to
+   */
   #handleBeforeInputEvent(event: InputEvent, input: HTMLElement, key: DataKey): void {
     /**
      * We prevent all events to handle them manually via model update
@@ -121,6 +131,14 @@ export class BlockToolAdapter {
     }
   }
 
+  /**
+   * Handles model update events and updates DOM
+   *
+   * @param event - model update event
+   * @param input - attched input element
+   * @param key - data key input is attached to
+   * @param caretAdapter - caret adapter instance
+   */
   #handleModelUpdate(event: ModelEvents, input: HTMLElement, key: DataKey, caretAdapter: CaretAdapter): void {
     if (!(event instanceof TextAddedEvent) && !(event instanceof TextRemovedEvent)) {
       return;
