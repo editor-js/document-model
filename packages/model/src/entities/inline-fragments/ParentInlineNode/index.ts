@@ -4,13 +4,13 @@ import { ParentNode } from '../mixins/ParentNode/index.js';
 import type { ChildNode } from '../mixins/ChildNode';
 import type { InlineToolData, InlineToolName } from '../FormattingInlineNode';
 import { TextInlineNode } from '../index.js';
-import { EventBus } from '../../../utils/EventBus/EventBus.js';
+import { EventBus } from '../../../EventBus/EventBus.js';
 import {
   TextAddedEvent,
   TextRemovedEvent,
   TextFormattedEvent,
   TextUnformattedEvent
-} from '../../../utils/EventBus/events/index.js';
+} from '../../../EventBus/events/index.js';
 
 /**
  * We need to extend ParentInlineNode interface with ParentNode ones to use the methods from mixins

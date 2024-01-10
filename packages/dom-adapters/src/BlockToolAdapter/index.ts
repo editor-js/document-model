@@ -1,12 +1,12 @@
 import type { DataKey, EditorJSModel, ModelEvents } from '@editorjs/model';
-import { EventType, EventAction } from '@editorjs/model';
+import { EventType, EventAction, composeDataIndex } from '@editorjs/model';
 import { InputType } from './types/InputType.js';
 import {
   TextAddedEvent,
   TextRemovedEvent
-} from '@editorjs/model/dist/utils/EventBus/events/index.js';
+} from '@editorjs/model';
 import { CaretAdapter } from '../caret/CaretAdapter.js';
-import { getAbsoluteRangeOffset, getRelativeRangeIndex } from '../utils/index.js';
+import { getAbsoluteRangeOffset, getBoundaryPointByAbsoluteOffset } from '../utils/index.js';
 
 enum NativeInput {
   Textarea = 'TEXTAREA',
@@ -48,13 +48,16 @@ export class BlockToolAdapter {
    * @param input - input element
    */
   public attachInput(key: DataKey, input: HTMLElement): void {
-    const caretAdapter = new CaretAdapter(input, this.#model, this.#blockIndex, key);
-
     const inputTag = input.tagName as NativeInput;
 
+    /**
+     * @todo Filter non-text-editable inputs
+     */
     if (![NativeInput.Textarea, NativeInput.Input].includes(inputTag) && !input.isContentEditable) {
       throw new Error('BlockToolAdapter: input should be either INPUT, TEXTAREA or contenteditable element');
     }
+
+    const caretAdapter = new CaretAdapter(input, this.#model, this.#blockIndex, key);
 
     input.addEventListener('beforeinput', event => this.#handleBeforeInputEvent(event, input, key));
 
@@ -84,9 +87,17 @@ export class BlockToolAdapter {
     const end = getAbsoluteRangeOffset(input, range.endContainer, range.endOffset);
 
     switch (inputType) {
-      case InputType.InsertReplacementText: {
+      case InputType.InsertReplacementText:
+      case InputType.InsertFromPaste: {
         this.#model.removeText(this.#blockIndex, key, start, end);
 
+        /**
+         * DataTransfer object is guaranteed to be not null for these types of event for contenteditable elements
+         *
+         * However, it is not guaranteed for INPUT and TEXTAREA elements, so @todo handle this case
+         *
+         * @see https://www.w3.org/TR/input-events-2/#overview
+         */
         const data = event.dataTransfer!.getData('text/plain');
 
         this.#model.insertText(this.#blockIndex, key, data, start);
@@ -150,11 +161,7 @@ export class BlockToolAdapter {
       return;
     }
 
-    if (dataIndex !== `data@${key}`) {
-      return;
-    }
-
-    if (!Array.isArray(rangeIndex)) {
+    if (dataIndex !== composeDataIndex(key)) {
       return;
     }
 
@@ -163,8 +170,8 @@ export class BlockToolAdapter {
     const start = rangeIndex[0];
     const end = rangeIndex[1];
 
-    const [startNode, startOffset] = getRelativeRangeIndex(input, start);
-    const [endNode, endOffset] = getRelativeRangeIndex(input, end);
+    const [startNode, startOffset] = getBoundaryPointByAbsoluteOffset(input, start);
+    const [endNode, endOffset] = getBoundaryPointByAbsoluteOffset(input, end);
     const range = new Range();
 
     range.setStart(startNode, startOffset);

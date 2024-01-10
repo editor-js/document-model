@@ -7,5 +7,8 @@ export enum EventType {
    */
   Changed = 'changed',
 
-  CaretUpdated = 'caret-updated',
+  /**
+   * The position of caret has been updated
+   */
+  CaretManagerUpdated = 'caret-updated',
 }

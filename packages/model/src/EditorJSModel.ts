@@ -2,10 +2,10 @@
 /* istanbul ignore file -- we don't count test coverage fot this file as it just proxy calls to EditorDocument */
 import { EditorDocument } from './entities/index.js';
 import { EventBus, EventType } from './utils/index.js';
-import type { ModelEvents, CaretUpdatedEvent } from './utils/index.js';
-import { BaseDocumentEvent } from './utils/EventBus/events/BaseEvent.js';
+import type { ModelEvents, CaretManagerCaretUpdatedEvent, CaretManagerEvents } from './utils/index.js';
+import { BaseDocumentEvent } from './EventBus/events/BaseEvent.js';
 import type { Constructor } from './utils/types.js';
-import { CaretManager } from './caret/index.js';
+import { CaretManager } from './CaretManagement/index.js';
 
 /**
  * Extends EditorJSModel with addEventListener overloads
@@ -19,7 +19,7 @@ export interface EditorJSModel {
   /**
    * Overload for CaretManager events
    */
-  addEventListener(type: EventType.CaretUpdated, listener: (event: CaretUpdatedEvent) => void): void;
+  addEventListener<K extends CaretManagerEvents>(type: EventType.CaretManagerUpdated, listener: (event: K) => void): void;
 }
 
 /**
@@ -31,6 +31,9 @@ export class EditorJSModel extends EventBus {
    */
   #document: EditorDocument;
 
+  /**
+   * CaretManager instance
+   */
   #caretManager: CaretManager;
 
   /**
@@ -70,13 +73,13 @@ export class EditorJSModel extends EventBus {
     super();
 
     this.#document = new EditorDocument(...parameters);
-    this.#caretManager = new CaretManager(this);
+    this.#caretManager = new CaretManager();
 
     this.#caretManager.addEventListener(
-      EventType.CaretUpdated,
+      EventType.CaretManagerUpdated,
       (event: CustomEvent) => {
         this.dispatchEvent(
-          new (event.constructor as Constructor<CaretUpdatedEvent>)(event.detail)
+          new (event.constructor as Constructor<CaretManagerCaretUpdatedEvent>)(event.detail)
         );
       }
     );
@@ -102,6 +105,17 @@ export class EditorJSModel extends EventBus {
    */
   public updateCaret(...parameters: Parameters<CaretManager['updateCaret']>): ReturnType<CaretManager['updateCaret']> {
     return this.#caretManager.updateCaret(...parameters);
+  }
+
+
+  /**
+   * Removes caret instance from the model
+   *
+   * @param parameters - removeCaret method parameters
+   * @param parameters.caret - Caret instance to remove
+   */
+  public removeCaret(...parameters: Parameters<CaretManager['removeCaret']>): ReturnType<CaretManager['removeCaret']> {
+    return this.#caretManager.removeCaret(...parameters);
   }
 
   /**

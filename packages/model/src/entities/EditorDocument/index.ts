@@ -7,20 +7,20 @@ import { IoCContainer, TOOLS_REGISTRY } from '../../IoC/index.js';
 import { ToolsRegistry } from '../../tools/index.js';
 import type { BlockNodeSerialized } from '../BlockNode/types';
 import type { DeepReadonly } from '../../utils/DeepReadonly';
-import { EventBus } from '../../utils/EventBus/EventBus.js';
-import { EventType } from '../../utils/EventBus/types/EventType.js';
+import { EventBus } from '../../EventBus/EventBus.js';
+import { EventType } from '../../EventBus/types/EventType.js';
 import type {
   BlockTuneEvents,
   TextNodeEvents,
   ValueNodeEvents
-} from '../../utils/EventBus/types/EventMap';
+} from '../../EventBus/types/EventMap';
 import {
   BlockAddedEvent,
   BlockRemovedEvent,
   PropertyModifiedEvent
-} from '../../utils/EventBus/events/index.js';
+} from '../../EventBus/events/index.js';
 import type { Constructor } from '../../utils/types.js';
-import { BaseDocumentEvent } from '../../utils/EventBus/events/BaseEvent.js';
+import { BaseDocumentEvent } from '../../EventBus/events/BaseEvent.js';
 
 /**
  * EditorDocument class represents the top-level container for a tree-like structure of BlockNodes in an editor document.

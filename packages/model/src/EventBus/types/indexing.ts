@@ -1,5 +1,5 @@
-import type { BlockTuneName, DataKey } from '../../../entities';
-import type { Nominal } from '../../Nominal';
+import type { BlockTuneName, DataKey } from '../../entities/index.js';
+import type { Nominal } from '../../utils/Nominal.js';
 
 /**
  * Alias for a document id

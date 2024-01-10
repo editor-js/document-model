@@ -4,7 +4,7 @@
  * @param root - root node
  * @param initialOffset - absolute offset
  */
-export function getRelativeRangeIndex(root: Node, initialOffset: number): [Text, number] {
+export function getBoundaryPointByAbsoluteOffset(root: Node, initialOffset: number): [Text, number] {
   let offset = initialOffset;
 
   const childNodes = Array.from(root.childNodes);
@@ -16,7 +16,7 @@ export function getRelativeRangeIndex(root: Node, initialOffset: number): [Text,
   while (i < childNodes.length) {
     if (offset <= childNode.textContent!.length) {
       if (!(childNode instanceof Text)) {
-        return getRelativeRangeIndex(childNode, offset);
+        return getBoundaryPointByAbsoluteOffset(childNode, offset);
       }
 
       return [childNode, offset];

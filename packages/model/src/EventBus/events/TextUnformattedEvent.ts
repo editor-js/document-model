@@ -1,6 +1,6 @@
-import type { TextIndex } from '../types/indexing';
+import type { TextIndex } from '../types/indexing.js';
 import { EventAction } from '../types/EventAction.js';
-import type { InlineToolData, InlineToolName } from '../../../entities';
+import type { InlineToolData, InlineToolName } from '../../entities/index.js';
 import { BaseDocumentEvent } from './BaseEvent.js';
 
 interface TextUnformattedEventData {

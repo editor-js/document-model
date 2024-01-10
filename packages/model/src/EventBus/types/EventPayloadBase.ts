@@ -1,5 +1,5 @@
-import type { EventAction } from './EventAction';
-import type { Index as IndexType } from './indexing';
+import type { EventAction } from './EventAction.js';
+import type { Index as IndexType } from './indexing.js';
 
 /**
  * Common fields for all events related to the document model

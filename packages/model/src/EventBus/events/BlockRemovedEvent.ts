@@ -1,6 +1,6 @@
 import { EventAction } from '../types/EventAction.js';
-import type { BlockNodeSerialized } from '../../../entities/BlockNode/types';
-import type { BlockIndex } from '../types/indexing';
+import type { BlockNodeSerialized } from '../../entities/BlockNode/types/index.js';
+import type { BlockIndex } from '../types/indexing.js';
 import { BaseDocumentEvent } from './BaseEvent.js';
 
 

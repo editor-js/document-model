@@ -1,4 +1,4 @@
-import type { ModifiedEventData } from '../types/EventPayloadBase';
+import type { ModifiedEventData } from '../types/EventPayloadBase.js';
 import { EventAction } from '../types/EventAction.js';
 import { BaseDocumentEvent } from './BaseEvent.js';
 import type { TuneIndex } from '../types/indexing.js';

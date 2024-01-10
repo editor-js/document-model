@@ -1,5 +1,5 @@
-import type { EventAction } from '../types/EventAction';
-import type { Index as IndexType } from '../types/indexing';
+import type { EventAction } from '../types/EventAction.js';
+import type { Index as IndexType } from '../types/indexing.js';
 import { EventType } from '../types/EventType.js';
 
 /**

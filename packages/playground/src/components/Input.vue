@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue';
 import { BlockToolAdapter } from '@editorjs/dom-adapters';
 import {
-  CaretUpdatedEvent,
+  CaretManagerCaretUpdatedEvent,
   createDataKey,
   type EditorJSModel,
   EventType,
@@ -26,7 +26,7 @@ onMounted(() => {
   if (input.value !== null) {
     blockToolAdapter.attachInput(createDataKey('text'), input.value);
 
-    props.model.addEventListener(EventType.CaretUpdated, (evt: CaretUpdatedEvent) => {
+    props.model.addEventListener(EventType.CaretManagerUpdated, (evt: CaretManagerCaretUpdatedEvent) => {
       index.value = (evt.detail.index as TextIndex)[0];
     });
   }

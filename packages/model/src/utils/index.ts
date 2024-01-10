@@ -1,1 +1,1 @@
-export * from './EventBus/index.js';
+export * from '../EventBus/index.js';

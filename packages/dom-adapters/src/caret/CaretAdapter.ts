@@ -1,6 +1,13 @@
-import type { DataKey, EditorJSModel, TextRange, Caret, TextIndex, CaretUpdatedEvent } from '@editorjs/model';
+import type {
+  DataKey,
+  EditorJSModel,
+  TextRange,
+  Caret,
+  TextIndex,
+  CaretManagerEvents
+} from '@editorjs/model';
 import { useSelectionChange, type Subscriber, type InputWithCaret } from './utils/useSelectionChange.js';
-import { getAbsoluteRangeOffset, getRelativeRangeIndex } from '../utils/index.js';
+import { getAbsoluteRangeOffset, getBoundaryPointByAbsoluteOffset } from '../utils/index.js';
 import { EventType } from '@editorjs/model';
 
 /**
@@ -28,7 +35,8 @@ export class CaretAdapter extends EventTarget {
   #input: null | InputWithCaret = null;
 
   /**
-   * Current caret instance
+   * Caret instance
+   * Stores index of the user's caret
    */
   #caret: Caret;
 
@@ -52,6 +60,9 @@ export class CaretAdapter extends EventTarget {
    */
   #offSelectionChange: (input: InputWithCaret) => void;
 
+  /**
+   * Data key of the input adapter is attached to
+   */
   #dataIndex: DataKey;
 
   /**
@@ -79,10 +90,25 @@ export class CaretAdapter extends EventTarget {
     this.#onSelectionChange = on;
     this.#offSelectionChange = off;
 
-    this.#model.addEventListener(EventType.CaretUpdated, this.#onModelUpdate.bind(this));
+    this.#model.addEventListener(EventType.CaretManagerUpdated, this.#onModelUpdate.bind(this));
 
     this.#onSelectionChange(this.#input, this.#onInputSelectionChange, this);
   }
+
+  /**
+   * Updates caret index in the model
+   *
+   * Method is used to update caret index in the model through the Caret instance
+   *
+   * It is called from private #updateIndex method when index is retrieved from the document selection,
+   * but also could be called from outside to update caret index programmatically (eg from BlockToolAdapter)
+   *
+   * @param index - caret index
+   */
+  public updateIndex(index: TextRange): void {
+    this.#caret.update([index, this.#dataIndex, this.#blockIndex] as TextIndex);
+  }
+
 
   /**
    * Unsubscribes from input caret change
@@ -104,15 +130,6 @@ export class CaretAdapter extends EventTarget {
   #onInputSelectionChange(selection: Selection | null): void {
     this.#updateIndex(selection);
   };
-
-  /**
-   * Updates caret index in the model
-   *
-   * @param index - caret index
-   */
-  public updateIndex(index: TextRange): void {
-    this.#caret.update([index, this.#dataIndex, this.#blockIndex] as TextIndex);
-  }
 
   /**
    * Updates caret index form selection
@@ -137,13 +154,11 @@ export class CaretAdapter extends EventTarget {
   /**
    * Handles model's caret update event
    *
+   * @todo handle caret removal
+   *
    * @param event - model's caret update event
    */
-  #onModelUpdate(event: CaretUpdatedEvent): void {
-    if (event.detail.index === null) {
-      return;
-    }
-
+  #onModelUpdate(event: CaretManagerEvents): void {
     const [textIndex, dataIndex, blockIndex] = event.detail.index as TextIndex;
     const caretId = event.detail.id;
 
@@ -163,12 +178,17 @@ export class CaretAdapter extends EventTarget {
       return;
     }
 
+    /**
+     * If new index equals the current index, do nothing
+     *
+     * That might happen when caret was updated in the model from the current document selection
+     */
     if (textIndex[0] === this.#index?.[0] && textIndex[1] === this.#index?.[1]) {
       return;
     }
 
-    const start = getRelativeRangeIndex(this.#input!, textIndex[0]);
-    const end = getRelativeRangeIndex(this.#input!, textIndex[1]);
+    const start = getBoundaryPointByAbsoluteOffset(this.#input!, textIndex[0]);
+    const end = getBoundaryPointByAbsoluteOffset(this.#input!, textIndex[1]);
 
     const selection = document.getSelection()!;
     const range = new Range();

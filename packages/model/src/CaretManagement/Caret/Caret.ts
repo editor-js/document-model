@@ -1,25 +1,32 @@
-import type { Index } from '../utils/index.js';
-import type { EditorJSModel } from '../EditorJSModel.js';
+import type { Index } from '../../utils/index.js';
+import type { CaretSerialized, CaretEvent } from './types.js';
+import { CaretUpdatedEvent } from './types.js';
+import { EventBus } from '../../utils/index.js';
 
 /**
- * Caret serialized data
+ * Interface to extend EventTarget methods
  */
-export interface CaretSerialized {
+export interface Caret {
   /**
-   * Caret id
+   * Adds CaretEvent listener
+   *
+   * @param event - type of event
+   * @param listener - listener
    */
-  readonly id: number;
+  addEventListener<K extends CaretUpdatedEvent>(event: CaretEvent, listener: (event: K) => void): void;
 
   /**
-   * Caret index
+   * Dispatches CaretUpdatedEvent
+   *
+   * @param event - event to dispatch
    */
-  readonly index: Index | null;
+  dispatchEvent(event: CaretUpdatedEvent): boolean;
 }
 
 /**
  * Caret is responsible for storing caret index
  */
-export class Caret {
+export class Caret extends EventBus {
   /**
    * Caret index
    */
@@ -32,11 +39,6 @@ export class Caret {
    */
   // eslint-disable-next-line @typescript-eslint/no-magic-numbers
   #id: number = Math.floor(Math.random() * 1e10);
-
-  /**
-   * EditorJSModel instance
-   */
-  #model: EditorJSModel;
 
   /**
    * Caret index getter
@@ -55,24 +57,23 @@ export class Caret {
   /**
    * Caret constructor
    *
-   * @param model - EditorJSModel instance
    * @param index - initial caret index
    */
-  constructor(model: EditorJSModel, index: Index | null = null) {
-    this.#model = model;
+  constructor(index: Index | null = null) {
+    super();
 
     this.#index = index;
   }
 
   /**
-   * Updates caret index in the model
+   * Updates caret index and dispatches updated event
    *
    * @param index - new caret index
    */
   public update(index: Index): void {
     this.#index = index;
 
-    this.#model.updateCaret(this);
+    this.dispatchEvent(new CaretUpdatedEvent(this));
   }
 
   /**

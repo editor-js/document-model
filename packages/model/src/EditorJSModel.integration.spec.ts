@@ -1,5 +1,5 @@
-import { EventType } from './utils/EventBus/types/EventType.js';
-import { BlockAddedEvent } from './utils/EventBus/events/index.js';
+import { EventType } from './EventBus/types/EventType.js';
+import { BlockAddedEvent } from './EventBus/events/index.js';
 import { EditorJSModel } from './EditorJSModel.js';
 import { data } from './mocks/data.js';
 

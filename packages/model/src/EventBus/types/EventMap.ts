@@ -1,4 +1,4 @@
-import type { EventType } from './EventType';
+import type { EventType } from './EventType.js';
 import type {
   BlockAddedEvent,
   BlockRemovedEvent,
@@ -9,10 +9,11 @@ import type {
   ValueModifiedEvent,
   TuneModifiedEvent,
   PropertyModifiedEvent,
-  CaretUpdatedEvent
-} from '../events';
+  CaretManagerCaretUpdatedEvent
+} from '../events/index.js';
+import type { CaretManagerCaretAddedEvent, CaretManagerCaretRemovedEvent } from '../events/index.js';
 
-export { CaretUpdatedEvent };
+export { CaretManagerCaretUpdatedEvent };
 
 /**
  * Alias for all block events
@@ -28,10 +29,13 @@ export type BlockTuneEvents = TuneModifiedEvent;
 export type DocumentEvents = PropertyModifiedEvent;
 
 export type ModelEvents = BlockEvents | TextNodeEvents | ValueNodeEvents | BlockTuneEvents | DocumentEvents;
+
+export type CaretManagerEvents = CaretManagerCaretAddedEvent | CaretManagerCaretUpdatedEvent | CaretManagerCaretRemovedEvent;
+
 /**
  * Map of all events that can be emitted inside the DocumentModel
  */
 export type EventMap = {
   [EventType.Changed]: ModelEvents;
-  [EventType.CaretUpdated]: CaretUpdatedEvent;
+  [EventType.CaretManagerUpdated]: CaretManagerEvents;
 };

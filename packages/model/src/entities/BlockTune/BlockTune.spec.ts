@@ -1,7 +1,7 @@
 import { BlockTune, createBlockTuneName } from './index.js';
-import { EventType } from '../../utils/EventBus/types/EventType.js';
-import { TuneModifiedEvent } from '../../utils/EventBus/events/index.js';
-import { EventAction } from '../../utils/EventBus/types/EventAction.js';
+import { EventType } from '../../EventBus/types/EventType.js';
+import { TuneModifiedEvent } from '../../EventBus/events/index.js';
+import { EventAction } from '../../EventBus/types/EventAction.js';
 
 describe('BlockTune', () => {
   const tuneName = createBlockTuneName('alignment');

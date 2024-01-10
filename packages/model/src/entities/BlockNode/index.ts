@@ -20,16 +20,17 @@ import { get, has } from '../../utils/keypath.js';
 import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
 import { mapObject } from '../../utils/mapObject.js';
 import type { DeepReadonly } from '../../utils/DeepReadonly';
-import { EventBus } from '../../utils/EventBus/EventBus.js';
-import { EventType } from '../../utils/EventBus/types/EventType.js';
+import { EventBus } from '../../EventBus/EventBus.js';
+import { EventType } from '../../EventBus/types/EventType.js';
 import {
   TuneModifiedEvent,
   ValueModifiedEvent
-} from '../../utils/EventBus/events/index.js';
+} from '../../EventBus/events/index.js';
 import type { Constructor } from '../../utils/types.js';
-import type { TextNodeEvents } from '../../utils/EventBus/types/EventMap';
-import type { TuneIndex } from '../../utils/EventBus/types/indexing.js';
-import { BaseDocumentEvent } from '../../utils/EventBus/events/BaseEvent.js';
+import type { TextNodeEvents } from '../../EventBus/types/EventMap';
+import type { TuneIndex } from '../../EventBus/types/indexing.js';
+import { BaseDocumentEvent } from '../../EventBus/events/BaseEvent.js';
+import { composeDataIndex } from '../../EventBus/index.js';
 
 /**
  * BlockNode class represents a node in a tree-like structure used to store and manipulate Blocks in an editor document.
@@ -352,7 +353,7 @@ export class BlockNode extends EventBus {
 
         this.dispatchEvent(
           new (event.constructor as Constructor<TextNodeEvents>)(
-            [...event.detail.index, `data@${key}`],
+            [...event.detail.index, composeDataIndex(key)],
             event.detail.data
           )
         );
@@ -380,7 +381,7 @@ export class BlockNode extends EventBus {
 
         this.dispatchEvent(
           new ValueModifiedEvent(
-            [ `data@${key}` ],
+            [ composeDataIndex(key) ],
             event.detail.data
           )
         );
