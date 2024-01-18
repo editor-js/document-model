@@ -33,6 +33,8 @@ jobs:
 
   mutation-tests:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
     steps:
       - uses: actions/checkout@v4
 
