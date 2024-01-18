@@ -54,7 +54,7 @@ runs:
           message: |
             ✅ Mutation testing passed for `${{ inputs.working-directory }}`
 
-            Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${{ github.event.number }}?module=${{ inputs.package-name }}
+            Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${{ steps.findPr.outputs.number }}?module=${{ inputs.package-name }}
             
             <details>
               <summary>Mutated files</summary>
@@ -72,7 +72,7 @@ runs:
           message: |
             ❌ Mutation testing hasn't passed score threshold for `${{ inputs.working-directory }}`
 
-            Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${{ github.event.number }}
+            Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${{ steps.findPr.outputs.number }}?module=${{ inputs.package-name }}
             
             <details>
               <summary>Mutated files</summary>

@@ -1,6 +1,6 @@
 name: Model check
 on:
-  push:
+  pull_request:
   merge_group:
 
 jobs:
@@ -34,8 +34,6 @@ jobs:
 
   mutation-tests:
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
     steps:
       - uses: actions/checkout@v4
 
