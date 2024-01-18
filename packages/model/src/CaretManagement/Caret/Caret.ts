@@ -1,7 +1,7 @@
-import type { Index } from '../../utils/index.js';
+import type { Index } from '../../EventBus/index.js';
 import type { CaretSerialized, CaretEvent } from './types.js';
 import { CaretUpdatedEvent } from './types.js';
-import { EventBus } from '../../utils/index.js';
+import { EventBus } from '../../EventBus/index.js';
 
 /**
  * Interface to extend EventTarget methods

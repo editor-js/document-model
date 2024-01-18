@@ -1,8 +1,8 @@
 // Stryker disable all -- we don't count mutation test coverage fot this file as it just proxy calls to EditorDocument
 /* istanbul ignore file -- we don't count test coverage fot this file as it just proxy calls to EditorDocument */
 import { EditorDocument } from './entities/index.js';
-import { EventBus, EventType } from './utils/index.js';
-import type { ModelEvents, CaretManagerCaretUpdatedEvent, CaretManagerEvents } from './utils/index.js';
+import { EventBus, EventType } from './EventBus/index.js';
+import type { ModelEvents, CaretManagerCaretUpdatedEvent, CaretManagerEvents } from './EventBus/index.js';
 import { BaseDocumentEvent } from './EventBus/events/BaseEvent.js';
 import type { Constructor } from './utils/types.js';
 import { CaretManager } from './CaretManagement/index.js';

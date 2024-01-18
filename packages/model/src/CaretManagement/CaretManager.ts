@@ -1,10 +1,10 @@
-import type { Index } from '../utils/index.js';
+import type { Index } from '../EventBus/index.js';
 import {
   CaretManagerCaretAddedEvent,
   CaretManagerCaretRemovedEvent,
   CaretManagerCaretUpdatedEvent,
   EventBus
-} from '../utils/index.js';
+} from '../EventBus/index.js';
 import { Caret } from './Caret/Caret.js';
 import { CaretEvent } from './Caret/types.js';
 
