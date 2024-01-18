@@ -1,6 +1,6 @@
 name: Dom-adapters check
 on:
-  push:
+  pull_request:
 
 jobs:
   lint:
@@ -11,7 +11,7 @@ jobs:
         uses: ./.github/actions/lint
         with:
           package-name: '@editorjs/dom-adapters'
-    
+
   tests:
     runs-on: ubuntu-latest
     steps:
@@ -22,13 +22,27 @@ jobs:
           working-directory: './packages/dom-adapters'
           package-name: '@editorjs/dom-adapters'
 
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the package
+        uses: ./.github/actions/build
+        with:
+          package-name: '@editorjs/dom-adapters'
+
   mutation-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
+      - name: Build dependencies
+        uses: ./.github/actions/build
+        with:
+          package-name: '@editorjs/dom-adapters'
+
       - name: Run mutation tests for changed files
-        if: ${{ github.event_name == 'push' }}
+        if: ${{ github.event_name == 'pull_request' }}
         uses: ./.github/actions/mutation-tests-changed-files
         with:
           package-name: '@editorjs/dom-adapters'
@@ -42,12 +56,3 @@ jobs:
           package-name: '@editorjs/dom-adapters'
           working-directory: './packages/dom-adapters'
           stryker_dashboard_api_key: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
-
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build the package
-        uses: ./.github/actions/build
-        with:
-          package-name: '@editorjs/dom-adapters'

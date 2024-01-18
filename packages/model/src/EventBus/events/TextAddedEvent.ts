@@ -1,4 +1,4 @@
-import type { TextIndex } from '../types/indexing';
+import type { TextIndex } from '../types/indexing.js';
 import { EventAction } from '../types/EventAction.js';
 import { BaseDocumentEvent } from './BaseEvent.js';
 

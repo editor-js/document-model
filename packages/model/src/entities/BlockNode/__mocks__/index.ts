@@ -1,4 +1,4 @@
-import { EventBus } from '../../../utils/EventBus/EventBus.js';
+import { EventBus } from '../../../EventBus/EventBus.js';
 
 /**
  * Mock for BlockNode class

@@ -3,14 +3,14 @@ import type { BlockToolName, DataKey } from '../BlockNode';
 import { BlockNode } from '../BlockNode/index.js';
 import type { BlockTuneName } from '../BlockTune';
 import type { InlineToolData, InlineToolName } from '../inline-fragments';
-import { EventType } from '../../utils/EventBus/types/EventType.js';
+import { EventType } from '../../EventBus/types/EventType.js';
 import {
   BlockAddedEvent,
   BlockRemovedEvent,
   PropertyModifiedEvent,
   TuneModifiedEvent
-} from '../../utils/EventBus/events/index.js';
-import { EventAction } from '../../utils/EventBus/types/EventAction.js';
+} from '../../EventBus/events/index.js';
+import { EventAction } from '../../EventBus/types/EventAction.js';
 
 jest.mock('../BlockNode');
 

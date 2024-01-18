@@ -1,6 +1,6 @@
 name: Playground check
 on:
-  push:
+  pull_request:
   merge_group:
 
 jobs:

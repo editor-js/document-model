@@ -1,6 +1,6 @@
-import type { ModifiedEventData } from '../types/EventPayloadBase';
+import type { ModifiedEventData } from '../types/EventPayloadBase.js';
 import { EventAction } from '../types/EventAction.js';
-import type { ValueIndex } from '../types/indexing';
+import type { ValueIndex } from '../types/indexing.js';
 import { BaseDocumentEvent } from './BaseEvent.js';
 
 /**

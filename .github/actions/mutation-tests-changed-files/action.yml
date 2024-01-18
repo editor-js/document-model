@@ -1,4 +1,6 @@
 name: Mutation tests for changed files
+description: Run mutation tests for changed files for a given package
+
 inputs:
   working-directory:
     description: 'Path to the ./packages/name_of_your_package_folder'
@@ -9,6 +11,7 @@ inputs:
   stryker_dashboard_api_key:
     description: 'Stryker dashboard api key'
     required: true
+
 runs:
   using: "composite"
   steps:
@@ -33,9 +36,11 @@ runs:
 
       - name: Run mutation tests
         if: steps.changed-files.outputs.src_any_changed == 'true'
+        env:
+          STRYKER_DASHBOARD_API_KEY: ${{ inputs.stryker_dashboard_api_key }}
         shell: bash
         id: run-mutation-tests
-        run: yarn workspace ${{ inputs.package-name }} test:mutations --mutate ${{format('''{0}''', steps.changed-files.outputs.src_all_changed_files)}}
+        run: yarn workspace ${{ inputs.package-name }} test:mutations --mutate ${{format('''{0}''', steps.changed-files.outputs.src_all_changed_files)}} --dashboard.module ${{ inputs.package-name }}
         continue-on-error: true
 
       - name: Find current PR's number
@@ -44,14 +49,12 @@ runs:
 
       - name: Comment on successful mutation testing
         uses: thollander/actions-comment-pull-request@v2
-        env:
-          STRYKER_DASHBOARD_API_KEY: ${{ inputs.stryker_dashboard_api_key }}
         if: steps.changed-files.outputs.src_any_changed == 'true' && steps.run-mutation-tests.outcome == 'success' && ${{ steps.findPr.outputs.number != '' }}
         with:
           message: |
             ✅ Mutation testing passed for `${{ inputs.working-directory }}`
 
-            Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${{ github.event.number }}
+            Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${{ steps.findPr.outputs.number }}?module=${{ inputs.package-name }}
             
             <details>
               <summary>Mutated files</summary>
@@ -64,14 +67,12 @@ runs:
 
       - name: Comment on failed mutation testing
         uses: thollander/actions-comment-pull-request@v2
-        env:
-          STRYKER_DASHBOARD_API_KEY: ${{ inputs.stryker_dashboard_api_key }}
         if: steps.changed-files.outputs.src_any_changed == 'true' && steps.run-mutation-tests.outcome == 'failure' && ${{ steps.findPr.outputs.number != '' }}
         with:
           message: |
             ❌ Mutation testing hasn't passed score threshold for `${{ inputs.working-directory }}`
 
-            Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${{ github.event.number }}
+            Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${{ steps.findPr.outputs.number }}?module=${{ inputs.package-name }}
             
             <details>
               <summary>Mutated files</summary>
@@ -84,8 +85,6 @@ runs:
 
       - name: Comment on empty changes
         uses: thollander/actions-comment-pull-request@v2
-        env:
-          STRYKER_DASHBOARD_API_KEY: ${{ inputs.stryker_dashboard_api_key }}
         if: steps.changed-files.outputs.src_any_changed == 'false' && ${{ steps.findPr.outputs.number != '' }}
         with:
           message: |

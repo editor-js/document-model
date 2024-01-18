@@ -23,3 +23,5 @@ reports/
 # stryker temp files
 .stryker-tmp
 *.tsbuildinfo
+
+.DS_Store

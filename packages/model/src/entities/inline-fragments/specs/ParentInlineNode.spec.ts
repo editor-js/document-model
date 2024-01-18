@@ -2,14 +2,14 @@ import type { InlineToolName, ChildNode } from '../index';
 import { TextInlineNode, FormattingInlineNode } from '../index.js';
 import { ParentInlineNode } from '../ParentInlineNode/index.js';
 import type { InlineNode } from '../InlineNode';
-import { EventType } from '../../../utils/EventBus/types/EventType.js';
+import { EventType } from '../../../EventBus/types/EventType.js';
 import {
   TextAddedEvent,
   TextFormattedEvent,
   TextRemovedEvent,
   TextUnformattedEvent
-} from '../../../utils/EventBus/events/index.js';
-import { EventAction } from '../../../utils/EventBus/types/EventAction.js';
+} from '../../../EventBus/events/index.js';
+import { EventAction } from '../../../EventBus/types/EventAction.js';
 import { createInlineToolData } from '../index.js';
 
 jest.mock('../TextInlineNode');

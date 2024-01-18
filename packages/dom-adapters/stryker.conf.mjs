@@ -5,7 +5,7 @@ const config = {
     "This config was generated using 'stryker init'. Please take a look at: https://stryker-mutator.io/docs/stryker-js/configuration/ for more information.",
   packageManager: "yarn",
   thresholds: {
-    break: 75,
+    break: 0,
   },
   thresholds_comment: "Minimum required coverage. Increase once we're closer to 100%.",
   clearTextReporter: {

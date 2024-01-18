@@ -24,11 +24,19 @@ export function getAbsoluteRangeOffset(parent: Node, initialNode: Node, initialO
   let node = initialNode;
   let offset = initialOffset;
 
+
   if (!parent.contains(node)) {
     throw new Error('Range is not contained by the parent node');
   }
 
-  while (node !== parent) {
+  if (parent === node) {
+    return node instanceof Text ? offset : 0;
+  }
+
+  /**
+   * Iterate over all parents and compute offset
+   */
+  do {
     const childNodes = Array.from(node.parentNode!.childNodes);
     const index = childNodes.indexOf(node as ChildNode);
 
@@ -47,11 +55,15 @@ export function getAbsoluteRangeOffset(parent: Node, initialNode: Node, initialO
         /**
          * Compute offset with text length of left siblings
          */
-        return acc + child.textContent!.length;
-      }, offset);
+        return acc + (child.textContent?.length ?? 0);
+
+        /**
+         * If initial node is a text node, then we need to add initial offset to the result
+         */
+      }, initialNode instanceof Text ? offset : 0);
 
     node = node.parentNode!;
-  }
+  } while (node !== parent);
 
   return offset;
 }

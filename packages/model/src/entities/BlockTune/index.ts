@@ -1,8 +1,8 @@
 import type { BlockTuneConstructorParameters, BlockTuneSerialized, BlockTuneName } from './types';
 import { createBlockTuneName } from './types/index.js';
-import { EventBus } from '../../utils/EventBus/EventBus.js';
-import { TuneModifiedEvent } from '../../utils/EventBus/events/index.js';
-import type { TuneIndex } from '../../utils/EventBus/types/indexing.js';
+import { EventBus } from '../../EventBus/EventBus.js';
+import { TuneModifiedEvent } from '../../EventBus/events/index.js';
+import type { TuneIndex } from '../../EventBus/types/indexing.js';
 
 /**
  * BlockTune class represents a set of additional information associated with a BlockNode.

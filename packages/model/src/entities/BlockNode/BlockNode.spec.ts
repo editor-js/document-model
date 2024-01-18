@@ -1,3 +1,4 @@
+import type { DataKey } from './index.js';
 import { BlockNode, createBlockToolName, createDataKey } from './index.js';
 
 import type { BlockTuneName, BlockTuneSerialized } from '../BlockTune';
@@ -11,9 +12,10 @@ import { TextNode } from '../inline-fragments/index.js';
 import type { BlockNodeData, BlockNodeDataSerialized } from './types';
 import { BlockChildType } from './types/index.js';
 import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
-import { TextAddedEvent, TuneModifiedEvent, ValueModifiedEvent } from '../../utils/EventBus/events/index.js';
-import { EventType } from '../../utils/EventBus/types/EventType.js';
+import { TextAddedEvent, TuneModifiedEvent, ValueModifiedEvent } from '../../EventBus/events/index.js';
+import { EventType } from '../../EventBus/types/EventType.js';
 import { createBlockTuneName } from '../BlockTune/index.js';
+import { composeDataIndex } from '../../EventBus/index.js';
 
 jest.mock('../BlockTune');
 
@@ -1139,7 +1141,7 @@ describe('BlockNode', () => {
       expect(event).toBeInstanceOf(TextAddedEvent);
       expect(event)
         .toHaveProperty('detail', expect.objectContaining({
-          index: [range, `data@${dataKey}`],
+          index: [range, composeDataIndex(dataKey)],
         }));
     });
 
@@ -1196,7 +1198,7 @@ describe('BlockNode', () => {
         .toBeInstanceOf(ValueModifiedEvent);
       expect(event)
         .toHaveProperty('detail', expect.objectContaining({
-          index: [ `data@${parentDataKey}.${dataKey}` ],
+          index: [ composeDataIndex(`${parentDataKey}.${dataKey}` as DataKey) ],
         }));
     });
 

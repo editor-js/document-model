@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import { CaretAdapter } from '@editorjs/dom-adapters';
-import { type EditorJSModel, TextRange } from '@editorjs/model';
+import { BlockToolAdapter } from '@editorjs/dom-adapters';
+import {
+  CaretManagerCaretUpdatedEvent,
+  createDataKey,
+  type EditorJSModel,
+  EventType,
+  type TextIndex,
+  type TextRange
+} from '@editorjs/model';
 
 const input = ref<HTMLElement | null>(null);
 const index = ref<TextRange | null>(null);
@@ -14,13 +21,13 @@ const props = defineProps<{
 }>();
 
 onMounted(() => {
-  const adapter = new CaretAdapter(props.model, 0);
+  const blockToolAdapter = new BlockToolAdapter(props.model, 0);
 
   if (input.value !== null) {
-    adapter.attachInput(input.value, 'text');
+    blockToolAdapter.attachInput(createDataKey('text'), input.value);
 
-    adapter.addEventListener('change', (event) => {
-      index.value = (event as CustomEvent<{ index: TextRange }>).detail.index;
+    props.model.addEventListener(EventType.CaretManagerUpdated, (evt: CaretManagerCaretUpdatedEvent) => {
+      index.value = (evt.detail.index as TextIndex)[0];
     });
   }
 });
@@ -33,7 +40,6 @@ onMounted(() => {
       contenteditable
       type="text"
       :class="$style.input"
-      v-html="`Some words <b>inside</b> the input`"
     />
     <div
       v-if="index !== null"
@@ -67,5 +73,7 @@ onMounted(() => {
   border-radius: 10px;
   font-size: 22px;
   outline: none;
+
+  white-space: pre;
 }
 </style>

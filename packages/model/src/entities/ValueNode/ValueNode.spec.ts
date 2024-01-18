@@ -1,9 +1,9 @@
 import { ValueNode } from './index.js';
 import { BlockChildType } from '../BlockNode/types/index.js';
 import { NODE_TYPE_HIDDEN_PROP } from '../BlockNode/consts.js';
-import { EventType } from '../../utils/EventBus/types/EventType.js';
-import { ValueModifiedEvent } from '../../utils/EventBus/events/index.js';
-import { EventAction } from '../../utils/EventBus/types/EventAction.js';
+import { EventType } from '../../EventBus/types/EventType.js';
+import { ValueModifiedEvent } from '../../EventBus/events/index.js';
+import { EventAction } from '../../EventBus/types/EventAction.js';
 
 describe('ValueNode', () => {
   describe('.update()', () => {

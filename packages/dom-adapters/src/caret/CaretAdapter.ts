@@ -1,6 +1,14 @@
-import type { EditorJSModel, TextRange } from '@editorjs/model';
-import { useSelectionChange, type Subscriber, type InputWithCaret  } from './utils/useSelectionChange.js';
-import { getAbsoluteRangeOffset } from './utils/absoluteOffset.js';
+import type {
+  DataKey,
+  EditorJSModel,
+  TextRange,
+  Caret,
+  TextIndex,
+  CaretManagerEvents
+} from '@editorjs/model';
+import { useSelectionChange, type Subscriber, type InputWithCaret } from './utils/useSelectionChange.js';
+import { getAbsoluteRangeOffset, getBoundaryPointByAbsoluteOffset } from '../utils/index.js';
+import { EventType } from '@editorjs/model';
 
 /**
  * Caret adapter watches input caret change and passes it to the model
@@ -10,6 +18,7 @@ import { getAbsoluteRangeOffset } from './utils/absoluteOffset.js';
  * - pass caret position to model —  model.updateCaret()
  * - subscribe on model's ‘caret change’ event (index) => {}), by filtering events only related with current input and set caret position
  *
+ * @todo make CaretAdapter a global instance
  * @todo add support for native inputs
  * @todo debug problem when document "selectionchange" is not fired on Enter press
  * @todo debug problem when offset at the end of line and at the beginning of the next line is the same
@@ -24,6 +33,12 @@ export class CaretAdapter extends EventTarget {
    * Input element
    */
   #input: null | InputWithCaret = null;
+
+  /**
+   * Caret instance
+   * Stores index of the user's caret
+   */
+  #caret: Caret;
 
   /**
    * EditorJSModel instance
@@ -46,39 +61,59 @@ export class CaretAdapter extends EventTarget {
   #offSelectionChange: (input: InputWithCaret) => void;
 
   /**
+   * Data key of the input adapter is attached to
+   */
+  #dataIndex: DataKey;
+
+  /**
+   * CaretAdapter constructor
+   *
+   * @param input - input element to attach caret adapter to
    * @param model - EditorJSModel instance
    * @param blockIndex - index of a block that contains input
+   * @param dataIndex - data key to attach input to
    */
-  constructor(model: EditorJSModel, blockIndex: number) {
+  constructor(input: HTMLElement, model: EditorJSModel, blockIndex: number, dataIndex: DataKey) {
     super();
 
+    this.#input = input;
     this.#model = model;
     this.#blockIndex = blockIndex;
+    this.#dataIndex = dataIndex;
+    this.#caret = this.#model.createCaret();
 
-    const { on, off } = useSelectionChange();
+    const {
+      on,
+      off,
+    } = useSelectionChange();
 
     this.#onSelectionChange = on;
     this.#offSelectionChange = off;
-  }
 
-  /**
-   * - Subscribes on input caret change
-   * - Composes caret index by selection position related to start of input
-   *
-   * @param input - input to watch caret change
-   * @param _dataKey - key of data property in block's data that contains input's value
-   */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars,no-unused-vars -- unused parameter for now
-  public attachInput(input: HTMLElement, _dataKey: string): void {
-    this.#input = input;
+    this.#model.addEventListener(EventType.CaretManagerUpdated, this.#onModelUpdate.bind(this));
 
     this.#onSelectionChange(this.#input, this.#onInputSelectionChange, this);
   }
 
   /**
+   * Updates caret index in the model
+   *
+   * Method is used to update caret index in the model through the Caret instance
+   *
+   * It is called from private #updateIndex method when index is retrieved from the document selection,
+   * but also could be called from outside to update caret index programmatically (eg from BlockToolAdapter)
+   *
+   * @param index - caret index
+   */
+  public updateIndex(index: TextRange): void {
+    this.#caret.update([index, this.#dataIndex, this.#blockIndex] as TextIndex);
+  }
+
+
+  /**
    * Unsubscribes from input caret change
    */
-  public detachInput(): void {
+  public destruct(): void {
     if (!this.#input) {
       return;
     }
@@ -97,7 +132,7 @@ export class CaretAdapter extends EventTarget {
   };
 
   /**
-   * Updates caret index
+   * Updates caret index form selection
    *
    * @param selection - changed document selection
    */
@@ -111,17 +146,58 @@ export class CaretAdapter extends EventTarget {
     this.#index = [
       getAbsoluteRangeOffset(this.#input, range.startContainer, range.startOffset),
       getAbsoluteRangeOffset(this.#input, range.endContainer, range.endOffset),
-    ];
+    ] as TextRange;
+
+    this.updateIndex(this.#index);
+  }
+
+  /**
+   * Handles model's caret update event
+   *
+   * @todo handle caret removal
+   *
+   * @param event - model's caret update event
+   */
+  #onModelUpdate(event: CaretManagerEvents): void {
+    const [textIndex, dataIndex, blockIndex] = event.detail.index as TextIndex;
+    const caretId = event.detail.id;
+
+
+    if (caretId !== this.#caret.id) {
+      /**
+       * @todo handle other carets
+       */
+      return;
+    }
+
+    if (blockIndex !== this.#blockIndex) {
+      return;
+    }
+
+    if (dataIndex !== this.#dataIndex) {
+      return;
+    }
 
     /**
-     * @todo
+     * If new index equals the current index, do nothing
+     *
+     * That might happen when caret was updated in the model from the current document selection
      */
-    // this.#model.updateCaret(this.blockIndex, this.#index);
+    if (textIndex[0] === this.#index?.[0] && textIndex[1] === this.#index?.[1]) {
+      return;
+    }
 
-    this.dispatchEvent(new CustomEvent('change', {
-      detail: {
-        index: this.#index,
-      },
-    }));
+    const start = getBoundaryPointByAbsoluteOffset(this.#input!, textIndex[0]);
+    const end = getBoundaryPointByAbsoluteOffset(this.#input!, textIndex[1]);
+
+    const selection = document.getSelection()!;
+    const range = new Range();
+
+    range.setStart(...start);
+    range.setEnd(...end);
+
+    selection.removeAllRanges();
+
+    selection.addRange(range);
   }
 }

@@ -7,3 +7,6 @@ export * from './TextAddedEvent.js';
 export * from './TextRemovedEvent.js';
 export * from './TuneModifiedEvent.js';
 export * from './ValueModifiedEvent.js';
+export * from './CaretManagerCaretUpdatedEvent.js';
+export * from './CaretManagerCaretAddedEvent.js';
+export * from './CaretManagerCaretRemovedEvent.js';

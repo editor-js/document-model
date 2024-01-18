@@ -1,11 +1,26 @@
 // Stryker disable all -- we don't count mutation test coverage fot this file as it just proxy calls to EditorDocument
 /* istanbul ignore file -- we don't count test coverage fot this file as it just proxy calls to EditorDocument */
 import { EditorDocument } from './entities/index.js';
-import { EventBus } from './utils/EventBus/EventBus.js';
-import { EventType } from './utils/EventBus/types/EventType.js';
-import type { ModelEvents } from './utils/EventBus/types/EventMap.js';
-import { BaseDocumentEvent } from './utils/EventBus/events/BaseEvent.js';
+import { EventBus, EventType } from './EventBus/index.js';
+import type { ModelEvents, CaretManagerCaretUpdatedEvent, CaretManagerEvents } from './EventBus/index.js';
+import { BaseDocumentEvent } from './EventBus/events/BaseEvent.js';
 import type { Constructor } from './utils/types.js';
+import { CaretManager } from './CaretManagement/index.js';
+
+/**
+ * Extends EditorJSModel with addEventListener overloads
+ */
+export interface EditorJSModel {
+  /**
+   * Overload for EditorDocument events
+   */
+  addEventListener<K extends ModelEvents>(type: EventType.Changed, listener: (event: K) => void): void;
+
+  /**
+   * Overload for CaretManager events
+   */
+  addEventListener<K extends CaretManagerEvents>(type: EventType.CaretManagerUpdated, listener: (event: K) => void): void;
+}
 
 /**
  * EditorJSModel is a wrapper around EditorDocument that prevent access to  internal structures
@@ -15,6 +30,11 @@ export class EditorJSModel extends EventBus {
    * EditorDocument instance
    */
   #document: EditorDocument;
+
+  /**
+   * CaretManager instance
+   */
+  #caretManager: CaretManager;
 
   /**
    * Returns serialized data associated with the document
@@ -53,8 +73,49 @@ export class EditorJSModel extends EventBus {
     super();
 
     this.#document = new EditorDocument(...parameters);
+    this.#caretManager = new CaretManager();
+
+    this.#caretManager.addEventListener(
+      EventType.CaretManagerUpdated,
+      (event: CustomEvent) => {
+        this.dispatchEvent(
+          new (event.constructor as Constructor<CaretManagerCaretUpdatedEvent>)(event.detail)
+        );
+      }
+    );
 
     this.#listenAndBubbleDocumentEvents(this.#document);
+  }
+
+  /**
+   *  Creates a new Caret instance in the model
+   *
+   *  @param parameters - createCaret method parameters
+   *  @param [parameters.index] - initial caret index
+   */
+  public createCaret(...parameters: Parameters<CaretManager['createCaret']>): ReturnType<CaretManager['createCaret']> {
+    return this.#caretManager.createCaret(...parameters);
+  }
+
+  /**
+   * Updates caret instance in the model
+   *
+   * @param parameters - updateCaret method parameters
+   * @param parameters.caret - Caret instance to update
+   */
+  public updateCaret(...parameters: Parameters<CaretManager['updateCaret']>): ReturnType<CaretManager['updateCaret']> {
+    return this.#caretManager.updateCaret(...parameters);
+  }
+
+
+  /**
+   * Removes caret instance from the model
+   *
+   * @param parameters - removeCaret method parameters
+   * @param parameters.caret - Caret instance to remove
+   */
+  public removeCaret(...parameters: Parameters<CaretManager['removeCaret']>): ReturnType<CaretManager['removeCaret']> {
+    return this.#caretManager.removeCaret(...parameters);
   }
 
   /**
