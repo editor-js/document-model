@@ -1,4 +1,6 @@
 name: Mutation tests for all files
+description: Run mutation tests for all files of a given package
+
 inputs:
   package-name:
     description: 'Name of the package'
@@ -6,6 +8,7 @@ inputs:
   stryker_dashboard_api_key:
     description: 'Stryker dashboard api key'
     required: true
+
 runs:
   using: "composite"
   steps:
@@ -21,4 +24,4 @@ runs:
           STRYKER_DASHBOARD_API_KEY: ${{ inputs.stryker_dashboard_api_key }}
         shell: bash
         id: run-mutation-tests
-        run: yarn workspace ${{ inputs.package-name }} test:mutations --dashboard.version main
+        run: yarn workspace ${{ inputs.package-name }} test:mutations --dashboard.version main --dashboard.module ${{ inputs.package-name }}
