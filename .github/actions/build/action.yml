@@ -15,7 +15,5 @@ runs:
       uses: ./.github/actions/setup
 
     - name: Build the package with dependencies
-      env:
-            STRYKER_DASHBOARD_API_KEY: ${{ inputs.stryker_dashboard_api_key }}
       shell: bash
       run: yarn workspaces foreach -Rpt --from '${{ inputs.package-name }}' run build

@@ -12,11 +12,13 @@ runs:
       - uses: actions/setup-node@v3
         with:
           node-version-file: .nvmrc
-        
+
       - name: Setup environment
         uses: ./.github/actions/setup
 
       - name: Run mutation tests
+        env:
+          STRYKER_DASHBOARD_API_KEY: ${{ inputs.stryker_dashboard_api_key }}
         shell: bash
         id: run-mutation-tests
         run: yarn workspace ${{ inputs.package-name }} test:mutations --dashboard.version main
