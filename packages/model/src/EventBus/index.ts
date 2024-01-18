@@ -6,4 +6,4 @@ export type * from './types/EventPayloadBase.js';
 export type * from './types/EventTarget.js';
 export * from './types/EventType.js';
 export type * from './types/indexing.js';
-export * from './composeIndex.js';
+export * from './composeDataIndex.js';

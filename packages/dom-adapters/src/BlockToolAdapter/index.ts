@@ -157,10 +157,16 @@ export class BlockToolAdapter {
 
     const [rangeIndex, dataIndex, blockIndex] = event.detail.index;
 
+    /**
+     * Event is not related to the attached block
+     */
     if (blockIndex !== this.#blockIndex) {
       return;
     }
 
+    /**
+     * Event is not related to the attached data key
+     */
     if (dataIndex !== composeDataIndex(key)) {
       return;
     }
