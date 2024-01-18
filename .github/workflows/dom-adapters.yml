@@ -36,6 +36,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Build dependencies
+        uses: ./.github/actions/build
+        with:
+          package-name: '@editorjs/dom-adapters'
+
       - name: Run mutation tests for changed files
         if: ${{ github.event_name == 'pull_request' }}
         uses: ./.github/actions/mutation-tests-changed-files
