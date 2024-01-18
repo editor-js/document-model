@@ -11,7 +11,7 @@ jobs:
         uses: ./.github/actions/lint
         with:
           package-name: '@editorjs/dom-adapters'
-    
+
   tests:
     runs-on: ubuntu-latest
     steps:
@@ -20,6 +20,15 @@ jobs:
         uses: ./.github/actions/unit-tests
         with:
           working-directory: './packages/dom-adapters'
+          package-name: '@editorjs/dom-adapters'
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the package
+        uses: ./.github/actions/build
+        with:
           package-name: '@editorjs/dom-adapters'
 
   mutation-tests:
@@ -42,12 +51,3 @@ jobs:
           package-name: '@editorjs/dom-adapters'
           working-directory: './packages/dom-adapters'
           stryker_dashboard_api_key: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
-
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build the package
-        uses: ./.github/actions/build
-        with:
-          package-name: '@editorjs/dom-adapters'
