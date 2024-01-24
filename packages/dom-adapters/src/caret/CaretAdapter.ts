@@ -7,7 +7,11 @@ import type {
   CaretManagerEvents
 } from '@editorjs/model';
 import { useSelectionChange, type Subscriber, type InputWithCaret } from './utils/useSelectionChange.js';
-import { getAbsoluteRangeOffset, getBoundaryPointByAbsoluteOffset } from '../utils/index.js';
+import {
+  getAbsoluteRangeOffset,
+  getBoundaryPointByAbsoluteOffset,
+  NATIVE_INPUT_SET
+} from '../utils/index.js';
 import { EventType } from '@editorjs/model';
 
 /**
@@ -187,17 +191,26 @@ export class CaretAdapter extends EventTarget {
       return;
     }
 
-    const start = getBoundaryPointByAbsoluteOffset(this.#input!, textIndex[0]);
-    const end = getBoundaryPointByAbsoluteOffset(this.#input!, textIndex[1]);
+    const input: HTMLElement = this.#input!;
 
-    const selection = document.getSelection()!;
-    const range = new Range();
+    const isNativeInput = NATIVE_INPUT_SET.has(input.tagName);
 
-    range.setStart(...start);
-    range.setEnd(...end);
+    if (isNativeInput) {
+      // skip
+    } else {
+      const start = getBoundaryPointByAbsoluteOffset(input,
+        textIndex[0]);
+      const end = getBoundaryPointByAbsoluteOffset(input, textIndex[1]);
 
-    selection.removeAllRanges();
+      const selection = document.getSelection()!;
+      const range = new Range();
 
-    selection.addRange(range);
+      range.setStart(...start);
+      range.setEnd(...end);
+
+      selection.removeAllRanges();
+
+      selection.addRange(range);
+    }
   }
 }

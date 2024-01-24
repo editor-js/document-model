@@ -1,24 +1,20 @@
 import type { DataKey, EditorJSModel, ModelEvents } from '@editorjs/model';
-import { EventType, EventAction, composeDataIndex } from '@editorjs/model';
-import { InputType } from './types/InputType.js';
 import {
+  composeDataIndex,
+  EventAction,
+  EventType,
   TextAddedEvent,
   TextRemovedEvent
 } from '@editorjs/model';
+import { InputType } from './types/InputType.js';
 import { CaretAdapter } from '../caret/CaretAdapter.js';
-import { getAbsoluteRangeOffset, getBoundaryPointByAbsoluteOffset } from '../utils/index.js';
-
-enum NativeInput {
-  Textarea = 'TEXTAREA',
-  Input = 'INPUT',
-}
-
-const enum InputMode {
-  Native = 'native',
-  ContentEditable = 'contenteditable',
-}
-
-const NATIVE_INPUT_SET = new Set([NativeInput.Textarea, NativeInput.Input]) as ReadonlySet<NativeInput>;
+import type { NativeInput } from '../utils/index.js';
+import {
+  getAbsoluteRangeOffset,
+  getBoundaryPointByAbsoluteOffset,
+  InputMode,
+  NATIVE_INPUT_SET
+} from '../utils/index.js';
 
 /**
  * BlockToolAdapter is using inside Block tools to connect browser DOM elements to the model
@@ -62,7 +58,7 @@ export class BlockToolAdapter {
   public attachInput(key: DataKey, input: HTMLElement): void {
     const inputTag = input.tagName as NativeInput;
 
-    if (NATIVE_INPUT_SET.has(inputTag)) {
+    if (Boolean(NATIVE_INPUT_SET.has(inputTag))) {
       this.#mode = InputMode.Native;
     } else if (input.isContentEditable) {
       this.#mode = InputMode.ContentEditable;
@@ -92,66 +88,91 @@ export class BlockToolAdapter {
      */
     event.preventDefault();
 
+    const isNativeInput = this.#mode === InputMode.Native;
     const inputType = event.inputType as InputType;
-    const targetRanges = event.getTargetRanges();
-    const range = targetRanges[0];
 
-    const start = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
-    const end = getAbsoluteRangeOffset(input, range.endContainer, range.endOffset);
+    if (isNativeInput) {
+      const currentElement = input as HTMLInputElement | HTMLTextAreaElement;
+      const start = currentElement.selectionStart as number;
+      const end = currentElement.selectionEnd as number;
 
-    switch (inputType) {
-      case InputType.InsertReplacementText:
-      case InputType.InsertFromPaste: {
-        this.#model.removeText(this.#blockIndex, key, start, end);
+      switch (inputType) {
+        case InputType.InsertText: {
+          const data = event.data as string;
 
-        /**
-         * DataTransfer object is guaranteed to be not null for these types of event for contenteditable elements
-         *
-         * However, it is not guaranteed for INPUT and TEXTAREA elements, so @todo handle this case
-         *
-         * @see https://www.w3.org/TR/input-events-2/#overview
-         */
-        const data = event.dataTransfer!.getData('text/plain');
+          this.#model.insertText(this.#blockIndex, key, data, start);
 
-        this.#model.insertText(this.#blockIndex, key, data, start);
-
-        break;
-      }
-      case InputType.InsertText:
-      /**
-       * @todo Handle composition events
-       */
-      case InputType.InsertCompositionText: {
-        /**
-         * If start and end aren't equal, it means that user selected some text and replaced it with new one
-         */
-        if (start !== end) {
+          break;
+        }
+        case InputType.DeleteContentBackward: {
           this.#model.removeText(this.#blockIndex, key, start, end);
+          break;
+        }
+      }
+    } else {
+      const targetRanges = event.getTargetRanges();
+      const range = targetRanges[0];
+
+      const start = getAbsoluteRangeOffset(input, range.startContainer,
+        range.startOffset);
+      const end = getAbsoluteRangeOffset(input, range.endContainer,
+        range.endOffset);
+
+      switch (inputType) {
+        case InputType.InsertReplacementText:
+        case InputType.InsertFromPaste: {
+          this.#model.removeText(this.#blockIndex, key, start, end);
+
+          /**
+           * DataTransfer object is guaranteed to be not null for these types of event for contenteditable elements
+           *
+           * However, it is not guaranteed for INPUT and TEXTAREA elements, so @todo handle this case
+           *
+           * @see https://www.w3.org/TR/input-events-2/#overview
+           */
+          const data = event.dataTransfer!.getData('text/plain');
+
+          this.#model.insertText(this.#blockIndex, key, data, start);
+
+          break;
+        }
+        case InputType.InsertText:
+        /**
+         * @todo Handle composition events
+         */
+        case InputType.InsertCompositionText: {
+          /**
+           * If start and end aren't equal,
+           * it means that user selected some text and replaced it with new one
+           */
+          if (start !== end) {
+            this.#model.removeText(this.#blockIndex, key, start, end);
+          }
+
+          const data = event.data as string;
+
+          this.#model.insertText(this.#blockIndex, key, data, start);
+          break;
         }
 
-        const data = event.data as string;
+        case InputType.DeleteContent:
+        case InputType.DeleteContentBackward:
+        case InputType.DeleteContentForward:
+        case InputType.DeleteByCut:
+        case InputType.DeleteByDrag:
+        case InputType.DeleteHardLineBackward:
+        case InputType.DeleteHardLineForward:
+        case InputType.DeleteSoftLineBackward:
+        case InputType.DeleteSoftLineForward:
+        case InputType.DeleteWordBackward:
+        case InputType.DeleteWordForward: {
+          this.#model.removeText(this.#blockIndex, key, start, end);
 
-        this.#model.insertText(this.#blockIndex, key, data, start);
-        break;
+          break;
+        }
+
+        default:
       }
-
-      case InputType.DeleteContent:
-      case InputType.DeleteContentBackward:
-      case InputType.DeleteContentForward:
-      case InputType.DeleteByCut:
-      case InputType.DeleteByDrag:
-      case InputType.DeleteHardLineBackward:
-      case InputType.DeleteHardLineForward:
-      case InputType.DeleteSoftLineBackward:
-      case InputType.DeleteSoftLineForward:
-      case InputType.DeleteWordBackward:
-      case InputType.DeleteWordForward: {
-        this.#model.removeText(this.#blockIndex, key, start, end);
-
-        break;
-      }
-
-      default:
     }
   };
 
@@ -164,6 +185,8 @@ export class BlockToolAdapter {
    * @param caretAdapter - caret adapter instance
    */
   #handleModelUpdate = (event: ModelEvents, input: HTMLElement, key: DataKey, caretAdapter: CaretAdapter): void => {
+    const isNativeInput = this.#mode === InputMode.Native;
+
     if (!(event instanceof TextAddedEvent) && !(event instanceof TextRemovedEvent)) {
       return;
     }
@@ -184,39 +207,70 @@ export class BlockToolAdapter {
       return;
     }
 
-    const action = event.detail.action;
+    if (isNativeInput) {
+      const currentElement = input as HTMLInputElement | HTMLTextAreaElement;
+      const start = currentElement.selectionStart!;
+      const end = currentElement.selectionEnd!;
 
-    const start = rangeIndex[0];
-    const end = rangeIndex[1];
+      const action = event.detail.action;
 
-    const [startNode, startOffset] = getBoundaryPointByAbsoluteOffset(input, start);
-    const [endNode, endOffset] = getBoundaryPointByAbsoluteOffset(input, end);
-    const range = new Range();
+      switch (action) {
+        case EventAction.Added: {
+          const text = event.detail.data as string;
 
-    range.setStart(startNode, startOffset);
+          currentElement.value = currentElement.value.slice(0, start) + text + currentElement.value.slice(end);
 
-    switch (action) {
-      case EventAction.Added: {
-        const text = event.detail.data as string;
-        const textNode = document.createTextNode(text);
-
-        range.insertNode(textNode);
-
-        caretAdapter.updateIndex([start + text.length, start + text.length]);
-
-        break;
+          currentElement.setSelectionRange(start + text.length, start + text.length);
+          break;
+        }
+        case EventAction.Removed: {
+          if (start === end) {
+            currentElement.value = currentElement.value.slice(0, start - 1) +
+              currentElement.value.slice(end);
+          } else {
+            currentElement.value = currentElement.value.slice(0, start) +
+              currentElement.value.slice(end);
+          }
+          currentElement.setSelectionRange(start, start);
+          break;
+        }
       }
-      case EventAction.Removed: {
-        range.setEnd(endNode, endOffset);
+    } else {
+      const action = event.detail.action;
 
-        range.deleteContents();
+      const start = rangeIndex[0];
+      const end = rangeIndex[1];
 
-        caretAdapter.updateIndex([start, start]);
+      const [startNode, startOffset] = getBoundaryPointByAbsoluteOffset(input,
+        start);
+      const [endNode, endOffset] = getBoundaryPointByAbsoluteOffset(input, end);
+      const range = new Range();
 
-        break;
+      range.setStart(startNode, startOffset);
+
+      switch (action) {
+        case EventAction.Added: {
+          const text = event.detail.data as string;
+          const textNode = document.createTextNode(text);
+
+          range.insertNode(textNode);
+
+          caretAdapter.updateIndex([start + text.length, start + text.length]);
+
+          break;
+        }
+        case EventAction.Removed: {
+          range.setEnd(endNode, endOffset);
+
+          range.deleteContents();
+
+          caretAdapter.updateIndex([start, start]);
+
+          break;
+        }
       }
+
+      input.normalize();
     }
-
-    input.normalize();
   };
 }
