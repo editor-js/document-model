@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import { BlockToolAdapter } from '@editorjs/dom-adapters';
+import { BlockToolAdapter, CaretAdapter } from '@editorjs/dom-adapters';
 import {
   CaretManagerCaretUpdatedEvent,
   createDataKey,
   type EditorJSModel,
   EventType,
+  type Index,
   type TextIndex,
-  type TextRange
 } from '@editorjs/model';
 
-const input = ref<HTMLElement | null>(null);
-const index = ref<TextRange | null>(null);
+const input1 = ref<HTMLElement | null>(null);
+const input2 = ref<HTMLElement | null>(null);
+const index = ref<Index | null>(null);
 
 const props = defineProps<{
   /**
@@ -21,14 +22,19 @@ const props = defineProps<{
 }>();
 
 onMounted(() => {
-  const blockToolAdapter = new BlockToolAdapter(props.model, 0);
+  const caretAdapter = new CaretAdapter(document.body, props.model);
+  const blockToolAdapter = new BlockToolAdapter(props.model, caretAdapter, 0);
 
-  if (input.value !== null) {
-    blockToolAdapter.attachInput(createDataKey('text'), input.value);
+  if (input1.value !== null) {
+    blockToolAdapter.attachInput(createDataKey('text1'), input1.value);
 
     props.model.addEventListener(EventType.CaretManagerUpdated, (evt: CaretManagerCaretUpdatedEvent) => {
-      index.value = (evt.detail.index as TextIndex)[0];
+      index.value = evt.detail.index;
     });
+  }
+
+  if (input2.value !== null) {
+    blockToolAdapter.attachInput(createDataKey('text2'), input2.value);
   }
 });
 </script>
@@ -36,7 +42,13 @@ onMounted(() => {
   <div :class="$style.wrapper">
     <!-- eslint-disable vue/no-v-html -->
     <div
-      ref="input"
+      ref="input1"
+      contenteditable
+      type="text"
+      :class="$style.input"
+    />
+    <div
+      ref="input2"
       contenteditable
       type="text"
       :class="$style.input"

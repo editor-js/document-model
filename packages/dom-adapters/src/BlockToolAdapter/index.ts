@@ -5,7 +5,7 @@ import {
   TextAddedEvent,
   TextRemovedEvent
 } from '@editorjs/model';
-import { CaretAdapter } from '../caret/CaretAdapter.js';
+import type { CaretAdapter } from '../CaretAdapter/index.js';
 import { getAbsoluteRangeOffset, getBoundaryPointByAbsoluteOffset } from '../utils/index.js';
 
 enum NativeInput {
@@ -29,15 +29,18 @@ export class BlockToolAdapter {
    */
   #blockIndex: number;
 
+  #caretAdapter: CaretAdapter;
+
   /**
    * BlockToolAdapter constructor
    *
    * @param model - EditorJSModel instance
    * @param blockIndex - index of the block that this adapter is connected to
    */
-  constructor(model: EditorJSModel, blockIndex: number) {
+  constructor(model: EditorJSModel, caretAdapter: CaretAdapter, blockIndex: number) {
     this.#model = model;
     this.#blockIndex = blockIndex;
+    this.#caretAdapter = caretAdapter;
   }
 
   /**
@@ -57,11 +60,10 @@ export class BlockToolAdapter {
       throw new Error('BlockToolAdapter: input should be either INPUT, TEXTAREA or contenteditable element');
     }
 
-    const caretAdapter = new CaretAdapter(input, this.#model, this.#blockIndex, key);
-
     input.addEventListener('beforeinput', event => this.#handleBeforeInputEvent(event, input, key));
 
-    this.#model.addEventListener(EventType.Changed, (event: ModelEvents) => this.#handleModelUpdate(event, input, key, caretAdapter));
+    this.#model.addEventListener(EventType.Changed, (event: ModelEvents) => this.#handleModelUpdate(event, input, key));
+    this.#caretAdapter.attachInput(input, [composeDataIndex(key), this.#blockIndex]);
   }
 
   /**
@@ -148,9 +150,8 @@ export class BlockToolAdapter {
    * @param event - model update event
    * @param input - attched input element
    * @param key - data key input is attached to
-   * @param caretAdapter - caret adapter instance
    */
-  #handleModelUpdate(event: ModelEvents, input: HTMLElement, key: DataKey, caretAdapter: CaretAdapter): void {
+  #handleModelUpdate(event: ModelEvents, input: HTMLElement, key: DataKey): void {
     if (!(event instanceof TextAddedEvent) && !(event instanceof TextRemovedEvent)) {
       return;
     }
@@ -189,7 +190,7 @@ export class BlockToolAdapter {
 
         range.insertNode(textNode);
 
-        caretAdapter.updateIndex([start + text.length, start + text.length]);
+        this.#caretAdapter.updateIndex([[start + text.length, start + text.length], composeDataIndex(key), this.#blockIndex]);
 
         break;
       }
@@ -198,7 +199,7 @@ export class BlockToolAdapter {
 
         range.deleteContents();
 
-        caretAdapter.updateIndex([start, start]);
+        this.#caretAdapter.updateIndex([[start, start], composeDataIndex(key), this.#blockIndex]);
 
         break;
       }

@@ -29,7 +29,7 @@ export type TextRange = [number, number];
 /**
  * Generic type for BlockNode elements
  */
-type DataIndex<Type extends 'data' | 'tune'> = [`${Type}@${Type extends 'data' ? DataKey : BlockTuneName}`, ...Partial<BlockIndex>];
+export type DataIndex<Type extends 'data' | 'tune'> = [`${Type}@${Type extends 'data' ? DataKey : BlockTuneName}`, ...Partial<BlockIndex>];
 
 /**
  * TextNode index. It consists of a range of characters and an optional index of a block node
