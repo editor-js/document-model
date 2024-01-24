@@ -24,6 +24,16 @@ model.addEventListener(EventType.Changed, () => {
   document.value = new EditorDocument(model.serialized);
 });
 
+// three types of inputs:
+// ?type=contenteditable
+// ?type=input
+// ?type=textarea
+let type = (new URL(window.location.href).searchParams.get('type') ?? 'contenteditable') as 'contenteditable' | 'input' | 'textarea';
+
+if (type !== 'contenteditable' && type !== 'input' && type !== 'textarea') {
+  type = 'contenteditable';
+}
+
 </script>
 
 <template>
@@ -41,6 +51,7 @@ model.addEventListener(EventType.Changed, () => {
       <div :class="$style.playground">
         <Input
           :model="model"
+          :type="type"
         />
         <pre>{{ serialized }}</pre>
       </div>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue'
 import { BlockToolAdapter } from '@editorjs/dom-adapters';
 import {
   CaretManagerCaretUpdatedEvent,
@@ -18,6 +18,7 @@ const props = defineProps<{
    * Editor js Document model to attach input to
    */
   model: EditorJSModel;
+  type: 'input' | 'textarea' | 'contenteditable';
 }>();
 
 onMounted(() => {
@@ -34,11 +35,22 @@ onMounted(() => {
 </script>
 <template>
   <div :class="$style.wrapper">
-    <!-- eslint-disable vue/no-v-html -->
     <div
+      v-if="type === 'contenteditable'"
       ref="input"
       contenteditable
       type="text"
+      :class="$style.input"
+    />
+    <input
+      v-else-if="type === 'input'"
+      ref="input"
+      type="text"
+      :class="$style.input"
+    >
+    <textarea
+      v-else-if="type === 'textarea'"
+      ref="input"
       :class="$style.input"
     />
     <div
