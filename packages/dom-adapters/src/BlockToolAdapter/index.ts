@@ -13,6 +13,13 @@ enum NativeInput {
   Input = 'INPUT',
 }
 
+const enum InputMode {
+  Native = 'native',
+  ContentEditable = 'contenteditable',
+}
+
+const NATIVE_INPUT_SET = new Set([NativeInput.Textarea, NativeInput.Input]) as ReadonlySet<NativeInput>;
+
 /**
  * BlockToolAdapter is using inside Block tools to connect browser DOM elements to the model
  * It can handle beforeinput events and update model data
@@ -28,6 +35,11 @@ export class BlockToolAdapter {
    * Index of the block that this adapter is connected to
    */
   #blockIndex: number;
+
+  /**
+   * Input mode
+   */
+  #mode: InputMode = InputMode.Native;
 
   /**
    * BlockToolAdapter constructor
@@ -50,10 +62,11 @@ export class BlockToolAdapter {
   public attachInput(key: DataKey, input: HTMLElement): void {
     const inputTag = input.tagName as NativeInput;
 
-    /**
-     * @todo Filter non-text-editable inputs
-     */
-    if (![NativeInput.Textarea, NativeInput.Input].includes(inputTag) && !input.isContentEditable) {
+    if (NATIVE_INPUT_SET.has(inputTag)) {
+      this.#mode = InputMode.Native;
+    } else if (input.isContentEditable) {
+      this.#mode = InputMode.ContentEditable;
+    } else {
       throw new Error('BlockToolAdapter: input should be either INPUT, TEXTAREA or contenteditable element');
     }
 
@@ -73,7 +86,7 @@ export class BlockToolAdapter {
    * @param input - input element
    * @param key - data key input is attached to
    */
-  #handleBeforeInputEvent(event: InputEvent, input: HTMLElement, key: DataKey): void {
+  #handleBeforeInputEvent = (event: InputEvent, input: HTMLElement, key: DataKey): void => {
     /**
      * We prevent all events to handle them manually via model update
      */
@@ -140,7 +153,7 @@ export class BlockToolAdapter {
 
       default:
     }
-  }
+  };
 
   /**
    * Handles model update events and updates DOM
@@ -150,7 +163,7 @@ export class BlockToolAdapter {
    * @param key - data key input is attached to
    * @param caretAdapter - caret adapter instance
    */
-  #handleModelUpdate(event: ModelEvents, input: HTMLElement, key: DataKey, caretAdapter: CaretAdapter): void {
+  #handleModelUpdate = (event: ModelEvents, input: HTMLElement, key: DataKey, caretAdapter: CaretAdapter): void => {
     if (!(event instanceof TextAddedEvent) && !(event instanceof TextRemovedEvent)) {
       return;
     }
@@ -205,5 +218,5 @@ export class BlockToolAdapter {
     }
 
     input.normalize();
-  }
+  };
 }
