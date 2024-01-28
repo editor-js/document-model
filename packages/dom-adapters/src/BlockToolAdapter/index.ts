@@ -105,7 +105,7 @@ export class BlockToolAdapter {
           break;
         }
         case InputType.DeleteContentBackward: {
-          this.#model.removeText(this.#blockIndex, key, start, end);
+          this.#model.removeText(this.#blockIndex, key, start - 1, end);
           break;
         }
       }
@@ -224,6 +224,7 @@ export class BlockToolAdapter {
           break;
         }
         case EventAction.Removed: {
+          console.log('remove', start, end);
           if (start === end) {
             currentElement.value = currentElement.value.slice(0, start - 1) +
               currentElement.value.slice(end);
