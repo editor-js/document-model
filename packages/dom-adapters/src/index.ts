@@ -1,2 +1,2 @@
-export * from './caret/CaretAdapter.js';
+export * from './CaretAdapter/index.js';
 export * from './BlockToolAdapter/index.js';

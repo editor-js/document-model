@@ -71,6 +71,10 @@ export class Caret extends EventBus {
    * @param index - new caret index
    */
   public update(index: Index): void {
+    if (JSON.stringify(this.#index) === JSON.stringify(index)) {
+      return;
+    }
+
     this.#index = index;
 
     this.dispatchEvent(new CaretUpdatedEvent(this));

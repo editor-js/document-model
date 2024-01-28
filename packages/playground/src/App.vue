@@ -8,7 +8,11 @@ const model = new EditorJSModel({
   blocks: [ {
     name: 'paragraph',
     data: {
-      text: {
+      text1: {
+        value: '',
+        $t: 't',
+      },
+      text2: {
         value: '',
         $t: 't',
       },
