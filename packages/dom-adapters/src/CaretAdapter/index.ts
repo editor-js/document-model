@@ -1,6 +1,6 @@
 import { useSelectionChange } from '../caret/utils/useSelectionChange.js';
 import type { Caret, EditorJSModel, DataIndex, TextIndex, CaretManagerEvents, Index } from '@editorjs/model';
-import { getAbsoluteRangeOffset, getBoundaryPointByAbsoluteOffset } from '../utils/index.js';
+import {getAbsoluteRangeOffset, getBoundaryPointByAbsoluteOffset, isNativeInput} from '../utils/index.js';
 import type { TextRange } from '@editorjs/model';
 import { EventType } from '@editorjs/model';
 
@@ -10,14 +10,6 @@ function hashIndex(index: Readonly<Index>): string {
 
 function parseIndex<T extends Index>(hash: string): T {
   return JSON.parse(hash) as T;
-}
-
-function areIndexesEqual(a: Readonly<Index | null>, b: Readonly<Index | null>): boolean {
-  if (a === null || b === null) {
-    return a === b;
-  }
-
-  return hashIndex(a) === hashIndex(b);
 }
 
 /**
@@ -74,12 +66,28 @@ export class CaretAdapter extends EventTarget {
       return;
     }
 
-    const range = selection.getRangeAt(0);
+    const activeElement = document.activeElement;
 
     for (const [index, input] of this.#inputs) {
-      if (!range.intersectsNode(input)) {
+      if (input !== activeElement) {
         continue;
       }
+
+      if (isNativeInput(input)) {
+        const textRange = [
+          input.selectionStart,
+          input.selectionEnd,
+        ] as TextRange;
+
+        this.updateIndex([textRange, ...parseIndex<DataIndex<'data'>>(index)]);
+
+        /**
+         * For now we handle only first found input
+         */
+        break;
+      }
+
+      const range = selection.getRangeAt(0);
 
       /**
        * @todo think of cross-block selection
@@ -109,6 +117,13 @@ export class CaretAdapter extends EventTarget {
     const input = this.#inputs.get(hashIndex([dataIndex, blockIndex]));
 
     if (!input) {
+      return;
+    }
+
+    if (isNativeInput(input)) {
+      input.selectionStart = textIndex[0];
+      input.selectionEnd = textIndex[1];
+
       return;
     }
 

@@ -47,10 +47,10 @@ onMounted(() => {
       type="text"
       :class="$style.input"
     />
-    <div
+    <input
       ref="input2"
-      contenteditable
       type="text"
+      value="Hello world"
       :class="$style.input"
     />
     <div
