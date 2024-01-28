@@ -90,89 +90,81 @@ export class BlockToolAdapter {
 
     const isNativeInput = this.#mode === InputMode.Native;
     const inputType = event.inputType as InputType;
+    let start: number;
+    let end: number;
 
-    if (isNativeInput) {
-      const currentElement = input as HTMLInputElement | HTMLTextAreaElement;
-      const start = currentElement.selectionStart as number;
-      const end = currentElement.selectionEnd as number;
-
-      switch (inputType) {
-        case InputType.InsertText: {
-          const data = event.data as string;
-
-          this.#model.insertText(this.#blockIndex, key, data, start);
-
-          break;
-        }
-        case InputType.DeleteContentBackward: {
-          this.#model.removeText(this.#blockIndex, key, start - 1, end);
-          break;
-        }
-      }
-    } else {
+    if (!isNativeInput) {
       const targetRanges = event.getTargetRanges();
       const range = targetRanges[0];
 
-      const start = getAbsoluteRangeOffset(input, range.startContainer,
+      start = getAbsoluteRangeOffset(input, range.startContainer,
         range.startOffset);
-      const end = getAbsoluteRangeOffset(input, range.endContainer,
+      end = getAbsoluteRangeOffset(input, range.endContainer,
         range.endOffset);
+    } else {
+      const currentElement = input as HTMLInputElement | HTMLTextAreaElement;
 
-      switch (inputType) {
-        case InputType.InsertReplacementText:
-        case InputType.InsertFromPaste: {
-          this.#model.removeText(this.#blockIndex, key, start, end);
+      start = currentElement.selectionStart as number;
+      end = currentElement.selectionEnd as number;
+    }
 
-          /**
-           * DataTransfer object is guaranteed to be not null for these types of event for contenteditable elements
-           *
-           * However, it is not guaranteed for INPUT and TEXTAREA elements, so @todo handle this case
-           *
-           * @see https://www.w3.org/TR/input-events-2/#overview
-           */
-          const data = event.dataTransfer!.getData('text/plain');
+    switch (inputType) {
+      case InputType.InsertReplacementText:
+      case InputType.InsertFromPaste: {
+        this.#model.removeText(this.#blockIndex, key, start, end);
 
-          this.#model.insertText(this.#blockIndex, key, data, start);
-
-          break;
-        }
-        case InputType.InsertText:
         /**
-         * @todo Handle composition events
+         * DataTransfer object is guaranteed to be not null for these types of event for contenteditable elements
+         *
+         * However, it is not guaranteed for INPUT and TEXTAREA elements, so @todo handle this case
+         *
+         * @see https://www.w3.org/TR/input-events-2/#overview
          */
-        case InputType.InsertCompositionText: {
-          /**
-           * If start and end aren't equal,
-           * it means that user selected some text and replaced it with new one
-           */
-          if (start !== end) {
-            this.#model.removeText(this.#blockIndex, key, start, end);
-          }
+        const data = event.dataTransfer!.getData('text/plain');
 
-          const data = event.data as string;
+        this.#model.insertText(this.#blockIndex, key, data, start);
 
-          this.#model.insertText(this.#blockIndex, key, data, start);
-          break;
-        }
-
-        case InputType.DeleteContent:
-        case InputType.DeleteContentBackward:
-        case InputType.DeleteContentForward:
-        case InputType.DeleteByCut:
-        case InputType.DeleteByDrag:
-        case InputType.DeleteHardLineBackward:
-        case InputType.DeleteHardLineForward:
-        case InputType.DeleteSoftLineBackward:
-        case InputType.DeleteSoftLineForward:
-        case InputType.DeleteWordBackward:
-        case InputType.DeleteWordForward: {
-          this.#model.removeText(this.#blockIndex, key, start, end);
-
-          break;
-        }
-
-        default:
+        break;
       }
+      case InputType.InsertText:
+      /**
+       * @todo Handle composition events
+       */
+      case InputType.InsertCompositionText: {
+        /**
+         * If start and end aren't equal,
+         * it means that user selected some text and replaced it with new one
+         */
+        if (start !== end) {
+          this.#model.removeText(this.#blockIndex, key, start, end);
+        }
+
+        const data = event.data as string;
+
+        this.#model.insertText(this.#blockIndex, key, data, start);
+        break;
+      }
+
+      case InputType.DeleteContent:
+      case InputType.DeleteContentBackward:
+      case InputType.DeleteContentForward:
+      case InputType.DeleteByCut:
+      case InputType.DeleteByDrag:
+      case InputType.DeleteHardLineBackward:
+      case InputType.DeleteHardLineForward:
+      case InputType.DeleteSoftLineBackward:
+      case InputType.DeleteSoftLineForward:
+      case InputType.DeleteWordBackward:
+      case InputType.DeleteWordForward: {
+        if (isNativeInput && start > 0) {
+          start = start - 1;
+        }
+        this.#model.removeText(this.#blockIndex, key, start, end);
+
+        break;
+      }
+
+      default:
     }
   };
 
@@ -212,6 +204,9 @@ export class BlockToolAdapter {
       const start = currentElement.selectionStart!;
       const end = currentElement.selectionEnd!;
 
+      // todo:
+      //  caretAdapter cannot handle native input
+      //  because it doesn't have the content of the input
       const action = event.detail.action;
 
       switch (action) {
@@ -224,7 +219,6 @@ export class BlockToolAdapter {
           break;
         }
         case EventAction.Removed: {
-          console.log('remove', start, end);
           if (start === end) {
             currentElement.value = currentElement.value.slice(0, start - 1) +
               currentElement.value.slice(end);
