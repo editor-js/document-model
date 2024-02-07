@@ -4,10 +4,11 @@
   "type": "module",
   "packageManager": "yarn@4.0.1",
   "scripts": {
-    "dev": "yarn build:dependencies && vite",
+    "dev": "yarn dev:dependencies & vite",
     "build": "yarn build:dependencies && vue-tsc && vite build",
     "preview": "yarn build:dependencies && vite preview",
     "build:dependencies": "yarn workspaces foreach -Rpt --from $npm_package_name --exclude $npm_package_name run build",
+    "dev:dependencies": "yarn workspaces foreach -Rpt --from $npm_package_name --exclude $npm_package_name run dev",
     "lint": "eslint src --ext .ts,.vue",
     "lint:ci": "yarn lint --max-warnings 0",
     "lint:fix": "yarn lint --fix"
