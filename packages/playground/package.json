@@ -11,7 +11,9 @@
     "dev:dependencies": "yarn workspaces foreach -Rp --from $npm_package_name --exclude $npm_package_name run dev",
     "lint": "eslint src --ext .ts,.vue",
     "lint:ci": "yarn lint --max-warnings 0",
-    "lint:fix": "yarn lint --fix"
+    "lint:fix": "yarn lint --fix",
+    "test": "playwright test",
+    "test:ui": "yarn test --ui"
   },
   "dependencies": {
     "@editorjs/dom-adapters": "workspace:^",
@@ -19,7 +21,9 @@
     "vue": "^3.3.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.41.2",
     "@types/eslint": "^8",
+    "@types/node": "^20.11.17",
     "@vitejs/plugin-vue": "^4.2.3",
     "concurrently": "^8.2.2",
     "eslint": "^8.53.0",
