@@ -8,12 +8,11 @@ import {
 } from '@editorjs/model';
 import { InputType } from './types/InputType.js';
 import { CaretAdapter } from '../caret/CaretAdapter.js';
-import type { NativeInput } from '../utils/index.js';
+import { isNativeInput } from '../utils/index.js';
 import {
   getAbsoluteRangeOffset,
   getBoundaryPointByAbsoluteOffset,
   InputMode,
-  NATIVE_INPUT_SET
 } from '../utils/index.js';
 
 /**
@@ -56,9 +55,7 @@ export class BlockToolAdapter {
    * @param input - input element
    */
   public attachInput(key: DataKey, input: HTMLElement): void {
-    const inputTag = input.tagName as NativeInput;
-
-    if (Boolean(NATIVE_INPUT_SET.has(inputTag))) {
+    if (isNativeInput(input)) {
       this.#mode = InputMode.Native;
     } else if (input.isContentEditable) {
       this.#mode = InputMode.ContentEditable;
@@ -88,12 +85,12 @@ export class BlockToolAdapter {
      */
     event.preventDefault();
 
-    const isNativeInput = this.#mode === InputMode.Native;
+    const nativeInput = this.#mode === InputMode.Native;
     const inputType = event.inputType as InputType;
     let start: number;
     let end: number;
 
-    if (!isNativeInput) {
+    if (!nativeInput) {
       const targetRanges = event.getTargetRanges();
       const range = targetRanges[0];
 
@@ -156,7 +153,7 @@ export class BlockToolAdapter {
       case InputType.DeleteSoftLineForward:
       case InputType.DeleteWordBackward:
       case InputType.DeleteWordForward: {
-        if (isNativeInput && start > 0 && start === end) {
+        if (nativeInput && start > 0 && start === end) {
           // for native input elements, we need to handle backspace manually
           start = start - 1;
         }
@@ -178,7 +175,7 @@ export class BlockToolAdapter {
    * @param caretAdapter - caret adapter instance
    */
   #handleModelUpdate = (event: ModelEvents, input: HTMLElement, key: DataKey, caretAdapter: CaretAdapter): void => {
-    const isNativeInput = this.#mode === InputMode.Native;
+    const nativeInput = this.#mode === InputMode.Native;
 
     if (!(event instanceof TextAddedEvent) && !(event instanceof TextRemovedEvent)) {
       return;
@@ -200,7 +197,7 @@ export class BlockToolAdapter {
       return;
     }
 
-    if (isNativeInput) {
+    if (nativeInput) {
       const currentElement = input as HTMLInputElement | HTMLTextAreaElement;
       const start = currentElement.selectionStart!;
       const end = currentElement.selectionEnd!;

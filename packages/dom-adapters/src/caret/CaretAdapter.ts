@@ -10,7 +10,7 @@ import { useSelectionChange, type Subscriber, type InputWithCaret } from './util
 import {
   getAbsoluteRangeOffset,
   getBoundaryPointByAbsoluteOffset,
-  NATIVE_INPUT_SET
+  isNativeInput
 } from '../utils/index.js';
 import { EventType } from '@editorjs/model';
 
@@ -193,9 +193,7 @@ export class CaretAdapter extends EventTarget {
 
     const input: HTMLElement = this.#input!;
 
-    const isNativeInput = NATIVE_INPUT_SET.has(input.tagName);
-
-    if (isNativeInput) {
+    if (isNativeInput(input)) {
       // skip
     } else {
       const start = getBoundaryPointByAbsoluteOffset(input,

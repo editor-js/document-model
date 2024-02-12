@@ -11,4 +11,8 @@ export enum InputMode {
   ContentEditable = 'contenteditable',
 }
 
-export const NATIVE_INPUT_SET = new Set([NativeInput.Textarea, NativeInput.Input]) as ReadonlySet<string>;
+const NATIVE_INPUT_SET = new Set([NativeInput.Textarea, NativeInput.Input]) as ReadonlySet<string>;
+
+export function isNativeInput(input: HTMLElement): input is HTMLInputElement | HTMLTextAreaElement {
+  return NATIVE_INPUT_SET.has(input.tagName);
+}
