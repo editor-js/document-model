@@ -217,15 +217,25 @@ export class BlockToolAdapter {
           break;
         }
         case EventAction.Removed: {
-          if (start === end) {
+          if (
+            start === end &&
+            // stop removing if the caret is at the beginning of the input
+            start > 0
+          ) {
             currentElement.value = currentElement.value.slice(0, start - 1) +
               currentElement.value.slice(end);
+            if (start === 0) {
+              currentElement.setSelectionRange(start, start);
+            } else {
+              currentElement.setSelectionRange(start - 1, start - 1);
+            }
+            break;
           } else {
             currentElement.value = currentElement.value.slice(0, start) +
               currentElement.value.slice(end);
+            currentElement.setSelectionRange(start, start);
+            break;
           }
-          currentElement.setSelectionRange(start, start);
-          break;
         }
       }
     } else {
