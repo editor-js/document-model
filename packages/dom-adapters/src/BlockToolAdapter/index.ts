@@ -8,11 +8,11 @@ import {
 } from '@editorjs/model';
 import { InputType } from './types/InputType.js';
 import { CaretAdapter } from '../caret/CaretAdapter.js';
-import { isNativeInput } from '../utils/index.js';
 import {
   getAbsoluteRangeOffset,
   getBoundaryPointByAbsoluteOffset,
   InputMode,
+  isNativeInput
 } from '../utils/index.js';
 
 /**
@@ -157,6 +157,12 @@ export class BlockToolAdapter {
           // for native input elements, we need to handle backspace manually
           start = start - 1;
         }
+        switch (inputType) {
+          case InputType.DeleteSoftLineBackward: {
+            start = 0;
+            break;
+          }
+        }
         this.#model.removeText(this.#blockIndex, key, start, end);
 
         break;
@@ -199,8 +205,7 @@ export class BlockToolAdapter {
 
     if (nativeInput) {
       const currentElement = input as HTMLInputElement | HTMLTextAreaElement;
-      const start = currentElement.selectionStart!;
-      const end = currentElement.selectionEnd!;
+      const [ [start, end] ] = event.detail.index;
 
       // todo:
       //  caretAdapter cannot handle native input
