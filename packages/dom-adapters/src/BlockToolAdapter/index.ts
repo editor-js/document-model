@@ -156,7 +156,8 @@ export class BlockToolAdapter {
       case InputType.DeleteSoftLineForward:
       case InputType.DeleteWordBackward:
       case InputType.DeleteWordForward: {
-        if (isNativeInput && start > 0) {
+        if (isNativeInput && start > 0 && start === end) {
+          // for native input elements, we need to handle backspace manually
           start = start - 1;
         }
         this.#model.removeText(this.#blockIndex, key, start, end);
