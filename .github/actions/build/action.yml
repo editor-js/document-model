@@ -16,4 +16,4 @@ runs:
 
     - name: Build the package with dependencies
       shell: bash
-      run: yarn workspaces foreach -Rpt --from '${{ inputs.package-name }}' run build
+      run: yarn workspace ${{ inputs.package-name }} run build

@@ -28,12 +28,6 @@
   "references": [
     { 
       "path": "./tsconfig.node.json" 
-    },
-    { 
-      "path": "../model" 
-    },
-    {
-      "path": "../dom-adapters"
     }
   ]
 }
