@@ -22,4 +22,12 @@ test.describe('input field', () => {
 
     await expect(input).toBeFocused();
   });
+
+  test('should accept text', async ({ page }) => {
+    const input = page.getByRole('textbox');
+
+    await input.pressSequentially('Hello, World!', { delay: 100 });
+
+    await expect(input).toHaveText('Hello, World!');
+  });
 });
