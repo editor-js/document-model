@@ -1,18 +1,25 @@
 import { test, expect } from '@playwright/test';
 
-test('has title', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
-
-  // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/Playwright/);
+test.beforeEach(async ({ page }) => {
+  await page.goto('/');
 });
 
-test('get started link', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
+test('has title', async ({ page }) => {
+  await expect(page).toHaveTitle(/Playground/);
+});
 
-  // Click the get started link.
-  await page.getByRole('link', { name: 'Get started' }).click();
+test.describe('input field', () => {
+  test('should be visible', async ({ page }) => {
+    const input = page.getByRole('textbox');
 
-  // Expects page to have a heading with the name of Installation.
-  await expect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();
+    await expect(input).toBeVisible();
+  });
+
+  test('should be focusable', async ({ page }) => {
+    const input = page.getByRole('textbox');
+
+    await input.click();
+
+    await expect(input).toBeFocused();
+  });
 });

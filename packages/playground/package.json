@@ -4,7 +4,7 @@
   "type": "module",
   "packageManager": "yarn@4.0.1",
   "scripts": {
-    "dev": "concurrently -n \"TSC Watch\",Vite \"yarn dev:dependencies\" \"vite\"",
+    "dev": "concurrently -n \"TSC Watch\",Vite \"yarn dev:dependencies\" \"vite --port 3123\"",
     "build": "yarn build:dependencies && vue-tsc && vite build",
     "preview": "yarn build:dependencies && vite preview",
     "build:dependencies": "yarn workspaces foreach -Rpt --from $npm_package_name --exclude $npm_package_name run build",
