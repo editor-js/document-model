@@ -21,11 +21,6 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       shell: bash
 
-    - name: Build the package
-      run: yarn build
-      working-directory: ${{ inputs.working-directory }}
-      shell: bash
-
     - name: Run Playwright tests
       run: yarn playwright test
       working-directory: ${{ inputs.working-directory }}
