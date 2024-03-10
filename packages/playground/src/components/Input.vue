@@ -37,6 +37,7 @@ onMounted(() => {
     <!-- eslint-disable vue/no-v-html -->
     <div
       ref="input"
+      role="textbox"
       contenteditable
       type="text"
       :class="$style.input"
