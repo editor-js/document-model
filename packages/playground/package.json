@@ -13,7 +13,8 @@
     "lint:ci": "yarn lint --max-warnings 0",
     "lint:fix": "yarn lint --fix",
     "test": "playwright test",
-    "test:ui": "yarn test --ui"
+    "test:ui": "yarn test --ui",
+    "e2e-dev-server": "vite --port 3123"
   },
   "dependencies": {
     "@editorjs/dom-adapters": "workspace:^",

@@ -73,8 +73,9 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'yarn dev',
+    command: 'yarn e2e-dev-server',
     url: 'http://localhost:3123',
     reuseExistingServer: !process.env.CI,
+    timeout: 120 * 1000,
   },
 });
