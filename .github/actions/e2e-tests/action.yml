@@ -1,0 +1,36 @@
+name: E2E tests
+description: This action runs end-to-end tests using Playwright
+inputs:
+  working-directory:
+    description: 'Path to the ./packages/name_of_your_package_folder'
+    required: true
+  package-name:
+    description: 'A full name of the package'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-node@v3
+      with:
+        node-version-file: .nvmrc
+    - uses: ./.github/actions/setup
+
+    - name: Install Playwright Browsers
+      run: yarn playwright install --with-deps
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash
+
+    - name: Run Playwright tests
+      run: yarn playwright test
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash
+
+    - name: Upload Playwright report to GitHub artifacts
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+          name: ${{ inputs.package-name }}-playwright-report
+          path: ${{ inputs.working-directory }}/playwright-report/
+          retention-days: 7
+
