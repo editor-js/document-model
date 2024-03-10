@@ -4,8 +4,8 @@ inputs:
   working-directory:
     description: 'Path to the ./packages/name_of_your_package_folder'
     required: true
-  package-name:
-    description: 'A full name of the package'
+  artifactory-report-name:
+    description: 'A full name of the artifact report'
     required: true
 
 runs:
@@ -30,7 +30,7 @@ runs:
       uses: actions/upload-artifact@v3
       if: always()
       with:
-          name: ${{ inputs.package-name }}-playwright-report
+          name: ${{ inputs.artifactory-report-name }}
           path: ${{ inputs.working-directory }}/playwright-report/
           retention-days: 7
 
