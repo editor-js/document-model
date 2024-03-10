@@ -14,7 +14,7 @@
     "lint:fix": "yarn lint --fix",
     "test": "playwright test",
     "test:ui": "yarn test --ui",
-    "e2e-dev-server": "vite --port 3123"
+    "e2e-dev-server": "yarn build:dependencies && vite --port 3123"
   },
   "dependencies": {
     "@editorjs/dom-adapters": "workspace:^",
