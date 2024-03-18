@@ -215,8 +215,9 @@ export class BlockToolAdapter {
       switch (action) {
         case EventAction.Added: {
           const text = event.detail.data as string;
+          const prevValue = currentElement.value;
 
-          currentElement.value = currentElement.value.slice(0, start) + text + currentElement.value.slice(end);
+          currentElement.value = prevValue.slice(0, start) + text + prevValue.slice(end - 1);
 
           currentElement.setSelectionRange(start + text.length, start + text.length);
           break;
