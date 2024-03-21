@@ -207,9 +207,9 @@ export class BlockToolAdapter {
       const currentElement = input as HTMLInputElement | HTMLTextAreaElement;
       const [ [start, end] ] = event.detail.index;
 
-      // todo:
-      //  caretAdapter cannot handle native input
-      //  because it doesn't have the content of the input
+      /** 
+       * @todo caretAdapter cannot handle native because it doesn't have the content of the input
+       */
       const action = event.detail.action;
 
       switch (action) {
