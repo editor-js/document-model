@@ -193,8 +193,13 @@ export class CaretAdapter extends EventTarget {
 
     const input: HTMLElement = this.#input!;
 
+    /**
+     * For native input, we cannot set caret position programmatically
+     *  because there is no enough information to get `start`
+     *  and `end` points in this case.
+     */
     if (isNativeInput(input)) {
-      // skip
+      return;
     } else {
       const start = getBoundaryPointByAbsoluteOffset(input,
         textIndex[0]);
