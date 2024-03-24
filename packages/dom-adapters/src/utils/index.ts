@@ -13,6 +13,10 @@ export enum InputMode {
 
 const NATIVE_INPUT_SET = new Set([NativeInput.Textarea, NativeInput.Input]) as ReadonlySet<string>;
 
+/**
+ *
+ * @param input
+ */
 export function isNativeInput(input: HTMLElement): input is HTMLInputElement | HTMLTextAreaElement {
   return NATIVE_INPUT_SET.has(input.tagName);
 }

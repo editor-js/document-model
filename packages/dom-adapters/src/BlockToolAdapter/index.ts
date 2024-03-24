@@ -71,6 +71,61 @@ export class BlockToolAdapter {
   }
 
   /**
+   * Handles delete events in native input
+   *
+   * @param event - beforeinput event
+   * @param input - input element
+   * @param key - data key input is attached to
+   * @private
+   */
+  #handleDeleteInNativeInput = (event: InputEvent, input: HTMLInputElement | HTMLTextAreaElement, key: DataKey): void => {
+    const inputType = event.inputType as InputType;
+    let start = input.selectionStart as number;
+    const end = input.selectionEnd as number;
+
+    if (start > 0 && start === end) {
+      start = start - 1;
+    }
+    switch (inputType) {
+      case InputType.DeleteSoftLineBackward: {
+        start = 0;
+        break;
+      }
+    }
+    this.#model.removeText(this.#blockIndex, key, start, end);
+  };
+
+  /**
+   * Handles delete events in contenteditable element
+   *
+   * @param event - beforeinput event
+   * @param input - input element
+   * @param key - data key input is attached to
+   */
+  #handleDeleteInContentEditable = (event: InputEvent, input: HTMLElement, key: DataKey): void => {
+    const inputType = event.inputType as InputType;
+    let start: number;
+    let end: number;
+
+    const targetRanges = event.getTargetRanges();
+    const range = targetRanges[0];
+
+    start = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
+    end = getAbsoluteRangeOffset(input, range.endContainer, range.endOffset);
+
+    if (start > 0 && start === end) {
+      start = start - 1;
+    }
+    switch (inputType) {
+      case InputType.DeleteSoftLineBackward: {
+        start = 0;
+        break;
+      }
+    }
+    this.#model.removeText(this.#blockIndex, key, start, end);
+  };
+
+  /**
    * Handles beforeinput event from user input and updates model data
    *
    * We prevent beforeinput event of any type to handle it manually via model update
@@ -153,23 +208,121 @@ export class BlockToolAdapter {
       case InputType.DeleteSoftLineForward:
       case InputType.DeleteWordBackward:
       case InputType.DeleteWordForward: {
-        if (nativeInput && start > 0 && start === end) {
-          // for native input elements, we need to handle backspace manually
-          start = start - 1;
+        if (nativeInput) {
+          this.#handleDeleteInNativeInput(event, input as HTMLInputElement | HTMLTextAreaElement, key);
+        } else {
+          this.#handleDeleteInContentEditable(event, input, key);
         }
-        switch (inputType) {
-          case InputType.DeleteSoftLineBackward: {
-            start = 0;
-            break;
-          }
-        }
-        this.#model.removeText(this.#blockIndex, key, start, end);
-
         break;
       }
 
       default:
     }
+  };
+
+  #handleModelUpdateNative = (event: ModelEvents, input: HTMLInputElement | HTMLTextAreaElement, key: DataKey): void => {
+    if (!(event instanceof TextAddedEvent) && !(event instanceof TextRemovedEvent)) {
+      return;
+    }
+
+    const [, dataIndex, blockIndex] = event.detail.index;
+
+    if (blockIndex !== this.#blockIndex) {
+      return;
+    }
+
+    if (dataIndex !== composeDataIndex(key)) {
+      return;
+    }
+
+    const currentElement = input as HTMLInputElement | HTMLTextAreaElement;
+    const [ [start, end] ] = event.detail.index;
+
+    const action = event.detail.action;
+
+    switch (action) {
+      case EventAction.Added: {
+        const text = event.detail.data as string;
+        const prevValue = currentElement.value;
+
+        currentElement.value = prevValue.slice(0, start) + text + prevValue.slice(end - 1);
+
+        currentElement.setSelectionRange(start + text.length, start + text.length);
+        break;
+      }
+      case EventAction.Removed: {
+        if (
+          start === end &&
+          start > 0
+        ) {
+          currentElement.value = currentElement.value.slice(0, start - 1) +
+            currentElement.value.slice(end);
+          if (start === 0) {
+            currentElement.setSelectionRange(start, start);
+          } else {
+            currentElement.setSelectionRange(start - 1, start - 1);
+          }
+          break;
+        } else {
+          currentElement.value = currentElement.value.slice(0, start) +
+            currentElement.value.slice(end);
+          currentElement.setSelectionRange(start, start);
+          break;
+        }
+      }
+    }
+  };
+
+  #handleModelUpdateContentEditable = (event: ModelEvents, input: HTMLElement, key: DataKey, caretAdapter: CaretAdapter): void => {
+    if (!(event instanceof TextAddedEvent) && !(event instanceof TextRemovedEvent)) {
+      return;
+    }
+
+    const [rangeIndex, dataIndex, blockIndex] = event.detail.index;
+
+    if (blockIndex !== this.#blockIndex) {
+      return;
+    }
+
+    if (dataIndex !== composeDataIndex(key)) {
+      return;
+    }
+
+    const action = event.detail.action;
+
+    const start = rangeIndex[0];
+    const end = rangeIndex[1];
+
+    const [startNode, startOffset] = getBoundaryPointByAbsoluteOffset(input,
+      start);
+    const [endNode, endOffset] = getBoundaryPointByAbsoluteOffset(input, end);
+    const range = new Range();
+
+    range.setStart(startNode, startOffset);
+
+    switch (action) {
+      case EventAction.Added: {
+        const text = event.detail.data as string;
+        const textNode = document.createTextNode(text);
+
+        range.insertNode(textNode);
+
+        caretAdapter.updateIndex([start + text.length, start + text.length]);
+
+        break;
+      }
+      case EventAction.Removed: {
+        range.setEnd(endNode, endOffset);
+
+        range.deleteContents();
+
+        caretAdapter.updateIndex([start, start]);
+
+        break;
+      }
+    }
+
+    input.normalize();
   };
 
   /**
@@ -183,103 +336,10 @@ export class BlockToolAdapter {
   #handleModelUpdate = (event: ModelEvents, input: HTMLElement, key: DataKey, caretAdapter: CaretAdapter): void => {
     const nativeInput = this.#mode === InputMode.Native;
 
-    if (!(event instanceof TextAddedEvent) && !(event instanceof TextRemovedEvent)) {
-      return;
-    }
-
-    const [rangeIndex, dataIndex, blockIndex] = event.detail.index;
-
-    /**
-     * Event is not related to the attached block
-     */
-    if (blockIndex !== this.#blockIndex) {
-      return;
-    }
-
-    /**
-     * Event is not related to the attached data key
-     */
-    if (dataIndex !== composeDataIndex(key)) {
-      return;
-    }
-
     if (nativeInput) {
-      const currentElement = input as HTMLInputElement | HTMLTextAreaElement;
-      const [ [start, end] ] = event.detail.index;
-
-      /** 
-       * @todo caretAdapter cannot handle native because it doesn't have the content of the input
-       */
-      const action = event.detail.action;
-
-      switch (action) {
-        case EventAction.Added: {
-          const text = event.detail.data as string;
-          const prevValue = currentElement.value;
-
-          currentElement.value = prevValue.slice(0, start) + text + prevValue.slice(end - 1);
-
-          currentElement.setSelectionRange(start + text.length, start + text.length);
-          break;
-        }
-        case EventAction.Removed: {
-          if (
-            start === end &&
-            // stop removing if the caret is at the beginning of the input
-            start > 0
-          ) {
-            currentElement.value = currentElement.value.slice(0, start - 1) +
-              currentElement.value.slice(end);
-            if (start === 0) {
-              currentElement.setSelectionRange(start, start);
-            } else {
-              currentElement.setSelectionRange(start - 1, start - 1);
-            }
-            break;
-          } else {
-            currentElement.value = currentElement.value.slice(0, start) +
-              currentElement.value.slice(end);
-            currentElement.setSelectionRange(start, start);
-            break;
-          }
-        }
-      }
+      this.#handleModelUpdateNative(event, input as HTMLInputElement | HTMLTextAreaElement, key);
     } else {
-      const action = event.detail.action;
-
-      const start = rangeIndex[0];
-      const end = rangeIndex[1];
-
-      const [startNode, startOffset] = getBoundaryPointByAbsoluteOffset(input,
-        start);
-      const [endNode, endOffset] = getBoundaryPointByAbsoluteOffset(input, end);
-      const range = new Range();
-
-      range.setStart(startNode, startOffset);
-
-      switch (action) {
-        case EventAction.Added: {
-          const text = event.detail.data as string;
-          const textNode = document.createTextNode(text);
-
-          range.insertNode(textNode);
-
-          caretAdapter.updateIndex([start + text.length, start + text.length]);
-
-          break;
-        }
-        case EventAction.Removed: {
-          range.setEnd(endNode, endOffset);
-
-          range.deleteContents();
-
-          caretAdapter.updateIndex([start, start]);
-
-          break;
-        }
-      }
-
-      input.normalize();
+      this.#handleModelUpdateContentEditable(event, input, key, caretAdapter);
     }
   };
 }
