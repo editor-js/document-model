@@ -32,11 +32,6 @@ export class BlockToolAdapter {
   #blockIndex: number;
 
   /**
-   * Input mode
-   */
-  #mode: InputMode = InputMode.Native;
-
-  /**
    * BlockToolAdapter constructor
    *
    * @param model - EditorJSModel instance
@@ -55,14 +50,6 @@ export class BlockToolAdapter {
    * @param input - input element
    */
   public attachInput(key: DataKey, input: HTMLElement): void {
-    if (isNativeInput(input)) {
-      this.#mode = InputMode.Native;
-    } else if (input.isContentEditable) {
-      this.#mode = InputMode.ContentEditable;
-    } else {
-      throw new Error('BlockToolAdapter: input should be either INPUT, TEXTAREA or contenteditable element');
-    }
-
     const caretAdapter = new CaretAdapter(input, this.#model, this.#blockIndex, key);
 
     input.addEventListener('beforeinput', event => this.#handleBeforeInputEvent(event, input, key));
@@ -140,7 +127,7 @@ export class BlockToolAdapter {
      */
     event.preventDefault();
 
-    const nativeInput = this.#mode === InputMode.Native;
+    const nativeInput = isNativeInput(input);
     const inputType = event.inputType as InputType;
     let start: number;
     let end: number;
@@ -334,7 +321,7 @@ export class BlockToolAdapter {
    * @param caretAdapter - caret adapter instance
    */
   #handleModelUpdate = (event: ModelEvents, input: HTMLElement, key: DataKey, caretAdapter: CaretAdapter): void => {
-    const nativeInput = this.#mode === InputMode.Native;
+    const nativeInput = isNativeInput(input);
 
     if (nativeInput) {
       this.#handleModelUpdateNative(event, input as HTMLInputElement | HTMLTextAreaElement, key);
