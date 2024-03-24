@@ -52,6 +52,11 @@ export const useSelectionChange = createSingleton(() => {
       return false;
     }
 
+    if (selection.rangeCount <= 0) {
+      // special case for native input elements
+      return false;
+    }
+
     const range = selection.getRangeAt(0);
 
     /**

@@ -20,6 +20,16 @@ const props = defineProps<{
   model: EditorJSModel;
 }>();
 
+// three types of inputs:
+// ?type=contenteditable
+// ?type=input
+// ?type=textarea
+let type = (new URL(window.location.href).searchParams.get('type') ?? 'contenteditable') as 'contenteditable' | 'input' | 'textarea';
+
+if (type !== 'contenteditable' && type !== 'input' && type !== 'textarea') {
+  type = 'contenteditable';
+}
+
 onMounted(() => {
   const blockToolAdapter = new BlockToolAdapter(props.model, 0);
 
@@ -34,11 +44,22 @@ onMounted(() => {
 </script>
 <template>
   <div :class="$style.wrapper">
-    <!-- eslint-disable vue/no-v-html -->
     <div
+      v-if="type === 'contenteditable'"
       ref="input"
       contenteditable
       type="text"
+      :class="$style.input"
+    />
+    <input
+      v-else-if="type === 'input'"
+      ref="input"
+      type="text"
+      :class="$style.input"
+    >
+    <textarea
+      v-else-if="type === 'textarea'"
+      ref="input"
       :class="$style.input"
     />
     <div
