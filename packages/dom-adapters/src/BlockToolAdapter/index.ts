@@ -238,24 +238,10 @@ export class BlockToolAdapter {
         break;
       }
       case EventAction.Removed: {
-        if (
-          start === end &&
-          start > 0
-        ) {
-          currentElement.value = currentElement.value.slice(0, start - 1) +
-            currentElement.value.slice(end);
-          if (start === 0) {
-            currentElement.setSelectionRange(start, start);
-          } else {
-            currentElement.setSelectionRange(start - 1, start - 1);
-          }
-          break;
-        } else {
-          currentElement.value = currentElement.value.slice(0, start) +
-            currentElement.value.slice(end);
-          currentElement.setSelectionRange(start, start);
-          break;
-        }
+        currentElement.value = currentElement.value.slice(0, start) +
+          currentElement.value.slice(end);
+        currentElement.setSelectionRange(start, start);
+        break;
       }
     }
   };
