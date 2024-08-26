@@ -1,8 +1,8 @@
-import { useSelectionChange } from '../caret/utils/useSelectionChange.js';
 import type { Caret, EditorJSModel, CaretManagerEvents, Index } from '@editorjs/model';
-import { getAbsoluteRangeOffset, getBoundaryPointByAbsoluteOffset, isNativeInput } from '../utils/index.js';
+import { getAbsoluteRangeOffset, getBoundaryPointByAbsoluteOffset, useSelectionChange } from '../utils/index.js';
 import type { TextRange } from '@editorjs/model';
 import { EventType, IndexBuilder } from '@editorjs/model';
+import { isNativeInput } from '@editorjs/dom';
 
 /**
  * Caret adapter watches selection change and saves it to the model
@@ -93,10 +93,10 @@ export class CaretAdapter extends EventTarget {
         continue;
       }
 
-      if (isNativeInput(input)) {
+      if (isNativeInput(input) === true) {
         const textRange = [
-          input.selectionStart,
-          input.selectionEnd,
+          (input as HTMLInputElement | HTMLTextAreaElement).selectionStart,
+          (input as HTMLInputElement | HTMLTextAreaElement).selectionEnd,
         ] as TextRange;
 
         const builder = new IndexBuilder();
@@ -158,15 +158,22 @@ export class CaretAdapter extends EventTarget {
       return;
     }
 
-    const input = this.#inputs.get(index.serialize());
+    const builder = new IndexBuilder();
+
+    /**
+     * We need to remove text range from index to find related input by serialized index
+     */
+    builder.from(index).addTextRange(undefined);
+
+    const input = this.#inputs.get(builder.build().serialize());
 
     if (!input) {
       return;
     }
 
-    if (isNativeInput(input)) {
-      input.selectionStart = textRange[0];
-      input.selectionEnd = textRange[1];
+    if (isNativeInput(input) === true) {
+      (input as HTMLInputElement | HTMLTextAreaElement).selectionStart = textRange[0];
+      (input as HTMLInputElement | HTMLTextAreaElement).selectionEnd = textRange[1];
 
       return;
     }

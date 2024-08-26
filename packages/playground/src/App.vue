@@ -14,17 +14,24 @@ const model = new EditorJSModel({
     name: 'paragraph',
     data: {
       text1: {
-        value: '',
+        value: 'This is contenteditable',
         $t: 't',
       },
       text2: {
-        value: '',
+        value: 'This is input element',
         $t: 't',
       },
     },
-  }, { name: 'paragraph',
-    data: { text2: { value: '',
-      $t: 't' } } } ],
+  },
+  {
+    name: 'paragraph',
+    data: {
+      text2: {
+        value: 'This is textarea element',
+        $t: 't',
+      },
+    },
+  } ],
 });
 const document = ref(new EditorDocument(model.serialized));
 const caretAdapter = new CaretAdapter(window.document.body, model);

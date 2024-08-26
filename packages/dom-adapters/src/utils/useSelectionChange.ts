@@ -48,7 +48,7 @@ export const useSelectionChange = createSingleton(() => {
    * @param input - input to check
    */
   function isSelectionRelatedToInput(selection: Selection | null, input: InputWithCaret): boolean {
-    if (!selection) {
+    if (selection === null || selection.rangeCount === 0) {
       return false;
     }
 

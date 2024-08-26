@@ -1,17 +1,19 @@
 import { type DataKey, type EditorJSModel, IndexBuilder, type ModelEvents } from '@editorjs/model';
-import { EventType, EventAction } from '@editorjs/model';
-import { InputType } from './types/InputType.js';
 import {
+  EventAction,
+  EventType,
   TextAddedEvent,
   TextRemovedEvent
 } from '@editorjs/model';
+import { InputType } from './types/InputType.js';
+import {
+  getAbsoluteRangeOffset,
+  getBoundaryPointByAbsoluteOffset,
+  isNonTextInput
+} from '../utils/index.js';
 import type { CaretAdapter } from '../CaretAdapter/index.js';
-import { getAbsoluteRangeOffset, getBoundaryPointByAbsoluteOffset } from '../utils/index.js';
 
-enum NativeInput {
-  Textarea = 'TEXTAREA',
-  Input = 'INPUT',
-}
+import { isNativeInput } from '@editorjs/dom';
 
 /**
  * BlockToolAdapter is using inside Block tools to connect browser DOM elements to the model
@@ -29,6 +31,11 @@ export class BlockToolAdapter {
    */
   #blockIndex: number;
 
+  /**
+   * Caret adapter instance
+   *
+   * @private
+   */
   #caretAdapter: CaretAdapter;
 
   /**
@@ -52,13 +59,8 @@ export class BlockToolAdapter {
    * @param input - input element
    */
   public attachInput(key: DataKey, input: HTMLElement): void {
-    const inputTag = input.tagName as NativeInput;
-
-    /**
-     * @todo Filter non-text-editable inputs
-     */
-    if (![NativeInput.Textarea, NativeInput.Input].includes(inputTag) && !input.isContentEditable) {
-      throw new Error('BlockToolAdapter: input should be either INPUT, TEXTAREA or contenteditable element');
+    if (input instanceof HTMLInputElement && isNonTextInput(input)) {
+      throw new Error('Cannot attach non-text input');
     }
 
     input.addEventListener('beforeinput', event => this.#handleBeforeInputEvent(event, input, key));
@@ -71,6 +73,65 @@ export class BlockToolAdapter {
 
     this.#caretAdapter.attachInput(input, builder.build());
   }
+
+  /**
+   * Handles delete events in native input
+   *
+   * @param event - beforeinput event
+   * @param input - input element
+   * @param key - data key input is attached to
+   * @private
+   */
+  #handleDeleteInNativeInput(event: InputEvent, input: HTMLInputElement | HTMLTextAreaElement, key: DataKey): void {
+    const inputType = event.inputType as InputType;
+
+    /**
+     * Check that selection exists in current input
+     */
+    if (input.selectionStart === null || input.selectionEnd === null) {
+      return;
+    }
+
+    let start = input.selectionStart;
+    let end = input.selectionEnd;
+
+    /**
+     * @todo Handle all possible deletion events
+     */
+    switch (inputType) {
+      case InputType.DeleteContentForward: {
+        /**
+         * If selection end is already after the last element, then there is nothing to delete
+         */
+        end = end !== input.value.length ? end + 1 : end;
+        break;
+      }
+      default: {
+        /**
+         * If start is already 0, then there is nothing to delete
+         */
+        start = start !== 0 ? start - 1 : start;
+      }
+    }
+    this.#model.removeText(this.#blockIndex, key, start, end);
+  };
+
+  /**
+   * Handles delete events in contenteditable element
+   *
+   * @param event - beforeinput event
+   * @param input - input element
+   * @param key - data key input is attached to
+   */
+  #handleDeleteInContentEditable(event: InputEvent, input: HTMLElement, key: DataKey): void {
+    const targetRanges = event.getTargetRanges();
+    const range = targetRanges[0];
+
+    const start: number = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
+    const end: number = getAbsoluteRangeOffset(input, range.endContainer, range.endOffset);
+
+    this.#model.removeText(this.#blockIndex, key, start, end);
+  };
 
   /**
    * Handles beforeinput event from user input and updates model data
@@ -87,12 +148,23 @@ export class BlockToolAdapter {
      */
     event.preventDefault();
 
+    const isInputNative = isNativeInput(input);
     const inputType = event.inputType as InputType;
-    const targetRanges = event.getTargetRanges();
-    const range = targetRanges[0];
+    let start: number;
+    let end: number;
 
-    const start = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
-    const end = getAbsoluteRangeOffset(input, range.endContainer, range.endOffset);
+    if (isInputNative === false) {
+      const targetRanges = event.getTargetRanges();
+      const range = targetRanges[0];
+
+      start = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
+      end = getAbsoluteRangeOffset(input, range.endContainer, range.endOffset);
+    } else {
+      const currentElement = input as HTMLInputElement | HTMLTextAreaElement;
+
+      start = currentElement.selectionStart as number;
+      end = currentElement.selectionEnd as number;
+    }
 
     switch (inputType) {
       case InputType.InsertReplacementText:
@@ -118,7 +190,8 @@ export class BlockToolAdapter {
        */
       case InputType.InsertCompositionText: {
         /**
-         * If start and end aren't equal, it means that user selected some text and replaced it with new one
+         * If start and end aren't equal,
+         * it means that user selected some text and replaced it with new one
          */
         if (start !== end) {
           this.#model.removeText(this.#blockIndex, key, start, end);
@@ -141,32 +214,88 @@ export class BlockToolAdapter {
       case InputType.DeleteSoftLineForward:
       case InputType.DeleteWordBackward:
       case InputType.DeleteWordForward: {
-        this.#model.removeText(this.#blockIndex, key, start, end);
-
+        if (isInputNative === true) {
+          this.#handleDeleteInNativeInput(event, input as HTMLInputElement | HTMLTextAreaElement, key);
+        } else {
+          this.#handleDeleteInContentEditable(event, input, key);
+        }
         break;
       }
 
       default:
     }
-  }
+  };
 
   /**
-   * Handles model update events and updates DOM
+   * Handles model update events for native inputs and updates DOM
    *
    * @param event - model update event
-   * @param input - attched input element
+   * @param input - input element
    * @param key - data key input is attached to
    */
-  #handleModelUpdate(event: ModelEvents, input: HTMLElement, key: DataKey): void {
+  #handleModelUpdateForNativeInput(event: ModelEvents, input: HTMLInputElement | HTMLTextAreaElement, key: DataKey): void {
+    if (!(event instanceof TextAddedEvent) && !(event instanceof TextRemovedEvent)) {
+      return;
+    }
+
+    const { textRange, dataKey, blockIndex }  = event.detail.index;
+
+    if (textRange === undefined) {
+      return;
+    }
+
+    /**
+     * Event is not related to the attached block
+     */
+    if (blockIndex !== this.#blockIndex) {
+      return;
+    }
+
+    /**
+     * Event is not related to the attached data key
+     */
+    if (dataKey !== key) {
+      return;
+    }
+
+    const currentElement = input;
+    const [start, end] = textRange;
+
+    const action = event.detail.action;
+
+    switch (action) {
+      case EventAction.Added: {
+        const text = event.detail.data as string;
+        const prevValue = currentElement.value;
+
+        currentElement.value = prevValue.slice(0, start) + text + prevValue.slice(end - 1);
+
+        currentElement.setSelectionRange(start + text.length, start + text.length);
+        break;
+      }
+      case EventAction.Removed: {
+        currentElement.value = currentElement.value.slice(0, start) +
+          currentElement.value.slice(end);
+        currentElement.setSelectionRange(start, start);
+        break;
+      }
+    }
+  };
+
+  /**
+   * Handles model update events for contenteditable elements and updates DOM
+   *
+   * @param event - model update event
+   * @param input - input element
+   * @param key - data key input is attached to
+   */
+  #handleModelUpdateForContentEditableElement(event: ModelEvents, input: HTMLElement, key: DataKey): void {
     if (!(event instanceof TextAddedEvent) && !(event instanceof TextRemovedEvent)) {
       return;
     }
 
     const { textRange, dataKey, blockIndex } = event.detail.index;
 
-    /**
-     * Event is not related to the attached block
-     */
     if (blockIndex !== this.#blockIndex) {
       return;
     }
@@ -224,5 +353,22 @@ export class BlockToolAdapter {
     }
 
     input.normalize();
-  }
+  };
+
+  /**
+   * Handles model update events and updates DOM
+   *
+   * @param event - model update event
+   * @param input - attched input element
+   * @param key - data key input is attached to
+   */
+  #handleModelUpdate(event: ModelEvents, input: HTMLElement, key: DataKey): void {
+    const isInputNative = isNativeInput(input);
+
+    if (isInputNative === true) {
+      this.#handleModelUpdateForNativeInput(event, input as HTMLInputElement | HTMLTextAreaElement, key);
+    } else {
+      this.#handleModelUpdateForContentEditableElement(event, input, key);
+    }
+  };
 }

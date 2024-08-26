@@ -14,7 +14,7 @@ export class IndexBuilder {
    *
    * @param range - text range
    */
-  public addTextRange(range: TextRange): this {
+  public addTextRange(range?: TextRange): this {
     this.#index.textRange = range;
 
     return this;
@@ -25,7 +25,7 @@ export class IndexBuilder {
    *
    * @param key - data key
    */
-  public addDataKey(key: DataKey): this {
+  public addDataKey(key?: DataKey): this {
     this.#index.dataKey = key;
 
     return this;
@@ -36,7 +36,7 @@ export class IndexBuilder {
    *
    * @param key - tune key
    */
-  public addTuneKey(key: string): this {
+  public addTuneKey(key?: string): this {
     this.#index.tuneKey = key;
 
     return this;
@@ -47,7 +47,7 @@ export class IndexBuilder {
    *
    * @param name - tune name
    */
-  public addTuneName(name: BlockTuneName): this {
+  public addTuneName(name?: BlockTuneName): this {
     this.#index.tuneName = name;
 
     return this;
@@ -58,7 +58,7 @@ export class IndexBuilder {
    *
    * @param index - block index
    */
-  public addBlockIndex(index: number): this {
+  public addBlockIndex(index?: number): this {
     this.#index.blockIndex = index;
 
     return this;
@@ -69,7 +69,7 @@ export class IndexBuilder {
    *
    * @param name - property name
    */
-  public addPropertyName(name: string): this {
+  public addPropertyName(name?: string): this {
     this.#index.propertyName = name;
 
     return this;
@@ -80,7 +80,7 @@ export class IndexBuilder {
    *
    * @param id - document id
    */
-  public addDocumentId(id: DocumentIndex): this {
+  public addDocumentId(id?: DocumentIndex): this {
     this.#index.documentId = id;
 
     return this;
