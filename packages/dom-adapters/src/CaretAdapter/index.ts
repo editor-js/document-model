@@ -142,7 +142,7 @@ export class CaretAdapter extends EventTarget {
   #onModelUpdate(event: CaretManagerEvents): void {
     const { index } = event.detail;
 
-    if (!index) {
+    if (index === null) {
       return;
     }
 
