@@ -219,7 +219,7 @@ export class BlockToolAdapter {
   /**
    * Handles model update events for native inputs and updates DOM
    * 
-   * @param event - beforeinput event
+   * @param event - model update event
    * @param input - input element
    * @param key - data key input is attached to
    */
@@ -271,7 +271,7 @@ export class BlockToolAdapter {
   /**
    * Handles model update events for contenteditable elements and updates DOM
    * 
-   * @param event - beforeinput event
+   * @param event - model update event
    * @param input - input element
    * @param key - data key input is attached to
    */
