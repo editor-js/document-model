@@ -1,4 +1,4 @@
-enum TextInput {
+enum TextInputType {
   Text = 'text',
   Tel = 'tel',
   Search = 'search',
@@ -7,11 +7,11 @@ enum TextInput {
 }
 
 const TEXT_INPUT_SET = new Set([
-  TextInput.Text,
-  TextInput.Tel,
-  TextInput.Search,
-  TextInput.Url,
-  TextInput.Password,
+  TextInputType.Text,
+  TextInputType.Tel,
+  TextInputType.Search,
+  TextInputType.Url,
+  TextInputType.Password,
 ]) as ReadonlySet<string>;
 
 /**

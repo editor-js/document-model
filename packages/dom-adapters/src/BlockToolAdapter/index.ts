@@ -130,18 +130,18 @@ export class BlockToolAdapter {
    * @param input - input element
    * @param key - data key input is attached to
    */
-  #handleBeforeInputEvent = (event: InputEvent, input: HTMLElement, key: DataKey): void => {
+  #handleBeforeInputEvent(event: InputEvent, input: HTMLElement, key: DataKey): void {
     /**
      * We prevent all events to handle them manually via model update
      */
     event.preventDefault();
 
-    const nativeInput = isNativeInput(input);
+    const isInputNative = isNativeInput(input);
     const inputType = event.inputType as InputType;
     let start: number;
     let end: number;
 
-    if (!nativeInput) {
+    if (!isInputNative) {
       const targetRanges = event.getTargetRanges();
       const range = targetRanges[0];
 
@@ -204,7 +204,7 @@ export class BlockToolAdapter {
       case InputType.DeleteSoftLineForward:
       case InputType.DeleteWordBackward:
       case InputType.DeleteWordForward: {
-        if (nativeInput) {
+        if (isInputNative) {
           this.#handleDeleteInNativeInput(event, input, key);
         } else {
           this.#handleDeleteInContentEditable(event, input, key);
@@ -321,9 +321,9 @@ export class BlockToolAdapter {
    * @param caretAdapter - caret adapter instance
    */
   #handleModelUpdate = (event: ModelEvents, input: HTMLElement, key: DataKey, caretAdapter: CaretAdapter): void => {
-    const nativeInput = isNativeInput(input);
+    const isInputNative = isNativeInput(input);
 
-    if (nativeInput) {
+    if (isInputNative) {
       this.#handleModelUpdateForNativeInput(event, input as HTMLInputElement | HTMLTextAreaElement, key);
     } else {
       this.#handleModelUpdateForContentEditableElement(event, input, key, caretAdapter);

@@ -52,13 +52,6 @@ export const useSelectionChange = createSingleton(() => {
       return false;
     }
 
-    /**
-     * Check, that selection range exists in native inputs
-     */
-    if (selection.rangeCount <= 0) {
-      return false;
-    }
-
     const range = selection.getRangeAt(0);
 
     /**
