@@ -1,4 +1,4 @@
-import type { TextIndex } from '../types/indexing.js';
+import type { Index } from '../../entities/Index/index.js';
 import { EventAction } from '../types/EventAction.js';
 import type { InlineToolData, InlineToolName } from '../../entities/index.js';
 import { BaseDocumentEvent } from './BaseEvent.js';
@@ -11,14 +11,14 @@ interface TextFormattedEventData {
 /**
  * TextFormatted Custom Event
  */
-export class TextFormattedEvent extends BaseDocumentEvent<TextIndex, EventAction.Modified, TextFormattedEventData> {
+export class TextFormattedEvent extends BaseDocumentEvent<EventAction.Modified, TextFormattedEventData> {
   /**
    * TextFormattedEvent class constructor
    *
    * @param index - index of formatted fragment in the document
    * @param data - data of the InlineTool that was used to format the fragment. Optional
    */
-  constructor(index: TextIndex, data: TextFormattedEventData) {
+  constructor(index: Index, data: TextFormattedEventData) {
     super(index, EventAction.Modified, data);
   }
 }

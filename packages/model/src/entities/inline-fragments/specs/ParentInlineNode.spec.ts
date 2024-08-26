@@ -228,7 +228,7 @@ describe('ParentInlineNode', () => {
       expect(event).toBeInstanceOf(TextAddedEvent);
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Added,
-        index: [ [index, index + newText.length] ],
+        index: expect.objectContaining({ textRange: [index, index + newText.length] }),
         data: newText,
       }));
     });
@@ -310,7 +310,7 @@ describe('ParentInlineNode', () => {
       expect(event).toBeInstanceOf(TextRemovedEvent);
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Removed,
-        index: [ [start, end] ],
+        index: expect.objectContaining({ textRange: [start, end] }),
       }));
     });
   });
@@ -488,7 +488,7 @@ describe('ParentInlineNode', () => {
       expect(event).toBeInstanceOf(TextFormattedEvent);
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Modified,
-        index: [ [start, end] ],
+        index: expect.objectContaining({ textRange: [start, end] }),
         data: {
           tool,
           data,
@@ -552,7 +552,7 @@ describe('ParentInlineNode', () => {
       expect(event).toBeInstanceOf(TextUnformattedEvent);
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Modified,
-        index: [ [start, end] ],
+        index: expect.objectContaining({ textRange: [start, end] }),
         data: {
           tool,
         },

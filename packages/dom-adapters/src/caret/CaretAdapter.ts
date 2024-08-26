@@ -1,14 +1,12 @@
 import type {
   DataKey,
   EditorJSModel,
-  TextRange,
   Caret,
-  TextIndex,
-  CaretManagerEvents
+  CaretManagerEvents, Index
 } from '@editorjs/model';
 import { useSelectionChange, type Subscriber, type InputWithCaret } from './utils/useSelectionChange.js';
 import { getAbsoluteRangeOffset, getBoundaryPointByAbsoluteOffset } from '../utils/index.js';
-import { EventType } from '@editorjs/model';
+import { EventType, IndexBuilder } from '@editorjs/model';
 
 /**
  * Caret adapter watches input caret change and passes it to the model
@@ -27,7 +25,7 @@ export class CaretAdapter extends EventTarget {
   /**
    * Index stores start and end offset of a caret depending on a root of input
    */
-  #index: TextRange | null = null;
+  #index: Index | null = null;
 
   /**
    * Input element
@@ -105,8 +103,8 @@ export class CaretAdapter extends EventTarget {
    *
    * @param index - caret index
    */
-  public updateIndex(index: TextRange): void {
-    this.#caret.update([index, this.#dataIndex, this.#blockIndex] as TextIndex);
+  public updateIndex(index: Index): void {
+    this.#caret.update(index);
   }
 
 
@@ -143,10 +141,14 @@ export class CaretAdapter extends EventTarget {
       return;
     }
 
-    this.#index = [
+    const builder = new IndexBuilder();
+
+    builder.addTextRange([
       getAbsoluteRangeOffset(this.#input, range.startContainer, range.startOffset),
       getAbsoluteRangeOffset(this.#input, range.endContainer, range.endOffset),
-    ] as TextRange;
+    ]);
+
+    this.#index = builder.build();
 
     this.updateIndex(this.#index);
   }
@@ -159,8 +161,18 @@ export class CaretAdapter extends EventTarget {
    * @param event - model's caret update event
    */
   #onModelUpdate(event: CaretManagerEvents): void {
-    const [textIndex, dataIndex, blockIndex] = event.detail.index as TextIndex;
+    const index = event.detail.index;
+
+    if (index === null) {
+      return;
+    }
+
+    const { textRange, dataKey, blockIndex } = index;
     const caretId = event.detail.id;
+
+    if (textRange === undefined) {
+      return;
+    }
 
 
     if (caretId !== this.#caret.id) {
@@ -174,7 +186,7 @@ export class CaretAdapter extends EventTarget {
       return;
     }
 
-    if (dataIndex !== this.#dataIndex) {
+    if (dataKey !== this.#dataIndex) {
       return;
     }
 
@@ -183,12 +195,12 @@ export class CaretAdapter extends EventTarget {
      *
      * That might happen when caret was updated in the model from the current document selection
      */
-    if (textIndex[0] === this.#index?.[0] && textIndex[1] === this.#index?.[1]) {
+    if (textRange[0] === this.#index?.textRange?.[0] && textRange[1] === this.#index?.textRange?.[1]) {
       return;
     }
 
-    const start = getBoundaryPointByAbsoluteOffset(this.#input!, textIndex[0]);
-    const end = getBoundaryPointByAbsoluteOffset(this.#input!, textIndex[1]);
+    const start = getBoundaryPointByAbsoluteOffset(this.#input!, textRange[0]);
+    const end = getBoundaryPointByAbsoluteOffset(this.#input!, textRange[1]);
 
     const selection = document.getSelection()!;
     const range = new Range();

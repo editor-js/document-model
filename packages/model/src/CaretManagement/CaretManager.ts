@@ -1,4 +1,4 @@
-import type { Index } from '../EventBus/index.js';
+import type { Index } from '../entities/Index/index.js';
 import {
   CaretManagerCaretAddedEvent,
   CaretManagerCaretRemovedEvent,

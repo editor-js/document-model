@@ -1,10 +1,10 @@
+import type { Index } from '../../entities/index.js';
 import type { EventAction } from './EventAction.js';
-import type { Index as IndexType } from './indexing.js';
 
 /**
  * Common fields for all events related to the document model
  */
-export interface EventPayloadBase<Index extends IndexType, Action extends EventAction> {
+export interface EventPayloadBase<Action extends EventAction> {
   /**
    * The index of changed information
    */

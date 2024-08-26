@@ -1,5 +1,5 @@
-import type { DataKey, EditorJSModel, ModelEvents } from '@editorjs/model';
-import { EventType, EventAction, composeDataIndex } from '@editorjs/model';
+import { type DataKey, type EditorJSModel, IndexBuilder, type ModelEvents } from '@editorjs/model';
+import { EventType, EventAction } from '@editorjs/model';
 import { InputType } from './types/InputType.js';
 import {
   TextAddedEvent,
@@ -35,6 +35,7 @@ export class BlockToolAdapter {
    * BlockToolAdapter constructor
    *
    * @param model - EditorJSModel instance
+   * @param caretAdapter
    * @param blockIndex - index of the block that this adapter is connected to
    */
   constructor(model: EditorJSModel, caretAdapter: CaretAdapter, blockIndex: number) {
@@ -63,7 +64,12 @@ export class BlockToolAdapter {
     input.addEventListener('beforeinput', event => this.#handleBeforeInputEvent(event, input, key));
 
     this.#model.addEventListener(EventType.Changed, (event: ModelEvents) => this.#handleModelUpdate(event, input, key));
-    this.#caretAdapter.attachInput(input, [composeDataIndex(key), this.#blockIndex]);
+
+    const builder = new IndexBuilder();
+
+    builder.addBlockIndex(this.#blockIndex).addDataKey(key);
+
+    this.#caretAdapter.attachInput(input, builder.build());
   }
 
   /**
@@ -156,7 +162,7 @@ export class BlockToolAdapter {
       return;
     }
 
-    const [rangeIndex, dataIndex, blockIndex] = event.detail.index;
+    const { textRange, dataKey, blockIndex } = event.detail.index;
 
     /**
      * Event is not related to the attached block
@@ -168,20 +174,28 @@ export class BlockToolAdapter {
     /**
      * Event is not related to the attached data key
      */
-    if (dataIndex !== composeDataIndex(key)) {
+    if (dataKey !== key) {
+      return;
+    }
+
+    if (textRange === undefined) {
       return;
     }
 
     const action = event.detail.action;
 
-    const start = rangeIndex[0];
-    const end = rangeIndex[1];
+    const start = textRange[0];
+    const end = textRange[1];
 
     const [startNode, startOffset] = getBoundaryPointByAbsoluteOffset(input, start);
     const [endNode, endOffset] = getBoundaryPointByAbsoluteOffset(input, end);
     const range = new Range();
 
     range.setStart(startNode, startOffset);
+
+    const builder = new IndexBuilder();
+
+    builder.addDataKey(key).addBlockIndex(this.#blockIndex);
 
     switch (action) {
       case EventAction.Added: {
@@ -190,7 +204,9 @@ export class BlockToolAdapter {
 
         range.insertNode(textNode);
 
-        this.#caretAdapter.updateIndex([[start + text.length, start + text.length], composeDataIndex(key), this.#blockIndex]);
+        builder.addTextRange([start + text.length, start + text.length]);
+
+        this.#caretAdapter.updateIndex(builder.build());
 
         break;
       }
@@ -199,7 +215,9 @@ export class BlockToolAdapter {
 
         range.deleteContents();
 
-        this.#caretAdapter.updateIndex([[start, start], composeDataIndex(key), this.#blockIndex]);
+        builder.addTextRange([start, start]);
+
+        this.#caretAdapter.updateIndex(builder.build());
 
         break;
       }

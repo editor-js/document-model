@@ -1,3 +1,4 @@
+import { IndexBuilder } from '../../Index/IndexBuilder.js';
 import type { InlineFragment, InlineNode, InlineTreeNodeSerialized } from '../InlineNode';
 import type { ParentNodeConstructorOptions } from '../mixins/ParentNode';
 import { ParentNode } from '../mixins/ParentNode/index.js';
@@ -67,7 +68,11 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
     this.normalize();
 
-    this.dispatchEvent(new TextAddedEvent([ [index, index + text.length] ], text));
+    const builder = new IndexBuilder();
+
+    builder.addTextRange([index, index + text.length]);
+
+    this.dispatchEvent(new TextAddedEvent(builder.build(), text));
   }
 
   /**
@@ -91,7 +96,11 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
     this.normalize();
 
-    this.dispatchEvent(new TextRemovedEvent([ [start, end] ], removedText));
+    const builder = new IndexBuilder();
+
+    builder.addTextRange([start, end]);
+
+    this.dispatchEvent(new TextRemovedEvent(builder.build(), removedText));
 
     return removedText;
   }
@@ -189,9 +198,13 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
     this.normalize();
 
+    const builder = new IndexBuilder();
+
+    builder.addTextRange([start, end]);
+
     this.dispatchEvent(
       new TextFormattedEvent(
-        [ [start, end] ],
+        builder.build(),
         {
           tool,
           data,
@@ -233,7 +246,11 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
     this.normalize();
 
-    this.dispatchEvent(new TextUnformattedEvent([ [start, end] ], { tool }));
+    const builder = new IndexBuilder();
+
+    builder.addTextRange([start, end]);
+
+    this.dispatchEvent(new TextUnformattedEvent(builder.build(), { tool }));
 
     return newNodes;
   }
@@ -253,7 +270,7 @@ export class ParentInlineNode extends EventBus implements InlineNode {
    * @param index - char index
    * @private
    */
-  protected findChildByIndex(index: number): [child: InlineNode & ChildNode, offset: number] {
+  protected findChildByIndex(index: number): [ child: InlineNode & ChildNode, offset: number ] {
     let totalLength = 0;
 
     for (const child of this.children) {
