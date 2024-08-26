@@ -33,6 +33,7 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
+    "@editorjs/dom": "^1.0.0",
     "@editorjs/model": "workspace:^"
   }
 }

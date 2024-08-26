@@ -5,5 +5,9 @@
   "packageManager": "yarn@4.0.1",
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "scripts": {
+    "lint": "yarn workspaces foreach -A run lint",
+    "lint:fix": "yarn workspaces foreach -A run lint --fix"
+  }
 }
