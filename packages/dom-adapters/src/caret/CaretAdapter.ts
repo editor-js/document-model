@@ -10,9 +10,9 @@ import { useSelectionChange, type Subscriber, type InputWithCaret } from './util
 import {
   getAbsoluteRangeOffset,
   getBoundaryPointByAbsoluteOffset,
-  isNativeInput
 } from '../utils/index.js';
 import { EventType } from '@editorjs/model';
+import { isNativeInput } from '@editorjs/dom'; 
 
 /**
  * Caret adapter watches input caret change and passes it to the model

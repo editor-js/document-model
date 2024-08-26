@@ -11,9 +11,9 @@ import { CaretAdapter } from '../caret/CaretAdapter.js';
 import {
   getAbsoluteRangeOffset,
   getBoundaryPointByAbsoluteOffset,
-  InputMode,
-  isNativeInput
 } from '../utils/index.js';
+
+import { isNativeInput } from '@editorjs/dom';
 
 /**
  * BlockToolAdapter is using inside Block tools to connect browser DOM elements to the model
@@ -67,16 +67,33 @@ export class BlockToolAdapter {
    */
   #handleDeleteInNativeInput = (event: InputEvent, input: HTMLInputElement | HTMLTextAreaElement, key: DataKey): void => {
     const inputType = event.inputType as InputType;
-    let start = input.selectionStart as number;
-    const end = input.selectionEnd as number;
 
-    if (start > 0 && start === end) {
-      start = start - 1;
+    /**
+     * Check that selection exists in current input
+     */
+    if (input.selectionStart === null || input.selectionEnd === null) {
+      return;
     }
+
+    let start = input.selectionStart;
+    let end = input.selectionEnd;
+
+    /**
+     * @todo Handle all possible deletion events
+     */
     switch (inputType) {
-      case InputType.DeleteSoftLineBackward: {
-        start = 0;
+      case InputType.DeleteContentForward: {
+        /**
+         * If selection end is already after the last element, then there is nothing to delete
+         */
+        end = end !== input.value.length ? end + 1 : end;
         break;
+      }
+      default: {
+        /**
+         * If start is already 0, then there is nothing to delete
+         */
+        start = start !== 0 ? start - 1 : start;
       }
     }
     this.#model.removeText(this.#blockIndex, key, start, end);
@@ -103,6 +120,7 @@ export class BlockToolAdapter {
     if (start > 0 && start === end) {
       start = start - 1;
     }
+
     switch (inputType) {
       case InputType.DeleteSoftLineBackward: {
         start = 0;
