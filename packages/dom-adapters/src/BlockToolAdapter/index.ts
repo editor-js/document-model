@@ -218,7 +218,7 @@ export class BlockToolAdapter {
 
   /**
    * Handles model update events for native inputs and updates DOM
-   * 
+   *
    * @param event - model update event
    * @param input - input element
    * @param key - data key input is attached to
@@ -270,10 +270,11 @@ export class BlockToolAdapter {
 
   /**
    * Handles model update events for contenteditable elements and updates DOM
-   * 
+   *
    * @param event - model update event
    * @param input - input element
    * @param key - data key input is attached to
+   * @param caretAdapter - caret adapter instance
    */
   #handleModelUpdateForContentEditableElement(event: ModelEvents, input: HTMLElement, key: DataKey, caretAdapter: CaretAdapter): void {
     if (!(event instanceof TextAddedEvent) && !(event instanceof TextRemovedEvent)) {
