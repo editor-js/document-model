@@ -11,7 +11,7 @@ import { CaretAdapter } from '../caret/CaretAdapter.js';
 import {
   getAbsoluteRangeOffset,
   getBoundaryPointByAbsoluteOffset,
-  isNonTextInput,
+  isNonTextInput
 } from '../utils/index.js';
 
 import { isNativeInput } from '@editorjs/dom';
@@ -112,16 +112,12 @@ export class BlockToolAdapter {
    * @param key - data key input is attached to
    */
   #handleDeleteInContentEditable = (event: InputEvent, input: HTMLElement, key: DataKey): void => {
-    const inputType = event.inputType as InputType;
-    let start: number;
-    let end: number;
-    
     const targetRanges = event.getTargetRanges();
     const range = targetRanges[0];
-    
-    start = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
-    end = getAbsoluteRangeOffset(input, range.endContainer, range.endOffset);
-    
+
+    const start: number = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
+    const end: number = getAbsoluteRangeOffset(input, range.endContainer, range.endOffset);
+
     this.#model.removeText(this.#blockIndex, key, start, end);
   };
 
@@ -285,7 +281,7 @@ export class BlockToolAdapter {
     const start = rangeIndex[0];
     const end = rangeIndex[1];
 
-    const [startNode, startOffset] = getBoundaryPointByAbsoluteOffset(input,start);
+    const [startNode, startOffset] = getBoundaryPointByAbsoluteOffset(input, start);
     const [endNode, endOffset] = getBoundaryPointByAbsoluteOffset(input, end);
     const range = new Range();
 
