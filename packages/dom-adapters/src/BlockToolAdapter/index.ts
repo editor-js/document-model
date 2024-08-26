@@ -70,7 +70,7 @@ export class BlockToolAdapter {
    * @param key - data key input is attached to
    * @private
    */
-  #handleDeleteInNativeInput = (event: InputEvent, input: HTMLInputElement | HTMLTextAreaElement, key: DataKey): void => {
+  #handleDeleteInNativeInput(event: InputEvent, input: HTMLInputElement | HTMLTextAreaElement, key: DataKey): void {
     const inputType = event.inputType as InputType;
 
     /**
@@ -111,7 +111,7 @@ export class BlockToolAdapter {
    * @param input - input element
    * @param key - data key input is attached to
    */
-  #handleDeleteInContentEditable = (event: InputEvent, input: HTMLElement, key: DataKey): void => {
+  #handleDeleteInContentEditable(event: InputEvent, input: HTMLElement, key: DataKey): void {
     const targetRanges = event.getTargetRanges();
     const range = targetRanges[0];
 
@@ -216,7 +216,7 @@ export class BlockToolAdapter {
     }
   };
 
-  #handleModelUpdateForNativeInput = (event: ModelEvents, input: HTMLInputElement | HTMLTextAreaElement, key: DataKey): void => {
+  #handleModelUpdateForNativeInput(event: ModelEvents, input: HTMLInputElement | HTMLTextAreaElement, key: DataKey): void {
     if (!(event instanceof TextAddedEvent) && !(event instanceof TextRemovedEvent)) {
       return;
     }
@@ -261,7 +261,7 @@ export class BlockToolAdapter {
     }
   };
 
-  #handleModelUpdateForContentEditableElement = (event: ModelEvents, input: HTMLElement, key: DataKey, caretAdapter: CaretAdapter): void => {
+  #handleModelUpdateForContentEditableElement(event: ModelEvents, input: HTMLElement, key: DataKey, caretAdapter: CaretAdapter): void {
     if (!(event instanceof TextAddedEvent) && !(event instanceof TextRemovedEvent)) {
       return;
     }
@@ -320,7 +320,7 @@ export class BlockToolAdapter {
    * @param key - data key input is attached to
    * @param caretAdapter - caret adapter instance
    */
-  #handleModelUpdate = (event: ModelEvents, input: HTMLElement, key: DataKey, caretAdapter: CaretAdapter): void => {
+  #handleModelUpdate(event: ModelEvents, input: HTMLElement, key: DataKey, caretAdapter: CaretAdapter): void {
     const isInputNative = isNativeInput(input);
 
     if (isInputNative) {
