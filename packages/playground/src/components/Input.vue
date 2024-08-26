@@ -89,6 +89,7 @@ onMounted(() => {
 }
 
 .input {
+  border: 0px;
   padding: 8px 14px;
   background-color: rgba(0, 0, 0, 0.2);
   border-radius: 10px;
