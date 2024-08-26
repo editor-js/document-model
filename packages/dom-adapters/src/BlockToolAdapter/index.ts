@@ -11,6 +11,7 @@ import { CaretAdapter } from '../caret/CaretAdapter.js';
 import {
   getAbsoluteRangeOffset,
   getBoundaryPointByAbsoluteOffset,
+  isNonTextInput,
 } from '../utils/index.js';
 
 import { isNativeInput } from '@editorjs/dom';
@@ -50,6 +51,10 @@ export class BlockToolAdapter {
    * @param input - input element
    */
   public attachInput(key: DataKey, input: HTMLElement): void {
+    if (input instanceof HTMLInputElement && isNonTextInput(input)) {
+      throw new Error('Cannot attach non-text input');
+    }
+
     const caretAdapter = new CaretAdapter(input, this.#model, this.#blockIndex, key);
 
     input.addEventListener('beforeinput', event => this.#handleBeforeInputEvent(event, input, key));
@@ -110,23 +115,13 @@ export class BlockToolAdapter {
     const inputType = event.inputType as InputType;
     let start: number;
     let end: number;
-
+    
     const targetRanges = event.getTargetRanges();
     const range = targetRanges[0];
-
+    
     start = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
     end = getAbsoluteRangeOffset(input, range.endContainer, range.endOffset);
-
-    if (start > 0 && start === end) {
-      start = start - 1;
-    }
-
-    switch (inputType) {
-      case InputType.DeleteSoftLineBackward: {
-        start = 0;
-        break;
-      }
-    }
+    
     this.#model.removeText(this.#blockIndex, key, start, end);
   };
 
@@ -214,7 +209,7 @@ export class BlockToolAdapter {
       case InputType.DeleteWordBackward:
       case InputType.DeleteWordForward: {
         if (nativeInput) {
-          this.#handleDeleteInNativeInput(event, input as HTMLInputElement | HTMLTextAreaElement, key);
+          this.#handleDeleteInNativeInput(event, input, key);
         } else {
           this.#handleDeleteInContentEditable(event, input, key);
         }
@@ -225,22 +220,28 @@ export class BlockToolAdapter {
     }
   };
 
-  #handleModelUpdateNative = (event: ModelEvents, input: HTMLInputElement | HTMLTextAreaElement, key: DataKey): void => {
+  #handleModelUpdateForNativeInput = (event: ModelEvents, input: HTMLInputElement | HTMLTextAreaElement, key: DataKey): void => {
     if (!(event instanceof TextAddedEvent) && !(event instanceof TextRemovedEvent)) {
       return;
     }
 
-    const [, dataIndex, blockIndex] = event.detail.index;
+    const [, dataKey, blockIndex] = event.detail.index;
 
+    /**
+     * Event is not related to the attached block
+     */
     if (blockIndex !== this.#blockIndex) {
       return;
     }
 
-    if (dataIndex !== composeDataIndex(key)) {
+    /**
+     * Event is not related to the attached data key
+     */
+    if (dataKey !== composeDataIndex(key)) {
       return;
     }
 
-    const currentElement = input as HTMLInputElement | HTMLTextAreaElement;
+    const currentElement = input;
     const [ [start, end] ] = event.detail.index;
 
     const action = event.detail.action;
@@ -264,7 +265,7 @@ export class BlockToolAdapter {
     }
   };
 
-  #handleModelUpdateContentEditable = (event: ModelEvents, input: HTMLElement, key: DataKey, caretAdapter: CaretAdapter): void => {
+  #handleModelUpdateForContentEditableElement = (event: ModelEvents, input: HTMLElement, key: DataKey, caretAdapter: CaretAdapter): void => {
     if (!(event instanceof TextAddedEvent) && !(event instanceof TextRemovedEvent)) {
       return;
     }
@@ -284,8 +285,7 @@ export class BlockToolAdapter {
     const start = rangeIndex[0];
     const end = rangeIndex[1];
 
-    const [startNode, startOffset] = getBoundaryPointByAbsoluteOffset(input,
-      start);
+    const [startNode, startOffset] = getBoundaryPointByAbsoluteOffset(input,start);
     const [endNode, endOffset] = getBoundaryPointByAbsoluteOffset(input, end);
     const range = new Range();
 
@@ -328,9 +328,9 @@ export class BlockToolAdapter {
     const nativeInput = isNativeInput(input);
 
     if (nativeInput) {
-      this.#handleModelUpdateNative(event, input as HTMLInputElement | HTMLTextAreaElement, key);
+      this.#handleModelUpdateForNativeInput(event, input as HTMLInputElement | HTMLTextAreaElement, key);
     } else {
-      this.#handleModelUpdateContentEditable(event, input, key, caretAdapter);
+      this.#handleModelUpdateForContentEditableElement(event, input, key, caretAdapter);
     }
   };
 }

@@ -41,6 +41,7 @@ model.addEventListener(EventType.Changed, () => {
       <div :class="$style.playground">
         <Input
           :model="model"
+          type="input"
         />
         <pre>{{ serialized }}</pre>
       </div>

@@ -201,8 +201,7 @@ export class CaretAdapter extends EventTarget {
     if (isNativeInput(input)) {
       return;
     } else {
-      const start = getBoundaryPointByAbsoluteOffset(input,
-        textIndex[0]);
+      const start = getBoundaryPointByAbsoluteOffset(input, textIndex[0]);
       const end = getBoundaryPointByAbsoluteOffset(input, textIndex[1]);
 
       const selection = document.getSelection()!;

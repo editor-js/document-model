@@ -13,22 +13,22 @@ import {
 const input = ref<HTMLElement | null>(null);
 const index = ref<TextRange | null>(null);
 
-const props = defineProps<{
-  /**
-   * Editor js Document model to attach input to
-   */
-  model: EditorJSModel;
-}>();
+const props = withDefaults(
+  defineProps<{
+    /**
+     * Type of the input to be displayed on the page
+     */
+    type?: 'contenteditable' | 'input' | 'textarea',
 
-// three types of inputs:
-// ?type=contenteditable
-// ?type=input
-// ?type=textarea
-let type = (new URL(window.location.href).searchParams.get('type') ?? 'contenteditable') as 'contenteditable' | 'input' | 'textarea';
-
-if (type !== 'contenteditable' && type !== 'input' && type !== 'textarea') {
-  type = 'contenteditable';
-}
+    /**
+     * Editor js Document model to attach input to
+     */
+    model: EditorJSModel;
+  }>(),
+  {
+    type: 'contenteditable'
+  }
+)
 
 onMounted(() => {
   const blockToolAdapter = new BlockToolAdapter(props.model, 0);
