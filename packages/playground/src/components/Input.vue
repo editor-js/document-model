@@ -26,9 +26,9 @@ const props = withDefaults(
     model: EditorJSModel;
   }>(),
   {
-    type: 'contenteditable'
+    type: 'contenteditable',
   }
-)
+);
 
 onMounted(() => {
   const blockToolAdapter = new BlockToolAdapter(props.model, 0);
