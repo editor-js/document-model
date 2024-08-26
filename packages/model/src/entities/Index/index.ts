@@ -6,14 +6,39 @@ import type { BlockTuneName } from '../BlockTune/index.js';
  * Class representing index in the document model tree
  */
 export class Index {
+  /**
+   * Text range in the text data property
+   */
   public textRange?: TextRange;
+
+  /**
+   * Data key in the block node
+   */
   public dataKey?: DataKey;
+
+  /**
+   * Tune name in the block node
+   */
   public tuneName?: BlockTuneName;
+
+  /**
+   * Tune key of the tune node
+   */
   public tuneKey?: string;
+
+  /**
+   * Index of the block node
+   */
   public blockIndex?: number;
 
+  /**
+   * Document property name
+   */
   public propertyName?: string;
 
+  /**
+   * Document id
+   */
   public documentId?: DocumentIndex;
 
   /**

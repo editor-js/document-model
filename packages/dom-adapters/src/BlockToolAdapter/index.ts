@@ -35,7 +35,7 @@ export class BlockToolAdapter {
    * BlockToolAdapter constructor
    *
    * @param model - EditorJSModel instance
-   * @param caretAdapter
+   * @param caretAdapter - CaretAdapter instance
    * @param blockIndex - index of the block that this adapter is connected to
    */
   constructor(model: EditorJSModel, caretAdapter: CaretAdapter, blockIndex: number) {

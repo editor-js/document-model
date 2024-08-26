@@ -5,18 +5,43 @@ import type { TextRange } from '@editorjs/model';
 import { EventType, IndexBuilder } from '@editorjs/model';
 
 /**
+ * Caret adapter watches selection change and saves it to the model
  *
+ * On model update, it updates the selection in the DOM
  */
 export class CaretAdapter extends EventTarget {
+  /**
+   * Editor.js DOM container
+   *
+   * @private
+   */
   #container: HTMLElement;
+
+  /**
+   * Editor.js model
+   *
+   * @private
+   */
   #model: EditorJSModel;
+
+  /**
+   * Map of inputs
+   *
+   * @private
+   */
   #inputs = new Map<string, HTMLElement>();
+
+  /**
+   * Current user's caret
+   *
+   * @private
+   */
   #userCaret: Caret;
 
   /**
-   *
-   * @param container
-   * @param model
+   * @class
+   * @param container - Editor.js DOM container
+   * @param model - Editor.js model
    */
   constructor(container: HTMLElement, model: EditorJSModel) {
     super();
@@ -33,25 +58,28 @@ export class CaretAdapter extends EventTarget {
   }
 
   /**
+   * Adds input to the caret adapter
    *
-   * @param input
-   * @param index
+   * @param input - input element
+   * @param index - index of the input in the model tree
    */
   public attachInput(input: HTMLElement, index: Index): void {
     this.#inputs.set(index.serialize(), input);
   }
 
   /**
+   * Updates current user's caret index
    *
-   * @param index
+   * @param index - new caret index
    */
   public updateIndex(index: Index): void {
     this.#userCaret.update(index);
   }
 
   /**
+   * Selection change handler
    *
-   * @param selection
+   * @param selection - new document selection
    */
   #onSelectionChange(selection: Selection | null): void {
     if (!selection) {
@@ -107,8 +135,9 @@ export class CaretAdapter extends EventTarget {
   }
 
   /**
+   * Model updates handler
    *
-   * @param event
+   * @param event - model update event
    */
   #onModelUpdate(event: CaretManagerEvents): void {
     const { index } = event.detail;

@@ -20,6 +20,7 @@ import { EventType, IndexBuilder } from '@editorjs/model';
  * @todo add support for native inputs
  * @todo debug problem when document "selectionchange" is not fired on Enter press
  * @todo debug problem when offset at the end of line and at the beginning of the next line is the same
+ * @todo do not use activeElement to find related input
  */
 export class CaretAdapter extends EventTarget {
   /**
