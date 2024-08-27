@@ -34,7 +34,7 @@ export class CaretAdapter extends EventTarget {
   /**
    * Current user's caret
    *
-   * @private
+   * @public
    */
   #userCaret: Caret;
 
@@ -74,6 +74,10 @@ export class CaretAdapter extends EventTarget {
    */
   public updateIndex(index: Index): void {
     this.#userCaret.update(index);
+  }
+
+  public get userCaretIndex(): Index | null {
+    return this.#userCaret.index;
   }
 
   /**

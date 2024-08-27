@@ -1,92 +1,38 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import { BlockToolAdapter, CaretAdapter, InlineTool, InlineToolAdapter } from '@editorjs/dom-adapters';
+import { BlockToolAdapter } from '@editorjs/dom-adapters';
 import {
-  CaretManagerCaretUpdatedEvent,
-  createDataKey,
-  createInlineToolName,
-  type EditorJSModel,
-  EventType,
-  FormattingAction,
-  InlineFragment,
-  type TextIndex,
-  type TextRange
+  createDataKey
 } from '@editorjs/model';
 
 const input = ref<HTMLElement | null>(null);
-const index = ref<TextRange | null>(null);
+const props = defineProps<{
+  /**
+   * Block Tool Adapter instance to use for the input
+   */
+  blockToolAdapter: BlockToolAdapter;
 
-const italicTool = {
-  name: createInlineToolName('italic'),
-  create() {
-    return document.createElement('i');
-  },
-  getAction(range: TextRange, fragments: InlineFragment[]) {
-    const action = fragments.length === 0 ? FormattingAction.Format : FormattingAction.Unformat;
-    return {
-      action,
-      range,
-    };
-  },
-} satisfies InlineTool;
+  /**
+   * Input type to use
+   */
+  type: 'contenteditable' | 'input' | 'textarea';
 
-const props = withDefaults(
-  defineProps<{
-    /**
-     * Block Tool Adapter instance to use for the input
-     */
-    blockToolAdapter: BlockToolAdapter;
+  /**
+   * Input name
+   * Used as data key for the Editor.js Model
+   */
+  name: string;
 
-    /**
-     * Type of the input to be displayed on the page
-     */
-    type?: 'contenteditable' | 'input' | 'textarea',
-
-    /**
-     * Input name
-     * Used as data key for the Editor.js Model
-     */
-    name: string;
-
-    /**
-     * Editor js Document model to attach input to
-     */
-    model: EditorJSModel;
-
-    /**
-     * Optional input value
-     */
-    value?: string;
-  }>(),
-  {
-    type: 'contenteditable',
-  }
-);
+  /**
+   * Optional input value
+   */
+  value?: string;
+}>();
 
 onMounted(() => {
-  const blockToolAdapter = new BlockToolAdapter(props.model, 0);
-
-  props.model.addBlock({
-    name: 'paragraph',
-    data: {
-      text: {
-        $t: 't',
-        value: 'Some words inside the input'
-      },
-    },
-  });
-
   if (input.value !== null) {
-    blockToolAdapter.attachInput(createDataKey('text'), input.value);
-
-    props.model.addEventListener(EventType.CaretManagerUpdated, (evt: CaretManagerCaretUpdatedEvent) => {
-      index.value = (evt.detail.index as TextIndex)[0];
-    });
+    props.blockToolAdapter.attachInput(createDataKey(props.name), input.value);
   }
-  
-  const inlineToolAdapter = new InlineToolAdapter(props.model, 0, createDataKey('text'), input.value, caretAdapter);
-
-  inlineToolAdapter.attachTool(italicTool);
 });
 </script>
 <template>
@@ -104,21 +50,6 @@ onMounted(() => {
 
 
 <style module>
-
-.wrapper {
-  position: relative;
-}
-
-.counter {
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: 8px 14px;
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 10px;
-  font-size: 22px;
-}
-
 .input {
   width: 100%;
   box-sizing: border-box;
@@ -129,9 +60,7 @@ onMounted(() => {
   border-radius: 10px;
   font-size: 22px;
   outline: none;
-
   font-family: inherit;
-
   white-space: pre;
 }
 </style>

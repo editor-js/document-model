@@ -197,8 +197,6 @@ export class ParentInlineNode extends EventBus implements InlineNode {
       []
     );
 
-    console.log('nwe nodes', newNodes);
-
     this.normalize();
 
     const builder = new IndexBuilder();

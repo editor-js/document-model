@@ -1,6 +1,7 @@
 import {
   DataKey,
   EditorJSModel,
+  EventType,
   InlineFragment,
   InlineToolData,
   InlineToolName,
@@ -14,6 +15,7 @@ import { IntersectType, FormattingAction } from '@editorjs/model/src/entities/in
 
 export interface InlineTool {
   name: InlineToolName;
+  intersectType: IntersectType, 
   create(data?: InlineToolData): HTMLElement;
   getAction(index: TextRange, fragments: InlineFragment[], intersectType: IntersectType, data?: InlineToolData): { action: FormattingAction; range: TextRange };
 }
@@ -28,25 +30,15 @@ export class InlineToolAdapter {
    */
   #caretAdapter: CaretAdapter;
 
-  /**
-   * Index of the block in the EditorJS model inline tool is related to
-   *
-   * @private
-   */
-  #blockIndex: number;
-
-  /**
-   * Key of the data in the BlockNode inline tool is related to
-   *
-   * @private
-   */
-  #dataKey: DataKey;
-
-  constructor(model: EditorJSModel, blockIndex: number, dataKey: DataKey, caretAdapter: CaretAdapter) {
+  constructor(model: EditorJSModel, caretAdapter: CaretAdapter) {
     this.#model = model;
     this.#caretAdapter = caretAdapter;
-    this.#blockIndex = blockIndex;
-    this.#dataKey = dataKey;
+
+    this.#model.addEventListener(EventType.Changed, (event: ModelEvents) => this.#handleModelUpdates(event));
+  }
+
+  #handleModelUpdates(event: ModelEvents/*, input: HTMLElement, key: DataKey */): void {
+    console.log('model changed event', event);
   }
 
   /**
@@ -68,14 +60,16 @@ export class InlineToolAdapter {
   }
 
   public applyFormat(toolName: InlineToolName, data: InlineToolData, intersectType: IntersectType): void {
-    const index = this.#caretAdapter.getIndex();
+    const index = this.#caretAdapter.userCaretIndex;
 
     if (index === null) {
       throw new Error('InlineToolAdapter: caret index is outside of the input');
     }
+    console.log(index);
 
-    let start = index[0];
-    let end = index[1];
+    const textRange = index.textRange!;
+    const blockIndex = index.blockIndex!;
+    const dataKey = index.dataKey!;
 
     const tool = this.#tools.get(toolName);
 
@@ -83,17 +77,17 @@ export class InlineToolAdapter {
       throw new Error(`InlineToolAdapter: tool ${toolName} is not attached`);
     }
 
-    const fragments = this.#model.getFragments(this.#blockIndex, this.#dataKey, ...index, toolName);
+    const fragments = this.#model.getFragments(blockIndex, dataKey, ...textRange, toolName);
 
-    const { action, range } = tool.getAction(index, fragments, intersectType, data);
+    const { action, range } = tool.getAction(textRange, fragments, intersectType, data);
 
     switch (action) {
       case FormattingAction.Format:
-        this.#model.format(this.#blockIndex, this.#dataKey, toolName, ...range, data);
+        this.#model.format(blockIndex, dataKey, toolName, ...range, data);
 
         break;
       case FormattingAction.Unformat:
-        this.#model.unformat(this.#blockIndex, this.#dataKey, toolName, ...range);
+        this.#model.unformat(blockIndex, dataKey, toolName, ...range);
 
         break;
       // case (FormattingAction): {

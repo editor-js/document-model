@@ -119,8 +119,8 @@ export class IndexBuilder {
       return this;
     }
 
-    this.#index = indexOrJSON;
-
+    this.#index = indexOrJSON.clone();
+    
     return this;
   }
 }

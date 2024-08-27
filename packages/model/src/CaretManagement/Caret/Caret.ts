@@ -1,3 +1,4 @@
+import { IndexBuilder } from '../../entities/index.js';
 import type { Index } from '../../entities/Index/index.js';
 import type { CaretSerialized, CaretEvent } from './types.js';
 import { CaretUpdatedEvent } from './types.js';
