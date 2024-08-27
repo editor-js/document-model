@@ -1,4 +1,5 @@
-import type { DataKey } from './index.js';
+import { Index } from '../Index/index.js';
+import { IndexBuilder } from '../Index/IndexBuilder.js';
 import { BlockNode, createBlockToolName, createDataKey } from './index.js';
 
 import type { BlockTuneName, BlockTuneSerialized } from '../BlockTune';
@@ -15,7 +16,6 @@ import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
 import { TextAddedEvent, TuneModifiedEvent, ValueModifiedEvent } from '../../EventBus/events/index.js';
 import { EventType } from '../../EventBus/types/EventType.js';
 import { createBlockTuneName } from '../BlockTune/index.js';
-import { composeDataIndex } from '../../EventBus/index.js';
 
 jest.mock('../BlockTune');
 
@@ -1136,12 +1136,14 @@ describe('BlockNode', () => {
 
       node.addEventListener(EventType.Changed, handler);
 
-      textNode.dispatchEvent(new TextAddedEvent([ range ], 'Hello'));
+      textNode.dispatchEvent(new TextAddedEvent(new IndexBuilder().addTextRange(range)
+        .build(), 'Hello'));
 
       expect(event).toBeInstanceOf(TextAddedEvent);
       expect(event)
-        .toHaveProperty('detail', expect.objectContaining({
-          index: [range, composeDataIndex(dataKey)],
+        .toHaveProperty('detail.index', expect.objectContaining({
+          textRange: range,
+          dataKey: dataKey,
         }));
     });
 
@@ -1186,7 +1188,7 @@ describe('BlockNode', () => {
 
       valueNode.dispatchEvent(
         new ValueModifiedEvent(
-          [],
+          new Index(),
           {
             value: newValue,
             previous: value,
@@ -1197,8 +1199,8 @@ describe('BlockNode', () => {
       expect(event)
         .toBeInstanceOf(ValueModifiedEvent);
       expect(event)
-        .toHaveProperty('detail', expect.objectContaining({
-          index: [ composeDataIndex(`${parentDataKey}.${dataKey}` as DataKey) ],
+        .toHaveProperty('detail.index', expect.objectContaining({
+          dataKey: `${parentDataKey}.${dataKey}`,
         }));
     });
 
@@ -1244,7 +1246,9 @@ describe('BlockNode', () => {
 
       tune.dispatchEvent(
         new TuneModifiedEvent(
-          [ key ],
+          new IndexBuilder()
+            .addTuneKey(key)
+            .build(),
           {
             value: newValue,
             previous: value,
@@ -1255,8 +1259,9 @@ describe('BlockNode', () => {
       expect(event)
         .toBeInstanceOf(TuneModifiedEvent);
       expect(event)
-        .toHaveProperty('detail', expect.objectContaining({
-          index: [key, `tune@${tuneName}`],
+        .toHaveProperty('detail.index', expect.objectContaining({
+          tuneKey: key,
+          tuneName: tuneName,
         }));
     });
 

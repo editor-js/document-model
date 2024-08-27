@@ -33,14 +33,30 @@ const italicTool = {
 const props = withDefaults(
   defineProps<{
     /**
+     * Block Tool Adapter instance to use for the input
+     */
+    blockToolAdapter: BlockToolAdapter;
+
+    /**
      * Type of the input to be displayed on the page
      */
     type?: 'contenteditable' | 'input' | 'textarea',
 
     /**
+     * Input name
+     * Used as data key for the Editor.js Model
+     */
+    name: string;
+
+    /**
      * Editor js Document model to attach input to
      */
     model: EditorJSModel;
+
+    /**
+     * Optional input value
+     */
+    value?: string;
   }>(),
   {
     type: 'contenteditable',
@@ -60,8 +76,6 @@ onMounted(() => {
     },
   });
 
-  const caretAdapter = new CaretAdapter(props.model, 0);
-
   if (input.value !== null) {
     blockToolAdapter.attachInput(createDataKey('text'), input.value);
 
@@ -76,32 +90,16 @@ onMounted(() => {
 });
 </script>
 <template>
-  <div :class="$style.wrapper">
-    <div
-      v-if="type === 'contenteditable'"
-      ref="input"
-      contenteditable
-      type="text"
-      :class="$style.input"
-    />
-    <input
-      v-else-if="type === 'input'"
-      ref="input"
-      type="text"
-      :class="$style.input"
-    >
-    <textarea
-      v-else-if="type === 'textarea'"
-      ref="input"
-      :class="$style.input"
-    />
-    <div
-      v-if="index !== null"
-      :class="$style.counter"
-    >
-      {{ index }}
-    </div>
-  </div>
+  <!-- eslint-disable vue/no-v-text-v-html-on-component vue/no-v-html -->
+  <component
+    :is="type === 'contenteditable' ? 'div' : type"
+    ref="input"
+    :contenteditable="type === 'contenteditable' ? true : undefined"
+    type="text"
+    :class="$style.input"
+    :value="type !== 'contenteditable' ? value : undefined"
+    v-html="type === 'contenteditable' ? value : undefined"
+  />
 </template>
 
 
@@ -122,12 +120,17 @@ onMounted(() => {
 }
 
 .input {
-  border: 0px;
+  width: 100%;
+  box-sizing: border-box;
   padding: 8px 14px;
+  margin-bottom: 8px;
   background-color: rgba(0, 0, 0, 0.2);
+  border: 0;
   border-radius: 10px;
   font-size: 22px;
   outline: none;
+
+  font-family: inherit;
 
   white-space: pre;
 }

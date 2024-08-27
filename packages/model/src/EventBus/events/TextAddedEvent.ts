@@ -1,4 +1,4 @@
-import type { TextIndex } from '../types/indexing.js';
+import type { Index } from '../../entities/Index/index.js';
 import { EventAction } from '../types/EventAction.js';
 import { BaseDocumentEvent } from './BaseEvent.js';
 
@@ -6,14 +6,14 @@ import { BaseDocumentEvent } from './BaseEvent.js';
 /**
  * TextAdded Custom Event
  */
-export class TextAddedEvent extends BaseDocumentEvent<TextIndex, EventAction.Added, string> {
+export class TextAddedEvent extends BaseDocumentEvent<EventAction.Added, string> {
   /**
    * TextAddedEvent class constructor
    *
    * @param index - index of the added text in the document
    * @param text - added text
    */
-  constructor(index: TextIndex, text: string) {
+  constructor(index: Index, text: string) {
     super(index, EventAction.Added, text);
   }
 }

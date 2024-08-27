@@ -1,6 +1,7 @@
 import type { EditorDocument } from '../EditorDocument';
 import type { BlockTuneName, BlockTuneSerialized } from '../BlockTune';
 import { BlockTune, createBlockTuneName } from '../BlockTune/index.js';
+import { IndexBuilder } from '../Index/IndexBuilder.js';
 import type {
   BlockNodeConstructorParameters,
   BlockNodeData,
@@ -28,9 +29,7 @@ import {
 } from '../../EventBus/events/index.js';
 import type { Constructor } from '../../utils/types.js';
 import type { TextNodeEvents } from '../../EventBus/types/EventMap';
-import type { TuneIndex } from '../../EventBus/types/indexing.js';
 import { BaseDocumentEvent } from '../../EventBus/events/BaseEvent.js';
-import { composeDataIndex } from '../../EventBus/index.js';
 import { IntersectType } from '../inline-fragments/FormattingInlineNode/types/IntersectType';
 
 /**
@@ -308,7 +307,7 @@ export class BlockNode extends EventBus {
         return mapObject(value as BlockNodeDataSerialized, (v, k) => mapSerializedToNodes(v, `${key}.${k}`));
       }
 
-      const node =  new ValueNode({ value });
+      const node = new ValueNode({ value });
 
       this.#listenAndBubbleValueNodeEvent(node, key as DataKey);
 
@@ -352,9 +351,13 @@ export class BlockNode extends EventBus {
           return;
         }
 
+        const builder = new IndexBuilder();
+
+        builder.from(event.detail.index).addDataKey(key);
+
         this.dispatchEvent(
           new (event.constructor as Constructor<TextNodeEvents>)(
-            [...event.detail.index, composeDataIndex(key)],
+            builder.build(),
             event.detail.data
           )
         );
@@ -379,10 +382,13 @@ export class BlockNode extends EventBus {
           return;
         }
 
+        const builder = new IndexBuilder();
+
+        builder.addDataKey(key);
 
         this.dispatchEvent(
           new ValueModifiedEvent(
-            [ composeDataIndex(key) ],
+            builder.build(),
             event.detail.data
           )
         );
@@ -407,10 +413,13 @@ export class BlockNode extends EventBus {
           return;
         }
 
+        const builder = new IndexBuilder();
+
+        builder.from(event.detail.index).addTuneName(name);
+
         this.dispatchEvent(
           new TuneModifiedEvent(
-            // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-            [...(event.detail.index as [TuneIndex[0]]), `tune@${name}`],
+            builder.build(),
             event.detail.data
           )
         );

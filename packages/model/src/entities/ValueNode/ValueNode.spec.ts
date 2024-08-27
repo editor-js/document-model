@@ -1,3 +1,4 @@
+import { Index } from '../Index/index.js';
 import { ValueNode } from './index.js';
 import { BlockChildType } from '../BlockNode/types/index.js';
 import { NODE_TYPE_HIDDEN_PROP } from '../BlockNode/consts.js';
@@ -51,7 +52,7 @@ describe('ValueNode', () => {
 
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Modified,
-        index: [],
+        index: expect.any(Index),
         data: {
           value: updatedLongitude,
           previous: value,

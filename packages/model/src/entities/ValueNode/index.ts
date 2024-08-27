@@ -1,3 +1,4 @@
+import { IndexBuilder } from '../Index/IndexBuilder.js';
 import type { ValueNodeConstructorParameters, ValueSerialized } from './types';
 import { BlockChildType } from '../BlockNode/types/index.js';
 import { NODE_TYPE_HIDDEN_PROP } from '../BlockNode/consts.js';
@@ -37,8 +38,10 @@ export class ValueNode<ValueType = unknown> extends EventBus {
 
     this.#value = value;
 
+    const builder = new IndexBuilder();
+
     this.dispatchEvent(
-      new ValueModifiedEvent([], {
+      new ValueModifiedEvent(builder.build(), {
         value: this.#value,
         previous: previousValue,
       })
