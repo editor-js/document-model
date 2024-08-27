@@ -11,6 +11,7 @@ import {
   TextFormattedEvent,
   TextUnformattedEvent
 } from '../../../EventBus/events/index.js';
+import { IntersectType } from '../FormattingInlineNode/types/IntersectType';
 
 /**
  * We need to extend ParentInlineNode interface with ParentNode ones to use the methods from mixins
@@ -173,7 +174,7 @@ export class ParentInlineNode extends EventBus implements InlineNode {
    * @param end - char end index of the range
    * @param [data] - inline tool data if applicable
    */
-  public format(tool: InlineToolName, start: number, end: number, data?: InlineToolData): InlineNode[] {
+  public format(tool: InlineToolName, start: number, end: number, data?: InlineToolData, intersectType?: IntersectType): InlineNode[] {
     this.validateRange(start, end);
 
     const newNodes = this.#reduceChildrenInRange<InlineNode[]>(
@@ -186,6 +187,8 @@ export class ParentInlineNode extends EventBus implements InlineNode {
       },
       []
     );
+
+    console.log('nwe nodes', newNodes);
 
     this.normalize();
 

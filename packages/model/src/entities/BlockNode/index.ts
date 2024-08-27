@@ -31,6 +31,7 @@ import type { TextNodeEvents } from '../../EventBus/types/EventMap';
 import type { TuneIndex } from '../../EventBus/types/indexing.js';
 import { BaseDocumentEvent } from '../../EventBus/events/BaseEvent.js';
 import { composeDataIndex } from '../../EventBus/index.js';
+import { IntersectType } from '../inline-fragments/FormattingInlineNode/types/IntersectType';
 
 /**
  * BlockNode class represents a node in a tree-like structure used to store and manipulate Blocks in an editor document.
@@ -218,12 +219,12 @@ export class BlockNode extends EventBus {
    * @param end - end char index of the range
    * @param [data] - Inline Tool data if applicable
    */
-  public format(dataKey: DataKey, tool: InlineToolName, start: number, end: number, data?: InlineToolData): void {
+  public format(dataKey: DataKey, tool: InlineToolName, start: number, end: number, data?: InlineToolData, intersectType? : IntersectType): void {
     this.#validateKey(dataKey, TextNode);
 
     const node = get(this.#data, dataKey as string) as TextNode;
 
-    node.format(tool, start, end, data);
+    node.format(tool, start, end, data, intersectType);
   }
 
   /**

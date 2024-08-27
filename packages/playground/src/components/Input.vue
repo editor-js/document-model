@@ -1,17 +1,34 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import { BlockToolAdapter } from '@editorjs/dom-adapters';
+import { BlockToolAdapter, CaretAdapter, InlineTool, InlineToolAdapter } from '@editorjs/dom-adapters';
 import {
   CaretManagerCaretUpdatedEvent,
   createDataKey,
+  createInlineToolName,
   type EditorJSModel,
   EventType,
+  FormattingAction,
+  InlineFragment,
   type TextIndex,
   type TextRange
 } from '@editorjs/model';
 
 const input = ref<HTMLElement | null>(null);
 const index = ref<TextRange | null>(null);
+
+const italicTool = {
+  name: createInlineToolName('italic'),
+  create() {
+    return document.createElement('i');
+  },
+  getAction(range: TextRange, fragments: InlineFragment[]) {
+    const action = fragments.length === 0 ? FormattingAction.Format : FormattingAction.Unformat;
+    return {
+      action,
+      range,
+    };
+  },
+} satisfies InlineTool;
 
 const props = withDefaults(
   defineProps<{
@@ -33,6 +50,18 @@ const props = withDefaults(
 onMounted(() => {
   const blockToolAdapter = new BlockToolAdapter(props.model, 0);
 
+  props.model.addBlock({
+    name: 'paragraph',
+    data: {
+      text: {
+        $t: 't',
+        value: 'Some words inside the input'
+      },
+    },
+  });
+
+  const caretAdapter = new CaretAdapter(props.model, 0);
+
   if (input.value !== null) {
     blockToolAdapter.attachInput(createDataKey('text'), input.value);
 
@@ -40,6 +69,10 @@ onMounted(() => {
       index.value = (evt.detail.index as TextIndex)[0];
     });
   }
+  
+  const inlineToolAdapter = new InlineToolAdapter(props.model, 0, createDataKey('text'), input.value, caretAdapter);
+
+  inlineToolAdapter.attachTool(italicTool);
 });
 </script>
 <template>
