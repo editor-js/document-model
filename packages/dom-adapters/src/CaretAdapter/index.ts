@@ -172,16 +172,38 @@ export class CaretAdapter extends EventTarget {
     }
 
     if (isNativeInput(input) === true) {
+      const currentStart = (input as HTMLInputElement | HTMLTextAreaElement).selectionStart;
+      const currentEnd = (input as HTMLInputElement | HTMLTextAreaElement).selectionEnd;
+
+      /**
+       * If selection is already the same, we don't need to update it to not interrupt browser's behaviour
+       */
+      if (currentStart === textRange[0] && currentEnd === textRange[1]) {
+        return;
+      }
+
       (input as HTMLInputElement | HTMLTextAreaElement).selectionStart = textRange[0];
       (input as HTMLInputElement | HTMLTextAreaElement).selectionEnd = textRange[1];
 
       return;
     }
 
+    const selection = document.getSelection()!;
+    const currentRange = selection.getRangeAt(0);
+
     const start = getBoundaryPointByAbsoluteOffset(input, textRange[0]);
     const end = getBoundaryPointByAbsoluteOffset(input, textRange[1]);
 
-    const selection = document.getSelection()!;
+    const isStartEqualsCurrent = start[0] === currentRange.startContainer && start[1] === currentRange.startOffset;
+    const isEndEqualsCurrent = end[0] === currentRange.endContainer && end[1] === currentRange.endOffset;
+
+    /**
+     * If selection is already the same, we don't need to update it to not interrupt browser's behaviour
+     */
+    if (isStartEqualsCurrent && isEndEqualsCurrent) {
+      return;
+    }
+
     const range = new Range();
 
     range.setStart(...start);

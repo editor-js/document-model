@@ -238,7 +238,7 @@ export class BlockToolAdapter {
       return;
     }
 
-    const { textRange, dataKey, blockIndex }  = event.detail.index;
+    const { textRange, dataKey, blockIndex } = event.detail.index;
 
     if (textRange === undefined) {
       return;
@@ -263,6 +263,10 @@ export class BlockToolAdapter {
 
     const action = event.detail.action;
 
+    const builder = new IndexBuilder();
+
+    builder.from(event.detail.index);
+
     switch (action) {
       case EventAction.Added: {
         const text = event.detail.data as string;
@@ -270,16 +274,21 @@ export class BlockToolAdapter {
 
         currentElement.value = prevValue.slice(0, start) + text + prevValue.slice(end - 1);
 
-        currentElement.setSelectionRange(start + text.length, start + text.length);
+        builder.addTextRange([start + text.length, start + text.length]);
+
         break;
       }
       case EventAction.Removed: {
         currentElement.value = currentElement.value.slice(0, start) +
           currentElement.value.slice(end);
-        currentElement.setSelectionRange(start, start);
+
+        builder.addTextRange([start, start]);
+
         break;
       }
     }
+
+    this.#caretAdapter.updateIndex(builder.build());
   };
 
   /**
@@ -335,8 +344,6 @@ export class BlockToolAdapter {
 
         builder.addTextRange([start + text.length, start + text.length]);
 
-        this.#caretAdapter.updateIndex(builder.build());
-
         break;
       }
       case EventAction.Removed: {
@@ -346,13 +353,13 @@ export class BlockToolAdapter {
 
         builder.addTextRange([start, start]);
 
-        this.#caretAdapter.updateIndex(builder.build());
-
         break;
       }
     }
 
     input.normalize();
+
+    this.#caretAdapter.updateIndex(builder.build());
   };
 
   /**
