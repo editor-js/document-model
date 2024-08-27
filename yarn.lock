@@ -600,6 +600,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@editorjs/dom-adapters@workspace:packages/dom-adapters"
   dependencies:
+    "@editorjs/dom": "npm:^1.0.0"
     "@editorjs/model": "workspace:^"
     "@jest/globals": "npm:^29.7.0"
     "@stryker-mutator/core": "npm:^7.0.2"
@@ -617,6 +618,22 @@ __metadata:
     typescript: "npm:^5.2.2"
   languageName: unknown
   linkType: soft
+
+"@editorjs/dom@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "@editorjs/dom@npm:1.0.0"
+  dependencies:
+    "@editorjs/helpers": "npm:^1.0.0"
+  checksum: d4a4f55ffb31adb4384ad9d75a7bfc2a017e616140059ac8970e6645126ab31afea9ceea24b18820e270269aa87884da6ff46408e3c443578c94d21b57ac9923
+  languageName: node
+  linkType: hard
+
+"@editorjs/helpers@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "@editorjs/helpers@npm:1.0.0"
+  checksum: d31286f5c9446a6d5a36802e4ca84939834eee73404804444cbdce2f28edfb91966ecad44340c94942036e96c2912414dc0e4caccf0d20558b895caf6d83fadb
+  languageName: node
+  linkType: hard
 
 "@editorjs/model@workspace:^, @editorjs/model@workspace:packages/model":
   version: 0.0.0-use.local

@@ -7,8 +7,12 @@ import type {
   CaretManagerEvents
 } from '@editorjs/model';
 import { useSelectionChange, type Subscriber, type InputWithCaret } from './utils/useSelectionChange.js';
-import { getAbsoluteRangeOffset, getBoundaryPointByAbsoluteOffset } from '../utils/index.js';
+import {
+  getAbsoluteRangeOffset,
+  getBoundaryPointByAbsoluteOffset
+} from '../utils/index.js';
 import { EventType } from '@editorjs/model';
+import { isNativeInput } from '@editorjs/dom';
 
 /**
  * Caret adapter watches input caret change and passes it to the model
@@ -187,17 +191,28 @@ export class CaretAdapter extends EventTarget {
       return;
     }
 
-    const start = getBoundaryPointByAbsoluteOffset(this.#input!, textIndex[0]);
-    const end = getBoundaryPointByAbsoluteOffset(this.#input!, textIndex[1]);
+    const input: HTMLElement = this.#input!;
 
-    const selection = document.getSelection()!;
-    const range = new Range();
+    /**
+     * For native input, we cannot set caret position programmatically
+     *  because there is no enough information to get `start`
+     *  and `end` points in this case.
+     */
+    if (isNativeInput(input)) {
+      return;
+    } else {
+      const start = getBoundaryPointByAbsoluteOffset(input, textIndex[0]);
+      const end = getBoundaryPointByAbsoluteOffset(input, textIndex[1]);
 
-    range.setStart(...start);
-    range.setEnd(...end);
+      const selection = document.getSelection()!;
+      const range = new Range();
 
-    selection.removeAllRanges();
+      range.setStart(...start);
+      range.setEnd(...end);
 
-    selection.addRange(range);
+      selection.removeAllRanges();
+
+      selection.addRange(range);
+    }
   }
 }

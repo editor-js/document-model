@@ -13,12 +13,22 @@ import {
 const input = ref<HTMLElement | null>(null);
 const index = ref<TextRange | null>(null);
 
-const props = defineProps<{
-  /**
-   * Editor js Document model to attach input to
-   */
-  model: EditorJSModel;
-}>();
+const props = withDefaults(
+  defineProps<{
+    /**
+     * Type of the input to be displayed on the page
+     */
+    type?: 'contenteditable' | 'input' | 'textarea',
+
+    /**
+     * Editor js Document model to attach input to
+     */
+    model: EditorJSModel;
+  }>(),
+  {
+    type: 'contenteditable',
+  }
+);
 
 onMounted(() => {
   const blockToolAdapter = new BlockToolAdapter(props.model, 0);
@@ -34,12 +44,23 @@ onMounted(() => {
 </script>
 <template>
   <div :class="$style.wrapper">
-    <!-- eslint-disable vue/no-v-html -->
     <div
+      v-if="type === 'contenteditable'"
       ref="input"
       role="textbox"
       contenteditable
       type="text"
+      :class="$style.input"
+    />
+    <input
+      v-else-if="type === 'input'"
+      ref="input"
+      type="text"
+      :class="$style.input"
+    >
+    <textarea
+      v-else-if="type === 'textarea'"
+      ref="input"
       :class="$style.input"
     />
     <div
@@ -69,6 +90,7 @@ onMounted(() => {
 }
 
 .input {
+  border: 0px;
   padding: 8px 14px;
   background-color: rgba(0, 0, 0, 0.2);
   border-radius: 10px;
