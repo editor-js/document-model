@@ -83,6 +83,23 @@ export class Index {
   }
 
   /**
+   * Creates new Index object with copied values
+   */
+  public clone(): Index {
+    const index = new Index();
+
+    index.textRange = this.textRange;
+    index.dataKey = this.dataKey;
+    index.tuneName = this.tuneName;
+    index.tuneKey = this.tuneKey;
+    index.blockIndex = this.blockIndex;
+    index.propertyName = this.propertyName;
+    index.documentId = this.documentId;
+
+    return index;
+  }
+
+  /**
    * Serialize index to string
    */
   public serialize(): string {

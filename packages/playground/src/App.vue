@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import CaretIndex from '@/components/CaretIndex.vue';
 import { BlockToolAdapter, CaretAdapter } from '@editorjs/dom-adapters';
-import { Node, Input } from './components';
 import { EditorDocument, EditorJSModel, EventType } from '@editorjs/model';
 // import { data } from '@editorjs/model/dist/mocks/data.js';
 import { ref } from 'vue';
+import { Input, Node } from './components';
 
 /**
  * Every instance here will be created by Editor.js core

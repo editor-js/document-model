@@ -72,14 +72,7 @@ export class Caret extends EventBus {
    * @param index - new caret index
    */
   public update(index: Index): void {
-    const builder = new IndexBuilder();
-
-    /**
-     * We need to remove text range to check if serialized indexes match
-     */
-    builder.from(index).addTextRange(undefined);
-
-    if (this.#index?.serialize() === builder.build().serialize()) {
+    if (this.#index?.serialize() === index.serialize()) {
       return;
     }
 
