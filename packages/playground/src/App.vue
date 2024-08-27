@@ -1,8 +1,20 @@
 <script setup lang="ts">
 import { Node, Input } from './components';
 import { EditorDocument, EditorJSModel, EventType } from '@editorjs/model';
+import Core from '@editorjs/core';
 // import { data } from '@editorjs/model/dist/mocks/data.js';
 import { ref } from 'vue';
+
+const editor = new Core({
+  data: {
+    blocks: [ {
+      type: 'paragraph',
+      data: {
+        text: 'Hello, World!',
+      },
+    } ],
+  } 
+})
 
 const model = new EditorJSModel({
   blocks: [ {
