@@ -52,6 +52,9 @@ export class CaretAdapter extends EventTarget {
 
     const { on } = useSelectionChange();
 
+    /**
+     * @todo Unsubscribe on adapter destruction
+     */
     on(container, (selection) => this.#onSelectionChange(selection), this);
 
     this.#model.addEventListener(EventType.CaretManagerUpdated, (event) => this.#onModelUpdate(event));
@@ -86,6 +89,9 @@ export class CaretAdapter extends EventTarget {
       return;
     }
 
+    /**
+     * @todo Think of cross-block selection
+     */
     const activeElement = document.activeElement;
 
     for (const [index, input] of this.#inputs) {
@@ -137,6 +143,9 @@ export class CaretAdapter extends EventTarget {
   /**
    * Model updates handler
    *
+   * - Finds input to set selection to by serialized index
+   * - If current user's selection is different, set the one from the update
+   *
    * @param event - model update event
    */
   #onModelUpdate(event: CaretManagerEvents): void {
@@ -161,7 +170,8 @@ export class CaretAdapter extends EventTarget {
     const builder = new IndexBuilder();
 
     /**
-     * We need to remove text range from index to find related input by serialized index
+     * Inputs are stored in the hashmap with serialized index as a key
+     * Those keys are serialized without text range to cover the whole input, so we need to remove it here to find the input
      */
     builder.from(index).addTextRange(undefined);
 
