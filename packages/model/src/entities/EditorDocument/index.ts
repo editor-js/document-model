@@ -41,13 +41,13 @@ export class EditorDocument extends EventBus {
   /**
    * Constructor for EditorDocument class.
    *
+   * To fill the document with blocks, use the `initialize` method.
+   *
    * @param [args] - EditorDocument constructor arguments.
-   * @param [args.blocks] - List of blocks to initialize the document with.
    * @param [args.properties] - The properties of the document.
    * @param [args.toolsRegistry] - ToolsRegistry instance for the current document. Defaults to a new ToolsRegistry instance.
    */
   constructor({
-    blocks = [],
     properties = {},
     toolsRegistry = new ToolsRegistry(),
   }: EditorDocumentConstructorParameters = {}) {
@@ -58,8 +58,17 @@ export class EditorDocument extends EventBus {
     const container = IoCContainer.of(this);
 
     container.set(TOOLS_REGISTRY, toolsRegistry);
+  }
 
-    this.#initialize(blocks);
+  /**
+   * Initializes EditorDocument with passed blocks
+   *
+   * @param blocks - document serialized blocks
+   */
+  public initialize(blocks: BlockNodeSerialized[]): void {
+    blocks.forEach((block) => {
+      this.addBlock(block);
+    });
   }
 
   /**
@@ -339,17 +348,6 @@ export class EditorDocument extends EventBus {
           event.detail.data
         )
       );
-    });
-  }
-
-  /**
-   * Initializes EditorDocument with passed blocks
-   *
-   * @param blocks - document serialized blocks
-   */
-  #initialize(blocks: BlockNodeSerialized[]): void {
-    blocks.forEach((block) => {
-      this.addBlock(block);
     });
   }
 
