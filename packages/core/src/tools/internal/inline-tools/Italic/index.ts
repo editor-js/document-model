@@ -5,11 +5,11 @@ import { createInlineToolName, IntersectType, type InlineToolName } from '@edito
 import { make } from '@editorjs/dom';
 
 /**
- * Bold Tool
+ * Italic Tool
  *
  * Inline Toolbar Tool
  *
- * Makes selected text bolder
+ * Makes selected text italic
  */
 export default class ItalicInlineTool implements InlineTool {
   /**
@@ -47,7 +47,7 @@ export default class ItalicInlineTool implements InlineTool {
     range: TextRange;
   } {
     return {
-      action: this.#getState(index, fragments) ? FormattingAction.Format : FormattingAction.Unformat,
+      action: this.checkState(index, fragments) ? FormattingAction.Format : FormattingAction.Unformat,
       range: index,
     };
   };
@@ -58,7 +58,7 @@ export default class ItalicInlineTool implements InlineTool {
    * @param fragments - all fragments of the bold inline tool inside of the current input
    * @returns true if tool is active, false otherwise
    */
-  #getState(index: TextRange, fragments: InlineFragment[]): boolean {
+  public checkState(index: TextRange, fragments: InlineFragment[]): boolean {
     let isActive = false;
 
     fragments.forEach((fragment) => {

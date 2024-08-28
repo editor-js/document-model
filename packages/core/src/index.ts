@@ -42,8 +42,14 @@ export default class Core {
    */
   #caretAdapter: CaretAdapter;
 
+  /**
+   * Inline tool adapter is responsible for handling model updates
+   */
   #inlineToolsAdapter: InlineToolsAdapter;
 
+  /**
+   * Inline toolbar is responsible for handling selection changes
+   */
   #inlineToolbar: InlineToolbar;
 
   /**
@@ -62,7 +68,7 @@ export default class Core {
     this.#caretAdapter = new CaretAdapter(this.#config.holder, this.#model);
     this.#inlineToolsAdapter = new InlineToolsAdapter(this.#model, this.#caretAdapter);
 
-    this.#inlineToolbar = new InlineToolbar(this.#model, this.#inlineToolsAdapter);
+    this.#inlineToolbar = new InlineToolbar(this.#model, this.#inlineToolsAdapter, this.#toolsManager.getInlineTools());
 
     this.#model.initializeDocument({ blocks });
   }

@@ -31,6 +31,8 @@ export class InlineToolbar {
    */
   #show: boolean = false;
 
+  #tools: InlineTool[];
+
   /**
    * Toolbar show state
    */
@@ -48,10 +50,14 @@ export class InlineToolbar {
   /**
    * @param model - editor model instance
    * @param inlineToolAdapter - inline tool adapter instance
+   * @param tools - inline tools to be attached to inline tool adapter
    */
-  constructor(model: EditorJSModel, inlineToolAdapter: InlineToolsAdapter) {
+  constructor(model: EditorJSModel, inlineToolAdapter: InlineToolsAdapter, tools: InlineTool[]) {
     this.#model = model;
     this.#inlineToolAdapter = inlineToolAdapter;
+    this.#tools = tools;
+
+    this.#attachTools();
 
     this.#handleSelectionChange();
   }
@@ -99,6 +105,15 @@ export class InlineToolbar {
       this.show = false;
     }
   }
+
+  /**
+   * Attach all passed inline tools to inline tool adapter
+   */
+  #attachTools(): void {
+    this.#tools.forEach((tool) => {
+      this.#inlineToolAdapter.attachTool(tool);
+    });
+  };
 
   /**
    * Apply format with data formed in toolbar
