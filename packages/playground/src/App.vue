@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import CaretIndex from '@/components/CaretIndex.vue';
-import { BlockToolAdapter, CaretAdapter, InlineTool, InlineToolAdapter } from '@editorjs/dom-adapters';
+import { BlockToolAdapter, CaretAdapter, InlineTool, InlineToolsAdapter } from '@editorjs/dom-adapters';
 import { createInlineToolName, EditorDocument, EditorJSModel, EventType, InlineFragment, TextRange } from '@editorjs/model';
 import { ref } from 'vue';
 import { make } from '@editorjs/dom';
@@ -82,7 +82,7 @@ const caretAdapter = new CaretAdapter(window.document.body, model);
  */
 const blockToolAdapter = new BlockToolAdapter(model, caretAdapter, 0);
 const anotherBlockToolAdapter = new BlockToolAdapter(model, caretAdapter, 1);
-const inlineToolAdapter = new InlineToolAdapter(model, caretAdapter);
+const inlineToolAdapter = new InlineToolsAdapter(model, caretAdapter);
 
 const serialized = ref(model.serialized);
 

@@ -1,4 +1,4 @@
-import type { InlineTool, InlineToolAdapter } from '@editorjs/dom-adapters';
+import type { InlineTool, InlineToolsAdapter } from '@editorjs/dom-adapters';
 import { type EditorJSModel, type TextRange, Index } from '@editorjs/model';
 import { EventType } from '@editorjs/model';
 import type { Nominal } from '@editorjs/model/dist/utils/Nominal';
@@ -20,7 +20,7 @@ export class InlineToolbar {
    * Inline tool adapter instance
    * Used for inline tools attaching and format apply
    */
-  #inlineToolAdapter: InlineToolAdapter;
+  #inlineToolAdapter: InlineToolsAdapter;
 
   /**
    * Current selection range
@@ -43,7 +43,7 @@ export class InlineToolbar {
    * @param inlineToolAdapter - inline tool adapter instance
    * @param tools - tools, that should be attached to adapter
    */
-  constructor(model: EditorJSModel, inlineToolAdapter: InlineToolAdapter, tools: InlineTool[]) {
+  constructor(model: EditorJSModel, inlineToolAdapter: InlineToolsAdapter, tools: InlineTool[]) {
     this.#model = model;
     this.#inlineToolAdapter = inlineToolAdapter;
     this.#tools = tools;

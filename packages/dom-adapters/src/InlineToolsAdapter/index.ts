@@ -18,14 +18,14 @@ export interface InlineTool {
   name: InlineToolName;
   intersectType: IntersectType,
   create(data?: InlineToolData): HTMLElement;
-  getAction(index: TextRange, fragments: InlineFragment[], intersectType: IntersectType, data?: InlineToolData): { action: FormattingAction; range: TextRange };
+  getAction(index: TextRange, fragments: InlineFragment[], data?: InlineToolData): { action: FormattingAction; range: TextRange };
 }
 
 /**
  * Class handles on format model events and renders inline tools
  * Applies format to the model
  */
-export class InlineToolAdapter {
+export class InlineToolsAdapter {
   /**
    * Editor model instance
    */
@@ -117,22 +117,26 @@ export class InlineToolAdapter {
     const index = this.#caretAdapter.userCaretIndex;
 
     if (index === null) {
-      throw new Error('InlineToolAdapter: caret index is outside of the input');
+      throw new Error('InlineToolsAdapter: caret index is outside of the input');
     }
 
-    const textRange = index.textRange!;
-    const blockIndex = index.blockIndex!;
-    const dataKey = index.dataKey!;
+    const textRange = index.textRange;
+    const blockIndex = index.blockIndex;
+    const dataKey = index.dataKey;
+
+    if (textRange === undefined || blockIndex === undefined || dataKey === undefined) {
+      return;
+    }
 
     const tool = this.#tools.get(toolName);
 
     if (!tool) {
-      throw new Error(`InlineToolAdapter: tool ${toolName} is not attached`);
+      throw new Error(`InlineToolsAdapter: tool ${toolName} is not attached`);
     }
 
     const fragments = this.#model.getFragments(blockIndex, dataKey, ...textRange, toolName);
 
-    const { action, range } = tool.getAction(textRange, fragments, intersectType, data);
+    const { action, range } = tool.getAction(textRange, fragments, data);
 
     switch (action) {
       case FormattingAction.Format:
