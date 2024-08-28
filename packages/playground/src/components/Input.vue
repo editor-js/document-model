@@ -1,101 +1,66 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { BlockToolAdapter } from '@editorjs/dom-adapters';
-import {
-  CaretManagerCaretUpdatedEvent,
-  createDataKey,
-  type EditorJSModel,
-  EventType,
-  type TextIndex,
-  type TextRange
-} from '@editorjs/model';
 
 const input = ref<HTMLElement | null>(null);
-const index = ref<TextRange | null>(null);
 
-const props = withDefaults(
-  defineProps<{
-    /**
-     * Type of the input to be displayed on the page
-     */
-    type?: 'contenteditable' | 'input' | 'textarea',
+const props = defineProps<{
+  /**
+   * Block Tool Adapter instance to use for the input
+   */
+  blockToolAdapter: BlockToolAdapter;
 
-    /**
-     * Editor js Document model to attach input to
-     */
-    model: EditorJSModel;
-  }>(),
-  {
-    type: 'contenteditable',
-  }
-);
+  /**
+   * Input type to use
+   */
+  type: 'contenteditable' | 'input' | 'textarea';
+
+  /**
+   * Input name
+   * Used as data key for the Editor.js Model
+   */
+  name: string;
+
+  /**
+   * Optional input value
+   */
+  value?: string;
+}>();
 
 onMounted(() => {
-  const blockToolAdapter = new BlockToolAdapter(props.model, 0);
-
   if (input.value !== null) {
-    blockToolAdapter.attachInput(createDataKey('text'), input.value);
-
-    props.model.addEventListener(EventType.CaretManagerUpdated, (evt: CaretManagerCaretUpdatedEvent) => {
-      index.value = (evt.detail.index as TextIndex)[0];
-    });
+    props.blockToolAdapter.attachInput(props.name, input.value);
   }
 });
+
 </script>
 <template>
-  <div :class="$style.wrapper">
-    <div
-      v-if="type === 'contenteditable'"
-      ref="input"
-      role="textbox"
-      contenteditable
-      type="text"
-      :class="$style.input"
-    />
-    <input
-      v-else-if="type === 'input'"
-      ref="input"
-      type="text"
-      :class="$style.input"
-    >
-    <textarea
-      v-else-if="type === 'textarea'"
-      ref="input"
-      :class="$style.input"
-    />
-    <div
-      v-if="index !== null"
-      :class="$style.counter"
-    >
-      {{ index }}
-    </div>
-  </div>
+  <!-- eslint-disable vue/no-v-text-v-html-on-component vue/no-v-html -->
+  <component
+    :is="type === 'contenteditable' ? 'div' : type"
+    ref="input"
+    :contenteditable="type === 'contenteditable' ? true : undefined"
+    type="text"
+    :class="$style.input"
+    :value="type !== 'contenteditable' ? value : undefined"
+    v-html="type === 'contenteditable' ? value : undefined"
+  />
 </template>
 
 
 <style module>
-
-.wrapper {
-  position: relative;
-}
-
-.counter {
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: 8px 14px;
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 10px;
-  font-size: 22px;
-}
-
 .input {
-  border: 0px;
+  width: 100%;
+  box-sizing: border-box;
   padding: 8px 14px;
+  margin-bottom: 8px;
   background-color: rgba(0, 0, 0, 0.2);
+  border: 0;
   border-radius: 10px;
   font-size: 22px;
   outline: none;
+
+  font-family: inherit;
 
   white-space: pre;
 }

@@ -1,18 +1,18 @@
-import type { DataKey, EditorJSModel, ModelEvents } from '@editorjs/model';
+import { type DataKey, type EditorJSModel, IndexBuilder, type ModelEvents } from '@editorjs/model';
 import {
-  composeDataIndex,
+  createDataKey,
   EventAction,
   EventType,
   TextAddedEvent,
   TextRemovedEvent
 } from '@editorjs/model';
 import { InputType } from './types/InputType.js';
-import { CaretAdapter } from '../caret/CaretAdapter.js';
 import {
   getAbsoluteRangeOffset,
   getBoundaryPointByAbsoluteOffset,
   isNonTextInput
 } from '../utils/index.js';
+import type { CaretAdapter } from '../CaretAdapter/index.js';
 
 import { isNativeInput } from '@editorjs/dom';
 
@@ -33,33 +33,48 @@ export class BlockToolAdapter {
   #blockIndex: number;
 
   /**
+   * Caret adapter instance
+   *
+   * @private
+   */
+  #caretAdapter: CaretAdapter;
+
+  /**
    * BlockToolAdapter constructor
    *
    * @param model - EditorJSModel instance
+   * @param caretAdapter - CaretAdapter instance
    * @param blockIndex - index of the block that this adapter is connected to
    */
-  constructor(model: EditorJSModel, blockIndex: number) {
+  constructor(model: EditorJSModel, caretAdapter: CaretAdapter, blockIndex: number) {
     this.#model = model;
     this.#blockIndex = blockIndex;
+    this.#caretAdapter = caretAdapter;
   }
 
   /**
    * Attaches input to the model using key
    * It handles beforeinput events and updates model data
    *
-   * @param key - data key to attach input to
+   * @param keyRaw - tools data key to attach input to
    * @param input - input element
    */
-  public attachInput(key: DataKey, input: HTMLElement): void {
+  public attachInput(keyRaw: string, input: HTMLElement): void {
     if (input instanceof HTMLInputElement && isNonTextInput(input)) {
       throw new Error('Cannot attach non-text input');
     }
 
-    const caretAdapter = new CaretAdapter(input, this.#model, this.#blockIndex, key);
+    const key = createDataKey(keyRaw);
 
     input.addEventListener('beforeinput', event => this.#handleBeforeInputEvent(event, input, key));
 
-    this.#model.addEventListener(EventType.Changed, (event: ModelEvents) => this.#handleModelUpdate(event, input, key, caretAdapter));
+    this.#model.addEventListener(EventType.Changed, (event: ModelEvents) => this.#handleModelUpdate(event, input, key));
+
+    const builder = new IndexBuilder();
+
+    builder.addBlockIndex(this.#blockIndex).addDataKey(key);
+
+    this.#caretAdapter.attachInput(input, builder.build());
   }
 
   /**
@@ -141,14 +156,12 @@ export class BlockToolAdapter {
     let start: number;
     let end: number;
 
-    if (!isInputNative) {
+    if (isInputNative === false) {
       const targetRanges = event.getTargetRanges();
       const range = targetRanges[0];
 
-      start = getAbsoluteRangeOffset(input, range.startContainer,
-        range.startOffset);
-      end = getAbsoluteRangeOffset(input, range.endContainer,
-        range.endOffset);
+      start = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
+      end = getAbsoluteRangeOffset(input, range.endContainer, range.endOffset);
     } else {
       const currentElement = input as HTMLInputElement | HTMLTextAreaElement;
 
@@ -204,8 +217,8 @@ export class BlockToolAdapter {
       case InputType.DeleteSoftLineForward:
       case InputType.DeleteWordBackward:
       case InputType.DeleteWordForward: {
-        if (isInputNative) {
-          this.#handleDeleteInNativeInput(event, input, key);
+        if (isInputNative === true) {
+          this.#handleDeleteInNativeInput(event, input as HTMLInputElement | HTMLTextAreaElement, key);
         } else {
           this.#handleDeleteInContentEditable(event, input, key);
         }
@@ -228,7 +241,11 @@ export class BlockToolAdapter {
       return;
     }
 
-    const [, dataKey, blockIndex] = event.detail.index;
+    const { textRange, dataKey, blockIndex } = event.detail.index;
+
+    if (textRange === undefined) {
+      return;
+    }
 
     /**
      * Event is not related to the attached block
@@ -240,14 +257,18 @@ export class BlockToolAdapter {
     /**
      * Event is not related to the attached data key
      */
-    if (dataKey !== composeDataIndex(key)) {
+    if (dataKey !== key) {
       return;
     }
 
     const currentElement = input;
-    const [ [start, end] ] = event.detail.index;
+    const [start, end] = textRange;
 
     const action = event.detail.action;
+
+    const builder = new IndexBuilder();
+
+    builder.from(event.detail.index);
 
     switch (action) {
       case EventAction.Added: {
@@ -256,16 +277,21 @@ export class BlockToolAdapter {
 
         currentElement.value = prevValue.slice(0, start) + text + prevValue.slice(end - 1);
 
-        currentElement.setSelectionRange(start + text.length, start + text.length);
+        builder.addTextRange([start + text.length, start + text.length]);
+
         break;
       }
       case EventAction.Removed: {
         currentElement.value = currentElement.value.slice(0, start) +
           currentElement.value.slice(end);
-        currentElement.setSelectionRange(start, start);
+
+        builder.addTextRange([start, start]);
+
         break;
       }
     }
+
+    this.#caretAdapter.updateIndex(builder.build());
   };
 
   /**
@@ -274,33 +300,43 @@ export class BlockToolAdapter {
    * @param event - model update event
    * @param input - input element
    * @param key - data key input is attached to
-   * @param caretAdapter - caret adapter instance
    */
-  #handleModelUpdateForContentEditableElement(event: ModelEvents, input: HTMLElement, key: DataKey, caretAdapter: CaretAdapter): void {
+  #handleModelUpdateForContentEditableElement(event: ModelEvents, input: HTMLElement, key: DataKey): void {
     if (!(event instanceof TextAddedEvent) && !(event instanceof TextRemovedEvent)) {
       return;
     }
 
-    const [rangeIndex, dataIndex, blockIndex] = event.detail.index;
+    const { textRange, dataKey, blockIndex } = event.detail.index;
 
     if (blockIndex !== this.#blockIndex) {
       return;
     }
 
-    if (dataIndex !== composeDataIndex(key)) {
+    /**
+     * Event is not related to the attached data key
+     */
+    if (dataKey !== key) {
+      return;
+    }
+
+    if (textRange === undefined) {
       return;
     }
 
     const action = event.detail.action;
 
-    const start = rangeIndex[0];
-    const end = rangeIndex[1];
+    const start = textRange[0];
+    const end = textRange[1];
 
     const [startNode, startOffset] = getBoundaryPointByAbsoluteOffset(input, start);
     const [endNode, endOffset] = getBoundaryPointByAbsoluteOffset(input, end);
     const range = new Range();
 
     range.setStart(startNode, startOffset);
+
+    const builder = new IndexBuilder();
+
+    builder.addDataKey(key).addBlockIndex(this.#blockIndex);
 
     switch (action) {
       case EventAction.Added: {
@@ -309,7 +345,7 @@ export class BlockToolAdapter {
 
         range.insertNode(textNode);
 
-        caretAdapter.updateIndex([start + text.length, start + text.length]);
+        builder.addTextRange([start + text.length, start + text.length]);
 
         break;
       }
@@ -318,13 +354,15 @@ export class BlockToolAdapter {
 
         range.deleteContents();
 
-        caretAdapter.updateIndex([start, start]);
+        builder.addTextRange([start, start]);
 
         break;
       }
     }
 
     input.normalize();
+
+    this.#caretAdapter.updateIndex(builder.build());
   };
 
   /**
@@ -333,15 +371,14 @@ export class BlockToolAdapter {
    * @param event - model update event
    * @param input - attched input element
    * @param key - data key input is attached to
-   * @param caretAdapter - caret adapter instance
    */
-  #handleModelUpdate(event: ModelEvents, input: HTMLElement, key: DataKey, caretAdapter: CaretAdapter): void {
+  #handleModelUpdate(event: ModelEvents, input: HTMLElement, key: DataKey): void {
     const isInputNative = isNativeInput(input);
 
-    if (isInputNative) {
+    if (isInputNative === true) {
       this.#handleModelUpdateForNativeInput(event, input as HTMLInputElement | HTMLTextAreaElement, key);
     } else {
-      this.#handleModelUpdateForContentEditableElement(event, input, key, caretAdapter);
+      this.#handleModelUpdateForContentEditableElement(event, input, key);
     }
   };
 }

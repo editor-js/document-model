@@ -1,3 +1,4 @@
+import { IndexBuilder } from '../Index/IndexBuilder.js';
 import { EditorDocument } from './index.js';
 import type { BlockToolName, DataKey } from '../BlockNode';
 import { BlockNode } from '../BlockNode/index.js';
@@ -20,17 +21,21 @@ jest.mock('../BlockNode');
 function createEditorDocumentWithSomeBlocks(): EditorDocument {
   const countOfBlocks = 3;
 
-  return new EditorDocument({
+  const doc = new EditorDocument({
     properties: {
       readOnly: false,
     },
-    blocks:
-      new Array(countOfBlocks).fill(undefined)
-        .map(() => ({
-          name: 'header' as BlockToolName,
-          data: {},
-        })),
   });
+
+  const blocks = new Array(countOfBlocks).fill(undefined)
+    .map(() => ({
+      name: 'header' as BlockToolName,
+      data: {},
+    }));
+
+  doc.initialize(blocks);
+
+  return doc;
 }
 
 describe('EditorDocument', () => {
@@ -230,7 +235,7 @@ describe('EditorDocument', () => {
       expect(event).toBeInstanceOf(BlockAddedEvent);
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Added,
-        index: [ index ],
+        index: expect.objectContaining({ blockIndex: index }),
         data: blockData,
       }));
     });
@@ -338,7 +343,7 @@ describe('EditorDocument', () => {
       const document = createEditorDocumentWithSomeBlocks();
       const index = 1;
 
-      const blockData  = {
+      const blockData = {
         name: 'header' as BlockToolName,
         data: {
           level: 1,
@@ -355,7 +360,7 @@ describe('EditorDocument', () => {
       expect(event).toBeInstanceOf(BlockRemovedEvent);
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Removed,
-        index: [ index ],
+        index: expect.objectContaining({ blockIndex: index }),
         data: blockData,
       }));
     });
@@ -499,7 +504,7 @@ describe('EditorDocument', () => {
       expect(event).toBeInstanceOf(PropertyModifiedEvent);
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Modified,
-        index: [propertyName, 'property'],
+        index: expect.objectContaining({ propertyName: propertyName }),
         data: {
           value,
           previous,
@@ -528,9 +533,9 @@ describe('EditorDocument', () => {
           data: {},
         },
       ];
-      const document = new EditorDocument({
-        blocks: blocksData,
-      });
+      const document = new EditorDocument();
+
+      document.initialize(blocksData);
 
       blocksData.forEach((_, i) => {
         const blockNode = document.getBlock(i);
@@ -567,9 +572,9 @@ describe('EditorDocument', () => {
           data: {},
         },
       ];
-      const document = new EditorDocument({
-        blocks: blocksData,
-      });
+      const document = new EditorDocument();
+
+      document.initialize(blocksData);
 
       const blockNodes = blocksData.map((_, i) => {
         const blockNode = document.getBlock(i);
@@ -633,9 +638,9 @@ describe('EditorDocument', () => {
           data: {},
         },
       ];
-      const document = new EditorDocument({
-        blocks: blocksData,
-      });
+      const document = new EditorDocument();
+
+      document.initialize(blocksData);
 
       blocksData.forEach((_, i) => {
         const blockNode = document.getBlock(i);
@@ -674,9 +679,9 @@ describe('EditorDocument', () => {
           data: {},
         },
       ];
-      const document = new EditorDocument({
-        blocks: blocksData,
-      });
+      const document = new EditorDocument();
+
+      document.initialize(blocksData);
 
       const blockNodes = blocksData.map((_, i) => {
         const blockNode = document.getBlock(i);
@@ -737,9 +742,9 @@ describe('EditorDocument', () => {
         data: {},
       };
 
-      document = new EditorDocument({
-        blocks: [ blockData ],
-      });
+      document = new EditorDocument();
+
+      document.initialize([ blockData ]);
 
       block = document.getBlock(0);
     });
@@ -781,9 +786,9 @@ describe('EditorDocument', () => {
         data: {},
       };
 
-      document = new EditorDocument({
-        blocks: [ blockData ],
-      });
+      document = new EditorDocument();
+
+      document.initialize([ blockData ]);
 
       block = document.getBlock(0);
     });
@@ -839,9 +844,9 @@ describe('EditorDocument', () => {
         data: {},
       };
 
-      document = new EditorDocument({
-        blocks: [ blockData ],
-      });
+      document = new EditorDocument();
+
+      document.initialize([ blockData ]);
 
       block = document.getBlock(0);
     });
@@ -886,9 +891,9 @@ describe('EditorDocument', () => {
         data: {},
       };
 
-      document = new EditorDocument({
-        blocks: [ blockData ],
-      });
+      document = new EditorDocument();
+
+      document.initialize([ blockData ]);
 
       block = document.getBlock(0);
     });
@@ -953,9 +958,13 @@ describe('EditorDocument', () => {
 
       document.addEventListener(EventType.Changed, handler);
 
+      const builder = new IndexBuilder();
+
+      builder.addTuneKey('value').addTuneName('tune' as BlockTuneName);
+
       blockNode.dispatchEvent(
         new TuneModifiedEvent(
-          ['value', `tune@${'tune' as BlockTuneName}`],
+          builder.build(),
           {
             value: 'value',
             previous: 'previous',
@@ -975,9 +984,13 @@ describe('EditorDocument', () => {
 
       document.addEventListener(EventType.Changed, handler);
 
+      const builder = new IndexBuilder();
+
+      builder.addTuneKey('value').addTuneName('tune' as BlockTuneName);
+
       blockNode.dispatchEvent(
         new TuneModifiedEvent(
-          ['value', `tune@${'tune' as BlockTuneName}`],
+          builder.build(),
           {
             value: 'value',
             previous: 'previous',
@@ -986,8 +999,10 @@ describe('EditorDocument', () => {
       );
 
       expect(event)
-        .toHaveProperty('detail', expect.objectContaining({
-          index: ['value', `tune@${'tune' as BlockTuneName}`, index],
+        .toHaveProperty('detail.index', expect.objectContaining({
+          tuneKey: 'value',
+          tuneName: 'tune',
+          blockIndex: index,
         }));
     });
 

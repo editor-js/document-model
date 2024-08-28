@@ -1,5 +1,6 @@
 import type { DataKey } from '../BlockNode';
 import { BlockNode } from '../BlockNode/index.js';
+import { IndexBuilder } from '../Index/IndexBuilder.js';
 import type { EditorDocumentSerialized, EditorDocumentConstructorParameters, Properties } from './types';
 import type { BlockTuneName } from '../BlockTune';
 import type { InlineFragment, InlineToolData, InlineToolName } from '../inline-fragments';
@@ -40,13 +41,13 @@ export class EditorDocument extends EventBus {
   /**
    * Constructor for EditorDocument class.
    *
+   * To fill the document with blocks, use the `initialize` method.
+   *
    * @param [args] - EditorDocument constructor arguments.
-   * @param [args.blocks] - List of blocks to initialize the document with.
    * @param [args.properties] - The properties of the document.
    * @param [args.toolsRegistry] - ToolsRegistry instance for the current document. Defaults to a new ToolsRegistry instance.
    */
   constructor({
-    blocks = [],
     properties = {},
     toolsRegistry = new ToolsRegistry(),
   }: EditorDocumentConstructorParameters = {}) {
@@ -57,8 +58,17 @@ export class EditorDocument extends EventBus {
     const container = IoCContainer.of(this);
 
     container.set(TOOLS_REGISTRY, toolsRegistry);
+  }
 
-    this.#initialize(blocks);
+  /**
+   * Initializes EditorDocument with passed blocks
+   *
+   * @param blocks - document serialized blocks
+   */
+  public initialize(blocks: BlockNodeSerialized[]): void {
+    blocks.forEach((block) => {
+      this.addBlock(block);
+    });
   }
 
   /**
@@ -102,7 +112,11 @@ export class EditorDocument extends EventBus {
 
     this.#listenAndBubbleBlockEvent(blockNode, index);
 
-    this.dispatchEvent(new BlockAddedEvent([ index ], blockNode.serialized));
+    const builder = new IndexBuilder();
+
+    builder.addBlockIndex(index);
+
+    this.dispatchEvent(new BlockAddedEvent(builder.build(), blockNode.serialized));
   }
 
   /**
@@ -132,7 +146,11 @@ export class EditorDocument extends EventBus {
 
     const [ blockNode ] = this.#children.splice(index, 1);
 
-    this.dispatchEvent(new BlockRemovedEvent([ index ], blockNode.serialized));
+    const builder = new IndexBuilder();
+
+    builder.addBlockIndex(index);
+
+    this.dispatchEvent(new BlockRemovedEvent(builder.build(), blockNode.serialized));
   }
 
   /**
@@ -177,9 +195,13 @@ export class EditorDocument extends EventBus {
 
     this.#properties[name] = value;
 
+    const builder = new IndexBuilder();
+
+    builder.addPropertyName(name);
+
     this.dispatchEvent(
       new PropertyModifiedEvent(
-        [name, 'property'],
+        builder.build(),
         {
           value,
           previous: previousValue,
@@ -316,23 +338,16 @@ export class EditorDocument extends EventBus {
         return;
       }
 
+      const builder = new IndexBuilder();
+
+      builder.from(event.detail.index).addBlockIndex(index);
+
       this.dispatchEvent(
         new (event.constructor as Constructor<TextNodeEvents | ValueNodeEvents | BlockTuneEvents>)(
-          [...event.detail.index, index],
+          builder.build(),
           event.detail.data
         )
       );
-    });
-  }
-
-  /**
-   * Initializes EditorDocument with passed blocks
-   *
-   * @param blocks - document serialized blocks
-   */
-  #initialize(blocks: BlockNodeSerialized[]): void {
-    blocks.forEach((block) => {
-      this.addBlock(block);
     });
   }
 

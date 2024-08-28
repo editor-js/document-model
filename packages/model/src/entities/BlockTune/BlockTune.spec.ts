@@ -72,7 +72,7 @@ describe('BlockTune', () => {
       expect(event).toBeInstanceOf(TuneModifiedEvent);
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Modified,
-        index: [ name ],
+        index: expect.objectContaining({ tuneKey: name }),
         data: {
           value: updatedValue,
           previous: value,
