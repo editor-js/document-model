@@ -168,5 +168,46 @@ describe('CollaborationManager', () => {
         properties: {},
       });
     });
+
+    it('should properly handle double undo', () => {
+      const model = new EditorJSModel({
+        blocks: [{
+          name: 'paragraph',
+          data: {
+            text: {
+              value: '',
+              $t: 't',
+            },
+          },
+        }],
+      });
+      const collaborationManager = new CollaborationManager(model);
+      const index = new IndexBuilder().addBlockIndex(0)
+        .addDataKey(createDataKey('text'))
+        .addTextRange([0, 4])
+        .build();
+      const operation = new Operation(OperationType.Insert, index, {
+        prevValue: '',
+        newValue: 'test',
+      });
+
+      collaborationManager.applyOperation(operation);
+      collaborationManager.undo();
+      collaborationManager.undo();
+      expect(model.serialized).toStrictEqual({
+        blocks: [{
+          name: 'paragraph',
+          tunes: {},
+          data: {
+            text: {
+              $t: 't',
+              value: '',
+              fragments: [],
+            },
+          },
+        }],
+        properties: {},
+      });
+    });
   })
 });

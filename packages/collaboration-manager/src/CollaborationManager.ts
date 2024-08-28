@@ -24,6 +24,12 @@ export class CollaborationManager {
 
 
   /**
+   * Flag to control whether events should be handled
+   */
+  #shouldHandleEvents = true;
+
+
+  /**
    * Creates an instance of CollaborationManager
    *
    * @param model - EditorJSModel instance to listen to and apply operations
@@ -42,10 +48,17 @@ export class CollaborationManager {
     if (operation === undefined) {
       return;
     }
+
+    // Disable event handling
+    this.#shouldHandleEvents = false;
+
     const inversedOperation = Transformer.inverse(operation);
 
     this.applyOperation(inversedOperation);
     this.#redoStack.push(operation);
+
+    // Re-enable event handling
+    this.#shouldHandleEvents = true;
   }
 
   /**
@@ -58,8 +71,14 @@ export class CollaborationManager {
       return;
     }
 
+    // Disable event handling
+    this.#shouldHandleEvents = false;
+
     this.applyOperation(operation);
     this.#undoStack.push(operation);
+
+    // Re-enable event handling
+    this.#shouldHandleEvents = true;
   }
 
   /**
@@ -88,8 +107,6 @@ export class CollaborationManager {
       default:
         throw new Error('Unknown operation type');
     }
-    this.#undoStack.push(operation);
-    this.#redoStack = [];
   }
 
   /**
@@ -98,6 +115,9 @@ export class CollaborationManager {
    * @param e - event to handle
    */
   #handleEvent(e: ModelEvents): void {
+    if (!this.#shouldHandleEvents) {
+      return;
+    }
     let operation: Operation | null = null;
 
     switch (true) {
@@ -116,6 +136,10 @@ export class CollaborationManager {
       default:
         console.error('Unknown event type', e);
     }
-    console.log('operation', operation);
+
+    if (operation !== null) {
+      this.#undoStack.push(operation);
+      this.#redoStack = [];
+    }
   }
 }
