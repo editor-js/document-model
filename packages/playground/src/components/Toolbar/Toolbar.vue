@@ -15,15 +15,15 @@ defineProps<{
 </script>
 
 <template>
-  <div 
-    v-if="show.value === true" 
+  <div
+    v-if="show.value === true"
     :class="$style['toolbar']"
   >
-    <button 
+    <button
       v-for="(tool) in tools"
       @click="toolbar.apply(tool)"
     >
-    {{ tool.name }}
+      {{ tool.name }}
     </button>
   </div>
 </template>

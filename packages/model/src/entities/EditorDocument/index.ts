@@ -22,7 +22,7 @@ import {
 } from '../../EventBus/events/index.js';
 import type { Constructor } from '../../utils/types.js';
 import { BaseDocumentEvent } from '../../EventBus/events/BaseEvent.js';
-import { IntersectType } from '../inline-fragments/FormattingInlineNode/types/IntersectType';
+import type { IntersectType } from '../inline-fragments/FormattingInlineNode/types/IntersectType';
 
 /**
  * EditorDocument class represents the top-level container for a tree-like structure of BlockNodes in an editor document.
@@ -266,6 +266,7 @@ export class EditorDocument extends EventBus {
    * @param start - start char index of the range
    * @param end - end char index of the range
    * @param [data] - Inline Tool data if applicable
+   * @param intersectType
    */
   public format(blockIndex: number, dataKey: DataKey, tool: InlineToolName, start: number, end: number, data?: InlineToolData, intersectType?: IntersectType): void {
     this.#checkIndexOutOfBounds(blockIndex, this.length - 1);

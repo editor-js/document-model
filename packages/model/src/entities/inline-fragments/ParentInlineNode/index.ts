@@ -12,7 +12,7 @@ import {
   TextFormattedEvent,
   TextUnformattedEvent
 } from '../../../EventBus/events/index.js';
-import { IntersectType } from '../FormattingInlineNode/types/IntersectType';
+import type { IntersectType } from '../FormattingInlineNode/types/IntersectType';
 
 /**
  * We need to extend ParentInlineNode interface with ParentNode ones to use the methods from mixins
@@ -182,6 +182,7 @@ export class ParentInlineNode extends EventBus implements InlineNode {
    * @param start - char start index of the range
    * @param end - char end index of the range
    * @param [data] - inline tool data if applicable
+   * @param intersectType
    */
   public format(tool: InlineToolName, start: number, end: number, data?: InlineToolData, intersectType?: IntersectType): InlineNode[] {
     this.validateRange(start, end);

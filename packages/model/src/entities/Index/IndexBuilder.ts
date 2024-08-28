@@ -120,7 +120,7 @@ export class IndexBuilder {
     }
 
     this.#index = indexOrJSON.clone();
-    
+
     return this;
   }
 }

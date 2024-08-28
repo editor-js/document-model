@@ -2,10 +2,10 @@
 import CaretIndex from '@/components/CaretIndex.vue';
 import { BlockToolAdapter, CaretAdapter, InlineTool, InlineToolAdapter } from '@editorjs/dom-adapters';
 // import { NodeInput } from './components';
-import { createDataKey, createInlineToolName, EditorDocument, EditorJSModel,EventType,/* EventType, */ InlineFragment, TextRange } from '@editorjs/model';
+import { createDataKey, createInlineToolName, EditorDocument, EditorJSModel, EventType, /* EventType, */ InlineFragment, TextRange } from '@editorjs/model';
 // import { data } from '@editorjs/model/dist/mocks/data.js';
 import { ref } from 'vue';
-import { make } from '@editorjs/dom'; 
+import { make } from '@editorjs/dom';
 import { FormattingAction, IntersectType } from '@editorjs/model/src/entities';
 import { Input, Toolbar } from './components';
 import { InlineToolbar } from './components/Toolbar';
@@ -18,6 +18,7 @@ const italicTool = {
   intersectType: IntersectType.Extend,
   getAction(range: TextRange, fragments: InlineFragment[]) {
     const action = fragments.length === 0 ? FormattingAction.Format : FormattingAction.Unformat;
+
     return {
       action,
       range,
@@ -33,6 +34,7 @@ const boldTool = {
   intersectType: IntersectType.Extend,
   getAction(range: TextRange, fragments: InlineFragment[]) {
     const action = fragments.length === 0 ? FormattingAction.Format : FormattingAction.Unformat;
+
     return {
       action,
       range,
@@ -40,7 +42,7 @@ const boldTool = {
   },
 } satisfies InlineTool;
 
-const tools: InlineTool[] = [ italicTool, boldTool ];
+const tools: InlineTool[] = [italicTool, boldTool];
 
 /**
  * Every instance here will be created by Editor.js core
@@ -76,7 +78,7 @@ const caretAdapter = new CaretAdapter(window.document.body, model);
  */
 const blockToolAdapter = new BlockToolAdapter(model, caretAdapter, 0);
 const anotherBlockToolAdapter = new BlockToolAdapter(model, caretAdapter, 1);
-const inlineToolAdapter = new InlineToolAdapter(model, caretAdapter)
+const inlineToolAdapter = new InlineToolAdapter(model, caretAdapter);
 
 const serialized = ref(model.serialized);
 
@@ -121,7 +123,7 @@ const inlineToolbar = new InlineToolbar(model, caretAdapter, inlineToolAdapter, 
         name="text2"
         value="This is textarea element"
       />
-      <Toolbar 
+      <Toolbar
         :show="inlineToolbar.show"
         :tools="tools"
         :toolbar="inlineToolbar"

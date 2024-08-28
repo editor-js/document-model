@@ -87,7 +87,7 @@ export class Index {
    */
   public clone(): Index {
     const index = new Index();
-  
+
     index.textRange = this.textRange;
     index.dataKey = this.dataKey;
     index.tuneName = this.tuneName;
@@ -95,7 +95,7 @@ export class Index {
     index.blockIndex = this.blockIndex;
     index.propertyName = this.propertyName;
     index.documentId = this.documentId;
-  
+
     return index;
   }
 

@@ -1,35 +1,46 @@
-import {
-  DataKey,
+import type {
   EditorJSModel,
-  EventType,
   InlineFragment,
   InlineToolData,
   InlineToolName,
   ModelEvents,
   TextRange
 } from '@editorjs/model';
+import {
+  DataKey,
+  EventType
+} from '@editorjs/model';
 import type { CaretAdapter } from '../CaretAdapter/index.js';
-import { IntersectType, FormattingAction } from '@editorjs/model/src/entities/inline-fragments/FormattingInlineNode/types';
+import type { IntersectType } from '@editorjs/model/src/entities/inline-fragments/FormattingInlineNode/types';
+import { FormattingAction } from '@editorjs/model/src/entities/inline-fragments/FormattingInlineNode/types';
 // import { intersectionExists } from '../utils/intersectExists.js';
 // import { mergeTextRanges } from '../utils/mergeTextRanges.js';
 
 export interface InlineTool {
   name: InlineToolName;
-  intersectType: IntersectType, 
+  intersectType: IntersectType,
   create(data?: InlineToolData): HTMLElement;
   getAction(index: TextRange, fragments: InlineFragment[], intersectType: IntersectType, data?: InlineToolData): { action: FormattingAction; range: TextRange };
 }
 
+/**
+ *
+ */
 export class InlineToolAdapter {
   #model: EditorJSModel;
 
   #tools: Map<InlineToolName, InlineTool> = new Map();
-  
+
   /**
    * Caret adapter instance for the input
    */
   #caretAdapter: CaretAdapter;
 
+  /**
+   *
+   * @param model
+   * @param caretAdapter
+   */
   constructor(model: EditorJSModel, caretAdapter: CaretAdapter) {
     this.#model = model;
     this.#caretAdapter = caretAdapter;
@@ -37,14 +48,18 @@ export class InlineToolAdapter {
     this.#model.addEventListener(EventType.Changed, (event: ModelEvents) => this.#handleModelUpdates(event));
   }
 
-  #handleModelUpdates(event: ModelEvents/*, input: HTMLElement, key: DataKey */): void {
+  /**
+   *
+   * @param event
+   */
+  #handleModelUpdates(event: ModelEvents/* , input: HTMLElement, key: DataKey */): void {
     console.log('model changed event', event);
   }
 
   /**
    * Attaches InlineTool to the adapter
    *
-   * @param tool - tool to attach  
+   * @param tool - tool to attach
    */
   public attachTool(tool: InlineTool): void {
     this.#tools.set(tool.name, tool);
@@ -59,6 +74,12 @@ export class InlineToolAdapter {
     this.#tools.delete(tool.name);
   }
 
+  /**
+   *
+   * @param toolName
+   * @param data
+   * @param intersectType
+   */
   public applyFormat(toolName: InlineToolName, data: InlineToolData, intersectType: IntersectType): void {
     const index = this.#caretAdapter.userCaretIndex;
 
@@ -98,7 +119,7 @@ export class InlineToolAdapter {
       //      */
       //     if (intersectionExists(fragment.range, [start, end])) {
       //       /**
-      //        * Update start and end of the 
+      //        * Update start and end of the
       //        */
       //       [ start, end ] = mergeTextRanges(fragment.range, [start, end]);
       //     };
