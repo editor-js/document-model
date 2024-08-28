@@ -552,7 +552,7 @@ describe('BlockNode', () => {
       expect(() => {
         blockNode.updateValue(dataKey, value);
       })
-        .toThrowError(`BlockNode: data with key ${dataKey} does not exist`);
+        .toThrowError(`BlockNode: data with key "${dataKey}" does not exist`);
     });
 
     it('should throw an error if the ValueNode with the passed dataKey is not a ValueNode', () => {
@@ -570,7 +570,7 @@ describe('BlockNode', () => {
       expect(() => {
         blockNode.updateValue(dataKey, value);
       })
-        .toThrowError(`BlockNode: data with key ${dataKey} is not a ValueNode`);
+        .toThrowError(`BlockNode: data with key "${dataKey}" is not a ValueNode`);
     });
   });
 
