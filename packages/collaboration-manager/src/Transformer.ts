@@ -1,12 +1,13 @@
 import { Operation, OperationType } from './Operation.js';
 
 /**
- *
+ * Utility class to transform operations
  */
 export class Transformer {
   /**
+   * Makes an inverse operation
    *
-   * @param operation
+   * @param operation - operation to inverse
    */
   public static inverse(operation: Operation): Operation {
     switch (operation.type) {

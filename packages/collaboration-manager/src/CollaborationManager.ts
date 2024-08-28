@@ -42,7 +42,7 @@ export class CollaborationManager {
   /**
    * Undo last operation in the local stack
    */
-  public undo() {
+  public undo(): void {
     const operation = this.#undoStack.pop();
 
     if (operation === undefined) {
@@ -64,7 +64,7 @@ export class CollaborationManager {
   /**
    * Redo last undone operation in the local stack
    */
-  public redo() {
+  public redo(): void {
     const operation = this.#redoStack.pop();
 
     if (operation === undefined) {

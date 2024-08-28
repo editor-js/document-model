@@ -8,7 +8,7 @@ describe('CollaborationManager', () => {
   describe('applyOperation', () => {
     it('should add text on apply Insert Operation', () => {
       const model = new EditorJSModel({
-        blocks: [{
+        blocks: [ {
           name: 'paragraph',
           data: {
             text: {
@@ -16,7 +16,7 @@ describe('CollaborationManager', () => {
               $t: 't',
             },
           },
-        }],
+        } ],
       });
       const collaborationManager = new CollaborationManager(model);
       const index = new IndexBuilder().addBlockIndex(0)
@@ -30,7 +30,7 @@ describe('CollaborationManager', () => {
 
       collaborationManager.applyOperation(operation);
       expect(model.serialized).toStrictEqual({
-        blocks: [{
+        blocks: [ {
           name: 'paragraph',
           tunes: {},
           data: {
@@ -40,7 +40,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        }],
+        } ],
         properties: {},
       });
     });
@@ -48,7 +48,7 @@ describe('CollaborationManager', () => {
 
     it('should remove text on apply Remove Operation', () => {
       const model = new EditorJSModel({
-        blocks: [{
+        blocks: [ {
           name: 'paragraph',
           data: {
             text: {
@@ -56,7 +56,7 @@ describe('CollaborationManager', () => {
               $t: 't',
             },
           },
-        }],
+        } ],
       });
       const collaborationManager = new CollaborationManager(model);
       const index = new IndexBuilder().addBlockIndex(0)
@@ -71,7 +71,7 @@ describe('CollaborationManager', () => {
 
       collaborationManager.applyOperation(operation);
       expect(model.serialized).toStrictEqual({
-        blocks: [{
+        blocks: [ {
           name: 'paragraph',
           tunes: {},
           data: {
@@ -81,7 +81,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        }],
+        } ],
         properties: {},
       });
     });
@@ -90,7 +90,7 @@ describe('CollaborationManager', () => {
   describe('undo logic', () => {
     it('should invert Insert operation', () => {
       const model = new EditorJSModel({
-        blocks: [{
+        blocks: [ {
           name: 'paragraph',
           data: {
             text: {
@@ -98,7 +98,7 @@ describe('CollaborationManager', () => {
               $t: 't',
             },
           },
-        }],
+        } ],
       });
       const collaborationManager = new CollaborationManager(model);
       const index = new IndexBuilder().addBlockIndex(0)
@@ -113,7 +113,7 @@ describe('CollaborationManager', () => {
       collaborationManager.applyOperation(operation);
       collaborationManager.undo();
       expect(model.serialized).toStrictEqual({
-        blocks: [{
+        blocks: [ {
           name: 'paragraph',
           tunes: {},
           data: {
@@ -123,14 +123,14 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        }],
+        } ],
         properties: {},
       });
     });
 
     it('should invert Remove operation', () => {
       const model = new EditorJSModel({
-        blocks: [{
+        blocks: [ {
           name: 'paragraph',
           data: {
             text: {
@@ -138,7 +138,7 @@ describe('CollaborationManager', () => {
               $t: 't',
             },
           },
-        }],
+        } ],
       });
       const collaborationManager = new CollaborationManager(model);
       const index = new IndexBuilder().addBlockIndex(0)
@@ -154,7 +154,7 @@ describe('CollaborationManager', () => {
       collaborationManager.applyOperation(operation);
       collaborationManager.undo();
       expect(model.serialized).toStrictEqual({
-        blocks: [{
+        blocks: [ {
           name: 'paragraph',
           tunes: {},
           data: {
@@ -164,14 +164,14 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        }],
+        } ],
         properties: {},
       });
     });
 
     it('should properly handle double undo', () => {
       const model = new EditorJSModel({
-        blocks: [{
+        blocks: [ {
           name: 'paragraph',
           data: {
             text: {
@@ -179,7 +179,7 @@ describe('CollaborationManager', () => {
               $t: 't',
             },
           },
-        }],
+        } ],
       });
       const collaborationManager = new CollaborationManager(model);
       const index = new IndexBuilder().addBlockIndex(0)
@@ -195,7 +195,7 @@ describe('CollaborationManager', () => {
       collaborationManager.undo();
       collaborationManager.undo();
       expect(model.serialized).toStrictEqual({
-        blocks: [{
+        blocks: [ {
           name: 'paragraph',
           tunes: {},
           data: {
@@ -205,14 +205,14 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        }],
+        } ],
         properties: {},
       });
     });
 
     it('should properly handle redo after undo', () => {
       const model = new EditorJSModel({
-        blocks: [{
+        blocks: [ {
           name: 'paragraph',
           data: {
             text: {
@@ -220,7 +220,7 @@ describe('CollaborationManager', () => {
               $t: 't',
             },
           },
-        }],
+        } ],
       });
       const collaborationManager = new CollaborationManager(model);
       const index = new IndexBuilder().addBlockIndex(0)
@@ -237,7 +237,7 @@ describe('CollaborationManager', () => {
       collaborationManager.redo();
 
       expect(model.serialized).toStrictEqual({
-        blocks: [{
+        blocks: [ {
           name: 'paragraph',
           tunes: {},
           data: {
@@ -247,9 +247,9 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        }],
+        } ],
         properties: {},
       });
     });
-  })
+  });
 });
