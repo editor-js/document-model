@@ -1,4 +1,4 @@
-import type { Index } from '../../EventBus/index.js';
+import type { Index } from '../../entities/Index/index.js';
 import type { CaretSerialized, CaretEvent } from './types.js';
 import { CaretUpdatedEvent } from './types.js';
 import { EventBus } from '../../EventBus/index.js';
@@ -71,6 +71,10 @@ export class Caret extends EventBus {
    * @param index - new caret index
    */
   public update(index: Index): void {
+    if (this.#index?.serialize() === index.serialize()) {
+      return;
+    }
+
     this.#index = index;
 
     this.dispatchEvent(new CaretUpdatedEvent(this));
@@ -82,7 +86,7 @@ export class Caret extends EventBus {
   public toJSON(): CaretSerialized {
     return {
       id: this.id,
-      index: this.index,
+      index: this.index?.serialize(),
     } as CaretSerialized;
   }
 }

@@ -1,5 +1,6 @@
 import type { DataKey } from '../BlockNode';
 import { BlockNode } from '../BlockNode/index.js';
+import { IndexBuilder } from '../Index/IndexBuilder.js';
 import type { EditorDocumentSerialized, EditorDocumentConstructorParameters, Properties } from './types';
 import type { BlockTuneName } from '../BlockTune';
 import type { InlineFragment, InlineToolData, InlineToolName } from '../inline-fragments';
@@ -111,7 +112,11 @@ export class EditorDocument extends EventBus {
 
     this.#listenAndBubbleBlockEvent(blockNode, index);
 
-    this.dispatchEvent(new BlockAddedEvent([ index ], blockNode.serialized));
+    const builder = new IndexBuilder();
+
+    builder.addBlockIndex(index);
+
+    this.dispatchEvent(new BlockAddedEvent(builder.build(), blockNode.serialized));
   }
 
   /**
@@ -141,7 +146,11 @@ export class EditorDocument extends EventBus {
 
     const [ blockNode ] = this.#children.splice(index, 1);
 
-    this.dispatchEvent(new BlockRemovedEvent([ index ], blockNode.serialized));
+    const builder = new IndexBuilder();
+
+    builder.addBlockIndex(index);
+
+    this.dispatchEvent(new BlockRemovedEvent(builder.build(), blockNode.serialized));
   }
 
   /**
@@ -186,9 +195,13 @@ export class EditorDocument extends EventBus {
 
     this.#properties[name] = value;
 
+    const builder = new IndexBuilder();
+
+    builder.addPropertyName(name);
+
     this.dispatchEvent(
       new PropertyModifiedEvent(
-        [name, 'property'],
+        builder.build(),
         {
           value,
           previous: previousValue,
@@ -325,9 +338,13 @@ export class EditorDocument extends EventBus {
         return;
       }
 
+      const builder = new IndexBuilder();
+
+      builder.from(event.detail.index).addBlockIndex(index);
+
       this.dispatchEvent(
         new (event.constructor as Constructor<TextNodeEvents | ValueNodeEvents | BlockTuneEvents>)(
-          [...event.detail.index, index],
+          builder.build(),
           event.detail.data
         )
       );

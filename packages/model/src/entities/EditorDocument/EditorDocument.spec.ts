@@ -1,3 +1,4 @@
+import { IndexBuilder } from '../Index/IndexBuilder.js';
 import { EditorDocument } from './index.js';
 import type { BlockToolName, DataKey } from '../BlockNode';
 import { BlockNode } from '../BlockNode/index.js';
@@ -230,7 +231,7 @@ describe('EditorDocument', () => {
       expect(event).toBeInstanceOf(BlockAddedEvent);
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Added,
-        index: [ index ],
+        index: expect.objectContaining({ blockIndex: index }),
         data: blockData,
       }));
     });
@@ -338,7 +339,7 @@ describe('EditorDocument', () => {
       const document = createEditorDocumentWithSomeBlocks();
       const index = 1;
 
-      const blockData  = {
+      const blockData = {
         name: 'header' as BlockToolName,
         data: {
           level: 1,
@@ -355,7 +356,7 @@ describe('EditorDocument', () => {
       expect(event).toBeInstanceOf(BlockRemovedEvent);
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Removed,
-        index: [ index ],
+        index: expect.objectContaining({ blockIndex: index }),
         data: blockData,
       }));
     });
@@ -499,7 +500,7 @@ describe('EditorDocument', () => {
       expect(event).toBeInstanceOf(PropertyModifiedEvent);
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Modified,
-        index: [propertyName, 'property'],
+        index: expect.objectContaining({ propertyName: propertyName }),
         data: {
           value,
           previous,
@@ -953,9 +954,13 @@ describe('EditorDocument', () => {
 
       document.addEventListener(EventType.Changed, handler);
 
+      const builder = new IndexBuilder();
+
+      builder.addTuneKey('value').addTuneName('tune' as BlockTuneName);
+
       blockNode.dispatchEvent(
         new TuneModifiedEvent(
-          ['value', `tune@${'tune' as BlockTuneName}`],
+          builder.build(),
           {
             value: 'value',
             previous: 'previous',
@@ -975,9 +980,13 @@ describe('EditorDocument', () => {
 
       document.addEventListener(EventType.Changed, handler);
 
+      const builder = new IndexBuilder();
+
+      builder.addTuneKey('value').addTuneName('tune' as BlockTuneName);
+
       blockNode.dispatchEvent(
         new TuneModifiedEvent(
-          ['value', `tune@${'tune' as BlockTuneName}`],
+          builder.build(),
           {
             value: 'value',
             previous: 'previous',
@@ -986,8 +995,10 @@ describe('EditorDocument', () => {
       );
 
       expect(event)
-        .toHaveProperty('detail', expect.objectContaining({
-          index: ['value', `tune@${'tune' as BlockTuneName}`, index],
+        .toHaveProperty('detail.index', expect.objectContaining({
+          tuneKey: 'value',
+          tuneName: 'tune',
+          blockIndex: index,
         }));
     });
 
