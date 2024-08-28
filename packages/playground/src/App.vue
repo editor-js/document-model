@@ -11,8 +11,9 @@ import { Input, Node } from './components';
  * Every instance here will be created by Editor.js core
  */
 const model = new EditorJSModel();
+
 model.initializeDocument({
-  blocks: [ 
+  blocks: [
     {
       name: 'paragraph',
       data: {
@@ -34,7 +35,7 @@ model.initializeDocument({
           $t: 't',
         },
       },
-    } 
+    },
   ],
 });
 const eDocument = ref(new EditorDocument(model.serialized));
@@ -62,7 +63,7 @@ onMounted(() => {
           text: 'Hello, World!',
         },
       } ],
-    } 
+    },
   });
 });
 
@@ -107,7 +108,10 @@ onMounted(() => {
           :node="eDocument"
         />
       </div>
-      <div id="editorjs" :class="$style.editor"></div>
+      <div
+        id="editorjs"
+        :class="$style.editor"
+      />
     </div>
   </div>
 </template>

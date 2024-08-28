@@ -40,7 +40,7 @@ export class EditorDocument extends EventBus {
 
   /**
    * Constructor for EditorDocument class.
-   * 
+   *
    * To fill the document with blocks, use the `initialize` method.
    *
    * @param [args] - EditorDocument constructor arguments.

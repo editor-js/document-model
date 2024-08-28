@@ -65,6 +65,7 @@ export class BlockToolAdapter {
     }
 
     const key = createDataKey(keyRaw);
+
     input.addEventListener('beforeinput', event => this.#handleBeforeInputEvent(event, input, key));
 
     this.#model.addEventListener(EventType.Changed, (event: ModelEvents) => this.#handleModelUpdate(event, input, key));
