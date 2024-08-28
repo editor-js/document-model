@@ -1,0 +1,27 @@
+extends:
+  - codex/ts
+
+ignorePatterns:
+  - node_modules
+  - dist
+
+# Eslint seems to not recognize WeakMap as a global
+globals:
+  WeakMap: readonly
+
+plugins:
+  - import
+
+rules:
+  import/extensions:
+    - error
+    - always
+  '@typescript-eslint/no-unsafe-declaration-merging':
+    - 0
+
+overrides:
+  - files:
+      - '**/*.test.ts'
+      - '**/*.spec.ts'
+    env:
+      jest: true
