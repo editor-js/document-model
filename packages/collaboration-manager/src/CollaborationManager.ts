@@ -73,5 +73,6 @@ export class CollaborationManager {
       default:
         console.error('Unknown event type', e);
     }
+    console.log('operation', operation);
   }
 }

@@ -4,24 +4,24 @@ import type { Index } from '@editorjs/model';
  * Type of the operation
  */
 export enum OperationType {
-    Insert = 'insert',
-    Delete = 'delete',
-    Modify = 'modify'
+  Insert = 'insert',
+  Delete = 'delete',
+  Modify = 'modify'
 }
 
 /**
  * Data for the operation
  */
 export interface OperationData {
-    /**
-     * Value before the operation
-     */
-    prevValue: string;
+  /**
+   * Value before the operation
+   */
+  prevValue: string;
 
-    /**
-     * Value after the operation
-     */
-    newValue: string;
+  /**
+   * Value after the operation
+   */
+  newValue: string;
 }
 
 

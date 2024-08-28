@@ -1,4 +1,5 @@
-import { Index } from '@editorjs/model';
+/* eslint-disable @typescript-eslint/no-magic-numbers */
+import { createDataKey, IndexBuilder } from '@editorjs/model';
 import { EditorJSModel } from '@editorjs/model';
 import { CollaborationManager } from './CollaborationManager.js';
 import { Operation, OperationType } from './Operation.js';
@@ -17,7 +18,10 @@ describe('CollaborationManager', () => {
       } ],
     });
     const collaborationManager = new CollaborationManager(model);
-    const index = Index.parse('"block@0:data@text:[0,4]"');
+    const index = new IndexBuilder().addBlockIndex(0)
+      .addDataKey(createDataKey('text'))
+      .addTextRange([0, 4])
+      .build();
     const operation = new Operation(OperationType.Insert, index, {
       prevValue: '',
       newValue: 'test',
@@ -54,7 +58,11 @@ describe('CollaborationManager', () => {
       } ],
     });
     const collaborationManager = new CollaborationManager(model);
-    const index = Index.parse('"block@0:data@text:[3,5]"');
+    const index = new IndexBuilder().addBlockIndex(0)
+      .addDataKey(createDataKey('text'))
+      .addTextRange([
+        3, 5])
+      .build();
     const operation = new Operation(OperationType.Delete, index, {
       prevValue: '11',
       newValue: '',
