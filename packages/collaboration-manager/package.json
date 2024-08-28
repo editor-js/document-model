@@ -1,20 +1,23 @@
 {
-  "name": "@editorjs/dom-adapters",
+  "name": "@editorjs/collaboration-manager",
   "version": "0.0.0",
   "packageManager": "yarn@4.0.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
-    "build": "tsc --build tsconfig.build.json",
-    "dev": "yarn build --watch",
+    "build": "tsc --project tsconfig.build.json",
+    "dev": "tsc --project tsconfig.build.json --watch",
     "lint": "eslint ./src",
     "lint:ci": "yarn lint --max-warnings 0",
     "lint:fix": "yarn lint --fix",
-    "test": "jest",
+    "test": "node --experimental-vm-modules $(yarn bin jest)",
     "test:coverage": "yarn test --coverage=true",
     "test:mutations": "stryker run",
     "clear": "rm -rf ./dist && rm -rf ./tsconfig.build.tsbuildinfo"
+  },
+  "dependencies": {
+    "@editorjs/model": "workspace:^"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
@@ -22,7 +25,7 @@
     "@stryker-mutator/jest-runner": "^7.0.2",
     "@stryker-mutator/typescript-checker": "^7.0.2",
     "@types/eslint": "^8",
-    "@types/jest": "^29.5.1",
+    "@types/jest": "^29.5.12",
     "eslint": "^8.38.0",
     "eslint-config-codex": "^1.7.2",
     "eslint-plugin-import": "^2.29.0",
@@ -31,9 +34,5 @@
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.4"
-  },
-  "dependencies": {
-    "@editorjs/dom": "^1.0.0",
-    "@editorjs/model": "workspace:^"
   }
 }
