@@ -1,6 +1,7 @@
 import type { EditorJSModel, ModelEvents } from '@editorjs/model';
 import { EventType, TextAddedEvent, TextRemovedEvent } from '@editorjs/model';
 import { Operation, OperationType } from './Operation.js';
+import { Transformer } from './Transformer.js';
 
 /**
  * CollaborationManager listens to EditorJSModel events and applies operations
@@ -12,6 +13,17 @@ export class CollaborationManager {
   #model: EditorJSModel;
 
   /**
+   * Local stack of operations to undo
+   */
+  #undoStack: Operation[] = [];
+
+  /**
+   * Local stack of operations to redo
+   */
+  #redoStack: Operation[] = [];
+
+
+  /**
    * Creates an instance of CollaborationManager
    *
    * @param model - EditorJSModel instance to listen to and apply operations
@@ -19,6 +31,35 @@ export class CollaborationManager {
   constructor(model: EditorJSModel) {
     this.#model = model;
     model.addEventListener(EventType.Changed, this.#handleEvent.bind(this));
+  }
+
+  /**
+   * Undo last operation in the local stack
+   */
+  public undo() {
+    const operation = this.#undoStack.pop();
+
+    if (operation === undefined) {
+      return;
+    }
+    const inversedOperation = Transformer.inverse(operation);
+
+    this.applyOperation(inversedOperation);
+    this.#redoStack.push(operation);
+  }
+
+  /**
+   * Redo last undone operation in the local stack
+   */
+  public redo() {
+    const operation = this.#redoStack.pop();
+
+    if (operation === undefined) {
+      return;
+    }
+
+    this.applyOperation(operation);
+    this.#undoStack.push(operation);
   }
 
   /**
@@ -35,7 +76,7 @@ export class CollaborationManager {
 
     switch (operation.type) {
       case OperationType.Insert:
-        this.#model.insertText(blockIndex, dataKey, operation.data.newValue);
+        this.#model.insertText(blockIndex, dataKey, operation.data.newValue, textRange[0]);
         break;
       case OperationType.Delete:
         this.#model.removeText(blockIndex, dataKey, textRange[0], textRange[1]);
@@ -47,6 +88,8 @@ export class CollaborationManager {
       default:
         throw new Error('Unknown operation type');
     }
+    this.#undoStack.push(operation);
+    this.#redoStack = [];
   }
 
   /**
