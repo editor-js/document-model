@@ -108,7 +108,7 @@ export default class Core {
     const index = event.detail.index;
 
     if (index.blockIndex === undefined) {
-      throw new Error('Block index should be defined');
+      throw new Error('Block index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
     }
 
     const blockToolAdapter = new BlockToolAdapter(this.#model, this.#caretAdapter, index.blockIndex);
