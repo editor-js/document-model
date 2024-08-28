@@ -128,6 +128,11 @@ const inlineToolbar = new InlineToolbar(model, caretAdapter, inlineToolAdapter, 
       />
       <pre>{{ serialized }}</pre>
     </div>
+    <div :class="$style.output">
+      <Node
+        :node="document"
+      />
+    </div>
   </div>
 </template>
 

@@ -1,4 +1,3 @@
-import { IndexBuilder } from '../../entities/index.js';
 import type { Index } from '../../entities/Index/index.js';
 import type { CaretSerialized, CaretEvent } from './types.js';
 import { CaretUpdatedEvent } from './types.js';
@@ -87,7 +86,7 @@ export class Caret extends EventBus {
   public toJSON(): CaretSerialized {
     return {
       id: this.id,
-      index: this.index,
+      index: this.index?.serialize(),
     } as CaretSerialized;
   }
 }

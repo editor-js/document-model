@@ -34,6 +34,7 @@ onMounted(() => {
     props.blockToolAdapter.attachInput(createDataKey(props.name), input.value);
   }
 });
+
 </script>
 <template>
   <!-- eslint-disable vue/no-v-text-v-html-on-component vue/no-v-html -->

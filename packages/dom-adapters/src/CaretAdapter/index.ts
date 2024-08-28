@@ -1,7 +1,7 @@
-import type { Caret, EditorJSModel, CaretManagerEvents, Index } from '@editorjs/model';
+import type { Caret, EditorJSModel, CaretManagerEvents } from '@editorjs/model';
 import { getAbsoluteRangeOffset, getBoundaryPointByAbsoluteOffset, useSelectionChange } from '../utils/index.js';
 import type { TextRange } from '@editorjs/model';
-import { EventType, IndexBuilder } from '@editorjs/model';
+import { EventType, IndexBuilder, Index } from '@editorjs/model';
 import { isNativeInput } from '@editorjs/dom';
 
 /**
@@ -34,7 +34,7 @@ export class CaretAdapter extends EventTarget {
   /**
    * Current user's caret
    *
-   * @public
+   * @private
    */
   #userCaret: Caret;
 
@@ -52,6 +52,9 @@ export class CaretAdapter extends EventTarget {
 
     const { on } = useSelectionChange();
 
+    /**
+     * @todo Unsubscribe on adapter destruction
+     */
     on(container, (selection) => this.#onSelectionChange(selection), this);
 
     this.#model.addEventListener(EventType.CaretManagerUpdated, (event) => this.#onModelUpdate(event));
@@ -76,10 +79,6 @@ export class CaretAdapter extends EventTarget {
     this.#userCaret.update(index);
   }
 
-  public get userCaretIndex(): Index | null {
-    return this.#userCaret.index;
-  }
-
   /**
    * Selection change handler
    *
@@ -90,6 +89,9 @@ export class CaretAdapter extends EventTarget {
       return;
     }
 
+    /**
+     * @todo Think of cross-block selection
+     */
     const activeElement = document.activeElement;
 
     for (const [index, input] of this.#inputs) {
@@ -141,14 +143,19 @@ export class CaretAdapter extends EventTarget {
   /**
    * Model updates handler
    *
+   * - Finds input to set selection to by serialized index
+   * - If current user's selection is different, set the one from the update
+   *
    * @param event - model update event
    */
   #onModelUpdate(event: CaretManagerEvents): void {
-    const { index } = event.detail;
+    const { index: serializedIndex } = event.detail;
 
-    if (index === null) {
+    if (serializedIndex === null) {
       return;
     }
+
+    const index = Index.parse(serializedIndex);
 
     const { textRange } = index;
 
@@ -165,7 +172,8 @@ export class CaretAdapter extends EventTarget {
     const builder = new IndexBuilder();
 
     /**
-     * We need to remove text range from index to find related input by serialized index
+     * Inputs are stored in the hashmap with serialized index as a key
+     * Those keys are serialized without text range to cover the whole input, so we need to remove it here to find the input
      */
     builder.from(index).addTextRange(undefined);
 
@@ -176,16 +184,38 @@ export class CaretAdapter extends EventTarget {
     }
 
     if (isNativeInput(input) === true) {
+      const currentStart = (input as HTMLInputElement | HTMLTextAreaElement).selectionStart;
+      const currentEnd = (input as HTMLInputElement | HTMLTextAreaElement).selectionEnd;
+
+      /**
+       * If selection is already the same, we don't need to update it to not interrupt browser's behaviour
+       */
+      if (currentStart === textRange[0] && currentEnd === textRange[1]) {
+        return;
+      }
+
       (input as HTMLInputElement | HTMLTextAreaElement).selectionStart = textRange[0];
       (input as HTMLInputElement | HTMLTextAreaElement).selectionEnd = textRange[1];
 
       return;
     }
 
+    const selection = document.getSelection()!;
+    const currentRange = selection.getRangeAt(0);
+
     const start = getBoundaryPointByAbsoluteOffset(input, textRange[0]);
     const end = getBoundaryPointByAbsoluteOffset(input, textRange[1]);
 
-    const selection = document.getSelection()!;
+    const isStartEqualsCurrent = start[0] === currentRange.startContainer && start[1] === currentRange.startOffset;
+    const isEndEqualsCurrent = end[0] === currentRange.endContainer && end[1] === currentRange.endOffset;
+
+    /**
+     * If selection is already the same, we don't need to update it to not interrupt browser's behaviour
+     */
+    if (isStartEqualsCurrent && isEndEqualsCurrent) {
+      return;
+    }
+
     const range = new Range();
 
     range.setStart(...start);

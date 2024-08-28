@@ -18,6 +18,15 @@ export class CaretManager extends EventBus {
   #registry = new Map<number, Caret>();
 
   /**
+   * Returns Caret instance by id
+   *
+   * @param id - Caret id
+   */
+  public getCaret(id: number): Caret | undefined {
+    return this.#registry.get(id);
+  }
+
+  /**
    * Creates a new Caret instance
    *
    * @param [index] - initial caret index
