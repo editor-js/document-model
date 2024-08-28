@@ -1,20 +1,25 @@
-import { type DataKey, type EditorJSModel, IndexBuilder, type ModelEvents } from '@editorjs/model';
+import { isNativeInput } from '@editorjs/dom';
 import {
+  type EditorJSModel,
+  type DataKey,
   createDataKey,
   EventAction,
   EventType,
+  IndexBuilder,
+  type ModelEvents,
   TextAddedEvent,
   TextRemovedEvent
 } from '@editorjs/model';
-import { InputType } from './types/InputType.js';
+import type { CaretAdapter } from '../CaretAdapter/index.js';
 import {
+  findNextHardLineBoundary,
+  findNextWordBoundary, findPreviousHardLineBoundary,
+  findPreviousWordBoundary,
   getAbsoluteRangeOffset,
   getBoundaryPointByAbsoluteOffset,
   isNonTextInput
 } from '../utils/index.js';
-import type { CaretAdapter } from '../CaretAdapter/index.js';
-
-import { isNativeInput } from '@editorjs/dom';
+import { InputType } from './types/InputType.js';
 
 /**
  * BlockToolAdapter is using inside Block tools to connect browser DOM elements to the model
@@ -99,8 +104,14 @@ export class BlockToolAdapter {
     let end = input.selectionEnd;
 
     /**
-     * @todo Handle all possible deletion events
+     * If selection is not collapsed, just remove selected text
      */
+    if (start !== end) {
+      this.#model.removeText(this.#blockIndex, key, start, end);
+
+      return;
+    }
+
     switch (inputType) {
       case InputType.DeleteContentForward: {
         /**
@@ -109,13 +120,55 @@ export class BlockToolAdapter {
         end = end !== input.value.length ? end + 1 : end;
         break;
       }
-      default: {
+      case InputType.DeleteContentBackward: {
         /**
          * If start is already 0, then there is nothing to delete
          */
         start = start !== 0 ? start - 1 : start;
+
+        break;
       }
+
+      case InputType.DeleteWordBackward: {
+        start = findPreviousWordBoundary(input.value, start);
+
+        break;
+      }
+
+      case InputType.DeleteWordForward: {
+        end = findNextWordBoundary(input.value, start);
+
+        break;
+      }
+
+      case InputType.DeleteHardLineBackward: {
+        start = findPreviousHardLineBoundary(input.value, start);
+
+        break;
+      }
+      case InputType.DeleteHardLineForward: {
+        end = findNextHardLineBoundary(input.value, start);
+
+        break;
+      }
+
+      case InputType.DeleteSoftLineBackward:
+      case InputType.DeleteSoftLineForward:
+      case InputType.DeleteEntireSoftLine:
+      /**
+       * @todo Think of how to find soft line boundaries
+       */
+
+      case InputType.DeleteByDrag:
+      case InputType.DeleteByCut:
+      case InputType.DeleteContent:
+
+      default:
+      /**
+       * do nothing, use start and end from user selection
+       */
     }
+
     this.#model.removeText(this.#blockIndex, key, start, end);
   };
 
@@ -171,17 +224,25 @@ export class BlockToolAdapter {
 
     switch (inputType) {
       case InputType.InsertReplacementText:
+      case InputType.InsertFromDrop:
       case InputType.InsertFromPaste: {
-        this.#model.removeText(this.#blockIndex, key, start, end);
+        if (start !== end) {
+          this.#model.removeText(this.#blockIndex, key, start, end);
+        }
+
+        let data: string;
 
         /**
-         * DataTransfer object is guaranteed to be not null for these types of event for contenteditable elements
-         *
-         * However, it is not guaranteed for INPUT and TEXTAREA elements, so @todo handle this case
+         * For native inputs data for those events comes from event.data property
+         * while for contenteditable elements it's stored in event.dataTransfer
          *
          * @see https://www.w3.org/TR/input-events-2/#overview
          */
-        const data = event.dataTransfer!.getData('text/plain');
+        if (isInputNative) {
+          data = event.data ?? '';
+        } else {
+          data = event.dataTransfer!.getData('text/plain');
+        }
 
         this.#model.insertText(this.#blockIndex, key, data, start);
 
@@ -215,6 +276,7 @@ export class BlockToolAdapter {
       case InputType.DeleteHardLineForward:
       case InputType.DeleteSoftLineBackward:
       case InputType.DeleteSoftLineForward:
+      case InputType.DeleteEntireSoftLine:
       case InputType.DeleteWordBackward:
       case InputType.DeleteWordForward: {
         if (isInputNative === true) {
@@ -225,6 +287,13 @@ export class BlockToolAdapter {
         break;
       }
 
+      case InputType.InsertLineBreak:
+        /**
+         * @todo Think if we need to keep that or not
+         */
+        if (isInputNative === true) {
+          this.#model.insertText(this.#blockIndex, key, '\n', start);
+        }
       default:
     }
   };
@@ -266,18 +335,18 @@ export class BlockToolAdapter {
 
     const action = event.detail.action;
 
-    const builder = new IndexBuilder();
+    const caretIndexBuilder = new IndexBuilder();
 
-    builder.from(event.detail.index);
+    caretIndexBuilder.from(event.detail.index);
 
     switch (action) {
       case EventAction.Added: {
         const text = event.detail.data as string;
         const prevValue = currentElement.value;
 
-        currentElement.value = prevValue.slice(0, start) + text + prevValue.slice(end - 1);
+        currentElement.value = prevValue.slice(0, start) + text + prevValue.slice(start);
 
-        builder.addTextRange([start + text.length, start + text.length]);
+        caretIndexBuilder.addTextRange([start + text.length, start + text.length]);
 
         break;
       }
@@ -285,13 +354,13 @@ export class BlockToolAdapter {
         currentElement.value = currentElement.value.slice(0, start) +
           currentElement.value.slice(end);
 
-        builder.addTextRange([start, start]);
+        caretIndexBuilder.addTextRange([start, start]);
 
         break;
       }
     }
 
-    this.#caretAdapter.updateIndex(builder.build());
+    this.#caretAdapter.updateIndex(caretIndexBuilder.build());
   };
 
   /**

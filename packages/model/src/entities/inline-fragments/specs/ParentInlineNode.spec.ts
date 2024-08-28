@@ -228,7 +228,7 @@ describe('ParentInlineNode', () => {
       expect(event).toBeInstanceOf(TextAddedEvent);
       expect(event).toHaveProperty('detail', expect.objectContaining({
         action: EventAction.Added,
-        index: expect.objectContaining({ textRange: [index, index + newText.length] }),
+        index: expect.objectContaining({ textRange: [index, index] }),
         data: newText,
       }));
     });
