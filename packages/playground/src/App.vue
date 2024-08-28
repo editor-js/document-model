@@ -38,7 +38,9 @@ model.initializeDocument({
     },
   ],
 });
-const eDocument = ref(new EditorDocument(model.serialized));
+const eDocument = ref(new EditorDocument());
+eDocument.value.initialize(model.serialized.blocks);
+
 const caretAdapter = new CaretAdapter(window.document.body, model);
 /**
  * Block Tool Adapter instance will be passed to a Tool constructor by Editor.js core
@@ -49,8 +51,11 @@ const anotherBlockToolAdapter = new BlockToolAdapter(model, caretAdapter, 1);
 const serialized = ref(model.serialized);
 
 model.addEventListener(EventType.Changed, () => {
+  console.log('Model changed', model.serialized);
+  
   serialized.value = model.serialized;
-  eDocument.value = new EditorDocument(model.serialized);
+  eDocument.value = new EditorDocument();
+  eDocument.value.initialize(model.serialized.blocks);
 });
 
 onMounted(() => {

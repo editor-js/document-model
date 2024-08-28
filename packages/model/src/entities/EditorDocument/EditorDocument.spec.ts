@@ -21,17 +21,21 @@ jest.mock('../BlockNode');
 function createEditorDocumentWithSomeBlocks(): EditorDocument {
   const countOfBlocks = 3;
 
-  return new EditorDocument({
+  const doc = new EditorDocument({
     properties: {
       readOnly: false,
     },
-    blocks:
-      new Array(countOfBlocks).fill(undefined)
-        .map(() => ({
-          name: 'header' as BlockToolName,
-          data: {},
-        })),
   });
+
+  const blocks = new Array(countOfBlocks).fill(undefined)
+    .map(() => ({
+      name: 'header' as BlockToolName,
+      data: {},
+    }));
+
+  doc.initialize(blocks);
+
+  return doc;
 }
 
 describe('EditorDocument', () => {
@@ -529,9 +533,9 @@ describe('EditorDocument', () => {
           data: {},
         },
       ];
-      const document = new EditorDocument({
-        blocks: blocksData,
-      });
+      const document = new EditorDocument();
+
+      document.initialize(blocksData);
 
       blocksData.forEach((_, i) => {
         const blockNode = document.getBlock(i);
@@ -568,9 +572,9 @@ describe('EditorDocument', () => {
           data: {},
         },
       ];
-      const document = new EditorDocument({
-        blocks: blocksData,
-      });
+      const document = new EditorDocument();
+
+      document.initialize(blocksData);
 
       const blockNodes = blocksData.map((_, i) => {
         const blockNode = document.getBlock(i);
@@ -634,9 +638,9 @@ describe('EditorDocument', () => {
           data: {},
         },
       ];
-      const document = new EditorDocument({
-        blocks: blocksData,
-      });
+      const document = new EditorDocument();
+
+      document.initialize(blocksData);
 
       blocksData.forEach((_, i) => {
         const blockNode = document.getBlock(i);
@@ -675,9 +679,9 @@ describe('EditorDocument', () => {
           data: {},
         },
       ];
-      const document = new EditorDocument({
-        blocks: blocksData,
-      });
+      const document = new EditorDocument();
+
+      document.initialize(blocksData);
 
       const blockNodes = blocksData.map((_, i) => {
         const blockNode = document.getBlock(i);
@@ -738,9 +742,9 @@ describe('EditorDocument', () => {
         data: {},
       };
 
-      document = new EditorDocument({
-        blocks: [ blockData ],
-      });
+      document = new EditorDocument();
+
+      document.initialize([ blockData ]);
 
       block = document.getBlock(0);
     });
@@ -782,9 +786,9 @@ describe('EditorDocument', () => {
         data: {},
       };
 
-      document = new EditorDocument({
-        blocks: [ blockData ],
-      });
+      document = new EditorDocument();
+
+      document.initialize([ blockData ]);
 
       block = document.getBlock(0);
     });
@@ -840,9 +844,9 @@ describe('EditorDocument', () => {
         data: {},
       };
 
-      document = new EditorDocument({
-        blocks: [ blockData ],
-      });
+      document = new EditorDocument();
+
+      document.initialize([ blockData ]);
 
       block = document.getBlock(0);
     });
@@ -887,9 +891,9 @@ describe('EditorDocument', () => {
         data: {},
       };
 
-      document = new EditorDocument({
-        blocks: [ blockData ],
-      });
+      document = new EditorDocument();
+
+      document.initialize([ blockData ]);
 
       block = document.getBlock(0);
     });
