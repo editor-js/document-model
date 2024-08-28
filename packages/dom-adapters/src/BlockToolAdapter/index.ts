@@ -112,10 +112,6 @@ export class BlockToolAdapter {
       return;
     }
 
-
-    /**
-     * @todo Handle all possible deletion events
-     */
     switch (inputType) {
       case InputType.DeleteContentForward: {
         /**
@@ -234,15 +230,14 @@ export class BlockToolAdapter {
           this.#model.removeText(this.#blockIndex, key, start, end);
         }
 
+        let data: string;
+
         /**
-         * DataTransfer object is guaranteed to be not null for these types of event for contenteditable elements
-         *
-         * However, it is not guaranteed for INPUT and TEXTAREA elements, so @todo handle this case
+         * For native inputs data for those events comes from event.data property
+         * while for contenteditable elements it's stored in event.dataTransfer
          *
          * @see https://www.w3.org/TR/input-events-2/#overview
          */
-        let data: string;
-
         if (isInputNative) {
           data = event.data ?? '';
         } else {

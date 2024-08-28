@@ -41,7 +41,7 @@ onMounted(() => {
     ref="input"
     :contenteditable="type === 'contenteditable' ? true : undefined"
     type="text"
-    :class="$style.input"
+    :class="{ [$style.input]: true, [$style.contenteditable]: type === 'contenteditable' }"
     :value="type !== 'contenteditable' ? value : undefined"
     v-html="type === 'contenteditable' ? value : undefined"
   />
@@ -62,7 +62,9 @@ onMounted(() => {
   outline: none;
 
   font-family: inherit;
+}
 
-  //white-space: pre;
+.contenteditable {
+  white-space: pre;
 }
 </style>
