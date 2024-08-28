@@ -6,7 +6,7 @@ import ToolsManager from './tools/ToolsManager.js';
 import { BlockToolAdapter, CaretAdapter, InlineToolsAdapter } from '@editorjs/dom-adapters';
 import type { BlockAPI, BlockToolData, API as EditorjsApi, ToolConfig } from '@editorjs/editorjs';
 import type { BlockTool } from './entities/BlockTool.js';
-import { InlineToolbar } from './UI/InlineToolbar/index.js';
+import { InlineToolbar } from './uiiii/InlineToolbar/index.js';
 
 /**
  * If no holder is provided via config, the editor will be appended to the element with this id
