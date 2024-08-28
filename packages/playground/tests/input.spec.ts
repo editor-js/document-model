@@ -23,6 +23,7 @@ test.describe('Native input element', () => {
     const expectedText = initialText + inputText;
 
     await input.click();
+    await input.press('Control+ArrowRight');
     await input.pressSequentially(inputText, { delay: 100 });
 
     await expect(input).toHaveValue(expectedText);

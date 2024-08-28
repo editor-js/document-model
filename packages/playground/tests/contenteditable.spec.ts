@@ -23,6 +23,7 @@ test.describe('Contenteditable field', () => {
     const expectedText = initialText + inputText;
 
     await contenteditable.click();
+    await contenteditable.press('Control+ArrowRight');
     await contenteditable.pressSequentially(inputText);
 
     await expect(contenteditable).toHaveText(expectedText);

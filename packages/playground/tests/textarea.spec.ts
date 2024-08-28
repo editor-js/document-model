@@ -23,6 +23,7 @@ test.describe('Textarea field', () => {
     const expectedText = initialText + inputText;
 
     await textarea.click();
+    await textarea.press('Control+ArrowRight');
     await textarea.pressSequentially(inputText, { delay: 100 });
 
     await expect(textarea).toHaveValue(expectedText);
