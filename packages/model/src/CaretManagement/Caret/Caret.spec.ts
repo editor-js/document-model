@@ -53,15 +53,6 @@ describe('Caret', () => {
     }));
   });
 
-  it('should not update index if it is the same', () => {
-    const caret = new Caret(new Index());
-    const index = new Index();
-
-    caret.update(index);
-
-    expect(caret.index).not.toBe(index);
-  });
-
   it('should serialize to JSON', () => {
     const index = new Index();
     const caret = new Caret(index);

@@ -53,6 +53,7 @@ onMounted(() => {
 
 <style module>
 .input {
+  max-width: 300px;
   width: 100%;
   box-sizing: border-box;
   padding: 8px 14px;
@@ -65,6 +66,6 @@ onMounted(() => {
 
   font-family: inherit;
 
-  white-space: pre;
+  //white-space: pre;
 }
 </style>

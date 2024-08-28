@@ -70,7 +70,7 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
     const builder = new IndexBuilder();
 
-    builder.addTextRange([index, index + text.length]);
+    builder.addTextRange([index, index]);
 
     this.dispatchEvent(new TextAddedEvent(builder.build(), text));
   }
