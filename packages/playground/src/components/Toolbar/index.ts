@@ -3,6 +3,7 @@ import { type EditorJSModel, type TextRange, Index } from '@editorjs/model';
 import { EventType } from '@editorjs/model';
 import type { Nominal } from '@editorjs/model/dist/utils/Nominal';
 import { ref } from 'vue';
+import { isNativeInput } from '@editorjs/dom';
 
 /**
  *
@@ -46,6 +47,22 @@ export class InlineToolbar {
      * Listen to selection change ivents in model
      */
     this.#model.addEventListener(EventType.CaretManagerUpdated, (event) => {
+      const selection = window.getSelection();
+
+      /**
+       * Get current input with selection
+       */
+      if (selection) {
+        console.log(selection.focusNode, typeof selection.focusNode);
+
+        /**
+         * Do not render inline toolbar for not contenteditable elements
+         */
+        if (selection.focusNode?.nodeType !== Node.TEXT_NODE) {
+          return;
+        }
+      }
+
       if (event.detail.index !== null) {
         this.#selectionRange = Index.parse(event.detail.index).textRange;
 

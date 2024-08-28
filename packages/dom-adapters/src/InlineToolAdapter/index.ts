@@ -8,7 +8,10 @@ import type {
 } from '@editorjs/model';
 import {
   DataKey,
-  EventType
+  EventType,
+  TextFormattedEvent,
+  TextFormattedEventData,
+  TextUnformattedEvent
 } from '@editorjs/model';
 import type { CaretAdapter } from '../CaretAdapter/index.js';
 import type { IntersectType } from '@editorjs/model/src/entities/inline-fragments/FormattingInlineNode/types';
@@ -52,8 +55,24 @@ export class InlineToolAdapter {
    *
    * @param event
    */
-  #handleModelUpdates(event: ModelEvents/* , input: HTMLElement, key: DataKey */): void {
-    console.log('model changed event', event);
+  #handleModelUpdates(event: ModelEvents/*, input: HTMLElement, key: DataKey */): void {
+    if (event instanceof TextFormattedEvent || event instanceof TextUnformattedEvent) {
+      const tool = this.#tools.get(event.detail.data.tool);
+
+      if (tool === undefined) {
+        return;
+      }
+
+      const selection = window.getSelection();
+
+      if (selection) {
+        const range = selection.getRangeAt(0);
+
+        const inlineElement = tool.create();;
+
+        range.surroundContents(inlineElement);
+      }
+    }
   }
 
   /**
