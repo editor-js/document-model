@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CaretManagerCaretUpdatedEvent, type EditorJSModel, EventType, type Index } from '@editorjs/model';
+import { CaretManagerCaretUpdatedEvent, type EditorJSModel, EventType, Index } from '@editorjs/model';
 import { onMounted, ref } from 'vue';
 
 const index = ref<Index | null>(null);
@@ -13,7 +13,9 @@ const props = defineProps<{
 
 onMounted(() => {
   props.model.addEventListener(EventType.CaretManagerUpdated, (evt: CaretManagerCaretUpdatedEvent) => {
-    index.value = evt.detail.index;
+    if (evt.detail.index !== null) {
+      index.value = Index.parse(evt.detail.index);
+    }
   });
 });
 </script>
