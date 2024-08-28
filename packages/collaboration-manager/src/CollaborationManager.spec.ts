@@ -5,7 +5,7 @@ import { CollaborationManager } from './CollaborationManager.js';
 import { Operation, OperationType } from './Operation.js';
 
 describe('CollaborationManager', () => {
-  it('should add text', () => {
+  it('should add text on apply Insert Operation', () => {
     const model = new EditorJSModel({
       blocks: [ {
         name: 'paragraph',
@@ -45,7 +45,7 @@ describe('CollaborationManager', () => {
   });
 
 
-  it('should remove text', () => {
+  it('should remove text on apply Remove Operation', () => {
     const model = new EditorJSModel({
       blocks: [ {
         name: 'paragraph',
