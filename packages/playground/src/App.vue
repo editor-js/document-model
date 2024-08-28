@@ -2,7 +2,8 @@
 import CaretIndex from '@/components/CaretIndex.vue';
 import { BlockToolAdapter, CaretAdapter, InlineTool, InlineToolsAdapter } from '@editorjs/dom-adapters';
 import { createInlineToolName, EditorDocument, EditorJSModel, EventType, InlineFragment, TextRange } from '@editorjs/model';
-import { ref } from 'vue';
+import Core from '@editorjs/core';
+import { ref, onMounted } from 'vue';
 import { make } from '@editorjs/dom';
 import { FormattingAction, IntersectType } from '@editorjs/model/src/entities';
 import { Input, Toolbar } from './components';
@@ -51,31 +52,38 @@ const tools: InlineTool[] = [italicTool, boldTool];
 /**
  * Every instance here will be created by Editor.js core
  */
-const model = new EditorJSModel({
-  blocks: [ {
-    name: 'paragraph',
-    data: {
-      text1: {
-        value: 'This is contenteditable',
-        $t: 't',
-      },
-      text2: {
-        value: 'This is input element',
-        $t: 't',
-      },
-    },
-  },
-  {
-    name: 'paragraph',
-    data: {
-      text2: {
-        value: 'This is textarea element',
-        $t: 't',
+const model = new EditorJSModel();
+
+model.initializeDocument({
+  blocks: [
+    {
+      name: 'paragraph',
+      data: {
+        text1: {
+          value: 'This is contenteditable',
+          $t: 't',
+        },
+        text2: {
+          value: 'This is input element',
+          $t: 't',
+        },
       },
     },
-  } ],
+    {
+      name: 'paragraph',
+      data: {
+        text2: {
+          value: 'This is textarea element',
+          $t: 't',
+        },
+      },
+    },
+  ],
 });
-const document = ref(new EditorDocument(model.serialized));
+const editorDocument = ref(new EditorDocument());
+
+editorDocument.value.initialize(model.serialized.blocks);
+
 const caretAdapter = new CaretAdapter(window.document.body, model);
 /**
  * Block Tool Adapter instance will be passed to a Tool constructor by Editor.js core
@@ -88,7 +96,22 @@ const serialized = ref(model.serialized);
 
 model.addEventListener(EventType.Changed, () => {
   serialized.value = model.serialized;
-  document.value = new EditorDocument(model.serialized);
+  editorDocument.value = new EditorDocument();
+  editorDocument.value.initialize(model.serialized.blocks);
+});
+
+onMounted(() => {
+  new Core({
+    holder: document.getElementById('editorjs') as HTMLElement,
+    data: {
+      blocks: [ {
+        type: 'paragraph',
+        data: {
+          text: 'Hello, World!',
+        },
+      } ],
+    },
+  });
 });
 
 const inlineToolbar = new InlineToolbar(model, inlineToolAdapter, tools);
@@ -136,7 +159,11 @@ const inlineToolbar = new InlineToolbar(model, inlineToolAdapter, tools);
     </div>
     <div :class="$style.output">
       <Node
-        :node="document"
+        :node="editorDocument"
+      />
+      <div
+        id="editorjs"
+        :class="$style.editor"
       />
     </div>
   </div>
@@ -186,5 +213,11 @@ const inlineToolbar = new InlineToolbar(model, inlineToolAdapter, tools);
   font-family: var(--rounded-family);
   font-size: 14px;
   font-weight: 450;
+}
+
+.editor {
+  background-color: #111;
+  border-radius: 8px;
+  padding: 10px;
 }
 </style>

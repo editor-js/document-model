@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { BlockToolAdapter } from '@editorjs/dom-adapters';
-import {
-  createDataKey
-} from '@editorjs/model';
 
 const input = ref<HTMLElement | null>(null);
 const props = defineProps<{
@@ -31,7 +28,7 @@ const props = defineProps<{
 
 onMounted(() => {
   if (input.value !== null) {
-    props.blockToolAdapter.attachInput(createDataKey(props.name), input.value);
+    props.blockToolAdapter.attachInput(props.name, input.value);
   }
 });
 
