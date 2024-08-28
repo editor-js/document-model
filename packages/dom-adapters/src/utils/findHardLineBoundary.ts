@@ -1,5 +1,5 @@
 /**
- * Finds nearest next caret symbol from passed position
+ * Finds nearest next carriage return symbol from passed position
  *
  * @param text - string to search in
  * @param position - search starting position
