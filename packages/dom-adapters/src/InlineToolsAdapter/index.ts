@@ -111,7 +111,6 @@ export class InlineToolsAdapter {
    *
    * @param toolName - name of the tool whose format will be applied
    * @param data - data of the tool got from toolbar
-   * @param intersectType - type of the intersect
    */
   public applyFormat(toolName: InlineToolName, data: InlineToolData): void {
     const index = this.#caretAdapter.userCaretIndex;
