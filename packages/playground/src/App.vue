@@ -8,6 +8,9 @@ import { FormattingAction, IntersectType } from '@editorjs/model/src/entities';
 import { Input, Toolbar } from './components';
 import { InlineToolbar } from './components/Toolbar';
 
+/**
+ * Inline tool mock for playground
+ */
 const italicTool = {
   name: createInlineToolName('italic'),
   create() {
@@ -24,6 +27,9 @@ const italicTool = {
   },
 } satisfies InlineTool;
 
+/**
+ * Bold tool mock for playground
+ */
 const boldTool = {
   name: createInlineToolName('bold'),
   create() {
