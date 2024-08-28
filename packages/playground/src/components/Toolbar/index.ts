@@ -115,6 +115,6 @@ export class InlineToolbar {
     /**
      * @todo pass to applyFormat inline tool data formed in toolbar
      */
-    this.#inlineToolAdapter.applyFormat(tool.name, {} as Nominal<Record<string, unknown>, 'InlineToolData'>, tool.intersectType);
+    this.#inlineToolAdapter.applyFormat(tool.name, {} as Nominal<Record<string, unknown>, 'InlineToolData'>);
   };
 }

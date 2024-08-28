@@ -1,5 +1,5 @@
 import type { TextRange } from '@editorjs/model';
-import { doRangesIntersect } from './doRangesIntersect';
+import { doRangesIntersect } from './doRangesIntersect.js';
 
 /**
  * Merge two text ranges
@@ -12,5 +12,6 @@ export function mergeTextRanges(firstRange: TextRange, secondRange: TextRange): 
   if (doRangesIntersect(firstRange, secondRange)) {
     return [Math.min(firstRange[0], secondRange[0]), Math.max(firstRange[1], secondRange[1])];
   }
+
   return null;
 }

@@ -82,7 +82,7 @@ export class InlineToolsAdapter {
         /**
          * Insert contents from range to new inline element and put created element in range
          */
-        inlineElement.appendChild(range.extractContents()); 
+        inlineElement.appendChild(range.extractContents());
         range.insertNode(inlineElement);
       }
     }
@@ -113,7 +113,7 @@ export class InlineToolsAdapter {
    * @param data - data of the tool got from toolbar
    * @param intersectType - type of the intersect
    */
-  public applyFormat(toolName: InlineToolName, data: InlineToolData, intersectType: IntersectType): void {
+  public applyFormat(toolName: InlineToolName, data: InlineToolData): void {
     const index = this.#caretAdapter.userCaretIndex;
 
     if (index === null) {
