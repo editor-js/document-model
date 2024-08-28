@@ -43,7 +43,7 @@ export default class Core {
     const { blocks } = composeDataFromVersion2(config.data ?? { blocks: [] });
 
     this.#model = new EditorJSModel();
-    this.#model.addEventListener(EventType.Changed, (event: ModelEvents) => this.#handleModelUpdate(event));
+    this.#model.addEventListener(EventType.Changed, (event: ModelEvents) => this.handleModelUpdate(event));
     this.#model.initializeDocument({ blocks });
   }
 
@@ -74,22 +74,22 @@ export default class Core {
   }
 
   /**
-   * Handle model update
-   * @param event - Model event
+   * When model emits block-added event, add an actual block to the editor
+   * @param event - Any model event
    */
-  #handleModelUpdate(event: ModelEvents): void {
+  private handleModelUpdate(event: ModelEvents): void {
     if (event instanceof BlockAddedEvent === false) {
       return;
     }
 
-    void this.#handleBlockAdded(event);
+    void this.handleBlockAdded(event);
   }
 
   /**
    * Insert block added to the model to the DOM
    * @param event - Block added event
    */
-  async #handleBlockAdded(event: BlockAddedEvent): Promise<void> {
+  private async handleBlockAdded(event: BlockAddedEvent): Promise<void> {
     /**
      * @todo add batch rendering to improve performance on large documents
      */
@@ -102,14 +102,14 @@ export default class Core {
     const caretAdapter = new CaretAdapter(this.#config.holder, this.#model);
     const blockToolAdapter = new BlockToolAdapter(this.#model, caretAdapter, index.blockIndex);
 
-    const block = this.#createBlock({
+    const block = this.createBlock({
       name: event.detail.data.name,
       data: event.detail.data.data,
     }, blockToolAdapter);
 
     const blockEl = await block.render();
 
-    (this.#config.holder).appendChild(blockEl);
+    this.#config.holder.appendChild(blockEl);
   }
 
   /**
@@ -117,7 +117,7 @@ export default class Core {
    * @param blockOptions - options to pass to the tool
    * @param blockToolAdapter - adapter for linking block and model
    */
-  #createBlock({ name, data }: {
+  private createBlock({ name, data }: {
     /**
      * Tool name
      */
