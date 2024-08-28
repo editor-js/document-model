@@ -23,10 +23,7 @@ export class Paragraph implements BlockTool {
     const wrapper = document.createElement('div');
 
     wrapper.contentEditable = 'true';
-
-    wrapper.style.background = '#f9f9f9';
-    wrapper.style.padding = '8px';
-    wrapper.style.borderRadius = '8px';
+    wrapper.style.outline = 'none';
 
     this.#adapter.attachInput('text', wrapper);
 

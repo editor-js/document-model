@@ -4,35 +4,38 @@ import { BlockToolAdapter, CaretAdapter } from '@editorjs/dom-adapters';
 import { EditorDocument, EditorJSModel, EventType } from '@editorjs/model';
 import Core from '@editorjs/core';
 // import { data } from '@editorjs/model/dist/mocks/data.js';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { Input, Node } from './components';
 
 /**
  * Every instance here will be created by Editor.js core
  */
-const model = new EditorJSModel({
-  blocks: [ {
-    name: 'paragraph',
-    data: {
-      text1: {
-        value: 'This is contenteditable',
-        $t: 't',
-      },
-      text2: {
-        value: 'This is input element',
-        $t: 't',
-      },
-    },
-  },
-  {
-    name: 'paragraph',
-    data: {
-      text2: {
-        value: 'This is textarea element',
-        $t: 't',
+const model = new EditorJSModel();
+model.initializeDocument({
+  blocks: [ 
+    {
+      name: 'paragraph',
+      data: {
+        text1: {
+          value: 'This is contenteditable',
+          $t: 't',
+        },
+        text2: {
+          value: 'This is input element',
+          $t: 't',
+        },
       },
     },
-  } ],
+    {
+      name: 'paragraph',
+      data: {
+        text2: {
+          value: 'This is textarea element',
+          $t: 't',
+        },
+      },
+    } 
+  ],
 });
 const eDocument = ref(new EditorDocument(model.serialized));
 const caretAdapter = new CaretAdapter(window.document.body, model);
@@ -50,7 +53,7 @@ model.addEventListener(EventType.Changed, () => {
 });
 
 onMounted(() => {
-  const editor = new Core({
+  new Core({
     holder: document.getElementById('editorjs') as HTMLElement,
     data: {
       blocks: [ {
@@ -60,7 +63,7 @@ onMounted(() => {
         },
       } ],
     } 
-  })
+  });
 });
 
 </script>
@@ -104,8 +107,7 @@ onMounted(() => {
           :node="eDocument"
         />
       </div>
-      <div id="editorjs">
-      </div>
+      <div id="editorjs" :class="$style.editor"></div>
     </div>
   </div>
 </template>
@@ -154,5 +156,11 @@ onMounted(() => {
   font-family: var(--rounded-family);
   font-size: 14px;
   font-weight: 450;
+}
+
+.editor {
+  background-color: #111;
+  border-radius: 8px;
+  padding: 10px;
 }
 </style>

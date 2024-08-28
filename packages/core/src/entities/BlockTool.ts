@@ -1,5 +1,5 @@
 import type { BlockToolAdapter } from '@editorjs/dom-adapters';
-import type { BlockToolData, BlockTool as BlockToolVersion2, ToolConfig } from '@editorjs/editorjs';
+import type { BlockTool as BlockToolVersion2 } from '@editorjs/editorjs';
 import type { BlockToolConstructorOptions as BlockToolConstructorOptionsVersion2 } from '@editorjs/editorjs';
 
 /**
@@ -17,5 +17,11 @@ export interface BlockToolConstructorOptions extends BlockToolConstructorOptions
  *
  * In version 3, the save method is removed since all data is stored in the model
  */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface BlockTool extends Omit<BlockToolVersion2, 'save'> {
 }
+
+/**
+ * Block Tool constructor class
+ */
+export type BlockToolConstructor = new (options: BlockToolConstructorOptions) => BlockTool;

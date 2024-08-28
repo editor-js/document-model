@@ -1,11 +1,11 @@
 import type { ModelEvents } from '@editorjs/model';
 import { BlockAddedEvent, EditorJSModel, EventType } from '@editorjs/model';
-import type { CoreConfig } from './entities/Config.js';
+import type { CoreConfig, CoreConfigValidated } from './entities/Config.js';
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
 import ToolsManager from './tools/ToolsManager.js';
-import { BlockToolAdapter } from '@editorjs/dom-adapters';
-import { Paragraph } from './tools/internal/paragraph/index.js';
-import type { API as EditorjsApi } from '@editorjs/editorjs';
+import { BlockToolAdapter, CaretAdapter } from '@editorjs/dom-adapters';
+import type { BlockAPI, BlockToolData, API as EditorjsApi, ToolConfig } from '@editorjs/editorjs';
+import type { BlockTool } from './entities/BlockTool.js';
 
 /**
  * Editor entry poit
@@ -29,15 +29,15 @@ export default class Core {
   /**
    * Editor configuration
    */
-  #config: CoreConfig;
+  #config: CoreConfigValidated;
 
   /**
    * @param config - Editor configuration
    */
   constructor(config: CoreConfig) {
     this.validateConfig(config);
+    this.#config = config as CoreConfigValidated;
 
-    this.#config = config;
     this.#toolsManager = new ToolsManager(config.tools);
 
     const { blocks } = composeDataFromVersion2(config.data ?? { blocks: [] });
@@ -53,7 +53,13 @@ export default class Core {
    */
   private validateConfig(config: CoreConfig): void {
     if (config.holder === undefined) {
-      throw new Error('Editor configuration should contain holder');
+      const holder = document.getElementById('editorjs');
+
+      if (holder) {
+        config.holder = holder;
+      } else {
+        throw new Error('Editor configuration should contain holder or #editorjs element should be present');
+      }
     }
 
     if (config.data) {
@@ -76,38 +82,63 @@ export default class Core {
       return;
     }
 
-    this.#handleBlockAdded(event);
+    void this.#handleBlockAdded(event);
   }
 
   /**
-   * Handle block added event
+   * Insert block added to the model to the DOM
    * @param event - Block added event
    */
-  #handleBlockAdded(event: BlockAddedEvent): void {
+  async #handleBlockAdded(event: BlockAddedEvent): Promise<void> {
     /**
      * @todo add batch rendering to improve performance on large documents
      */
-    console.log('Block added', event);
-
     const index = event.detail.index;
-    const [blockIndex] = index;
-    // const tool = this.#toolsManager.resolveBlockTool(event.detail.data.name);
-    const tool = Paragraph;
-    const adapter = new BlockToolAdapter(this.#model, blockIndex);
 
-    const block = new tool({
-      blockToolAdapter: adapter,
-      api: {} as any,
-      config: {} as any,
+    if (index.blockIndex === undefined) {
+      throw new Error('Block index should be defined');
+    }
+
+    const caretAdapter = new CaretAdapter(this.#config.holder, this.#model);
+    const blockToolAdapter = new BlockToolAdapter(this.#model, caretAdapter, index.blockIndex);
+
+    const block = this.#createBlock({
+      name: event.detail.data.name,
       data: event.detail.data.data,
-      block: {} as any,
+    }, blockToolAdapter);
+
+    const blockEl = await block.render();
+
+    (this.#config.holder).appendChild(blockEl);
+  }
+
+  /**
+   * Create Block Tools instance
+   * @param blockOptions - options to pass to the tool
+   * @param blockToolAdapter - adapter for linking block and model
+   */
+  #createBlock({ name, data }: {
+    /**
+     * Tool name
+     */
+    name: string;
+    /**
+     * Saved block data
+     */
+    data: BlockToolData<Record<string, unknown>>;
+  }, blockToolAdapter: BlockToolAdapter): BlockTool {
+    const tool = this.#toolsManager.resolveBlockTool(name);
+    const block = new tool({
+      blockToolAdapter,
+      data: data,
+
+      // @todo
+      api: {} as EditorjsApi,
+      config: {} as ToolConfig<Record<string, unknown>>,
+      block: {} as BlockAPI,
       readOnly: false,
     });
 
-    const blockEl = block.render();
-
-    console.log('blockEl', blockEl, this.#config.holder);
-
-    (this.#config.holder as HTMLElement).appendChild(blockEl);
+    return block;
   }
 }

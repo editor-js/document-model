@@ -1,4 +1,4 @@
-import type { BlockTool } from '../entities/BlockTool.js';
+import type { BlockToolConstructor } from '../entities/BlockTool.js';
 import { Paragraph } from './internal/paragraph/index.js';
 import type { EditorConfig } from '@editorjs/editorjs';
 
@@ -14,14 +14,14 @@ export default class ToolsManager {
 
   /**
    * Returns a block tool by its name
-   * @param toolName - Tool name
+   * @param toolName - name of a tool to resolve
    */
-  // public resolveBlockTool(toolName: string): BlockTool {
-  //   switch (toolName) {
-  //     case 'paragraph':
-  //       return Paragraph;
-  //     default:
-  //       throw new Error(`Unknown tool: ${toolName}`);
-  //   }
-  // }
+  public resolveBlockTool(toolName: string): BlockToolConstructor {
+    switch (toolName) {
+      case 'paragraph':
+        return Paragraph;
+      default:
+        throw new Error(`Unknown tool: ${toolName}`);
+    }
+  }
 }
