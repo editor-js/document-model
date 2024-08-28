@@ -427,5 +427,15 @@ export class BlockNode extends EventBus {
   }
 }
 
-export type { BlockToolName, DataKey, BlockNodeSerialized };
-export { createBlockToolName, createDataKey };
+export type { 
+  BlockToolName, 
+  DataKey, 
+  BlockNodeSerialized, 
+  BlockNodeDataSerializedValue,
+};
+
+export { 
+  createBlockToolName, 
+  createDataKey,
+  BlockChildType 
+};

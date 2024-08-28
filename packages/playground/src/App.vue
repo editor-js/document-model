@@ -38,9 +38,9 @@ model.initializeDocument({
     },
   ],
 });
-const eDocument = ref(new EditorDocument());
+const editorDocument = ref(new EditorDocument());
 
-eDocument.value.initialize(model.serialized.blocks);
+editorDocument.value.initialize(model.serialized.blocks);
 
 const caretAdapter = new CaretAdapter(window.document.body, model);
 /**
@@ -53,8 +53,8 @@ const serialized = ref(model.serialized);
 
 model.addEventListener(EventType.Changed, () => {
   serialized.value = model.serialized;
-  eDocument.value = new EditorDocument();
-  eDocument.value.initialize(model.serialized.blocks);
+  editorDocument.value = new EditorDocument();
+  editorDocument.value.initialize(model.serialized.blocks);
 });
 
 onMounted(() => {
@@ -109,7 +109,7 @@ onMounted(() => {
       </div>
       <div :class="$style.output">
         <Node
-          :node="eDocument"
+          :node="editorDocument"
         />
       </div>
       <div

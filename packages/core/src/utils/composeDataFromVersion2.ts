@@ -1,5 +1,5 @@
 import type { OutputData } from '@editorjs/editorjs';
-import type { BlockNodeSerialized, TextNodeSerialized } from '@editorjs/model';
+import { BlockChildType, type BlockNodeDataSerializedValue, type BlockNodeSerialized, type TextNodeSerialized } from '@editorjs/model';
 
 /**
  * Converst OutputData from version 2 to version 3
@@ -19,10 +19,18 @@ export function composeDataFromVersion2(data: OutputData): {
           Object
             .entries(block.data as Record<string, unknown>)
             .map(([key, value]) => {
+              const valueObject: BlockNodeDataSerializedValue = {
+                value,
+              };
+
+              if (typeof value === 'string') {
+                (valueObject as TextNodeSerialized).$t = BlockChildType.Text;
+              }
+
               return [
                 key, {
-                  value: value as TextNodeSerialized,
-                  $t: 't',
+                  value,
+                  $t: typeof value === 'string' ? '$t' : '$v',
                 },
               ];
             })

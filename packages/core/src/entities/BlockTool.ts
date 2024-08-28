@@ -9,7 +9,7 @@ export interface BlockToolConstructorOptions extends BlockToolConstructorOptions
   /**
    * Block tool adapter will be passed to the tool to connect data with the DOM
    */
-  blockToolAdapter: BlockToolAdapter;
+  adapter: BlockToolAdapter;
 }
 
 /**

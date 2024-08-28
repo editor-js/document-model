@@ -9,11 +9,12 @@ export class Paragraph implements BlockTool {
    * Adapter for linking block data with the DOM
    */
   #adapter: BlockToolAdapter;
+
   /**
    * @param options - Block tool constructor options
    */
-  constructor({ blockToolAdapter }: BlockToolConstructorOptions) {
-    this.#adapter = blockToolAdapter;
+  constructor({ adapter }: BlockToolConstructorOptions) {
+    this.#adapter = adapter;
   }
 
   /**

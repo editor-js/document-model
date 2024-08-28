@@ -8,6 +8,11 @@ import type { BlockAPI, BlockToolData, API as EditorjsApi, ToolConfig } from '@e
 import type { BlockTool } from './entities/BlockTool.js';
 
 /**
+ * If no holder is provided via config, the editor will be appended to the element with this id
+ */
+const DEFAULT_HOLDER_ID = 'editorjs';
+
+/**
  * Editor entry poit
  * - initializes Model
  * - subscribes to model updates
@@ -32,18 +37,25 @@ export default class Core {
   #config: CoreConfigValidated;
 
   /**
+   * Caret adapter is responsible for handling caret position and selection
+   */
+  #caretAdapter: CaretAdapter;
+
+  /**
    * @param config - Editor configuration
    */
   constructor(config: CoreConfig) {
     this.validateConfig(config);
     this.#config = config as CoreConfigValidated;
 
-    this.#toolsManager = new ToolsManager(config.tools);
-
     const { blocks } = composeDataFromVersion2(config.data ?? { blocks: [] });
 
     this.#model = new EditorJSModel();
     this.#model.addEventListener(EventType.Changed, (event: ModelEvents) => this.handleModelUpdate(event));
+
+    this.#toolsManager = new ToolsManager(this.#config.tools);
+    this.#caretAdapter = new CaretAdapter(this.#config.holder, this.#model);
+
     this.#model.initializeDocument({ blocks });
   }
 
@@ -53,7 +65,7 @@ export default class Core {
    */
   private validateConfig(config: CoreConfig): void {
     if (config.holder === undefined) {
-      const holder = document.getElementById('editorjs');
+      const holder = document.getElementById(DEFAULT_HOLDER_ID);
 
       if (holder) {
         config.holder = holder;
@@ -99,8 +111,7 @@ export default class Core {
       throw new Error('Block index should be defined');
     }
 
-    const caretAdapter = new CaretAdapter(this.#config.holder, this.#model);
-    const blockToolAdapter = new BlockToolAdapter(this.#model, caretAdapter, index.blockIndex);
+    const blockToolAdapter = new BlockToolAdapter(this.#model, this.#caretAdapter, index.blockIndex);
 
     const block = this.createBlock({
       name: event.detail.data.name,
@@ -109,6 +120,9 @@ export default class Core {
 
     const blockEl = await block.render();
 
+    /**
+     * @todo add block to the correct position
+     */
     this.#config.holder.appendChild(blockEl);
   }
 
@@ -129,7 +143,7 @@ export default class Core {
   }, blockToolAdapter: BlockToolAdapter): BlockTool {
     const tool = this.#toolsManager.resolveBlockTool(name);
     const block = new tool({
-      blockToolAdapter,
+      adapter: blockToolAdapter,
       data: data,
 
       // @todo
