@@ -28,6 +28,6 @@ test.describe('input field', () => {
 
     await input.pressSequentially('Hello, World!', { delay: 100 });
 
-    await expect(input).toHaveText('Hello, World!');
+    await expect(input).toHaveValue('Hello, World!');
   });
 });
