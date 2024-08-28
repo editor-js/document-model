@@ -57,24 +57,21 @@ export class CollaborationManager {
   #handleEvent(e: ModelEvents): void {
     let operation: Operation | null = null;
 
-    if (e instanceof TextAddedEvent) {
-      operation = new Operation(OperationType.Insert, e.detail.index, {
-        prevValue: '',
-        newValue: e.detail.data,
-      });
-    }
-
-    if (e instanceof TextRemovedEvent) {
-      operation = new Operation(OperationType.Delete, e.detail.index, {
-        prevValue: e.detail.data,
-        newValue: '',
-      });
-    }
-
-    if (operation === null) {
-      console.error('Unknown event type', e);
-
-      return;
+    switch (true) {
+      case (e instanceof TextAddedEvent):
+        operation = new Operation(OperationType.Insert, e.detail.index, {
+          prevValue: '',
+          newValue: e.detail.data,
+        });
+        break;
+      case (e instanceof TextRemovedEvent):
+        operation = new Operation(OperationType.Delete, e.detail.index, {
+          prevValue: e.detail.data,
+          newValue: '',
+        });
+        break;
+      default:
+        console.error('Unknown event type', e);
     }
   }
 }
