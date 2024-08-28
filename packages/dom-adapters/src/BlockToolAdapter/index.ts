@@ -1,6 +1,7 @@
 import { isNativeInput } from '@editorjs/dom';
 import {
   type EditorJSModel,
+  type DataKey,
   createDataKey,
   EventAction,
   EventType,
