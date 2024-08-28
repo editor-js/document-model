@@ -1,5 +1,5 @@
 import type { CaretAdapter, InlineTool, InlineToolAdapter } from '@editorjs/dom-adapters';
-import type { EditorJSModel, TextRange } from '@editorjs/model';
+import { type EditorJSModel, type TextRange, Index } from '@editorjs/model';
 import { EventType } from '@editorjs/model';
 import type { Nominal } from '@editorjs/model/dist/utils/Nominal';
 import { ref } from 'vue';
@@ -14,7 +14,7 @@ export class InlineToolbar {
 
   #caretAdapter: CaretAdapter;
 
-  #selectionRange: TextRange | null = null;
+  #selectionRange: TextRange | undefined = undefined;
 
   #tools: InlineTool[];
 
@@ -46,9 +46,11 @@ export class InlineToolbar {
      * Listen to selection change ivents in model
      */
     this.#model.addEventListener(EventType.CaretManagerUpdated, (event) => {
-      this.#selectionRange = event.detail.index?.textRange ?? null;
+      if (event.detail.index !== null) {
+        this.#selectionRange = Index.parse(event.detail.index).textRange;
 
-      this.#selectionChanged();
+        this.#selectionChanged();
+      }
     });
   }
 
@@ -68,7 +70,7 @@ export class InlineToolbar {
     /**
      * Show or hide inline toolbar
      */
-    if (this.#selectionRange !== null && this.#selectionRange[0] !== this.#selectionRange[1]) {
+    if (this.#selectionRange !== undefined && this.#selectionRange[0] !== this.#selectionRange[1]) {
       this.show.value = true;
     } else {
       this.show.value = false;
@@ -76,8 +78,9 @@ export class InlineToolbar {
   }
 
   /**
-   *
+   * 
    * @param tool
+   * @todo add data composing for tool
    */
   public apply(tool: InlineTool): void {
     this.#inlineToolAdapter.applyFormat(tool.name, {} as Nominal<Record<string, unknown>, 'InlineToolData'>, tool.intersectType);

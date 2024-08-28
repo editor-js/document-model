@@ -86,7 +86,6 @@ export class InlineToolAdapter {
     if (index === null) {
       throw new Error('InlineToolAdapter: caret index is outside of the input');
     }
-    console.log(index);
 
     const textRange = index.textRange!;
     const blockIndex = index.blockIndex!;

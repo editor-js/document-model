@@ -74,7 +74,7 @@ export class Index {
           index.dataKey = data as DataKey;
           break;
         default:
-          index.textRange = JSON.parse(data) as TextRange;
+          index.textRange = JSON.parse(type) as TextRange;
           break;
       }
     }

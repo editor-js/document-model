@@ -13,7 +13,9 @@ const props = defineProps<{
 
 onMounted(() => {
   props.model.addEventListener(EventType.CaretManagerUpdated, (evt: CaretManagerCaretUpdatedEvent) => {
-    index.value = evt.detail.index;
+    if (evt.detail.index !== null) {
+      index.value = Index.parse(evt.detail.index);
+    }
   });
 });
 </script>
