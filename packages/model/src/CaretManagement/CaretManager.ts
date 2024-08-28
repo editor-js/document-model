@@ -1,4 +1,4 @@
-import type { Index } from '../EventBus/index.js';
+import type { Index } from '../entities/Index/index.js';
 import {
   CaretManagerCaretAddedEvent,
   CaretManagerCaretRemovedEvent,
@@ -16,6 +16,15 @@ export class CaretManager extends EventBus {
    * Caret instances registry
    */
   #registry = new Map<number, Caret>();
+
+  /**
+   * Returns Caret instance by id
+   *
+   * @param id - Caret id
+   */
+  public getCaret(id: number): Caret | undefined {
+    return this.#registry.get(id);
+  }
 
   /**
    * Creates a new Caret instance

@@ -1,11 +1,11 @@
+import type { Index } from '../../entities/Index/index.js';
 import type { EventAction } from '../types/EventAction.js';
-import type { Index as IndexType } from '../types/indexing.js';
 import { EventType } from '../types/EventType.js';
 
 /**
  * Common fields for all events related to the document model
  */
-export interface EventPayloadBase<Index extends IndexType, Action extends EventAction, Data = unknown> {
+export interface EventPayloadBase<Action extends EventAction, Data = unknown> {
   /**
    * The index of changed information
    */
@@ -33,7 +33,7 @@ export interface ModifiedEventData<T = unknown> {
 /**
  * BaseDocumentEvent Custom Event
  */
-export class BaseDocumentEvent<Index extends IndexType, Action extends EventAction, Data = unknown> extends CustomEvent<EventPayloadBase<Index, Action, Data>> {
+export class BaseDocumentEvent<Action extends EventAction, Data = unknown> extends CustomEvent<EventPayloadBase<Action, Data>> {
   /**
    * BaseDocumentEvent class constructor
    *

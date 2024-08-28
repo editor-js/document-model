@@ -1,21 +1,45 @@
 <script setup lang="ts">
-import { Node, Input } from './components';
+import CaretIndex from '@/components/CaretIndex.vue';
+import { BlockToolAdapter, CaretAdapter } from '@editorjs/dom-adapters';
 import { EditorDocument, EditorJSModel, EventType } from '@editorjs/model';
 // import { data } from '@editorjs/model/dist/mocks/data.js';
 import { ref } from 'vue';
+import { Input, Node } from './components';
 
+/**
+ * Every instance here will be created by Editor.js core
+ */
 const model = new EditorJSModel({
   blocks: [ {
     name: 'paragraph',
     data: {
-      text: {
-        value: '',
+      text1: {
+        value: 'This is contenteditable',
+        $t: 't',
+      },
+      text2: {
+        value: 'This is input element',
+        $t: 't',
+      },
+    },
+  },
+  {
+    name: 'paragraph',
+    data: {
+      text2: {
+        value: 'This is textarea element',
         $t: 't',
       },
     },
   } ],
 });
 const document = ref(new EditorDocument(model.serialized));
+const caretAdapter = new CaretAdapter(window.document.body, model);
+/**
+ * Block Tool Adapter instance will be passed to a Tool constructor by Editor.js core
+ */
+const blockToolAdapter = new BlockToolAdapter(model, caretAdapter, 0);
+const anotherBlockToolAdapter = new BlockToolAdapter(model, caretAdapter, 1);
 
 const serialized = ref(model.serialized);
 
@@ -39,9 +63,24 @@ model.addEventListener(EventType.Changed, () => {
     </div>
     <div :class="$style.body">
       <div :class="$style.playground">
+        <CaretIndex :model="model" />
         <Input
-          :model="model"
+          :block-tool-adapter="blockToolAdapter"
+          type="contenteditable"
+          name="text1"
+          value="This is contenteditable"
+        />
+        <Input
+          :block-tool-adapter="blockToolAdapter"
           type="input"
+          name="text2"
+          value="This is input element"
+        />
+        <Input
+          :block-tool-adapter="anotherBlockToolAdapter"
+          type="textarea"
+          name="text2"
+          value="This is textarea element"
         />
         <pre>{{ serialized }}</pre>
       </div>
