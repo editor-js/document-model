@@ -1,5 +1,7 @@
+import type { EditorConfig } from '@editorjs/editorjs';
+
 /**
  * Editor.js configuration
  */
-export interface EditorConfig {
+export interface CoreConfig extends EditorConfig {
 }

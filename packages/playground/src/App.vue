@@ -3,9 +3,32 @@ import { Node, Input } from './components';
 import { EditorDocument, EditorJSModel, EventType } from '@editorjs/model';
 import Core from '@editorjs/core';
 // import { data } from '@editorjs/model/dist/mocks/data.js';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
-const editor = new Core({
+const model = new EditorJSModel();
+model.initializeDocument({
+  blocks: [{
+    name: 'paragraph',
+    data: {
+      text: {
+        value: '',
+        $t: 't',
+      },
+    },
+  }]
+})
+const eDocument = ref(new EditorDocument(model.serialized));
+
+const serialized = ref(model.serialized);
+
+model.addEventListener(EventType.Changed, () => {
+  serialized.value = model.serialized;
+  eDocument.value = new EditorDocument(model.serialized);
+});
+
+onMounted(() => {
+  const editor = new Core({
+  holder: document.getElementById('editorjs') as HTMLElement,
   data: {
     blocks: [ {
       type: 'paragraph',
@@ -16,24 +39,6 @@ const editor = new Core({
   } 
 })
 
-const model = new EditorJSModel({
-  blocks: [ {
-    name: 'paragraph',
-    data: {
-      text: {
-        value: '',
-        $t: 't',
-      },
-    },
-  } ],
-});
-const document = ref(new EditorDocument(model.serialized));
-
-const serialized = ref(model.serialized);
-
-model.addEventListener(EventType.Changed, () => {
-  serialized.value = model.serialized;
-  document.value = new EditorDocument(model.serialized);
 });
 
 </script>
@@ -59,8 +64,10 @@ model.addEventListener(EventType.Changed, () => {
       </div>
       <div :class="$style.output">
         <Node
-          :node="document"
+          :node="eDocument"
         />
+      </div>
+      <div id="editorjs">
       </div>
     </div>
   </div>

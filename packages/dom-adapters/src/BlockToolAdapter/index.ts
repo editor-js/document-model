@@ -1,6 +1,7 @@
 import type { DataKey, EditorJSModel, ModelEvents } from '@editorjs/model';
 import {
   composeDataIndex,
+  createDataKey,
   EventAction,
   EventType,
   TextAddedEvent,
@@ -47,14 +48,15 @@ export class BlockToolAdapter {
    * Attaches input to the model using key
    * It handles beforeinput events and updates model data
    *
-   * @param key - data key to attach input to
+   * @param keyRaw - tools data key to attach input to
    * @param input - input element
    */
-  public attachInput(key: DataKey, input: HTMLElement): void {
+  public attachInput(keyRaw: string, input: HTMLElement): void {
     if (input instanceof HTMLInputElement && isNonTextInput(input)) {
       throw new Error('Cannot attach non-text input');
     }
 
+    const key = createDataKey(keyRaw);
     const caretAdapter = new CaretAdapter(input, this.#model, this.#blockIndex, key);
 
     input.addEventListener('beforeinput', event => this.#handleBeforeInputEvent(event, input, key));

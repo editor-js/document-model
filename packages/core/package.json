@@ -9,11 +9,17 @@
     "dev": "yarn build --watch",
     "lint": "eslint ./src",
     "lint:ci": "yarn lint --max-warnings 0",
-    "lint:fix": "yarn lint --fix"
+    "lint:fix": "yarn lint --fix",
+    "clear": "rm -rf ./dist && rm -rf ./tsconfig.build.tsbuildinfo"
   },
   "devDependencies": {
     "eslint": "^9.9.1",
     "eslint-config-codex": "^2.0.2",
     "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "@editorjs/dom-adapters": "workspace:^",
+    "@editorjs/editorjs": "^2.30.5",
+    "@editorjs/model": "workspace:^"
   }
 }

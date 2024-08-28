@@ -573,6 +573,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@editorjs/core@workspace:packages/core"
   dependencies:
+    "@editorjs/dom-adapters": "workspace:^"
+    "@editorjs/editorjs": "npm:^2.30.5"
+    "@editorjs/model": "workspace:^"
     eslint: "npm:^9.9.1"
     eslint-config-codex: "npm:^2.0.2"
     typescript: "npm:^5.5.4"
@@ -634,6 +637,13 @@ __metadata:
   dependencies:
     "@editorjs/helpers": "npm:^1.0.0"
   checksum: d4a4f55ffb31adb4384ad9d75a7bfc2a017e616140059ac8970e6645126ab31afea9ceea24b18820e270269aa87884da6ff46408e3c443578c94d21b57ac9923
+  languageName: node
+  linkType: hard
+
+"@editorjs/editorjs@npm:^2.30.5":
+  version: 2.30.5
+  resolution: "@editorjs/editorjs@npm:2.30.5"
+  checksum: 85d52cce0280e3a74f40388d17b4c36a798863112cddde7effdb4db1a22ad8bb9f07dd84fc19cf176a6c690c0e3b2f8055c21e52542240cd274641967a8e66a7
   languageName: node
   linkType: hard
 

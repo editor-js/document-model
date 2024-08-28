@@ -418,5 +418,5 @@ export class BlockNode extends EventBus {
   }
 }
 
-export type { BlockToolName, DataKey };
+export type { BlockToolName, DataKey, BlockNodeSerialized };
 export { createBlockToolName, createDataKey };

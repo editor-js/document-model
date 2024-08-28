@@ -1,6 +1,6 @@
 // Stryker disable all -- we don't count mutation test coverage fot this file as it just proxy calls to EditorDocument
 /* istanbul ignore file -- we don't count test coverage fot this file as it just proxy calls to EditorDocument */
-import { EditorDocument } from './entities/index.js';
+import { BlockNodeSerialized, EditorDocument } from './entities/index.js';
 import { EventBus, EventType } from './EventBus/index.js';
 import type { ModelEvents, CaretManagerCaretUpdatedEvent, CaretManagerEvents } from './EventBus/index.js';
 import { BaseDocumentEvent } from './EventBus/events/BaseEvent.js';
@@ -85,6 +85,10 @@ export class EditorJSModel extends EventBus {
     );
 
     this.#listenAndBubbleDocumentEvents(this.#document);
+  }
+
+  public initializeDocument({ blocks }: { blocks: BlockNodeSerialized[] }): void {
+    this.#document.initialize(blocks);
   }
 
   /**
