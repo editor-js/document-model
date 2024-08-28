@@ -79,7 +79,11 @@ export class InlineToolAdapter {
 
         const inlineElement = tool.create();
 
-        range.surroundContents(inlineElement);
+        /**
+         * Insert contents from range to new inline element and put created element in range
+         */
+        inlineElement.appendChild(range.extractContents()); 
+        range.insertNode(inlineElement);
       }
     }
   }
