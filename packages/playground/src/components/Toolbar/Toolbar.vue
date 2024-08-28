@@ -5,10 +5,19 @@ import { InlineToolbar } from '.';
 
 
 defineProps<{
+  /**
+   * Toolbar show state
+   */
   show: Ref<boolean>;
 
+  /**
+   * Tools to be rendered in toolbar
+   */
   tools: InlineTool[];
 
+  /**
+   * Toolbar instance
+   */
   toolbar: InlineToolbar;
 }>();
 
