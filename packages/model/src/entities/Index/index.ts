@@ -47,7 +47,7 @@ export class Index {
    * @param serialized - serialized index
    */
   public static parse(serialized: string): Index {
-    const arrayIndex = JSON.parse(serialized) as string[];
+    const arrayIndex = JSON.parse(serialized).split(':') as string[];
 
     const index = new Index();
 
@@ -74,7 +74,7 @@ export class Index {
           index.dataKey = data as DataKey;
           break;
         default:
-          index.textRange = JSON.parse(data) as TextRange;
+          index.textRange = JSON.parse(type) as TextRange;
           break;
       }
     }
@@ -113,7 +113,7 @@ export class Index {
       this.textRange ? JSON.stringify(this.textRange) : undefined,
     ] as const;
 
-    return JSON.stringify(arrayIndex.filter((value) => value !== undefined));
+    return JSON.stringify(arrayIndex.filter((value) => value !== undefined).join(':'));
   }
 
   /**
@@ -128,7 +128,7 @@ export class Index {
     const includesPropertyName = this.propertyName !== undefined;
     const includesDocumentId = !!this.documentId;
 
-    const includesSomethingBlockRelated = includesBlockIndex || includesTuneName || includesDataKey || includesTextRange;
+    const includesSomethingBlockRelated = includesBlockIndex || includesTuneName || includesTuneKey || includesDataKey || includesTextRange;
 
     switch (true) {
       case includesTuneName && (includesDataKey || includesTextRange):
@@ -138,6 +138,7 @@ export class Index {
       case includesDocumentId && includesDataKey && !includesBlockIndex:
       case includesDocumentId && includesTuneName && !includesBlockIndex:
       case includesDocumentId && includesTextRange && !includesBlockIndex:
+      case includesDocumentId && includesTuneKey && !includesBlockIndex:
         throw new Error('Invalid index');
 
       default:

@@ -1,7 +1,7 @@
-import type { Caret, EditorJSModel, CaretManagerEvents, Index } from '@editorjs/model';
+import type { Caret, EditorJSModel, CaretManagerEvents } from '@editorjs/model';
 import { getAbsoluteRangeOffset, getBoundaryPointByAbsoluteOffset, useSelectionChange } from '../utils/index.js';
 import type { TextRange } from '@editorjs/model';
-import { EventType, IndexBuilder } from '@editorjs/model';
+import { EventType, IndexBuilder, Index } from '@editorjs/model';
 import { isNativeInput } from '@editorjs/dom';
 
 /**
@@ -149,11 +149,13 @@ export class CaretAdapter extends EventTarget {
    * @param event - model update event
    */
   #onModelUpdate(event: CaretManagerEvents): void {
-    const { index } = event.detail;
+    const { index: serializedIndex } = event.detail;
 
-    if (index === null) {
+    if (serializedIndex === null) {
       return;
     }
+
+    const index = Index.parse(serializedIndex);
 
     const { textRange } = index;
 

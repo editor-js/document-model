@@ -1,4 +1,3 @@
-import type { Index } from '../../entities/Index/index.js';
 import type { Caret } from './Caret.js';
 
 
@@ -14,7 +13,7 @@ export interface CaretSerialized {
   /**
    * Caret index
    */
-  readonly index: Index | null;
+  readonly index: string | null;
 }
 
 /**

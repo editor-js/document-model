@@ -86,7 +86,7 @@ export class Caret extends EventBus {
   public toJSON(): CaretSerialized {
     return {
       id: this.id,
-      index: this.index,
+      index: this.index?.serialize(),
     } as CaretSerialized;
   }
 }
