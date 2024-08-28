@@ -99,7 +99,7 @@ export default class Core {
 
   /**
    * Insert block added to the model to the DOM
-   * @param event - Block added event
+   * @param event - Event containing information about the added block
    */
   private async handleBlockAdded(event: BlockAddedEvent): Promise<void> {
     /**
