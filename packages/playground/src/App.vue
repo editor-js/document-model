@@ -2,7 +2,7 @@
 import CaretIndex from '@/components/CaretIndex.vue';
 import { BlockToolAdapter, CaretAdapter, InlineTool, InlineToolAdapter } from '@editorjs/dom-adapters';
 // import { NodeInput } from './components';
-import { createDataKey, createInlineToolName, EditorDocument, EditorJSModel, EventType, /* EventType, */ InlineFragment, TextRange } from '@editorjs/model';
+import { createInlineToolName, EditorDocument, EditorJSModel, EventType, /* EventType, */ InlineFragment, TextRange } from '@editorjs/model';
 // import { data } from '@editorjs/model/dist/mocks/data.js';
 import { ref } from 'vue';
 import { make } from '@editorjs/dom';
@@ -87,7 +87,7 @@ model.addEventListener(EventType.Changed, () => {
   document.value = new EditorDocument(model.serialized);
 });
 
-const inlineToolbar = new InlineToolbar(model, caretAdapter, inlineToolAdapter, tools);
+const inlineToolbar = new InlineToolbar(model, inlineToolAdapter, tools);
 </script>
 
 <template>

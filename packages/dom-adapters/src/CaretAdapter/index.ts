@@ -60,6 +60,9 @@ export class CaretAdapter extends EventTarget {
     this.#model.addEventListener(EventType.CaretManagerUpdated, (event) => this.#onModelUpdate(event));
   }
 
+  /**
+   *
+   */
   public get userCaretIndex(): Index | null {
     return this.#userCaret.index;
   }

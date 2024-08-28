@@ -7,17 +7,12 @@ import type {
   TextRange
 } from '@editorjs/model';
 import {
-  DataKey,
   EventType,
   TextFormattedEvent,
-  TextFormattedEventData,
   TextUnformattedEvent
 } from '@editorjs/model';
 import type { CaretAdapter } from '../CaretAdapter/index.js';
-import type { IntersectType } from '@editorjs/model/src/entities/inline-fragments/FormattingInlineNode/types';
-import { FormattingAction } from '@editorjs/model/src/entities/inline-fragments/FormattingInlineNode/types';
-// import { intersectionExists } from '../utils/intersectExists.js';
-// import { mergeTextRanges } from '../utils/mergeTextRanges.js';
+import { type IntersectType, FormattingAction } from '@editorjs/model';
 
 export interface InlineTool {
   name: InlineToolName;
@@ -27,11 +22,18 @@ export interface InlineTool {
 }
 
 /**
- *
+ * Class handles on format model events and renders inline tools
+ * Applies format to the model
  */
 export class InlineToolAdapter {
+  /**
+   * Editor model instance
+   */
   #model: EditorJSModel;
 
+  /**
+   * Tools, attached to the inline tool adapter
+   */
   #tools: Map<InlineToolName, InlineTool> = new Map();
 
   /**
@@ -40,22 +42,26 @@ export class InlineToolAdapter {
   #caretAdapter: CaretAdapter;
 
   /**
-   *
-   * @param model
-   * @param caretAdapter
+   * @class
+   * @param model - editor model instance
+   * @param caretAdapter - caret adapter instance
    */
   constructor(model: EditorJSModel, caretAdapter: CaretAdapter) {
     this.#model = model;
     this.#caretAdapter = caretAdapter;
 
+    /**
+     * Add event listener for model changes
+     */
     this.#model.addEventListener(EventType.Changed, (event: ModelEvents) => this.#handleModelUpdates(event));
   }
 
   /**
+   * Handles text format and unformat model events
    *
-   * @param event
+   * @param event - model change event
    */
-  #handleModelUpdates(event: ModelEvents/*, input: HTMLElement, key: DataKey */): void {
+  #handleModelUpdates(event: ModelEvents): void {
     if (event instanceof TextFormattedEvent || event instanceof TextUnformattedEvent) {
       const tool = this.#tools.get(event.detail.data.tool);
 
@@ -65,10 +71,13 @@ export class InlineToolAdapter {
 
       const selection = window.getSelection();
 
+      /**
+       * Render inline tool for current range
+       */
       if (selection) {
         const range = selection.getRangeAt(0);
 
-        const inlineElement = tool.create();;
+        const inlineElement = tool.create();
 
         range.surroundContents(inlineElement);
       }
@@ -94,10 +103,11 @@ export class InlineToolAdapter {
   }
 
   /**
+   * Applies format of the tool to the model
    *
-   * @param toolName
-   * @param data
-   * @param intersectType
+   * @param toolName - name of the tool whose format will be applied
+   * @param data - data of the tool got from toolbar
+   * @param intersectType - type of the intersect
    */
   public applyFormat(toolName: InlineToolName, data: InlineToolData, intersectType: IntersectType): void {
     const index = this.#caretAdapter.userCaretIndex;
@@ -129,22 +139,6 @@ export class InlineToolAdapter {
         this.#model.unformat(blockIndex, dataKey, toolName, ...range);
 
         break;
-      // case (FormattingAction): {
-      //   fragments.forEach((fragment: InlineFragment) => {
-
-      //     /**
-      //      * If start or end of current format range is in range of existing format range
-      //      */
-      //     if (intersectionExists(fragment.range, [start, end])) {
-      //       /**
-      //        * Update start and end of the
-      //        */
-      //       [ start, end ] = mergeTextRanges(fragment.range, [start, end]);
-      //     };
-      //   });
-
-      //   break;
-      // }
     }
   }
 }

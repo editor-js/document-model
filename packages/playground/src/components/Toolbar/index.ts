@@ -1,36 +1,50 @@
-import type { CaretAdapter, InlineTool, InlineToolAdapter } from '@editorjs/dom-adapters';
+import type { InlineTool, InlineToolAdapter } from '@editorjs/dom-adapters';
 import { type EditorJSModel, type TextRange, Index } from '@editorjs/model';
 import { EventType } from '@editorjs/model';
 import type { Nominal } from '@editorjs/model/dist/utils/Nominal';
 import { ref } from 'vue';
-import { isNativeInput } from '@editorjs/dom';
 
 /**
- *
+ * Class determines, when inline toolbar should be rendered
+ * Handles caret selection changes
+ * Forms data required in certain inline tool
  */
 export class InlineToolbar {
+  /**
+   * Editor model instance
+   * Used for interactions with stored data
+   */
   #model: EditorJSModel;
 
+  /**
+   * Inline tool adapter instance
+   * Used for inline tools attaching and format apply
+   */
   #inlineToolAdapter: InlineToolAdapter;
 
-  #caretAdapter: CaretAdapter;
-
+  /**
+   * Current selection range
+   */
   #selectionRange: TextRange | undefined = undefined;
 
+  /**
+   * Tools that would be attached to the adapter
+   */
   #tools: InlineTool[];
 
+  /**
+   * Toolbar show state
+   */
   public show = ref<boolean>(false);
 
   /**
-   *
-   * @param model
-   * @param caretAdapter
-   * @param inlineToolAdapter
-   * @param tools
+   * @class
+   * @param model - editor model instance
+   * @param inlineToolAdapter - inline tool adapter instance
+   * @param tools - tools, that should be attached to adapter
    */
-  constructor(model: EditorJSModel, caretAdapter: CaretAdapter, inlineToolAdapter: InlineToolAdapter, tools: InlineTool[]) {
+  constructor(model: EditorJSModel, inlineToolAdapter: InlineToolAdapter, tools: InlineTool[]) {
     this.#model = model;
-    this.#caretAdapter = caretAdapter;
     this.#inlineToolAdapter = inlineToolAdapter;
     this.#tools = tools;
 
@@ -40,7 +54,7 @@ export class InlineToolbar {
   }
 
   /**
-   *
+   * Handle changes of the caret selection
    */
   #handleSelectionChange(): void {
     /**
@@ -53,8 +67,6 @@ export class InlineToolbar {
        * Get current input with selection
        */
       if (selection) {
-        console.log(selection.focusNode, typeof selection.focusNode);
-
         /**
          * Do not render inline toolbar for not contenteditable elements
          */
@@ -72,7 +84,7 @@ export class InlineToolbar {
   }
 
   /**
-   *
+   * Attach all tools passed to the inline tool adapter
    */
   #attachTools(): void {
     this.#tools.forEach(tool => {
@@ -81,7 +93,7 @@ export class InlineToolbar {
   }
 
   /**
-   *
+   * Change toolbar show state if any text is selected
    */
   #selectionChanged(): void {
     /**
@@ -95,11 +107,14 @@ export class InlineToolbar {
   }
 
   /**
-   * 
-   * @param tool
-   * @todo add data composing for tool
+   * Apply format with data formed in toolbar
+   *
+   * @param tool - tool, that was triggered
    */
   public apply(tool: InlineTool): void {
+    /**
+     * @todo pass to applyFormat inline tool data formed in toolbar
+     */
     this.#inlineToolAdapter.applyFormat(tool.name, {} as Nominal<Record<string, unknown>, 'InlineToolData'>, tool.intersectType);
   };
 }

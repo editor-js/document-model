@@ -20,7 +20,8 @@ defineProps<{
     :class="$style['toolbar']"
   >
     <button
-      v-for="(tool) in tools"
+      v-for="(tool, index) in tools"
+      :key="index"
       @click="toolbar.apply(tool)"
     >
       {{ tool.name }}

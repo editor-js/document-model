@@ -6,7 +6,7 @@ import type { TextRange } from '@editorjs/model';
  *
  * @param firstRange - first range to be merged
  * @param secondRange - second range to be merged
- * @returns merged text range
+ * @returns {TextRange} merged text range
  */
 export function mergeTextRanges(firstRange: TextRange, secondRange: TextRange): TextRange {
   return [Math.min(firstRange[0], secondRange[0]), Math.max(firstRange[1], secondRange[1])];
