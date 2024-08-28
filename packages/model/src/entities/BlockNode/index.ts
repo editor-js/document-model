@@ -325,11 +325,11 @@ export class BlockNode extends EventBus {
    */
   #validateKey(key: DataKey, Node?: typeof ValueNode | typeof TextNode): void {
     if (!has(this.#data, key as string)) {
-      throw new Error(`BlockNode: data with key ${key} does not exist`);
+      throw new Error(`BlockNode: data with key "${key}" does not exist`);
     }
 
     if (Node && !(get(this.#data, key as string) instanceof Node)) {
-      throw new Error(`BlockNode: data with key ${key} is not a ${Node.name}`);
+      throw new Error(`BlockNode: data with key "${key}" is not a ${Node.name}`);
     }
   }
 
@@ -430,12 +430,10 @@ export class BlockNode extends EventBus {
 export type {
   BlockToolName,
   DataKey,
-  BlockNodeSerialized,
-  BlockNodeDataSerializedValue
+  BlockNodeSerialized
 };
 
 export {
   createBlockToolName,
-  createDataKey,
-  BlockChildType
+  createDataKey
 };
