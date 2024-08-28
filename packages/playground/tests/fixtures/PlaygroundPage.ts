@@ -4,9 +4,9 @@ import type { Locator, Page } from '@playwright/test';
  * Playground page fixture to help access the page elements
  */
 export class PlaygroundPage {
-  private readonly inputLocator: Locator;
-  private readonly textareaLocator: Locator;
-  private readonly contenteditableLocator: Locator;
+  readonly #input: Locator;
+  readonly #textarea: Locator;
+  readonly #contenteditable: Locator;
 
   /**
    * Sets locators for input, textarea and contenteditable elements
@@ -14,9 +14,9 @@ export class PlaygroundPage {
    * @param page - Playwright page object
    */
   constructor(public readonly page: Page) {
-    this.inputLocator = page.locator('input');
-    this.textareaLocator = page.locator('textarea');
-    this.contenteditableLocator = page.locator('[contenteditable]').first(); // hack to get the first contenteditable element
+    this.#input = page.locator('input');
+    this.#textarea = page.locator('textarea');
+    this.#contenteditable = page.locator('[contenteditable]').first(); // hack to get the first contenteditable element
   }
 
   /**
@@ -30,20 +30,20 @@ export class PlaygroundPage {
    * Returns the native input locator
    */
   public get input(): Locator {
-    return this.inputLocator;
+    return this.#input;
   }
 
   /**
    * Returns the textarea locator
    */
   public get textarea(): Locator {
-    return this.textareaLocator;
+    return this.#textarea;
   }
 
   /**
    * Returns the contenteditable locator
    */
   public get contenteditable(): Locator {
-    return this.contenteditableLocator;
+    return this.#contenteditable;
   }
 }
