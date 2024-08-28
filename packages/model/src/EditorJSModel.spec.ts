@@ -8,6 +8,7 @@ describe('EditorJSModel', () => {
       'serialized',
       'properties',
       'getProperty',
+      'initializeDocument',
       'setProperty',
       'addBlock',
       'updateTuneData',
