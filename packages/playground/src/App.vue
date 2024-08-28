@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import CaretIndex from '@/components/CaretIndex.vue';
 import { BlockToolAdapter, CaretAdapter, InlineTool, InlineToolAdapter } from '@editorjs/dom-adapters';
-// import { NodeInput } from './components';
-import { createInlineToolName, EditorDocument, EditorJSModel, EventType, /* EventType, */ InlineFragment, TextRange } from '@editorjs/model';
-// import { data } from '@editorjs/model/dist/mocks/data.js';
+import { createInlineToolName, EditorDocument, EditorJSModel, EventType, InlineFragment, TextRange } from '@editorjs/model';
 import { ref } from 'vue';
 import { make } from '@editorjs/dom';
 import { FormattingAction, IntersectType } from '@editorjs/model/src/entities';
