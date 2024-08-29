@@ -81,7 +81,7 @@ export class InlineToolsAdapter {
 
   /**
    * Attaches InlineTool to the adapter
-   *
+   * @param toolName - name of the tool to be attached
    * @param tool - tool to attach
    */
   public attachTool(toolName: InlineToolName, tool: InlineTool): void {
