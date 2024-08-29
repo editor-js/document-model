@@ -634,10 +634,13 @@ __metadata:
     "@editorjs/dom": "npm:^1.0.0"
     "@editorjs/dom-adapters": "workspace:^"
     "@editorjs/editorjs": "npm:^2.30.5"
+    "@editorjs/helpers": "npm:^1.0.0"
     "@editorjs/model": "workspace:^"
     "@editorjs/sdk": "workspace:^"
     eslint: "npm:^9.9.1"
     eslint-config-codex: "npm:^2.0.2"
+    reflect-metadata: "npm:^0.2.2"
+    typedi: "npm:^0.10.0"
     typescript: "npm:^5.5.4"
   languageName: unknown
   linkType: soft
@@ -6891,6 +6894,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"reflect-metadata@npm:^0.2.2":
+  version: 0.2.2
+  resolution: "reflect-metadata@npm:0.2.2"
+  checksum: 1c93f9ac790fea1c852fde80c91b2760420069f4862f28e6fae0c00c6937a56508716b0ed2419ab02869dd488d123c4ab92d062ae84e8739ea7417fae10c4745
+  languageName: node
+  linkType: hard
+
 "regenerator-runtime@npm:^0.14.0":
   version: 0.14.1
   resolution: "regenerator-runtime@npm:0.14.1"
@@ -7930,6 +7940,13 @@ __metadata:
     tunnel: "npm:0.0.6"
     underscore: "npm:^1.12.1"
   checksum: 9c160780f476aa03ad1ce6e7961894d06c17d9b67d94da9fbbcd0c5a5ff741e4a6d85c3b938964b13826d3f20ea36febcd6186b43e361cc62a9960241e0f5a4f
+  languageName: node
+  linkType: hard
+
+"typedi@npm:^0.10.0":
+  version: 0.10.0
+  resolution: "typedi@npm:0.10.0"
+  checksum: 3d519795b4d1a9edea2e5fdb9fa61bc2eca00546aeaf2dbbc1597cfed021659ca117454913022828c77f4971dd03f38a3f9a646eda374ccfb565d3ddcb661224
   languageName: node
   linkType: hard
 

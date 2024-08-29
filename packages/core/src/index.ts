@@ -1,9 +1,12 @@
 import type { ModelEvents } from '@editorjs/model';
 import { BlockAddedEvent, EditorJSModel, EventType } from '@editorjs/model';
+import type { ContainerInstance } from 'typedi';
+import { Container } from 'typedi';
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
 import ToolsManager from './tools/ToolsManager.js';
-import { BlockToolAdapter, CaretAdapter, FormattingAdapter } from '@editorjs/dom-adapters';
-import type { BlockAPI, BlockToolData, API as EditorjsApi, ToolConfig } from '@editorjs/editorjs';
+import { FormattingAdapter } from '@editorjs/dom-adapters';
+import { BlockToolAdapter, CaretAdapter } from '@editorjs/dom-adapters';
+import type { BlockAPI, BlockToolData } from '@editorjs/editorjs';
 import { InlineToolbar } from './ui/InlineToolbar/index.js';
 import type { CoreConfigValidated } from './entities/Config.js';
 import type { BlockTool, CoreConfig } from '@editorjs/sdk';
@@ -43,6 +46,11 @@ export default class Core {
   #caretAdapter: CaretAdapter;
 
   /**
+   * Inversion of Control container for dependency injections
+   */
+  #iocContainer: ContainerInstance;
+
+  /**
    * Inline tool adapter is responsible for handling model formatting updates
    * Applies format, got from inline toolbar to the model
    * When model changed with formatting event, it renders related fragment
@@ -61,19 +69,32 @@ export default class Core {
    * @param config - Editor configuration
    */
   constructor(config: CoreConfig) {
+    // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+    this.#iocContainer = Container.of(Math.floor(Math.random() * 1e10).toString());
+
     this.validateConfig(config);
     this.#config = config as CoreConfigValidated;
+
+    this.#iocContainer.set('EditorConfig', this.#config);
 
     const { blocks } = composeDataFromVersion2(config.data ?? { blocks: [] });
 
     this.#model = new EditorJSModel();
+
+    this.#iocContainer.set(EditorJSModel, this.#model);
+
     this.#model.addEventListener(EventType.Changed, (event: ModelEvents) => this.handleModelUpdate(event));
 
-    this.#toolsManager = new ToolsManager(this.#config.tools);
-    this.#caretAdapter = new CaretAdapter(this.#config.holder, this.#model);
-    this.#formattingAdapter = new FormattingAdapter(this.#model, this.#caretAdapter);
+    this.#toolsManager = this.#iocContainer.get(ToolsManager);
 
-    this.#inlineToolbar = new InlineToolbar(this.#model, this.#formattingAdapter, this.#toolsManager.getInlineTools(), this.#config.holder);
+    this.#caretAdapter = new CaretAdapter(this.#config.holder, this.#model);
+    this.#iocContainer.set(CaretAdapter, this.#caretAdapter);
+
+    this.#formattingAdapter = new FormattingAdapter(this.#model, this.#caretAdapter);
+    this.#iocContainer.set(FormattingAdapter, this.#formattingAdapter);
+
+    this.#inlineToolbar = new InlineToolbar(this.#model, this.#formattingAdapter, this.#toolsManager.inlineTools, this.#config.holder);
+    this.#iocContainer.set(InlineToolbar, this.#inlineToolbar);
 
     this.#model.initializeDocument({ blocks });
   }
@@ -160,14 +181,15 @@ export default class Core {
      */
     data: BlockToolData<Record<string, unknown>>;
   }, blockToolAdapter: BlockToolAdapter): BlockTool {
-    const tool = this.#toolsManager.resolveBlockTool(name);
-    const block = new tool({
+    const tool = this.#toolsManager.blockTools.get(name);
+
+    if (!tool) {
+      throw new Error(`Block Tool ${name} not found`);
+    }
+
+    const block = tool.create({
       adapter: blockToolAdapter,
       data: data,
-
-      // @todo
-      api: {} as EditorjsApi,
-      config: {} as ToolConfig<Record<string, unknown>>,
       block: {} as BlockAPI,
       readOnly: false,
     });
