@@ -4,7 +4,7 @@ import { BlockToolAdapter, CaretAdapter } from '@editorjs/dom-adapters';
 import { EditorDocument, EditorJSModel, EventType } from '@editorjs/model';
 import Core from '@editorjs/core';
 import { ref, onMounted } from 'vue';
-import { Input } from './components';
+import { Input, Node } from './components';
 
 /**
  * Every instance here will be created by Editor.js core

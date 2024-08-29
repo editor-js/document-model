@@ -1,7 +1,6 @@
-import type { BlockToolAdapter } from '@editorjs/dom-adapters';
 import type { ToolConfig } from '@editorjs/editorjs';
 import type { TextNodeSerialized } from '@editorjs/model';
-import type { BlockTool, BlockToolConstructorOptions, BlockToolData } from '@editorjs/sdk';
+import type { BlockTool, BlockToolAdapter, BlockToolConstructorOptions, BlockToolData } from '@editorjs/sdk';
 
 /**
  * Data structure describing the tool's input/output data

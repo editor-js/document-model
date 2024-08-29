@@ -1,7 +1,7 @@
-import type { BlockToolAdapter } from '@editorjs/dom-adapters';
 import type { BlockTool as BlockToolVersion2, ToolConfig } from '@editorjs/editorjs';
 import type { BlockToolConstructorOptions as BlockToolConstructorOptionsVersion2 } from '@editorjs/editorjs';
 import type { ValueSerialized } from '@editorjs/model';
+import { BlockToolAdapter } from './BlockToolAdapter';
 
 /**
  * Extended BlockToolConstructorOptions interface for version 3.

@@ -20,13 +20,14 @@ import {
   isNonTextInput
 } from '../utils/index.js';
 import { InputType } from './types/InputType.js';
+import { BlockToolAdapter as BlockToolAdapterInterface } from '@editorjs/sdk';
 
 /**
  * BlockToolAdapter is using inside Block tools to connect browser DOM elements to the model
  * It can handle beforeinput events and update model data
  * It can handle model's change events and update DOM
  */
-export class BlockToolAdapter {
+export class BlockToolAdapter implements BlockToolAdapterInterface {
   /**
    * Model instance
    */
