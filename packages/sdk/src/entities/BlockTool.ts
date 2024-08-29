@@ -1,4 +1,4 @@
-import type { BlockTool as BlockToolVersion2, ToolConfig } from '@editorjs/editorjs';
+import type { BlockTool as BlockToolVersion2, BlockToolConstructable as BlockToolConstructableV2, ToolConfig } from '@editorjs/editorjs';
 import type { BlockToolConstructorOptions as BlockToolConstructorOptionsVersion2 } from '@editorjs/editorjs';
 import type { ValueSerialized } from '@editorjs/model';
 import { BlockToolAdapter } from './BlockToolAdapter';
@@ -57,7 +57,7 @@ export type BlockTool<
 /**
  * Block Tool constructor class
  */
-export type BlockToolConstructor = new (options: BlockToolConstructorOptions) => BlockTool;
+export type BlockToolConstructor = BlockToolConstructableV2 & (new (options: BlockToolConstructorOptions) => BlockTool);
 
 /**
  * Data structure describing the tool's input/output data
