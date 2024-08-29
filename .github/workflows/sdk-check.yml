@@ -10,7 +10,7 @@ jobs:
       - name: Run ESLint check
         uses: ./.github/actions/lint
         with:
-          package-name: '@editorjs/dom-adapters'
+          package-name: '@editorjs/sdk'
 
   build:
     runs-on: ubuntu-latest
@@ -19,4 +19,4 @@ jobs:
       - name: Build the package
         uses: ./.github/actions/build
         with:
-          package-name: '@editorjs/dom-adapters'
+          package-name: '@editorjs/sdk'
