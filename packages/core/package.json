@@ -20,6 +20,9 @@
   "dependencies": {
     "@editorjs/dom-adapters": "workspace:^",
     "@editorjs/editorjs": "^2.30.5",
-    "@editorjs/model": "workspace:^"
+    "@editorjs/helpers": "^1.0.0",
+    "@editorjs/model": "workspace:^",
+    "reflect-metadata": "^0.2.2",
+    "typedi": "^0.10.0"
   }
 }

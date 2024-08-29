@@ -1,5 +1,5 @@
 import type { BlockToolAdapter } from '@editorjs/dom-adapters';
-import type { BlockTool as BlockToolVersion2 } from '@editorjs/editorjs';
+import type { BlockTool as BlockToolVersion2, BlockToolConstructable as BlockToolConstructableV2 } from '@editorjs/editorjs';
 import type { BlockToolConstructorOptions as BlockToolConstructorOptionsVersion2 } from '@editorjs/editorjs';
 
 /**
@@ -24,4 +24,4 @@ export interface BlockTool extends Omit<BlockToolVersion2, 'save'> {
 /**
  * Block Tool constructor class
  */
-export type BlockToolConstructor = new (options: BlockToolConstructorOptions) => BlockTool;
+export type BlockToolConstructor = BlockToolConstructableV2 & (new (options: BlockToolConstructorOptions) => BlockTool);

@@ -1,5 +1,7 @@
 import type { ModelEvents } from '@editorjs/model';
 import { BlockAddedEvent, EditorJSModel, EventType } from '@editorjs/model';
+import type { ContainerInstance } from 'typedi';
+import { Container } from 'typedi';
 import type { CoreConfig, CoreConfigValidated } from './entities/Config.js';
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
 import ToolsManager from './tools/ToolsManager.js';
@@ -21,6 +23,8 @@ const DEFAULT_HOLDER_ID = 'editorjs';
  * - adds Blocks accodring to model updates
  */
 export default class Core {
+  #id = Math.floor(Math.random() * 1e10).toString();
+
   /**
    * Editor's Document Model
    */
@@ -41,20 +45,32 @@ export default class Core {
    */
   #caretAdapter: CaretAdapter;
 
+  #iocContainer: ContainerInstance;
+
   /**
    * @param config - Editor configuration
    */
   constructor(config: CoreConfig) {
+    this.#iocContainer = Container.of(this.#id);
+
     this.validateConfig(config);
     this.#config = config as CoreConfigValidated;
+
+    this.#iocContainer.set('EditorConfig', this.#config);
 
     const { blocks } = composeDataFromVersion2(config.data ?? { blocks: [] });
 
     this.#model = new EditorJSModel();
+
+    this.#iocContainer.set(EditorJSModel, this.#model);
+
     this.#model.addEventListener(EventType.Changed, (event: ModelEvents) => this.handleModelUpdate(event));
 
-    this.#toolsManager = new ToolsManager(this.#config.tools);
+    this.#toolsManager = this.#iocContainer.get(ToolsManager);
+
     this.#caretAdapter = new CaretAdapter(this.#config.holder, this.#model);
+
+    this.#iocContainer.set(CaretAdapter, this.#caretAdapter);
 
     this.#model.initializeDocument({ blocks });
   }
@@ -141,14 +157,15 @@ export default class Core {
      */
     data: BlockToolData<Record<string, unknown>>;
   }, blockToolAdapter: BlockToolAdapter): BlockTool {
-    const tool = this.#toolsManager.resolveBlockTool(name);
-    const block = new tool({
+    const tool = this.#toolsManager.blockTools.get(name);
+
+    if (!tool) {
+      throw new Error(`Block Tool ${name} not found`);
+    }
+
+    const block = tool.create({
       adapter: blockToolAdapter,
       data: data,
-
-      // @todo
-      api: {} as EditorjsApi,
-      config: {} as ToolConfig<Record<string, unknown>>,
       block: {} as BlockAPI,
       readOnly: false,
     });
