@@ -1,7 +1,7 @@
-import { InternalInlineToolSettings, InternalTuneSettings } from './BaseToolBuilder.js';
-import { InlineToolBuilder } from './InlineToolBuilder.js';
-import { BlockTuneBuilder } from './BlockTuneBuilder.js';
-import { BlockToolBuilder } from './BlockToolBuilder.js';
+import { InternalInlineToolSettings, InternalTuneSettings } from './BaseToolFacade.js';
+import { InlineToolFacade } from './InlineToolFacade.js';
+import { BlockTuneFacade } from './BlockTuneFacade.js';
+import { BlockToolFacade } from './BlockToolFacade.js';
 // import type ApiModule from '../modules/api';
 import type {
   ToolConstructable,
@@ -11,7 +11,7 @@ import type {
   BlockTuneConstructable
 } from '@editorjs/editorjs';
 
-type ToolConstructor = typeof InlineToolBuilder | typeof BlockToolBuilder | typeof BlockTuneBuilder;
+type ToolConstructor = typeof InlineToolFacade | typeof BlockToolFacade | typeof BlockTuneFacade;
 
 export type UnifiedToolConfig = Record<string, Omit<ToolSettings, 'class'> & {
   class: ToolConstructable;
@@ -56,7 +56,7 @@ export class ToolsFactory {
    * Returns Tool object based on it's type
    * @param name - tool name
    */
-  public get(name: string): InlineToolBuilder | BlockToolBuilder | BlockTuneBuilder {
+  public get(name: string): InlineToolFacade | BlockToolFacade | BlockTuneFacade {
     const { class: constructable, isInternal = false, ...config } = this.config[name];
 
     const Constructor = this.getConstructor(constructable);
@@ -84,11 +84,11 @@ export class ToolsFactory {
   private getConstructor(constructable: ToolConstructable): ToolConstructor {
     switch (true) {
       case (constructable as InlineToolConstructable)[InternalInlineToolSettings.IsInline]:
-        return InlineToolBuilder;
+        return InlineToolFacade;
       case (constructable as BlockTuneConstructable)[InternalTuneSettings.IsTune]:
-        return BlockTuneBuilder;
+        return BlockTuneFacade;
       default:
-        return BlockToolBuilder;
+        return BlockToolFacade;
     }
   }
 }

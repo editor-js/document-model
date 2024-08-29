@@ -1,11 +1,11 @@
-import { BaseToolBuilder, InternalInlineToolSettings } from './BaseToolBuilder.js';
+import { BaseToolFacade, InternalInlineToolSettings } from './BaseToolFacade.js';
 import type { InlineTool as IInlineTool, InlineToolConstructable } from '@editorjs/editorjs';
 import { ToolType } from './ToolType.js';
 
 /**
  * InlineTool object to work with Inline Tools constructables
  */
-export class InlineToolBuilder extends BaseToolBuilder<ToolType.Inline, IInlineTool> {
+export class InlineToolFacade extends BaseToolFacade<ToolType.Inline, IInlineTool> {
   /**
    * Tool type — Inline
    */

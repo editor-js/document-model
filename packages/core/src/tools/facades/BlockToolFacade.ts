@@ -1,5 +1,5 @@
 import type { BlockToolAdapter } from "@editorjs/dom-adapters";
-import { BaseToolBuilder, InternalBlockToolSettings, UserSettings } from './BaseToolBuilder.js';
+import { BaseToolFacade, InternalBlockToolSettings, UserSettings } from './BaseToolFacade.js';
 import type {
   BlockAPI,
   BlockToolData,
@@ -8,16 +8,16 @@ import type {
   ToolboxConfigEntry
 } from '@editorjs/editorjs';
 import { isEmpty, cacheable, isObject } from '@editorjs/helpers';
-import { type InlineToolBuilder } from './InlineToolBuilder.js';
+import { type InlineToolFacade } from './InlineToolFacade.js';
 import { ToolType } from './ToolType.js';
-import { type BlockTuneBuilder } from './BlockTuneBuilder.js';
+import { type BlockTuneFacade } from './BlockTuneFacade.js';
 import { ToolsCollection } from './ToolsCollection.js';
 import { BlockToolConstructor as BlockToolConstructable, BlockTool as IBlockTool } from '../../entities/BlockTool.js';
 
 /**
  * Class to work with Block tools constructables
  */
-export class BlockToolBuilder extends BaseToolBuilder<ToolType.Block, IBlockTool> {
+export class BlockToolFacade extends BaseToolFacade<ToolType.Block, IBlockTool> {
   /**
    * Tool type — Block
    */
@@ -26,12 +26,12 @@ export class BlockToolBuilder extends BaseToolBuilder<ToolType.Block, IBlockTool
   /**
    * InlineTool collection for current Block Tool
    */
-  public inlineTools: ToolsCollection<InlineToolBuilder> = new ToolsCollection<InlineToolBuilder>();
+  public inlineTools: ToolsCollection<InlineToolFacade> = new ToolsCollection<InlineToolFacade>();
 
   /**
    * BlockTune collection for current Block Tool
    */
-  public tunes: ToolsCollection<BlockTuneBuilder> = new ToolsCollection<BlockTuneBuilder>();
+  public tunes: ToolsCollection<BlockTuneFacade> = new ToolsCollection<BlockTuneFacade>();
 
   /**
    * Tool's constructable blueprint

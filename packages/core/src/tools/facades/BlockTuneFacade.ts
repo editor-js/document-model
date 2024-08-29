@@ -1,4 +1,4 @@
-import { BaseToolBuilder } from './BaseToolBuilder.js';
+import { BaseToolFacade } from './BaseToolFacade.js';
 import type { BlockAPI, BlockTune as IBlockTune, BlockTuneConstructable } from '@editorjs/editorjs';
 import { ToolType } from './ToolType.js';
 // import type { BlockTuneData } from '@editorjs/editorjs';
@@ -7,7 +7,7 @@ import { ToolType } from './ToolType.js';
  * Stub class for BlockTunes
  * @todo Implement
  */
-export class BlockTuneBuilder extends BaseToolBuilder<ToolType.Tune, IBlockTune> {
+export class BlockTuneFacade extends BaseToolFacade<ToolType.Tune, IBlockTune> {
   /**
    * Tool type — Tune
    */

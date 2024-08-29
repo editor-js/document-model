@@ -1,8 +1,8 @@
-import { type BlockToolBuilder } from './BlockToolBuilder.js';
-import { type InlineToolBuilder } from './InlineToolBuilder.js';
-import { type BlockTuneBuilder } from './BlockTuneBuilder.js';
+import { type BlockToolFacade } from './BlockToolFacade.js';
+import { type InlineToolFacade } from './InlineToolFacade.js';
+import { type BlockTuneFacade } from './BlockTuneFacade.js';
 
-export type ToolClass = BlockToolBuilder | InlineToolBuilder | BlockTuneBuilder;
+export type ToolClass = BlockToolFacade | InlineToolFacade | BlockTuneFacade;
 
 /**
  * Class to store Editor Tools
@@ -11,34 +11,34 @@ export class ToolsCollection<V extends ToolClass = ToolClass> extends Map<string
   /**
    * Returns Block Tools collection
    */
-  public get blockTools(): ToolsCollection<BlockToolBuilder> {
+  public get blockTools(): ToolsCollection<BlockToolFacade> {
     const tools = Array
       .from(this.entries())
-      .filter(([, tool]) => tool.isBlock()) as [string, BlockToolBuilder][];
+      .filter(([, tool]) => tool.isBlock()) as [string, BlockToolFacade][];
 
-    return new ToolsCollection<BlockToolBuilder>(tools);
+    return new ToolsCollection<BlockToolFacade>(tools);
   }
 
   /**
    * Returns Inline Tools collection
    */
-  public get inlineTools(): ToolsCollection<InlineToolBuilder> {
+  public get inlineTools(): ToolsCollection<InlineToolFacade> {
     const tools = Array
       .from(this.entries())
-      .filter(([, tool]) => tool.isInline()) as [string, InlineToolBuilder][];
+      .filter(([, tool]) => tool.isInline()) as [string, InlineToolFacade][];
 
-    return new ToolsCollection<InlineToolBuilder>(tools);
+    return new ToolsCollection<InlineToolFacade>(tools);
   }
 
   /**
    * Returns Block Tunes collection
    */
-  public get blockTunes(): ToolsCollection<BlockTuneBuilder> {
+  public get blockTunes(): ToolsCollection<BlockTuneFacade> {
     const tools = Array
       .from(this.entries())
-      .filter(([, tool]) => tool.isTune()) as [string, BlockTuneBuilder][];
+      .filter(([, tool]) => tool.isTune()) as [string, BlockTuneFacade][];
 
-    return new ToolsCollection<BlockTuneBuilder>(tools);
+    return new ToolsCollection<BlockTuneFacade>(tools);
   }
 
   /**

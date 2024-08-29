@@ -23,8 +23,6 @@ const DEFAULT_HOLDER_ID = 'editorjs';
  * - adds Blocks accodring to model updates
  */
 export default class Core {
-  #id = Math.floor(Math.random() * 1e10).toString();
-
   /**
    * Editor's Document Model
    */
@@ -51,7 +49,7 @@ export default class Core {
    * @param config - Editor configuration
    */
   constructor(config: CoreConfig) {
-    this.#iocContainer = Container.of(this.#id);
+    this.#iocContainer = Container.of(Math.floor(Math.random() * 1e10).toString());
 
     this.validateConfig(config);
     this.#config = config as CoreConfigValidated;

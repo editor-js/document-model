@@ -6,10 +6,10 @@ import type {
   ToolSettings,
 } from '@editorjs/editorjs';
 import { isFunction } from '@editorjs/helpers';
-import { type BlockToolBuilder } from './BlockToolBuilder.js';
-import { type InlineToolBuilder } from './InlineToolBuilder.js';
+import { type BlockToolFacade } from './BlockToolFacade.js';
+import { type InlineToolFacade } from './InlineToolFacade.js';
 import { ToolType } from './ToolType.js';
-import { type BlockTuneBuilder } from './BlockTuneBuilder.js';
+import { type BlockTuneFacade } from './BlockTuneFacade.js';
 import { BlockToolConstructor as BlockToolConstructable } from "../../entities/BlockTool.js";
 
 export type ToolConstructable = ToolConstructableV2 | BlockToolConstructable;
@@ -120,7 +120,7 @@ interface ConstructorOptions {
 /**
  * Base abstract class for Tools
  */
-export abstract class BaseToolBuilder<Type extends ToolType = ToolType, ToolClass extends Tool = Tool> {
+export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass extends Tool = Tool> {
   /**
    * Tool type: Block, Inline or Tune
    */
@@ -239,21 +239,21 @@ export abstract class BaseToolBuilder<Type extends ToolType = ToolType, ToolClas
   /**
    * Returns true if Tools is inline
    */
-  public isInline(): this is InlineToolBuilder {
+  public isInline(): this is InlineToolFacade {
     return this.type === ToolType.Inline;
   }
 
   /**
    * Returns true if Tools is block
    */
-  public isBlock(): this is BlockToolBuilder {
+  public isBlock(): this is BlockToolFacade {
     return this.type === ToolType.Block;
   }
 
   /**
    * Returns true if Tools is tune
    */
-  public isTune(): this is BlockTuneBuilder {
+  public isTune(): this is BlockTuneFacade {
     return this.type === ToolType.Tune;
   }
 
