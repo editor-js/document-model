@@ -27,7 +27,7 @@ export class UndoRedoManager {
 
     const inversedOperation = Transformer.inverse(operation);
 
-    this.#redoStack.push(operation);
+    this.#redoStack.push(inversedOperation);
 
     return inversedOperation;
   }
@@ -42,31 +42,20 @@ export class UndoRedoManager {
       return;
     }
 
-    return operation;
+    const inversedOperation = Transformer.inverse(operation);
+
+    this.#undoStack.push(Transformer.inverse(inversedOperation));
+
+    return inversedOperation;
   }
 
   /**
-   * Put operation to undo stack
+   * Put operation to undo stack and clear redo stack
    *
    * @param operation - operation to put
    */
-  public putToUndoStack(operation: Operation): void {
+  public put(operation: Operation): void {
     this.#undoStack.push(operation);
-  }
-
-  /**
-   * Put operation to redo stack
-   *
-   * @param operation - operation to put
-   */
-  public putToRedoStack(operation: Operation): void {
-    this.#redoStack.push(operation);
-  }
-
-  /**
-   * Flushes undo stack
-   */
-  public flushRedoStack(): void {
     this.#redoStack = [];
   }
 }

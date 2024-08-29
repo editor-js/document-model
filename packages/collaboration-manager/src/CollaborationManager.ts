@@ -49,7 +49,6 @@ export class CollaborationManager {
     this.#shouldHandleEvents = false;
 
     this.applyOperation(operation);
-    this.#undoRedoManager.putToRedoStack(Transformer.inverse(operation));
 
     // Re-enable event handling
     this.#shouldHandleEvents = true;
@@ -69,7 +68,6 @@ export class CollaborationManager {
     this.#shouldHandleEvents = false;
 
     this.applyOperation(operation);
-    this.#undoRedoManager.putToUndoStack(operation);
 
     // Re-enable event handling
     this.#shouldHandleEvents = true;
@@ -132,8 +130,7 @@ export class CollaborationManager {
     }
 
     if (operation !== null) {
-      this.#undoRedoManager.putToUndoStack(operation);
-      this.#undoRedoManager.flushRedoStack();
+      this.#undoRedoManager.put(operation);
     }
   }
 }
