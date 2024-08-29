@@ -63,7 +63,7 @@ onMounted(() => {
       blocks: [ {
         type: 'paragraph',
         data: {
-          text: 'Hello, World!',
+          text: 'Hello, <b>World</b>!',
         },
       } ],
     },
@@ -85,6 +85,12 @@ onMounted(() => {
     </div>
   </div>
   <div :class="$style.body">
+    <div>
+      <div
+        id="editorjs"
+        :class="$style.editor"
+      />
+    </div>
     <div :class="$style.playground">
       <CaretIndex :model="model" />
       <Input
@@ -111,10 +117,6 @@ onMounted(() => {
       <Node
         :node="editorDocument"
       />
-      <div
-        id="editorjs"
-        :class="$style.editor"
-      />
     </div>
   </div>
 </template>
@@ -128,7 +130,7 @@ onMounted(() => {
 .body {
   padding: 16px;
   display: grid;
-  grid-template-columns: 50% 50%;
+  grid-template-columns: repeat(3, 1fr);
   grid-gap: 16px;
 }
 

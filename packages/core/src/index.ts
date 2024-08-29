@@ -2,7 +2,7 @@ import type { ModelEvents } from '@editorjs/model';
 import { BlockAddedEvent, EditorJSModel, EventType } from '@editorjs/model';
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
 import ToolsManager from './tools/ToolsManager.js';
-import { BlockToolAdapter, CaretAdapter, InlineToolsAdapter } from '@editorjs/dom-adapters';
+import { BlockToolAdapter, CaretAdapter, FormattingAdapter } from '@editorjs/dom-adapters';
 import type { BlockAPI, BlockToolData, API as EditorjsApi, ToolConfig } from '@editorjs/editorjs';
 import { InlineToolbar } from './ui/InlineToolbar/index.js';
 import type { CoreConfigValidated } from './entities/Config.js';
@@ -47,7 +47,7 @@ export default class Core {
    * Applies format, got from inline toolbar to the model
    * When model changed with formatting event, it renders related fragment
    */
-  #inlineToolsAdapter: InlineToolsAdapter;
+  #formattingAdapter: FormattingAdapter;
 
   /**
    * @todo inline toolbar should subscripe on selection change event called by EventBus
@@ -71,9 +71,9 @@ export default class Core {
 
     this.#toolsManager = new ToolsManager(this.#config.tools);
     this.#caretAdapter = new CaretAdapter(this.#config.holder, this.#model);
-    this.#inlineToolsAdapter = new InlineToolsAdapter(this.#model, this.#caretAdapter);
+    this.#formattingAdapter = new FormattingAdapter(this.#model, this.#caretAdapter);
 
-    this.#inlineToolbar = new InlineToolbar(this.#model, this.#inlineToolsAdapter, this.#toolsManager.getInlineTools(), this.#config.holder);
+    this.#inlineToolbar = new InlineToolbar(this.#model, this.#formattingAdapter, this.#toolsManager.getInlineTools(), this.#config.holder);
 
     this.#model.initializeDocument({ blocks });
   }
@@ -130,7 +130,7 @@ export default class Core {
       throw new Error('Block index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
     }
 
-    const blockToolAdapter = new BlockToolAdapter(this.#model, this.#caretAdapter, index.blockIndex);
+    const blockToolAdapter = new BlockToolAdapter(this.#model, this.#caretAdapter, index.blockIndex, this.#formattingAdapter);
 
     const block = this.createBlock({
       name: event.detail.data.name,
