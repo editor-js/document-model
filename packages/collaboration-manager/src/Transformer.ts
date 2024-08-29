@@ -1,3 +1,4 @@
+import { IndexBuilder } from '@editorjs/model';
 import { Operation, OperationType } from './Operation.js';
 
 /**
@@ -12,7 +13,12 @@ export class Transformer {
   public static inverse(operation: Operation): Operation {
     switch (operation.type) {
       case OperationType.Insert:
-        return new Operation(OperationType.Delete, operation.index, {
+        const newIndex = new IndexBuilder()
+          .from(operation.index)
+          .addTextRange([operation.index.textRange![0], operation.index.textRange![0] + operation.data.newValue.length])
+          .build();
+
+        return new Operation(OperationType.Delete, newIndex, {
           prevValue: operation.data.newValue,
           newValue: operation.data.prevValue,
         });

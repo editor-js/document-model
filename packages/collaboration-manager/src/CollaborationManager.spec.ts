@@ -7,7 +7,9 @@ import { Operation, OperationType } from './Operation.js';
 describe('CollaborationManager', () => {
   describe('applyOperation', () => {
     it('should add text on apply Insert Operation', () => {
-      const model = new EditorJSModel({
+      const model = new EditorJSModel();
+
+      model.initializeDocument({
         blocks: [ {
           name: 'paragraph',
           data: {
@@ -47,7 +49,9 @@ describe('CollaborationManager', () => {
 
 
     it('should remove text on apply Remove Operation', () => {
-      const model = new EditorJSModel({
+      const model = new EditorJSModel();
+
+      model.initializeDocument({
         blocks: [ {
           name: 'paragraph',
           data: {
@@ -89,7 +93,9 @@ describe('CollaborationManager', () => {
 
   describe('undo logic', () => {
     it('should invert Insert operation', () => {
-      const model = new EditorJSModel({
+      const model = new EditorJSModel();
+
+      model.initializeDocument({
         blocks: [ {
           name: 'paragraph',
           data: {
@@ -129,7 +135,9 @@ describe('CollaborationManager', () => {
     });
 
     it('should invert Remove operation', () => {
-      const model = new EditorJSModel({
+      const model = new EditorJSModel();
+
+      model.initializeDocument({
         blocks: [ {
           name: 'paragraph',
           data: {
@@ -170,7 +178,9 @@ describe('CollaborationManager', () => {
     });
 
     it('should revert only one operation if stack length is 1', () => {
-      const model = new EditorJSModel({
+      const model = new EditorJSModel();
+
+      model.initializeDocument({
         blocks: [ {
           name: 'paragraph',
           data: {
@@ -211,7 +221,9 @@ describe('CollaborationManager', () => {
     });
 
     it('should revert back to original state after undo and redo operations', () => {
-      const model = new EditorJSModel({
+      const model = new EditorJSModel();
+
+      model.initializeDocument({
         blocks: [ {
           name: 'paragraph',
           data: {
