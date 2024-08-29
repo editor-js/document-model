@@ -145,4 +145,18 @@ export class Index {
         return true;
     }
   }
+
+  /**
+   * Returns true if index points to the text data
+   */
+  public get isTextIndex(): boolean {
+    return this.blockIndex !== undefined && this.dataKey !== undefined && this.textRange !== undefined;
+  }
+
+  /**
+   * Returns true if index points to the block node
+   */
+  public get isBlockIndex(): boolean {
+    return this.blockIndex !== undefined && this.tuneName === undefined && this.dataKey === undefined && this.textRange === undefined;
+  }
 }

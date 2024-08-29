@@ -197,11 +197,11 @@ export class EditorJSModel extends EventBus {
    */
   public insertData(index: Index, data: unknown): void {
     switch (true) {
-      case (index.blockIndex !== undefined && index.dataKey !== undefined && index.textRange !== undefined):
-        this.#document.insertText(index.blockIndex, index.dataKey, data as string, index.textRange[0]);
+      case index.isTextIndex:
+        this.#document.insertText(index.blockIndex!, index.dataKey!, data as string, index.textRange![0]);
         break;
 
-      case (index.blockIndex !== undefined):
+      case index.isBlockIndex:
         // eslint-disable-next-line @typescript-eslint/no-magic-numbers
         this.#document.addBlock(data as Parameters<EditorDocument['addBlock']>[0], index.blockIndex);
       default:
