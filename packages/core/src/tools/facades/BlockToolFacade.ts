@@ -1,10 +1,9 @@
-import type { BlockToolAdapter } from '@editorjs/dom-adapters';
 import { BaseToolFacade, InternalBlockToolSettings, UserSettings } from './BaseToolFacade.js';
 import type {
-  BlockAPI,
-  BlockToolData,
   ConversionConfig,
-  PasteConfig, SanitizerConfig, ToolboxConfig,
+  PasteConfig,
+  SanitizerConfig,
+  ToolboxConfig,
   ToolboxConfigEntry
 } from '@editorjs/editorjs';
 import { isEmpty, cacheable, isObject } from '@editorjs/helpers';
@@ -12,7 +11,7 @@ import { type InlineToolFacade } from './InlineToolFacade.js';
 import { ToolType } from './ToolType.js';
 import { type BlockTuneFacade } from './BlockTuneFacade.js';
 import { ToolsCollection } from './ToolsCollection.js';
-import { BlockToolConstructor as BlockToolConstructable, BlockTool as IBlockTool } from '@editorjs/sdk';
+import { BlockToolConstructor as BlockToolConstructable, BlockToolConstructorOptions, BlockTool as IBlockTool } from '@editorjs/sdk';
 
 /**
  * Class to work with Block tools constructables
@@ -45,8 +44,7 @@ export class BlockToolFacade extends BaseToolFacade<ToolType.Block, IBlockTool> 
    * @param options.block - BlockAPI for current Block
    * @param options.readOnly - True if Editor is in read-only mode
    */
-  // eslint-disable-next-line jsdoc/require-jsdoc
-  public create({ data, block, readOnly, adapter }: { data: BlockToolData; block: BlockAPI; readOnly: boolean; adapter: BlockToolAdapter }): IBlockTool {
+  public create({ data, block, readOnly, adapter }: Pick<BlockToolConstructorOptions, 'data' | 'block' | 'readOnly' | 'adapter'>): IBlockTool {
     return new this.constructable({
       adapter,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

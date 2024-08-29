@@ -5,8 +5,7 @@ import {
   BlockToolFacade, BlockTuneFacade,
   InlineToolFacade,
   ToolsCollection,
-  ToolsFactory,
-  UnifiedToolConfig
+  ToolsFactory
 } from './facades/index.js';
 import { Paragraph } from './internal/block-tools/paragraph/index.js';
 import type {
@@ -17,6 +16,7 @@ import type {
 import BoldInlineTool from './internal/inline-tools/bold/index.js';
 import ItalicInlineTool from './internal/inline-tools/italic/index.js';
 import { BlockToolConstructor, InlineTool, InlineToolConstructor } from '@editorjs/sdk';
+import { UnifiedToolConfig } from '../entities/index.js';
 
 /**
  * Works with tools

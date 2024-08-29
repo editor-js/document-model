@@ -7,25 +7,13 @@ import { BlockToolFacade } from './BlockToolFacade.js';
 // import type ApiModule from '../modules/api';
 import type {
   ToolConstructable,
-  ToolSettings,
   EditorConfig,
   InlineToolConstructable,
   BlockTuneConstructable
 } from '@editorjs/editorjs';
+import type { UnifiedToolConfig } from '../../entities/UnifiedToolConfig.js';
 
 type ToolConstructor = typeof InlineToolFacade | typeof BlockToolFacade | typeof BlockTuneFacade;
-
-export type UnifiedToolConfig = Record<string, Omit<ToolSettings, 'class'> & {
-  /**
-   * Tool constructor
-   */
-  class: ToolConstructable | BlockToolConstructor | InlineToolConstructor;
-
-  /**
-   * Specifies if tool is internal
-   */
-  isInternal?: boolean;
-}>;
 
 /**
  * Factory to construct classes to work with tools
