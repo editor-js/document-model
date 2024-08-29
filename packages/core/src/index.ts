@@ -175,3 +175,5 @@ export default class Core {
     return block;
   }
 }
+
+export * from './entities/index.js';

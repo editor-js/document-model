@@ -10,7 +10,7 @@ import {
 } from '@editorjs/model';
 import type { CaretAdapter } from '../CaretAdapter/index.js';
 import { FormattingAction } from '@editorjs/model';
-import type { InlineTool } from '@editorjs/core/src/entities/InlineTool.js';
+import type { InlineTool } from '@editorjs/core';
 
 /**
  * Class handles on format model events and renders inline tools
@@ -81,6 +81,7 @@ export class InlineToolsAdapter {
 
   /**
    * Attaches InlineTool to the adapter
+   *
    * @param toolName - name of the tool to be attached
    * @param tool - tool to attach
    */
@@ -92,6 +93,7 @@ export class InlineToolsAdapter {
    * Detaches InlineTool from the adapter
    *
    * @param tool - tool to detach
+   * @param toolName
    */
   public detachTool(toolName: InlineToolName): void {
     this.#tools.delete(toolName);

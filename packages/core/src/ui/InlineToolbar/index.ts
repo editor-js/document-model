@@ -1,9 +1,8 @@
 import type { InlineToolsAdapter } from '@editorjs/dom-adapters';
 import type { InlineTool, InlineToolsConfig } from '../../entities/InlineTool.js';
 import type { InlineToolName } from '@editorjs/model';
-import { type EditorJSModel, type TextRange, createInlineToolName, Index } from '@editorjs/model';
+import { type EditorJSModel, type TextRange, createInlineToolData, createInlineToolName, Index } from '@editorjs/model';
 import { EventType } from '@editorjs/model';
-import type { Nominal } from '@editorjs/model/dist/utils/Nominal';
 import { make } from '@editorjs/dom';
 
 /**
@@ -162,6 +161,6 @@ export class InlineToolbar {
     /**
      * @todo pass to applyFormat inline tool data formed in toolbar
      */
-    this.#inlineToolAdapter.applyFormat(toolName, {} as Nominal<Record<string, unknown>, 'InlineToolData'>);
+    this.#inlineToolAdapter.applyFormat(toolName, createInlineToolData({}));
   };
 }
