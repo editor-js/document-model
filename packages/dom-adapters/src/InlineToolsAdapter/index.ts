@@ -68,7 +68,7 @@ export class InlineToolsAdapter {
       if (selection) {
         const range = selection.getRangeAt(0);
 
-        const inlineElement = tool.create();
+        const inlineElement = tool.createWrapper();
 
         /**
          * Insert contents from range to new inline element and put created element in range
@@ -134,8 +134,6 @@ export class InlineToolsAdapter {
     const fragments = this.#model.getFragments(blockIndex, dataKey, ...textRange, toolName);
 
     const { action, range } = tool.getAction(textRange, fragments);
-
-    console.log('tool get action in adapter');
 
     switch (action) {
       case FormattingAction.Format:

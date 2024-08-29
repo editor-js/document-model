@@ -34,7 +34,7 @@ export default class BoldInlineTool implements InlineTool {
    * Renders wrapper for tool without actual content
    * @returns Created html element
    */
-  public create(): HTMLElement {
+  public createWrapper(): HTMLElement {
     return make('b');
   }
 

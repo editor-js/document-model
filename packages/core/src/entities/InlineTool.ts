@@ -53,9 +53,9 @@ export interface InlineTool extends Omit<InlineToolVersion2, 'save' | 'checkStat
   getAction(index: TextRange, fragments: InlineFragment[]): FormattingActionWithRange;
 
   /**
-   * Method for rendering the tool
+   * Method for creating wrapper element of the tool
    */
-  create(): HTMLElement;
+  createWrapper(): HTMLElement;
 }
 
 /**
