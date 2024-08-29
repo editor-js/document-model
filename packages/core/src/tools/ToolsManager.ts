@@ -25,9 +25,24 @@ import { UnifiedToolConfig } from '../entities/index.js';
  */
 @Service()
 export default class ToolsManager {
+  /**
+   * ToolsFactory instance
+   */
   #factory: ToolsFactory;
+
+  /**
+   * Unified config with internal and internal tools
+   */
   #config: UnifiedToolConfig;
+
+  /**
+   * Tools available for use
+   */
   #availableTools = new ToolsCollection();
+
+  /**
+   * Tools loaded but unavailable for use
+   */
   #unavailableTools = new ToolsCollection();
 
   /**
@@ -84,20 +99,23 @@ export default class ToolsManager {
 
     this.#factory = new ToolsFactory(this.#config, editorConfig, {});
 
-    void this.#prepareTools();
+    void this.prepareTools();
   }
 
   /**
    * Calls tools prepare method if it exists and adds tools to relevant collection (available or unavailable tools)
    * @returns Promise<void>
    */
-  #prepareTools(): Promise<void> {
+  public async prepareTools(): Promise<void> {
     const promiseQueue = new PromiseQueue();
 
     Object.entries(this.#config).forEach(([toolName, config]) => {
       if (isFunction(config.class.prepare)) {
         void promiseQueue.add(async () => {
           try {
+            /**
+             * TypeScript doesn't get type guard here, so non-null assertion is used
+             */
             await config.class.prepare!({
               toolName: toolName,
               config: config,
@@ -140,7 +158,7 @@ export default class ToolsManager {
       }
     });
 
-    return promiseQueue.completed;
+    await promiseQueue.completed;
   }
 
   /**
