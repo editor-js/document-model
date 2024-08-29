@@ -22,5 +22,10 @@
   "dependencies": {
     "@editorjs/editorjs": "^2.30.5",
     "@editorjs/model": "workspace:^"
-  }
+  },
+  "references": [
+    {
+      "path": "../model/tsconfig.build.json"
+    }
+  ]
 }
