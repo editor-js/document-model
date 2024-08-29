@@ -169,7 +169,7 @@ describe('CollaborationManager', () => {
       });
     });
 
-    it('should properly handle double undo', () => {
+    it('should revert only one operation if stack length is 1', () => {
       const model = new EditorJSModel({
         blocks: [ {
           name: 'paragraph',
@@ -210,7 +210,7 @@ describe('CollaborationManager', () => {
       });
     });
 
-    it('should properly handle redo after undo', () => {
+    it('should revert back to original state after undo and redo operations', () => {
       const model = new EditorJSModel({
         blocks: [ {
           name: 'paragraph',

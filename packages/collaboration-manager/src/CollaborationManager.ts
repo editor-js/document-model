@@ -1,7 +1,6 @@
 import type { EditorJSModel, ModelEvents } from '@editorjs/model';
 import { EventType, TextAddedEvent, TextRemovedEvent } from '@editorjs/model';
 import { Operation, OperationType } from './Operation.js';
-import { Transformer } from './Transformer.js';
 import { UndoRedoManager } from './UndoRedoManager.js';
 
 /**
