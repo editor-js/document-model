@@ -10,7 +10,10 @@ const props = defineProps<{
 
 const isHidden = ref(props.collapsed ?? true);
 
-function collapseExpand(){
+/**
+ * Collapse or expand the content.
+ */
+function collapseExpand() {
   isHidden.value = !isHidden.value;
 };
 </script>
@@ -19,7 +22,7 @@ function collapseExpand(){
   <div
     :class="$style.indent"
   >
-    <div 
+    <div
       :class="$style.collapser"
       @click="collapseExpand"
     />
