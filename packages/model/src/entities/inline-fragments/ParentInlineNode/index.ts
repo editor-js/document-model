@@ -33,7 +33,7 @@ export class ParentInlineNode extends EventBus implements InlineNode {
    * @param options - constructor options to support types
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars,@typescript-eslint/no-empty-function,no-unused-vars
-  constructor(/*options?: ParentInlineNodeConstructorOptions*/) {
+  constructor(options?: ParentInlineNodeConstructorOptions) {
     super();
   }
 
