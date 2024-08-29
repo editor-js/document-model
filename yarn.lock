@@ -635,6 +635,7 @@ __metadata:
     "@editorjs/dom-adapters": "workspace:^"
     "@editorjs/editorjs": "npm:^2.30.5"
     "@editorjs/model": "workspace:^"
+    "@editorjs/sdk": "workspace:^"
     eslint: "npm:^9.9.1"
     eslint-config-codex: "npm:^2.0.2"
     typescript: "npm:^5.5.4"

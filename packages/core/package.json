@@ -21,6 +21,7 @@
     "@editorjs/dom": "^1.0.0",
     "@editorjs/dom-adapters": "workspace:^",
     "@editorjs/editorjs": "^2.30.5",
-    "@editorjs/model": "workspace:^"
+    "@editorjs/model": "workspace:^",
+    "@editorjs/sdk": "workspace:^"
   }
 }
