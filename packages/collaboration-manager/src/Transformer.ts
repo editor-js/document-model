@@ -11,11 +11,22 @@ export class Transformer {
    * @param operation - operation to inverse
    */
   public static inverse(operation: Operation): Operation {
+    const index = operation.index;
+
     switch (operation.type) {
       case OperationType.Insert:
+
+        const textRange = index.textRange;
+
+        if (textRange == undefined) {
+          throw new Error('Unsupported index');
+        }
+
+        const [ textRangeStart ] = textRange;
+
         const newIndex = new IndexBuilder()
-          .from(operation.index)
-          .addTextRange([operation.index.textRange![0], operation.index.textRange![0] + operation.data.newValue.length])
+          .from(index)
+          .addTextRange([textRangeStart, textRangeStart + operation.data.newValue.length])
           .build();
 
         return new Operation(OperationType.Delete, newIndex, {
@@ -23,12 +34,12 @@ export class Transformer {
           newValue: operation.data.prevValue,
         });
       case OperationType.Delete:
-        return new Operation(OperationType.Insert, operation.index, {
+        return new Operation(OperationType.Insert, index, {
           prevValue: operation.data.newValue,
           newValue: operation.data.prevValue,
         });
       case OperationType.Modify:
-        return new Operation(OperationType.Modify, operation.index, {
+        return new Operation(OperationType.Modify, index, {
           prevValue: operation.data.newValue,
           newValue: operation.data.prevValue,
         });

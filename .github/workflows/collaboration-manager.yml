@@ -18,6 +18,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - run: yarn
+
+      - name: Build the package
+        uses: ./.github/actions/build
+        with:
+          package-name: '@editorjs/model'
+
       - name: Run unit tests
         uses: ./.github/actions/unit-tests
         with:
