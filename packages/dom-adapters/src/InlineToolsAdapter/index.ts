@@ -1,16 +1,18 @@
 import type {
   EditorJSModel,
-  InlineToolData,
   InlineToolName,
-  ModelEvents
+  ModelEvents,
+  InlineToolData,
+  TextRange
 } from '@editorjs/model';
 import {
+  createInlineToolData,
   EventType,
   TextFormattedEvent
 } from '@editorjs/model';
 import type { CaretAdapter } from '../CaretAdapter/index.js';
 import { FormattingAction } from '@editorjs/model';
-import type { InlineTool } from '@editorjs/sdk';
+import type { DataFormElementWithOptions, InlineTool, InlineToolFormatData } from '@editorjs/sdk';
 
 /**
  * Class handles on format model events and renders inline tools
@@ -48,6 +50,7 @@ export class InlineToolsAdapter {
   }
 
   /**
+   * @todo move event handling to BlockToolAdapter
    * Handles text format and unformat model events
    *
    * @param event - model change event
@@ -68,15 +71,54 @@ export class InlineToolsAdapter {
       if (selection) {
         const range = selection.getRangeAt(0);
 
-        const inlineElement = tool.createWrapper();
+        const inlineElement = tool.createWrapper(event.detail.data.data);
 
+        const extracted = range.extractContents()
+        
         /**
          * Insert contents from range to new inline element and put created element in range
-         */
-        inlineElement.appendChild(range.extractContents());
+        */
+        inlineElement.appendChild(extracted);
+        
         range.insertNode(inlineElement);
       }
     }
+  }
+
+  /**
+   * Format content of the contenteditable element
+   *
+   * @param input - input element to apply format to
+   * @param index - text range inside of the input element
+   * @param toolName - name of the tool, which format to apply
+   * @param toolData - additional data for the tool
+   */
+  public formatElementContent(input: HTMLElement, index: TextRange, toolName: InlineToolName, toolData?: InlineToolData): void {
+    const tool = this.#tools.get(toolName);
+
+    if (tool === undefined) {
+      throw new Error(`InlineToolAdapter: tool ${toolName} is not attached`);
+    }
+
+    const [ start, end ] = index;
+
+    /**
+     * Create range with positions specified in index
+     */
+    const range = document.createRange();
+    range.setStart(input, start);
+    range.setEnd(input, end);
+
+    const inlineElement = tool.createWrapper(toolData);
+
+    const extracted = range.extractContents()
+        
+    /**
+     * Insert contents from range to new inline element and put created element in range
+     */
+    inlineElement.appendChild(extracted);
+        
+    range.insertNode(inlineElement);
   }
 
   /**
@@ -96,6 +138,34 @@ export class InlineToolsAdapter {
    */
   public detachTool(toolName: InlineToolName): void {
     this.#tools.delete(toolName);
+  }
+
+  /**
+   * 
+   * @param toolName 
+   * @param callback 
+   * @returns 
+   */
+  public formatData(toolName: InlineToolName, callback: (data: InlineToolFormatData) => void): DataFormElementWithOptions | null {
+    const currentTool = this.#tools.get(toolName);
+
+    if (currentTool === undefined) {
+      throw new Error(`InlineToolAdapter: tool ${toolName} was not attached`)
+    }
+
+    /**
+     * If createDataFormElement method specified, render element and return it
+     */
+    if (currentTool.createDataFormElement !== undefined) {
+      return currentTool.createDataFormElement(callback); 
+    } 
+    /**
+     * If createDataFormElement method is not specidied, then no data required for the tool
+     * Trigger callback
+     */
+    callback(createInlineToolData({}));
+
+    return null;
   }
 
   /**

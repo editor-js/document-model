@@ -1,5 +1,5 @@
 import type { InlineToolsAdapter } from '@editorjs/dom-adapters';
-import type { InlineTool, InlineToolsConfig } from '@editorjs/sdk';
+import type { InlineTool, InlineToolsConfig, InlineToolFormatData } from '@editorjs/sdk';
 import type { InlineToolName } from '@editorjs/model';
 import { type EditorJSModel, type TextRange, createInlineToolData, createInlineToolName, Index } from '@editorjs/model';
 import { EventType } from '@editorjs/model';
@@ -38,6 +38,10 @@ export class InlineToolbar {
    */
   #toolbar: HTMLElement | undefined = undefined;
 
+  #dataFormElement: HTMLElement | undefined = undefined;
+  /**
+   * Holder element of the editor
+   */
   #holder: HTMLElement;
 
   /**
@@ -136,7 +140,7 @@ export class InlineToolbar {
       inlineElementButton.innerHTML = toolName;
 
       inlineElementButton.addEventListener('click', (_event) => {
-        this.apply(toolName);
+        this.formData(toolName);
       });
       if (this.#toolbar !== undefined) {
         this.#toolbar.appendChild(inlineElementButton);
@@ -155,12 +159,40 @@ export class InlineToolbar {
 
   /**
    * Apply format with data formed in toolbar
-   * @param toolName - name of the inline tool, whose format would be applied
+   * @param nameOfTheTool - name of the inline tool, whose format would be applied
    */
-  public apply(toolName: InlineToolName): void {
+  public formData(nameOfTheTool: InlineToolName): void {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+    const elementWithOptions = this.#inlineToolAdapter.formatData(nameOfTheTool, (data: InlineToolFormatData): void => {
+      this.apply(nameOfTheTool, data);
+    });
+
     /**
-     * @todo pass to applyFormat inline tool data formed in toolbar
+     * Do not render toolbar data former if element with options is null
+     * It means, that tool does not need any data, and callback will be triggered in adapter
      */
-    this.#inlineToolAdapter.applyFormat(toolName, createInlineToolData({}));
+    if (elementWithOptions === null) {
+      return;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    this.#dataFormElement = elementWithOptions.element;
+
+    if (this.#toolbar === undefined) {
+      throw new Error('InlineToolbar: can not show formDataElement without toolbar');
+    }
+
+    this.#holder.appendChild(this.#dataFormElement);
   };
+
+  /**
+   * lalala
+   * @param toolName lalala
+   * @param formatData ;alala
+   */
+  public apply(toolName: InlineToolName, formatData: InlineToolFormatData): void {
+    this.#dataFormElement?.remove();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    this.#inlineToolAdapter.applyFormat(toolName, createInlineToolData(formatData));
+  }
 }

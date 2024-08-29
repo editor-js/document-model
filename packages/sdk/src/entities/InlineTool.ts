@@ -1,4 +1,4 @@
-import type { TextRange, InlineFragment, FormattingAction, IntersectType } from '@editorjs/model';
+import type { TextRange, InlineFragment, FormattingAction, IntersectType, InlineToolName } from '@editorjs/model';
 import type { InlineTool as InlineToolVersion2 } from '@editorjs/editorjs';
 import type { InlineToolConstructorOptions as InlineToolConstructorOptionsVersion2 } from '@editorjs/editorjs';
 
@@ -22,6 +22,32 @@ export interface FormattingActionWithRange {
    */
   range: TextRange;
 }
+
+/**
+ * @todo support fakeSelectionRequired option
+ * Interface that represents options handled by toolbar element
+ */
+export interface ToolbarOptions {
+  fakeSelectionRequired: boolean
+}
+
+/**
+ * Interface that represents return type of the createFormData function of the tool
+ * Contains rendered by tool FormDataElement with options for toolbar
+ */
+export interface DataFormElementWithOptions {
+  /**
+   * HTML element rendered by tool for data forming
+   */
+  element: HTMLElement,
+
+  /**
+   * Oprions of custom toolbar behaviour
+   */
+  toolbarOptions?: ToolbarOptions;
+}
+
+export type InlineToolFormatData = Record<string, unknown>;
 
 /**
  * Inline Tool interface for version 3
@@ -51,7 +77,13 @@ export interface InlineTool extends Omit<InlineToolVersion2, 'save' | 'checkStat
   /**
    * Method for creating wrapper element of the tool
    */
-  createWrapper(): HTMLElement;
+  createWrapper(data?: InlineToolFormatData): HTMLElement;
+
+  /**
+   * Create element for toolbar, which will form data required for inline tool
+   * @param callback - callback function that should be triggered, when data is formed, to apply format to model
+   */
+  createDataFormElement?(callback: (data: InlineToolFormatData) => void): DataFormElementWithOptions | null;
 }
 
 /**

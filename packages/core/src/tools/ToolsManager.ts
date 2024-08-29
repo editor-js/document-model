@@ -4,6 +4,7 @@ import { Paragraph } from './internal/block-tools/paragraph/index.js';
 import type { EditorConfig } from '@editorjs/editorjs';
 import BoldInlineTool from './internal/inline-tools/bold/index.js';
 import ItalicInlineTool from './internal/inline-tools/italic/index.js';
+import LinkInlineTool from './internal/inline-tools/link/index.js';
 
 /**
  * Works with tools
@@ -38,6 +39,7 @@ export default class ToolsManager {
     return {
       bold: BoldInlineTool,
       italic: ItalicInlineTool,
+      link: LinkInlineTool,
     };
   };
 }
