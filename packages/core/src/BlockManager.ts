@@ -46,7 +46,7 @@ export class BlocksManager {
    * @param editorUI - Editor's UI class instance
    * @param caretAdapter - Caret Adapter instance
    * @param toolsManager - Tools manager instance
-   * @param formattingAdapter
+   * @param formattingAdapter - will be passed to BlockToolAdapter for rendering inputs` formatted text
    */
   constructor(
     model: EditorJSModel,
