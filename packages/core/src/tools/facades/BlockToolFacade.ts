@@ -1,4 +1,4 @@
-import type { BlockToolAdapter } from "@editorjs/dom-adapters";
+import type { BlockToolAdapter } from '@editorjs/dom-adapters';
 import { BaseToolFacade, InternalBlockToolSettings, UserSettings } from './BaseToolFacade.js';
 import type {
   BlockAPI,
@@ -45,7 +45,7 @@ export class BlockToolFacade extends BaseToolFacade<ToolType.Block, IBlockTool> 
    * @param options.block - BlockAPI for current Block
    * @param options.readOnly - True if Editor is in read-only mode
    */
-  public create({ data, block, readOnly, adapter }: { data: BlockToolData, block: BlockAPI, readOnly: boolean, adapter: BlockToolAdapter }): IBlockTool {
+  public create({ data, block, readOnly, adapter }: { data: BlockToolData; block: BlockAPI; readOnly: boolean; adapter: BlockToolAdapter }): IBlockTool {
     return new this.constructable({
       adapter,
       data,

@@ -3,14 +3,14 @@ import type {
   API as ApiMethods,
   Tool,
   ToolConstructable as ToolConstructableV2,
-  ToolSettings,
+  ToolSettings
 } from '@editorjs/editorjs';
 import { isFunction } from '@editorjs/helpers';
 import { type BlockToolFacade } from './BlockToolFacade.js';
 import { type InlineToolFacade } from './InlineToolFacade.js';
 import { ToolType } from './ToolType.js';
 import { type BlockTuneFacade } from './BlockTuneFacade.js';
-import { BlockTool, BlockToolConstructor, InlineTool, InlineToolConstructor } from "@editorjs/sdk";
+import type { BlockTool, BlockToolConstructor, InlineTool, InlineToolConstructor } from '@editorjs/sdk';
 
 export type ToolConstructable = ToolConstructableV2 | BlockToolConstructor | InlineToolConstructor;
 
@@ -107,25 +107,51 @@ export enum InternalTuneSettings {
 
 export type ToolOptions = Omit<ToolSettings, 'class'>;
 
+/**
+ * BlockToolFacade constructor options inteface
+ */
 interface ConstructorOptions {
+  /**
+   * Tool name
+   */
   name: string;
+
+  /**
+   * Tool constructor function/class
+   */
   constructable: ToolConstructable;
+
+  /**
+   * Tool options
+   */
   config: ToolOptions;
+
+  /**
+   * Api methods for the Tool
+   */
   api: ApiMethods;
+
+  /**
+   * Is tool default
+   */
   isDefault: boolean;
+
+  /**
+   * Is tool internal
+   */
   isInternal: boolean;
+
+  /**
+   * Defualt placaholder for the Tol
+   */
   defaultPlaceholder?: string | false;
 }
 
 /**
  * Base abstract class for Tools
  */
-export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass extends (Tool | InlineTool | BlockTool) = Tool> {
-  /**
-   * Tool type: Block, Inline or Tune
-   */
-  public abstract type: Type;
-
+// eslint-disable-next-line @stylistic/type-generic-spacing
+export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass extends (Tool | InlineTool | BlockTool) = (Tool | InlineTool | BlockTool)> {
   /**
    * Tool name specified in EditorJS config
    */
@@ -162,7 +188,13 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
   protected defaultPlaceholder?: string | false;
 
   /**
-   * @param options - Constructor options
+   * Tool type: Block, Inline or Tune
+   */
+  public abstract type: Type;
+
+  /**
+   * BaseToolFacade constructor function
+   * @param options - BaseToolFacade constructor paramaters
    */
   constructor({
     name,
@@ -186,9 +218,9 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
    * Returns Tool user configuration
    */
   public get settings(): ToolOptions {
-    const config = this.config[UserSettings.Config] || {};
+    const config: ToolOptions = this.config[UserSettings.Config] ?? {};
 
-    if (this.isDefault && !('placeholder' in config) && this.defaultPlaceholder) {
+    if (this.isDefault && !('placeholder' in config) && typeof this.defaultPlaceholder === 'string') {
       config.placeholder = this.defaultPlaceholder;
     }
 

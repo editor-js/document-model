@@ -7,17 +7,16 @@ import {
   ToolsCollection,
   ToolsFactory,
   UnifiedToolConfig
-} from "./facades/index.js";
+} from './facades/index.js';
 import { Paragraph } from './internal/block-tools/paragraph/index.js';
 import type {
   EditorConfig,
-  ToolConfig,
   ToolConstructable,
   ToolSettings
 } from '@editorjs/editorjs';
-import BoldInlineTool from "./internal/inline-tools/bold/index.js";
-import ItalicInlineTool from "./internal/inline-tools/italic/index.js";
-import { InlineTool } from "@editorjs/sdk";
+import BoldInlineTool from './internal/inline-tools/bold/index.js';
+import ItalicInlineTool from './internal/inline-tools/italic/index.js';
+import { BlockToolConstructor, InlineTool, InlineToolConstructor } from '@editorjs/sdk';
 
 /**
  * Works with tools
@@ -85,15 +84,19 @@ export default class ToolsManager {
 
     this.#factory = new ToolsFactory(this.#config, editorConfig, {});
 
-    void this.#prepareTools(editorConfig.tools);
+    void this.#prepareTools();
   }
 
-  #prepareTools(config: ToolConfig): Promise<void> {
+  /**
+   * Calls tools prepare method if it exists and adds tools to relevant collection (available or unavailable tools)
+   * @returns Promise<void>
+   */
+  #prepareTools(): Promise<void> {
     const promiseQueue = new PromiseQueue();
 
     Object.entries(this.#config).forEach(([toolName, config]) => {
       if (isFunction(config.class.prepare)) {
-        promiseQueue.add(async () => {
+        void promiseQueue.add(async () => {
           try {
             await config.class.prepare!({
               toolName: toolName,
@@ -107,7 +110,7 @@ export default class ToolsManager {
                * Some Tools validation
                */
               const inlineToolRequiredMethods = ['render'];
-              const notImplementedMethods = inlineToolRequiredMethods.filter(method => !tool.create()[method as keyof InlineTool]);
+              const notImplementedMethods = inlineToolRequiredMethods.filter(method => tool.create()[method as keyof InlineTool] !== undefined);
 
               if (notImplementedMethods.length) {
                 /**
@@ -144,7 +147,7 @@ export default class ToolsManager {
 
   /**
    * Unify tools config
-   * @param config
+   * @param config - user's tools config
    */
   #prepareConfig(config: EditorConfig['tools']): UnifiedToolConfig {
     const unifiedConfig: UnifiedToolConfig = {} as UnifiedToolConfig;
@@ -197,24 +200,24 @@ export default class ToolsManager {
    * Returns internal tools
    * Includes Bold, Italic, Link and Paragraph
    */
-  get #internalTools():  UnifiedToolConfig {
+  get #internalTools(): UnifiedToolConfig {
     return {
       paragraph: {
         /**
          * @todo solve problems with types
          */
-        class: Paragraph as any,
+        class: Paragraph as unknown as BlockToolConstructor,
         inlineToolbar: true,
         isInternal: true,
       },
       bold: {
-        class: BoldInlineTool as any,
+        class: BoldInlineTool as unknown as InlineToolConstructor,
         isInternal: true,
       },
       italic: {
-        class: ItalicInlineTool as any,
+        class: ItalicInlineTool as unknown as InlineToolConstructor,
         isInternal: true,
-      }
+      },
     };
   }
 }

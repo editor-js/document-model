@@ -7,7 +7,7 @@ import { ToolType } from './ToolType.js';
  */
 export class InlineToolFacade extends BaseToolFacade<ToolType.Inline, IInlineTool> {
   /**
-   * Tool type — Inline
+   * Tool type for InlineToolFacade tools — Inline
    */
   public type: ToolType.Inline = ToolType.Inline;
 

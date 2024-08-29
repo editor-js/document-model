@@ -1,10 +1,9 @@
 import type { InlineToolsAdapter } from '@editorjs/dom-adapters';
-import type { InlineTool, InlineToolsConfig } from '@editorjs/sdk';
 import type { InlineToolName } from '@editorjs/model';
-import { type EditorJSModel, type TextRange, createInlineToolData, createInlineToolName, Index } from '@editorjs/model';
+import { type EditorJSModel, type TextRange, createInlineToolData, Index } from '@editorjs/model';
 import { EventType } from '@editorjs/model';
 import { make } from '@editorjs/dom';
-import { InlineToolFacade, ToolsCollection } from "../../tools/facades/index.js";
+import type { InlineToolFacade, ToolsCollection } from '../../tools/facades/index.js';
 
 /**
  * Class determines, when inline toolbar should be rendered

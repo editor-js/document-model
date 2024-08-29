@@ -1,4 +1,5 @@
-import type { BlockToolConstructor, InlineToolConstructor } from "@editorjs/sdk";
+/* eslint-disable jsdoc/informative-docs */
+import type { BlockToolConstructor, InlineToolConstructor } from '@editorjs/sdk';
 import { InternalInlineToolSettings, InternalTuneSettings } from './BaseToolFacade.js';
 import { InlineToolFacade } from './InlineToolFacade.js';
 import { BlockTuneFacade } from './BlockTuneFacade.js';
@@ -15,7 +16,14 @@ import type {
 type ToolConstructor = typeof InlineToolFacade | typeof BlockToolFacade | typeof BlockTuneFacade;
 
 export type UnifiedToolConfig = Record<string, Omit<ToolSettings, 'class'> & {
+  /**
+   * Tool constructor
+   */
   class: ToolConstructable | BlockToolConstructor | InlineToolConstructor;
+
+  /**
+   * Specifies if tool is internal
+   */
   isInternal?: boolean;
 }>;
 
@@ -31,6 +39,7 @@ export class ToolsFactory {
   /**
    * EditorJS API Module
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private api: any;
 
   /**
@@ -39,15 +48,18 @@ export class ToolsFactory {
   private editorConfig: EditorConfig;
 
   /**
-   * @param config - tools config
-   * @param editorConfig - EditorJS config
-   * @param api - EditorJS API module
+   * ToolsFactory
+   * @param config - unified tools config for user`s and internal tools
+   * @param editorConfig - full Editor.js configuration
+   * @param api - EditorJS module with all Editor methods
    */
   constructor(
     config: UnifiedToolConfig,
     editorConfig: EditorConfig,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     api: any
   ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     this.api = api;
     this.config = config;
     this.editorConfig = editorConfig;
@@ -63,6 +75,7 @@ export class ToolsFactory {
     const Constructor = this.getConstructor(constructable);
     // const isTune = constructable[InternalTuneSettings.IsTune];
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return new Constructor({
       name,
       constructable,
@@ -75,6 +88,7 @@ export class ToolsFactory {
       /**
        * @todo implement api.getMethodsForTool
        */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
   }
 
