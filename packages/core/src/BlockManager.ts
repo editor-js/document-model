@@ -2,7 +2,7 @@ import { BlockAddedEvent, BlockRemovedEvent, EditorJSModel, EventType, ModelEven
 import 'reflect-metadata';
 import { Service } from 'typedi';
 import { EditorUI } from './ui/Editor/index.js';
-import { BlockToolAdapter, CaretAdapter } from '@editorjs/dom-adapters';
+import { BlockToolAdapter, CaretAdapter, FormattingAdapter } from '@editorjs/dom-adapters';
 import ToolsManager from './tools/ToolsManager.js';
 import { BlockAPI } from '@editorjs/editorjs';
 
@@ -35,23 +35,31 @@ export class BlocksManager {
   #toolsManager: ToolsManager;
 
   /**
+   * Will be passed to BlockToolAdapter for rendering inputs` formatted text
+   */
+  #formattingAdapter: FormattingAdapter;
+
+  /**
    * BlocksManager constructor
    * All parameters are injected thorugh the IoC container
    * @param model - Editor's Document Model instance
    * @param editorUI - Editor's UI class instance
    * @param caretAdapter - Caret Adapter instance
    * @param toolsManager - Tools manager instance
+   * @param formattingAdapter
    */
   constructor(
     model: EditorJSModel,
     editorUI: EditorUI,
     caretAdapter: CaretAdapter,
-    toolsManager: ToolsManager
+    toolsManager: ToolsManager,
+    formattingAdapter: FormattingAdapter
   ) {
     this.#model = model;
     this.#editorUI = editorUI;
     this.#caretAdapter = caretAdapter;
     this.#toolsManager = toolsManager;
+    this.#formattingAdapter = formattingAdapter;
 
     this.#model.addEventListener(EventType.Changed, event => this.#handleModelUpdate(event));
   }
@@ -87,11 +95,11 @@ export class BlocksManager {
       throw new Error('[BlockManager] Block index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
     }
 
-    const blockToolAdapter = new BlockToolAdapter(this.#model, this.#caretAdapter, index.blockIndex);
+    const blockToolAdapter = new BlockToolAdapter(this.#model, this.#caretAdapter, index.blockIndex, this.#formattingAdapter);
 
     const tool = this.#toolsManager.blockTools.get(event.detail.data.name);
 
-    if (!tool) {
+    if (tool === undefined) {
       throw new Error(`[BlockManager] Block Tool ${event.detail.data.name} not found`);
     }
 
