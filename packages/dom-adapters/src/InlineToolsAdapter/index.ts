@@ -53,7 +53,6 @@ export class InlineToolsAdapter {
    * @param event - model change event
    */
   #handleModelUpdates(event: ModelEvents): void {
-    console.log('model', event);
     if (event instanceof TextFormattedEvent) {
       const tool = this.#tools.get(event.detail.data.tool);
 

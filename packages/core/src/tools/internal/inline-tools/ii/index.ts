@@ -1,4 +1,4 @@
-import type { InlineTool } from '../../../../entities/InlineTool.js';
+import type { FormattingActionWithRange, InlineTool } from '../../../../entities/InlineTool.js';
 import type { InlineFragment, TextRange } from '@editorjs/model';
 import { FormattingAction } from '@editorjs/model';
 import { createInlineToolName, IntersectType, type InlineToolName } from '@editorjs/model';
@@ -18,8 +18,16 @@ export default class ItalicInlineTool implements InlineTool {
    */
   public static isInline = true;
 
-  public name: InlineToolName = createInlineToolName('Italic');
+  /**
+   * @todo - get rid of tool name, since name could be user-spesific
+   * It is a temporary solution, because tools inline tools are now formed not from config
+   */
+  public name: InlineToolName = createInlineToolName('Iatlic');
 
+  /**
+   * Type of behaviour of the tool if new selection range intersect with existing fragment
+   * If two fragment intersect, they should be merged
+   */
   public intersectType: IntersectType = IntersectType.Extend;
 
   /**
@@ -35,17 +43,7 @@ export default class ItalicInlineTool implements InlineTool {
    * @param index - index of current text selection
    * @param fragments - all fragments of the bold inline tool inside of the current input
    */
-  public getAction(index: TextRange, fragments: InlineFragment[]): {
-    /**
-     * Formatting action - format or unformat
-     */
-    action: FormattingAction;
-
-    /**
-     * Range to apply formatting action
-     */
-    range: TextRange;
-  } {
+  public getAction(index: TextRange, fragments: InlineFragment[]): FormattingActionWithRange {
     return {
       action: this.checkState(index, fragments) ? FormattingAction.Unformat : FormattingAction.Format,
       range: index,
@@ -67,10 +65,9 @@ export default class ItalicInlineTool implements InlineTool {
        */
       if (index[0] >= fragment.range[0] && index[1] <= fragment.range[1]) {
         isActive = true;
-        console.log(isActive, index, fragment);
 
         /**
-         * No need to check other fragments if state already chaned
+         * Don't need to check other fragments if state already chaned
          */
         return;
       }

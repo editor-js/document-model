@@ -43,12 +43,17 @@ export default class Core {
   #caretAdapter: CaretAdapter;
 
   /**
-   * Inline tool adapter is responsible for handling model updates
+   * Inline tool adapter is responsible for handling model formatting updates
+   * Applies format, got from inline toolbar to the model
+   * When model changed with formatting event, it renders related fragment
    */
   #inlineToolsAdapter: InlineToolsAdapter;
 
   /**
+   * @todo inline toolbar should subscripe on selection change event called by EventBus
    * Inline toolbar is responsible for handling selection changes
+   * When model selection changes, it determines, whenever to show toolbar element,
+   * Which calls apply format method of the adapter
    */
   #inlineToolbar: InlineToolbar;
 

@@ -68,7 +68,8 @@ export class InlineToolbar {
        */
       if (selection) {
         /**
-         * Do not render inline toolbar for not contenteditable elements
+         * Check, that selection is in TEXT_NODE element, it means, that only selection in text contenteditable would render toolbar
+         * Native inputs do not support inline tags, but they also would have selection, this is why we need this condition
          */
         if (selection.focusNode?.nodeType !== Node.TEXT_NODE) {
           return;
@@ -107,6 +108,7 @@ export class InlineToolbar {
   }
 
   /**
+   * @todo implement EventBus for ui to subscribe on selectionChange event
    * Creates inline toolbar html element
    */
   #createToolbarElement(): void {
