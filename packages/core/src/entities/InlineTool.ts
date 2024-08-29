@@ -43,7 +43,7 @@ export interface InlineTool extends Omit<InlineToolVersion2, 'save' | 'checkStat
    * @param index - index of current text selection
    * @param fragments - all fragments of the inline tool inside of the current input
    */
-  checkState(index: TextRange, fragments: InlineFragment[]): boolean;
+  isActive(index: TextRange, fragments: InlineFragment[]): boolean;
 
   /**
    * Returns formatting action and range for it to be applied

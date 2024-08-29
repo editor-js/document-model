@@ -45,7 +45,7 @@ export default class BoldInlineTool implements InlineTool {
    */
   public getAction(index: TextRange, fragments: InlineFragment[]): FormattingActionWithRange {
     return {
-      action: this.checkState(index, fragments) ? FormattingAction.Unformat : FormattingAction.Format,
+      action: this.isActive(index, fragments) ? FormattingAction.Unformat : FormattingAction.Format,
       range: index,
     };
   };
@@ -56,7 +56,7 @@ export default class BoldInlineTool implements InlineTool {
    * @param fragments - all fragments of the bold inline tool inside of the current input
    * @returns true if tool is active, false otherwise
    */
-  public checkState(index: TextRange, fragments: InlineFragment[]): boolean {
+  public isActive(index: TextRange, fragments: InlineFragment[]): boolean {
     let isActive = false;
 
     fragments.forEach((fragment) => {

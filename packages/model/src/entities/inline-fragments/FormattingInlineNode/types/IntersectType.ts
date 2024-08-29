@@ -15,5 +15,5 @@ export enum IntersectType {
   /**
    * If two fragments of one tool intersect - treat them as two different fragments
    */
-  Separate = 'separate'
+  LeaveBoth = 'LeaveBoth'
 }

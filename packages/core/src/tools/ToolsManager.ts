@@ -2,8 +2,8 @@ import type { InlineTool } from '../entities/InlineTool.js';
 import type { BlockToolConstructor } from '../entities/BlockTool.js';
 import { Paragraph } from './internal/block-tools/paragraph/index.js';
 import type { EditorConfig } from '@editorjs/editorjs';
-import BoldInlineTool from './internal/inline-tools/Bold/index.js';
-import ItalicInlineTool from './internal/inline-tools/Italic/index.js';
+import BoldInlineTool from './internal/inline-tools/bold/index.js';
+import ItalicInlineTool from './internal/inline-tools/italic/index.js';
 ;
 
 /**
