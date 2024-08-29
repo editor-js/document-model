@@ -100,8 +100,8 @@ export class InlineToolbar {
    * Attach all tools passed to the inline tool adapter
    */
   #attachTools(): void {
-    this.#tools.forEach((tool) => {
-      this.#inlineToolAdapter.attachTool(tool);
+    this.#tools.forEach((tool, toolName) => {
+      this.#inlineToolAdapter.attachTool(toolName, tool);
     });
   }
 
