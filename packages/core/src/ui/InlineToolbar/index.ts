@@ -4,6 +4,7 @@ import type { InlineToolName } from '@editorjs/model';
 import { type EditorJSModel, type TextRange, createInlineToolData, createInlineToolName, Index } from '@editorjs/model';
 import { EventType } from '@editorjs/model';
 import { make } from '@editorjs/dom';
+import type { InlineToolFacade, ToolsCollection } from '../../tools/facades/index.js';
 
 /**
  * Class determines, when inline toolbar should be rendered
@@ -31,7 +32,7 @@ export class InlineToolbar {
   /**
    * Tools that would be attached to the adapter
    */
-  #tools: Map<InlineToolName, InlineTool>;
+  #tools: ToolsCollection<InlineToolFacade>;
 
   /**
    * Toolbar html element related to the editor
@@ -50,18 +51,11 @@ export class InlineToolbar {
    * @param tools - tools, that should be attached to adapter
    * @param holder - editor holder element
    */
-  constructor(model: EditorJSModel, inlineToolAdapter: InlineToolsAdapter, tools: InlineToolsConfig, holder: HTMLElement) {
+  constructor(model: EditorJSModel, inlineToolAdapter: InlineToolsAdapter, tools: ToolsCollection<InlineToolFacade>, holder: HTMLElement) {
     this.#model = model;
     this.#inlineToolAdapter = inlineToolAdapter;
     this.#holder = holder;
-    this.#tools = new Map<InlineToolName, InlineTool>();
-
-    Object.entries(tools).forEach(([toolName, toolConstructable]) => {
-      /**
-       * @todo - support inline tool options
-       */
-      this.#tools.set(createInlineToolName(toolName), new toolConstructable());
-    });
+    this.#tools = tools;
 
     this.#attachTools();
 
@@ -103,8 +97,8 @@ export class InlineToolbar {
    * Attach all tools passed to the inline tool adapter
    */
   #attachTools(): void {
-    this.#tools.forEach((tool, toolName) => {
-      this.#inlineToolAdapter.attachTool(toolName, tool);
+    Array.from(this.#tools.entries()).forEach(([toolName, tool]) => {
+      this.#inlineToolAdapter.attachTool(toolName as InlineToolName, tool.create());
     });
   }
 
@@ -134,7 +128,7 @@ export class InlineToolbar {
 
     this.#toolbar = make('div');
 
-    this.#tools.forEach((_tool, toolName) => {
+    Array.from(this.#tools.keys()).forEach((toolName) => {
       const inlineElementButton = make('button');
 
       inlineElementButton.innerHTML = toolName;

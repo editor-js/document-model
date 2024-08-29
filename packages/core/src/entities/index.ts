@@ -1,2 +1,2 @@
-export * from './BlockTool.js';
 export * from './Config.js';
+export * from './UnifiedToolConfig.js';

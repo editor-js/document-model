@@ -1,5 +1,6 @@
 import type { TextRange, InlineFragment, FormattingAction, IntersectType, InlineToolName } from '@editorjs/model';
 import type { InlineTool as InlineToolVersion2 } from '@editorjs/editorjs';
+import type { InlineToolConstructable as InlineToolConstructableV2 } from '@editorjs/editorjs';
 import type { InlineToolConstructorOptions as InlineToolConstructorOptionsVersion2 } from '@editorjs/editorjs';
 
 /**
@@ -96,4 +97,4 @@ export interface InlineToolsConfig extends Record<string, InlineToolConstructor>
  * @todo support options: InlineToolConstructableOptions
  * Inline Tool constructor class
  */
-export type InlineToolConstructor = new () => InlineTool;
+export type InlineToolConstructor = InlineToolConstructableV2 & (new () => InlineTool);

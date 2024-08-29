@@ -1,18 +1,19 @@
-import type {
+
+import {
   EditorJSModel,
-  InlineToolName,
-  ModelEvents,
+  InlineFragment,
+  createInlineToolData,
   InlineToolData,
-  InlineFragment
+  InlineToolName,
+  ModelEvents
 } from '@editorjs/model';
 import {
-  createInlineToolData,
   EventType,
   TextFormattedEvent
 } from '@editorjs/model';
 import type { CaretAdapter } from '../CaretAdapter/index.js';
 import { FormattingAction } from '@editorjs/model';
-import type { DataFormElementWithOptions, InlineTool, InlineToolFormatData } from '@editorjs/sdk';
+import type { InlineTool } from '@editorjs/sdk';
 
 /**
  * Class handles on format model events and renders inline tools
