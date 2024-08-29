@@ -162,7 +162,6 @@ export class InlineToolbar {
    * @param nameOfTheTool - name of the inline tool, whose format would be applied
    */
   public formData(nameOfTheTool: InlineToolName): void {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     const elementWithOptions = this.#inlineToolAdapter.formatData(nameOfTheTool, (data: InlineToolFormatData): void => {
       this.apply(nameOfTheTool, data);
     });
@@ -175,7 +174,6 @@ export class InlineToolbar {
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     this.#dataFormElement = elementWithOptions.element;
 
     if (this.#toolbar === undefined) {
@@ -192,7 +190,7 @@ export class InlineToolbar {
    */
   public apply(toolName: InlineToolName, formatData: InlineToolFormatData): void {
     this.#dataFormElement?.remove();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+
     this.#inlineToolAdapter.applyFormat(toolName, createInlineToolData(formatData));
   }
 }

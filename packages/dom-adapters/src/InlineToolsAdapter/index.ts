@@ -3,7 +3,7 @@ import type {
   InlineToolName,
   ModelEvents,
   InlineToolData,
-  TextRange
+  InlineFragment
 } from '@editorjs/model';
 import {
   createInlineToolData,
@@ -73,13 +73,13 @@ export class InlineToolsAdapter {
 
         const inlineElement = tool.createWrapper(event.detail.data.data);
 
-        const extracted = range.extractContents()
-        
+        const extracted = range.extractContents();
+
         /**
          * Insert contents from range to new inline element and put created element in range
-        */
+         */
         inlineElement.appendChild(extracted);
-        
+
         range.insertNode(inlineElement);
       }
     }
@@ -89,35 +89,41 @@ export class InlineToolsAdapter {
    * Format content of the contenteditable element
    *
    * @param input - input element to apply format to
-   * @param index - text range inside of the input element
-   * @param toolName - name of the tool, which format to apply
-   * @param toolData - additional data for the tool
+   * @param inlineFragment - instance that contains index, toolName and toolData
+   * @param inlineFragment.index - text range inside of the input element
+   * @param inlineFragment.toolName - name of the tool, which format to apply
+   * @param inlineFragment.toolData - additional data for the tool
    */
-  public formatElementContent(input: HTMLElement, index: TextRange, toolName: InlineToolName, toolData?: InlineToolData): void {
+  public formatElementContent(input: HTMLElement, inlineFragment: InlineFragment): void {
+    const toolName = inlineFragment.tool;
+    const toolData = inlineFragment.data;
+    const index = inlineFragment.range;
+
     const tool = this.#tools.get(toolName);
 
     if (tool === undefined) {
       throw new Error(`InlineToolAdapter: tool ${toolName} is not attached`);
     }
 
-    const [ start, end ] = index;
+    const [start, end] = index;
 
     /**
      * Create range with positions specified in index
      */
     const range = document.createRange();
+
     range.setStart(input, start);
     range.setEnd(input, end);
 
     const inlineElement = tool.createWrapper(toolData);
 
-    const extracted = range.extractContents()
-        
+    const extracted = range.extractContents();
+
     /**
      * Insert contents from range to new inline element and put created element in range
      */
     inlineElement.appendChild(extracted);
-        
+
     range.insertNode(inlineElement);
   }
 
@@ -141,24 +147,27 @@ export class InlineToolsAdapter {
   }
 
   /**
+   * Function that checks if data required for current tool
+   * If data required - return rendered by tool data form element with options required in toolbar
+   * If data is not required - trigger callback
    * 
-   * @param toolName 
-   * @param callback 
-   * @returns 
+   * @param toolName - name of the tool to check if data is required
+   * @param callback - callback function that should be triggered, when data completely formed
+   * @returns rendered data form element with options required in toolbar or null if no data required
    */
   public formatData(toolName: InlineToolName, callback: (data: InlineToolFormatData) => void): DataFormElementWithOptions | null {
     const currentTool = this.#tools.get(toolName);
 
     if (currentTool === undefined) {
-      throw new Error(`InlineToolAdapter: tool ${toolName} was not attached`)
+      throw new Error(`InlineToolAdapter: tool ${toolName} was not attached`);
     }
 
     /**
      * If createDataFormElement method specified, render element and return it
      */
     if (currentTool.createDataFormElement !== undefined) {
-      return currentTool.createDataFormElement(callback); 
-    } 
+      return currentTool.createDataFormElement(callback);
+    }
     /**
      * If createDataFormElement method is not specidied, then no data required for the tool
      * Trigger callback

@@ -32,9 +32,7 @@ export default class LinkInlineTool implements InlineTool {
   public createWrapper(data: InlineToolFormatData): HTMLElement {
     const linkElement = make('a') as HTMLLinkElement;
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     if (typeof data.link === 'string') {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       linkElement.href = data.link;
     }
 
@@ -80,11 +78,10 @@ export default class LinkInlineTool implements InlineTool {
   }
 
   /**
-   * lalala
-   * @param callback llalaal
-   * @returns lalala
+   * Function that is responsible for rendering data form element
+   * @param callback function that should be triggered, when data completely formed
+   * @returns rendered data form element with options required in toolbar
    */
-  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   public createDataFormElement(callback: (data: InlineToolFormatData) => void): DataFormElementWithOptions | null {
     const dataFormerElement = make('input') as HTMLInputElement;
 
