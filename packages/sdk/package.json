@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "lint": "eslint ./src",
+    "lint": "eslint",
     "lint:ci": "yarn lint --max-warnings 0",
     "lint:fix": "yarn lint --fix"
   },
@@ -22,10 +22,5 @@
   "dependencies": {
     "@editorjs/editorjs": "^2.30.5",
     "@editorjs/model": "workspace:^"
-  },
-  "references": [
-    {
-      "path": "../model/tsconfig.build.json"
-    }
-  ]
+  }
 }
