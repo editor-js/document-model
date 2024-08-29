@@ -58,7 +58,7 @@ export interface InlineTool extends Omit<InlineToolVersion2, 'save' | 'checkStat
  * Interface, that represents inline tool with configured name
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface InlineToolConfig extends Record<string, InlineToolConstructor> {};
+export interface InlineToolsConfig extends Record<string, InlineToolConstructor> {};
 
 /**
  * @todo support options: InlineToolConstructableOptions

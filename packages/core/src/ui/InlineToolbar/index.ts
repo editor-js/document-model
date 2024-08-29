@@ -1,5 +1,5 @@
 import type { InlineToolsAdapter } from '@editorjs/dom-adapters';
-import type { InlineTool, InlineToolConfig } from '../../entities/InlineTool.js';
+import type { InlineTool, InlineToolsConfig } from '../../entities/InlineTool.js';
 import type { InlineToolName } from '@editorjs/model';
 import { type EditorJSModel, type TextRange, createInlineToolName, Index } from '@editorjs/model';
 import { EventType } from '@editorjs/model';
@@ -47,7 +47,7 @@ export class InlineToolbar {
    * @param tools - tools, that should be attached to adapter
    * @param holder - editor holder element
    */
-  constructor(model: EditorJSModel, inlineToolAdapter: InlineToolsAdapter, tools: InlineToolConfig, holder: HTMLElement) {
+  constructor(model: EditorJSModel, inlineToolAdapter: InlineToolsAdapter, tools: InlineToolsConfig, holder: HTMLElement) {
     this.#model = model;
     this.#inlineToolAdapter = inlineToolAdapter;
     this.#holder = holder;

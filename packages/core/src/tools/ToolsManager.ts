@@ -1,4 +1,4 @@
-import type { InlineToolConfig } from '../entities/InlineTool.js';
+import type { InlineToolsConfig } from '../entities/InlineTool.js';
 import type { BlockToolConstructor } from '../entities/BlockTool.js';
 import { Paragraph } from './internal/block-tools/paragraph/index.js';
 import type { EditorConfig } from '@editorjs/editorjs';
@@ -34,7 +34,7 @@ export default class ToolsManager {
   /**
    * Returns inline tools got from the EditorConfig tools
    */
-  public getInlineTools(): InlineToolConfig {
+  public getInlineTools(): InlineToolsConfig {
     return {
       bold: BoldInlineTool,
       italic: ItalicInlineTool,
