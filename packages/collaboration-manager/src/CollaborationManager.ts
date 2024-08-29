@@ -86,10 +86,10 @@ export class CollaborationManager {
 
     switch (operation.type) {
       case OperationType.Insert:
-        this.#model.insertData(operation.index, operation.data.newValue);
+        this.#model.insertText(blockIndex, dataKey, operation.data.newValue, textRange[0]);
         break;
       case OperationType.Delete:
-        this.#model.removeData(operation.index);
+        this.#model.removeText(blockIndex, dataKey, textRange[0], textRange[1]);
         break;
       case OperationType.Modify:
         console.log('modify operation is not implemented yet');

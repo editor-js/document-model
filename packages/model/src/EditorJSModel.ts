@@ -1,6 +1,5 @@
 // Stryker disable all -- we don't count mutation test coverage fot this file as it just proxy calls to EditorDocument
 /* istanbul ignore file -- we don't count test coverage fot this file as it just proxy calls to EditorDocument */
-import type { Index } from './entities/index.js';
 import { type BlockNodeSerialized, EditorDocument } from './entities/index.js';
 import { EventBus, EventType } from './EventBus/index.js';
 import type { ModelEvents, CaretManagerCaretUpdatedEvent, CaretManagerEvents } from './EventBus/index.js';
@@ -187,44 +186,6 @@ export class EditorJSModel extends EventBus {
    */
   public removeBlock(...parameters: Parameters<EditorDocument['removeBlock']>): ReturnType<EditorDocument['removeBlock']> {
     return this.#document.removeBlock(...parameters);
-  }
-
-  /**
-   * Inserts data to the specified index
-   *
-   * @param index - index to insert data
-   * @param data - data to insert
-   */
-  public insertData(index: Index, data: unknown): void {
-    switch (true) {
-      case (index.blockIndex !== undefined && index.dataKey !== undefined && index.textRange !== undefined):
-        this.#document.insertText(index.blockIndex, index.dataKey, data as string, index.textRange[0]);
-        break;
-
-      case (index.blockIndex !== undefined):
-        // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-        this.#document.addBlock(data as Parameters<EditorDocument['addBlock']>[0], index.blockIndex);
-      default:
-        throw new Error('Unsupported index');
-    }
-  }
-
-  /**
-   * Removes data from the specified index
-   *
-   * @param index - index to remove data from
-   */
-  public removeData(index: Index): void {
-    switch (true) {
-      case (index.blockIndex !== undefined && index.dataKey !== undefined && index.textRange !== undefined):
-        this.#document.removeText(index.blockIndex, index.dataKey, index.textRange[0], index.textRange[1]);
-        break;
-
-      case (index.blockIndex !== undefined):
-        this.#document.removeBlock(index.blockIndex);
-      default:
-        throw new Error('Unsupported index');
-    }
   }
 
   /**
