@@ -351,12 +351,12 @@ export class EditorDocument extends EventBus {
    */
   public removeData(index: Index): void {
     switch (true) {
-      case (index.blockIndex !== undefined && index.dataKey !== undefined && index.textRange !== undefined):
-        this.removeText(index.blockIndex, index.dataKey, index.textRange[0], index.textRange[1]);
+      case index.isTextIndex:
+        this.removeText(index.blockIndex!, index.dataKey!, index.textRange![0], index.textRange![1]);
         break;
 
-      case (index.blockIndex !== undefined):
-        this.removeBlock(index.blockIndex);
+      case index.isBlockIndex:
+        this.removeBlock(index.blockIndex!);
       default:
         throw new Error('Unsupported index');
     }
