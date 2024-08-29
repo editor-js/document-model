@@ -1,19 +1,16 @@
 import type {
   EditorJSModel,
-  InlineFragment,
   InlineToolData,
   InlineToolName,
-  ModelEvents,
-  TextRange
+  ModelEvents
 } from '@editorjs/model';
 import {
   EventType,
-  TextFormattedEvent,
-  TextUnformattedEvent
+  TextFormattedEvent
 } from '@editorjs/model';
 import type { CaretAdapter } from '../CaretAdapter/index.js';
 import { FormattingAction } from '@editorjs/model';
-import type { InlineTool } from '@editorjs/core/src/entities/InlineTool.js'
+import type { InlineTool } from '@editorjs/core/src/entities/InlineTool.js';
 
 /**
  * Class handles on format model events and renders inline tools
@@ -56,7 +53,6 @@ export class InlineToolsAdapter {
    * @param event - model change event
    */
   #handleModelUpdates(event: ModelEvents): void {
-    
     console.log('model', event);
     if (event instanceof TextFormattedEvent) {
       const tool = this.#tools.get(event.detail.data.tool);
@@ -119,15 +115,15 @@ export class InlineToolsAdapter {
     const blockIndex = index.blockIndex;
     const dataKey = index.dataKey;
 
-    
+
     if (textRange === undefined) {
-      throw new Error ('TextRange of the index should be defined. Probably something wrong with the Editor Model. Please, report this issue')
+      throw new Error ('TextRange of the index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
     }
     if (blockIndex === undefined) {
-      throw new Error ('BlockIndex should be defined. Probably something wrong with the Editor Model. Please, report this issue')
+      throw new Error ('BlockIndex should be defined. Probably something wrong with the Editor Model. Please, report this issue');
     }
     if (dataKey === undefined) {
-      throw new Error ('DataKey of the index should be defined. Probably something wrong with the Editor Model. Please, report this issue')
+      throw new Error ('DataKey of the index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
     }
 
     const tool = this.#tools.get(toolName);
@@ -139,7 +135,8 @@ export class InlineToolsAdapter {
     const fragments = this.#model.getFragments(blockIndex, dataKey, ...textRange, toolName);
 
     const { action, range } = tool.getAction(textRange, fragments);
-    console.log('tool get action in adapter')
+
+    console.log('tool get action in adapter');
 
     switch (action) {
       case FormattingAction.Format:

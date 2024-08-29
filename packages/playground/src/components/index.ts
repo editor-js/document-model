@@ -7,5 +7,5 @@ export {
   Node,
   Indent,
   Value,
-  Input,
+  Input
 };
