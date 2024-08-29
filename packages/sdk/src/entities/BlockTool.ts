@@ -7,7 +7,14 @@ import { BlockToolAdapter } from './BlockToolAdapter';
  * Extended BlockToolConstructorOptions interface for version 3.
  */
 export interface BlockToolConstructorOptions<
+  /**
+   * Data structure describing the tool's input/output data
+   */
   Data extends BlockToolData = BlockToolData,
+
+  /**
+   * User-end configuration for the tool
+   */
   Config extends ToolConfig = ToolConfig
 > extends BlockToolConstructorOptionsVersion2 {
   /**
@@ -34,11 +41,15 @@ export interface BlockToolConstructorOptions<
 export type BlockTool<
   /** 
    * Data structure describing the tool's input/output data
+   * 
+   * any is used as a placeholder to allow using BlockToolData without generic
    */
   Data extends BlockToolData = any,
 
   /**
    * User-end configuration for the tool
+   * 
+   * any is used as a placeholder to allow using BlockToolData without generic
    */
   Config extends ToolConfig = any
 > = Omit<BlockToolVersion2, 'save'>;
