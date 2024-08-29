@@ -1,12 +1,12 @@
 import type { ModelEvents } from '@editorjs/model';
 import { BlockAddedEvent, EditorJSModel, EventType } from '@editorjs/model';
-import type { CoreConfig, CoreConfigValidated } from './entities/Config.js';
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
 import ToolsManager from './tools/ToolsManager.js';
 import { BlockToolAdapter, CaretAdapter, InlineToolsAdapter } from '@editorjs/dom-adapters';
 import type { BlockAPI, BlockToolData, API as EditorjsApi, ToolConfig } from '@editorjs/editorjs';
-import type { BlockTool } from './entities/BlockTool.js';
 import { InlineToolbar } from './ui/InlineToolbar/index.js';
+import type { CoreConfigValidated } from './entities/Config.js';
+import type { BlockTool, CoreConfig } from '@editorjs/sdk';
 
 /**
  * If no holder is provided via config, the editor will be appended to the element with this id
@@ -73,7 +73,7 @@ export default class Core {
     this.#caretAdapter = new CaretAdapter(this.#config.holder, this.#model);
     this.#inlineToolsAdapter = new InlineToolsAdapter(this.#model, this.#caretAdapter);
 
-    this.#inlineToolbar = new InlineToolbar(this.#model, this.#inlineToolsAdapter, this.#toolsManager.getInlineTools(), config.holder!);
+    this.#inlineToolbar = new InlineToolbar(this.#model, this.#inlineToolsAdapter, this.#toolsManager.getInlineTools(), this.#config.holder);
 
     this.#model.initializeDocument({ blocks });
   }

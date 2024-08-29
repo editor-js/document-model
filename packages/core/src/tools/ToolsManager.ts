@@ -1,5 +1,4 @@
-import type { InlineToolsConfig } from '@editorjs/sdk';
-import type { BlockToolConstructor } from '../entities/BlockTool.js';
+import type { BlockToolConstructor, InlineToolsConfig } from '@editorjs/sdk';
 import { Paragraph } from './internal/block-tools/paragraph/index.js';
 import type { EditorConfig } from '@editorjs/editorjs';
 import BoldInlineTool from './internal/inline-tools/bold/index.js';

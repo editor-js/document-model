@@ -70,5 +70,6 @@ export class ValueNode<ValueType = unknown> extends EventBus {
 }
 
 export type {
-  ValueNodeConstructorParameters
+  ValueNodeConstructorParameters,
+  ValueSerialized
 };
