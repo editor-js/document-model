@@ -181,6 +181,7 @@ export class ParentInlineNode extends EventBus implements InlineNode {
    * @param start - char start index of the range
    * @param end - char end index of the range
    * @param [data] - inline tool data if applicable
+   * @todo - Implement intersectionType logic
    */
   public format(tool: InlineToolName, start: number, end: number, data?: InlineToolData): InlineNode[] {
     this.validateRange(start, end);

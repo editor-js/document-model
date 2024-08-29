@@ -3,7 +3,6 @@ import { onMounted, ref } from 'vue';
 import { BlockToolAdapter } from '@editorjs/dom-adapters';
 
 const input = ref<HTMLElement | null>(null);
-
 const props = defineProps<{
   /**
    * Block Tool Adapter instance to use for the input
@@ -60,10 +59,8 @@ onMounted(() => {
   border-radius: 10px;
   font-size: 22px;
   outline: none;
-
   font-family: inherit;
 }
-
 .contenteditable {
   white-space: pre;
 }

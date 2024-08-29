@@ -3,9 +3,8 @@ import CaretIndex from '@/components/CaretIndex.vue';
 import { BlockToolAdapter, CaretAdapter } from '@editorjs/dom-adapters';
 import { EditorDocument, EditorJSModel, EventType } from '@editorjs/model';
 import Core from '@editorjs/core';
-// import { data } from '@editorjs/model/dist/mocks/data.js';
 import { ref, onMounted } from 'vue';
-import { Input, Node } from './components';
+import { Input } from './components';
 
 /**
  * Every instance here will be created by Editor.js core
@@ -84,34 +83,34 @@ onMounted(() => {
       >
       Editor.js Document Playground
     </div>
-    <div :class="$style.body">
-      <div :class="$style.playground">
-        <CaretIndex :model="model" />
-        <Input
-          :block-tool-adapter="blockToolAdapter"
-          type="contenteditable"
-          name="text1"
-          value="This is contenteditable"
-        />
-        <Input
-          :block-tool-adapter="blockToolAdapter"
-          type="input"
-          name="text2"
-          value="This is input element"
-        />
-        <Input
-          :block-tool-adapter="anotherBlockToolAdapter"
-          type="textarea"
-          name="text2"
-          value="This is textarea element"
-        />
-        <pre>{{ serialized }}</pre>
-      </div>
-      <div :class="$style.output">
-        <Node
-          :node="editorDocument"
-        />
-      </div>
+  </div>
+  <div :class="$style.body">
+    <div :class="$style.playground">
+      <CaretIndex :model="model" />
+      <Input
+        :block-tool-adapter="blockToolAdapter"
+        type="contenteditable"
+        name="text1"
+        value="This is contenteditable"
+      />
+      <Input
+        :block-tool-adapter="blockToolAdapter"
+        type="input"
+        name="text2"
+        value="This is input element"
+      />
+      <Input
+        :block-tool-adapter="anotherBlockToolAdapter"
+        type="textarea"
+        name="text2"
+        value="This is textarea element"
+      />
+      <pre>{{ serialized }}</pre>
+    </div>
+    <div :class="$style.output">
+      <Node
+        :node="editorDocument"
+      />
       <div
         id="editorjs"
         :class="$style.editor"

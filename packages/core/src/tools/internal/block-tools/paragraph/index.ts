@@ -1,5 +1,5 @@
 import type { BlockToolAdapter } from '@editorjs/dom-adapters';
-import type { BlockTool, BlockToolConstructorOptions } from '../../../entities/BlockTool.js';
+import type { BlockTool, BlockToolConstructorOptions } from '../../../../entities/BlockTool.js';
 
 /**
  * Base text block tool

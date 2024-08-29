@@ -9,7 +9,6 @@
     "strict": true,
     "skipLibCheck": true,
     "experimentalDecorators": true,
-    "types": ["jest"],
     "rootDir": "src",
     "outDir": "dist"
   },
@@ -20,7 +19,7 @@
   ],
   "references": [
     {
-      "path": "../sdk/tsconfig.build.json",
+      "path": "../model/tsconfig.build.json"
     }
   ]
 }
