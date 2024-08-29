@@ -61,6 +61,13 @@ export class CaretAdapter extends EventTarget {
   }
 
   /**
+   * Getter for internal caret index of the user
+   */
+  public get userCaretIndex(): Index | null {
+    return this.#userCaret.index;
+  }
+
+  /**
    * Adds input to the caret adapter
    *
    * @param input - input element

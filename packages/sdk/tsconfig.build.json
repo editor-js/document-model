@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "references": [
+    {
+      "path": "../model/tsconfig.build.json"
+    }
+  ]
+}

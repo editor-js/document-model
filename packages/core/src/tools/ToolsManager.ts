@@ -1,15 +1,21 @@
+import type { InlineToolsConfig } from '@editorjs/sdk';
 import type { BlockToolConstructor } from '../entities/BlockTool.js';
-import { Paragraph } from './internal/paragraph/index.js';
+import { Paragraph } from './internal/block-tools/paragraph/index.js';
 import type { EditorConfig } from '@editorjs/editorjs';
+import BoldInlineTool from './internal/inline-tools/bold/index.js';
+import ItalicInlineTool from './internal/inline-tools/italic/index.js';
 
 /**
  * Works with tools
  */
 export default class ToolsManager {
+  #tools: EditorConfig['tools'];
+
   /**
    * @param tools - Tools configuration passed by user
    */
-  constructor(private tools: EditorConfig['tools']) {
+  constructor(tools: EditorConfig['tools']) {
+    this.#tools = tools;
   }
 
   /**
@@ -24,4 +30,14 @@ export default class ToolsManager {
         throw new Error(`Unknown tool: ${toolName}`);
     }
   }
+
+  /**
+   * Returns inline tools got from the EditorConfig tools
+   */
+  public getInlineTools(): InlineToolsConfig {
+    return {
+      bold: BoldInlineTool,
+      italic: ItalicInlineTool,
+    };
+  };
 }
