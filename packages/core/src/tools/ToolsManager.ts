@@ -1,10 +1,9 @@
-import type { InlineToolWithName } from '../entities/InlineTool.js';
+import type { InlineToolConfig } from '../entities/InlineTool.js';
 import type { BlockToolConstructor } from '../entities/BlockTool.js';
 import { Paragraph } from './internal/block-tools/paragraph/index.js';
 import type { EditorConfig } from '@editorjs/editorjs';
 import BoldInlineTool from './internal/inline-tools/bold/index.js';
 import ItalicInlineTool from './internal/inline-tools/italic/index.js';
-import { createInlineToolName } from '@editorjs/model';
 
 /**
  * Works with tools
@@ -35,13 +34,10 @@ export default class ToolsManager {
   /**
    * Returns inline tools got from the EditorConfig tools
    */
-  public getInlineTools(): InlineToolWithName[] {
-    return [{
-      name: createInlineToolName('Bold'),
-      tool: new BoldInlineTool(),
-    }, {
-      name: createInlineToolName('Italic'),
-      tool: new ItalicInlineTool(),
-    }];
+  public getInlineTools(): InlineToolConfig {
+    return {
+      bold: BoldInlineTool,
+      italic: ItalicInlineTool,
+    };
   };
 }

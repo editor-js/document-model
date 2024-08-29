@@ -1,11 +1,12 @@
+import type { TextRange, InlineFragment, FormattingAction, IntersectType } from '@editorjs/model';
 import type { InlineTool as InlineToolVersion2 } from '@editorjs/editorjs';
-import type { TextRange, InlineFragment, FormattingAction, IntersectType, InlineToolName } from '@editorjs/model';
+import type { InlineToolConstructorOptions as InlineToolConstructorOptionsVersion2 } from '@editorjs/editorjs';
 
 /**
  * Extended InlineToolConstructorOptions interface for version 3.
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface InlineToolConstructorOptions extends InlineToolVersion2 {}
+export interface InlineToolConstructorOptions extends InlineToolConstructorOptionsVersion2 {}
 
 /**
  * Object represents formatting action with text range to be applied on
@@ -56,19 +57,11 @@ export interface InlineTool extends Omit<InlineToolVersion2, 'save' | 'checkStat
 /**
  * Interface, that represents inline tool with configured name
  */
-export interface InlineToolWithName {
-  /**
-   * Name of the inline tool got from editor config
-   */
-  name: InlineToolName;
-
-  /**
-   * Inline tool instanse
-   */
-  tool: InlineTool;
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface InlineToolConfig extends Record<string, InlineToolConstructor> {};
 
 /**
+ * @todo support options: InlineToolConstructableOptions
  * Inline Tool constructor class
  */
-export type InlineToolConstructor = new (options: InlineToolConstructorOptions) => InlineTool;
+export type InlineToolConstructor = new () => InlineTool;

@@ -1,6 +1,7 @@
 import type { InlineToolsAdapter } from '@editorjs/dom-adapters';
-import type { InlineToolWithName } from '../../entities/InlineTool.js';
-import { type EditorJSModel, type TextRange, Index } from '@editorjs/model';
+import type { InlineTool, InlineToolConfig } from '../../entities/InlineTool.js';
+import type { InlineToolName } from '@editorjs/model';
+import { type EditorJSModel, type TextRange, createInlineToolName, Index } from '@editorjs/model';
 import { EventType } from '@editorjs/model';
 import type { Nominal } from '@editorjs/model/dist/utils/Nominal';
 import { make } from '@editorjs/dom';
@@ -31,7 +32,7 @@ export class InlineToolbar {
   /**
    * Tools that would be attached to the adapter
    */
-  #tools: InlineToolWithName[];
+  #tools: Map<InlineToolName, InlineTool>;
 
   /**
    * Toolbar html element related to the editor
@@ -46,11 +47,18 @@ export class InlineToolbar {
    * @param tools - tools, that should be attached to adapter
    * @param holder - editor holder element
    */
-  constructor(model: EditorJSModel, inlineToolAdapter: InlineToolsAdapter, tools: InlineToolWithName[], holder: HTMLElement) {
+  constructor(model: EditorJSModel, inlineToolAdapter: InlineToolsAdapter, tools: InlineToolConfig, holder: HTMLElement) {
     this.#model = model;
     this.#inlineToolAdapter = inlineToolAdapter;
-    this.#tools = tools;
     this.#holder = holder;
+    this.#tools = new Map<InlineToolName, InlineTool>();
+
+    Object.entries(tools).forEach(([toolName, toolConstructable]) => {
+      /**
+       * @todo - support inline tool options
+       */
+      this.#tools.set(createInlineToolName(toolName), new toolConstructable());
+    });
 
     this.#attachTools();
 
@@ -123,13 +131,13 @@ export class InlineToolbar {
 
     this.#toolbar = make('div');
 
-    this.#tools.forEach((tool) => {
+    this.#tools.forEach((_tool, toolName) => {
       const inlineElementButton = make('button');
 
-      inlineElementButton.innerHTML = tool.name;
+      inlineElementButton.innerHTML = toolName;
 
-      inlineElementButton.addEventListener('click', (_) => {
-        this.apply(tool);
+      inlineElementButton.addEventListener('click', (_event) => {
+        this.apply(toolName);
       });
       if (this.#toolbar !== undefined) {
         this.#toolbar.appendChild(inlineElementButton);
@@ -148,12 +156,12 @@ export class InlineToolbar {
 
   /**
    * Apply format with data formed in toolbar
-   * @param tool - tool, that was triggered
+   * @param toolName - name of the inline tool, whose format would be applied
    */
-  public apply(tool: InlineToolWithName): void {
+  public apply(toolName: InlineToolName): void {
     /**
      * @todo pass to applyFormat inline tool data formed in toolbar
      */
-    this.#inlineToolAdapter.applyFormat(tool.name, {} as Nominal<Record<string, unknown>, 'InlineToolData'>);
+    this.#inlineToolAdapter.applyFormat(toolName, {} as Nominal<Record<string, unknown>, 'InlineToolData'>);
   };
 }

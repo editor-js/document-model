@@ -1,7 +1,7 @@
 import type { FormattingActionWithRange, InlineTool } from '../../../../entities/InlineTool.js';
 import type { InlineFragment, TextRange } from '@editorjs/model';
 import { FormattingAction } from '@editorjs/model';
-import { createInlineToolName, IntersectType, type InlineToolName } from '@editorjs/model';
+import { IntersectType } from '@editorjs/model';
 import { make } from '@editorjs/dom';
 
 /**
@@ -17,12 +17,6 @@ export default class BoldInlineTool implements InlineTool {
    * @returns {boolean}
    */
   public static isInline = true;
-
-  /**
-   * @todo - get rid of tool name, since name could be user-spesific
-   * It is a temporary solution, because tools inline tools are now formed not from config
-   */
-  public name: InlineToolName = createInlineToolName('Bold');
 
   /**
    * Type of behaviour of the tool if new selection range intersect with existing fragment
