@@ -12,14 +12,8 @@ import {
   TextUnformattedEvent
 } from '@editorjs/model';
 import type { CaretAdapter } from '../CaretAdapter/index.js';
-import { type IntersectType, FormattingAction } from '@editorjs/model';
-
-export interface InlineTool {
-  name: InlineToolName;
-  intersectType: IntersectType,
-  create(data?: InlineToolData): HTMLElement;
-  getAction(index: TextRange, fragments: InlineFragment[], data?: InlineToolData): { action: FormattingAction; range: TextRange };
-}
+import { FormattingAction } from '@editorjs/model';
+import type { InlineTool } from '@editorjs/core/src/entities/InlineTool.js'
 
 /**
  * Class handles on format model events and renders inline tools
@@ -62,7 +56,9 @@ export class InlineToolsAdapter {
    * @param event - model change event
    */
   #handleModelUpdates(event: ModelEvents): void {
-    if (event instanceof TextFormattedEvent || event instanceof TextUnformattedEvent) {
+    
+    console.log('model', event);
+    if (event instanceof TextFormattedEvent) {
       const tool = this.#tools.get(event.detail.data.tool);
 
       if (tool === undefined) {
@@ -107,7 +103,7 @@ export class InlineToolsAdapter {
   }
 
   /**
-   * Applies format of the tool to the model
+   * Format model according to action formed by inline tool instance
    *
    * @param toolName - name of the tool whose format will be applied
    * @param data - data of the tool got from toolbar
@@ -123,8 +119,15 @@ export class InlineToolsAdapter {
     const blockIndex = index.blockIndex;
     const dataKey = index.dataKey;
 
-    if (textRange === undefined || blockIndex === undefined || dataKey === undefined) {
-      return;
+    
+    if (textRange === undefined) {
+      throw new Error ('TextRange of the index should be defined. Probably something wrong with the Editor Model. Please, report this issue')
+    }
+    if (blockIndex === undefined) {
+      throw new Error ('BlockIndex should be defined. Probably something wrong with the Editor Model. Please, report this issue')
+    }
+    if (dataKey === undefined) {
+      throw new Error ('DataKey of the index should be defined. Probably something wrong with the Editor Model. Please, report this issue')
     }
 
     const tool = this.#tools.get(toolName);
@@ -135,7 +138,8 @@ export class InlineToolsAdapter {
 
     const fragments = this.#model.getFragments(blockIndex, dataKey, ...textRange, toolName);
 
-    const { action, range } = tool.getAction(textRange, fragments, data);
+    const { action, range } = tool.getAction(textRange, fragments);
+    console.log('tool get action in adapter')
 
     switch (action) {
       case FormattingAction.Format:

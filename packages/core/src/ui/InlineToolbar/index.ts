@@ -1,7 +1,9 @@
-import type { InlineTool, InlineToolsAdapter } from '@editorjs/dom-adapters';
+import type { InlineToolsAdapter } from '@editorjs/dom-adapters';
+import type { InlineTool } from '../../entities/InlineTool.js';
 import { type EditorJSModel, type TextRange, Index } from '@editorjs/model';
 import { EventType } from '@editorjs/model';
 import type { Nominal } from '@editorjs/model/dist/utils/Nominal';
+import { make } from '@editorjs/dom';
 
 /**
  * Class determines, when inline toolbar should be rendered
@@ -27,30 +29,19 @@ export class InlineToolbar {
   #selectionRange: TextRange | undefined = undefined;
 
   /**
-   * Toolbar show state
+   * Tools that would be attached to the adapter
    */
-  #show: boolean = false;
-
   #tools: InlineTool[];
 
   /**
-   * Toolbar show state
+   * Toolbar html element related to the editor
    */
-  public get show(): boolean {
-    return this.#show;
-  };
-
-  /**
-   * @param state - state of the show property
-   */
-  private set show(state: boolean) {
-    this.#show = state;
-  }
+  #toolbar: HTMLElement | undefined = undefined;
 
   /**
    * @param model - editor model instance
    * @param inlineToolAdapter - inline tool adapter instance
-   * @param tools - inline tools to be attached to inline tool adapter
+   * @param tools - tools, that should be attached to adapter
    */
   constructor(model: EditorJSModel, inlineToolAdapter: InlineToolsAdapter, tools: InlineTool[]) {
     this.#model = model;
@@ -93,6 +84,15 @@ export class InlineToolbar {
   }
 
   /**
+   * Attach all tools passed to the inline tool adapter
+   */
+  #attachTools(): void {
+    this.#tools.forEach((tool) => {
+      this.#inlineToolAdapter.attachTool(tool);
+    });
+  }
+
+  /**
    * Change toolbar show state if any text is selected
    */
   #selectionChanged(): void {
@@ -100,20 +100,57 @@ export class InlineToolbar {
      * Show or hide inline toolbar
      */
     if (this.#selectionRange !== undefined && this.#selectionRange[0] !== this.#selectionRange[1]) {
-      this.show = true;
+      this.#createToolbarElement();
     } else {
-      this.show = false;
+      this.#deleteToolbarElement();
     }
   }
 
   /**
-   * Attach all passed inline tools to inline tool adapter
+   * Creates inline toolbar html element
    */
-  #attachTools(): void {
+  #createToolbarElement(): void {
+    /**
+     * Before creating new toolbar element, remove existing one
+     */
+    this.#deleteToolbarElement();
+
+    const selection = window.getSelection();
+
+    this.#toolbar = make('div');
+
     this.#tools.forEach((tool) => {
-      this.#inlineToolAdapter.attachTool(tool);
+      const inlineElementButton = make('button');
+
+      inlineElementButton.innerHTML = tool.name;
+
+      inlineElementButton.addEventListener('click', (_) => {
+        this.apply(tool);
+      });
+      if (this.#toolbar !== undefined) {
+        this.#toolbar.appendChild(inlineElementButton);
+      }
     });
-  };
+
+    /**
+     * Get current input with selection
+     */
+    if (selection) {
+      /**
+       * Do not render inline toolbar for not contenteditable elements
+       */
+      if (selection.focusNode !== null && selection.anchorNode !== null) {
+        selection.focusNode.parentElement?.parentNode?.insertBefore(this.#toolbar, selection.focusNode.parentElement);
+      }
+    }
+  }
+
+  /**
+   * Removes inline toolbar html element
+   */
+  #deleteToolbarElement(): void {
+    this.#toolbar?.remove();
+  }
 
   /**
    * Apply format with data formed in toolbar

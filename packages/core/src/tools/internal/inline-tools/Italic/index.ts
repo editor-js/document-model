@@ -1,4 +1,4 @@
-import type { InlineTool } from '@editorjs/dom-adapters';
+import type { InlineTool } from '../../../../entities/InlineTool.js';
 import type { InlineFragment, TextRange } from '@editorjs/model';
 import { FormattingAction } from '@editorjs/model';
 import { createInlineToolName, IntersectType, type InlineToolName } from '@editorjs/model';
@@ -47,7 +47,7 @@ export default class ItalicInlineTool implements InlineTool {
     range: TextRange;
   } {
     return {
-      action: this.checkState(index, fragments) ? FormattingAction.Format : FormattingAction.Unformat,
+      action: this.checkState(index, fragments) ? FormattingAction.Unformat : FormattingAction.Format,
       range: index,
     };
   };
@@ -67,6 +67,7 @@ export default class ItalicInlineTool implements InlineTool {
        */
       if (index[0] >= fragment.range[0] && index[1] <= fragment.range[1]) {
         isActive = true;
+        console.log(isActive, index, fragment);
 
         /**
          * No need to check other fragments if state already chaned

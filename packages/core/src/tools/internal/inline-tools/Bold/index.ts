@@ -1,4 +1,4 @@
-import type { InlineTool } from '@editorjs/dom-adapters';
+import type { InlineTool } from '../../../../entities/InlineTool.js';
 import type { InlineFragment, TextRange } from '@editorjs/model';
 import { FormattingAction } from '@editorjs/model';
 import { createInlineToolName, IntersectType, type InlineToolName } from '@editorjs/model';
@@ -47,7 +47,7 @@ export default class BoldInlineTool implements InlineTool {
     range: TextRange;
   } {
     return {
-      action: this.checkState(index, fragments) ? FormattingAction.Format : FormattingAction.Unformat,
+      action: this.checkState(index, fragments) ? FormattingAction.Unformat : FormattingAction.Format,
       range: index,
     };
   };

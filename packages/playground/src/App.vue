@@ -1,53 +1,10 @@
 <script setup lang="ts">
 import CaretIndex from '@/components/CaretIndex.vue';
-import { BlockToolAdapter, CaretAdapter, InlineTool, InlineToolsAdapter } from '@editorjs/dom-adapters';
-import { createInlineToolName, EditorDocument, EditorJSModel, EventType, InlineFragment, TextRange } from '@editorjs/model';
+import { BlockToolAdapter, CaretAdapter } from '@editorjs/dom-adapters';
+import { EditorDocument, EditorJSModel, EventType } from '@editorjs/model';
 import Core from '@editorjs/core';
 import { ref, onMounted } from 'vue';
-import { make } from '@editorjs/dom';
-import { FormattingAction, IntersectType } from '@editorjs/model/src/entities';
-import { Input, Toolbar } from './components';
-import { InlineToolbar } from './components/Toolbar';
-
-/**
- * Inline tool mock for playground
- */
-const italicTool = {
-  name: createInlineToolName('italic'),
-  create() {
-    return make('i');
-  },
-  intersectType: IntersectType.Extend,
-  getAction(range: TextRange, fragments: InlineFragment[]) {
-    const action = fragments.length === 0 ? FormattingAction.Format : FormattingAction.Unformat;
-
-    return {
-      action,
-      range,
-    };
-  },
-} satisfies InlineTool;
-
-/**
- * Bold tool mock for playground
- */
-const boldTool = {
-  name: createInlineToolName('bold'),
-  create() {
-    return make('b');
-  },
-  intersectType: IntersectType.Extend,
-  getAction(range: TextRange, fragments: InlineFragment[]) {
-    const action = fragments.length === 0 ? FormattingAction.Format : FormattingAction.Unformat;
-
-    return {
-      action,
-      range,
-    };
-  },
-} satisfies InlineTool;
-
-const tools: InlineTool[] = [italicTool, boldTool];
+import { Input } from './components';
 
 /**
  * Every instance here will be created by Editor.js core
@@ -90,7 +47,6 @@ const caretAdapter = new CaretAdapter(window.document.body, model);
  */
 const blockToolAdapter = new BlockToolAdapter(model, caretAdapter, 0);
 const anotherBlockToolAdapter = new BlockToolAdapter(model, caretAdapter, 1);
-const inlineToolAdapter = new InlineToolsAdapter(model, caretAdapter);
 
 const serialized = ref(model.serialized);
 
@@ -114,7 +70,6 @@ onMounted(() => {
   });
 });
 
-const inlineToolbar = new InlineToolbar(model, inlineToolAdapter, tools);
 </script>
 
 <template>
@@ -149,11 +104,6 @@ const inlineToolbar = new InlineToolbar(model, inlineToolAdapter, tools);
         type="textarea"
         name="text2"
         value="This is textarea element"
-      />
-      <Toolbar
-        :show="inlineToolbar.show"
-        :tools="tools"
-        :toolbar="inlineToolbar"
       />
       <pre>{{ serialized }}</pre>
     </div>
