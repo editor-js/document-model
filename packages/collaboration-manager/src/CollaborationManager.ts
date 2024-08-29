@@ -19,7 +19,7 @@ export class CollaborationManager {
   #undoRedoManager: UndoRedoManager;
 
   /**
-   * Flag to control whether events should be handled to avoid putting operations to the stack on undo/redo
+   * Flag to control whether events should be handled to avoid putting operations to the stack on undo/redo. Used for preventing operations infinity loop on undo/redo
    */
   #shouldHandleEvents = true;
 
