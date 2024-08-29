@@ -1,15 +1,29 @@
 import type { BlockToolAdapter } from '@editorjs/dom-adapters';
-import type { BlockTool as BlockToolVersion2 } from '@editorjs/editorjs';
+import type { BlockTool as BlockToolVersion2, ToolConfig } from '@editorjs/editorjs';
 import type { BlockToolConstructorOptions as BlockToolConstructorOptionsVersion2 } from '@editorjs/editorjs';
+import type { ValueSerialized } from '@editorjs/model';
 
 /**
  * Extended BlockToolConstructorOptions interface for version 3.
  */
-export interface BlockToolConstructorOptions extends BlockToolConstructorOptionsVersion2 {
+export interface BlockToolConstructorOptions<
+  Data extends BlockToolData = BlockToolData,
+  Config extends ToolConfig = ToolConfig
+> extends BlockToolConstructorOptionsVersion2 {
   /**
    * Block tool adapter will be passed to the tool to connect data with the DOM
    */
   adapter: BlockToolAdapter;
+
+  /**
+   * Tool's input/output data
+   */
+  data: Data;
+
+  /**
+   * Config could be passed by tools user through the Editor config
+   */
+  config: Config;
 }
 
 /**
@@ -17,11 +31,17 @@ export interface BlockToolConstructorOptions extends BlockToolConstructorOptions
  *
  * In version 3, the save method is removed since all data is stored in the model
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface BlockTool extends Omit<BlockToolVersion2, 'save'> {
-}
+export type BlockTool<
+  Data extends BlockToolData = any,
+  Config extends ToolConfig = any
+> = Omit<BlockToolVersion2, 'save'>;
 
 /**
  * Block Tool constructor class
  */
 export type BlockToolConstructor = new (options: BlockToolConstructorOptions) => BlockTool;
+
+/**
+ * Data structure describing the tool's input/output data
+ */
+export type BlockToolData<T extends Record<string, ValueSerialized> = any> = T;
