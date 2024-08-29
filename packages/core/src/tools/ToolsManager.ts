@@ -129,8 +129,6 @@ export default class ToolsManager {
             }
 
             this.#availableTools.set(toolName, tool);
-
-            console.log(this.#availableTools.entries());
           } catch (e) {
             console.error(`Tool ${toolName} failed to prepare`, e);
 

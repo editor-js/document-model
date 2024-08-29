@@ -44,6 +44,9 @@ export default class Core {
    */
   #caretAdapter: CaretAdapter;
 
+  /**
+   * Inversion of Control container for dependency injections
+   */
   #iocContainer: ContainerInstance;
 
   /**
