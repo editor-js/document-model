@@ -33,8 +33,8 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
-    "@editorjs/core": "workspace:^",
     "@editorjs/dom": "^1.0.0",
-    "@editorjs/model": "workspace:^"
+    "@editorjs/model": "workspace:^",
+    "@editorjs/sdk": "workspace:^"
   }
 }

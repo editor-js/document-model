@@ -1,4 +1,4 @@
-import type { InlineToolsConfig } from '../entities/InlineTool.js';
+import type { InlineToolsConfig } from '../../../sdk/src/entities/InlineTool.js';
 import type { BlockToolConstructor } from '../entities/BlockTool.js';
 import { Paragraph } from './internal/block-tools/paragraph/index.js';
 import type { EditorConfig } from '@editorjs/editorjs';

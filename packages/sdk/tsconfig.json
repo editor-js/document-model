@@ -9,18 +9,12 @@
     "strict": true,
     "skipLibCheck": true,
     "experimentalDecorators": true,
-    "types": ["jest"],
     "rootDir": "src",
     "outDir": "dist"
   },
-  "include": ["src/**/*", "../sdk/src/entities/InlineTool.ts"],
+  "include": ["src/**/*"],
   "exclude": [
     "node_modules/**/*",
     "dist/**/*"
   ],
-  "references": [
-    {
-      "path": "../model/tsconfig.build.json"
-    }
-  ]
 }

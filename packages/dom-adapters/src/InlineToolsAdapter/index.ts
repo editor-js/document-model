@@ -10,7 +10,7 @@ import {
 } from '@editorjs/model';
 import type { CaretAdapter } from '../CaretAdapter/index.js';
 import { FormattingAction } from '@editorjs/model';
-import type { InlineTool } from '@editorjs/core';
+import type { InlineTool } from '@editorjs/sdk';
 
 /**
  * Class handles on format model events and renders inline tools

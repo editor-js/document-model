@@ -1,4 +1,4 @@
-import type { FormattingActionWithRange, InlineTool } from '../../../../entities/InlineTool.js';
+import type { FormattingActionWithRange, InlineTool } from '../../../../../../sdk/src/entities/InlineTool.js';
 import type { InlineFragment, TextRange } from '@editorjs/model';
 import { FormattingAction } from '@editorjs/model';
 import { IntersectType } from '@editorjs/model';

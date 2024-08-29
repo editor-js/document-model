@@ -1,5 +1,5 @@
 import type { InlineToolsAdapter } from '@editorjs/dom-adapters';
-import type { InlineTool, InlineToolsConfig } from '../../entities/InlineTool.js';
+import type { InlineTool, InlineToolsConfig } from '../../../../sdk/src/entities/InlineTool.js';
 import type { InlineToolName } from '@editorjs/model';
 import { type EditorJSModel, type TextRange, createInlineToolData, createInlineToolName, Index } from '@editorjs/model';
 import { EventType } from '@editorjs/model';
