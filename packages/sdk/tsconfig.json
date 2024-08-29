@@ -17,4 +17,9 @@
     "node_modules/**/*",
     "dist/**/*"
   ],
+  "references": [
+    {
+      "path": "../model/tsconfig.build.json"
+    }
+  ]
 }
