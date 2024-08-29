@@ -218,12 +218,15 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
    * Returns Tool user configuration
    */
   public get settings(): ToolOptions {
-    const config: ToolOptions = this.config[UserSettings.Config] ?? {};
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const config = this.config[UserSettings.Config] ?? {};
 
     if (this.isDefault && !('placeholder' in config) && typeof this.defaultPlaceholder === 'string') {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       config.placeholder = this.defaultPlaceholder;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return config;
   }
 

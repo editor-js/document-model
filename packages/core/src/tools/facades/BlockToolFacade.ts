@@ -19,7 +19,7 @@ import { BlockToolConstructor as BlockToolConstructable, BlockTool as IBlockTool
  */
 export class BlockToolFacade extends BaseToolFacade<ToolType.Block, IBlockTool> {
   /**
-   * Tool type — Block
+   * Tool type for BlockToolFacade tools — Block
    */
   public type: ToolType.Block = ToolType.Block;
 
@@ -40,14 +40,16 @@ export class BlockToolFacade extends BaseToolFacade<ToolType.Block, IBlockTool> 
 
   /**
    * Creates new Tool instance
-   * @param options
-   * @param options.data - Tool data
+   * @param options - Tool constructor options
+   * @param options.data - Tools data
    * @param options.block - BlockAPI for current Block
    * @param options.readOnly - True if Editor is in read-only mode
    */
+  // eslint-disable-next-line jsdoc/require-jsdoc
   public create({ data, block, readOnly, adapter }: { data: BlockToolData; block: BlockAPI; readOnly: boolean; adapter: BlockToolAdapter }): IBlockTool {
     return new this.constructable({
       adapter,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       data,
       block,
       readOnly,
@@ -109,7 +111,7 @@ export class BlockToolFacade extends BaseToolFacade<ToolType.Block, IBlockTool> 
         return userToolboxSettings.map((item, i) => {
           const toolToolboxEntry = toolToolboxSettings[i];
 
-          if (toolToolboxEntry) {
+          if (toolToolboxEntry !== undefined) {
             return {
               ...toolToolboxEntry,
               ...item,
@@ -146,7 +148,7 @@ export class BlockToolFacade extends BaseToolFacade<ToolType.Block, IBlockTool> 
    * Returns enabled inline tools for Tool
    */
   public get enabledInlineTools(): boolean | string[] {
-    return this.config[UserSettings.EnabledInlineTools] || false;
+    return this.config[UserSettings.EnabledInlineTools] ?? false;
   }
 
   /**

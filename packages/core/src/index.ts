@@ -65,6 +65,7 @@ export default class Core {
    * @param config - Editor configuration
    */
   constructor(config: CoreConfig) {
+    // eslint-disable-next-line @typescript-eslint/no-magic-numbers
     this.#iocContainer = Container.of(Math.floor(Math.random() * 1e10).toString());
 
     this.validateConfig(config);
