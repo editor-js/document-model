@@ -17,7 +17,7 @@ function extractFragments(html: string): InlineFragment[] {
 
   /**
    * Traverses children of the parent node
-   * @param parent - parent node
+   * @param parent - node to traverse children from
    * @param startIndex - start index of the text
    */
   function traverseChildren(parent: HTMLElement, startIndex: number): number {
@@ -31,7 +31,7 @@ function extractFragments(html: string): InlineFragment[] {
 
   /**
    * Traverses the node and its children
-   * @param node - node to traverse
+   * @param node - node to traverse children from
    * @param startIndex - start index of the text
    */
   function traverse(node: ChildNode, startIndex: number): number {

@@ -21,7 +21,7 @@ import {
 } from '../utils/index.js';
 import { InputType } from './types/InputType.js';
 import type { BlockToolAdapter as BlockToolAdapterInterface } from '@editorjs/sdk';
-import { FormattingAdapter } from '../InlineToolsAdapter/index.js';
+import type { FormattingAdapter } from '../InlineToolsAdapter/index.js';
 
 /**
  * BlockToolAdapter is using inside Block tools to connect browser DOM elements to the model
@@ -46,7 +46,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
 
   /**
    * Formatting adapter instance
-   */ 
+   */
   #formattingAdapter: FormattingAdapter;
 
   /**
@@ -91,6 +91,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     const fragments = this.#model.getFragments(this.#blockIndex, key);
 
     fragments.forEach(fragment => {
+      console.log('fragment', fragment);
       // this.#formattingAdapter.formatElementContent(input, fragment);
     });
   }
