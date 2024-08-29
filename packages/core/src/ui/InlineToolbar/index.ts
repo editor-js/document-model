@@ -1,5 +1,5 @@
 import type { InlineToolsAdapter } from '@editorjs/dom-adapters';
-import type { InlineTool } from '../../entities/InlineTool.js';
+import type { InlineToolWithName } from '../../entities/InlineTool.js';
 import { type EditorJSModel, type TextRange, Index } from '@editorjs/model';
 import { EventType } from '@editorjs/model';
 import type { Nominal } from '@editorjs/model/dist/utils/Nominal';
@@ -31,22 +31,26 @@ export class InlineToolbar {
   /**
    * Tools that would be attached to the adapter
    */
-  #tools: InlineTool[];
+  #tools: InlineToolWithName[];
 
   /**
    * Toolbar html element related to the editor
    */
   #toolbar: HTMLElement | undefined = undefined;
 
+  #holder: HTMLElement;
+
   /**
    * @param model - editor model instance
    * @param inlineToolAdapter - inline tool adapter instance
    * @param tools - tools, that should be attached to adapter
+   * @param holder - editor holder element
    */
-  constructor(model: EditorJSModel, inlineToolAdapter: InlineToolsAdapter, tools: InlineTool[]) {
+  constructor(model: EditorJSModel, inlineToolAdapter: InlineToolsAdapter, tools: InlineToolWithName[], holder: HTMLElement) {
     this.#model = model;
     this.#inlineToolAdapter = inlineToolAdapter;
     this.#tools = tools;
+    this.#holder = holder;
 
     this.#attachTools();
 
@@ -117,8 +121,6 @@ export class InlineToolbar {
      */
     this.#deleteToolbarElement();
 
-    const selection = window.getSelection();
-
     this.#toolbar = make('div');
 
     this.#tools.forEach((tool) => {
@@ -134,17 +136,7 @@ export class InlineToolbar {
       }
     });
 
-    /**
-     * Get current input with selection
-     */
-    if (selection) {
-      /**
-       * Do not render inline toolbar for not contenteditable elements
-       */
-      if (selection.focusNode !== null && selection.anchorNode !== null) {
-        selection.focusNode.parentElement?.parentNode?.insertBefore(this.#toolbar, selection.focusNode.parentElement);
-      }
-    }
+    this.#holder.appendChild(this.#toolbar);
   }
 
   /**
@@ -158,7 +150,7 @@ export class InlineToolbar {
    * Apply format with data formed in toolbar
    * @param tool - tool, that was triggered
    */
-  public apply(tool: InlineTool): void {
+  public apply(tool: InlineToolWithName): void {
     /**
      * @todo pass to applyFormat inline tool data formed in toolbar
      */

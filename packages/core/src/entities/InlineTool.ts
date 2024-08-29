@@ -29,11 +29,6 @@ export interface FormattingActionWithRange {
  */
 export interface InlineTool extends Omit<InlineToolVersion2, 'save' | 'checkState' | 'render'> {
   /**
-   * Name of the inline tool
-   */
-  name: InlineToolName;
-
-  /**
    * Type of merging of two ranges which intersect
    */
   intersectType?: IntersectType;
@@ -56,6 +51,21 @@ export interface InlineTool extends Omit<InlineToolVersion2, 'save' | 'checkStat
    * Method for creating wrapper element of the tool
    */
   createWrapper(): HTMLElement;
+}
+
+/**
+ * Interface, that represents inline tool with configured name
+ */
+export interface InlineToolWithName {
+  /**
+   * Name of the inline tool got from editor config
+   */
+  name: InlineToolName;
+
+  /**
+   * Inline tool instanse
+   */
+  tool: InlineTool;
 }
 
 /**

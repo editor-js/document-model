@@ -73,7 +73,7 @@ export default class Core {
     this.#caretAdapter = new CaretAdapter(this.#config.holder, this.#model);
     this.#inlineToolsAdapter = new InlineToolsAdapter(this.#model, this.#caretAdapter);
 
-    this.#inlineToolbar = new InlineToolbar(this.#model, this.#inlineToolsAdapter, this.#toolsManager.getInlineTools());
+    this.#inlineToolbar = new InlineToolbar(this.#model, this.#inlineToolsAdapter, this.#toolsManager.getInlineTools(), config.holder!);
 
     this.#model.initializeDocument({ blocks });
   }
