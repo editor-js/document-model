@@ -32,7 +32,14 @@ export interface BlockToolConstructorOptions<
  * In version 3, the save method is removed since all data is stored in the model
  */
 export type BlockTool<
+  /** 
+   * Data structure describing the tool's input/output data
+   */
   Data extends BlockToolData = any,
+
+  /**
+   * User-end configuration for the tool
+   */
   Config extends ToolConfig = any
 > = Omit<BlockToolVersion2, 'save'>;
 
@@ -43,5 +50,7 @@ export type BlockToolConstructor = new (options: BlockToolConstructorOptions) =>
 
 /**
  * Data structure describing the tool's input/output data
+ * 
+ * any is used as a placeholder to allow using BlockToolData without generic
  */
 export type BlockToolData<T extends Record<string, ValueSerialized> = any> = T;
