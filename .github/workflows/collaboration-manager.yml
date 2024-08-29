@@ -1,0 +1,33 @@
+name: Collaboration manager check
+on:
+  pull_request:
+  merge_group:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run ESLint check
+        uses: ./.github/actions/lint
+        with:
+          package-name: '@editorjs/collaboration-manager'
+
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run unit tests
+        uses: ./.github/actions/unit-tests
+        with:
+          package-name: '@editorjs/collaboration-manager'
+          working-directory: './packages/collaboration-manager'
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the package
+        uses: ./.github/actions/build
+        with:
+          package-name: '@editorjs/collaboration-manager'
