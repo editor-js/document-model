@@ -1,14 +1,13 @@
-import type { ModelEvents } from '@editorjs/model';
-import { BlockAddedEvent, EditorJSModel, EventType } from '@editorjs/model';
+import { EditorJSModel } from '@editorjs/model';
 import type { ContainerInstance } from 'typedi';
 import { Container } from 'typedi';
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
 import ToolsManager from './tools/ToolsManager.js';
-import { BlockToolAdapter, CaretAdapter, InlineToolsAdapter } from '@editorjs/dom-adapters';
-import type { BlockAPI, BlockToolData } from '@editorjs/editorjs';
+import { CaretAdapter, InlineToolsAdapter } from '@editorjs/dom-adapters';
 import { InlineToolbar } from './ui/InlineToolbar/index.js';
 import type { CoreConfigValidated } from './entities/Config.js';
-import type { BlockTool, CoreConfig } from '@editorjs/sdk';
+import type { CoreConfig } from '@editorjs/sdk';
+import { BlocksManager } from './BlockManager.js';
 
 /**
  * If no holder is provided via config, the editor will be appended to the element with this id
@@ -82,8 +81,6 @@ export default class Core {
 
     this.#iocContainer.set(EditorJSModel, this.#model);
 
-    this.#model.addEventListener(EventType.Changed, (event: ModelEvents) => this.handleModelUpdate(event));
-
     this.#toolsManager = this.#iocContainer.get(ToolsManager);
 
     this.#caretAdapter = new CaretAdapter(this.#config.holder, this.#model);
@@ -94,6 +91,8 @@ export default class Core {
 
     this.#inlineToolbar = new InlineToolbar(this.#model, this.#inlineToolsAdapter, this.#toolsManager.inlineTools, this.#config.holder);
     this.#iocContainer.set(InlineToolbar, this.#inlineToolbar);
+
+    this.#iocContainer.get(BlocksManager);
 
     this.#model.initializeDocument({ blocks });
   }
@@ -122,78 +121,6 @@ export default class Core {
         throw new Error('Editor configuration blocks should be an array');
       }
     }
-  }
-
-  /**
-   * When model emits block-added event, add an actual block to the editor
-   * @param event - Any model event
-   */
-  private handleModelUpdate(event: ModelEvents): void {
-    if (event instanceof BlockAddedEvent === false) {
-      return;
-    }
-
-    void this.handleBlockAdded(event);
-  }
-
-  /**
-   * Insert block added to the model to the DOM
-   * @param event - Event containing information about the added block
-   */
-  private async handleBlockAdded(event: BlockAddedEvent): Promise<void> {
-    /**
-     * @todo add batch rendering to improve performance on large documents
-     */
-    const index = event.detail.index;
-
-    if (index.blockIndex === undefined) {
-      throw new Error('Block index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
-    }
-
-    const blockToolAdapter = new BlockToolAdapter(this.#model, this.#caretAdapter, index.blockIndex);
-
-    const block = this.createBlock({
-      name: event.detail.data.name,
-      data: event.detail.data.data,
-    }, blockToolAdapter);
-
-    const blockEl = await block.render();
-
-    /**
-     * @todo add block to the correct position
-     */
-    this.#config.holder.appendChild(blockEl);
-  }
-
-  /**
-   * Create Block Tools instance
-   * @param blockOptions - options to pass to the tool
-   * @param blockToolAdapter - adapter for linking block and model
-   */
-  private createBlock({ name, data }: {
-    /**
-     * Tool name
-     */
-    name: string;
-    /**
-     * Saved block data
-     */
-    data: BlockToolData<Record<string, unknown>>;
-  }, blockToolAdapter: BlockToolAdapter): BlockTool {
-    const tool = this.#toolsManager.blockTools.get(name);
-
-    if (!tool) {
-      throw new Error(`Block Tool ${name} not found`);
-    }
-
-    const block = tool.create({
-      adapter: blockToolAdapter,
-      data: data,
-      block: {} as BlockAPI,
-      readOnly: false,
-    });
-
-    return block;
   }
 }
 
