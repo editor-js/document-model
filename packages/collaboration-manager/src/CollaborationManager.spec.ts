@@ -5,83 +5,251 @@ import { CollaborationManager } from './CollaborationManager.js';
 import { Operation, OperationType } from './Operation.js';
 
 describe('CollaborationManager', () => {
-  it('should add text on apply Insert Operation', () => {
-    const model = new EditorJSModel({
-      blocks: [ {
-        name: 'paragraph',
-        data: {
-          text: {
-            value: '',
-            $t: 't',
+  describe('applyOperation', () => {
+    it('should add text on apply Insert Operation', () => {
+      const model = new EditorJSModel({
+        blocks: [ {
+          name: 'paragraph',
+          data: {
+            text: {
+              value: '',
+              $t: 't',
+            },
           },
-        },
-      } ],
-    });
-    const collaborationManager = new CollaborationManager(model);
-    const index = new IndexBuilder().addBlockIndex(0)
-      .addDataKey(createDataKey('text'))
-      .addTextRange([0, 4])
-      .build();
-    const operation = new Operation(OperationType.Insert, index, {
-      prevValue: '',
-      newValue: 'test',
+        } ],
+      });
+      const collaborationManager = new CollaborationManager(model);
+      const index = new IndexBuilder().addBlockIndex(0)
+        .addDataKey(createDataKey('text'))
+        .addTextRange([0, 4])
+        .build();
+      const operation = new Operation(OperationType.Insert, index, {
+        prevValue: '',
+        newValue: 'test',
+      });
+
+      collaborationManager.applyOperation(operation);
+      expect(model.serialized).toStrictEqual({
+        blocks: [ {
+          name: 'paragraph',
+          tunes: {},
+          data: {
+            text: {
+              $t: 't',
+              value: 'test',
+              fragments: [],
+            },
+          },
+        } ],
+        properties: {},
+      });
     });
 
-    collaborationManager.applyOperation(operation);
-    expect(model.serialized).toStrictEqual({
-      blocks: [ {
-        name: 'paragraph',
-        tunes: {},
-        data: {
-          text: {
-            $t: 't',
-            value: 'test',
-            fragments: [],
+
+    it('should remove text on apply Remove Operation', () => {
+      const model = new EditorJSModel({
+        blocks: [ {
+          name: 'paragraph',
+          data: {
+            text: {
+              value: 'hel11lo',
+              $t: 't',
+            },
           },
-        },
-      } ],
-      properties: {},
+        } ],
+      });
+      const collaborationManager = new CollaborationManager(model);
+      const index = new IndexBuilder().addBlockIndex(0)
+        .addDataKey(createDataKey('text'))
+        .addTextRange([
+          3, 5])
+        .build();
+      const operation = new Operation(OperationType.Delete, index, {
+        prevValue: '11',
+        newValue: '',
+      });
+
+      collaborationManager.applyOperation(operation);
+      expect(model.serialized).toStrictEqual({
+        blocks: [ {
+          name: 'paragraph',
+          tunes: {},
+          data: {
+            text: {
+              $t: 't',
+              value: 'hello',
+              fragments: [],
+            },
+          },
+        } ],
+        properties: {},
+      });
     });
   });
 
-
-  it('should remove text on apply Remove Operation', () => {
-    const model = new EditorJSModel({
-      blocks: [ {
-        name: 'paragraph',
-        data: {
-          text: {
-            value: 'hel11lo',
-            $t: 't',
+  describe('undo logic', () => {
+    it('should invert Insert operation', () => {
+      const model = new EditorJSModel({
+        blocks: [ {
+          name: 'paragraph',
+          data: {
+            text: {
+              value: '',
+              $t: 't',
+            },
           },
-        },
-      } ],
-    });
-    const collaborationManager = new CollaborationManager(model);
-    const index = new IndexBuilder().addBlockIndex(0)
-      .addDataKey(createDataKey('text'))
-      .addTextRange([
-        3, 5])
-      .build();
-    const operation = new Operation(OperationType.Delete, index, {
-      prevValue: '11',
-      newValue: '',
+        } ],
+      });
+      const collaborationManager = new CollaborationManager(model);
+      const index = new IndexBuilder().addBlockIndex(0)
+        .addDataKey(createDataKey('text'))
+        .addTextRange([0, 4])
+        .build();
+      const operation = new Operation(OperationType.Insert, index, {
+        prevValue: '',
+        newValue: 'test',
+      });
+
+      collaborationManager.applyOperation(operation);
+      collaborationManager.undo();
+      expect(model.serialized).toStrictEqual({
+        blocks: [ {
+          name: 'paragraph',
+          tunes: {},
+          data: {
+            text: {
+              $t: 't',
+              value: '',
+              fragments: [],
+            },
+          },
+        } ],
+        properties: {},
+      });
     });
 
-    collaborationManager.applyOperation(operation);
-    expect(model.serialized).toStrictEqual({
-      blocks: [ {
-        name: 'paragraph',
-        tunes: {},
-        data: {
-          text: {
-            $t: 't',
-            value: 'hello',
-            fragments: [],
+    it('should invert Remove operation', () => {
+      const model = new EditorJSModel({
+        blocks: [ {
+          name: 'paragraph',
+          data: {
+            text: {
+              value: 'hel11lo',
+              $t: 't',
+            },
           },
-        },
-      } ],
-      properties: {},
+        } ],
+      });
+      const collaborationManager = new CollaborationManager(model);
+      const index = new IndexBuilder().addBlockIndex(0)
+        .addDataKey(createDataKey('text'))
+        .addTextRange([
+          3, 5])
+        .build();
+      const operation = new Operation(OperationType.Delete, index, {
+        prevValue: '11',
+        newValue: '',
+      });
+
+      collaborationManager.applyOperation(operation);
+      collaborationManager.undo();
+      expect(model.serialized).toStrictEqual({
+        blocks: [ {
+          name: 'paragraph',
+          tunes: {},
+          data: {
+            text: {
+              $t: 't',
+              value: 'hel11lo',
+              fragments: [],
+            },
+          },
+        } ],
+        properties: {},
+      });
+    });
+
+    it('should revert only one operation if stack length is 1', () => {
+      const model = new EditorJSModel({
+        blocks: [ {
+          name: 'paragraph',
+          data: {
+            text: {
+              value: '',
+              $t: 't',
+            },
+          },
+        } ],
+      });
+      const collaborationManager = new CollaborationManager(model);
+      const index = new IndexBuilder().addBlockIndex(0)
+        .addDataKey(createDataKey('text'))
+        .addTextRange([0, 4])
+        .build();
+      const operation = new Operation(OperationType.Insert, index, {
+        prevValue: '',
+        newValue: 'test',
+      });
+
+      collaborationManager.applyOperation(operation);
+      collaborationManager.undo();
+      collaborationManager.undo();
+      expect(model.serialized).toStrictEqual({
+        blocks: [ {
+          name: 'paragraph',
+          tunes: {},
+          data: {
+            text: {
+              $t: 't',
+              value: '',
+              fragments: [],
+            },
+          },
+        } ],
+        properties: {},
+      });
+    });
+
+    it('should revert back to original state after undo and redo operations', () => {
+      const model = new EditorJSModel({
+        blocks: [ {
+          name: 'paragraph',
+          data: {
+            text: {
+              value: '',
+              $t: 't',
+            },
+          },
+        } ],
+      });
+      const collaborationManager = new CollaborationManager(model);
+      const index = new IndexBuilder().addBlockIndex(0)
+        .addDataKey(createDataKey('text'))
+        .addTextRange([0, 4])
+        .build();
+      const operation = new Operation(OperationType.Insert, index, {
+        prevValue: '',
+        newValue: 'test',
+      });
+
+      collaborationManager.applyOperation(operation);
+      collaborationManager.undo();
+      collaborationManager.redo();
+
+      expect(model.serialized).toStrictEqual({
+        blocks: [ {
+          name: 'paragraph',
+          tunes: {},
+          data: {
+            text: {
+              $t: 't',
+              value: 'test',
+              fragments: [],
+            },
+          },
+        } ],
+        properties: {},
+      });
     });
   });
 });
