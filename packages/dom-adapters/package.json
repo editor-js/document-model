@@ -34,6 +34,7 @@
   },
   "dependencies": {
     "@editorjs/dom": "^1.0.0",
-    "@editorjs/model": "workspace:^"
+    "@editorjs/model": "workspace:^",
+    "@editorjs/sdk": "workspace:^"
   }
 }

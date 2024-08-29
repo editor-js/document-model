@@ -3,7 +3,7 @@ import { EventAction } from '../types/EventAction.js';
 import type { InlineToolData, InlineToolName } from '../../entities/index.js';
 import { BaseDocumentEvent } from './BaseEvent.js';
 
-interface TextUnformattedEventData {
+export interface TextUnformattedEventData {
   tool: InlineToolName,
   data?: InlineToolData,
 }

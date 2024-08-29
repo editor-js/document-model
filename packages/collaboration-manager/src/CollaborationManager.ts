@@ -1,6 +1,7 @@
 import type { EditorJSModel, ModelEvents } from '@editorjs/model';
 import { EventType, TextAddedEvent, TextRemovedEvent } from '@editorjs/model';
 import { Operation, OperationType } from './Operation.js';
+import { UndoRedoManager } from './UndoRedoManager.js';
 
 /**
  * CollaborationManager listens to EditorJSModel events and applies operations
@@ -12,13 +13,63 @@ export class CollaborationManager {
   #model: EditorJSModel;
 
   /**
+   * UndoRedoManager instance to manage undo/redo operations
+   */
+  #undoRedoManager: UndoRedoManager;
+
+  /**
+   * Flag to control whether events should be handled to avoid putting operations to the stack on undo/redo. Used for preventing operations infinity loop on undo/redo
+   */
+  #shouldHandleEvents = true;
+
+
+  /**
    * Creates an instance of CollaborationManager
    *
    * @param model - EditorJSModel instance to listen to and apply operations
    */
   constructor(model: EditorJSModel) {
     this.#model = model;
+    this.#undoRedoManager = new UndoRedoManager();
     model.addEventListener(EventType.Changed, this.#handleEvent.bind(this));
+  }
+
+  /**
+   * Undo last operation in the local stack
+   */
+  public undo(): void {
+    const operation = this.#undoRedoManager.undo();
+
+    if (operation === undefined) {
+      return;
+    }
+
+    // Disable event handling
+    this.#shouldHandleEvents = false;
+
+    this.applyOperation(operation);
+
+    // Re-enable event handling
+    this.#shouldHandleEvents = true;
+  }
+
+  /**
+   * Redo last undone operation in the local stack
+   */
+  public redo(): void {
+    const operation = this.#undoRedoManager.redo();
+
+    if (operation === undefined) {
+      return;
+    }
+
+    // Disable event handling
+    this.#shouldHandleEvents = false;
+
+    this.applyOperation(operation);
+
+    // Re-enable event handling
+    this.#shouldHandleEvents = true;
   }
 
   /**
@@ -35,7 +86,7 @@ export class CollaborationManager {
 
     switch (operation.type) {
       case OperationType.Insert:
-        this.#model.insertText(blockIndex, dataKey, operation.data.newValue);
+        this.#model.insertText(blockIndex, dataKey, operation.data.newValue, textRange[0]);
         break;
       case OperationType.Delete:
         this.#model.removeText(blockIndex, dataKey, textRange[0], textRange[1]);
@@ -55,6 +106,9 @@ export class CollaborationManager {
    * @param e - event to handle
    */
   #handleEvent(e: ModelEvents): void {
+    if (!this.#shouldHandleEvents) {
+      return;
+    }
     let operation: Operation | null = null;
 
     switch (true) {
@@ -73,6 +127,9 @@ export class CollaborationManager {
       default:
         console.error('Unknown event type', e);
     }
-    console.log('operation', operation);
+
+    if (operation !== null) {
+      this.#undoRedoManager.put(operation);
+    }
   }
 }

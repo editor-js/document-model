@@ -10,9 +10,9 @@ import { type BlockToolFacade } from './BlockToolFacade.js';
 import { type InlineToolFacade } from './InlineToolFacade.js';
 import { ToolType } from './ToolType.js';
 import { type BlockTuneFacade } from './BlockTuneFacade.js';
-import { BlockToolConstructor as BlockToolConstructable } from "../../entities/BlockTool.js";
+import { BlockTool, BlockToolConstructor, InlineTool, InlineToolConstructor } from "@editorjs/sdk";
 
-export type ToolConstructable = ToolConstructableV2 | BlockToolConstructable;
+export type ToolConstructable = ToolConstructableV2 | BlockToolConstructor | InlineToolConstructor;
 
 /**
  * Enum of Tool options provided by user
@@ -120,7 +120,7 @@ interface ConstructorOptions {
 /**
  * Base abstract class for Tools
  */
-export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass extends Tool = Tool> {
+export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass extends (Tool | InlineTool | BlockTool) = Tool> {
   /**
    * Tool type: Block, Inline or Tune
    */

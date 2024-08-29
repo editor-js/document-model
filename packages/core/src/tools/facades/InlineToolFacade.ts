@@ -1,5 +1,5 @@
 import { BaseToolFacade, InternalInlineToolSettings } from './BaseToolFacade.js';
-import type { InlineTool as IInlineTool, InlineToolConstructable } from '@editorjs/editorjs';
+import type { InlineTool as IInlineTool, InlineToolConstructor as InlineToolConstructable } from '@editorjs/sdk';
 import { ToolType } from './ToolType.js';
 
 /**
@@ -27,9 +27,12 @@ export class InlineToolFacade extends BaseToolFacade<ToolType.Inline, IInlineToo
    * Constructs new InlineTool instance from constructable
    */
   public create(): IInlineTool {
+    /**
+     * @todo fix types
+     */
     return new this.constructable({
       api: this.api,
       config: this.settings,
-    }) as IInlineTool;
+    }) as unknown as IInlineTool;
   }
 }

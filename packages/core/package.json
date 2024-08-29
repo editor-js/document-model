@@ -18,10 +18,12 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
+    "@editorjs/dom": "^1.0.0",
     "@editorjs/dom-adapters": "workspace:^",
     "@editorjs/editorjs": "^2.30.5",
     "@editorjs/helpers": "^1.0.0",
     "@editorjs/model": "workspace:^",
+    "@editorjs/sdk": "workspace:^",
     "reflect-metadata": "^0.2.2",
     "typedi": "^0.10.0"
   }

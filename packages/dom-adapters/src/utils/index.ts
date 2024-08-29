@@ -4,3 +4,5 @@ export * from './isNonTextInput.js';
 export * from './useSelectionChange.js';
 export * from './findWordBoundary.js';
 export * from './findHardLineBoundary.js';
+export * from './doRangesIntersect.js';
+export * from './mergeTextRanges.js';

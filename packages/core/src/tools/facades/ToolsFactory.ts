@@ -1,3 +1,4 @@
+import type { BlockToolConstructor, InlineToolConstructor } from "@editorjs/sdk";
 import { InternalInlineToolSettings, InternalTuneSettings } from './BaseToolFacade.js';
 import { InlineToolFacade } from './InlineToolFacade.js';
 import { BlockTuneFacade } from './BlockTuneFacade.js';
@@ -14,7 +15,7 @@ import type {
 type ToolConstructor = typeof InlineToolFacade | typeof BlockToolFacade | typeof BlockTuneFacade;
 
 export type UnifiedToolConfig = Record<string, Omit<ToolSettings, 'class'> & {
-  class: ToolConstructable;
+  class: ToolConstructable | BlockToolConstructor | InlineToolConstructor;
   isInternal?: boolean;
 }>;
 
@@ -81,7 +82,7 @@ export class ToolsFactory {
    * Find appropriate Tool object constructor for Tool constructable
    * @param constructable - Tools constructable
    */
-  private getConstructor(constructable: ToolConstructable): ToolConstructor {
+  private getConstructor(constructable: ToolConstructable | BlockToolConstructor | InlineToolConstructor): ToolConstructor {
     switch (true) {
       case (constructable as InlineToolConstructable)[InternalInlineToolSettings.IsInline]:
         return InlineToolFacade;

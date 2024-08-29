@@ -2,12 +2,13 @@ import type { ModelEvents } from '@editorjs/model';
 import { BlockAddedEvent, EditorJSModel, EventType } from '@editorjs/model';
 import type { ContainerInstance } from 'typedi';
 import { Container } from 'typedi';
-import type { CoreConfig, CoreConfigValidated } from './entities/Config.js';
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
 import ToolsManager from './tools/ToolsManager.js';
-import { BlockToolAdapter, CaretAdapter } from '@editorjs/dom-adapters';
-import type { BlockAPI, BlockToolData, API as EditorjsApi, ToolConfig } from '@editorjs/editorjs';
-import type { BlockTool } from './entities/BlockTool.js';
+import { BlockToolAdapter, CaretAdapter, InlineToolsAdapter } from '@editorjs/dom-adapters';
+import type { BlockAPI, BlockToolData } from '@editorjs/editorjs';
+import { InlineToolbar } from './ui/InlineToolbar/index.js';
+import type { CoreConfigValidated } from './entities/Config.js';
+import type { BlockTool, CoreConfig } from '@editorjs/sdk';
 
 /**
  * If no holder is provided via config, the editor will be appended to the element with this id
@@ -46,6 +47,21 @@ export default class Core {
   #iocContainer: ContainerInstance;
 
   /**
+   * Inline tool adapter is responsible for handling model formatting updates
+   * Applies format, got from inline toolbar to the model
+   * When model changed with formatting event, it renders related fragment
+   */
+  #inlineToolsAdapter: InlineToolsAdapter;
+
+  /**
+   * @todo inline toolbar should subscripe on selection change event called by EventBus
+   * Inline toolbar is responsible for handling selection changes
+   * When model selection changes, it determines, whenever to show toolbar element,
+   * Which calls apply format method of the adapter
+   */
+  #inlineToolbar: InlineToolbar;
+
+  /**
    * @param config - Editor configuration
    */
   constructor(config: CoreConfig) {
@@ -67,8 +83,13 @@ export default class Core {
     this.#toolsManager = this.#iocContainer.get(ToolsManager);
 
     this.#caretAdapter = new CaretAdapter(this.#config.holder, this.#model);
-
     this.#iocContainer.set(CaretAdapter, this.#caretAdapter);
+
+    this.#inlineToolsAdapter = new InlineToolsAdapter(this.#model, this.#caretAdapter);
+    this.#iocContainer.set(InlineToolsAdapter, this.#inlineToolsAdapter);
+
+    this.#inlineToolbar = new InlineToolbar(this.#model, this.#inlineToolsAdapter, this.#toolsManager.inlineTools, this.#config.holder);
+    this.#iocContainer.set(InlineToolbar, this.#inlineToolbar);
 
     this.#model.initializeDocument({ blocks });
   }
@@ -171,3 +192,5 @@ export default class Core {
     return block;
   }
 }
+
+export * from './entities/index.js';

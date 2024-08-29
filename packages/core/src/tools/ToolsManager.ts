@@ -1,22 +1,23 @@
 import 'reflect-metadata';
 import { deepMerge, isFunction, isObject, PromiseQueue } from '@editorjs/helpers';
 import { Inject, Service } from 'typedi';
-import type { BlockToolConstructor } from "../entities/BlockTool.js";
 import {
-  BlockToolBuilder, BlockTuneBuilder,
-  InlineToolBuilder,
+  BlockToolFacade, BlockTuneFacade,
+  InlineToolFacade,
   ToolsCollection,
   ToolsFactory,
   UnifiedToolConfig
-} from "./builders/index.js";
-import { Paragraph } from './internal/paragraph/index.js';
+} from "./facades/index.js";
+import { Paragraph } from './internal/block-tools/paragraph/index.js';
 import type {
   EditorConfig,
-  InlineTool,
   ToolConfig,
   ToolConstructable,
   ToolSettings
 } from '@editorjs/editorjs';
+import BoldInlineTool from "./internal/inline-tools/bold/index.js";
+import ItalicInlineTool from "./internal/inline-tools/italic/index.js";
+import { InlineTool } from "@editorjs/sdk";
 
 /**
  * Works with tools
@@ -47,14 +48,14 @@ export default class ToolsManager {
   /**
    * Return Tools for the Inline Toolbar
    */
-  public get inlineTools(): ToolsCollection<InlineToolBuilder> {
+  public get inlineTools(): ToolsCollection<InlineToolFacade> {
     return this.available.inlineTools;
   }
 
   /**
    * Return editor block tools
    */
-  public get blockTools(): ToolsCollection<BlockToolBuilder> {
+  public get blockTools(): ToolsCollection<BlockToolFacade> {
     return this.available.blockTools;
   }
 
@@ -62,7 +63,7 @@ export default class ToolsManager {
    * Return available Block Tunes
    * @returns - object of Inline Tool's classes
    */
-  public get blockTunes(): ToolsCollection<BlockTuneBuilder> {
+  public get blockTunes(): ToolsCollection<BlockTuneFacade> {
     return this.available.blockTunes;
   }
 
@@ -206,6 +207,14 @@ export default class ToolsManager {
         inlineToolbar: true,
         isInternal: true,
       },
+      bold: {
+        class: BoldInlineTool as any,
+        isInternal: true,
+      },
+      italic: {
+        class: ItalicInlineTool as any,
+        isInternal: true,
+      }
     };
   }
 }
