@@ -671,6 +671,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@editorjs/dom-adapters@workspace:packages/dom-adapters"
   dependencies:
+    "@editorjs/core": "workspace:^"
     "@editorjs/dom": "npm:^1.0.0"
     "@editorjs/model": "workspace:^"
     "@jest/globals": "npm:^29.7.0"

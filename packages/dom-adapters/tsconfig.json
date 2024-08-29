@@ -11,9 +11,7 @@
     "experimentalDecorators": true,
     "types": ["jest"],
     "rootDir": "src",
-    "outDir": "dist",
-    "noEmit": true,
-    "allowImportingTsExtensions": true
+    "outDir": "dist"
   },
   "include": ["src/**/*"],
   "exclude": [

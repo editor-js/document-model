@@ -1,5 +1,5 @@
 import type { Caret, EditorJSModel, CaretManagerEvents } from '@editorjs/model';
-import { getAbsoluteRangeOffset, getBoundaryPointByAbsoluteOffset, useSelectionChange } from '../utils/index';
+import { getAbsoluteRangeOffset, getBoundaryPointByAbsoluteOffset, useSelectionChange } from '../utils/index.js';
 import type { TextRange } from '@editorjs/model';
 import { EventType, IndexBuilder, Index } from '@editorjs/model';
 import { isNativeInput } from '@editorjs/dom';
