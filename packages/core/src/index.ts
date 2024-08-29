@@ -9,7 +9,7 @@ import type { BlockAPI, BlockToolData } from '@editorjs/editorjs';
 import { InlineToolbar } from './ui/InlineToolbar/index.js';
 import type { CoreConfigValidated } from './entities/Config.js';
 import type { BlockTool, CoreConfig } from '@editorjs/sdk';
-import { BlockManager } from './BlockManager.js';
+import { BlocksManager } from './BlockManager.js';
 
 /**
  * If no holder is provided via config, the editor will be appended to the element with this id
@@ -94,7 +94,7 @@ export default class Core {
     this.#inlineToolbar = new InlineToolbar(this.#model, this.#inlineToolsAdapter, this.#toolsManager.inlineTools, this.#config.holder);
     this.#iocContainer.set(InlineToolbar, this.#inlineToolbar);
 
-    this.#iocContainer.get(BlockManager);
+    this.#iocContainer.get(BlocksManager);
 
     this.#model.initializeDocument({ blocks });
   }

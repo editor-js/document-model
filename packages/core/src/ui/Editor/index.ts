@@ -1,20 +1,44 @@
 import 'reflect-metadata';
 import { Inject, Service } from 'typedi';
-import { CoreConfigValidated } from '../../../entities';
+import { CoreConfigValidated } from '../../entities/index.js';
 
+/**
+ * Editor's main UI renderer for HTML environment
+ *  - renders the editor UI
+ *  - adds and removes blocks on the page
+ *  - handles user UI interactions
+ */
 @Service()
 export class EditorUI {
+  /**
+   * Editor holder element
+   */
   #holder: HTMLElement;
+  /**
+   * Elements of the blocks added to the editor
+   */
   #blocks: HTMLElement[] = [];
 
+  /**
+   * EditorUI constructor method
+   * @param config - EditorJS validated configuration
+   */
   constructor(@Inject('EditorConfig') config: CoreConfigValidated) {
     this.#holder = config.holder;
   }
 
+  /**
+   * Renders the editor UI
+   */
   public render(): void {
     // will add UI to holder element
   }
 
+  /**
+   * Renders block's content on the page
+   * @param blockElement - block HTML element to add to the page
+   * @param index - index where to add a block at
+   */
   public addBlock(blockElement: HTMLElement, index: number): void {
     this.#validateIndex(index);
 
@@ -27,6 +51,10 @@ export class EditorUI {
     }
   }
 
+  /**
+   * Removes block from the page
+   * @param index - index where to remove block at
+   */
   public removeBlock(index: number): void {
     this.#validateIndex(index);
 
@@ -34,6 +62,10 @@ export class EditorUI {
     this.#blocks.splice(index, 1);
   }
 
+  /**
+   * Validates index to be in bounds of the blocks array
+   * @param index - index to validate
+   */
   #validateIndex(index: number): void {
     if (index < 0 || index > this.#blocks.length) {
       throw new Error('Index out of bounds');
