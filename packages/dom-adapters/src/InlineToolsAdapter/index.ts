@@ -92,8 +92,7 @@ export class InlineToolsAdapter {
   /**
    * Detaches InlineTool from the adapter
    *
-   * @param tool - tool to detach
-   * @param toolName
+   * @param toolName - name of the tool to be detached
    */
   public detachTool(toolName: InlineToolName): void {
     this.#tools.delete(toolName);
@@ -129,7 +128,7 @@ export class InlineToolsAdapter {
 
     const tool = this.#tools.get(toolName);
 
-    if (!tool) {
+    if (tool === undefined) {
       throw new Error(`InlineToolsAdapter: tool ${toolName} is not attached`);
     }
 
