@@ -102,7 +102,13 @@ export class BlocksManager {
       readOnly: false,
     });
 
-    this.#editorUI.addBlock(await block.render(), index.blockIndex);
+    try {
+      const blockElement = await block.render();
+
+      this.#editorUI.addBlock(blockElement, index.blockIndex);
+    } catch (error) {
+      console.error(`[BlockManager] Block Tool ${event.detail.data.name} failed to render`, error);
+    }
   }
 
   /**

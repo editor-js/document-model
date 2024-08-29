@@ -1,14 +1,12 @@
-import type { ModelEvents } from '@editorjs/model';
-import { BlockAddedEvent, EditorJSModel, EventType } from '@editorjs/model';
+import { EditorJSModel } from '@editorjs/model';
 import type { ContainerInstance } from 'typedi';
 import { Container } from 'typedi';
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
 import ToolsManager from './tools/ToolsManager.js';
-import { BlockToolAdapter, CaretAdapter, InlineToolsAdapter } from '@editorjs/dom-adapters';
-import type { BlockAPI, BlockToolData } from '@editorjs/editorjs';
+import { CaretAdapter, InlineToolsAdapter } from '@editorjs/dom-adapters';
 import { InlineToolbar } from './ui/InlineToolbar/index.js';
 import type { CoreConfigValidated } from './entities/Config.js';
-import type { BlockTool, CoreConfig } from '@editorjs/sdk';
+import type { CoreConfig } from '@editorjs/sdk';
 import { BlocksManager } from './BlockManager.js';
 
 /**
