@@ -22,6 +22,7 @@ import {
 } from '../../EventBus/events/index.js';
 import type { Constructor } from '../../utils/types.js';
 import { BaseDocumentEvent } from '../../EventBus/events/BaseEvent.js';
+import { Index } from '../Index';
 
 /**
  * EditorDocument class represents the top-level container for a tree-like structure of BlockNodes in an editor document.
@@ -322,6 +323,44 @@ export class EditorDocument extends EventBus {
   public getFragments(blockIndex: number, dataKey: DataKey, start?: number, end?: number, tool?: InlineToolName): InlineFragment[] {
     return this.#children[blockIndex].getFragments(dataKey, start, end, tool);
   }
+
+    /**
+   * Inserts data to the specified index
+   *
+   * @param index - index to insert data
+   * @param data - data to insert
+   */
+    public insertData(index: Index, data: unknown): void {
+      switch (true) {
+        case index.isTextIndex:
+          this.insertText(index.blockIndex!, index.dataKey!, data as string, index.textRange![0]);
+          break;
+
+        case index.isBlockIndex:
+          // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+          this.addBlock(data as Parameters<EditorDocument['addBlock']>[0], index.blockIndex);
+        default:
+          throw new Error('Unsupported index');
+      }
+    }
+
+    /**
+     * Removes data from the specified index
+     *
+     * @param index - index to remove data from
+     */
+    public removeData(index: Index): void {
+      switch (true) {
+        case (index.blockIndex !== undefined && index.dataKey !== undefined && index.textRange !== undefined):
+          this.removeText(index.blockIndex, index.dataKey, index.textRange[0], index.textRange[1]);
+          break;
+
+        case (index.blockIndex !== undefined):
+          this.removeBlock(index.blockIndex);
+        default:
+          throw new Error('Unsupported index');
+      }
+    }
 
   /**
    * Listens to BlockNode events and bubbles them to the EditorDocument

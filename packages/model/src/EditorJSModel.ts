@@ -196,17 +196,7 @@ export class EditorJSModel extends EventBus {
    * @param data - data to insert
    */
   public insertData(index: Index, data: unknown): void {
-    switch (true) {
-      case index.isTextIndex:
-        this.#document.insertText(index.blockIndex!, index.dataKey!, data as string, index.textRange![0]);
-        break;
-
-      case index.isBlockIndex:
-        // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-        this.#document.addBlock(data as Parameters<EditorDocument['addBlock']>[0], index.blockIndex);
-      default:
-        throw new Error('Unsupported index');
-    }
+    this.#document.insertData(index, data);
   }
 
   /**
@@ -215,16 +205,7 @@ export class EditorJSModel extends EventBus {
    * @param index - index to remove data from
    */
   public removeData(index: Index): void {
-    switch (true) {
-      case (index.blockIndex !== undefined && index.dataKey !== undefined && index.textRange !== undefined):
-        this.#document.removeText(index.blockIndex, index.dataKey, index.textRange[0], index.textRange[1]);
-        break;
-
-      case (index.blockIndex !== undefined):
-        this.#document.removeBlock(index.blockIndex);
-      default:
-        throw new Error('Unsupported index');
-    }
+    this.#document.removeData(index);
   }
 
   /**
