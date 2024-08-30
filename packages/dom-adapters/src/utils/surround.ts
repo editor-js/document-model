@@ -1,5 +1,6 @@
 /**
  * Function, that surrounds passed range with passed html element
+ *
  * @param range - range to be surrounded
  * @param wrapper - wrapper to surround the range
  */

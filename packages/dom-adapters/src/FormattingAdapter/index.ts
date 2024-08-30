@@ -6,7 +6,6 @@ import type {
   InlineToolName,
   ModelEvents
 } from '@editorjs/model';
-import { createInlineToolData } from '@editorjs/model';
 import {
   EventType,
   TextFormattedEvent
@@ -111,7 +110,7 @@ export class FormattingAdapter {
     range.setEnd(input, end);
 
     const inlineElement = tool.createWrapper(toolData);
-    
+
     surround(range, inlineElement);
   }
 
