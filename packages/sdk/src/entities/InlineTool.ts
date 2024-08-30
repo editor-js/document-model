@@ -12,7 +12,7 @@ export interface InlineToolConstructorOptions extends InlineToolConstructorOptio
 /**
  * Object represents formatting action with text range to be applied on
  */
-export interface FormattingActionWithRange {
+export interface ToolFormattingOptions {
   /**
    * Formatting action - format or unformat
    */
@@ -73,7 +73,7 @@ export interface InlineTool extends Omit<InlineToolVersion2, 'save' | 'checkStat
    * @param index - index of current selection
    * @param fragments - all fragments of the inline tool inside of the current input
    */
-  getFormattingOptions(index: TextRange, fragments: InlineFragment[]): FormattingActionWithRange;
+  getFormattingOptions(range: TextRange, fragments: InlineFragment[]): ToolFormattingOptions;
 
   /**
    * Method for creating wrapper element of the tool

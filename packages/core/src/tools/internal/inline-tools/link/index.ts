@@ -1,4 +1,4 @@
-import type { ActionsElementWithOptions, FormattingActionWithRange, InlineTool, InlineToolFormatData } from '@editorjs/sdk';
+import type { ActionsElementWithOptions, ToolFormattingOptions, InlineTool, InlineToolFormatData } from '@editorjs/sdk';
 import type { InlineFragment, TextRange } from '@editorjs/model';
 import { FormattingAction } from '@editorjs/model';
 import { IntersectType } from '@editorjs/model';
@@ -41,30 +41,30 @@ export default class LinkInlineTool implements InlineTool {
 
   /**
    * Returns formatting action and range for it to be applied
-   * @param index - index of current text selection
+   * @param range - range of current text selection
    * @param fragments - all fragments of the bold inline tool inside of the current input
    */
-  public getFormattingOptions(index: TextRange, fragments: InlineFragment[]): FormattingActionWithRange {
+  public getFormattingOptions(range: TextRange, fragments: InlineFragment[]): ToolFormattingOptions {
     return {
-      action: this.isActive(index, fragments) ? FormattingAction.Unformat : FormattingAction.Format,
-      range: index,
+      action: this.isActive(range, fragments) ? FormattingAction.Unformat : FormattingAction.Format,
+      range,
     };
   };
 
   /**
    * Returns state of the bold inline tool
-   * @param index - index of current selection
+   * @param range - range of current selection
    * @param fragments - all fragments of the bold inline tool inside of the current input
    * @returns true if tool is active, false otherwise
    */
-  public isActive(index: TextRange, fragments: InlineFragment[]): boolean {
+  public isActive(range: TextRange, fragments: InlineFragment[]): boolean {
     let isActive = false;
 
     fragments.forEach((fragment) => {
       /**
        * Check if current index is inside of model fragment
        */
-      if (index[0] === fragment.range[0] && index[1] === fragment.range[1]) {
+      if (range[0] === fragment.range[0] && range[1] === fragment.range[1]) {
         isActive = true;
 
         /**

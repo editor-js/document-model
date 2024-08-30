@@ -143,7 +143,7 @@ export class InlineToolbar {
        */
       if (tool.hasActions) {
         inlineElementButton.addEventListener('click', (_event) => {
-          this.createToolActions(createInlineToolName(toolName));
+          this.renderToolActions(createInlineToolName(toolName));
         });
       } else {
         inlineElementButton.addEventListener('click', (_event) => {
@@ -172,24 +172,24 @@ export class InlineToolbar {
    * This function adds actions element to the toolbar
    * @param nameOfTheTool - name of the inline tool, whose format would be applied
    */
-  public createToolActions(nameOfTheTool: InlineToolName): void {
-    const elementWithOptions = this.#formattingAdapter.renderToolActions(nameOfTheTool, (data: InlineToolFormatData): void => {
+  public renderToolActions(nameOfTheTool: InlineToolName): void {
+    const elementWithOptions = this.#formattingAdapter.createToolActions(nameOfTheTool, (data: InlineToolFormatData): void => {
       this.apply(nameOfTheTool, data);
     });
-
-    /**
-     * If actions element already exists, replace it with new one
-     * This check is needed to prevent displaying of several actions elements
-     */
-    if (this.#actionsElement) {
-      this.#actionsElement.remove();
-      this.#actionsElement = elementWithOptions.element;
-    }
 
     if (this.#toolbar === undefined) {
       throw new Error('InlineToolbar: can not show tool actions without toolbar');
     }
 
+    /**
+     * If actions element already exists, replace it with new one
+     * This check is needed to prevent displaying of several actions elements
+     */
+    if (this.#actionsElement !== undefined) {
+      this.#actionsElement.remove();
+    }
+
+    this.#actionsElement = elementWithOptions.element;
     this.#holder.appendChild(this.#actionsElement);
   };
 
