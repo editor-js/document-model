@@ -1,6 +1,9 @@
+import type { BlockToolConstructor } from '@editorjs/sdk';
 import 'reflect-metadata';
 import { deepMerge, isFunction, isObject, PromiseQueue } from '@editorjs/helpers';
 import { Inject, Service } from 'typedi';
+import type { BlockToolFacade, BlockTuneFacade,
+  InlineToolFacade } from './facades/index.js';
 import {
   BlockToolFacade, BlockTuneFacade,
   InlineToolFacade,
@@ -14,10 +17,11 @@ import type {
   ToolConstructable,
   ToolSettings
 } from '@editorjs/editorjs';
+import { InlineTool, InlineToolConstructor } from '@editorjs/sdk';
+import type { UnifiedToolConfig } from '../entities/index.js';
 import BoldInlineTool from './internal/inline-tools/bold/index.js';
 import ItalicInlineTool from './internal/inline-tools/italic/index.js';
-import { BlockToolConstructor, InlineTool, InlineToolConstructor } from '@editorjs/sdk';
-import { UnifiedToolConfig } from '../entities/index.js';
+import LinkInlineTool from './internal/inline-tools/link/index.js';
 import { EventBus, ToolLoadedCoreEvent } from '../components/EventBus/index.js';
 
 /**
@@ -27,6 +31,8 @@ import { EventBus, ToolLoadedCoreEvent } from '../components/EventBus/index.js';
  */
 @Service()
 export default class ToolsManager {
+  #tools: EditorConfig['tools'];
+
   /**
    * ToolsFactory instance
    */
@@ -250,6 +256,10 @@ export default class ToolsManager {
       },
       italic: {
         class: ItalicInlineTool as unknown as InlineToolConstructor,
+        isInternal: true,
+      },
+      link: {
+        class: LinkInlineTool as unknown as InlineToolConstructor,
         isInternal: true,
       },
     };

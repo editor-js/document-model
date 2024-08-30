@@ -1,5 +1,7 @@
+
 import type {
   EditorJSModel,
+  InlineFragment,
   InlineToolData,
   InlineToolName,
   ModelEvents
@@ -10,7 +12,8 @@ import {
 } from '@editorjs/model';
 import type { CaretAdapter } from '../CaretAdapter/index.js';
 import { FormattingAction } from '@editorjs/model';
-import type { InlineTool } from '@editorjs/sdk';
+import type { InlineTool, InlineToolFormatData, ActionsElementWithOptions } from '@editorjs/sdk';
+import { surround } from '../utils/surround.js';
 
 /**
  * Class handles on format model events and renders inline tools
@@ -48,6 +51,7 @@ export class FormattingAdapter {
   }
 
   /**
+   * @todo move event handling to BlockToolAdapter
    * Handles text format and unformat model events
    *
    * @param event - model change event
@@ -68,15 +72,46 @@ export class FormattingAdapter {
       if (selection) {
         const range = selection.getRangeAt(0);
 
-        const inlineElement = tool.createWrapper();
+        const inlineElement = tool.createWrapper(event.detail.data.data);
 
-        /**
-         * Insert contents from range to new inline element and put created element in range
-         */
-        inlineElement.appendChild(range.extractContents());
-        range.insertNode(inlineElement);
+        surround(range, inlineElement);
       }
     }
+  }
+
+  /**
+   * Allows to render formatting inside a passed input
+   *
+   * @param input - input element to apply format to
+   * @param inlineFragment - instance that contains index, toolName and toolData
+   * @param inlineFragment.index - text range inside of the input element
+   * @param inlineFragment.toolName - name of the tool, which format to apply
+   * @param inlineFragment.toolData - additional data for the tool
+   */
+  public formatElementContent(input: HTMLElement, inlineFragment: InlineFragment): void {
+    const toolName = inlineFragment.tool;
+    const toolData = inlineFragment.data;
+    const index = inlineFragment.range;
+
+    const tool = this.#tools.get(toolName);
+
+    if (tool === undefined) {
+      throw new Error(`FormattingAdapter: tool ${toolName} is not attached`);
+    }
+
+    const [start, end] = index;
+
+    /**
+     * Create range with positions specified in index
+     */
+    const range = document.createRange();
+
+    range.setStart(input, start);
+    range.setEnd(input, end);
+
+    const inlineElement = tool.createWrapper(toolData);
+
+    surround(range, inlineElement);
   }
 
   /**
@@ -96,6 +131,32 @@ export class FormattingAdapter {
    */
   public detachTool(toolName: InlineToolName): void {
     this.#tools.delete(toolName);
+  }
+
+  /**
+   * Function that call tool's render actions method if it is specified, otherwise triggers callback
+   * If any data for tool is required - return rendered by tool data form element with options required in toolbar
+   * If data for tool is not required (tool don't need any data to apply format) - trigger callback with empty data
+   *
+   * @param toolName - name of the tool to check if data is required
+   * @param callback - callback function that should be triggered, when data completely formed
+   * @returns {ActionsElementWithOptions | null} rendered data form element with options required in toolbar or null if no data required
+   */
+  public createToolActions(toolName: InlineToolName, callback: (data: InlineToolFormatData) => void): ActionsElementWithOptions {
+    const currentTool = this.#tools.get(toolName);
+
+    if (currentTool === undefined) {
+      throw new Error(`FormattingAdapter: tool ${toolName} was not attached`);
+    }
+
+    /**
+     * If renderActions method specified, render element and return it
+     */
+    if (currentTool.renderActions === undefined) {
+      throw new Error(`FormattingAdapter: render actions method is not specified in tool ${toolName}`);
+    }
+
+    return currentTool.renderActions(callback);
   }
 
   /**
@@ -134,7 +195,7 @@ export class FormattingAdapter {
 
     const fragments = this.#model.getFragments(blockIndex, dataKey, ...textRange, toolName);
 
-    const { action, range } = tool.getAction(textRange, fragments);
+    const { action, range } = tool.getFormattingOptions(textRange, fragments);
 
     switch (action) {
       case FormattingAction.Format:
