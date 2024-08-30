@@ -3,7 +3,7 @@ import type { ContainerInstance } from 'typedi';
 import { Container } from 'typedi';
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
 import ToolsManager from './tools/ToolsManager.js';
-import { CaretAdapter, InlineToolsAdapter } from '@editorjs/dom-adapters';
+import { CaretAdapter, FormattingAdapter } from '@editorjs/dom-adapters';
 import { InlineToolbar } from './ui/InlineToolbar/index.js';
 import type { CoreConfigValidated } from './entities/Config.js';
 import type { CoreConfig } from '@editorjs/sdk';
@@ -53,7 +53,7 @@ export default class Core {
    * Applies format, got from inline toolbar to the model
    * When model changed with formatting event, it renders related fragment
    */
-  #inlineToolsAdapter: InlineToolsAdapter;
+  #formattingAdapter: FormattingAdapter;
 
   /**
    * @todo inline toolbar should subscripe on selection change event called by EventBus
@@ -71,6 +71,8 @@ export default class Core {
     this.#iocContainer = Container.of(Math.floor(Math.random() * 1e10).toString());
 
     this.validateConfig(config);
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-type-assertion
     this.#config = config as CoreConfigValidated;
 
     this.#iocContainer.set('EditorConfig', this.#config);
@@ -86,10 +88,10 @@ export default class Core {
     this.#caretAdapter = new CaretAdapter(this.#config.holder, this.#model);
     this.#iocContainer.set(CaretAdapter, this.#caretAdapter);
 
-    this.#inlineToolsAdapter = new InlineToolsAdapter(this.#model, this.#caretAdapter);
-    this.#iocContainer.set(InlineToolsAdapter, this.#inlineToolsAdapter);
+    this.#formattingAdapter = new FormattingAdapter(this.#model, this.#caretAdapter);
+    this.#iocContainer.set(FormattingAdapter, this.#formattingAdapter);
 
-    this.#inlineToolbar = new InlineToolbar(this.#model, this.#inlineToolsAdapter, this.#toolsManager.inlineTools, this.#config.holder);
+    this.#inlineToolbar = new InlineToolbar(this.#model, this.#formattingAdapter, this.#toolsManager.inlineTools, this.#config.holder);
     this.#iocContainer.set(InlineToolbar, this.#inlineToolbar);
 
     this.#iocContainer.get(BlocksManager);

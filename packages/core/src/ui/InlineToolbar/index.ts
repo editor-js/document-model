@@ -1,4 +1,4 @@
-import type { InlineToolsAdapter } from '@editorjs/dom-adapters';
+import type { FormattingAdapter } from '@editorjs/dom-adapters';
 import type { InlineToolFormatData } from '@editorjs/sdk';
 import type { InlineToolName } from '@editorjs/model';
 import { type EditorJSModel, type TextRange, createInlineToolData, createInlineToolName, Index } from '@editorjs/model';
@@ -22,7 +22,7 @@ export class InlineToolbar {
    * Inline tool adapter instance
    * Used for inline tools attaching and format apply
    */
-  #inlineToolAdapter: InlineToolsAdapter;
+  #formattingAdapter: FormattingAdapter;
 
   /**
    * Current selection range
@@ -47,13 +47,13 @@ export class InlineToolbar {
 
   /**
    * @param model - editor model instance
-   * @param inlineToolAdapter - inline tool adapter instance
+   * @param FormattingAdapter - inline tool adapter instance
    * @param tools - tools, that should be attached to adapter
    * @param holder - editor holder element
    */
-  constructor(model: EditorJSModel, inlineToolAdapter: InlineToolsAdapter, tools: ToolsCollection<InlineToolFacade>, holder: HTMLElement) {
+  constructor(model: EditorJSModel, FormattingAdapter: FormattingAdapter, tools: ToolsCollection<InlineToolFacade>, holder: HTMLElement) {
     this.#model = model;
-    this.#inlineToolAdapter = inlineToolAdapter;
+    this.#formattingAdapter = FormattingAdapter;
     this.#holder = holder;
     this.#tools = tools;
 
@@ -98,7 +98,7 @@ export class InlineToolbar {
    */
   #attachTools(): void {
     Array.from(this.#tools.entries()).forEach(([toolName, tool]) => {
-      this.#inlineToolAdapter.attachTool(toolName as InlineToolName, tool.create());
+      this.#formattingAdapter.attachTool(toolName as InlineToolName, tool.create());
     });
   }
 
@@ -156,7 +156,7 @@ export class InlineToolbar {
    * @param nameOfTheTool - name of the inline tool, whose format would be applied
    */
   public formData(nameOfTheTool: InlineToolName): void {
-    const elementWithOptions = this.#inlineToolAdapter.formatData(nameOfTheTool, (data: InlineToolFormatData): void => {
+    const elementWithOptions = this.#formattingAdapter.formatData(nameOfTheTool, (data: InlineToolFormatData): void => {
       this.apply(nameOfTheTool, data);
     });
 
@@ -185,6 +185,6 @@ export class InlineToolbar {
   public apply(toolName: InlineToolName, formatData: InlineToolFormatData): void {
     this.#dataFormElement?.remove();
 
-    this.#inlineToolAdapter.applyFormat(toolName, createInlineToolData(formatData));
+    this.#formattingAdapter.applyFormat(toolName, createInlineToolData(formatData));
   }
 }

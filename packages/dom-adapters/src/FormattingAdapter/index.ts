@@ -19,7 +19,7 @@ import type { InlineTool, InlineToolFormatData, DataFormElementWithOptions } fro
  * Class handles on format model events and renders inline tools
  * Applies format to the model
  */
-export class InlineToolsAdapter {
+export class FormattingAdapter {
   /**
    * Editor model instance
    */
@@ -103,7 +103,7 @@ export class InlineToolsAdapter {
     const tool = this.#tools.get(toolName);
 
     if (tool === undefined) {
-      throw new Error(`InlineToolAdapter: tool ${toolName} is not attached`);
+      throw new Error(`FormattingAdapter: tool ${toolName} is not attached`);
     }
 
     const [start, end] = index;
@@ -160,7 +160,7 @@ export class InlineToolsAdapter {
     const currentTool = this.#tools.get(toolName);
 
     if (currentTool === undefined) {
-      throw new Error(`InlineToolAdapter: tool ${toolName} was not attached`);
+      throw new Error(`FormattingAdapter: tool ${toolName} was not attached`);
     }
 
     /**
@@ -188,7 +188,7 @@ export class InlineToolsAdapter {
     const index = this.#caretAdapter.userCaretIndex;
 
     if (index === null) {
-      throw new Error('InlineToolsAdapter: caret index is outside of the input');
+      throw new Error('FormattingAdapter: caret index is outside of the input');
     }
 
     const textRange = index.textRange;
@@ -209,7 +209,7 @@ export class InlineToolsAdapter {
     const tool = this.#tools.get(toolName);
 
     if (tool === undefined) {
-      throw new Error(`InlineToolsAdapter: tool ${toolName} is not attached`);
+      throw new Error(`FormattingAdapter: tool ${toolName} is not attached`);
     }
 
     const fragments = this.#model.getFragments(blockIndex, dataKey, ...textRange, toolName);
