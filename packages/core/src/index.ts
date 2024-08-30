@@ -74,7 +74,6 @@ export default class Core {
 
     this.validateConfig(config);
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unnecessary-type-assertion
     this.#config = config as CoreConfigValidated;
 
     this.#iocContainer.set('EditorConfig', this.#config);
