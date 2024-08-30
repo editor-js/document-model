@@ -143,7 +143,7 @@ export class InlineToolbar {
        */
       if (tool.hasActions) {
         inlineElementButton.addEventListener('click', (_event) => {
-          this.renderToolActions(createInlineToolName(toolName));
+          this.#renderToolActions(createInlineToolName(toolName));
         });
       } else {
         inlineElementButton.addEventListener('click', (_event) => {
@@ -172,7 +172,7 @@ export class InlineToolbar {
    * This function adds actions element to the toolbar
    * @param nameOfTheTool - name of the inline tool, whose format would be applied
    */
-  public renderToolActions(nameOfTheTool: InlineToolName): void {
+  #renderToolActions(nameOfTheTool: InlineToolName): void {
     const elementWithOptions = this.#formattingAdapter.createToolActions(nameOfTheTool, (data: InlineToolFormatData): void => {
       this.apply(nameOfTheTool, data);
     });
