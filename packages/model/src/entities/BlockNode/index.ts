@@ -2,8 +2,8 @@ import type { EditorDocument } from '../EditorDocument';
 import type { BlockTuneName, BlockTuneSerialized } from '../BlockTune';
 import { BlockTune, createBlockTuneName } from '../BlockTune/index.js';
 import { IndexBuilder } from '../Index/IndexBuilder.js';
-import { InvalidNodeTypeError } from "./errors/InvalidNodeTypeError.js";
-import { NonExistingKeyError } from "./errors/NonExistingKeyError.js";
+import { InvalidNodeTypeError } from './errors/InvalidNodeTypeError.js';
+import { NonExistingKeyError } from './errors/NonExistingKeyError.js';
 import type {
   BlockNodeConstructorParameters,
   BlockNodeData,
@@ -69,11 +69,11 @@ export class BlockNode extends EventBus {
    * @param [args.tunes] - The BlockTunes associated with the BlockNode.
    */
   constructor({
-                name,
-                data = {},
-                parent,
-                tunes = {},
-              }: BlockNodeConstructorParameters) {
+    name,
+    data = {},
+    parent,
+    tunes = {},
+  }: BlockNodeConstructorParameters) {
     super();
 
     this.#name = createBlockToolName(name);
@@ -161,7 +161,7 @@ export class BlockNode extends EventBus {
    */
   public updateTuneData(tuneName: BlockTuneName, data: Record<string, unknown>): void {
     Object.entries(data)
-      .forEach(([ key, value ]) => {
+      .forEach(([key, value]) => {
         this.#tunes[tuneName].update(key, value);
       });
   }
