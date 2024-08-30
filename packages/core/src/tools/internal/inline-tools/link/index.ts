@@ -83,14 +83,14 @@ export default class LinkInlineTool implements InlineTool {
    * @returns rendered data form element with options required in toolbar
    */
   public renderActions(callback: (data: InlineToolFormatData) => void): ActionsElementWithOptions | null {
-    const dataFormerElement = make('input') as HTMLInputElement;
+    const linkInput = make('input') as HTMLInputElement;
 
-    dataFormerElement.addEventListener('keydown', (event: KeyboardEvent) => {
+    linkInput.addEventListener('keydown', (event: KeyboardEvent) => {
       if (event.key === 'Enter') {
-        callback({ link: dataFormerElement.value });
+        callback({ link: linkInput.value });
       }
     });
 
-    return { element: dataFormerElement };
+    return { element: linkInput };
   }
 }
