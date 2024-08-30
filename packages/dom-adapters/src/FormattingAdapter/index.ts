@@ -14,6 +14,7 @@ import {
 import type { CaretAdapter } from '../CaretAdapter/index.js';
 import { FormattingAction } from '@editorjs/model';
 import type { InlineTool, InlineToolFormatData, ActionsElementWithOptions } from '@editorjs/sdk';
+import { surround } from '../utils/surround.js';
 
 /**
  * Class handles on format model events and renders inline tools
@@ -74,14 +75,7 @@ export class FormattingAdapter {
 
         const inlineElement = tool.createWrapper(event.detail.data.data);
 
-        const extracted = range.extractContents();
-
-        /**
-         * Insert contents from range to new inline element and put created element in range
-         */
-        inlineElement.appendChild(extracted);
-
-        range.insertNode(inlineElement);
+        surround(range, inlineElement);
       }
     }
   }
@@ -117,15 +111,8 @@ export class FormattingAdapter {
     range.setEnd(input, end);
 
     const inlineElement = tool.createWrapper(toolData);
-
-    const extracted = range.extractContents();
-
-    /**
-     * Insert contents from range to new inline element and put created element in range
-     */
-    inlineElement.appendChild(extracted);
-
-    range.insertNode(inlineElement);
+    
+    surround(range, inlineElement);
   }
 
   /**
