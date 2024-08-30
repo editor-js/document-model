@@ -1,5 +1,4 @@
 <script setup lang="ts">
-// import CaretIndex from '@/components/CaretIndex.vue';
 import { EditorDocument, EditorJSModel } from '@editorjs/model';
 import Core from '@editorjs/core';
 import { ref, onMounted } from 'vue';

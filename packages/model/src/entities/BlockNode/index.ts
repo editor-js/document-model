@@ -192,7 +192,7 @@ export class BlockNode extends EventBus {
   }
 
   /**
-   * Returns a text value of the specified text node
+   * Returns a text value of the specified data key
    *
    * @param dataKey - key of the data
    */

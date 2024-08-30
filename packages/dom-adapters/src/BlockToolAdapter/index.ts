@@ -94,8 +94,10 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
 
       input.textContent = value;
 
+      const nodeToFormat = input.firstChild as HTMLElement; // we just set textContent, so it's always a TextNode
+
       fragments.forEach(fragment => {
-        this.#formattingAdapter.formatElementContent(input, fragment);
+        this.#formattingAdapter.formatElementContent(nodeToFormat, fragment);
       });
     } catch (_) {
       // do nothing — TextNode is not created yet as there is no initial data in the model

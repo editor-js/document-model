@@ -107,14 +107,8 @@ export class FormattingAdapter {
        */
       const range = document.createRange();
 
-      const inputTextNode = input.firstChild;
-
-      if (inputTextNode === null) {
-        throw new Error('FormattingAdapter: input element should contain text node');
-      }
-
-      range.setStart(inputTextNode, start);
-      range.setEnd(inputTextNode, end);
+      range.setStart(input, start);
+      range.setEnd(input, end);
 
       const inlineElement = tool.createWrapper(toolData);
 
