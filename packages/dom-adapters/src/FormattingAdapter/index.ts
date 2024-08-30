@@ -87,7 +87,7 @@ export class FormattingAdapter {
   }
 
   /**
-   * Format content of the contenteditable element
+   * Allows to render formatting inside a passed input
    *
    * @param input - input element to apply format to
    * @param inlineFragment - instance that contains index, toolName and toolData

@@ -167,7 +167,7 @@ export class InlineToolbar {
     });
 
     /**
-     * Do not render toolbar data former if element with options is null
+     * Do not render actions if element with options is null
      * It means, that tool does not need any data, and callback will be triggered in adapter
      */
     if (elementWithOptions === null) {
