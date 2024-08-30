@@ -82,7 +82,7 @@ export default class LinkInlineTool implements InlineTool {
    * @param callback function that should be triggered, when data completely formed
    * @returns rendered data form element with options required in toolbar
    */
-  public createDataFormElement(callback: (data: InlineToolFormatData) => void): DataFormElementWithOptions | null {
+  public renderActions(callback: (data: InlineToolFormatData) => void): DataFormElementWithOptions | null {
     const dataFormerElement = make('input') as HTMLInputElement;
 
     dataFormerElement.addEventListener('keydown', (event: KeyboardEvent) => {

@@ -134,7 +134,7 @@ export class InlineToolbar {
       inlineElementButton.innerHTML = toolName;
 
       inlineElementButton.addEventListener('click', (_event) => {
-        this.formData(createInlineToolName(toolName));
+        this.renderToolActions(createInlineToolName(toolName));
       });
       if (this.#toolbar !== undefined) {
         this.#toolbar.appendChild(inlineElementButton);
@@ -152,10 +152,12 @@ export class InlineToolbar {
   }
 
   /**
-   * Apply format with data formed in toolbar
+   * Render actions to form data, which is required in tool
+   * Element that is used for forming data is rendered inside of the tool instance
+   * This function adds actions element to the toolbar
    * @param nameOfTheTool - name of the inline tool, whose format would be applied
    */
-  public formData(nameOfTheTool: InlineToolName): void {
+  public renderToolActions(nameOfTheTool: InlineToolName): void {
     const elementWithOptions = this.#formattingAdapter.formatData(nameOfTheTool, (data: InlineToolFormatData): void => {
       this.apply(nameOfTheTool, data);
     });
@@ -171,16 +173,16 @@ export class InlineToolbar {
     this.#dataFormElement = elementWithOptions.element;
 
     if (this.#toolbar === undefined) {
-      throw new Error('InlineToolbar: can not show formDataElement without toolbar');
+      throw new Error('InlineToolbar: can not show tool actions without toolbar');
     }
 
     this.#holder.appendChild(this.#dataFormElement);
   };
 
   /**
-   * lalala
-   * @param toolName lalala
-   * @param formatData ;alala
+   * Apply format of the inline tool to the model
+   * @param toolName - name of the tool which format would be applied
+   * @param formatData - formed data required in the inline tool
    */
   public apply(toolName: InlineToolName, formatData: InlineToolFormatData): void {
     this.#dataFormElement?.remove();

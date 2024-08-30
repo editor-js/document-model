@@ -33,8 +33,8 @@ export interface ToolbarOptions {
 }
 
 /**
- * Interface that represents return type of the createFormData function of the tool
- * Contains rendered by tool FormDataElement with options for toolbar
+ * Interface that represents return type of the renderActions function of the tool
+ * Contains rendered by tool renderActions with options for toolbar
  */
 export interface DataFormElementWithOptions {
   /**
@@ -55,7 +55,7 @@ export type InlineToolFormatData = Record<string, unknown>;
  *
  * In version 3, the save method is removed since all data is stored in the model
  */
-export interface InlineTool extends Omit<InlineToolVersion2, 'save' | 'checkState' | 'render'> {
+export interface InlineTool extends Omit<InlineToolVersion2, 'save' | 'checkState' | 'render' | 'renderActions'> {
   /**
    * Type of merging of two ranges which intersect
    */
@@ -84,7 +84,7 @@ export interface InlineTool extends Omit<InlineToolVersion2, 'save' | 'checkStat
    * Create element for toolbar, which will form data required for inline tool
    * @param callback - callback function that should be triggered, when data is formed, to apply format to model
    */
-  createDataFormElement?(callback: (data: InlineToolFormatData) => void): DataFormElementWithOptions | null;
+  renderActions?(callback: (data: InlineToolFormatData) => void): DataFormElementWithOptions | null;
 }
 
 /**

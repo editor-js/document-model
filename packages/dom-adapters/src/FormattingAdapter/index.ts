@@ -148,9 +148,9 @@ export class FormattingAdapter {
   }
 
   /**
-   * Function that checks if data required for current tool
-   * If data required - return rendered by tool data form element with options required in toolbar
-   * If data is not required - trigger callback
+   * Function that call tool's render actions method if it is specified, otherwise triggers callback
+   * If any data for tool is required - return rendered by tool data form element with options required in toolbar
+   * If data for tool is not required (tool don't need any data to apply format) - trigger callback with empty data
    *
    * @param toolName - name of the tool to check if data is required
    * @param callback - callback function that should be triggered, when data completely formed
@@ -164,13 +164,13 @@ export class FormattingAdapter {
     }
 
     /**
-     * If createDataFormElement method specified, render element and return it
+     * If renderActions method specified, render element and return it
      */
-    if (currentTool.createDataFormElement !== undefined) {
-      return currentTool.createDataFormElement(callback);
+    if (currentTool.renderActions !== undefined) {
+      return currentTool.renderActions(callback);
     }
     /**
-     * If createDataFormElement method is not specidied, then no data required for the tool
+     * If renderActions method is not specidied, then no data required for the tool
      * Trigger callback
      */
     callback(createInlineToolData({}));

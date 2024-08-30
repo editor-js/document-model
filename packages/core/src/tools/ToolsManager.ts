@@ -240,6 +240,7 @@ export default class ToolsManager {
       },
       link: {
         class: LinkInlineTool as unknown as InlineToolConstructor,
+        isInternal: true,
       },
     };
   }
