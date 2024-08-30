@@ -87,11 +87,6 @@ export default class LinkInlineTool implements InlineTool {
 
     linkInput.addEventListener('keydown', (event: KeyboardEvent) => {
       if (event.key === 'Enter') {
-        /**
-         * Remove link input, when data formed and trigger callback
-         */
-        linkInput.remove();
-
         callback({ link: linkInput.value });
       }
     });

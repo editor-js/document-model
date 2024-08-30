@@ -1,204 +1,182 @@
-import type { FormattingAdapter } from '@editorjs/dom-adapters';
-import type { InlineToolFormatData } from '@editorjs/sdk';
-import type { InlineToolName } from '@editorjs/model';
-import { type EditorJSModel, type TextRange, createInlineToolData, createInlineToolName, Index } from '@editorjs/model';
-import { EventType } from '@editorjs/model';
+import 'reflect-metadata';
+import { Service } from 'typedi';
+
 import { make } from '@editorjs/dom';
-import type { InlineToolFacade, ToolsCollection } from '../../tools/facades/index.js';
+import { InlineToolbarRenderedUIEvent } from './InlineToolbarRenderedUIEvent.js';
+import { CoreEventType, EventBus, SelectionChangedCoreEvent } from '../../components/EventBus/index.js';
+import { EditorAPI } from '../../api/index.js';
+import { InlineTool, InlineToolFormatData } from '@editorjs/sdk';
+import { InlineToolName } from '@editorjs/model';
+import { CoreConfigValidated } from '../../entities/index.js';
 
 /**
- * Class determines, when inline toolbar should be rendered
- * Handles caret selection changes
- * Forms data required in certain inline tool
+ * Inline Toolbar UI module
+ * - renders the inline toolbar with available inline tools
+ * - listens to the selection change core event
+ * - handles the inline tools actions via EditorAPI
  */
-export class InlineToolbar {
+@Service()
+export class InlineToolbarUI {
   /**
-   * Editor model instance
-   * Used for interactions with stored data
+   * EventBus instance to exchange events between components
    */
-  #model: EditorJSModel;
-
-  /**
-   * Inline tool adapter instance
-   * Used for inline tools attaching and format apply
-   */
-  #formattingAdapter: FormattingAdapter;
+  #eventBus: EventBus;
 
   /**
-   * Current selection range
+   * HTML nodes of the inline toolbar
    */
-  #selectionRange: TextRange | undefined = undefined;
+  #nodes: Record<string, HTMLElement> = {};
 
   /**
-   * Tools that would be attached to the adapter
+   * EditorAPI instance to apply inline tools
    */
-  #tools: ToolsCollection<InlineToolFacade>;
+  #api: EditorAPI;
 
   /**
-   * Toolbar html element related to the editor
+   * InlineToolbarUI class constructor
+   * @param _config - EditorJS validated configuration, not used here
+   * @param api - EditorAPI instance to apply inline tools
+   * @param eventBus - EventBus instance to exchange events between components
    */
-  #toolbar: HTMLElement | undefined = undefined;
+  constructor(
+    _config: CoreConfigValidated,
+    api: EditorAPI,
+    eventBus: EventBus
+  ) {
+    this.#eventBus = eventBus;
+    this.#api = api;
 
-  /**
-   * Actions of the current tool html element rendered inside of the toolbar element
-   */
-  #actionsElement: HTMLElement | undefined = undefined;
+    this.#render();
 
-  /**
-   * Holder element of the editor
-   */
-  #holder: HTMLElement;
-
-  /**
-   * @param model - editor model instance
-   * @param formattingAdapter - needed for applying format to the model
-   * @param tools - tools, that should be attached to adapter
-   * @param holder - editor holder element
-   */
-  constructor(model: EditorJSModel, formattingAdapter: FormattingAdapter, tools: ToolsCollection<InlineToolFacade>, holder: HTMLElement) {
-    this.#model = model;
-    this.#formattingAdapter = formattingAdapter;
-    this.#holder = holder;
-    this.#tools = tools;
-
-    this.#attachTools();
-
-    this.#handleSelectionChange();
+    this.#eventBus.addEventListener(`core:${CoreEventType.SelectionChanged}`, (event: SelectionChangedCoreEvent) => this.#handleSelectionChange(event));
   }
 
   /**
-   * Handle changes of the caret selection
+   * Handles the selection change core event
+   * @param event - SelectionChangedCoreEvent event
    */
-  #handleSelectionChange(): void {
-    /**
-     * Listen to selection change ivents in model
-     */
-    this.#model.addEventListener(EventType.CaretManagerUpdated, (event) => {
-      const selection = window.getSelection();
+  #handleSelectionChange(event: SelectionChangedCoreEvent): void {
+    const { availableInlineTools, index } = event.detail;
+    const selection = window.getSelection();
 
+    if (
+      !index
+      || index.textRange === undefined
+      || (index.textRange[0] === index.textRange[1])
       /**
-       * Get current input with selection
+       * Index could contain textRange for native inputs,
+       * so we need to check if there are ranges in the document selection
        */
-      if (selection) {
-        /**
-         * Check, that selection is in TEXT_NODE element, it means, that only selection in text contenteditable would render toolbar
-         * Native inputs do not support inline tags, but they also would have selection, this is why we need this condition
-         */
-        if (selection.focusNode?.nodeType !== Node.TEXT_NODE) {
-          return;
-        }
-      }
+      || !selection
+      || !selection.rangeCount
+    ) {
+      this.#hide();
 
-      if (event.detail.index !== null) {
-        this.#selectionRange = Index.parse(event.detail.index).textRange;
-
-        this.#selectionChanged();
-      }
-    });
-  }
-
-  /**
-   * Attach all tools passed to the inline tool adapter
-   */
-  #attachTools(): void {
-    Array.from(this.#tools.entries()).forEach(([toolName, tool]) => {
-      this.#formattingAdapter.attachTool(toolName as InlineToolName, tool.create());
-    });
-  }
-
-  /**
-   * Change toolbar show state if any text is selected
-   */
-  #selectionChanged(): void {
-    /**
-     * Show or hide inline toolbar
-     */
-    if (this.#selectionRange !== undefined && this.#selectionRange[0] !== this.#selectionRange[1]) {
-      this.#createToolbarElement();
-    } else {
-      this.#deleteToolbarElement();
+      return;
     }
+
+    this.#updateToolsList(availableInlineTools);
+    this.#move();
+    this.#show();
   }
 
   /**
-   * @todo implement EventBus for ui to subscribe on selectionChange event
-   * Creates inline toolbar html element
+   * Renders the Inline Toolbar UI HTML nodes
    */
-  #createToolbarElement(): void {
-    /**
-     * Before creating new toolbar element, remove existing one
-     */
-    this.#deleteToolbarElement();
+  #render(): void {
+    this.#nodes.holder = make('div');
 
-    this.#toolbar = make('div');
+    this.#nodes.holder.style.display = 'none';
+    this.#nodes.holder.style.position = 'absolute';
 
-    this.#tools.forEach((tool, toolName) => {
-      const inlineElementButton = make('button');
+    this.#nodes.buttons = make('div');
+    this.#nodes.buttons.style.display = 'flex';
 
-      inlineElementButton.innerHTML = toolName;
+    this.#nodes.holder.appendChild(this.#nodes.buttons);
 
-      /**
-       * If tool has actions, then on click of the element button we should render actions element
-       * If tool has no action, then on click of the element button we should apply format
-       */
-      if (tool.hasActions) {
-        inlineElementButton.addEventListener('click', (_event) => {
-          this.#renderToolActions(createInlineToolName(toolName));
+    this.#nodes.actions = make('div');
+
+    this.#nodes.holder.appendChild(this.#nodes.actions);
+
+    this.#eventBus.dispatchEvent(new InlineToolbarRenderedUIEvent({ toolbar: this.#nodes.holder }));
+  }
+
+  /**
+   * Shows the Inline Toolbar
+   */
+  #show(): void {
+    this.#nodes.holder.style.display = 'block';
+  }
+
+  /**
+   * Hides the Inline Toolbar
+   */
+  #hide(): void {
+    this.#nodes.holder.style.display = 'none';
+  }
+
+  /**
+   * Moves the Inline Toolbar to the current selection
+   */
+  #move(): void {
+    const selection = window.getSelection();
+
+    if (!selection || !selection.rangeCount) {
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+
+    const rect = range.getBoundingClientRect();
+
+    // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+    this.#nodes.holder.style.top = `${rect.top + 16}px`;
+    this.#nodes.holder.style.left = `${rect.left}px`;
+    this.#nodes.holder.style.zIndex = '1000';
+  }
+
+  /**
+   * Renders the list of available inline tools in the Inline Toolbar
+   * @param tools - Inline Tools available for the current selection
+   */
+  #updateToolsList(tools: Map<InlineToolName, InlineTool>): void {
+    this.#nodes.buttons.innerHTML = '';
+
+    Array.from(tools.entries()).forEach(([name, tool]) => {
+      const button = make('button');
+
+      button.textContent = name;
+
+      if (Object.hasOwnProperty.call(tool.constructor.prototype, 'renderActions')) {
+        button.addEventListener('click', () => {
+          this.#renderToolActions(name, tool);
         });
       } else {
-        inlineElementButton.addEventListener('click', (_event) => {
-          this.apply(createInlineToolName(toolName), createInlineToolData({}));
+        button.addEventListener('click', () => {
+          this.#api.selection.applyInlineToolForCurrentSelection(name);
         });
       }
 
-      if (this.#toolbar !== undefined) {
-        this.#toolbar.appendChild(inlineElementButton);
-      }
+      this.#nodes.buttons.appendChild(button);
     });
-
-    this.#holder.appendChild(this.#toolbar);
   }
 
   /**
-   * Removes inline toolbar html element
+   * Renders the actions for the inline tool
+   * @param name - name of the inline tool to render actions for
+   * @param tool - inline tool instance
    */
-  #deleteToolbarElement(): void {
-    this.#toolbar?.remove();
-  }
+  #renderToolActions(name: string, tool: InlineTool): void {
+    const { element } = tool.renderActions?.((data: InlineToolFormatData) => {
+      this.#api.selection.applyInlineToolForCurrentSelection(name, data);
+    }) ?? { element: null };
 
-  /**
-   * Render actions to form data, which is required in tool
-   * Element that is used for forming data is rendered inside of the tool instance
-   * This function adds actions element to the toolbar
-   * @param nameOfTheTool - name of the inline tool, whose format would be applied
-   */
-  #renderToolActions(nameOfTheTool: InlineToolName): void {
-    const elementWithOptions = this.#formattingAdapter.createToolActions(nameOfTheTool, (data: InlineToolFormatData): void => {
-      this.apply(nameOfTheTool, data);
-    });
-
-    if (this.#toolbar === undefined) {
-      throw new Error('InlineToolbar: can not show tool actions without toolbar');
+    if (element === null) {
+      return;
     }
 
-    /**
-     * If actions element already exists, replace it with new one
-     * This check is needed to prevent displaying of several actions elements
-     */
-    if (this.#actionsElement !== undefined) {
-      this.#actionsElement.remove();
-    }
+    this.#nodes.actions.innerHTML = '';
 
-    this.#actionsElement = elementWithOptions.element;
-    this.#holder.appendChild(this.#actionsElement);
-  };
-
-  /**
-   * Apply format of the inline tool to the model
-   * @param toolName - name of the tool which format would be applied
-   * @param formatData - formed data required in the inline tool
-   */
-  public apply(toolName: InlineToolName, formatData: InlineToolFormatData): void {
-    this.#formattingAdapter.applyFormat(toolName, createInlineToolData(formatData));
+    this.#nodes.actions.appendChild(element);
   }
 }

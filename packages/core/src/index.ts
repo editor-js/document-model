@@ -4,12 +4,13 @@ import { Container } from 'typedi';
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
 import ToolsManager from './tools/ToolsManager.js';
 import { CaretAdapter, FormattingAdapter } from '@editorjs/dom-adapters';
-import { InlineToolbar } from './ui/InlineToolbar/index.js';
 import type { CoreConfigValidated } from './entities/Config.js';
 import type { CoreConfig } from '@editorjs/sdk';
 import { BlocksManager } from './components/BlockManager.js';
 import { EditorUI } from './ui/Editor/index.js';
 import { ToolboxUI } from './ui/Toolbox/index.js';
+import { InlineToolbarUI } from './ui/InlineToolbar/index.js';
+import { SelectionManager } from './components/SelectionManager.js';
 
 /**
  * If no holder is provided via config, the editor will be appended to the element with this id
@@ -58,14 +59,6 @@ export default class Core {
   #formattingAdapter: FormattingAdapter;
 
   /**
-   * @todo inline toolbar should subscripe on selection change event called by EventBus
-   * Inline toolbar is responsible for handling selection changes
-   * When model selection changes, it determines, whenever to show toolbar element,
-   * Which calls apply format method of the adapter
-   */
-  #inlineToolbar: InlineToolbar;
-
-  /**
    * @param config - Editor configuration
    */
   constructor(config: CoreConfig) {
@@ -91,9 +84,7 @@ export default class Core {
 
     this.#formattingAdapter = new FormattingAdapter(this.#model, this.#caretAdapter);
     this.#iocContainer.set(FormattingAdapter, this.#formattingAdapter);
-
-    this.#inlineToolbar = new InlineToolbar(this.#model, this.#formattingAdapter, this.#toolsManager.inlineTools, this.#config.holder);
-    this.#iocContainer.set(InlineToolbar, this.#inlineToolbar);
+    this.#iocContainer.get(SelectionManager);
 
     this.#prepareUI();
 
@@ -114,6 +105,7 @@ export default class Core {
     const editorUI = this.#iocContainer.get(EditorUI);
 
     this.#iocContainer.get(ToolboxUI);
+    this.#iocContainer.get(InlineToolbarUI);
 
     editorUI.render();
   }
