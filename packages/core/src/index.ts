@@ -1,4 +1,4 @@
-import { EditorJSModel } from '@editorjs/model';
+import { EditorJSModel, EventType } from '@editorjs/model';
 import type { ContainerInstance } from 'typedi';
 import { Container } from 'typedi';
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
@@ -93,6 +93,12 @@ export default class Core {
     this.#iocContainer.set(InlineToolbar, this.#inlineToolbar);
 
     this.#iocContainer.get(BlocksManager);
+
+    if (config.onModelUpdate !== undefined) {
+      this.#model.addEventListener(EventType.Changed, () => {
+        config.onModelUpdate?.(this.#model);
+      });
+    }
 
     this.#model.initializeDocument({ blocks });
   }

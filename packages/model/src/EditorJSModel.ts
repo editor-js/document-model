@@ -284,6 +284,15 @@ export class EditorJSModel extends EventBus {
   }
 
   /**
+   * Exposing document for dev-tools
+   * 
+   * USE ONLY FOR DEV PURPOSES
+   */
+  public devModeGetDocument(): EditorDocument {
+    return this.#document;
+  }
+
+  /**
    * Listens to BlockNode events and bubbles re-emits them from the EditorJSModel instance
    *
    * @param document - EditorDocument instance to listen to

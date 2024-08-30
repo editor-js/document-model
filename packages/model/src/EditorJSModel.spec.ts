@@ -23,6 +23,7 @@ describe('EditorJSModel', () => {
       'createCaret',
       'updateCaret',
       'removeCaret',
+      'devModeGetDocument',
     ];
     const ownProperties = Object.getOwnPropertyNames(EditorJSModel.prototype);
 
