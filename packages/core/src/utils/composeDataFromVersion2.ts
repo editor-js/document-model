@@ -3,6 +3,14 @@ import type { InlineFragment } from '@editorjs/model';
 import { createInlineToolData, createInlineToolName, TextNode, ValueNode, type BlockNodeSerialized } from '@editorjs/model';
 
 /**
+ * Removes HTML tags from the input string
+ * @param input - any string with HTML tags like '<b>bold</b> <a href="https://editorjs.io">link</a>'
+ */
+function stripTags(input: string): string {
+  return input.replace(/<\/?[^>]+(>|$)/g, '');
+}
+
+/**
  * Extracts inline fragments from the HTML string
  * @param html - any html string like '<b>bold</b> <a href="https://editorjs.io">link</a>'
  *
@@ -97,7 +105,7 @@ export function composeDataFromVersion2(data: OutputData): {
               if (typeof value === 'string') {
                 const fragments = extractFragments(value);
                 const textNode = new TextNode({
-                  value,
+                  value: stripTags(value),
                   fragments,
                 });
 

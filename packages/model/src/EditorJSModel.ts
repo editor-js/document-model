@@ -235,6 +235,17 @@ export class EditorJSModel extends EventBus {
   }
 
   /**
+   * Returns a text from the specified block and data key
+   *
+   * @param parameters - getText method parameters
+   * @param parameters.blockIndex - index of the block
+   * @param parameters.dataKey - key of the data
+   */
+  public getText(...parameters: Parameters<EditorDocument['getText']>): ReturnType<EditorDocument['getText']> {
+    return this.#document.getText(...parameters);
+  }
+
+  /**
    * Inserts text to the specified block
    *
    * @param parameters - insertText method parameters
@@ -301,6 +312,15 @@ export class EditorJSModel extends EventBus {
    */
   public getFragments(...parameters: Parameters<EditorDocument['getFragments']>): ReturnType<EditorDocument['getFragments']> {
     return this.#document.getFragments(...parameters);
+  }
+
+  /**
+   * Exposing document for dev-tools
+   *
+   * USE ONLY FOR DEV PURPOSES
+   */
+  public devModeGetDocument(): EditorDocument {
+    return this.#document;
   }
 
   /**

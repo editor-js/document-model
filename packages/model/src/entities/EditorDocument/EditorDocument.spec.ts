@@ -729,6 +729,42 @@ describe('EditorDocument', () => {
     });
   });
 
+  describe('.getText()', () => {
+    let document: EditorDocument;
+    const dataKey = 'text' as DataKey;
+    const text = 'Some text';
+    let block: BlockNode;
+
+    beforeEach(() => {
+      const blockData = {
+        name: 'text' as BlockToolName,
+        data: {
+          [dataKey]: text,
+        },
+      };
+
+      document = new EditorDocument();
+
+      document.initialize([ blockData ]);
+
+      block = document.getBlock(0);
+    });
+
+    it('should call .getText() method of the BlockNode if index and data key are correct', () => {
+      const spy = jest.spyOn(block, 'getText');
+
+      document.getText(0, dataKey);
+
+      expect(spy)
+        .toHaveBeenCalledWith(dataKey);
+    });
+
+    it('should throw an error if index is out of bounds', () => {
+      expect(() => document.getText(document.length + 1, dataKey))
+        .toThrow('Index out of bounds');
+    });
+  });
+
   describe('.insertText()', () => {
     let document: EditorDocument;
     const dataKey = 'text' as DataKey;

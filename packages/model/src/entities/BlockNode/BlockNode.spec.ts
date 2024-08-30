@@ -11,7 +11,7 @@ import type { EditorDocument } from '../EditorDocument';
 import type { ValueNodeConstructorParameters } from '../ValueNode';
 import type { InlineFragment, InlineToolData, InlineToolName } from '../inline-fragments';
 import { TextNode } from '../inline-fragments/index.js';
-import type { BlockNodeData, BlockNodeDataSerialized } from './types';
+import type { BlockNodeData, BlockNodeDataSerialized, DataKey } from './types';
 import { BlockChildType } from './types/index.js';
 import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
 import { TextAddedEvent, TuneModifiedEvent, ValueModifiedEvent } from '../../EventBus/events/index.js';
@@ -571,6 +571,31 @@ describe('BlockNode', () => {
         blockNode.updateValue(dataKey, value);
       })
         .toThrowError(`BlockNode: data with key "${dataKey}" is not a ValueNode`);
+    });
+  });
+
+  describe('.getText()', () => {
+    it('should call .serialized getter of the TextNode', () => {
+      const spy = jest.spyOn(TextNode.prototype, 'serialized', 'get');
+      const node = createBlockNodeWithData({
+        text: {
+          [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+          value: '',
+          fragments: [],
+        },
+      });
+
+      node.getText(createDataKey('text'));
+
+      expect(spy)
+        .toHaveBeenCalled();
+    });
+
+    it('should throw an error if data key is invalid', () => {
+      const node = createBlockNodeWithData({});
+
+      expect(() => node.getText('invalid-key' as DataKey))
+        .toThrow();
     });
   });
 
