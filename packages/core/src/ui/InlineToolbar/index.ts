@@ -1,6 +1,7 @@
 import type { FormattingAdapter } from '@editorjs/dom-adapters';
+import type { InlineToolFormatData } from '@editorjs/sdk';
 import type { InlineToolName } from '@editorjs/model';
-import { type EditorJSModel, type TextRange, createInlineToolData, Index } from '@editorjs/model';
+import { type EditorJSModel, type TextRange, createInlineToolData, createInlineToolName, Index } from '@editorjs/model';
 import { EventType } from '@editorjs/model';
 import { make } from '@editorjs/dom';
 import type { InlineToolFacade, ToolsCollection } from '../../tools/facades/index.js';
@@ -38,6 +39,14 @@ export class InlineToolbar {
    */
   #toolbar: HTMLElement | undefined = undefined;
 
+  /**
+   * Actions of the current tool html element rendered inside of the toolbar element
+   */
+  #actionsElement: HTMLElement | undefined = undefined;
+
+  /**
+   * Holder element of the editor
+   */
   #holder: HTMLElement;
 
   /**
@@ -123,14 +132,25 @@ export class InlineToolbar {
 
     this.#toolbar = make('div');
 
-    Array.from(this.#tools.keys()).forEach((toolName) => {
+    this.#tools.forEach((tool, toolName) => {
       const inlineElementButton = make('button');
 
       inlineElementButton.innerHTML = toolName;
 
-      inlineElementButton.addEventListener('click', (_event) => {
-        this.apply(toolName as InlineToolName);
-      });
+      /**
+       * If tool has actions, then on click of the element button we should render actions element
+       * If tool has no action, then on click of the element button we should apply format
+       */
+      if (tool.hasActions) {
+        inlineElementButton.addEventListener('click', (_event) => {
+          this.#renderToolActions(createInlineToolName(toolName));
+        });
+      } else {
+        inlineElementButton.addEventListener('click', (_event) => {
+          this.apply(createInlineToolName(toolName), createInlineToolData({}));
+        });
+      }
+
       if (this.#toolbar !== undefined) {
         this.#toolbar.appendChild(inlineElementButton);
       }
@@ -147,13 +167,38 @@ export class InlineToolbar {
   }
 
   /**
-   * Apply format with data formed in toolbar
-   * @param toolName - name of the inline tool, whose format would be applied
+   * Render actions to form data, which is required in tool
+   * Element that is used for forming data is rendered inside of the tool instance
+   * This function adds actions element to the toolbar
+   * @param nameOfTheTool - name of the inline tool, whose format would be applied
    */
-  public apply(toolName: InlineToolName): void {
+  #renderToolActions(nameOfTheTool: InlineToolName): void {
+    const elementWithOptions = this.#formattingAdapter.createToolActions(nameOfTheTool, (data: InlineToolFormatData): void => {
+      this.apply(nameOfTheTool, data);
+    });
+
+    if (this.#toolbar === undefined) {
+      throw new Error('InlineToolbar: can not show tool actions without toolbar');
+    }
+
     /**
-     * @todo pass to applyFormat inline tool data formed in toolbar
+     * If actions element already exists, replace it with new one
+     * This check is needed to prevent displaying of several actions elements
      */
-    this.#formattingAdapter.applyFormat(toolName, createInlineToolData({}));
+    if (this.#actionsElement !== undefined) {
+      this.#actionsElement.remove();
+    }
+
+    this.#actionsElement = elementWithOptions.element;
+    this.#holder.appendChild(this.#actionsElement);
   };
+
+  /**
+   * Apply format of the inline tool to the model
+   * @param toolName - name of the tool which format would be applied
+   * @param formatData - formed data required in the inline tool
+   */
+  public apply(toolName: InlineToolName, formatData: InlineToolFormatData): void {
+    this.#formattingAdapter.applyFormat(toolName, createInlineToolData(formatData));
+  }
 }
