@@ -3,6 +3,8 @@ import { Service } from 'typedi';
 import { BlockToolFacade } from '../../tools/facades/index.js';
 import { make } from '@editorjs/dom';
 import { BlocksAPI } from '../../api/BlocksAPI.js';
+import { CoreEventType, EventBus, ToolLoadedCoreEvent } from '../../components/EventBus/index.js';
+import { ToolboxRenderedUIEvent } from './ToolboxRenderedUIEvent.js';
 
 /**
  * UI module responsible for rendering the toolbox
@@ -18,28 +20,47 @@ export class ToolboxUI {
   #blocksAPI: BlocksAPI;
 
   /**
+   * EventBus instance to exchange events between components
+   */
+  #eventBus: EventBus;
+
+  /**
    * Object with Toolbox HTML nodes
    */
   #nodes: Record<string, HTMLElement> = {};
 
   /**
    * ToolboxUI class constructor
+   * @todo - unify the constructor parameters with the other UI plugins
    * @param blocksAPI - BlocksAPI instance to insert blocks
+   * @param eventBus - EventBus instance to exchange events between components
    */
-  constructor(blocksAPI: BlocksAPI) {
+  constructor(blocksAPI: BlocksAPI, eventBus: EventBus) {
     this.#blocksAPI = blocksAPI;
+    this.#eventBus = eventBus;
+
+    this.#render();
+
+    this.#eventBus.addEventListener(`core:${CoreEventType.ToolLoaded}`, (event: ToolLoadedCoreEvent) => {
+      const { tool } = event.detail;
+
+      if (tool.isBlock()) {
+        this.addTool(tool);
+      }
+    });
   }
 
   /**
-   * Renders Toolbox UI
-   * @returns Toolbox HTML element
+   * Renders Toolbox UI and dispatches an event
    */
-  public render(): HTMLElement {
+  #render(): void {
     this.#nodes.holder = make('div');
 
     this.#nodes.holder.style.display = 'flex';
 
-    return this.#nodes.holder;
+    this.#eventBus.dispatchEvent(new ToolboxRenderedUIEvent({
+      toolbox: this.#nodes.holder,
+    }));
   }
 
   /**
@@ -58,3 +79,5 @@ export class ToolboxUI {
     this.#nodes.holder.appendChild(toolButton);
   }
 }
+
+export * from './ToolboxRenderedUIEvent.js';
