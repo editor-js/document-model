@@ -115,10 +115,6 @@ onMounted(() => {
       <pre>{{ serialized }}</pre>
     </div>
     <div :class="$style.output">
-      <div
-        id="editorjs"
-        :class="$style.editor"
-      />
       <Node
         :node="editorDocument"
       />
