@@ -21,7 +21,7 @@ import {
 } from '../utils/index.js';
 import { InputType } from './types/InputType.js';
 import type { BlockToolAdapter as BlockToolAdapterInterface } from '@editorjs/sdk';
-import type { FormattingAdapter } from '../InlineToolsAdapter/index.js';
+import type { FormattingAdapter } from '../FormattingAdapter/index.js';
 
 /**
  * BlockToolAdapter is using inside Block tools to connect browser DOM elements to the model
