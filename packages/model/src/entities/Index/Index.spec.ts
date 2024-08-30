@@ -1,6 +1,7 @@
 import type { DocumentIndex } from '../../EventBus/index.js';
 import type { DataKey } from '../BlockNode/index.js';
 import type { BlockTuneName } from '../BlockTune/index.js';
+import { IndexBuilder } from '../index.js';
 import { Index } from './index.js';
 
 describe('Index', () => {
@@ -196,6 +197,67 @@ describe('Index', () => {
       index.textRange = [0, 0];
 
       expect(index.validate()).toBe(true);
+    });
+  });
+
+  describe('.isBlockIndex', () => {
+    it('should return true if index points to the block', () => {
+      const index = new IndexBuilder().addBlockIndex(0)
+        .build();
+
+      expect(index.isBlockIndex).toBe(true);
+    });
+
+    it('should return false if index does not include block index', () => {
+      const index = new Index();
+
+      expect(index.isBlockIndex).toBe(false);
+    });
+
+    it('should return false if index points to the text range', () => {
+      const index = new IndexBuilder().addBlockIndex(0)
+        .addDataKey('dataKey' as DataKey)
+        .addTextRange([0, 0])
+        .build();
+
+      expect(index.isBlockIndex).toBe(false);
+    });
+
+    it('should return false if index points to the tune data', () => {
+      const index = new IndexBuilder().addBlockIndex(0)
+        .addTuneName('tuneName' as BlockTuneName)
+        .addTuneKey('tuneKey')
+        .build();
+
+      expect(index.isBlockIndex).toBe(false);
+    });
+  });
+
+  describe('.isTextIndex', () => {
+    it('should return true if index points to the text', () => {
+      const index = new IndexBuilder().addBlockIndex(0)
+        .addDataKey('dataKey' as DataKey)
+        .addTextRange([0, 0])
+        .build();
+
+      expect(index.isTextIndex).toBe(true);
+    });
+
+    it('should return false if index does not include text range', () => {
+      const index = new IndexBuilder().addBlockIndex(0)
+        .addDataKey('dataKey' as DataKey)
+        .build();
+
+      expect(index.isTextIndex).toBe(false);
+    });
+
+    it('should return false if index points to the tune data', () => {
+      const index = new IndexBuilder().addBlockIndex(0)
+        .addTuneName('tuneName' as BlockTuneName)
+        .addTuneKey('tuneKey')
+        .build();
+
+      expect(index.isTextIndex).toBe(false);
     });
   });
 });
