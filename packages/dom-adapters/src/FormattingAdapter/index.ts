@@ -209,7 +209,7 @@ export class FormattingAdapter {
 
     const fragments = this.#model.getFragments(blockIndex, dataKey, ...textRange, toolName);
 
-    const { action, range } = tool.getAction(textRange, fragments);
+    const { action, range } = tool.getFormattingOptions(textRange, fragments);
 
     switch (action) {
       case FormattingAction.Format:

@@ -44,7 +44,7 @@ export default class LinkInlineTool implements InlineTool {
    * @param index - index of current text selection
    * @param fragments - all fragments of the bold inline tool inside of the current input
    */
-  public getAction(index: TextRange, fragments: InlineFragment[]): FormattingActionWithRange {
+  public getFormattingOptions(index: TextRange, fragments: InlineFragment[]): FormattingActionWithRange {
     return {
       action: this.isActive(index, fragments) ? FormattingAction.Unformat : FormattingAction.Format,
       range: index,

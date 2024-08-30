@@ -73,7 +73,7 @@ export interface InlineTool extends Omit<InlineToolVersion2, 'save' | 'checkStat
    * @param index - index of current selection
    * @param fragments - all fragments of the inline tool inside of the current input
    */
-  getAction(index: TextRange, fragments: InlineFragment[]): FormattingActionWithRange;
+  getFormattingOptions(index: TextRange, fragments: InlineFragment[]): FormattingActionWithRange;
 
   /**
    * Method for creating wrapper element of the tool
