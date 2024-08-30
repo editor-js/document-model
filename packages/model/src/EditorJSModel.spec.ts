@@ -11,6 +11,8 @@ describe('EditorJSModel', () => {
       'initializeDocument',
       'setProperty',
       'addBlock',
+      'insertData',
+      'removeData',
       'updateTuneData',
       'updateValue',
       'removeBlock',
