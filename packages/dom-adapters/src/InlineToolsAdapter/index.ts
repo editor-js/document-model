@@ -151,10 +151,10 @@ export class InlineToolsAdapter {
    * Function that checks if data required for current tool
    * If data required - return rendered by tool data form element with options required in toolbar
    * If data is not required - trigger callback
-   * 
+   *
    * @param toolName - name of the tool to check if data is required
    * @param callback - callback function that should be triggered, when data completely formed
-   * @returns rendered data form element with options required in toolbar or null if no data required
+   * @returns {DataFormElementWithOptions | null} rendered data form element with options required in toolbar or null if no data required
    */
   public formatData(toolName: InlineToolName, callback: (data: InlineToolFormatData) => void): DataFormElementWithOptions | null {
     const currentTool = this.#tools.get(toolName);
