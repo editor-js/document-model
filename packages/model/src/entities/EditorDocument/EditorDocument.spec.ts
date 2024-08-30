@@ -744,7 +744,7 @@ describe('EditorDocument', () => {
 
       document = new EditorDocument();
 
-      document.initialize([blockData]);
+      document.initialize([ blockData ]);
 
       block = document.getBlock(0);
     });
@@ -789,7 +789,7 @@ describe('EditorDocument', () => {
 
       document = new EditorDocument();
 
-      document.initialize([blockData]);
+      document.initialize([ blockData ]);
 
       block = document.getBlock(0);
     });
@@ -824,9 +824,7 @@ describe('EditorDocument', () => {
   describe('.removeData()', () => {
     let document: EditorDocument;
     const dataKey = 'text' as DataKey;
-    const text = 'Some text';
     const blockIndex = 0;
-    let block: BlockNode;
 
     beforeEach(() => {
       const blockData = {
@@ -836,23 +834,22 @@ describe('EditorDocument', () => {
 
       document = new EditorDocument();
 
-      document.initialize([blockData]);
-
-      block = document.getBlock(0);
+      document.initialize([ blockData ]);
     });
 
     it('should call .removeText() method if text index provided', () => {
       const spy = jest.spyOn(document, 'removeText');
+      const rangeEnd = 5;
       const index = new IndexBuilder()
         .addBlockIndex(blockIndex)
         .addDataKey(dataKey)
-        .addTextRange([0, 5])
+        .addTextRange([0, rangeEnd])
         .build();
 
       document.removeData(index);
 
       expect(spy)
-        .toHaveBeenCalledWith(blockIndex, dataKey, 0, 5);
+        .toHaveBeenCalledWith(blockIndex, dataKey, 0, rangeEnd);
     });
 
     it('should call .removeBlock() if block index is provided', () => {
@@ -883,7 +880,7 @@ describe('EditorDocument', () => {
 
       document = new EditorDocument();
 
-      document.initialize([blockData]);
+      document.initialize([ blockData ]);
 
       block = document.getBlock(0);
     });
@@ -941,7 +938,7 @@ describe('EditorDocument', () => {
 
       document = new EditorDocument();
 
-      document.initialize([blockData]);
+      document.initialize([ blockData ]);
 
       block = document.getBlock(0);
     });
@@ -988,7 +985,7 @@ describe('EditorDocument', () => {
 
       document = new EditorDocument();
 
-      document.initialize([blockData]);
+      document.initialize([ blockData ]);
 
       block = document.getBlock(0);
     });
