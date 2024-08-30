@@ -34,9 +34,9 @@ export class EditorUI {
     this.#eventBus = eventBus;
 
     this.#eventBus.addEventListener(`core:${CoreEventType.BlockAdded}`, (event: BlockAddedCoreEvent<HTMLElement>) => {
-      const { uiContent, index } = event.detail;
+      const { ui, index } = event.detail;
 
-      this.#addBlock(uiContent, index);
+      this.#addBlock(ui, index);
     });
 
     this.#eventBus.addEventListener(`core:${CoreEventType.BlockRemoved}`, (event: BlockAddedCoreEvent<HTMLElement>) => {

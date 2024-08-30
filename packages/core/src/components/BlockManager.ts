@@ -180,7 +180,7 @@ export class BlocksManager {
       this.#eventBus.dispatchEvent(new BlockAddedCoreEvent({
         tool: tool.name,
         data: data.data,
-        uiContent: blockElement,
+        ui: blockElement,
         index: index.blockIndex,
       }));
     } catch (error) {

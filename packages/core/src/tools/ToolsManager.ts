@@ -2,8 +2,6 @@ import type { BlockToolConstructor } from '@editorjs/sdk';
 import 'reflect-metadata';
 import { deepMerge, isFunction, isObject, PromiseQueue } from '@editorjs/helpers';
 import { Inject, Service } from 'typedi';
-import type { BlockToolFacade, BlockTuneFacade,
-  InlineToolFacade } from './facades/index.js';
 import {
   BlockToolFacade, BlockTuneFacade,
   InlineToolFacade,

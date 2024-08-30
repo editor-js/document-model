@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import type { BlockToolData } from '@editorjs/editorjs';
 import { CoreEventBase } from './CoreEventBase.js';
 import { CoreEventType } from './CoreEventType.js';
@@ -5,9 +6,9 @@ import { CoreEventType } from './CoreEventType.js';
 /**
  * Payload of BlockAddedCoreEvent custom event
  * Contains added block data: name, data, index and UI content to be rendered on tha page
- * @template UiContent - type of the UI content
+ * @template UI - type of the UI content
  */
-export interface BlockAddedCoreEventPayload<UiContent = unknown> {
+export interface BlockAddedCoreEventPayload<UI = unknown> {
   /**
    * Name of the added Block Tool
    */
@@ -19,7 +20,7 @@ export interface BlockAddedCoreEventPayload<UiContent = unknown> {
   /**
    * UI content to be rendered on the page
    */
-  readonly uiContent: UiContent;
+  readonly ui: UI;
   /**
    * Index of the added Block
    */
@@ -29,12 +30,12 @@ export interface BlockAddedCoreEventPayload<UiContent = unknown> {
 /**
  * Class for event that is being fired after the block is added
  */
-export class BlockAddedCoreEvent<UiContent = unknown> extends CoreEventBase<BlockAddedCoreEventPayload<UiContent>> {
+export class BlockAddedCoreEvent<UI = unknown> extends CoreEventBase<BlockAddedCoreEventPayload<UI>> {
   /**
    * BlockAddedCoreEvent constructor function
    * @param payload - BlockAdded event payload with tool name, block data, index and UI content
    */
-  constructor(payload: BlockAddedCoreEventPayload<UiContent>) {
+  constructor(payload: BlockAddedCoreEventPayload<UI>) {
     super(CoreEventType.BlockAdded, payload);
   }
 }
