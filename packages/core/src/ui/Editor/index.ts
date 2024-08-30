@@ -34,6 +34,10 @@ export class EditorUI {
     // will add UI to holder element
   }
 
+  public addToolbox(toolboxElement: HTMLElement): void {
+    this.#holder.appendChild(toolboxElement);
+  }
+
   /**
    * Renders block's content on the page
    * @param blockElement - block HTML element to add to the page
@@ -67,7 +71,7 @@ export class EditorUI {
    * @param index - index to validate
    */
   #validateIndex(index: number): void {
-    if (index < 0 || index > this.#blocks.length) {
+    if (index < 0 || index > this.#blocks.length + 1) {
       throw new Error('Index out of bounds');
     }
   }

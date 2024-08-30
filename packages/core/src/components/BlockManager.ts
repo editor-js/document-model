@@ -1,10 +1,21 @@
 import { BlockAddedEvent, BlockRemovedEvent, EditorJSModel, EventType, ModelEvents } from '@editorjs/model';
 import 'reflect-metadata';
-import { Service } from 'typedi';
-import { EditorUI } from './ui/Editor/index.js';
+import { Inject, Service } from 'typedi';
+import { EditorUI } from '../ui/Editor/index.js';
 import { BlockToolAdapter, CaretAdapter } from '@editorjs/dom-adapters';
-import ToolsManager from './tools/ToolsManager.js';
-import { BlockAPI } from '@editorjs/editorjs';
+import ToolsManager from '../tools/ToolsManager.js';
+import { BlockAPI, BlockToolData } from '@editorjs/editorjs';
+import { CoreConfigValidated } from '../entities/Config.js';
+
+interface InsertBlockParameters {
+  // id?: string;
+  type?: string;
+  data?: BlockToolData;
+  index?: number;
+  // needToFocus?: boolean;
+  replace?: boolean;
+  // tunes?: {[name: string]: BlockTuneData};
+}
 
 /**
  * BlocksManager is responsible for
@@ -34,6 +45,8 @@ export class BlocksManager {
    */
   #toolsManager: ToolsManager;
 
+  #config: CoreConfigValidated;
+
   /**
    * BlocksManager constructor
    * All parameters are injected thorugh the IoC container
@@ -41,19 +54,44 @@ export class BlocksManager {
    * @param editorUI - Editor's UI class instance
    * @param caretAdapter - Caret Adapter instance
    * @param toolsManager - Tools manager instance
+   * @param config
    */
   constructor(
     model: EditorJSModel,
     editorUI: EditorUI,
     caretAdapter: CaretAdapter,
-    toolsManager: ToolsManager
+    toolsManager: ToolsManager,
+    @Inject('EditorConfig') config: CoreConfigValidated
   ) {
     this.#model = model;
     this.#editorUI = editorUI;
     this.#caretAdapter = caretAdapter;
     this.#toolsManager = toolsManager;
+    this.#config = config;
 
     this.#model.addEventListener(EventType.Changed, event => this.#handleModelUpdate(event));
+  }
+
+  public insert({
+    // id = undefined,
+    type = this.#config.defaultBlock,
+    data = {},
+    index,
+    // needToFocus = true,
+    replace = false,
+    // tunes = {},
+  }: InsertBlockParameters = {}): void {
+    let newIndex = index;
+
+    if (newIndex === undefined) {
+      newIndex = this.#model.length + (replace ? 0 : 1);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    this.#model.addBlock({
+      ...data,
+      name: type,
+    }, index);
   }
 
   /**
@@ -89,15 +127,15 @@ export class BlocksManager {
 
     const blockToolAdapter = new BlockToolAdapter(this.#model, this.#caretAdapter, index.blockIndex);
 
-    const tool = this.#toolsManager.blockTools.get(event.detail.data.name);
+    const tool = this.#toolsManager.blockTools.get(data.name);
 
     if (!tool) {
-      throw new Error(`[BlockManager] Block Tool ${event.detail.data.name} not found`);
+      throw new Error(`[BlockManager] Block Tool ${data.name} not found`);
     }
 
     const block = tool.create({
       adapter: blockToolAdapter,
-      data: data,
+      data: data.data,
       block: {} as BlockAPI,
       readOnly: false,
     });
@@ -107,7 +145,7 @@ export class BlocksManager {
 
       this.#editorUI.addBlock(blockElement, index.blockIndex);
     } catch (error) {
-      console.error(`[BlockManager] Block Tool ${event.detail.data.name} failed to render`, error);
+      console.error(`[BlockManager] Block Tool ${data.name} failed to render`, error);
     }
   }
 

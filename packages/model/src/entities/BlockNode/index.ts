@@ -171,7 +171,11 @@ export class BlockNode extends EventBus {
    * @param value - The new value of the ValueNode
    */
   public updateValue<T = unknown>(dataKey: DataKey, value: T): void {
-    this.#validateKey(dataKey, ValueNode);
+    try {
+      this.#validateKey(dataKey, ValueNode);
+    } catch (_) {
+      this.#data[dataKey] = this.#createValueNode(dataKey);
+    }
 
     const node = get(this.#data, dataKey as string) as ValueNode<T>;
 
@@ -186,7 +190,11 @@ export class BlockNode extends EventBus {
    * @param [start] - char index where to insert text
    */
   public insertText(dataKey: DataKey, text: string, start?: number): void {
-    this.#validateKey(dataKey, TextNode);
+    try {
+      this.#validateKey(dataKey, TextNode);
+    } catch (_) {
+      this.#data[dataKey] = this.#createTextNode(dataKey);
+    }
 
     const node = get(this.#data, dataKey as string) as TextNode;
 
@@ -287,18 +295,10 @@ export class BlockNode extends EventBus {
         if (NODE_TYPE_HIDDEN_PROP in value) {
           switch (value[NODE_TYPE_HIDDEN_PROP]) {
             case BlockChildType.Value: {
-              const node = new ValueNode({ value });
-
-              this.#listenAndBubbleValueNodeEvent(node, key as DataKey);
-
-              return node;
+              return this.#createValueNode(createDataKey(key), value);
             }
             case BlockChildType.Text: {
-              const node = new TextNode(value as TextNodeSerialized);
-
-              this.#listenAndBubbleTextNodeEvent(node, key as DataKey);
-
-              return node;
+              return this.#createTextNode(createDataKey(key), value as TextNodeSerialized);
             }
           }
         }
@@ -315,6 +315,22 @@ export class BlockNode extends EventBus {
 
     this.#data = mapObject(data, mapSerializedToNodes);
   }
+
+  #createTextNode(key: DataKey, value?: TextNodeSerialized) {
+    const node = new TextNode(value);
+
+    this.#listenAndBubbleTextNodeEvent(node, key);
+
+    return node;
+  }
+
+  #createValueNode(key: DataKey, value?: BlockNodeDataSerializedValue) {
+    const node = new ValueNode({ value });
+
+    this.#listenAndBubbleValueNodeEvent(node, key);
+
+    return node;
+  };
 
   /**
    * Validates data key and node type
