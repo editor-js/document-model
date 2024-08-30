@@ -239,7 +239,7 @@ export class EditorDocument extends EventBus {
   }
 
   /**
-   * Returns text of the specified block and data key
+   * Returns text for the specified block and data key
    *
    * @param blockIndex - index of the block
    * @param dataKey - key of the data containing the text
