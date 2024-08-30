@@ -8,9 +8,15 @@ import { SelectionAPI } from './SelectionAPI.js';
  */
 @Service()
 export class EditorAPI {
+  /**
+   * Blocks API instance to work with blocks
+   */
   @Inject()
   public blocks!: BlocksAPI;
 
+  /**
+   * Selection API instance to work with selection and inline formatting
+   */
   @Inject()
   public selection!: SelectionAPI;
 }

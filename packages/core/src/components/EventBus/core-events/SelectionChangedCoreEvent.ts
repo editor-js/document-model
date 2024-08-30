@@ -4,8 +4,8 @@ import { CoreEventType } from './CoreEventType.js';
 import type { Index, InlineToolName } from '@editorjs/model';
 
 /**
- * Payload of BlockAddedCoreEvent custom event
- * Contains updated caret index
+ * Payload of SelectionChangedCoreEvent custom event
+ * Contains updated caret index and available inline tools
  */
 export interface SelectionChangedCoreEventPayload {
   /**

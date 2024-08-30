@@ -13,6 +13,10 @@ import { InlineToolFormatData } from '@editorjs/sdk';
 export class SelectionAPI {
   #selectionManager: SelectionManager;
 
+  /**
+   * SelectionAPI class constructor
+   * @param selectionManager - SelectionManager instance to work with selection and inline fotmatting
+   */
   constructor(
     selectionManager: SelectionManager
   ) {

@@ -30,6 +30,9 @@ export class SelectionManager {
    */
   #eventBus: EventBus;
 
+  /**
+   * Inline Tools instances available for use
+   */
   #inlineTools: Map<InlineToolName, InlineTool> = new Map();
 
   /**
