@@ -102,12 +102,12 @@ export default class Core {
       });
     }
 
+    this.#prepareUI();
+
     this.#toolsManager.prepareTools()
       .then(() => {
         this.#inlineToolbar = new InlineToolbar(this.#model, this.#formattingAdapter, this.#toolsManager.inlineTools, this.#config.holder);
         this.#iocContainer.set(InlineToolbar, this.#inlineToolbar);
-
-        this.#prepareUI();
 
         this.#model.initializeDocument({ blocks });
       })
