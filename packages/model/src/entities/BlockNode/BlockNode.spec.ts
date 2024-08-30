@@ -1,3 +1,4 @@
+import { expect } from '@jest/globals';
 import { Index } from '../Index/index.js';
 import { IndexBuilder } from '../Index/IndexBuilder.js';
 import { BlockNode, createBlockToolName, createDataKey } from './index.js';
@@ -539,7 +540,7 @@ describe('BlockNode', () => {
         .toHaveBeenCalledWith(value);
     });
 
-    it('should throw an error if the ValueNode with the passed dataKey does not exist', () => {
+    it('should create new ValueNode if the ValueNode with the passed dataKey does not exist', () => {
       const dataKey = createDataKey('data-key-1a2b');
       const value = 'Some value';
 
@@ -549,10 +550,9 @@ describe('BlockNode', () => {
         parent: {} as EditorDocument,
       });
 
-      expect(() => {
-        blockNode.updateValue(dataKey, value);
-      })
-        .toThrowError(`BlockNode: data with key "${dataKey}" does not exist`);
+      blockNode.updateValue(dataKey, value);
+
+      expect(blockNode.data[dataKey]).toBeInstanceOf(ValueNode);
     });
 
     it('should throw an error if the ValueNode with the passed dataKey is not a ValueNode', () => {
@@ -667,12 +667,13 @@ describe('BlockNode', () => {
         .toHaveBeenCalledWith(text, start);
     });
 
-    it('should throw an error if node does not exist', () => {
+    it('should create new TextNode if data key does not exist', () => {
       const key = createDataKey('non-existing-key');
       const node = createBlockNodeWithData({});
 
-      expect(() => node.insertText(key, text))
-        .toThrow();
+      node.insertText(key, text);
+
+      expect(node.data[key]).toBeInstanceOf(TextNode);
     });
 
     it('should throw an error if node is not a TextNode', () => {

@@ -35,6 +35,14 @@ export class EditorUI {
   }
 
   /**
+   * Adds toolbox to the editor UI
+   * @param toolboxElement - toolbox HTML element to add to the page
+   */
+  public addToolbox(toolboxElement: HTMLElement): void {
+    this.#holder.appendChild(toolboxElement);
+  }
+
+  /**
    * Renders block's content on the page
    * @param blockElement - block HTML element to add to the page
    * @param index - index where to add a block at
