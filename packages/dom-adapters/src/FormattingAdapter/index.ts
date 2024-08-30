@@ -8,12 +8,14 @@ import type {
 } from '@editorjs/model';
 import {
   EventType,
-  TextFormattedEvent
+  TextFormattedEvent,
+  TextUnformattedEvent
 } from '@editorjs/model';
 import type { CaretAdapter } from '../CaretAdapter/index.js';
 import { FormattingAction } from '@editorjs/model';
 import type { InlineTool, InlineToolFormatData, ActionsElementWithOptions } from '@editorjs/sdk';
 import { surround } from '../utils/surround.js';
+import { unformat } from '../utils/unformat.js';
 
 /**
  * Class handles on format model events and renders inline tools
@@ -57,25 +59,33 @@ export class FormattingAdapter {
    * @param event - model change event
    */
   #handleModelUpdates(event: ModelEvents): void {
-    if (event instanceof TextFormattedEvent) {
-      const tool = this.#tools.get(event.detail.data.tool);
+    switch (true) {
+      case (event instanceof TextFormattedEvent):
+        const tool = this.#tools.get(event.detail.data.tool);
 
-      if (tool === undefined) {
-        return;
-      }
+        if (tool === undefined) {
+          return;
+        }
 
-      const selection = window.getSelection();
+        const selection = window.getSelection();
 
-      /**
-       * Render inline tool for current range
-       */
-      if (selection) {
-        const range = selection.getRangeAt(0);
+        /**
+         * Render inline tool for current range
+         */
+        if (selection) {
+          const range = selection.getRangeAt(0);
 
-        const inlineElement = tool.createWrapper(event.detail.data.data);
+          const inlineElement = tool.createWrapper(event.detail.data.data);
 
-        surround(range, inlineElement);
-      }
+          surround(range, inlineElement);
+        }
+
+        break;
+      case (event instanceof TextUnformattedEvent):
+        console.log('text unformatted event from the model', event);
+
+        unformat();
+        break;
     }
   }
 

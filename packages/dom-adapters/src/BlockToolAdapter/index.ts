@@ -91,7 +91,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     const fragments = this.#model.getFragments(this.#blockIndex, key);
 
     fragments.forEach(fragment => {
-      console.log('fragment', fragment);
+      // console.log('fragment', fragment);
       // this.#formattingAdapter.formatElementContent(input, fragment);
     });
   }
