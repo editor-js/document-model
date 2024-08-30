@@ -24,13 +24,6 @@ export class InlineToolFacade extends BaseToolFacade<ToolType.Inline, IInlineToo
   }
 
   /**
-   * Checks if actions element could be rendered by tool
-   */
-  public get hasActions(): boolean {
-    return 'renderActions' in this.constructable.prototype;
-  }
-
-  /**
    * Constructs new InlineTool instance from constructable
    */
   public create(): IInlineTool {

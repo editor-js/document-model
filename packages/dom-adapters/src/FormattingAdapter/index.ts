@@ -12,7 +12,7 @@ import {
 } from '@editorjs/model';
 import type { CaretAdapter } from '../CaretAdapter/index.js';
 import { FormattingAction } from '@editorjs/model';
-import type { InlineTool, InlineToolFormatData, ActionsElementWithOptions } from '@editorjs/sdk';
+import type { InlineTool } from '@editorjs/sdk';
 import { surround } from '../utils/surround.js';
 
 /**
@@ -135,32 +135,6 @@ export class FormattingAdapter {
    */
   public detachTool(toolName: InlineToolName): void {
     this.#tools.delete(toolName);
-  }
-
-  /**
-   * Function that call tool's render actions method if it is specified, otherwise triggers callback
-   * If any data for tool is required - return rendered by tool data form element with options required in toolbar
-   * If data for tool is not required (tool don't need any data to apply format) - trigger callback with empty data
-   *
-   * @param toolName - name of the tool to check if data is required
-   * @param callback - callback function that should be triggered, when data completely formed
-   * @returns {ActionsElementWithOptions | null} rendered data form element with options required in toolbar or null if no data required
-   */
-  public createToolActions(toolName: InlineToolName, callback: (data: InlineToolFormatData) => void): ActionsElementWithOptions {
-    const currentTool = this.#tools.get(toolName);
-
-    if (currentTool === undefined) {
-      throw new Error(`FormattingAdapter: tool ${toolName} was not attached`);
-    }
-
-    /**
-     * If renderActions method specified, render element and return it
-     */
-    if (currentTool.renderActions === undefined) {
-      throw new Error(`FormattingAdapter: render actions method is not specified in tool ${toolName}`);
-    }
-
-    return currentTool.renderActions(callback);
   }
 
   /**
