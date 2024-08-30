@@ -1,4 +1,4 @@
-import type { InlineToolsAdapter } from '@editorjs/dom-adapters';
+import type { FormattingAdapter } from '@editorjs/dom-adapters';
 import type { InlineToolName } from '@editorjs/model';
 import { type EditorJSModel, type TextRange, createInlineToolData, Index } from '@editorjs/model';
 import { EventType } from '@editorjs/model';
@@ -21,7 +21,7 @@ export class InlineToolbar {
    * Inline tool adapter instance
    * Used for inline tools attaching and format apply
    */
-  #inlineToolAdapter: InlineToolsAdapter;
+  #formattingAdapter: FormattingAdapter;
 
   /**
    * Current selection range
@@ -42,13 +42,13 @@ export class InlineToolbar {
 
   /**
    * @param model - editor model instance
-   * @param inlineToolAdapter - inline tool adapter instance
+   * @param formattingAdapter - needed for applying format to the model
    * @param tools - tools, that should be attached to adapter
    * @param holder - editor holder element
    */
-  constructor(model: EditorJSModel, inlineToolAdapter: InlineToolsAdapter, tools: ToolsCollection<InlineToolFacade>, holder: HTMLElement) {
+  constructor(model: EditorJSModel, formattingAdapter: FormattingAdapter, tools: ToolsCollection<InlineToolFacade>, holder: HTMLElement) {
     this.#model = model;
-    this.#inlineToolAdapter = inlineToolAdapter;
+    this.#formattingAdapter = formattingAdapter;
     this.#holder = holder;
     this.#tools = tools;
 
@@ -93,7 +93,7 @@ export class InlineToolbar {
    */
   #attachTools(): void {
     Array.from(this.#tools.entries()).forEach(([toolName, tool]) => {
-      this.#inlineToolAdapter.attachTool(toolName as InlineToolName, tool.create());
+      this.#formattingAdapter.attachTool(toolName as InlineToolName, tool.create());
     });
   }
 
@@ -154,6 +154,6 @@ export class InlineToolbar {
     /**
      * @todo pass to applyFormat inline tool data formed in toolbar
      */
-    this.#inlineToolAdapter.applyFormat(toolName, createInlineToolData({}));
+    this.#formattingAdapter.applyFormat(toolName, createInlineToolData({}));
   };
 }

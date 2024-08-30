@@ -21,6 +21,7 @@ import {
 } from '../utils/index.js';
 import { InputType } from './types/InputType.js';
 import type { BlockToolAdapter as BlockToolAdapterInterface } from '@editorjs/sdk';
+import type { FormattingAdapter } from '../InlineToolsAdapter/index.js';
 
 /**
  * BlockToolAdapter is using inside Block tools to connect browser DOM elements to the model
@@ -40,10 +41,13 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
 
   /**
    * Caret adapter instance
-   *
-   * @private
    */
   #caretAdapter: CaretAdapter;
+
+  /**
+   * Formatting adapter instance
+   */
+  #formattingAdapter: FormattingAdapter;
 
   /**
    * BlockToolAdapter constructor
@@ -51,11 +55,13 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    * @param model - EditorJSModel instance
    * @param caretAdapter - CaretAdapter instance
    * @param blockIndex - index of the block that this adapter is connected to
+   * @param formattingAdapter - needed to render formatted text
    */
-  constructor(model: EditorJSModel, caretAdapter: CaretAdapter, blockIndex: number) {
+  constructor(model: EditorJSModel, caretAdapter: CaretAdapter, blockIndex: number, formattingAdapter: FormattingAdapter) {
     this.#model = model;
     this.#blockIndex = blockIndex;
     this.#caretAdapter = caretAdapter;
+    this.#formattingAdapter = formattingAdapter;
   }
 
   /**
@@ -81,6 +87,13 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     builder.addBlockIndex(this.#blockIndex).addDataKey(key);
 
     this.#caretAdapter.attachInput(input, builder.build());
+
+    const fragments = this.#model.getFragments(this.#blockIndex, key);
+
+    fragments.forEach(fragment => {
+      console.log('fragment', fragment);
+      // this.#formattingAdapter.formatElementContent(input, fragment);
+    });
   }
 
   /**

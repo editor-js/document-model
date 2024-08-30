@@ -2,7 +2,7 @@ import { BlockAddedEvent, BlockRemovedEvent, EditorJSModel, EventType, ModelEven
 import 'reflect-metadata';
 import { Inject, Service } from 'typedi';
 import { EditorUI } from '../ui/Editor/index.js';
-import { BlockToolAdapter, CaretAdapter } from '@editorjs/dom-adapters';
+import { BlockToolAdapter, CaretAdapter, FormattingAdapter } from '@editorjs/dom-adapters';
 import ToolsManager from '../tools/ToolsManager.js';
 import { BlockAPI, BlockToolData } from '@editorjs/editorjs';
 import { CoreConfigValidated } from '../entities/Config.js';
@@ -60,7 +60,15 @@ export class BlocksManager {
    */
   #toolsManager: ToolsManager;
 
+  /**
+   * Editor's validated user configuration
+   */
   #config: CoreConfigValidated;
+
+  /**
+   * Will be passed to BlockToolAdapter for rendering inputs` formatted text
+   */
+  #formattingAdapter: FormattingAdapter;
 
   /**
    * BlocksManager constructor
@@ -69,6 +77,7 @@ export class BlocksManager {
    * @param editorUI - Editor's UI class instance
    * @param caretAdapter - Caret Adapter instance
    * @param toolsManager - Tools manager instance
+   * @param formattingAdapter - will be passed to BlockToolAdapter for rendering inputs` formatted text
    * @param config - Editor validated configuration
    */
   constructor(
@@ -76,12 +85,14 @@ export class BlocksManager {
     editorUI: EditorUI,
     caretAdapter: CaretAdapter,
     toolsManager: ToolsManager,
+    formattingAdapter: FormattingAdapter,
     @Inject('EditorConfig') config: CoreConfigValidated
   ) {
     this.#model = model;
     this.#editorUI = editorUI;
     this.#caretAdapter = caretAdapter;
     this.#toolsManager = toolsManager;
+    this.#formattingAdapter = formattingAdapter;
     this.#config = config;
 
     this.#model.addEventListener(EventType.Changed, event => this.#handleModelUpdate(event));
@@ -148,12 +159,12 @@ export class BlocksManager {
       throw new Error('[BlockManager] Block index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
     }
 
-    const blockToolAdapter = new BlockToolAdapter(this.#model, this.#caretAdapter, index.blockIndex);
+    const blockToolAdapter = new BlockToolAdapter(this.#model, this.#caretAdapter, index.blockIndex, this.#formattingAdapter);
 
     const tool = this.#toolsManager.blockTools.get(data.name);
 
-    if (!tool) {
-      throw new Error(`[BlockManager] Block Tool ${data.name} not found`);
+    if (tool === undefined) {
+      throw new Error(`[BlockManager] Block Tool ${event.detail.data.name} not found`);
     }
 
     const block = tool.create({
