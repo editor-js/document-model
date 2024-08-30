@@ -1,4 +1,4 @@
-import type { InlineToolsConfig, BlockToolConstructor } from '@editorjs/sdk';
+import type { BlockToolConstructor } from '@editorjs/sdk';
 import 'reflect-metadata';
 import { deepMerge, isFunction, isObject, PromiseQueue } from '@editorjs/helpers';
 import { Inject, Service } from 'typedi';
@@ -108,26 +108,139 @@ export default class ToolsManager {
 
   /**
    * Calls tools prepare method if it exists and adds tools to relevant collection (available or unavailable tools)
-   * @param toolName
    * @returns Promise<void>
    */
-  public resolveBlockTool(toolName: string): BlockToolConstructor {
-    switch (toolName) {
-      case 'paragraph':
-        return Paragraph;
-      default:
-        throw new Error(`Unknown tool: ${toolName}`);
+  public async prepareTools(): Promise<void> {
+    const promiseQueue = new PromiseQueue();
+
+    Object.entries(this.#config).forEach(([toolName, config]) => {
+      if (isFunction(config.class.prepare)) {
+        void promiseQueue.add(async () => {
+          try {
+            /**
+             * TypeScript doesn't get type guard here, so non-null assertion is used
+             */
+            await config.class.prepare!({
+              toolName: toolName,
+              config: config,
+            });
+
+            const tool = this.#factory.get(toolName);
+
+            if (tool.isInline()) {
+              /**
+               * Some Tools validation
+               */
+              const inlineToolRequiredMethods = ['render'];
+              const notImplementedMethods = inlineToolRequiredMethods.filter(method => tool.create()[method as keyof InlineTool] !== undefined);
+
+              if (notImplementedMethods.length) {
+                /**
+                 * @todo implement logger
+                 */
+                console.log(
+                  `Incorrect Inline Tool: ${tool.name}. Some of required methods is not implemented %o`,
+                  'warn',
+                  notImplementedMethods
+                );
+
+                this.#unavailableTools.set(tool.name, tool);
+
+                return;
+              }
+            }
+
+            this.#availableTools.set(toolName, tool);
+          } catch (e) {
+            console.error(`Tool ${toolName} failed to prepare`, e);
+
+            this.#unavailableTools.set(toolName, this.#factory.get(toolName));
+          }
+        });
+      } else {
+        this.#availableTools.set(toolName, this.#factory.get(toolName));
+      }
+    });
+
+    await promiseQueue.completed;
+  }
+
+  /**
+   * Unify tools config
+   * @param config - user's tools config
+   */
+  #prepareConfig(config: EditorConfig['tools']): UnifiedToolConfig {
+    const unifiedConfig: UnifiedToolConfig = {} as UnifiedToolConfig;
+
+    /**
+     * Save Tools settings to a map
+     */
+    for (const toolName in config) {
+      /**
+       * If Tool is an object not a Tool's class then
+       * save class and settings separately
+       */
+      if (isObject(config)) {
+        unifiedConfig[toolName] = config[toolName] as UnifiedToolConfig[string];
+      } else {
+        unifiedConfig[toolName] = { class: config[toolName] as ToolConstructable };
+      }
+    }
+
+    deepMerge(unifiedConfig, this.#internalTools);
+
+    return unifiedConfig;
+  }
+
+  /**
+   * Validate Tools configuration objects and throw Error for user if it is invalid
+   */
+  #validateTools(): void {
+    /**
+     * Check Tools for a class containing
+     */
+    for (const toolName in this.#config) {
+      if (Object.prototype.hasOwnProperty.call(this.#config, toolName)) {
+        // if (toolName in this.internalTools) {
+        //   return;
+        // }
+
+        const tool = this.#config[toolName];
+
+        if (!isFunction(tool) && !isFunction((tool as ToolSettings).class)) {
+          throw Error(
+            `Tool «${toolName}» must be a constructor function or an object with function in the «class» property`
+          );
+        }
+      }
     }
   }
 
   /**
-   * Returns inline tools got from the EditorConfig tools
+   * Returns internal tools
+   * Includes Bold, Italic, Link and Paragraph
    */
-  public getInlineTools(): InlineToolsConfig {
+  get #internalTools(): UnifiedToolConfig {
     return {
-      bold: BoldInlineTool,
-      italic: ItalicInlineTool,
-      link: LinkInlineTool,
+      paragraph: {
+        /**
+         * @todo solve problems with types
+         */
+        class: Paragraph as unknown as BlockToolConstructor,
+        inlineToolbar: true,
+        isInternal: true,
+      },
+      bold: {
+        class: BoldInlineTool as unknown as InlineToolConstructor,
+        isInternal: true,
+      },
+      italic: {
+        class: ItalicInlineTool as unknown as InlineToolConstructor,
+        isInternal: true,
+      },
+      link: {
+        class: LinkInlineTool as unknown as InlineToolConstructor,
+      },
     };
-  };
+  }
 }

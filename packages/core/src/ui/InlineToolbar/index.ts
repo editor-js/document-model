@@ -1,5 +1,5 @@
 import type { InlineToolsAdapter } from '@editorjs/dom-adapters';
-import type { InlineTool, InlineToolsConfig, InlineToolFormatData } from '@editorjs/sdk';
+import type { InlineToolFormatData } from '@editorjs/sdk';
 import type { InlineToolName } from '@editorjs/model';
 import { type EditorJSModel, type TextRange, createInlineToolData, createInlineToolName, Index } from '@editorjs/model';
 import { EventType } from '@editorjs/model';
@@ -134,7 +134,7 @@ export class InlineToolbar {
       inlineElementButton.innerHTML = toolName;
 
       inlineElementButton.addEventListener('click', (_event) => {
-        this.formData(toolName);
+        this.formData(createInlineToolName(toolName));
       });
       if (this.#toolbar !== undefined) {
         this.#toolbar.appendChild(inlineElementButton);
