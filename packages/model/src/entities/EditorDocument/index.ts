@@ -22,7 +22,7 @@ import {
 } from '../../EventBus/events/index.js';
 import type { Constructor } from '../../utils/types.js';
 import { BaseDocumentEvent } from '../../EventBus/events/BaseEvent.js';
-import type { Index } from '../Index';
+import type { Index } from '../Index/index.js';
 
 /**
  * EditorDocument class represents the top-level container for a tree-like structure of BlockNodes in an editor document.
@@ -339,6 +339,7 @@ export class EditorDocument extends EventBus {
       case index.isBlockIndex:
         // eslint-disable-next-line @typescript-eslint/no-magic-numbers
         this.addBlock(data as Parameters<EditorDocument['addBlock']>[0], index.blockIndex);
+        break;
       default:
         throw new Error('Unsupported index');
     }
@@ -357,6 +358,7 @@ export class EditorDocument extends EventBus {
 
       case index.isBlockIndex:
         this.removeBlock(index.blockIndex!);
+        break;
       default:
         throw new Error('Unsupported index');
     }

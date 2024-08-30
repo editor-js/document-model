@@ -744,7 +744,7 @@ describe('EditorDocument', () => {
 
       document = new EditorDocument();
 
-      document.initialize([ blockData ]);
+      document.initialize([blockData]);
 
       block = document.getBlock(0);
     });
@@ -774,6 +774,101 @@ describe('EditorDocument', () => {
     });
   });
 
+  describe('.insertData()', () => {
+    let document: EditorDocument;
+    const dataKey = 'text' as DataKey;
+    const text = 'Some text';
+    const blockIndex = 0;
+    let block: BlockNode;
+
+    beforeEach(() => {
+      const blockData = {
+        name: 'header' as BlockToolName,
+        data: {},
+      };
+
+      document = new EditorDocument();
+
+      document.initialize([blockData]);
+
+      block = document.getBlock(0);
+    });
+
+    it('should call .insertText() method if text index provided', () => {
+      const spy = jest.spyOn(document, 'insertText');
+      const index = new IndexBuilder().addBlockIndex(blockIndex)
+        .addDataKey(dataKey)
+        .addTextRange([0, 0])
+        .build();
+
+      document.insertData(index, text);
+
+      expect(spy)
+        .toHaveBeenCalledWith(blockIndex, dataKey, text, 0);
+    });
+
+    it('should call .addBlock() if block index is provided', () => {
+      const spy = jest.spyOn(document, 'addBlock');
+      const index = new IndexBuilder()
+        .addBlockIndex(blockIndex)
+        .build();
+
+
+      document.insertData(index, block);
+
+      expect(spy)
+        .toHaveBeenCalledWith(block, blockIndex);
+    });
+  });
+
+  describe('.removeData()', () => {
+    let document: EditorDocument;
+    const dataKey = 'text' as DataKey;
+    const text = 'Some text';
+    const blockIndex = 0;
+    let block: BlockNode;
+
+    beforeEach(() => {
+      const blockData = {
+        name: 'header' as BlockToolName,
+        data: {},
+      };
+
+      document = new EditorDocument();
+
+      document.initialize([blockData]);
+
+      block = document.getBlock(0);
+    });
+
+    it('should call .removeText() method if text index provided', () => {
+      const spy = jest.spyOn(document, 'removeText');
+      const index = new IndexBuilder()
+        .addBlockIndex(blockIndex)
+        .addDataKey(dataKey)
+        .addTextRange([0, 5])
+        .build();
+
+      document.removeData(index);
+
+      expect(spy)
+        .toHaveBeenCalledWith(blockIndex, dataKey, 0, 5);
+    });
+
+    it('should call .removeBlock() if block index is provided', () => {
+      const spy = jest.spyOn(document, 'removeBlock');
+      const index = new IndexBuilder()
+        .addBlockIndex(blockIndex)
+        .build();
+
+
+      document.removeData(index);
+
+      expect(spy)
+        .toHaveBeenCalledWith(blockIndex);
+    });
+  });
+
   describe('.removeText()', () => {
     let document: EditorDocument;
     const dataKey = 'text' as DataKey;
@@ -788,7 +883,7 @@ describe('EditorDocument', () => {
 
       document = new EditorDocument();
 
-      document.initialize([ blockData ]);
+      document.initialize([blockData]);
 
       block = document.getBlock(0);
     });
@@ -846,7 +941,7 @@ describe('EditorDocument', () => {
 
       document = new EditorDocument();
 
-      document.initialize([ blockData ]);
+      document.initialize([blockData]);
 
       block = document.getBlock(0);
     });
@@ -893,7 +988,7 @@ describe('EditorDocument', () => {
 
       document = new EditorDocument();
 
-      document.initialize([ blockData ]);
+      document.initialize([blockData]);
 
       block = document.getBlock(0);
     });
