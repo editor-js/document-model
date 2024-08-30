@@ -47,13 +47,13 @@ export class InlineToolbar {
 
   /**
    * @param model - editor model instance
-   * @param FormattingAdapter - inline tool adapter instance
+   * @param formattingAdapter - needed for applying format to the model
    * @param tools - tools, that should be attached to adapter
    * @param holder - editor holder element
    */
-  constructor(model: EditorJSModel, FormattingAdapter: FormattingAdapter, tools: ToolsCollection<InlineToolFacade>, holder: HTMLElement) {
+  constructor(model: EditorJSModel, formattingAdapter: FormattingAdapter, tools: ToolsCollection<InlineToolFacade>, holder: HTMLElement) {
     this.#model = model;
-    this.#formattingAdapter = FormattingAdapter;
+    this.#formattingAdapter = formattingAdapter;
     this.#holder = holder;
     this.#tools = tools;
 

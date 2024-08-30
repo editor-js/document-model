@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import CaretIndex from '@/components/CaretIndex.vue';
-import { BlockToolAdapter, CaretAdapter } from '@editorjs/dom-adapters';
+import { BlockToolAdapter, CaretAdapter, FormattingAdapter } from '@editorjs/dom-adapters';
 import { EditorDocument, EditorJSModel, EventType } from '@editorjs/model';
 import Core from '@editorjs/core';
 import { ref, onMounted } from 'vue';
@@ -45,8 +45,9 @@ const caretAdapter = new CaretAdapter(window.document.body, model);
 /**
  * Block Tool Adapter instance will be passed to a Tool constructor by Editor.js core
  */
-const blockToolAdapter = new BlockToolAdapter(model, caretAdapter, 0);
-const anotherBlockToolAdapter = new BlockToolAdapter(model, caretAdapter, 1);
+const formattingAdapter = new FormattingAdapter(model, caretAdapter);
+const blockToolAdapter = new BlockToolAdapter(model, caretAdapter, 0, formattingAdapter);
+const anotherBlockToolAdapter = new BlockToolAdapter(model, caretAdapter, 1, formattingAdapter);
 
 const serialized = ref(model.serialized);
 
@@ -63,7 +64,7 @@ onMounted(() => {
       blocks: [ {
         type: 'paragraph',
         data: {
-          text: 'Hello, World!',
+          text: 'Hello, <b>World</b>!',
         },
       } ],
     },
@@ -85,6 +86,12 @@ onMounted(() => {
     </div>
   </div>
   <div :class="$style.body">
+    <div>
+      <div
+        id="editorjs"
+        :class="$style.editor"
+      />
+    </div>
     <div :class="$style.playground">
       <CaretIndex :model="model" />
       <Input
@@ -128,7 +135,7 @@ onMounted(() => {
 .body {
   padding: 16px;
   display: grid;
-  grid-template-columns: 50% 50%;
+  grid-template-columns: repeat(3, 1fr);
   grid-gap: 16px;
 }
 
