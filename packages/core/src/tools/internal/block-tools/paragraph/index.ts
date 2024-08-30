@@ -52,6 +52,7 @@ export class Paragraph implements BlockTool<ParagraphData, ParagraphConfig> {
 
     wrapper.contentEditable = 'true';
     wrapper.style.outline = 'none';
+    wrapper.style.whiteSpace = 'pre-wrap';
 
     this.#adapter.attachInput('text', wrapper);
 
