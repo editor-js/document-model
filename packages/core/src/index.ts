@@ -103,6 +103,9 @@ export default class Core {
     this.#model.initializeDocument({ blocks });
   }
 
+  /**
+   * Renders Editor`s UI
+   */
   #prepareUI(): void {
     const editorUI = this.#iocContainer.get(EditorUI);
     const toolboxUI = this.#iocContainer.get(ToolboxUI);

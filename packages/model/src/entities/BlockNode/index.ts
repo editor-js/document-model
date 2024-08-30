@@ -174,6 +174,9 @@ export class BlockNode extends EventBus {
     try {
       this.#validateKey(dataKey, ValueNode);
     } catch (_) {
+      /**
+       * In case there is no data key for the value, we need to create a new ValueNode
+       */
       this.#data[dataKey] = this.#createValueNode(dataKey);
     }
 
@@ -193,6 +196,9 @@ export class BlockNode extends EventBus {
     try {
       this.#validateKey(dataKey, TextNode);
     } catch (_) {
+      /**
+       * In case there is no data key for the text, we need to create a new TextNode
+       */
       this.#data[dataKey] = this.#createTextNode(dataKey);
     }
 

@@ -7,12 +7,27 @@ import ToolsManager from '../tools/ToolsManager.js';
 import { BlockAPI, BlockToolData } from '@editorjs/editorjs';
 import { CoreConfigValidated } from '../entities/Config.js';
 
+/**
+ * Parameters for the BlocksManager.insert() method
+ */
 interface InsertBlockParameters {
   // id?: string;
+  /**
+   * Block tool name to insert
+   */
   type?: string;
+  /**
+   * Block's initial data
+   */
   data?: BlockToolData;
+  /**
+   * Index to insert block at
+   */
   index?: number;
   // needToFocus?: boolean;
+  /**
+   * Flag indicates if block at index should be replaced
+   */
   replace?: boolean;
   // tunes?: {[name: string]: BlockTuneData};
 }
@@ -54,7 +69,7 @@ export class BlocksManager {
    * @param editorUI - Editor's UI class instance
    * @param caretAdapter - Caret Adapter instance
    * @param toolsManager - Tools manager instance
-   * @param config
+   * @param config - Editor validated configuration
    */
   constructor(
     model: EditorJSModel,
@@ -72,6 +87,14 @@ export class BlocksManager {
     this.#model.addEventListener(EventType.Changed, event => this.#handleModelUpdate(event));
   }
 
+  /**
+   * Inserts a new block to the editor at the specified index
+   * @param parameters - method paramaters object
+   * @param parameters.type - block tool name to insert
+   * @param parameters.data - block's initial data
+   * @param parameters.index - index to insert block at
+   * @param parameters.replace - flag indicates if block at index should be replaced
+   */
   public insert({
     // id = undefined,
     type = this.#config.defaultBlock,
