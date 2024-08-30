@@ -1,6 +1,9 @@
 import 'reflect-metadata';
 import { Inject, Service } from 'typedi';
 import { CoreConfigValidated } from '../../entities/index.js';
+import { EventBus } from '../../components/EventBus/index.js';
+import { BlockAddedCoreEvent, CoreEventType } from '../../components/EventBus/index.js';
+import { ToolboxRenderedUIEvent } from '../Toolbox/index.js';
 
 /**
  * Editor's main UI renderer for HTML environment
@@ -19,19 +22,48 @@ export class EditorUI {
    */
   #blocks: HTMLElement[] = [];
 
+  #eventBus: EventBus;
+
   /**
    * EditorUI constructor method
    * @param config - EditorJS validated configuration
+   * @param eventBus - EventBus instance to exchange events between components
    */
-  constructor(@Inject('EditorConfig') config: CoreConfigValidated) {
+  constructor(@Inject('EditorConfig') config: CoreConfigValidated, eventBus: EventBus) {
     this.#holder = config.holder;
+    this.#eventBus = eventBus;
+
+    this.#eventBus.addEventListener(`core:${CoreEventType.BlockAdded}`, (event: BlockAddedCoreEvent<HTMLElement>) => {
+      const { ui, index } = event.detail;
+
+      this.#addBlock(ui, index);
+    });
+
+    this.#eventBus.addEventListener(`core:${CoreEventType.BlockRemoved}`, (event: BlockAddedCoreEvent<HTMLElement>) => {
+      const { index } = event.detail;
+
+      this.#removeBlock(index);
+    });
+
+    this.#eventBus.addEventListener(`ui:toolbox:rendered`, (event: ToolboxRenderedUIEvent) => {
+      this.#addToolbox(event.detail.toolbox);
+    });
   }
 
   /**
    * Renders the editor UI
+   * @todo replace with the event handler
    */
   public render(): void {
     // will add UI to holder element
+  }
+
+  /**
+   * Adds toolbox to the editor UI
+   * @param toolboxElement - toolbox HTML element to add to the page
+   */
+  #addToolbox(toolboxElement: HTMLElement): void {
+    this.#holder.appendChild(toolboxElement);
   }
 
   /**
@@ -39,7 +71,7 @@ export class EditorUI {
    * @param blockElement - block HTML element to add to the page
    * @param index - index where to add a block at
    */
-  public addBlock(blockElement: HTMLElement, index: number): void {
+  #addBlock(blockElement: HTMLElement, index: number): void {
     this.#validateIndex(index);
 
     if (index < this.#blocks.length) {
@@ -55,7 +87,7 @@ export class EditorUI {
    * Removes block from the page
    * @param index - index where to remove block at
    */
-  public removeBlock(index: number): void {
+  #removeBlock(index: number): void {
     this.#validateIndex(index);
 
     this.#blocks[index].remove();

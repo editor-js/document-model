@@ -1,5 +1,6 @@
 // Stryker disable all -- we don't count mutation test coverage fot this file as it just proxy calls to EditorDocument
 /* istanbul ignore file -- we don't count test coverage fot this file as it just proxy calls to EditorDocument */
+import type { Index } from './entities/index.js';
 import { type BlockNodeSerialized, EditorDocument } from './entities/index.js';
 import { EventBus, EventType } from './EventBus/index.js';
 import type { ModelEvents, CaretManagerCaretUpdatedEvent, CaretManagerEvents } from './EventBus/index.js';
@@ -186,6 +187,25 @@ export class EditorJSModel extends EventBus {
    */
   public removeBlock(...parameters: Parameters<EditorDocument['removeBlock']>): ReturnType<EditorDocument['removeBlock']> {
     return this.#document.removeBlock(...parameters);
+  }
+
+  /**
+   * Inserts data to the specified index
+   *
+   * @param index - index to insert data
+   * @param data - data to insert
+   */
+  public insertData(index: Index, data: unknown): void {
+    this.#document.insertData(index, data);
+  }
+
+  /**
+   * Removes data from the specified index
+   *
+   * @param index - index to remove data from
+   */
+  public removeData(index: Index): void {
+    this.#document.removeData(index);
   }
 
   /**

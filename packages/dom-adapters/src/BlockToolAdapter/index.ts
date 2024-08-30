@@ -21,7 +21,7 @@ import {
 } from '../utils/index.js';
 import { InputType } from './types/InputType.js';
 import type { BlockToolAdapter as BlockToolAdapterInterface } from '@editorjs/sdk';
-import type { FormattingAdapter } from '../InlineToolsAdapter/index.js';
+import type { FormattingAdapter } from '../FormattingAdapter/index.js';
 
 /**
  * BlockToolAdapter is using inside Block tools to connect browser DOM elements to the model
@@ -88,11 +88,15 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
 
     this.#caretAdapter.attachInput(input, builder.build());
 
-    const fragments = this.#model.getFragments(this.#blockIndex, key);
+    try {
+      const fragments = this.#model.getFragments(this.#blockIndex, key);
 
-    fragments.forEach(fragment => {
-      this.#formattingAdapter.formatElementContent(input, fragment);
-    });
+      fragments.forEach(fragment => {
+        this.#formattingAdapter.formatElementContent(input, fragment);
+      });
+    } catch (_) {
+      // do nothing — TextNode is not created yet as there is no initial data in the model
+    }
   }
 
   /**

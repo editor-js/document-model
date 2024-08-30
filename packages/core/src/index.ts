@@ -7,7 +7,9 @@ import { CaretAdapter, FormattingAdapter } from '@editorjs/dom-adapters';
 import { InlineToolbar } from './ui/InlineToolbar/index.js';
 import type { CoreConfigValidated } from './entities/Config.js';
 import type { CoreConfig } from '@editorjs/sdk';
-import { BlocksManager } from './BlockManager.js';
+import { BlocksManager } from './components/BlockManager.js';
+import { EditorUI } from './ui/Editor/index.js';
+import { ToolboxUI } from './ui/Toolbox/index.js';
 
 /**
  * If no holder is provided via config, the editor will be appended to the element with this id
@@ -71,6 +73,7 @@ export default class Core {
     this.#iocContainer = Container.of(Math.floor(Math.random() * 1e10).toString());
 
     this.validateConfig(config);
+
     this.#config = config as CoreConfigValidated;
 
     this.#iocContainer.set('EditorConfig', this.#config);
@@ -92,6 +95,8 @@ export default class Core {
     this.#inlineToolbar = new InlineToolbar(this.#model, this.#formattingAdapter, this.#toolsManager.inlineTools, this.#config.holder);
     this.#iocContainer.set(InlineToolbar, this.#inlineToolbar);
 
+    this.#prepareUI();
+
     this.#iocContainer.get(BlocksManager);
 
     if (config.onModelUpdate !== undefined) {
@@ -99,8 +104,23 @@ export default class Core {
         config.onModelUpdate?.(this.#model);
       });
     }
+    /**
+     * @todo avait when isReady API is implemented
+     */
+    void this.#toolsManager.prepareTools();
 
     this.#model.initializeDocument({ blocks });
+  }
+
+  /**
+   * Renders Editor`s UI
+   */
+  #prepareUI(): void {
+    const editorUI = this.#iocContainer.get(EditorUI);
+
+    this.#iocContainer.get(ToolboxUI);
+
+    editorUI.render();
   }
 
   /**
@@ -126,6 +146,10 @@ export default class Core {
       if (!Array.isArray(config.data.blocks)) {
         throw new Error('Editor configuration blocks should be an array');
       }
+    }
+
+    if (config.defaultBlock === undefined) {
+      config.defaultBlock = 'paragraph';
     }
   }
 }

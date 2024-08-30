@@ -2,12 +2,12 @@ import { type BlockToolFacade } from './BlockToolFacade.js';
 import { type InlineToolFacade } from './InlineToolFacade.js';
 import { type BlockTuneFacade } from './BlockTuneFacade.js';
 
-export type ToolClass = BlockToolFacade | InlineToolFacade | BlockTuneFacade;
+export type ToolFacadeClass = BlockToolFacade | InlineToolFacade | BlockTuneFacade;
 
 /**
  * Class to store Editor Tools
  */
-export class ToolsCollection<V extends ToolClass = ToolClass> extends Map<string, V> {
+export class ToolsCollection<V extends ToolFacadeClass = ToolFacadeClass> extends Map<string, V> {
   /**
    * Returns Block Tools collection
    */
