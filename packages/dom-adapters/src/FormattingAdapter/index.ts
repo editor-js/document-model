@@ -12,7 +12,7 @@ import {
 } from '@editorjs/model';
 import type { CaretAdapter } from '../CaretAdapter/index.js';
 import { FormattingAction } from '@editorjs/model';
-import type { InlineTool, InlineToolFormatData, ActionsElementWithOptions } from '@editorjs/sdk';
+import type { InlineTool } from '@editorjs/sdk';
 import { surround } from '../utils/surround.js';
 
 /**
