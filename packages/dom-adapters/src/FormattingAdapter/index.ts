@@ -156,7 +156,7 @@ export class FormattingAdapter {
    * @param callback - callback function that should be triggered, when data completely formed
    * @returns {ActionsElementWithOptions | null} rendered data form element with options required in toolbar or null if no data required
    */
-  public formatData(toolName: InlineToolName, callback: (data: InlineToolFormatData) => void): ActionsElementWithOptions | null {
+  public renderToolActions(toolName: InlineToolName, callback: (data: InlineToolFormatData) => void): ActionsElementWithOptions {
     const currentTool = this.#tools.get(toolName);
 
     if (currentTool === undefined) {
@@ -166,16 +166,11 @@ export class FormattingAdapter {
     /**
      * If renderActions method specified, render element and return it
      */
-    if (currentTool.renderActions !== undefined) {
-      return currentTool.renderActions(callback);
+    if (currentTool.renderActions === undefined) {
+      throw new Error(`FormattingAdapter: render actions method is not specified in tool ${toolName}`);
     }
-    /**
-     * If renderActions method is not specidied, then no data required for the tool
-     * Trigger callback
-     */
-    callback(createInlineToolData({}));
 
-    return null;
+    return currentTool.renderActions(callback);
   }
 
   /**

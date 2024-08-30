@@ -84,7 +84,7 @@ export interface InlineTool extends Omit<InlineToolVersion2, 'save' | 'checkStat
    * Create element for toolbar, which will form data required for inline tool
    * @param callback - callback function that should be triggered, when data is formed, to apply format to model
    */
-  renderActions?(callback: (data: InlineToolFormatData) => void): ActionsElementWithOptions | null;
+  renderActions?(callback: (data: InlineToolFormatData) => void): ActionsElementWithOptions;
 }
 
 /**

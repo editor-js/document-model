@@ -132,14 +132,28 @@ export class InlineToolbar {
 
     this.#toolbar = make('div');
 
-    Array.from(this.#tools.keys()).forEach((toolName) => {
+    this.#tools.forEach((tool, toolName) => {
       const inlineElementButton = make('button');
 
       inlineElementButton.innerHTML = toolName;
 
-      inlineElementButton.addEventListener('click', (_event) => {
-        this.renderToolActions(createInlineToolName(toolName));
-      });
+      console.log(tool, tool.hasActions);
+
+      /**
+       * If tool has actions, then on click of the element button we should render actions element
+       * If tool has no action, then on click of the element button we should apply format
+       */
+      if (tool.hasActions) {
+        inlineElementButton.addEventListener('click', (_event) => {
+          console.log('clicked');
+          this.renderToolActions(createInlineToolName(toolName));
+        });
+      } else {
+        inlineElementButton.addEventListener('click', (_event) => {
+          this.apply(createInlineToolName(toolName), createInlineToolData({}));
+        });
+      }
+
       if (this.#toolbar !== undefined) {
         this.#toolbar.appendChild(inlineElementButton);
       }
@@ -162,17 +176,9 @@ export class InlineToolbar {
    * @param nameOfTheTool - name of the inline tool, whose format would be applied
    */
   public renderToolActions(nameOfTheTool: InlineToolName): void {
-    const elementWithOptions = this.#formattingAdapter.formatData(nameOfTheTool, (data: InlineToolFormatData): void => {
+    const elementWithOptions = this.#formattingAdapter.renderToolActions(nameOfTheTool, (data: InlineToolFormatData): void => {
       this.apply(nameOfTheTool, data);
     });
-
-    /**
-     * Do not render actions if element with options is null
-     * It means, that tool does not need any data, and callback will be triggered in adapter
-     */
-    if (elementWithOptions === null) {
-      return;
-    }
 
     this.#actionsElement = elementWithOptions.element;
 
