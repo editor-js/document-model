@@ -2,6 +2,8 @@ import type { EditorDocument } from '../EditorDocument';
 import type { BlockTuneName, BlockTuneSerialized } from '../BlockTune';
 import { BlockTune, createBlockTuneName } from '../BlockTune/index.js';
 import { IndexBuilder } from '../Index/IndexBuilder.js';
+import { InvalidNodeTypeError } from "./errors/InvalidNodeTypeError.js";
+import { NonExistingKeyError } from "./errors/NonExistingKeyError.js";
 import type {
   BlockNodeConstructorParameters,
   BlockNodeData,
@@ -67,11 +69,11 @@ export class BlockNode extends EventBus {
    * @param [args.tunes] - The BlockTunes associated with the BlockNode.
    */
   constructor({
-    name,
-    data = {},
-    parent,
-    tunes = {},
-  }: BlockNodeConstructorParameters) {
+                name,
+                data = {},
+                parent,
+                tunes = {},
+              }: BlockNodeConstructorParameters) {
     super();
 
     this.#name = createBlockToolName(name);
@@ -159,7 +161,7 @@ export class BlockNode extends EventBus {
    */
   public updateTuneData(tuneName: BlockTuneName, data: Record<string, unknown>): void {
     Object.entries(data)
-      .forEach(([key, value]) => {
+      .forEach(([ key, value ]) => {
         this.#tunes[tuneName].update(key, value);
       });
   }
@@ -173,7 +175,11 @@ export class BlockNode extends EventBus {
   public updateValue<T = unknown>(dataKey: DataKey, value: T): void {
     try {
       this.#validateKey(dataKey, ValueNode);
-    } catch (_) {
+    } catch (error) {
+      if (!(error instanceof NonExistingKeyError)) {
+        throw error;
+      }
+
       /**
        * In case there is no data key for the value, we need to create a new ValueNode
        */
@@ -195,7 +201,11 @@ export class BlockNode extends EventBus {
   public insertText(dataKey: DataKey, text: string, start?: number): void {
     try {
       this.#validateKey(dataKey, TextNode);
-    } catch (_) {
+    } catch (error) {
+      if (!(error instanceof NonExistingKeyError)) {
+        throw error;
+      }
+
       /**
        * In case there is no data key for the text, we need to create a new TextNode
        */
@@ -322,7 +332,14 @@ export class BlockNode extends EventBus {
     this.#data = mapObject(data, mapSerializedToNodes);
   }
 
-  #createTextNode(key: DataKey, value?: TextNodeSerialized) {
+  /**
+   * Creates new text node with passed key and initial value
+   *
+   * @param key - DataKey for the new text node
+   * @param value - initial value for the new text node
+   * @private
+   */
+  #createTextNode(key: DataKey, value?: TextNodeSerialized): TextNode {
     const node = new TextNode(value);
 
     this.#listenAndBubbleTextNodeEvent(node, key);
@@ -330,7 +347,14 @@ export class BlockNode extends EventBus {
     return node;
   }
 
-  #createValueNode(key: DataKey, value?: BlockNodeDataSerializedValue) {
+  /**
+   * Creates new value node with passed key and initial value
+   *
+   * @param key - DataKey for the new value node
+   * @param value - initial value for the new value node
+   * @private
+   */
+  #createValueNode(key: DataKey, value?: BlockNodeDataSerializedValue): ValueNode {
     const node = new ValueNode({ value });
 
     this.#listenAndBubbleValueNodeEvent(node, key);
@@ -347,11 +371,11 @@ export class BlockNode extends EventBus {
    */
   #validateKey(key: DataKey, Node?: typeof ValueNode | typeof TextNode): void {
     if (!has(this.#data, key as string)) {
-      throw new Error(`BlockNode: data with key "${key}" does not exist`);
+      throw new NonExistingKeyError(key);
     }
 
     if (Node && !(get(this.#data, key as string) instanceof Node)) {
-      throw new Error(`BlockNode: data with key "${key}" is not a ${Node.name}`);
+      throw new InvalidNodeTypeError(key, Node.name);
     }
   }
 
