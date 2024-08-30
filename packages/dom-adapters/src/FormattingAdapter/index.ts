@@ -101,17 +101,21 @@ export class FormattingAdapter {
 
     const [start, end] = index;
 
-    /**
-     * Create range with positions specified in index
-     */
-    const range = document.createRange();
+    try {
+      /**
+       * Create range with positions specified in index
+       */
+      const range = document.createRange();
 
-    range.setStart(input, start);
-    range.setEnd(input, end);
+      range.setStart(input, start);
+      range.setEnd(input, end);
 
-    const inlineElement = tool.createWrapper(toolData);
+      const inlineElement = tool.createWrapper(toolData);
 
-    surround(range, inlineElement);
+      surround(range, inlineElement);
+    } catch (e) {
+      console.error('Error while formatting element content', e);
+    }
   }
 
   /**

@@ -1,4 +1,4 @@
-import { EditorJSModel } from '@editorjs/model';
+import { EditorJSModel, EventType } from '@editorjs/model';
 import type { ContainerInstance } from 'typedi';
 import { Container } from 'typedi';
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
@@ -85,17 +85,23 @@ export default class Core {
     this.#formattingAdapter = new FormattingAdapter(this.#model, this.#caretAdapter);
     this.#iocContainer.set(FormattingAdapter, this.#formattingAdapter);
     this.#iocContainer.get(SelectionManager);
+    this.#iocContainer.get(BlocksManager);
+
+    if (config.onModelUpdate !== undefined) {
+      this.#model.addEventListener(EventType.Changed, () => {
+        config.onModelUpdate?.(this.#model);
+      });
+    }
 
     this.#prepareUI();
 
-    this.#iocContainer.get(BlocksManager);
-
-    /**
-     * @todo avait when isReady API is implemented
-     */
-    void this.#toolsManager.prepareTools();
-
-    this.#model.initializeDocument({ blocks });
+    this.#toolsManager.prepareTools()
+      .then(() => {
+        this.#model.initializeDocument({ blocks });
+      })
+      .catch((error) => {
+        console.error('Editor.js initialization failed', error);
+      });
   }
 
   /**

@@ -239,6 +239,18 @@ export class EditorDocument extends EventBus {
   }
 
   /**
+   * Returns text for the specified block and data key
+   *
+   * @param blockIndex - index of the block
+   * @param dataKey - key of the data containing the text
+   */
+  public getText(blockIndex: number, dataKey: DataKey): string {
+    this.#checkIndexOutOfBounds(blockIndex, this.length - 1);
+
+    return this.#children[blockIndex].getText(dataKey);
+  }
+
+  /**
    * Inserts text to the specified block
    *
    * @param blockIndex - index of the block

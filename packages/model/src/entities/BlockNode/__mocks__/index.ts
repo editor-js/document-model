@@ -21,6 +21,13 @@ export class BlockNode extends EventBus {
   /**
    * Mock method
    */
+  public getText(): string {
+    return 'mocked text';
+  }
+
+  /**
+   * Mock method
+   */
   public insertText(): void {
     return;
   }

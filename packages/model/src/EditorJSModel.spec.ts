@@ -17,6 +17,7 @@ describe('EditorJSModel', () => {
       'updateValue',
       'removeBlock',
       'moveBlock',
+      'getText',
       'insertText',
       'removeText',
       'format',
@@ -25,6 +26,7 @@ describe('EditorJSModel', () => {
       'createCaret',
       'updateCaret',
       'removeCaret',
+      'devModeGetDocument',
     ];
     const ownProperties = Object.getOwnPropertyNames(EditorJSModel.prototype);
 
