@@ -1,11 +1,11 @@
 import { BlockAddedEvent, BlockRemovedEvent, EditorJSModel, EventType, ModelEvents } from '@editorjs/model';
 import 'reflect-metadata';
 import { Inject, Service } from 'typedi';
-import { EditorUI } from '../ui/Editor/index.js';
 import { BlockToolAdapter, CaretAdapter, FormattingAdapter } from '@editorjs/dom-adapters';
 import ToolsManager from '../tools/ToolsManager.js';
 import { BlockAPI, BlockToolData } from '@editorjs/editorjs';
 import { CoreConfigValidated } from '../entities/Config.js';
+import { BlockAddedCoreEvent, BlockRemovedCoreEvent, EventBus } from './EventBus/index.js';
 
 /**
  * Parameters for the BlocksManager.insert() method
@@ -45,9 +45,9 @@ export class BlocksManager {
   #model: EditorJSModel;
 
   /**
-   * Editor's UI class instance to add and remove blocks to the UI
+   * Editor's EventBus instance to exchange events between components
    */
-  #editorUI: EditorUI;
+  #eventBus: EventBus;
 
   /**
    * Caret Adapter instance
@@ -74,7 +74,7 @@ export class BlocksManager {
    * BlocksManager constructor
    * All parameters are injected thorugh the IoC container
    * @param model - Editor's Document Model instance
-   * @param editorUI - Editor's UI class instance
+   * @param eventBus - Editor's EventBus instance
    * @param caretAdapter - Caret Adapter instance
    * @param toolsManager - Tools manager instance
    * @param formattingAdapter - will be passed to BlockToolAdapter for rendering inputs` formatted text
@@ -82,14 +82,14 @@ export class BlocksManager {
    */
   constructor(
     model: EditorJSModel,
-    editorUI: EditorUI,
+    eventBus: EventBus,
     caretAdapter: CaretAdapter,
     toolsManager: ToolsManager,
     formattingAdapter: FormattingAdapter,
     @Inject('EditorConfig') config: CoreConfigValidated
   ) {
     this.#model = model;
-    this.#editorUI = editorUI;
+    this.#eventBus = eventBus;
     this.#caretAdapter = caretAdapter;
     this.#toolsManager = toolsManager;
     this.#formattingAdapter = formattingAdapter;
@@ -177,7 +177,12 @@ export class BlocksManager {
     try {
       const blockElement = await block.render();
 
-      this.#editorUI.addBlock(blockElement, index.blockIndex);
+      this.#eventBus.dispatchEvent(new BlockAddedCoreEvent({
+        tool: tool.name,
+        data: data.data,
+        ui: blockElement,
+        index: index.blockIndex,
+      }));
     } catch (error) {
       console.error(`[BlockManager] Block Tool ${data.name} failed to render`, error);
     }
@@ -189,12 +194,15 @@ export class BlocksManager {
    * @param event - BlockRemovedEvent
    */
   #handleBlockRemovedEvent(event: BlockRemovedEvent): void {
-    const { index } = event.detail;
+    const { data, index } = event.detail;
 
     if (index.blockIndex === undefined) {
       throw new Error('Block index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
     }
 
-    this.#editorUI.removeBlock(index.blockIndex);
+    this.#eventBus.dispatchEvent(new BlockRemovedCoreEvent({
+      tool: data.name,
+      index: index.blockIndex,
+    }));
   }
 }
