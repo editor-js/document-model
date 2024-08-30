@@ -2,6 +2,8 @@ import type { EditorDocument } from '../EditorDocument';
 import type { BlockTuneName, BlockTuneSerialized } from '../BlockTune';
 import { BlockTune, createBlockTuneName } from '../BlockTune/index.js';
 import { IndexBuilder } from '../Index/IndexBuilder.js';
+import { InvalidNodeTypeError } from './errors/InvalidNodeTypeError.js';
+import { NonExistingKeyError } from './errors/NonExistingKeyError.js';
 import type {
   BlockNodeConstructorParameters,
   BlockNodeData,
@@ -171,7 +173,18 @@ export class BlockNode extends EventBus {
    * @param value - The new value of the ValueNode
    */
   public updateValue<T = unknown>(dataKey: DataKey, value: T): void {
-    this.#validateKey(dataKey, ValueNode);
+    try {
+      this.#validateKey(dataKey, ValueNode);
+    } catch (error) {
+      if (!(error instanceof NonExistingKeyError)) {
+        throw error;
+      }
+
+      /**
+       * In case there is no data key for the value, we need to create a new ValueNode
+       */
+      this.#data[dataKey] = this.#createValueNode(dataKey);
+    }
 
     const node = get(this.#data, dataKey as string) as ValueNode<T>;
 
@@ -186,7 +199,18 @@ export class BlockNode extends EventBus {
    * @param [start] - char index where to insert text
    */
   public insertText(dataKey: DataKey, text: string, start?: number): void {
-    this.#validateKey(dataKey, TextNode);
+    try {
+      this.#validateKey(dataKey, TextNode);
+    } catch (error) {
+      if (!(error instanceof NonExistingKeyError)) {
+        throw error;
+      }
+
+      /**
+       * In case there is no data key for the text, we need to create a new TextNode
+       */
+      this.#data[dataKey] = this.#createTextNode(dataKey);
+    }
 
     const node = get(this.#data, dataKey as string) as TextNode;
 
@@ -287,18 +311,10 @@ export class BlockNode extends EventBus {
         if (NODE_TYPE_HIDDEN_PROP in value) {
           switch (value[NODE_TYPE_HIDDEN_PROP]) {
             case BlockChildType.Value: {
-              const node = new ValueNode({ value });
-
-              this.#listenAndBubbleValueNodeEvent(node, key as DataKey);
-
-              return node;
+              return this.#createValueNode(createDataKey(key), value);
             }
             case BlockChildType.Text: {
-              const node = new TextNode(value as TextNodeSerialized);
-
-              this.#listenAndBubbleTextNodeEvent(node, key as DataKey);
-
-              return node;
+              return this.#createTextNode(createDataKey(key), value as TextNodeSerialized);
             }
           }
         }
@@ -317,6 +333,36 @@ export class BlockNode extends EventBus {
   }
 
   /**
+   * Creates new text node with passed key and initial value
+   *
+   * @param key - DataKey for the new text node
+   * @param value - initial value for the new text node
+   * @private
+   */
+  #createTextNode(key: DataKey, value?: TextNodeSerialized): TextNode {
+    const node = new TextNode(value);
+
+    this.#listenAndBubbleTextNodeEvent(node, key);
+
+    return node;
+  }
+
+  /**
+   * Creates new value node with passed key and initial value
+   *
+   * @param key - DataKey for the new value node
+   * @param value - initial value for the new value node
+   * @private
+   */
+  #createValueNode(key: DataKey, value?: BlockNodeDataSerializedValue): ValueNode {
+    const node = new ValueNode({ value });
+
+    this.#listenAndBubbleValueNodeEvent(node, key);
+
+    return node;
+  };
+
+  /**
    * Validates data key and node type
    *
    * @param key - key to validate
@@ -325,11 +371,11 @@ export class BlockNode extends EventBus {
    */
   #validateKey(key: DataKey, Node?: typeof ValueNode | typeof TextNode): void {
     if (!has(this.#data, key as string)) {
-      throw new Error(`BlockNode: data with key "${key}" does not exist`);
+      throw new NonExistingKeyError(key);
     }
 
     if (Node && !(get(this.#data, key as string) instanceof Node)) {
-      throw new Error(`BlockNode: data with key "${key}" is not a ${Node.name}`);
+      throw new InvalidNodeTypeError(key, Node.name);
     }
   }
 

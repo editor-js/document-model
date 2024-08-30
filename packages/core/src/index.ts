@@ -7,7 +7,10 @@ import { CaretAdapter, FormattingAdapter } from '@editorjs/dom-adapters';
 import { InlineToolbar } from './ui/InlineToolbar/index.js';
 import type { CoreConfigValidated } from './entities/Config.js';
 import type { CoreConfig } from '@editorjs/sdk';
-import { BlocksManager } from './BlockManager.js';
+import { BlocksManager } from './components/BlockManager.js';
+import { EditorUI } from './ui/Editor/index.js';
+import { ToolboxUI } from './ui/Toolbox/index.js';
+import { Toolbox } from './components/Toolbox.js';
 
 /**
  * If no holder is provided via config, the editor will be appended to the element with this id
@@ -94,9 +97,24 @@ export default class Core {
     this.#inlineToolbar = new InlineToolbar(this.#model, this.#formattingAdapter, this.#toolsManager.inlineTools, this.#config.holder);
     this.#iocContainer.set(InlineToolbar, this.#inlineToolbar);
 
+    this.#prepareUI();
+
     this.#iocContainer.get(BlocksManager);
+    this.#iocContainer.get(Toolbox);
 
     this.#model.initializeDocument({ blocks });
+  }
+
+  /**
+   * Renders Editor`s UI
+   */
+  #prepareUI(): void {
+    const editorUI = this.#iocContainer.get(EditorUI);
+    const toolboxUI = this.#iocContainer.get(ToolboxUI);
+
+    editorUI.render();
+
+    editorUI.addToolbox(toolboxUI.render());
   }
 
   /**
@@ -122,6 +140,10 @@ export default class Core {
       if (!Array.isArray(config.data.blocks)) {
         throw new Error('Editor configuration blocks should be an array');
       }
+    }
+
+    if (config.defaultBlock === undefined) {
+      config.defaultBlock = 'paragraph';
     }
   }
 }
