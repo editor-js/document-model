@@ -192,6 +192,19 @@ export class BlockNode extends EventBus {
   }
 
   /**
+   * Returns a text value of the specified text node
+   *
+   * @param dataKey - key of the data
+   */
+  public getText(dataKey: DataKey): string {
+    this.#validateKey(dataKey, TextNode);
+
+    const node = get(this.#data, dataKey as string) as TextNode;
+
+    return node.serialized.value;
+  }
+
+  /**
    * Inserts text to the specified text node by index, by default appends text to the end of the current value
    *
    * @param dataKey - key of the data

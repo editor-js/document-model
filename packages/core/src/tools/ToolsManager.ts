@@ -121,6 +121,8 @@ export default class ToolsManager {
    * @returns Promise<void>
    */
   public async prepareTools(): Promise<void> {
+    console.log('prepare start');
+
     const promiseQueue = new PromiseQueue();
 
     const setToAvailableToolsCollection = (toolName: string, tool: ToolFacadeClass): void => {
@@ -181,6 +183,8 @@ export default class ToolsManager {
     });
 
     await promiseQueue.completed;
+
+    console.log('prepare end');
   }
 
   /**

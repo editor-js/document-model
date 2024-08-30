@@ -101,17 +101,27 @@ export class FormattingAdapter {
 
     const [start, end] = index;
 
-    /**
-     * Create range with positions specified in index
-     */
-    const range = document.createRange();
+    try {
+      /**
+       * Create range with positions specified in index
+       */
+      const range = document.createRange();
 
-    range.setStart(input, start);
-    range.setEnd(input, end);
+      const inputTextNode = input.firstChild;
 
-    const inlineElement = tool.createWrapper(toolData);
+      if (inputTextNode === null) {
+        throw new Error('FormattingAdapter: input element should contain text node');
+      }
 
-    surround(range, inlineElement);
+      range.setStart(inputTextNode, start);
+      range.setEnd(inputTextNode, end);
+
+      const inlineElement = tool.createWrapper(toolData);
+
+      surround(range, inlineElement);
+    } catch (e) {
+      console.error('Error while formatting element content', e);
+    }
   }
 
   /**

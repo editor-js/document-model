@@ -62,8 +62,10 @@ export default class Core {
    * Inline toolbar is responsible for handling selection changes
    * When model selection changes, it determines, whenever to show toolbar element,
    * Which calls apply format method of the adapter
+   *
+   * null when inline toolbar is not initialized
    */
-  #inlineToolbar: InlineToolbar;
+  #inlineToolbar: InlineToolbar | null = null;
 
   /**
    * @param config - Editor configuration
@@ -92,11 +94,6 @@ export default class Core {
     this.#formattingAdapter = new FormattingAdapter(this.#model, this.#caretAdapter);
     this.#iocContainer.set(FormattingAdapter, this.#formattingAdapter);
 
-    this.#inlineToolbar = new InlineToolbar(this.#model, this.#formattingAdapter, this.#toolsManager.inlineTools, this.#config.holder);
-    this.#iocContainer.set(InlineToolbar, this.#inlineToolbar);
-
-    this.#prepareUI();
-
     this.#iocContainer.get(BlocksManager);
 
     if (config.onModelUpdate !== undefined) {
@@ -104,12 +101,19 @@ export default class Core {
         config.onModelUpdate?.(this.#model);
       });
     }
-    /**
-     * @todo avait when isReady API is implemented
-     */
-    void this.#toolsManager.prepareTools();
 
-    this.#model.initializeDocument({ blocks });
+    this.#toolsManager.prepareTools()
+      .then(() => {
+        this.#inlineToolbar = new InlineToolbar(this.#model, this.#formattingAdapter, this.#toolsManager.inlineTools, this.#config.holder);
+        this.#iocContainer.set(InlineToolbar, this.#inlineToolbar);
+
+        this.#prepareUI();
+
+        this.#model.initializeDocument({ blocks });
+      })
+      .catch((error) => {
+        console.error('Editor.js initialization failed', error);
+      });
   }
 
   /**

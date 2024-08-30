@@ -89,7 +89,10 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     this.#caretAdapter.attachInput(input, builder.build());
 
     try {
+      const value = this.#model.getText(this.#blockIndex, key);
       const fragments = this.#model.getFragments(this.#blockIndex, key);
+
+      input.textContent = value;
 
       fragments.forEach(fragment => {
         this.#formattingAdapter.formatElementContent(input, fragment);

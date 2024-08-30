@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import CaretIndex from '@/components/CaretIndex.vue';
-
-import { EditorDocument, EditorJSModel, EventType } from '@editorjs/model';
+// import CaretIndex from '@/components/CaretIndex.vue';
+import { EditorDocument, EditorJSModel } from '@editorjs/model';
 import Core from '@editorjs/core';
 import { ref, onMounted } from 'vue';
 import { Node } from './components';
@@ -16,6 +15,10 @@ const editorDocument = ref<EditorDocument | null>(null);
  */
 const serialized = ref<EditorDocument['serialized'] | null>(null);
 
+
+/**
+ * @todo display caret index somewhere
+ */
 
 onMounted(() => {
   new Core({
@@ -48,12 +51,12 @@ onMounted(() => {
       >
       Editor.js Document Playground
     </div>
-  
+
     <div :class="$style.body">
       <div>
-          <h2 :class="$style.sectionHeading">
-            Editor
-          </h2>
+        <h2 :class="$style.sectionHeading">
+          Editor
+        </h2>
         <div
           id="editorjs"
           :class="$style.editor"
@@ -61,7 +64,7 @@ onMounted(() => {
       </div>
       <div :class="$style.playground">
         <h2 :class="$style.sectionHeading">
-            Model Serialized
+          Model Serialized
         </h2>
         <!-- <CaretIndex :model="model" /> -->
         <pre v-if="serialized">{{ serialized }}</pre>
@@ -76,7 +79,7 @@ onMounted(() => {
         />
       </div>
     </div>
-</div>
+  </div>
 </template>
 
 <style module>
