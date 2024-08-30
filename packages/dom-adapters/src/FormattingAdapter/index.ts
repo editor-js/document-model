@@ -13,7 +13,7 @@ import {
 } from '@editorjs/model';
 import type { CaretAdapter } from '../CaretAdapter/index.js';
 import { FormattingAction } from '@editorjs/model';
-import type { InlineTool, InlineToolFormatData, DataFormElementWithOptions } from '@editorjs/sdk';
+import type { InlineTool, InlineToolFormatData, ActionsElementWithOptions } from '@editorjs/sdk';
 
 /**
  * Class handles on format model events and renders inline tools
@@ -154,9 +154,9 @@ export class FormattingAdapter {
    *
    * @param toolName - name of the tool to check if data is required
    * @param callback - callback function that should be triggered, when data completely formed
-   * @returns {DataFormElementWithOptions | null} rendered data form element with options required in toolbar or null if no data required
+   * @returns {ActionsElementWithOptions | null} rendered data form element with options required in toolbar or null if no data required
    */
-  public formatData(toolName: InlineToolName, callback: (data: InlineToolFormatData) => void): DataFormElementWithOptions | null {
+  public formatData(toolName: InlineToolName, callback: (data: InlineToolFormatData) => void): ActionsElementWithOptions | null {
     const currentTool = this.#tools.get(toolName);
 
     if (currentTool === undefined) {

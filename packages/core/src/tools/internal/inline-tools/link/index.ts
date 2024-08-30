@@ -1,4 +1,4 @@
-import type { DataFormElementWithOptions, FormattingActionWithRange, InlineTool, InlineToolFormatData } from '@editorjs/sdk';
+import type { ActionsElementWithOptions, FormattingActionWithRange, InlineTool, InlineToolFormatData } from '@editorjs/sdk';
 import type { InlineFragment, TextRange } from '@editorjs/model';
 import { FormattingAction } from '@editorjs/model';
 import { IntersectType } from '@editorjs/model';
@@ -82,7 +82,7 @@ export default class LinkInlineTool implements InlineTool {
    * @param callback function that should be triggered, when data completely formed
    * @returns rendered data form element with options required in toolbar
    */
-  public renderActions(callback: (data: InlineToolFormatData) => void): DataFormElementWithOptions | null {
+  public renderActions(callback: (data: InlineToolFormatData) => void): ActionsElementWithOptions | null {
     const dataFormerElement = make('input') as HTMLInputElement;
 
     dataFormerElement.addEventListener('keydown', (event: KeyboardEvent) => {

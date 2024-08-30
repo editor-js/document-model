@@ -39,7 +39,11 @@ export class InlineToolbar {
    */
   #toolbar: HTMLElement | undefined = undefined;
 
-  #dataFormElement: HTMLElement | undefined = undefined;
+  /**
+   * Actions of the current tool html element rendered inside of the toolbar element
+   */
+  #actionsElement: HTMLElement | undefined = undefined;
+
   /**
    * Holder element of the editor
    */
@@ -170,13 +174,13 @@ export class InlineToolbar {
       return;
     }
 
-    this.#dataFormElement = elementWithOptions.element;
+    this.#actionsElement = elementWithOptions.element;
 
     if (this.#toolbar === undefined) {
       throw new Error('InlineToolbar: can not show tool actions without toolbar');
     }
 
-    this.#holder.appendChild(this.#dataFormElement);
+    this.#holder.appendChild(this.#actionsElement);
   };
 
   /**
@@ -185,7 +189,7 @@ export class InlineToolbar {
    * @param formatData - formed data required in the inline tool
    */
   public apply(toolName: InlineToolName, formatData: InlineToolFormatData): void {
-    this.#dataFormElement?.remove();
+    this.#actionsElement?.remove();
 
     this.#formattingAdapter.applyFormat(toolName, createInlineToolData(formatData));
   }

@@ -36,7 +36,7 @@ export interface ToolbarOptions {
  * Interface that represents return type of the renderActions function of the tool
  * Contains rendered by tool renderActions with options for toolbar
  */
-export interface DataFormElementWithOptions {
+export interface ActionsElementWithOptions {
   /**
    * HTML element rendered by tool for data forming
    */
@@ -84,7 +84,7 @@ export interface InlineTool extends Omit<InlineToolVersion2, 'save' | 'checkStat
    * Create element for toolbar, which will form data required for inline tool
    * @param callback - callback function that should be triggered, when data is formed, to apply format to model
    */
-  renderActions?(callback: (data: InlineToolFormatData) => void): DataFormElementWithOptions | null;
+  renderActions?(callback: (data: InlineToolFormatData) => void): ActionsElementWithOptions | null;
 }
 
 /**
