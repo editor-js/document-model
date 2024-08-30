@@ -4,6 +4,7 @@ import { Inject, Service } from 'typedi';
 import {
   BlockToolFacade, BlockTuneFacade,
   InlineToolFacade,
+  ToolFacadeClass,
   ToolsCollection,
   ToolsFactory
 } from './facades/index.js';
@@ -17,6 +18,7 @@ import BoldInlineTool from './internal/inline-tools/bold/index.js';
 import ItalicInlineTool from './internal/inline-tools/italic/index.js';
 import { BlockToolConstructor, InlineTool, InlineToolConstructor } from '@editorjs/sdk';
 import { UnifiedToolConfig } from '../entities/index.js';
+import { EventBus, ToolLoadedCoreEvent } from '../components/EventBus/index.js';
 
 /**
  * Works with tools
@@ -34,6 +36,11 @@ export default class ToolsManager {
    * Unified config with internal and internal tools
    */
   #config: UnifiedToolConfig;
+
+  /**
+   * EventBus instance to exchange events between components
+   */
+  #eventBus: EventBus;
 
   /**
    * Tools available for use
@@ -91,15 +98,18 @@ export default class ToolsManager {
   /**
    * @param editorConfig - EditorConfig object
    * @param editorConfig.tools - Tools configuration passed by user
+   * @param eventBus - EventBus instance to exchange events between components
    */
-  constructor(@Inject('EditorConfig') editorConfig: EditorConfig) {
+  constructor(
+    @Inject('EditorConfig') editorConfig: EditorConfig,
+      eventBus: EventBus
+  ) {
     this.#config = this.#prepareConfig(editorConfig.tools ?? {});
+    this.#eventBus = eventBus;
 
     this.#validateTools();
 
     this.#factory = new ToolsFactory(this.#config, editorConfig, {});
-
-    void this.prepareTools();
   }
 
   /**
@@ -108,6 +118,14 @@ export default class ToolsManager {
    */
   public async prepareTools(): Promise<void> {
     const promiseQueue = new PromiseQueue();
+
+    const setToAvailableToolsCollection = (toolName: string, tool: ToolFacadeClass): void => {
+      this.#availableTools.set(toolName, tool);
+
+      this.#eventBus.dispatchEvent(new ToolLoadedCoreEvent({
+        tool,
+      }));
+    };
 
     Object.entries(this.#config).forEach(([toolName, config]) => {
       if (isFunction(config.class.prepare)) {
@@ -146,7 +164,7 @@ export default class ToolsManager {
               }
             }
 
-            this.#availableTools.set(toolName, tool);
+            setToAvailableToolsCollection(toolName, tool);
           } catch (e) {
             console.error(`Tool ${toolName} failed to prepare`, e);
 
@@ -154,7 +172,7 @@ export default class ToolsManager {
           }
         });
       } else {
-        this.#availableTools.set(toolName, this.#factory.get(toolName));
+        setToAvailableToolsCollection(toolName, this.#factory.get(toolName));
       }
     });
 

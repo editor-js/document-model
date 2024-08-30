@@ -10,7 +10,6 @@ import type { CoreConfig } from '@editorjs/sdk';
 import { BlocksManager } from './components/BlockManager.js';
 import { EditorUI } from './ui/Editor/index.js';
 import { ToolboxUI } from './ui/Toolbox/index.js';
-import { Toolbox } from './components/Toolbox.js';
 
 /**
  * If no holder is provided via config, the editor will be appended to the element with this id
@@ -98,7 +97,11 @@ export default class Core {
     this.#prepareUI();
 
     this.#iocContainer.get(BlocksManager);
-    this.#iocContainer.get(Toolbox);
+
+    /**
+     * @todo avait when isReady API is implemented
+     */
+    void this.#toolsManager.prepareTools();
 
     this.#model.initializeDocument({ blocks });
   }
@@ -108,11 +111,10 @@ export default class Core {
    */
   #prepareUI(): void {
     const editorUI = this.#iocContainer.get(EditorUI);
-    const toolboxUI = this.#iocContainer.get(ToolboxUI);
+
+    this.#iocContainer.get(ToolboxUI);
 
     editorUI.render();
-
-    editorUI.addToolbox(toolboxUI.render());
   }
 
   /**
