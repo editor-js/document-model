@@ -57,10 +57,10 @@ export class Operation {
     this.data = data;
   }
 
-   /**
+  /**
    * Makes an inverse operation
    */
-   public inverse(): Operation {
+  public inverse(): Operation {
     const index = this.index;
 
     switch (this.type) {
@@ -96,6 +96,11 @@ export class Operation {
     }
   }
 
+  /**
+   * Transforms the operation against another operation
+   *
+   * @param againstOp - operation to transform against
+   */
   public transform(againstOp: Operation): Operation {
     if (!this.index.isTextIndex || !againstOp.index.isTextIndex) {
       throw new Error('Unsupported index');
@@ -158,8 +163,9 @@ export class Operation {
   }
 
   /**
+   * Shifts the operation by the given shift value (by adjusting the text range)
    *
-   * @param shift
+   * @param shift - shift value
    */
   private shiftOperation(shift: number): Operation {
     if (!this.index.isTextIndex) {
