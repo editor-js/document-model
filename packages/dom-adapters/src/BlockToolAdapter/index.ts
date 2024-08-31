@@ -50,18 +50,25 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
   #formattingAdapter: FormattingAdapter;
 
   /**
+   * Name of the tool that this adapter is connected to
+   */
+  #toolName: string;
+
+  /**
    * BlockToolAdapter constructor
    *
    * @param model - EditorJSModel instance
    * @param caretAdapter - CaretAdapter instance
    * @param blockIndex - index of the block that this adapter is connected to
    * @param formattingAdapter - needed to render formatted text
+   * @param toolName - tool name of the block
    */
-  constructor(model: EditorJSModel, caretAdapter: CaretAdapter, blockIndex: number, formattingAdapter: FormattingAdapter) {
+  constructor(model: EditorJSModel, caretAdapter: CaretAdapter, blockIndex: number, formattingAdapter: FormattingAdapter, toolName: string) {
     this.#model = model;
     this.#blockIndex = blockIndex;
     this.#caretAdapter = caretAdapter;
     this.#formattingAdapter = formattingAdapter;
+    this.#toolName = toolName;
   }
 
   /**
@@ -311,7 +318,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
 
       case InputType.InsertParagraph:
         this.#handleSplit(key, start, end);
-
+        break;
       case InputType.InsertLineBreak:
         /**
          * @todo Think if we need to keep that or not
@@ -319,6 +326,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
         if (isInputNative === true) {
           this.#model.insertText(this.#blockIndex, key, '\n', start);
         }
+        break;
       default:
     }
   };
@@ -338,7 +346,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
 
     this.#model.removeText(this.#blockIndex, key, start, currentValue.length);
     this.#model.addBlock({
-      name: 'paragraph',
+      name: this.#toolName,
       data : {
         [key]: {
           $t: 't',
@@ -347,6 +355,10 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
         }
       }
     }, this.#blockIndex + 1);
+
+    /**
+     * Raf is needed to ensure that the new block is added so caret can be moved to it
+     */
     requestAnimationFrame(() => {
       this.#caretAdapter.updateIndex(
         new IndexBuilder()

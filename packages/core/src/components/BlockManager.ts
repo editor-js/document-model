@@ -159,7 +159,15 @@ export class BlocksManager {
       throw new Error('[BlockManager] Block index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
     }
 
-    const blockToolAdapter = new BlockToolAdapter(this.#model, this.#caretAdapter, index.blockIndex, this.#formattingAdapter);
+    const toolName = event.detail.data.name;
+
+    const blockToolAdapter = new BlockToolAdapter(
+      this.#model,
+      this.#caretAdapter,
+      index.blockIndex,
+      this.#formattingAdapter,
+      toolName
+    );
 
     const tool = this.#toolsManager.blockTools.get(data.name);
 
