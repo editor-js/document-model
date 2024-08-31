@@ -8,7 +8,7 @@ import {
   IndexBuilder,
   type ModelEvents,
   TextAddedEvent,
-  TextRemovedEvent,
+  TextRemovedEvent
 } from '@editorjs/model';
 import type { CaretAdapter } from '../CaretAdapter/index.js';
 import {
@@ -335,7 +335,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    * Splits the current block's data field at the specified index
    * Removes selected range if it's not collapsed
    * Sets caret to the beginning of the next block
-   * 
+   *
    * @param key - data key to split
    * @param start - start index of the split
    * @param end - end index of the selected range
@@ -351,9 +351,9 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
         [key]: {
           $t: 't',
           value: newValueAfter,
-          fragments: []
-        }
-      }
+          fragments: [],
+        },
+      },
     }, this.#blockIndex + 1);
 
     /**
