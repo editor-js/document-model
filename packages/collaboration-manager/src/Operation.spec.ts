@@ -3,7 +3,7 @@ import type { DataKey, DocumentIndex } from '@editorjs/model';
 import { IndexBuilder } from '@editorjs/model';
 import { Operation, OperationType } from './Operation.js';
 
-describe('Transformer', () => {
+describe('Operation', () => {
   const createOperation = (type: OperationType, startIndex: number, value: string): Operation => {
     return new Operation(
       type,
