@@ -150,7 +150,6 @@ export class FormattingAdapter {
 
 
   /**
-   * @todo move event handling to BlockToolAdapter
    * Handles text format and unformat model events
    *
    * @param event - model change event
