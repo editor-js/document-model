@@ -30,8 +30,6 @@ export class FormattingAdapter {
    */
   #tools: Map<InlineToolName, InlineTool> = new Map();
 
-  #inputs: Map<HTMLElement, InlineFragment> = new Map();
-
   /**
    * Caret adapter instance for the input
    */
