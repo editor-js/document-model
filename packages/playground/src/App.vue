@@ -1,61 +1,23 @@
 <script setup lang="ts">
-import CaretIndex from '@/components/CaretIndex.vue';
-import { BlockToolAdapter, CaretAdapter, FormattingAdapter } from '@editorjs/dom-adapters';
-import { EditorDocument, EditorJSModel, EventType } from '@editorjs/model';
+import { EditorDocument, EditorJSModel } from '@editorjs/model';
 import Core from '@editorjs/core';
 import { ref, onMounted } from 'vue';
-import { Input, Node } from './components';
+import { Node } from './components';
 
 /**
- * Every instance here will be created by Editor.js core
+ * Editor document for visualizing
  */
-const model = new EditorJSModel();
+const editorDocument = ref<EditorDocument | null>(null);
 
-model.initializeDocument({
-  blocks: [
-    {
-      name: 'paragraph',
-      data: {
-        text1: {
-          value: 'This is contenteditable',
-          $t: 't',
-        },
-        text2: {
-          value: 'This is input element',
-          $t: 't',
-        },
-      },
-    },
-    {
-      name: 'paragraph',
-      data: {
-        text2: {
-          value: 'This is textarea element',
-          $t: 't',
-        },
-      },
-    },
-  ],
-});
-const editorDocument = ref(new EditorDocument());
-
-editorDocument.value.initialize(model.serialized.blocks);
-
-const caretAdapter = new CaretAdapter(window.document.body, model);
 /**
- * Block Tool Adapter instance will be passed to a Tool constructor by Editor.js core
+ * Serialized document value
  */
-const formattingAdapter = new FormattingAdapter(model, caretAdapter);
-const blockToolAdapter = new BlockToolAdapter(model, caretAdapter, 0, formattingAdapter);
-const anotherBlockToolAdapter = new BlockToolAdapter(model, caretAdapter, 1, formattingAdapter);
+const serialized = ref<EditorDocument['serialized'] | null>(null);
 
-const serialized = ref(model.serialized);
 
-model.addEventListener(EventType.Changed, () => {
-  serialized.value = model.serialized;
-  editorDocument.value = new EditorDocument();
-  editorDocument.value.initialize(model.serialized.blocks);
-});
+/**
+ * @todo display caret index somewhere
+ */
 
 onMounted(() => {
   new Core({
@@ -67,6 +29,10 @@ onMounted(() => {
           text: 'Hello, <b>World</b>!',
         },
       } ],
+    },
+    onModelUpdate: (model: EditorJSModel) => {
+      serialized.value = model.serialized;
+      editorDocument.value = model.devModeGetDocument();
     },
   });
 });
@@ -84,40 +50,33 @@ onMounted(() => {
       >
       Editor.js Document Playground
     </div>
-  </div>
-  <div :class="$style.body">
-    <div>
-      <div
-        id="editorjs"
-        :class="$style.editor"
-      />
-    </div>
-    <div :class="$style.playground">
-      <CaretIndex :model="model" />
-      <Input
-        :block-tool-adapter="blockToolAdapter"
-        type="contenteditable"
-        name="text1"
-        value="This is contenteditable"
-      />
-      <Input
-        :block-tool-adapter="blockToolAdapter"
-        type="input"
-        name="text2"
-        value="This is input element"
-      />
-      <Input
-        :block-tool-adapter="anotherBlockToolAdapter"
-        type="textarea"
-        name="text2"
-        value="This is textarea element"
-      />
-      <pre>{{ serialized }}</pre>
-    </div>
-    <div :class="$style.output">
-      <Node
-        :node="editorDocument"
-      />
+
+    <div :class="$style.body">
+      <div>
+        <h2 :class="$style.sectionHeading">
+          Editor
+        </h2>
+        <div
+          id="editorjs"
+          :class="$style.editor"
+        />
+      </div>
+      <div :class="$style.playground">
+        <h2 :class="$style.sectionHeading">
+          Model Serialized
+        </h2>
+        <!-- <CaretIndex :model="model" /> -->
+        <pre v-if="serialized">{{ serialized }}</pre>
+      </div>
+      <div :class="$style.output">
+        <h2 :class="$style.sectionHeading">
+          Model
+        </h2>
+        <Node
+          v-if="editorDocument"
+          :node="editorDocument"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -125,14 +84,13 @@ onMounted(() => {
 <style module>
 
 .container {
-  height: 100%;
 }
 
 .body {
   padding: 16px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  grid-gap: 16px;
+  grid-gap: 20px;
 }
 
 .playground {
@@ -149,12 +107,14 @@ onMounted(() => {
 
 .header {
   font-weight: 500;
-  padding: 8px 16px;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
   position: sticky;
   top: 0;
-  background: var(--background);
+  -webkit-backdrop-filter: blur(30px);
+  backdrop-filter: blur(30px);
+  z-index: 2;
 }
 
 .header img {
@@ -172,5 +132,15 @@ onMounted(() => {
   background-color: #111;
   border-radius: 8px;
   padding: 10px;
+}
+
+.sectionHeading {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  margin-top: 0;
+  font-family: var(--rounded-family);
+  color: var(--foreground-secondary);
+  text-transform: uppercase;
 }
 </style>

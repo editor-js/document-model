@@ -4,6 +4,7 @@ import { CoreConfigValidated } from '../../entities/index.js';
 import { EventBus } from '../../components/EventBus/index.js';
 import { BlockAddedCoreEvent, CoreEventType } from '../../components/EventBus/index.js';
 import { ToolboxRenderedUIEvent } from '../Toolbox/index.js';
+import { InlineToolbarRenderedUIEvent } from '../InlineToolbar/InlineToolbarRenderedUIEvent.js';
 
 /**
  * Editor's main UI renderer for HTML environment
@@ -47,6 +48,10 @@ export class EditorUI {
 
     this.#eventBus.addEventListener(`ui:toolbox:rendered`, (event: ToolboxRenderedUIEvent) => {
       this.#addToolbox(event.detail.toolbox);
+    });
+
+    this.#eventBus.addEventListener(`ui:inline-toolbar:rendered`, (event: InlineToolbarRenderedUIEvent) => {
+      this.#holder.appendChild(event.detail.toolbar);
     });
   }
 

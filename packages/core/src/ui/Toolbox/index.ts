@@ -2,9 +2,10 @@ import 'reflect-metadata';
 import { Service } from 'typedi';
 import { BlockToolFacade } from '../../tools/facades/index.js';
 import { make } from '@editorjs/dom';
-import { BlocksAPI } from '../../api/BlocksAPI.js';
 import { CoreEventType, EventBus, ToolLoadedCoreEvent } from '../../components/EventBus/index.js';
 import { ToolboxRenderedUIEvent } from './ToolboxRenderedUIEvent.js';
+import { EditorAPI } from '../../api/index.js';
+import { CoreConfigValidated } from '../../entities/Config.js';
 
 /**
  * UI module responsible for rendering the toolbox
@@ -14,10 +15,9 @@ import { ToolboxRenderedUIEvent } from './ToolboxRenderedUIEvent.js';
 @Service()
 export class ToolboxUI {
   /**
-   * BlocksAPI instance to insert blocks
-   * @todo replace with the full Editor API
+   * EditorAPI instance to insert blocks
    */
-  #blocksAPI: BlocksAPI;
+  #api: EditorAPI;
 
   /**
    * EventBus instance to exchange events between components
@@ -32,11 +32,16 @@ export class ToolboxUI {
   /**
    * ToolboxUI class constructor
    * @todo - unify the constructor parameters with the other UI plugins
-   * @param blocksAPI - BlocksAPI instance to insert blocks
+   * @param _config - EditorJS validated configuration, not used here
+   * @param api - EditorAPI instance to insert blocks
    * @param eventBus - EventBus instance to exchange events between components
    */
-  constructor(blocksAPI: BlocksAPI, eventBus: EventBus) {
-    this.#blocksAPI = blocksAPI;
+  constructor(
+    _config: CoreConfigValidated,
+    api: EditorAPI,
+    eventBus: EventBus
+  ) {
+    this.#api = api;
     this.#eventBus = eventBus;
 
     this.#render();
@@ -73,7 +78,7 @@ export class ToolboxUI {
     toolButton.textContent = tool.name;
 
     toolButton.addEventListener('click', () => {
-      void this.#blocksAPI.insert(tool.name);
+      void this.#api.blocks.insert(tool.name);
     });
 
     this.#nodes.holder.appendChild(toolButton);

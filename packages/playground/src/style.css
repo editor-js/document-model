@@ -4,6 +4,7 @@
 
   --background: #242424;
   --foreground: rgba(255, 255, 255, 0.87);
+  --foreground-secondary: rgba(255, 255, 255, 0.6);
   
   font-family: var(--family);
   font-weight: 400;
@@ -31,7 +32,7 @@ body {
 #app {
   display: grid;
   grid-template-columns: 100%;
-  grid-template-rows: 1fr;
+  grid-template-rows: min-content 1fr;
   min-height: 100%;
   width: 100%;
 

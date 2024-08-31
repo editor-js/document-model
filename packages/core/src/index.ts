@@ -1,15 +1,16 @@
-import { EditorJSModel } from '@editorjs/model';
+import { EditorJSModel, EventType } from '@editorjs/model';
 import type { ContainerInstance } from 'typedi';
 import { Container } from 'typedi';
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
 import ToolsManager from './tools/ToolsManager.js';
 import { CaretAdapter, FormattingAdapter } from '@editorjs/dom-adapters';
-import { InlineToolbar } from './ui/InlineToolbar/index.js';
 import type { CoreConfigValidated } from './entities/Config.js';
 import type { CoreConfig } from '@editorjs/sdk';
 import { BlocksManager } from './components/BlockManager.js';
 import { EditorUI } from './ui/Editor/index.js';
 import { ToolboxUI } from './ui/Toolbox/index.js';
+import { InlineToolbarUI } from './ui/InlineToolbar/index.js';
+import { SelectionManager } from './components/SelectionManager.js';
 
 /**
  * If no holder is provided via config, the editor will be appended to the element with this id
@@ -58,14 +59,6 @@ export default class Core {
   #formattingAdapter: FormattingAdapter;
 
   /**
-   * @todo inline toolbar should subscripe on selection change event called by EventBus
-   * Inline toolbar is responsible for handling selection changes
-   * When model selection changes, it determines, whenever to show toolbar element,
-   * Which calls apply format method of the adapter
-   */
-  #inlineToolbar: InlineToolbar;
-
-  /**
    * @param config - Editor configuration
    */
   constructor(config: CoreConfig) {
@@ -91,20 +84,24 @@ export default class Core {
 
     this.#formattingAdapter = new FormattingAdapter(this.#model, this.#caretAdapter);
     this.#iocContainer.set(FormattingAdapter, this.#formattingAdapter);
+    this.#iocContainer.get(SelectionManager);
+    this.#iocContainer.get(BlocksManager);
 
-    this.#inlineToolbar = new InlineToolbar(this.#model, this.#formattingAdapter, this.#toolsManager.inlineTools, this.#config.holder);
-    this.#iocContainer.set(InlineToolbar, this.#inlineToolbar);
+    if (config.onModelUpdate !== undefined) {
+      this.#model.addEventListener(EventType.Changed, () => {
+        config.onModelUpdate?.(this.#model);
+      });
+    }
 
     this.#prepareUI();
 
-    this.#iocContainer.get(BlocksManager);
-
-    /**
-     * @todo avait when isReady API is implemented
-     */
-    void this.#toolsManager.prepareTools();
-
-    this.#model.initializeDocument({ blocks });
+    this.#toolsManager.prepareTools()
+      .then(() => {
+        this.#model.initializeDocument({ blocks });
+      })
+      .catch((error) => {
+        console.error('Editor.js initialization failed', error);
+      });
   }
 
   /**
@@ -114,6 +111,7 @@ export default class Core {
     const editorUI = this.#iocContainer.get(EditorUI);
 
     this.#iocContainer.get(ToolboxUI);
+    this.#iocContainer.get(InlineToolbarUI);
 
     editorUI.render();
   }
