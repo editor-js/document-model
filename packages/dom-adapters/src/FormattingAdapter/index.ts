@@ -30,6 +30,8 @@ export class FormattingAdapter {
    */
   #tools: Map<InlineToolName, InlineTool> = new Map();
 
+  #inputs: Map<HTMLElement, InlineFragment> = new Map();
+
   /**
    * Caret adapter instance for the input
    */
@@ -51,35 +53,6 @@ export class FormattingAdapter {
   }
 
   /**
-   * @todo move event handling to BlockToolAdapter
-   * Handles text format and unformat model events
-   *
-   * @param event - model change event
-   */
-  #handleModelUpdates(event: ModelEvents): void {
-    if (event instanceof TextFormattedEvent) {
-      const tool = this.#tools.get(event.detail.data.tool);
-
-      if (tool === undefined) {
-        return;
-      }
-
-      const selection = window.getSelection();
-
-      /**
-       * Render inline tool for current range
-       */
-      if (selection) {
-        const range = selection.getRangeAt(0);
-
-        const inlineElement = tool.createWrapper(event.detail.data.data);
-
-        surround(range, inlineElement);
-      }
-    }
-  }
-
-  /**
    * Allows to render formatting inside a passed input
    *
    * @param input - input element to apply format to
@@ -91,28 +64,18 @@ export class FormattingAdapter {
   public formatElementContent(input: HTMLElement, inlineFragment: InlineFragment): void {
     const toolName = inlineFragment.tool;
     const toolData = inlineFragment.data;
-    const index = inlineFragment.range;
+    const textRange = inlineFragment.range;
 
     const tool = this.#tools.get(toolName);
 
     if (tool === undefined) {
       throw new Error(`FormattingAdapter: tool ${toolName} is not attached`);
-    }
-
-    const [start, end] = index;
+    };
 
     try {
-      /**
-       * Create range with positions specified in index
-       */
-      const range = document.createRange();
-
-      range.setStart(input, start);
-      range.setEnd(input, end);
-
       const inlineElement = tool.createWrapper(toolData);
 
-      surround(range, inlineElement);
+      surround(inlineElement, input, textRange);
     } catch (e) {
       console.error('Error while formatting element content', e);
     }
@@ -184,6 +147,36 @@ export class FormattingAdapter {
         this.#model.unformat(blockIndex, dataKey, toolName, ...range);
 
         break;
+    }
+  }
+
+
+  /**
+   * @todo move event handling to BlockToolAdapter
+   * Handles text format and unformat model events
+   *
+   * @param event - model change event
+   */
+  #handleModelUpdates(event: ModelEvents): void {
+    if (event instanceof TextFormattedEvent) {
+      const tool = this.#tools.get(event.detail.data.tool);
+      const { textRange } = event.detail.index;
+
+      if (tool === undefined || textRange === undefined) {
+        return;
+      }
+
+      const input = this.#caretAdapter.getInput(event.detail.index);
+
+      if (input === undefined) {
+        console.warn('No input found for the index', event.detail.index);
+
+        return;
+      }
+
+      const inlineElement = tool.createWrapper(event.detail.data.data);
+
+      surround(inlineElement, input, textRange);
     }
   }
 }

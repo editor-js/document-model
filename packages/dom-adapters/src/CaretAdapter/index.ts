@@ -87,6 +87,32 @@ export class CaretAdapter extends EventTarget {
   }
 
   /**
+   * Finds input by index
+   *
+   * @param index - index of the input in the model tree
+   */
+  public getInput(index?: Index): HTMLElement | undefined {
+    const builder = new IndexBuilder();
+
+
+    if (index !== undefined) {
+      builder.from(index);
+    } else if (this.#userCaret.index !== null) {
+      builder.from(this.#userCaret.index);
+    } else {
+      throw new Error('[CaretManager] No index provided and no user caret index found');
+    }
+
+    /**
+     * Inputs are stored in the hashmap with serialized index as a key
+     * Those keys are serialized without text range to cover the whole input, so we need to remove it here to find the input
+     */
+    builder.addTextRange(undefined);
+
+    return this.#inputs.get(builder.build().serialize());
+  }
+
+  /**
    * Selection change handler
    *
    * @param selection - new document selection
@@ -176,15 +202,7 @@ export class CaretAdapter extends EventTarget {
       return;
     }
 
-    const builder = new IndexBuilder();
-
-    /**
-     * Inputs are stored in the hashmap with serialized index as a key
-     * Those keys are serialized without text range to cover the whole input, so we need to remove it here to find the input
-     */
-    builder.from(index).addTextRange(undefined);
-
-    const input = this.#inputs.get(builder.build().serialize());
+    const input = this.getInput(index);
 
     if (!input) {
       return;

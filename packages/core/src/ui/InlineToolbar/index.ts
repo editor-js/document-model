@@ -129,8 +129,7 @@ export class InlineToolbarUI {
 
     const rect = range.getBoundingClientRect();
 
-    // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-    this.#nodes.holder.style.top = `${rect.top + 16}px`;
+    this.#nodes.holder.style.top = `${rect.top}px`;
     this.#nodes.holder.style.left = `${rect.left}px`;
     this.#nodes.holder.style.zIndex = '1000';
   }
