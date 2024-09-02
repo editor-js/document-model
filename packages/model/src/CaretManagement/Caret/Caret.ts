@@ -70,7 +70,7 @@ export class Caret extends EventBus {
    *
    * @param index - new caret index
    */
-  public update(index: Index): void {
+  public update(index: Index | null): void {
     this.#index = index;
 
     this.dispatchEvent(new CaretUpdatedEvent(this));
@@ -82,7 +82,7 @@ export class Caret extends EventBus {
   public toJSON(): CaretSerialized {
     return {
       id: this.id,
-      index: this.index?.serialize(),
+      index: this.index !== null ? this.index.serialize() : null,
     } as CaretSerialized;
   }
 }

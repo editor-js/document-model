@@ -32,6 +32,12 @@ export type InputWithCaret = HTMLElement;
  */
 export const useSelectionChange = createSingleton(() => {
   /**
+   * Stores the last input that was related to the selection.
+   * We need that to send update when selection is moved to another input.
+   */
+  let lastRelatedInput: HTMLElement | null  = null;
+
+  /**
    * Used to iterate over all inputs and check if selection is related to them.
    */
   const inputsWatched: InputWithCaret[] = [];
@@ -72,8 +78,27 @@ export const useSelectionChange = createSingleton(() => {
     inputsWatched.forEach((input) => {
       const subscriber = subscribers.get(input);
 
+      let isRelatedInputFound = false;
+
       if (subscriber && isSelectionRelatedToInput(selection, input)) {
+        lastRelatedInput = input;
+        isRelatedInputFound = true;
+
         subscriber.callback.call(subscriber.context, selection);
+      }
+
+      /**
+       * If no related input found or input is changed, we need to notify subscriber selection is out of it's input
+       */
+      if (!isRelatedInputFound || input !== lastRelatedInput) {
+        subscriber?.callback.call(subscriber.context, null);
+      }
+
+      /**
+       * If no related input found, we need to reset last related input
+       */
+      if (!isRelatedInputFound) {
+        lastRelatedInput = null;
       }
     });
   }

@@ -182,6 +182,19 @@ describe('ParentNode mixin', () => {
 
       expect(dummy.children).toEqual([childMock, anotherChildMock, childMockToInsert]);
     });
+
+    it('should correctly insert children when it contains the target child', () => {
+      const childMock = new ChildDummy();
+      const anotherChildMock = new ChildDummy();
+      const childMockToInsert = new ChildDummy();
+      const anotherChildMockToInsert = new ChildDummy();
+
+      dummy.append(childMock, childMockToInsert, anotherChildMock);
+
+      dummy.insertAfter(childMockToInsert, anotherChildMockToInsert, childMockToInsert);
+
+      expect(dummy.children).toEqual([childMock, anotherChildMock, anotherChildMockToInsert, childMockToInsert]);
+    });
   });
 
   describe('.removeChild()', () => {

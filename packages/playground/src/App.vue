@@ -132,6 +132,8 @@ onMounted(() => {
   background-color: #111;
   border-radius: 8px;
   padding: 10px;
+
+  font-size: 2em;
 }
 
 .sectionHeading {

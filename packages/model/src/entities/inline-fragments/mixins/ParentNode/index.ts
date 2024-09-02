@@ -138,6 +138,11 @@ export function ParentNode<C extends { new(...args: any[]): InlineNode }>(constr
      */
     public insertAfter(target: ChildNode, ...children: ChildNode[]): void {
       /**
+       * We need to get the index first before any manipulations with children array
+       */
+      const targetIndex = this.children.indexOf(target);
+
+      /**
        * Append children to the parent to set their parent property
        */
       children.forEach(child => child.appendTo(this));
@@ -154,9 +159,7 @@ export function ParentNode<C extends { new(...args: any[]): InlineNode }>(constr
       /**
        * Insert added children to correct places
        */
-      const index = this.children.indexOf(target);
-
-      this.children.splice(index + 1, 0, ...children);
+      this.children.splice(targetIndex + 1, 0, ...children);
     }
 
 
