@@ -31,7 +31,6 @@ onMounted(() => {
       } ],
     },
     onModelUpdate: (model: EditorJSModel) => {
-      window.model = model;
       serialized.value = model.serialized;
       editorDocument.value = model.devModeGetDocument();
     },
