@@ -50,18 +50,25 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
   #formattingAdapter: FormattingAdapter;
 
   /**
+   * Name of the tool that this adapter is connected to
+   */
+  #toolName: string;
+
+  /**
    * BlockToolAdapter constructor
    *
    * @param model - EditorJSModel instance
    * @param caretAdapter - CaretAdapter instance
    * @param blockIndex - index of the block that this adapter is connected to
    * @param formattingAdapter - needed to render formatted text
+   * @param toolName - tool name of the block
    */
-  constructor(model: EditorJSModel, caretAdapter: CaretAdapter, blockIndex: number, formattingAdapter: FormattingAdapter) {
+  constructor(model: EditorJSModel, caretAdapter: CaretAdapter, blockIndex: number, formattingAdapter: FormattingAdapter, toolName: string) {
     this.#model = model;
     this.#blockIndex = blockIndex;
     this.#caretAdapter = caretAdapter;
     this.#formattingAdapter = formattingAdapter;
+    this.#toolName = toolName;
   }
 
   /**
@@ -307,6 +314,9 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
         break;
       }
 
+      case InputType.InsertParagraph:
+        this.#handleSplit(key, start, end);
+        break;
       case InputType.InsertLineBreak:
         /**
          * @todo Think if we need to keep that or not
@@ -314,9 +324,49 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
         if (isInputNative === true) {
           this.#model.insertText(this.#blockIndex, key, '\n', start);
         }
+        break;
       default:
     }
   };
+
+  /**
+   * Splits the current block's data field at the specified index
+   * Removes selected range if it's not collapsed
+   * Sets caret to the beginning of the next block
+   *
+   * @param key - data key to split
+   * @param start - start index of the split
+   * @param end - end index of the selected range
+   */
+  #handleSplit(key: DataKey, start: number, end: number): void {
+    const currentValue = this.#model.getText(this.#blockIndex, key);
+    const newValueAfter = currentValue.slice(end);
+
+    this.#model.removeText(this.#blockIndex, key, start, currentValue.length);
+    this.#model.addBlock({
+      name: this.#toolName,
+      data : {
+        [key]: {
+          $t: 't',
+          value: newValueAfter,
+          fragments: [],
+        },
+      },
+    }, this.#blockIndex + 1);
+
+    /**
+     * Raf is needed to ensure that the new block is added so caret can be moved to it
+     */
+    requestAnimationFrame(() => {
+      this.#caretAdapter.updateIndex(
+        new IndexBuilder()
+          .addBlockIndex(this.#blockIndex + 1)
+          .addDataKey(key)
+          .addTextRange([0, 0])
+          .build()
+      );
+    });
+  }
 
   /**
    * Handles model update events for native inputs and updates DOM
