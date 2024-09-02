@@ -82,7 +82,7 @@ export class CaretAdapter extends EventTarget {
    *
    * @param index - new caret index
    */
-  public updateIndex(index: Index): void {
+  public updateIndex(index: Index | null): void {
     this.#userCaret.update(index);
   }
 
@@ -119,6 +119,8 @@ export class CaretAdapter extends EventTarget {
    */
   #onSelectionChange(selection: Selection | null): void {
     if (!selection) {
+      this.updateIndex(null);
+
       return;
     }
 
