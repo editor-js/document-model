@@ -32,7 +32,7 @@ export type InputWithCaret = HTMLElement;
  */
 export const useSelectionChange = createSingleton(() => {
   /**
-   * Stores the last input that was related to the selection. 
+   * Stores the last input that was related to the selection.
    * We need that to send update when selection is moved to another input.
    */
   let lastRelatedInput: HTMLElement | null  = null;

@@ -97,6 +97,7 @@ describe('CaretManager', () => {
     expect(handler).toHaveBeenCalledWith(expect.objectContaining({
       detail: {
         id: caret.id,
+        index: null,
       },
     }));
   });
