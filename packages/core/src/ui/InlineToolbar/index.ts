@@ -6,7 +6,7 @@ import { InlineToolbarRenderedUIEvent } from './InlineToolbarRenderedUIEvent.js'
 import { CoreEventType, EventBus, SelectionChangedCoreEvent } from '../../components/EventBus/index.js';
 import { EditorAPI } from '../../api/index.js';
 import { InlineTool, InlineToolFormatData } from '@editorjs/sdk';
-import { InlineToolName } from '@editorjs/model';
+import { InlineFragment, InlineToolName, TextRange } from '@editorjs/model';
 import { CoreConfigValidated } from '../../entities/index.js';
 
 /**
@@ -56,7 +56,7 @@ export class InlineToolbarUI {
    * @param event - SelectionChangedCoreEvent event
    */
   #handleSelectionChange(event: SelectionChangedCoreEvent): void {
-    const { availableInlineTools, index } = event.detail;
+    const { availableInlineTools, index, fragments } = event.detail;
     const selection = window.getSelection();
 
     if (
@@ -75,7 +75,7 @@ export class InlineToolbarUI {
       return;
     }
 
-    this.#updateToolsList(availableInlineTools);
+    this.#updateToolsList(availableInlineTools, index.textRange, fragments);
     this.#move();
     this.#show();
   }
@@ -137,14 +137,22 @@ export class InlineToolbarUI {
   /**
    * Renders the list of available inline tools in the Inline Toolbar
    * @param tools - Inline Tools available for the current selection
+   * @param textRange - current selection text range
+   * @param fragments - inline fragments for the current selection
    */
-  #updateToolsList(tools: Map<InlineToolName, InlineTool>): void {
+  #updateToolsList(tools: Map<InlineToolName, InlineTool>, textRange: TextRange, fragments: InlineFragment[]): void {
     this.#nodes.buttons.innerHTML = '';
 
     Array.from(tools.entries()).forEach(([name, tool]) => {
       const button = make('button');
 
       button.textContent = name;
+
+      const isActive = tool.isActive(textRange, fragments.filter((fragment: InlineFragment) => fragment.tool === name));
+
+      if (isActive) {
+        button.style.fontWeight = 'bold';
+      }
 
       if (Object.hasOwnProperty.call(tool.constructor.prototype, 'renderActions')) {
         button.addEventListener('click', () => {

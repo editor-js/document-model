@@ -31,6 +31,7 @@ onMounted(() => {
       } ],
     },
     onModelUpdate: (model: EditorJSModel) => {
+      window.model = model;
       serialized.value = model.serialized;
       editorDocument.value = model.devModeGetDocument();
     },
@@ -132,6 +133,8 @@ onMounted(() => {
   background-color: #111;
   border-radius: 8px;
   padding: 10px;
+
+  font-size: 2em;
 }
 
 .sectionHeading {

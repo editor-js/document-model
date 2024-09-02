@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { FormattingAdapter } from '@editorjs/dom-adapters';
-import type { CaretManagerEvents, InlineToolName } from '@editorjs/model';
+import type { CaretManagerEvents, InlineFragment, InlineToolName } from '@editorjs/model';
 import { CaretManagerCaretUpdatedEvent, Index, EditorJSModel, createInlineToolData, createInlineToolName } from '@editorjs/model';
 import { EventType } from '@editorjs/model';
 import { Service } from 'typedi';
@@ -73,15 +73,26 @@ export class SelectionManager {
    */
   #handleCaretManagerUpdate(event: CaretManagerEvents): void {
     switch (true) {
-      case event instanceof CaretManagerCaretUpdatedEvent:
+      case event instanceof CaretManagerCaretUpdatedEvent: {
+        const { index: serializedIndex } = event.detail;
+        const index = serializedIndex !== null ? Index.parse(serializedIndex) : null;
+        let fragments: InlineFragment[] = [];
+
+        if (index !== null && index.blockIndex !== undefined && index.dataKey !== undefined && index.textRange !== undefined) {
+          fragments = this.#model.getFragments(index.blockIndex, index.dataKey, ...index.textRange);
+        }
+
         this.#eventBus.dispatchEvent(new SelectionChangedCoreEvent({
-          index: event.detail.index !== null ? Index.parse(event.detail.index) : null,
+          index,
           /**
            * @todo implement filter by current BlockTool configuration
            */
           availableInlineTools: this.#inlineTools,
+          fragments,
         }));
+
         break;
+      }
       default:
         break;
     }
