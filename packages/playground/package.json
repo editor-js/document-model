@@ -4,14 +4,17 @@
   "type": "module",
   "packageManager": "yarn@4.0.1",
   "scripts": {
-    "dev": "concurrently -n \"TSC Watch\",Vite \"yarn dev:dependencies\" \"vite\"",
+    "dev": "concurrently -n \"TSC Watch\",Vite \"yarn dev:dependencies\" \"vite --port 3123\"",
     "build": "yarn build:dependencies && vue-tsc && vite build",
     "preview": "yarn build:dependencies && vite preview",
     "build:dependencies": "yarn workspaces foreach -Rpt --from $npm_package_name --exclude $npm_package_name run build",
     "dev:dependencies": "yarn workspaces foreach -Rp --from $npm_package_name --exclude $npm_package_name run dev",
     "lint": "eslint src --ext .ts,.vue",
     "lint:ci": "yarn lint --max-warnings 0",
-    "lint:fix": "yarn lint --fix"
+    "lint:fix": "yarn lint --fix",
+    "test": "playwright test",
+    "test:ui": "yarn test --ui",
+    "e2e-dev-server": "yarn build:dependencies && vite --port 3123"
   },
   "dependencies": {
     "@editorjs/core": "workspace:^",
@@ -20,7 +23,9 @@
     "vue": "^3.3.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.41.2",
     "@types/eslint": "^8",
+    "@types/node": "^20.11.17",
     "@vitejs/plugin-vue": "^4.2.3",
     "concurrently": "^8.2.2",
     "eslint": "^8.53.0",

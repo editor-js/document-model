@@ -21,3 +21,13 @@ jobs:
         uses: ./.github/actions/build
         with:
           package-name: '@editorjs/document-playground'
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run E2E tests
+        uses: ./.github/actions/e2e-tests
+        with:
+          working-directory: packages/playground
+          artifactory-report-name: 'document-playground-e2e-report'

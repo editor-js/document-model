@@ -10,6 +10,7 @@ module.exports = {
     project: [
       './tsconfig.json',
       './tsconfig.eslint.json',
+      './tsconfig.playwright.json'
     ],
     ecmaVersion: 2022,
     extraFileExtensions: [ '.vue' ],
