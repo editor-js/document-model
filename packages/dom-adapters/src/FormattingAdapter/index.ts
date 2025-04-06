@@ -8,12 +8,15 @@ import type {
 } from '@editorjs/model';
 import {
   EventType,
-  TextFormattedEvent
+  TextFormattedEvent,
+  TextUnformattedEvent
 } from '@editorjs/model';
 import type { CaretAdapter } from '../CaretAdapter/index.js';
 import { FormattingAction } from '@editorjs/model';
 import type { InlineTool } from '@editorjs/sdk';
 import { surround } from '../utils/surround.js';
+import { getBoundaryPointByAbsoluteOffset } from '../utils/getRelativeIndex.js';
+import { expandRangeNodeBoundary } from '../utils/expandRangeNodeBoundary.js';
 
 /**
  * Class handles on format model events and renders inline tools
@@ -148,18 +151,17 @@ export class FormattingAdapter {
     }
   }
 
-
   /**
    * Handles text format and unformat model events
    *
    * @param event - model change event
    */
   #handleModelUpdates(event: ModelEvents): void {
-    if (event instanceof TextFormattedEvent) {
+    if (event instanceof TextFormattedEvent || event instanceof TextUnformattedEvent) {
       const tool = this.#tools.get(event.detail.data.tool);
-      const { textRange } = event.detail.index;
+      const { textRange, blockIndex, dataKey } = event.detail.index;
 
-      if (tool === undefined || textRange === undefined) {
+      if (tool === undefined || textRange === undefined || blockIndex === undefined || dataKey === undefined) {
         return;
       }
 
@@ -171,9 +173,72 @@ export class FormattingAdapter {
         return;
       }
 
-      const inlineElement = tool.createWrapper(event.detail.data.data);
+      const affectedFragments = this.#model.getFragments(blockIndex, dataKey, ...textRange);
 
-      surround(inlineElement, input, textRange);
+      let lowerBoundary = textRange[0];
+      let upperBoundary = textRange[1];
+
+      for (const fragment of affectedFragments) {
+        lowerBoundary = Math.min(lowerBoundary, fragment.range[0] ?? 0);
+        upperBoundary = Math.max(upperBoundary, fragment.range[1] ?? 0);
+      }
+
+      this.#rerenderRange(input, lowerBoundary, upperBoundary, affectedFragments);
+
+      // const inlineElement = tool.createWrapper(event.detail.data.data);
+
+      /**
+       * @todo probably not surround
+       */
+
+
+      // surround(inlineElement, input, textRange);
     }
+  }
+
+  #rerenderRange(input: HTMLElement, lowerBoundary: number, upperBoundary: number, affectedFragments: InlineFragment[]): void {
+    const range = document.createRange();
+    const [startNode, startOffset] = getBoundaryPointByAbsoluteOffset(input, lowerBoundary);
+    const [endNode, endOffset] = getBoundaryPointByAbsoluteOffset(input, upperBoundary);
+
+    if (startOffset === 0) {
+      range.setStartBefore(expandRangeNodeBoundary(startNode));
+    } else {
+      range.setStart(startNode, startOffset);
+    }
+
+    if (endOffset === 1) {
+      range.setEndAfter(expandRangeNodeBoundary(endNode, true));
+    } else {
+      range.setEnd(endNode, endOffset);
+    }
+
+    const extractedContent = range.extractContents();
+
+    /**
+     * Create temporary container to allow formatting of the extracted content
+     */
+    const template = document.createElement('template');
+    template.innerHTML = extractedContent.textContent!;
+
+    for (const fragment of affectedFragments) {
+      const tool = this.#tools.get(fragment.tool);
+
+      if (!tool || !fragment.range) {
+        continue;
+      }
+      
+      const relativeStart = fragment.range[0] - lowerBoundary;
+      const relativeEnd = fragment.range[1] - lowerBoundary;
+
+      /**
+       * Create wrapper element for the fragment
+       */
+      const wrapper = tool.createWrapper(fragment.data);
+
+      surround(wrapper, template.content, [relativeStart, relativeEnd]);
+    }
+
+    range.insertNode(template.content);
   }
 }
