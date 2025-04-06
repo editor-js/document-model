@@ -18,6 +18,8 @@ rules:
     - always
   '@typescript-eslint/no-unsafe-declaration-merging':
     - 0
+env:
+  browser: true
 
 overrides:
   - files:

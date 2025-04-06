@@ -62,6 +62,7 @@ export class ToolboxUI {
     this.#nodes.holder = make('div');
 
     this.#nodes.holder.style.display = 'flex';
+    this.#nodes.holder.style.marginBottom = '10px';
 
     this.#eventBus.dispatchEvent(new ToolboxRenderedUIEvent({
       toolbox: this.#nodes.holder,
