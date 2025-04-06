@@ -184,15 +184,6 @@ export class FormattingAdapter {
       }
 
       this.#rerenderRange(input, lowerBoundary, upperBoundary, affectedFragments);
-
-      // const inlineElement = tool.createWrapper(event.detail.data.data);
-
-      /**
-       * @todo probably not surround
-       */
-
-
-      // surround(inlineElement, input, textRange);
     }
   }
 

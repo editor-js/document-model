@@ -8,7 +8,7 @@ import { getBoundaryPointByAbsoluteOffset } from './getRelativeIndex.js';
  * @param inputElement - element, where the range is located
  * @param textRange - range to be surrounded
  */
-export function surround(wrapper: HTMLElement, inputElement: HTMLElement, textRange: TextRange): void {
+export function surround(wrapper: HTMLElement, inputElement: Node, textRange: TextRange): void {
   const range = document.createRange();
 
   range.setStart(...getBoundaryPointByAbsoluteOffset(inputElement, textRange[0]));
