@@ -850,10 +850,10 @@ describe('EditorDocument', () => {
         .build();
 
 
-      document.insertData(index, block);
+      document.insertData(index, [ block.serialized ]);
 
       expect(spy)
-        .toHaveBeenCalledWith(block, blockIndex);
+        .toHaveBeenCalledWith(block.serialized, blockIndex);
     });
   });
 
@@ -882,7 +882,7 @@ describe('EditorDocument', () => {
         .addTextRange([0, rangeEnd])
         .build();
 
-      document.removeData(index);
+      document.removeData(index, 'hello');
 
       expect(spy)
         .toHaveBeenCalledWith(blockIndex, dataKey, 0, rangeEnd);
@@ -894,8 +894,14 @@ describe('EditorDocument', () => {
         .addBlockIndex(blockIndex)
         .build();
 
+      const blockData = {
+        name: 'paragraph',
+        data: { text: 'editor.js' },
+      };
 
-      document.removeData(index);
+      document.removeData(index, [
+        blockData,
+      ]);
 
       expect(spy)
         .toHaveBeenCalledWith(blockIndex);
