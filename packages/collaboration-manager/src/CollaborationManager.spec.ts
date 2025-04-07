@@ -32,7 +32,7 @@ describe('CollaborationManager', () => {
       const collaborationManager = new CollaborationManager(model);
       const index = new IndexBuilder().addBlockIndex(0)
         .addDataKey(createDataKey('text'))
-        .addTextRange([ 0, 4 ])
+        .addTextRange([0, 4])
         .build();
       const operation = new Operation(OperationType.Insert, index, {
         payload: 'test',
@@ -73,7 +73,7 @@ describe('CollaborationManager', () => {
       const index = new IndexBuilder().addBlockIndex(0)
         .addDataKey(createDataKey('text'))
         .addTextRange([
-          3, 5 ])
+          3, 5])
         .build();
       const operation = new Operation(OperationType.Delete, index, {
         payload: '11',
@@ -180,7 +180,7 @@ describe('CollaborationManager', () => {
       const collaborationManager = new CollaborationManager(model);
       const index = new IndexBuilder().addBlockIndex(0)
         .addDataKey(createDataKey('text'))
-        .addTextRange([ 0, 5 ])
+        .addTextRange([0, 5])
         .build();
       const operation = new Operation(OperationType.Modify, index, {
         payload: {
@@ -200,7 +200,7 @@ describe('CollaborationManager', () => {
               value: 'Hello world',
               fragments: [ {
                 tool: 'bold',
-                range: [ 0, 5 ],
+                range: [0, 5],
               } ],
             },
           },
@@ -221,7 +221,7 @@ describe('CollaborationManager', () => {
               $t: 't',
               fragments: [ {
                 tool: 'bold',
-                range: [ 0, 5 ],
+                range: [0, 5],
               } ],
             },
           },
@@ -230,7 +230,7 @@ describe('CollaborationManager', () => {
       const collaborationManager = new CollaborationManager(model);
       const index = new IndexBuilder().addBlockIndex(0)
         .addDataKey(createDataKey('text'))
-        .addTextRange([ 0, 3 ])
+        .addTextRange([0, 3])
         .build();
       const operation = new Operation(OperationType.Modify, index, {
         payload: null,
@@ -250,7 +250,7 @@ describe('CollaborationManager', () => {
               value: 'Hello world',
               fragments: [ {
                 tool: 'bold',
-                range: [ 3, 5 ],
+                range: [3, 5],
               } ],
             },
           },
@@ -278,7 +278,7 @@ describe('CollaborationManager', () => {
       const collaborationManager = new CollaborationManager(model);
       const index = new IndexBuilder().addBlockIndex(0)
         .addDataKey(createDataKey('text'))
-        .addTextRange([ 0, 4 ])
+        .addTextRange([0, 4])
         .build();
       const operation = new Operation(OperationType.Insert, index, {
         payload: 'test',
@@ -320,7 +320,7 @@ describe('CollaborationManager', () => {
       const index = new IndexBuilder().addBlockIndex(0)
         .addDataKey(createDataKey('text'))
         .addTextRange([
-          3, 5 ])
+          3, 5])
         .build();
       const operation = new Operation(OperationType.Delete, index, {
         payload: '11',
@@ -361,7 +361,7 @@ describe('CollaborationManager', () => {
       const collaborationManager = new CollaborationManager(model);
       const index = new IndexBuilder().addBlockIndex(0)
         .addDataKey(createDataKey('text'))
-        .addTextRange([ 0, 4 ])
+        .addTextRange([0, 4])
         .build();
       const operation = new Operation(OperationType.Insert, index, {
         payload: 'test',
@@ -403,7 +403,7 @@ describe('CollaborationManager', () => {
       const collaborationManager = new CollaborationManager(model);
       const index = new IndexBuilder().addBlockIndex(0)
         .addDataKey(createDataKey('text'))
-        .addTextRange([ 0, 4 ])
+        .addTextRange([0, 4])
         .build();
       const operation = new Operation(OperationType.Insert, index, {
         payload: 'test',
@@ -477,7 +477,7 @@ describe('CollaborationManager', () => {
       const collaborationManager = new CollaborationManager(model);
       const index = new IndexBuilder().addBlockIndex(0)
         .addDataKey(createDataKey('text'))
-        .addTextRange([ 0, 5 ])
+        .addTextRange([0, 5])
         .build();
       const operation = new Operation(OperationType.Modify, index, {
         payload: {
@@ -517,7 +517,7 @@ describe('CollaborationManager', () => {
               $t: 't',
               fragments: [ {
                 tool: 'bold',
-                range: [ 0, 5 ],
+                range: [0, 5],
               } ],
             },
           },
@@ -526,7 +526,7 @@ describe('CollaborationManager', () => {
       const collaborationManager = new CollaborationManager(model);
       const index = new IndexBuilder().addBlockIndex(0)
         .addDataKey(createDataKey('text'))
-        .addTextRange([ 0, 3 ])
+        .addTextRange([0, 3])
         .build();
       const operation = new Operation(OperationType.Modify, index, {
         payload: null,
@@ -548,7 +548,7 @@ describe('CollaborationManager', () => {
               value: 'Hello world',
               fragments: [ {
                 tool: 'bold',
-                range: [ 0, 5 ],
+                range: [0, 5],
               } ],
             },
           },
@@ -569,7 +569,7 @@ describe('CollaborationManager', () => {
               $t: 't',
               fragments: [ {
                 tool: 'bold',
-                range: [ 0, 5 ],
+                range: [0, 5],
               } ],
             },
           },
@@ -578,7 +578,7 @@ describe('CollaborationManager', () => {
       const collaborationManager = new CollaborationManager(model);
       const index = new IndexBuilder().addBlockIndex(0)
         .addDataKey(createDataKey('text'))
-        .addTextRange([ 0, 3 ])
+        .addTextRange([0, 3])
         .build();
       const operation = new Operation(OperationType.Modify, index, {
         payload: null,
@@ -601,7 +601,7 @@ describe('CollaborationManager', () => {
               value: 'Hello world',
               fragments: [ {
                 tool: 'bold',
-                range: [ 3, 5 ],
+                range: [3, 5],
               } ],
             },
           },

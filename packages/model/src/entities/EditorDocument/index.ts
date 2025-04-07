@@ -3,7 +3,7 @@ import { BlockNode } from '../BlockNode/index.js';
 import { IndexBuilder } from '../Index/IndexBuilder.js';
 import type { EditorDocumentSerialized, EditorDocumentConstructorParameters, Properties } from './types';
 import type { BlockTuneName } from '../BlockTune';
-import type { InlineFragment, InlineToolData, InlineToolName } from '../inline-fragments';
+import { type InlineFragment, type InlineToolData, type InlineToolName } from '../inline-fragments/index.js';
 import { IoCContainer, TOOLS_REGISTRY } from '../../IoC/index.js';
 import { ToolsRegistry } from '../../tools/index.js';
 import type { BlockNodeSerialized } from '../BlockNode/types';
@@ -18,10 +18,10 @@ import type {
 import {
   BlockAddedEvent,
   BlockRemovedEvent,
-  PropertyModifiedEvent
+  PropertyModifiedEvent, type TextFormattedEventData, type TextUnformattedEventData
 } from '../../EventBus/events/index.js';
 import type { Constructor } from '../../utils/types.js';
-import { BaseDocumentEvent } from '../../EventBus/events/BaseEvent.js';
+import { BaseDocumentEvent, type ModifiedEventData } from '../../EventBus/events/BaseEvent.js';
 import type { Index } from '../Index/index.js';
 
 /**
@@ -374,6 +374,28 @@ export class EditorDocument extends EventBus {
         break;
       default:
         throw new Error('Unsupported index');
+    }
+  }
+
+  /**
+   * Modifies data for the specific index
+   *
+   * @param index - index of data to modify
+   * @param data - data to modify (includes current and previous values)
+   */
+  public modifyData(index: Index, data: ModifiedEventData): void {
+    switch (true) {
+      case index.isTextIndex:
+        if (data.value !== null) {
+          this.format(index.blockIndex!, index.dataKey!, (data.value as TextFormattedEventData).tool, index.textRange![0], index.textRange![1]);
+        } else if (data.previous !== null) {
+          this.unformat(index.blockIndex!, index.dataKey!, (data.previous as TextUnformattedEventData).tool, index.textRange![0], index.textRange![1]);
+        }
+
+      default:
+      /**
+       * @todo implement other actions
+       */
     }
   }
 
