@@ -224,7 +224,7 @@ export class FormattingAdapter {
     for (const fragment of affectedFragments) {
       const tool = this.#tools.get(fragment.tool);
 
-      if (!tool) {
+      if (tool === undefined) {
         continue;
       }
 
