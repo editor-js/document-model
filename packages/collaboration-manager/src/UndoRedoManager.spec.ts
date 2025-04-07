@@ -32,7 +32,7 @@ describe('UndoRedoManager', () => {
     expect(manager.undo()).toBeUndefined();
   });
 
-  it('should return undefined on undo if there is no operations in stack', () => {
+  it('should return undefined on redo if there is no operations in stack', () => {
     const manager = new UndoRedoManager();
 
     expect(manager.redo()).toBeUndefined();
