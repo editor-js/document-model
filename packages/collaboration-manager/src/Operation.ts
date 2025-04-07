@@ -9,6 +9,9 @@ export enum OperationType {
   Modify = 'modify'
 }
 
+/**
+ * Operation payload could be string (for Text operations), or serialized Block data (for Block operations)
+ */
 type OperationPayload = string | BlockNodeSerialized;
 
 /**
@@ -27,12 +30,12 @@ export interface ModifyOperationData<T extends Record<any, any> = Record<any, an
   /**
    * Previous payload for undo/redo purposes
    */
-  payload?: T;
+  payload?: T | null;
 
   /**
    * Previous payload for undo/redo purposes
    */
-  prevPayload?: T;
+  prevPayload?: T | null;
 }
 
 export type OperationTypeToData<T extends OperationType> = T extends OperationType.Modify
@@ -172,7 +175,9 @@ export class Operation<T extends OperationType = OperationType> {
   }
 
   /**
-   * Checks if operation needs to be transformed
+   * Checks if operation needs to be transformed:
+   * 1. If relative operation (againstOp) happened in the block before or at the same index of the Block of _this_ operation
+   * 2. If relative operation happened in the same block and same data key and before the text range of _this_ operation
    *
    * @param indexToCompare - index of a relative operation
    */

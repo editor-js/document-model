@@ -8,7 +8,7 @@ import {
   TextFormattedEvent, TextRemovedEvent,
   TextUnformattedEvent
 } from '@editorjs/model';
-import { Operation, OperationType } from './Operation.js';
+import { type ModifyOperationData, Operation, OperationType } from './Operation.js';
 import { UndoRedoManager } from './UndoRedoManager.js';
 
 /**
@@ -86,12 +86,6 @@ export class CollaborationManager {
    * @param operation - operation to apply
    */
   public applyOperation(operation: Operation): void {
-    const { blockIndex, dataKey, textRange } = operation.index;
-
-    if (blockIndex == undefined || dataKey == undefined || textRange == undefined) {
-      throw new Error('Unsupported index');
-    }
-
     switch (operation.type) {
       case OperationType.Insert:
         this.#model.insertData(operation.index, operation.data.payload as string | BlockNodeSerialized[]);
@@ -100,8 +94,10 @@ export class CollaborationManager {
         this.#model.removeData(operation.index, operation.data.payload as string | BlockNodeSerialized[]);
         break;
       case OperationType.Modify:
-        console.log('modify operation is not implemented yet');
-        // this.#model.insertText(blockIndex, dataKey, operation.data.newValue);
+        this.#model.modifyData(operation.index, {
+          value: operation.data.payload,
+          previous: (operation.data as ModifyOperationData).prevPayload,
+        });
         break;
       default:
         throw new Error('Unknown operation type');
@@ -136,13 +132,13 @@ export class CollaborationManager {
       case (e instanceof TextFormattedEvent):
         operation = new Operation(OperationType.Modify, e.detail.index, {
           payload: e.detail.data,
-          prevPayload: undefined,
+          prevPayload: null,
         });
         break;
       case (e instanceof TextUnformattedEvent):
         operation = new Operation(OperationType.Modify, e.detail.index, {
           prevPayload: e.detail.data,
-          payload: undefined,
+          payload: null,
         });
         break;
       case (e instanceof BlockAddedEvent):
@@ -155,7 +151,9 @@ export class CollaborationManager {
           payload: [ e.detail.data ],
         });
         break;
+      // Stryker disable next-line ConditionalExpression
       default:
+        // Stryker disable next-line StringLiteral
         console.error('Unknown event type', e);
     }
 

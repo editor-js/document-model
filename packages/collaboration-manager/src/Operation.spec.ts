@@ -23,7 +23,7 @@ const createOperation = (
 
   const data: InsertOrDeleteOperationData | ModifyOperationData = {
     payload: value as ArrayLike<never>,
-    prevPayload: undefined,
+    prevPayload: null,
   };
 
   if (type === OperationType.Modify && prevValue !== undefined) {
@@ -80,7 +80,7 @@ describe('Operation', () => {
       expect(() => receivedOp.transform(localOp)).toThrow('Unsupported operation type');
     });
 
-    it('should not transform relative the Modify operation', () => {
+    it('should not transform relative to the Modify operation (as Modify operation doesn\'t change index)', () => {
       const receivedOp = createOperation(OperationType.Insert, 0, 'abc');
       const localOp = createOperation(OperationType.Modify, 0, 'def');
       const transformedOp = receivedOp.transform(localOp);
