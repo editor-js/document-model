@@ -187,6 +187,14 @@ export class FormattingAdapter {
     }
   }
 
+  /**
+   * Apply formatting of all affected fragments to the range with boundaries
+   *
+   * @param input - input element to apply formatting to
+   * @param lowerBoundary - lower boundary of the range
+   * @param upperBoundary - upper boundary of the range
+   * @param affectedFragments - model fragments that are used to format the range
+   */
   #rerenderRange(input: HTMLElement, lowerBoundary: number, upperBoundary: number, affectedFragments: InlineFragment[]): void {
     const range = document.createRange();
     const [startNode, startOffset] = getBoundaryPointByAbsoluteOffset(input, lowerBoundary);
@@ -210,15 +218,16 @@ export class FormattingAdapter {
      * Create temporary container to allow formatting of the extracted content
      */
     const template = document.createElement('template');
+
     template.innerHTML = extractedContent.textContent!;
 
     for (const fragment of affectedFragments) {
       const tool = this.#tools.get(fragment.tool);
 
-      if (!tool || !fragment.range) {
+      if (!tool) {
         continue;
       }
-      
+
       const relativeStart = fragment.range[0] - lowerBoundary;
       const relativeEnd = fragment.range[1] - lowerBoundary;
 

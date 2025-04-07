@@ -6,12 +6,12 @@
  *
  * @param currentNode - Node to start expanding from
  * @param end - If true, expands end boundary of the range. If false/undefined, expands start boundary of the range
- * @returns The highest node that is still a first/last child, or the original node if no expansion needed
+ * @returns {Node} The highest node that is still a first/last child, or the original node if no expansion needed
  */
 export function expandRangeNodeBoundary(currentNode: Node, end?: boolean): Node {
   let node = currentNode;
 
-  if (end) {
+  if (end === true) {
     while (!(node.parentNode instanceof HTMLElement && node.parentNode.getAttribute('contenteditable') === 'true')) {
       if (node.parentNode && node === node.parentNode.lastChild) {
         node = node.parentNode;
@@ -20,14 +20,15 @@ export function expandRangeNodeBoundary(currentNode: Node, end?: boolean): Node 
       }
     }
   } else {
-    while (
-      node.parentNode && 
-      node === node.parentNode.firstChild &&
-      !(node.parentNode instanceof HTMLElement && node.parentNode.getAttribute('contenteditable') === 'true')
-    ) {
-      node = node.parentNode;
+    while (!(node.parentNode instanceof HTMLElement && node.parentNode.getAttribute('contenteditable') === 'true')) {
+      if (node.parentNode && node === node.parentNode.firstChild) {
+        node = node.parentNode;
+      } else {
+        return node;
+      }
     }
   }
+
 
   return node;
 }
