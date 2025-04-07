@@ -2,6 +2,18 @@ import type { DocumentIndex, TextRange } from '../../EventBus/index.js';
 import type { DataKey } from '../BlockNode/index.js';
 import type { BlockTuneName } from '../BlockTune/index.js';
 
+interface IndexDelta {
+  /**
+   * The first number is a delta of the starts,
+   * the second number is a delta of the ends
+   */
+  textRangeDelta?: TextRange;
+
+  blockIndexDelta?: number;
+
+  isTheSameDataKey?: boolean;
+}
+
 /**
  * Class representing index in the document model tree
  */
@@ -52,7 +64,7 @@ export class Index {
     const index = new Index();
 
     for (const value of arrayIndex) {
-      const [type, data] = value.split('@');
+      const [ type, data ] = value.split('@');
 
       switch (type) {
         case 'doc':

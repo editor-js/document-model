@@ -49,9 +49,9 @@ export class EditorDocument extends EventBus {
    * @param [args.toolsRegistry] - ToolsRegistry instance for the current document. Defaults to a new ToolsRegistry instance.
    */
   constructor({
-    properties = {},
-    toolsRegistry = new ToolsRegistry(),
-  }: EditorDocumentConstructorParameters = {}) {
+                properties = {},
+                toolsRegistry = new ToolsRegistry(),
+              }: EditorDocumentConstructorParameters = {}) {
     super();
 
     this.#properties = properties;
@@ -340,17 +340,17 @@ export class EditorDocument extends EventBus {
    * Inserts data to the specified index
    *
    * @param index - index to insert data
-   * @param data - data to insert
+   * @param data - data to insert (text or blocks)
    */
-  public insertData(index: Index, data: unknown): void {
+  public insertData(index: Index, data: string | BlockNodeSerialized[]): void {
     switch (true) {
       case index.isTextIndex:
         this.insertText(index.blockIndex!, index.dataKey!, data as string, index.textRange![0]);
         break;
 
       case index.isBlockIndex:
-        // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-        this.addBlock(data as Parameters<EditorDocument['addBlock']>[0], index.blockIndex);
+        (data as BlockNodeSerialized[])
+          .forEach((blockData, i) => this.addBlock(blockData, index.blockIndex! + i));
         break;
       default:
         throw new Error('Unsupported index');
@@ -361,15 +361,16 @@ export class EditorDocument extends EventBus {
    * Removes data from the specified index
    *
    * @param index - index to remove data from
+   * @param data - text or blocks to remove
    */
-  public removeData(index: Index): void {
+  public removeData(index: Index, data: string | BlockNodeSerialized[]): void {
     switch (true) {
       case index.isTextIndex:
-        this.removeText(index.blockIndex!, index.dataKey!, index.textRange![0], index.textRange![1]);
+        this.removeText(index.blockIndex!, index.dataKey!, index.textRange![0], index.textRange![0] + data.length);
         break;
 
       case index.isBlockIndex:
-        this.removeBlock(index.blockIndex!);
+        (data as BlockNodeSerialized[]).forEach(() => this.removeBlock(index.blockIndex!));
         break;
       default:
         throw new Error('Unsupported index');

@@ -24,11 +24,11 @@ export class UndoRedoManager {
       return;
     }
 
-    const inversedOperation = operation.inverse();
+    const invertedOperation = operation.inverse();
 
-    this.#redoStack.push(inversedOperation);
+    this.#redoStack.push(invertedOperation);
 
-    return inversedOperation;
+    return invertedOperation;
   }
 
   /**
@@ -41,11 +41,11 @@ export class UndoRedoManager {
       return;
     }
 
-    const inversedOperation = operation.inverse();
+    const invertedOperation = operation.inverse();
 
     this.#undoStack.push(operation);
 
-    return inversedOperation;
+    return invertedOperation;
   }
 
   /**

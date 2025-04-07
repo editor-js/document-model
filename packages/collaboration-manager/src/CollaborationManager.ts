@@ -1,5 +1,14 @@
-import type { EditorJSModel, ModelEvents } from '@editorjs/model';
-import { EventType, TextAddedEvent, TextRemovedEvent } from '@editorjs/model';
+import {
+  BlockAddedEvent, type BlockNodeSerialized,
+  BlockRemovedEvent,
+  type EditorJSModel,
+  EventType,
+  type ModelEvents,
+  TextAddedEvent,
+  TextFormattedEvent, type TextFormattedEventData,
+  TextRemovedEvent,
+  TextUnformattedEvent
+} from '@editorjs/model';
 import { Operation, OperationType } from './Operation.js';
 import { UndoRedoManager } from './UndoRedoManager.js';
 
@@ -86,10 +95,10 @@ export class CollaborationManager {
 
     switch (operation.type) {
       case OperationType.Insert:
-        this.#model.insertData(operation.index, operation.data.newValue);
+        this.#model.insertData(operation.index, operation.data.payload as string | BlockNodeSerialized[]);
         break;
       case OperationType.Delete:
-        this.#model.removeData(operation.index);
+        this.#model.removeData(operation.index, operation.data.payload as string | BlockNodeSerialized[]);
         break;
       case OperationType.Modify:
         console.log('modify operation is not implemented yet');
@@ -111,17 +120,40 @@ export class CollaborationManager {
     }
     let operation: Operation | null = null;
 
+    /**
+     * @todo add all model events
+     */
     switch (true) {
       case (e instanceof TextAddedEvent):
         operation = new Operation(OperationType.Insert, e.detail.index, {
-          prevValue: '',
-          newValue: e.detail.data,
+          payload: e.detail.data,
         });
         break;
       case (e instanceof TextRemovedEvent):
         operation = new Operation(OperationType.Delete, e.detail.index, {
-          prevValue: e.detail.data,
-          newValue: '',
+          payload: e.detail.data,
+        });
+        break;
+      case (e instanceof TextFormattedEvent):
+        operation = new Operation(OperationType.Modify, e.detail.index, {
+          payload: e.detail.data,
+          prevPayload: undefined,
+        });
+        break;
+      case (e instanceof TextUnformattedEvent):
+        operation = new Operation(OperationType.Modify, e.detail.index, {
+          prevPayload: e.detail.data,
+          payload: undefined,
+        });
+        break;
+      case (e instanceof BlockAddedEvent):
+        operation = new Operation(OperationType.Insert, e.detail.index, {
+          payload: [ e.detail.data ],
+        });
+        break;
+      case (e instanceof BlockRemovedEvent):
+        operation = new Operation(OperationType.Delete, e.detail.index, {
+          payload: [ e.detail.data ],
         });
         break;
       default:

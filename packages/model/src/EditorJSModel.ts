@@ -193,9 +193,9 @@ export class EditorJSModel extends EventBus {
    * Inserts data to the specified index
    *
    * @param index - index to insert data
-   * @param data - data to insert
+   * @param data - data to insert (text or blocks)
    */
-  public insertData(index: Index, data: unknown): void {
+  public insertData(index: Index, data: string | BlockNodeSerialized[]): void {
     this.#document.insertData(index, data);
   }
 
@@ -203,9 +203,10 @@ export class EditorJSModel extends EventBus {
    * Removes data from the specified index
    *
    * @param index - index to remove data from
+   * @param data - text or blocks to remove
    */
-  public removeData(index: Index): void {
-    this.#document.removeData(index);
+  public removeData(index: Index, data: string | BlockNodeSerialized[]): void {
+    this.#document.removeData(index, data);
   }
 
   /**

@@ -26,8 +26,7 @@ describe('CollaborationManager', () => {
         .addTextRange([0, 4])
         .build();
       const operation = new Operation(OperationType.Insert, index, {
-        prevValue: '',
-        newValue: 'test',
+        payload: 'test',
       });
 
       collaborationManager.applyOperation(operation);
@@ -69,8 +68,7 @@ describe('CollaborationManager', () => {
           3, 5])
         .build();
       const operation = new Operation(OperationType.Delete, index, {
-        prevValue: '11',
-        newValue: '',
+        payload: '11',
       });
 
       collaborationManager.applyOperation(operation);
@@ -112,8 +110,7 @@ describe('CollaborationManager', () => {
         .addTextRange([0, 4])
         .build();
       const operation = new Operation(OperationType.Insert, index, {
-        prevValue: '',
-        newValue: 'test',
+        payload: 'test',
       });
 
       collaborationManager.applyOperation(operation);
@@ -155,8 +152,7 @@ describe('CollaborationManager', () => {
           3, 5])
         .build();
       const operation = new Operation(OperationType.Delete, index, {
-        prevValue: '11',
-        newValue: '',
+        payload: '11',
       });
 
       collaborationManager.applyOperation(operation);
@@ -197,8 +193,7 @@ describe('CollaborationManager', () => {
         .addTextRange([0, 4])
         .build();
       const operation = new Operation(OperationType.Insert, index, {
-        prevValue: '',
-        newValue: 'test',
+        payload: 'test',
       });
 
       collaborationManager.applyOperation(operation);
@@ -240,8 +235,7 @@ describe('CollaborationManager', () => {
         .addTextRange([0, 4])
         .build();
       const operation = new Operation(OperationType.Insert, index, {
-        prevValue: '',
-        newValue: 'test',
+        payload: 'test',
       });
 
       collaborationManager.applyOperation(operation);

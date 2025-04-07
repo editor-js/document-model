@@ -12,4 +12,7 @@ export default {
   transform: {
     ...createDefaultEsmPreset().transform,
   },
+  "transformIgnorePatterns": [
+    "packages/model"
+  ]
 } as JestConfigWithTsJest;

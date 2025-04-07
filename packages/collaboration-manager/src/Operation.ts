@@ -1,4 +1,4 @@
-import { IndexBuilder, type Index } from '@editorjs/model';
+import { IndexBuilder, type Index, type BlockNodeSerialized } from '@editorjs/model';
 
 /**
  * Type of the operation
@@ -9,30 +9,51 @@ export enum OperationType {
   Modify = 'modify'
 }
 
+type OperationPayload = string | BlockNodeSerialized;
+
 /**
  * Data for the operation
  */
-export interface OperationData {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface InsertOrDeleteOperationData<T extends OperationPayload = any> {
   /**
-   * Value before the operation
+   * Operation payload
    */
-  prevValue: string;
+  payload: ArrayLike<T>;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface ModifyOperationData<T extends Record<any, any> = Record<any, any>> {
+  /**
+   * Previous payload for undo/redo purposes
+   */
+  payload?: T;
 
   /**
-   * Value after the operation
+   * Previous payload for undo/redo purposes
    */
-  newValue: string;
+  prevPayload?: T;
 }
+
+export type OperationTypeToData<T extends OperationType> = T extends OperationType.Modify
+  ? ModifyOperationData
+  : InsertOrDeleteOperationData;
+
+export type InvertedOperationType<T extends OperationType> = T extends OperationType.Insert
+  ? OperationType.Delete
+  : T extends OperationType.Delete
+    ? OperationType.Insert
+    : OperationType.Modify;
 
 
 /**
  * Class representing operation on the document model tree
  */
-export class Operation {
+export class Operation<T extends OperationType = OperationType> {
   /**
    * Operation type
    */
-  public type: OperationType;
+  public type: T;
 
   /**
    * Index in the document model tree
@@ -42,7 +63,7 @@ export class Operation {
   /**
    * Operation data
    */
-  public data: OperationData;
+  public data: OperationTypeToData<T>;
 
   /**
    * Creates an instance of Operation
@@ -51,48 +72,40 @@ export class Operation {
    * @param index - index in the document model tree
    * @param data - operation data
    */
-  constructor(type: OperationType, index: Index, data: OperationData) {
+  constructor(type: T, index: Index, data: OperationTypeToData<T>) {
     this.type = type;
     this.index = index;
     this.data = data;
   }
 
   /**
-   * Makes an inverse operation
+   * Returns an inverted operation
    */
-  public inverse(): Operation {
+  public inverse(): Operation<InvertedOperationType<T>> {
     const index = this.index;
 
     switch (this.type) {
-      case OperationType.Insert:
+      case OperationType.Insert: {
+        const data = this.data as InsertOrDeleteOperationData;
 
-        const textRange = index.textRange;
+        return new Operation(OperationType.Delete, index, data) as Operation<InvertedOperationType<T>>;
+      }
+      case OperationType.Delete: {
+        const data = this.data as InsertOrDeleteOperationData;
 
-        if (textRange == undefined) {
-          throw new Error('Unsupported index');
-        }
+        return new Operation(OperationType.Insert, index, data) as Operation<InvertedOperationType<T>>;
+      }
+      case OperationType.Modify: {
+        const data = this.data as ModifyOperationData;
 
-        const [ textRangeStart ] = textRange;
-
-        const newIndex = new IndexBuilder()
-          .from(index)
-          .addTextRange([textRangeStart, textRangeStart + this.data.newValue.length])
-          .build();
-
-        return new Operation(OperationType.Delete, newIndex, {
-          prevValue: this.data.newValue,
-          newValue: this.data.prevValue,
-        });
-      case OperationType.Delete:
-        return new Operation(OperationType.Insert, index, {
-          prevValue: this.data.newValue,
-          newValue: this.data.prevValue,
-        });
-      case OperationType.Modify:
         return new Operation(OperationType.Modify, index, {
-          prevValue: this.data.newValue,
-          newValue: this.data.prevValue,
-        });
+          payload: data.prevPayload,
+          prevPayload: data.payload,
+        }) as Operation<InvertedOperationType<T>>;
+      }
+
+      default:
+        throw Error('Unsupported operation type');
     }
   }
 
@@ -101,85 +114,76 @@ export class Operation {
    *
    * @param againstOp - operation to transform against
    */
-  public transform(againstOp: Operation): Operation {
-    if (!this.index.isTextIndex || !againstOp.index.isTextIndex) {
-      throw new Error('Unsupported index');
-    }
-
-    if (this.type === OperationType.Modify || againstOp.type === OperationType.Modify) {
-      throw new Error('Unsupported operation type');
-    }
-
+  public transform(againstOp: Operation): Operation<T> {
     /**
-     * Do not transform operations if they are on different blocks or documents
+     * Do not transform operations if they are on different documents
      */
-    if (this.index.documentId !== againstOp.index.documentId || this.index.blockIndex !== againstOp.index.blockIndex) {
+    if (this.index.documentId !== againstOp.index.documentId) {
       return this;
     }
 
-    const [ receivedStartIndex ] = this.index.textRange!;
-    const [ localStartIndex ] = againstOp.index.textRange!;
+    /**
+     * Do not transform if the againstOp index is greater or if againstOp is Modify op
+     */
+    if (!this.#shouldTransform(againstOp.index) || againstOp.type === OperationType.Modify) {
+      return this;
+    }
 
-    switch (true) {
-      case this.type === OperationType.Insert && againstOp.type === OperationType.Insert:
-        if (receivedStartIndex <= localStartIndex) {
-          return this;
-        } else {
-          return this.shiftOperation(againstOp.data.newValue.length);
+    const newIndexBuilder = new IndexBuilder().from(this.index);
+
+    switch (againstOp.type) {
+      case OperationType.Insert: {
+        const payload = (againstOp as Operation<OperationType.Insert>).data.payload;
+
+        if (againstOp.index.isBlockIndex) {
+          newIndexBuilder.addBlockIndex(this.index.blockIndex! + payload.length);
+
+          break;
         }
 
-      case this.type === OperationType.Delete && againstOp.type === OperationType.Delete:
-        if (receivedStartIndex < localStartIndex) {
-          return this;
-        } else if (receivedStartIndex > localStartIndex) {
-          return this.shiftOperation(-againstOp.data.prevValue.length);
-        } else {
-          // If both delete at the same index, adjust the length of deletion
-          const minLength = Math.min(this.data.prevValue.length, againstOp.data.prevValue.length);
+        newIndexBuilder.addTextRange([ this.index.textRange![0] + payload.length, this.index.textRange![1] + payload.length ]);
 
-          return new Operation(OperationType.Delete, this.index, {
-            prevValue: this.data.prevValue.slice(minLength),
-            newValue: '',
-          });
+        break;
+      }
+
+      case OperationType.Delete: {
+        const payload = (againstOp as Operation<OperationType.Delete>).data.payload;
+
+        if (againstOp.index.isBlockIndex) {
+          newIndexBuilder.addBlockIndex(this.index.blockIndex! - payload.length);
+
+          break;
         }
 
-      case this.type === OperationType.Insert && againstOp.type === OperationType.Delete:
-        if (receivedStartIndex <= localStartIndex) {
-          return this;
-        } else {
-          return this.shiftOperation(-againstOp.data.prevValue.length);
-        }
+        newIndexBuilder.addTextRange([ this.index.textRange![0] - payload.length, this.index.textRange![1] - payload.length ]);
 
-      case this.type === OperationType.Delete && againstOp.type === OperationType.Insert:
-        if (receivedStartIndex < localStartIndex) {
-          return this;
-        } else {
-          return this.shiftOperation(againstOp.data.newValue.length);
-        }
+        break;
+      }
 
       default:
         throw new Error('Unsupported operation type');
     }
-  }
-
-  /**
-   * Shifts the operation by the given shift value (by adjusting the text range)
-   *
-   * @param shift - shift value
-   */
-  private shiftOperation(shift: number): Operation {
-    if (!this.index.isTextIndex) {
-      throw new Error('Unsupported index');
-    }
-
-    const [ textRangeStart ] = this.index.textRange!;
 
     return new Operation(
       this.type,
-      new IndexBuilder().from(this.index)
-        .addTextRange([textRangeStart + shift, textRangeStart + shift])
-        .build(),
+      newIndexBuilder.build(),
       this.data
     );
+  }
+
+  /**
+   *
+   * @param indexToCompare
+   */
+  #shouldTransform(indexToCompare: Index): boolean {
+    if (indexToCompare.isBlockIndex && this.index.blockIndex !== undefined) {
+      return indexToCompare.blockIndex! <= this.index.blockIndex;
+    }
+
+    if (indexToCompare.isTextIndex && this.index.isTextIndex) {
+      return indexToCompare.dataKey === this.index.dataKey && indexToCompare.textRange![0] <= this.index.textRange![0];
+    }
+
+    return false;
   }
 }
