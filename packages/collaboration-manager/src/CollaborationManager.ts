@@ -5,8 +5,7 @@ import {
   EventType,
   type ModelEvents,
   TextAddedEvent,
-  TextFormattedEvent, type TextFormattedEventData,
-  TextRemovedEvent,
+  TextFormattedEvent, TextRemovedEvent,
   TextUnformattedEvent
 } from '@editorjs/model';
 import { Operation, OperationType } from './Operation.js';

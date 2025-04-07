@@ -49,9 +49,9 @@ export class EditorDocument extends EventBus {
    * @param [args.toolsRegistry] - ToolsRegistry instance for the current document. Defaults to a new ToolsRegistry instance.
    */
   constructor({
-                properties = {},
-                toolsRegistry = new ToolsRegistry(),
-              }: EditorDocumentConstructorParameters = {}) {
+    properties = {},
+    toolsRegistry = new ToolsRegistry(),
+  }: EditorDocumentConstructorParameters = {}) {
     super();
 
     this.#properties = properties;

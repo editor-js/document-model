@@ -834,7 +834,7 @@ describe('EditorDocument', () => {
       const spy = jest.spyOn(document, 'insertText');
       const index = new IndexBuilder().addBlockIndex(blockIndex)
         .addDataKey(dataKey)
-        .addTextRange([ 0, 0 ])
+        .addTextRange([0, 0])
         .build();
 
       document.insertData(index, text);
@@ -879,7 +879,7 @@ describe('EditorDocument', () => {
       const index = new IndexBuilder()
         .addBlockIndex(blockIndex)
         .addDataKey(dataKey)
-        .addTextRange([ 0, rangeEnd ])
+        .addTextRange([0, rangeEnd])
         .build();
 
       document.removeData(index, 'hello');

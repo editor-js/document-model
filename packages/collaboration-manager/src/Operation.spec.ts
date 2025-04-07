@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import type { BlockNodeSerialized, DataKey, DocumentIndex } from '@editorjs/model';
 import { IndexBuilder } from '@editorjs/model';
-import { describe } from "@jest/globals";
+import { describe } from '@jest/globals';
 import { type InsertOrDeleteOperationData, type ModifyOperationData, Operation, OperationType } from './Operation.js';
 
 const createOperation = (
@@ -18,7 +18,7 @@ const createOperation = (
   if (Array.isArray(value)) {
     index.addBlockIndex(startIndex);
   } else {
-    index.addDataKey('text' as DataKey).addTextRange([ startIndex, startIndex ]);
+    index.addDataKey('text' as DataKey).addTextRange([startIndex, startIndex]);
   }
 
   const data: InsertOrDeleteOperationData | ModifyOperationData = {
@@ -33,7 +33,7 @@ const createOperation = (
   return new Operation(
     type,
     index.build(),
-    data,
+    data
   );
 };
 
@@ -102,7 +102,7 @@ describe('Operation', () => {
         const localOp = createOperation(OperationType.Insert, 0, 'abc');
         const transformedOp = receivedOp.transform(localOp);
 
-        expect(transformedOp.index.textRange).toEqual([ 6, 6 ]);
+        expect(transformedOp.index.textRange).toEqual([6, 6]);
       });
 
       it('should transform a received operation if it is at the same position as a local one', () => {
@@ -110,7 +110,7 @@ describe('Operation', () => {
         const localOp = createOperation(OperationType.Insert, 0, 'def');
         const transformedOp = receivedOp.transform(localOp);
 
-        expect(transformedOp.index.textRange).toEqual([ 3, 3 ]);
+        expect(transformedOp.index.textRange).toEqual([3, 3]);
       });
 
       it('should not change the text index if local op is a Block operation', () => {
@@ -121,7 +121,7 @@ describe('Operation', () => {
         } ]);
         const transformedOp = receivedOp.transform(localOp);
 
-        expect(transformedOp.index.textRange).toEqual([ 0, 0 ]);
+        expect(transformedOp.index.textRange).toEqual([0, 0]);
       });
 
       it('should not change the operation if local op is a Block operation after a received one', () => {
@@ -184,7 +184,7 @@ describe('Operation', () => {
         const localOp = createOperation(OperationType.Delete, 0, 'abc');
         const transformedOp = receivedOp.transform(localOp);
 
-        expect(transformedOp.index.textRange).toEqual([ 0, 0 ]);
+        expect(transformedOp.index.textRange).toEqual([0, 0]);
       });
 
       it('should transform a received operation if it is at the same position as a local one', () => {
@@ -192,7 +192,7 @@ describe('Operation', () => {
         const localOp = createOperation(OperationType.Delete, 3, 'def');
         const transformedOp = receivedOp.transform(localOp);
 
-        expect(transformedOp.index.textRange).toEqual([ 0, 0 ]);
+        expect(transformedOp.index.textRange).toEqual([0, 0]);
       });
 
       it('should not change the text index if local op is a Block operation', () => {
@@ -203,7 +203,7 @@ describe('Operation', () => {
         } ]);
         const transformedOp = receivedOp.transform(localOp);
 
-        expect(transformedOp.index.textRange).toEqual([ 1, 1 ]);
+        expect(transformedOp.index.textRange).toEqual([1, 1]);
       });
 
       it('should not change the text index if local op is a Block operation', () => {
@@ -214,7 +214,7 @@ describe('Operation', () => {
         } ]);
         const transformedOp = receivedOp.transform(localOp);
 
-        expect(transformedOp.index.textRange).toEqual([ 0, 0 ]);
+        expect(transformedOp.index.textRange).toEqual([0, 0]);
       });
 
       it('should not change the operation if local op is a Block operation after a received one', () => {
@@ -304,7 +304,8 @@ describe('Operation', () => {
       const op = createOperation(OperationType.Modify, 0, { bold: true }, { bold: false });
       const inverted = op.inverse();
 
-      expect(inverted.data).toEqual({ payload: { bold: false }, prevPayload: { bold: true } });
+      expect(inverted.data).toEqual({ payload: { bold: false },
+        prevPayload: { bold: true } });
     });
 
     it('should throw an error if unsupported operation type is provided', () => {

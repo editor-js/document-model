@@ -141,7 +141,7 @@ export class Operation<T extends OperationType = OperationType> {
           break;
         }
 
-        newIndexBuilder.addTextRange([ this.index.textRange![0] + payload.length, this.index.textRange![1] + payload.length ]);
+        newIndexBuilder.addTextRange([this.index.textRange![0] + payload.length, this.index.textRange![1] + payload.length]);
 
         break;
       }
@@ -155,7 +155,7 @@ export class Operation<T extends OperationType = OperationType> {
           break;
         }
 
-        newIndexBuilder.addTextRange([ this.index.textRange![0] - payload.length, this.index.textRange![1] - payload.length ]);
+        newIndexBuilder.addTextRange([this.index.textRange![0] - payload.length, this.index.textRange![1] - payload.length]);
 
         break;
       }
@@ -172,8 +172,9 @@ export class Operation<T extends OperationType = OperationType> {
   }
 
   /**
+   * Checks if operation needs to be transformed
    *
-   * @param indexToCompare
+   * @param indexToCompare - index of a relative operation
    */
   #shouldTransform(indexToCompare: Index): boolean {
     if (indexToCompare.isBlockIndex && this.index.blockIndex !== undefined) {
