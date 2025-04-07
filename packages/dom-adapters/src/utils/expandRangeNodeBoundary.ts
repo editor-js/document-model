@@ -29,8 +29,5 @@ export function expandRangeNodeBoundary(currentNode: Node, end?: boolean): Node 
     }
   }
 
-
   return node;
 }
-
-

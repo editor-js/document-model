@@ -178,9 +178,10 @@ export class FormattingAdapter {
       let lowerBoundary = textRange[0];
       let upperBoundary = textRange[1];
 
+      lowerBoundary = lowerBoundary, affectedFragments[0].range[0];
+
       for (const fragment of affectedFragments) {
-        lowerBoundary = Math.min(lowerBoundary, fragment.range[0] ?? 0);
-        upperBoundary = Math.max(upperBoundary, fragment.range[1] ?? 0);
+        upperBoundary = Math.max(upperBoundary, fragment.range[1]);
       }
 
       this.#rerenderRange(input, lowerBoundary, upperBoundary, affectedFragments);
@@ -212,7 +213,7 @@ export class FormattingAdapter {
       range.setEnd(endNode, endOffset);
     }
 
-    const extractedContent = range.extractContents();
+    const extractedContent = range.cloneContents();
 
     /**
      * Create temporary container to allow formatting of the extracted content
