@@ -16,11 +16,6 @@ jobs:
         with:
           package-name: '@editorjs/model'
 
-      - name: Build the sdk package
-        uses: ./.github/actions/build
-        with:
-          package-name: '@editorjs/sdk'
-
       - name: Run ESLint check
         uses: ./.github/actions/lint
         with:
