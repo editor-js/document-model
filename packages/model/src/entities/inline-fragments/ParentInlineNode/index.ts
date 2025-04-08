@@ -134,6 +134,11 @@ export class ParentInlineNode extends EventBus implements InlineNode {
   public getFragments(start = 0, end = this.length, includeEdges = false): InlineFragment[] {
     this.validateRange(start, end);
 
+    if (includeEdges === true) {
+      start = Math.max(0, start - 1);
+      end = Math.min(this.length, end + 1);
+    }
+
     const reduceResult = this.#reduceChildrenInRange<InlineFragment[]>(
       start,
       end,
@@ -171,8 +176,7 @@ export class ParentInlineNode extends EventBus implements InlineNode {
           return normalized;
         }, [] as InlineFragment[]);
       },
-      [],
-      includeEdges
+      []
     );
 
     return reduceResult;
@@ -308,8 +312,7 @@ export class ParentInlineNode extends EventBus implements InlineNode {
     start: number,
     end: number,
     callback: (acc: Acc, child: InlineNode, start: number, end: number, offset: number) => Acc,
-    initialValue: Acc,
-    includeEdges?: boolean
+    initialValue: Acc
   ): Acc {
     let result = initialValue;
 
@@ -326,11 +329,7 @@ export class ParentInlineNode extends EventBus implements InlineNode {
        */
       const childLength = child.length;
 
-      if (includeEdges) {
-        console.log('includeEdges', includeEdges);
-      }
-
-      if ((start < childLength && end > 0 && start < end) || ((includeEdges === true) && ((start === 0) || (end === childLength)))) {
+      if ((start < childLength && end > 0 && start < end)) {
         result = callback(result, child, Math.max(start, 0), Math.min(childLength, end), offset);
       }
 
