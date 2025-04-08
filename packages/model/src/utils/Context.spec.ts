@@ -40,7 +40,7 @@ describe('Context util', () => {
     expect(getContext()).toBeUndefined();
   });
 
-  it('should return udnefined as a context after a function call in the context', () => {
+  it('should return undefined as a context after a function call in the context', () => {
     const func = (): string | undefined => {
       return getContext<string>();
     };
