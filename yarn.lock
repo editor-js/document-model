@@ -645,6 +645,7 @@ __metadata:
   resolution: "@editorjs/collaboration-manager@workspace:packages/collaboration-manager"
   dependencies:
     "@editorjs/model": "workspace:^"
+    "@editorjs/sdk": "workspace:^"
     "@jest/globals": "npm:^29.7.0"
     "@stryker-mutator/core": "npm:^7.0.2"
     "@stryker-mutator/jest-runner": "npm:^7.0.2"

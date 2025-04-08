@@ -12,7 +12,7 @@ import {
 } from '@editorjs/model';
 import type { CaretAdapter } from '../CaretAdapter/index.js';
 import { FormattingAction } from '@editorjs/model';
-import type { InlineTool } from '@editorjs/sdk';
+import type { CoreConfig, InlineTool } from '@editorjs/sdk';
 import { surround } from '../utils/surround.js';
 
 /**
@@ -36,11 +36,18 @@ export class FormattingAdapter {
   #caretAdapter: CaretAdapter;
 
   /**
+   * Editor's config
+   */
+  #config: CoreConfig;
+
+  /**
    * @class
+   * @param config - Editor's config
    * @param model - editor model instance
    * @param caretAdapter - caret adapter instance
    */
-  constructor(model: EditorJSModel, caretAdapter: CaretAdapter) {
+  constructor(config: CoreConfig, model: EditorJSModel, caretAdapter: CaretAdapter) {
+    this.#config = config;
     this.#model = model;
     this.#caretAdapter = caretAdapter;
 
@@ -55,7 +62,7 @@ export class FormattingAdapter {
    *
    * @param input - input element to apply format to
    * @param inlineFragment - instance that contains index, toolName and toolData
-   * @param inlineFragment.index - text range inside of the input element
+   * @param inlineFragment.index - text range inside the input element
    * @param inlineFragment.toolName - name of the tool, which format to apply
    * @param inlineFragment.toolData - additional data for the tool
    */
@@ -138,11 +145,11 @@ export class FormattingAdapter {
 
     switch (action) {
       case FormattingAction.Format:
-        this.#model.format(blockIndex, dataKey, toolName, ...range, data);
+        this.#model.format(this.#config.userId, blockIndex, dataKey, toolName, ...range, data);
 
         break;
       case FormattingAction.Unformat:
-        this.#model.unformat(blockIndex, dataKey, toolName, ...range);
+        this.#model.unformat(this.#config.userId, blockIndex, dataKey, toolName, ...range);
 
         break;
     }

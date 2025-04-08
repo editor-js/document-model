@@ -122,7 +122,7 @@ export class BlocksManager {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    this.#model.addBlock({
+    this.#model.addBlock(this.#config.userId, {
       ...data,
       name: type,
     }, index);
@@ -162,6 +162,7 @@ export class BlocksManager {
     const toolName = event.detail.data.name;
 
     const blockToolAdapter = new BlockToolAdapter(
+      this.#config,
       this.#model,
       this.#caretAdapter,
       index.blockIndex,

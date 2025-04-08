@@ -34,6 +34,9 @@
     },
     {
       "path": "../core/tsconfig.json"
+    },
+    {
+      "path": "../collaboration-manager/tsconfig.json",
     }
   ]
 }
