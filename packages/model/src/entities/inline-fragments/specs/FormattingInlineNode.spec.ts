@@ -302,7 +302,7 @@ describe('FormattingInlineNode', () => {
       const secondChild = new FormattingInlineNode({ tool: anotherTool });
       const nodeToMerge = new FormattingInlineNode({
         tool,
-        children: [ firstChild, secondChild ],
+        children: [firstChild, secondChild],
       });
 
       const spy = jest.spyOn(node, 'append');
@@ -311,7 +311,7 @@ describe('FormattingInlineNode', () => {
 
       expect(spy).toBeCalledWith(firstChild);
       expect(spy).toBeCalledWith(secondChild);
-    })
+    });
 
     it('should remove merged node', () => {
       const nodeToMerge = new FormattingInlineNode({ tool });

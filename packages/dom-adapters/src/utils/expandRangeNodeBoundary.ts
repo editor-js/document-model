@@ -15,7 +15,7 @@ export function expandRangeNodeBoundary(currentNode: Node, end?: boolean): Node 
     while (!(node.parentNode instanceof HTMLElement && node.parentNode.getAttribute('contenteditable') === 'true')) {
       if (!(node.parentNode && node === node.parentNode.lastChild)) {
         return node;
-      } 
+      }
 
       node = node.parentNode;
     }
