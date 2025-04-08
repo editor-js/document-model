@@ -4,7 +4,8 @@ import {
   CoreEventType, 
   EventBus, 
   EditorjsPlugin, 
-  EditorjsPluginParams 
+  EditorjsPluginParams,
+  UiComponentType,
 } from '@editorjs/core';
 
 /**
@@ -14,7 +15,10 @@ import {
  *  - handles user UI interactions
  */
 export class BlocksUI implements EditorjsPlugin {
-  static readonly type = 'blocks';
+  /**
+   * Plugin type
+   */
+  static readonly type = UiComponentType.Blocks;
 
   /**
    * Editor holder element

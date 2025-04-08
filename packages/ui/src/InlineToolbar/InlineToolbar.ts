@@ -6,7 +6,9 @@ import {
   EventBus, 
   SelectionChangedCoreEvent, 
   EditorjsPlugin, 
-  EditorjsPluginParams } from '@editorjs/core';
+  EditorjsPluginParams,
+  UiComponentType
+} from '@editorjs/core';
 import { InlineTool, InlineToolFormatData } from '@editorjs/sdk';
 import { InlineFragment, InlineToolName, TextRange } from '@editorjs/model';
 
@@ -20,7 +22,7 @@ export class InlineToolbarUI implements EditorjsPlugin {
   /**
    * Plugin type
    */
-  public static readonly type = 'inline-toolbar';
+  public static readonly type = UiComponentType.InlineToolbar;
 
   /**
    * EventBus instance to exchange events between components

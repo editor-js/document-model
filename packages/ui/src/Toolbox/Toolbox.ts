@@ -5,7 +5,8 @@ import {
   ToolLoadedCoreEvent, 
   BlockToolFacade, 
   EditorjsPlugin, 
-  EditorjsPluginParams 
+  EditorjsPluginParams,
+  UiComponentType
 } from '@editorjs/core';
 import { ToolboxRenderedUIEvent } from './ToolboxRenderedUIEvent.js';
 import { EditorAPI } from '@editorjs/core';
@@ -19,7 +20,7 @@ export class ToolboxUI implements EditorjsPlugin {
   /**
    * Plugin type
    */
-  public static readonly type = 'toolbox';
+  public static readonly type = UiComponentType.Toolbox;
 
   /**
    * EditorAPI instance to insert blocks

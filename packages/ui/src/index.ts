@@ -1,4 +1,10 @@
-import { CoreConfigValidated, EventBus, EditorjsPlugin, EditorjsPluginParams } from '@editorjs/core';
+import { 
+  CoreConfigValidated, 
+  EventBus, 
+  EditorjsPlugin, 
+  EditorjsPluginParams,
+  UiComponentType
+} from '@editorjs/core';
 import { ToolboxRenderedUIEvent } from './Toolbox/ToolboxRenderedUIEvent.js';
 import { InlineToolbarRenderedUIEvent } from './InlineToolbar/InlineToolbarRenderedUIEvent.js';
 
@@ -24,7 +30,7 @@ export class EditorjsUI implements EditorjsPlugin {
   /**
    * Plugin type
    */
-  public static type = 'editorjs-ui';
+  public static type = UiComponentType.Shell;
 
   /**
    * @param params - Plugin parameters

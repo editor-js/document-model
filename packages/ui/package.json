@@ -27,8 +27,8 @@
     "eslint": "^9.9.1",
     "eslint-config-codex": "^2.0.2",
     "typescript": "^5.5.4",
-    "vite": "^6.2.5",
-    "vite-plugin-dts": "^4.5.3"
+    "vite": "^5.1.3",
+    "vite-plugin-dts": "^3.7.3"
   },
   "dependencies": {
     "@editorjs/core": "workspace:^",
@@ -37,8 +37,6 @@
     "@editorjs/editorjs": "^2.30.5",
     "@editorjs/helpers": "^1.0.0",
     "@editorjs/model": "workspace:^",
-    "@editorjs/sdk": "workspace:^",
-    "reflect-metadata": "^0.2.2",
-    "typedi": "^0.10.0"
+    "@editorjs/sdk": "workspace:^"
   }
 }
