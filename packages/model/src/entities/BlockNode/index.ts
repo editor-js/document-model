@@ -285,15 +285,16 @@ export class BlockNode extends EventBus {
    * @param dataKey - key of the data
    * @param [start] - start char index of the range
    * @param [end] - end char index of the range
+   * @param [includeEdges] - whether to include edges of the range
    * @param [tool] - name of the Inline Tool
    * @throws {Error} if data with passed key does not exist
    */
-  public getFragments(dataKey: DataKey, start?: number, end?: number, tool?: InlineToolName): InlineFragment[] {
+  public getFragments(dataKey: DataKey, start?: number, end?: number, includeEdges?: boolean, tool?: InlineToolName): InlineFragment[] {
     this.#validateKey(dataKey, TextNode);
 
     const node = get<TextNode>(this.#data, dataKey as string)!;
 
-    return node.getFragments(start, end, tool);
+    return node.getFragments(start, end, includeEdges, tool);
   }
 
   /**

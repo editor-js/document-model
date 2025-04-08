@@ -330,10 +330,11 @@ export class EditorDocument extends EventBus {
    * @param dataKey - key of the data
    * @param [start] - start char index of the range
    * @param [end] - end char index of the range
+   * @param [includeEdges] - whether to include edges of the range
    * @param [tool] - name of the Inline Tool to filter by
    */
-  public getFragments(blockIndex: number, dataKey: DataKey, start?: number, end?: number, tool?: InlineToolName): InlineFragment[] {
-    return this.#children[blockIndex].getFragments(dataKey, start, end, tool);
+  public getFragments(blockIndex: number, dataKey: DataKey, start?: number, end?: number, includeEdges?: boolean, tool?: InlineToolName): InlineFragment[] {
+    return this.#children[blockIndex].getFragments(dataKey, start, end, includeEdges, tool);
   }
 
   /**

@@ -129,11 +129,12 @@ export class ParentInlineNode extends EventBus implements InlineNode {
    *
    * @param [start] - start char index of the range, by default 0
    * @param [end] - end char index of the range, by default length of the text value
+   * @param [includeEdges] - whether to include edges of the range
    */
-  public getFragments(start = 0, end = this.length): InlineFragment[] {
+  public getFragments(start = 0, end = this.length, includeEdges = false): InlineFragment[] {
     this.validateRange(start, end);
 
-    return this.#reduceChildrenInRange<InlineFragment[]>(
+    const reduceResult = this.#reduceChildrenInRange<InlineFragment[]>(
       start,
       end,
       (acc, child, childStart, childEnd, offset) => {
@@ -145,7 +146,7 @@ export class ParentInlineNode extends EventBus implements InlineNode {
         }
 
         const fragments = child
-          .getFragments(childStart, childEnd)
+          .getFragments(childStart, childEnd, includeEdges)
           .map(fragment => ({
             ...fragment,
             range: fragment.range.map(index => index + offset) as InlineFragment['range'],
@@ -170,8 +171,11 @@ export class ParentInlineNode extends EventBus implements InlineNode {
           return normalized;
         }, [] as InlineFragment[]);
       },
-      []
+      [],
+      includeEdges
     );
+
+    return reduceResult;
   }
 
   /**
@@ -304,7 +308,8 @@ export class ParentInlineNode extends EventBus implements InlineNode {
     start: number,
     end: number,
     callback: (acc: Acc, child: InlineNode, start: number, end: number, offset: number) => Acc,
-    initialValue: Acc
+    initialValue: Acc,
+    includeEdges?: boolean
   ): Acc {
     let result = initialValue;
 
@@ -321,7 +326,11 @@ export class ParentInlineNode extends EventBus implements InlineNode {
        */
       const childLength = child.length;
 
-      if (start < childLength && end > 0 && start < end) {
+      if (includeEdges) {
+        console.log('includeEdges', includeEdges);
+      }
+
+      if ((start < childLength && end > 0 && start < end) || ((includeEdges === true) && ((start === 0) || (end === childLength)))) {
         result = callback(result, child, Math.max(start, 0), Math.min(childLength, end), offset);
       }
 

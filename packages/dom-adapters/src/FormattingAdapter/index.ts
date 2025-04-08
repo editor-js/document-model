@@ -135,7 +135,7 @@ export class FormattingAdapter {
       throw new Error(`FormattingAdapter: tool ${toolName} is not attached`);
     }
 
-    const fragments = this.#model.getFragments(blockIndex, dataKey, ...textRange, toolName);
+    const fragments = this.#model.getFragments(blockIndex, dataKey, ...textRange, false, toolName);
 
     const { action, range } = tool.getFormattingOptions(textRange, fragments);
 
@@ -145,7 +145,11 @@ export class FormattingAdapter {
 
         break;
       case FormattingAction.Unformat:
+        console.log('unformat action called')
         this.#model.unformat(blockIndex, dataKey, toolName, ...range);
+        console.log('unformat action done')
+
+        console.log('unformatted fragments', this.#model.getFragments(blockIndex, dataKey, ...range, true));
 
         break;
     }
@@ -156,8 +160,11 @@ export class FormattingAdapter {
    *
    * @param event - model change event
    */
-  #handleModelUpdates(event: ModelEvents): void {
+  #handleModelUpdates(event: ModelEvents): void {  
     if (event instanceof TextFormattedEvent || event instanceof TextUnformattedEvent) {
+      console.log('handleModelUpdates called')
+
+
       const tool = this.#tools.get(event.detail.data.tool);
       const { textRange, blockIndex, dataKey } = event.detail.index;
 
@@ -173,18 +180,20 @@ export class FormattingAdapter {
         return;
       }
 
-      const affectedFragments = this.#model.getFragments(blockIndex, dataKey, ...textRange);
+      const affectedFragments = this.#model.getFragments(blockIndex, dataKey, ...textRange, true);
 
-      let lowerBoundary = textRange[0];
+      const lowerBoundary = affectedFragments[0]?.range[0] ?? textRange[0];
       let upperBoundary = textRange[1];
 
-      lowerBoundary = lowerBoundary, affectedFragments[0].range[0];
+      console.log('================================ affectedFragments', affectedFragments);
 
       for (const fragment of affectedFragments) {
         upperBoundary = Math.max(upperBoundary, fragment.range[1]);
       }
 
       this.#rerenderRange(input, lowerBoundary, upperBoundary, affectedFragments);
+
+      console.log('rerendering done')
     }
   }
 
@@ -201,19 +210,24 @@ export class FormattingAdapter {
     const [startNode, startOffset] = getBoundaryPointByAbsoluteOffset(input, lowerBoundary);
     const [endNode, endOffset] = getBoundaryPointByAbsoluteOffset(input, upperBoundary);
 
+    // console.log('startNode', startNode, 'startOffset', startOffset);
+    // console.log('endNode', endNode, 'endOffset', endOffset);
+
     if (startOffset === 0) {
       range.setStartBefore(expandRangeNodeBoundary(startNode));
     } else {
       range.setStart(startNode, startOffset);
     }
 
-    if (endOffset === 1) {
+    if (endOffset === endNode.textContent!.length) {
       range.setEndAfter(expandRangeNodeBoundary(endNode, true));
     } else {
       range.setEnd(endNode, endOffset);
     }
 
     const extractedContent = range.cloneContents();
+
+    // console.log('extractedContent', extractedContent);
 
     /**
      * Create temporary container to allow formatting of the extracted content
@@ -240,6 +254,7 @@ export class FormattingAdapter {
       surround(wrapper, template.content, [relativeStart, relativeEnd]);
     }
 
+    range.extractContents();
     range.insertNode(template.content);
   }
 }
