@@ -33,5 +33,5 @@ export enum CoreEventType {
   /**
    * Event is fired when redo action should be performed
    */
-  Redo = 'redo',
+  Redo = 'redo'
 }

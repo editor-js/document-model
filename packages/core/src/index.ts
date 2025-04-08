@@ -1,8 +1,8 @@
-import { CollaborationManager } from "@editorjs/collaboration-manager";
+import { CollaborationManager } from '@editorjs/collaboration-manager';
 import { EditorJSModel, EventType } from '@editorjs/model';
 import type { ContainerInstance } from 'typedi';
 import { Container } from 'typedi';
-import { CoreEventType, EventBus } from "./components/EventBus/index";
+import { CoreEventType, EventBus } from './components/EventBus/index.js';
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
 import ToolsManager from './tools/ToolsManager.js';
 import { CaretAdapter, FormattingAdapter } from '@editorjs/dom-adapters';

@@ -18,6 +18,7 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
+    "@editorjs/collaboration-manager": "workspace:^",
     "@editorjs/dom": "^1.0.0",
     "@editorjs/dom-adapters": "workspace:^",
     "@editorjs/editorjs": "^2.30.5",
