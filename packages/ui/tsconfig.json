@@ -11,7 +11,7 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "types": ["jest"],
-    "rootDir": ".",
+    "rootDir": "src",
     "outDir": "dist"
   },
   "include": ["src/**/*", "postcss.config.ts", "src/types/**/*"],
