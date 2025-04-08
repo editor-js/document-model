@@ -14,7 +14,7 @@
     "rootDir": "src",
     "outDir": "dist"
   },
-  "include": ["src/**/*", "postcss.config.ts", "src/types/**/*"],
+  "include": ["src/**/*"],
   "exclude": [
     "node_modules/**/*",
     "dist/**/*"
