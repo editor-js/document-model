@@ -43,7 +43,6 @@ export class TextNode extends ParentInlineNode {
    * @param [tool] - name of the Inline Tool
    */
   public getFragments(start?: number, end?: number, includeEdges?: boolean, tool?: InlineToolName): InlineFragment[] {
-    // console.trace('getFragments');
     let fragments = super.getFragments(start, end, includeEdges);
 
     if (tool) {
