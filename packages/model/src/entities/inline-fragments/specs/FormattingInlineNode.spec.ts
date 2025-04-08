@@ -297,6 +297,22 @@ describe('FormattingInlineNode', () => {
       expect(spy).toBeCalledWith(child);
     });
 
+    it('should append several children of merged node to the current', () => {
+      const firstChild = new TextInlineNode({ value: 'Text node' });
+      const secondChild = new FormattingInlineNode({ tool: anotherTool });
+      const nodeToMerge = new FormattingInlineNode({
+        tool,
+        children: [firstChild, secondChild],
+      });
+
+      const spy = jest.spyOn(node, 'append');
+
+      node.mergeWith(nodeToMerge);
+
+      expect(spy).toBeCalledWith(firstChild);
+      expect(spy).toBeCalledWith(secondChild);
+    });
+
     it('should remove merged node', () => {
       const nodeToMerge = new FormattingInlineNode({ tool });
 

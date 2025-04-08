@@ -229,8 +229,7 @@ export class FormattingInlineNode extends ParentInlineNode implements InlineNode
     /**
      * @todo merge data
      */
-
-    node.children.forEach((child) => {
+    Array.from(node.children).forEach((child) => {
       this.append(child);
     });
 

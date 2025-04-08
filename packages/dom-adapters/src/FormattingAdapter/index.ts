@@ -8,12 +8,15 @@ import type {
 } from '@editorjs/model';
 import {
   EventType,
-  TextFormattedEvent
+  TextFormattedEvent,
+  TextUnformattedEvent
 } from '@editorjs/model';
 import type { CaretAdapter } from '../CaretAdapter/index.js';
 import { FormattingAction } from '@editorjs/model';
 import type { CoreConfig, InlineTool } from '@editorjs/sdk';
 import { surround } from '../utils/surround.js';
+import { getBoundaryPointByAbsoluteOffset } from '../utils/getRelativeIndex.js';
+import { expandRangeNodeBoundary } from '../utils/expandRangeNodeBoundary.js';
 
 /**
  * Class handles on format model events and renders inline tools
@@ -155,18 +158,17 @@ export class FormattingAdapter {
     }
   }
 
-
   /**
    * Handles text format and unformat model events
    *
    * @param event - model change event
    */
   #handleModelUpdates(event: ModelEvents): void {
-    if (event instanceof TextFormattedEvent) {
+    if (event instanceof TextFormattedEvent || event instanceof TextUnformattedEvent) {
       const tool = this.#tools.get(event.detail.data.tool);
-      const { textRange } = event.detail.index;
+      const { textRange, blockIndex, dataKey } = event.detail.index;
 
-      if (tool === undefined || textRange === undefined) {
+      if (tool === undefined || textRange === undefined || blockIndex === undefined || dataKey === undefined) {
         return;
       }
 
@@ -178,9 +180,77 @@ export class FormattingAdapter {
         return;
       }
 
-      const inlineElement = tool.createWrapper(event.detail.data.data);
+      const inputContent = input.textContent;
 
-      surround(inlineElement, input, textRange);
+      const rangeStart = Math.max(0, textRange[0] - 1);
+      const rangeEnd = inputContent !== null ? Math.min(inputContent.length, textRange[1] + 1) : 0;
+
+      const affectedFragments = this.#model.getFragments(blockIndex, dataKey, rangeStart, rangeEnd);
+
+      const leftBoundary = affectedFragments[0]?.range[0] ?? textRange[0];
+      let rightBoundary = textRange[1];
+
+      for (const fragment of affectedFragments) {
+        rightBoundary = Math.max(rightBoundary, fragment.range[1]);
+      }
+
+      this.#rerenderRange(input, leftBoundary, rightBoundary, affectedFragments);
+
+      this.#caretAdapter.updateIndex(event.detail.index);
     }
+  }
+
+  /**
+   * Apply formatting of all affected fragments to the range with boundaries
+   *
+   * @param input - input element to apply formatting to
+   * @param leftBoundary - lower boundary of the range
+   * @param rightBoundary - upper boundary of the range
+   * @param affectedFragments - model fragments that are used to format the range
+   */
+  #rerenderRange(input: HTMLElement, leftBoundary: number, rightBoundary: number, affectedFragments: InlineFragment[]): void {
+    const range = document.createRange();
+    const [startNode, startOffset] = getBoundaryPointByAbsoluteOffset(input, leftBoundary);
+    const [endNode, endOffset] = getBoundaryPointByAbsoluteOffset(input, rightBoundary);
+
+    if (startOffset === 0) {
+      range.setStartBefore(expandRangeNodeBoundary(startNode));
+    } else {
+      range.setStart(startNode, startOffset);
+    }
+
+    if (endOffset === endNode.textContent!.length) {
+      range.setEndAfter(expandRangeNodeBoundary(endNode, true));
+    } else {
+      range.setEnd(endNode, endOffset);
+    }
+
+    /**
+     * Create temporary container to allow formatting of the extracted content
+     */
+    const template = document.createElement('template');
+
+    template.innerHTML = range.toString()!;
+
+    for (const fragment of affectedFragments) {
+      const tool = this.#tools.get(fragment.tool);
+
+      if (tool === undefined) {
+        continue;
+      }
+
+      const relativeStart = fragment.range[0] - leftBoundary;
+      const relativeEnd = fragment.range[1] - leftBoundary;
+
+      /**
+       * Create wrapper element for the fragment
+       */
+      const wrapper = tool.createWrapper(fragment.data);
+
+      surround(wrapper, template.content, [relativeStart, relativeEnd]);
+    }
+
+    range.extractContents();
+    range.insertNode(template.content);
   }
 }
