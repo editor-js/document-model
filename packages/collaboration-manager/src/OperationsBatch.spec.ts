@@ -1,5 +1,5 @@
 import { createDataKey, IndexBuilder } from '@editorjs/model';
-import { Batch } from './Batch.js';
+import { OperationsBatch } from './OperationsBatch.js';
 import { Operation, OperationType } from './Operation.js';
 import { jest } from '@jest/globals';
 
@@ -25,7 +25,7 @@ describe('Batch', () => {
     );
     const onTimeout = jest.fn();
 
-    const batch = new Batch(onTimeout, op1);
+    const batch = new OperationsBatch(onTimeout, op1);
 
     batch.add(op2);
 
@@ -52,7 +52,7 @@ describe('Batch', () => {
     );
     const onTimeout = jest.fn();
 
-    const batch = new Batch(onTimeout, op1);
+    const batch = new OperationsBatch(onTimeout, op1);
 
     batch.add(op2);
 
@@ -88,7 +88,7 @@ describe('Batch', () => {
 
     const onTimeout = jest.fn();
 
-    const batch = new Batch(onTimeout, op1);
+    const batch = new OperationsBatch(onTimeout, op1);
 
     batch.add(op2);
 
@@ -115,7 +115,7 @@ describe('Batch', () => {
 
     const onTimeout = jest.fn();
 
-    const batch = new Batch(onTimeout, op1);
+    const batch = new OperationsBatch(onTimeout, op1);
 
     batch.add(op2);
 
@@ -140,7 +140,7 @@ describe('Batch', () => {
 
     const onTimeout = jest.fn();
 
-    const batch = new Batch(onTimeout, op1);
+    const batch = new OperationsBatch(onTimeout, op1);
 
     batch.add(op2);
 
@@ -165,7 +165,7 @@ describe('Batch', () => {
 
     const onTimeout = jest.fn();
 
-    const batch = new Batch(onTimeout, op1);
+    const batch = new OperationsBatch(onTimeout, op1);
 
     batch.add(op2);
 
@@ -183,7 +183,7 @@ describe('Batch', () => {
     );
     const onTimeout = jest.fn();
 
-    const batch = new Batch(onTimeout, op1);
+    const batch = new OperationsBatch(onTimeout, op1);
 
     batch.add(op2);
 
@@ -202,7 +202,7 @@ describe('Batch', () => {
     );
     const onTimeout = jest.fn();
 
-    const batch = new Batch(onTimeout, op1);
+    const batch = new OperationsBatch(onTimeout, op1);
 
     batch.add(op2);
 
@@ -221,7 +221,7 @@ describe('Batch', () => {
     );
     const onTimeout = jest.fn();
 
-    const batch = new Batch(onTimeout, op1);
+    const batch = new OperationsBatch(onTimeout, op1);
 
     batch.add(op2);
 
@@ -239,7 +239,7 @@ describe('Batch', () => {
     );
     const onTimeout = jest.fn();
 
-    const batch = new Batch(onTimeout, op1);
+    const batch = new OperationsBatch(onTimeout, op1);
 
     batch.add(op2);
 
@@ -251,7 +251,7 @@ describe('Batch', () => {
 
     const onTimeout = jest.fn();
 
-    const batch = new Batch(onTimeout, op1);
+    const batch = new OperationsBatch(onTimeout, op1);
 
     // eslint-disable-next-line @typescript-eslint/no-magic-numbers
     jest.advanceTimersByTime(1000);
@@ -261,7 +261,7 @@ describe('Batch', () => {
 
   it('should return null if there\'s no operations as effective operation in the batch', () => {
     const onTimeout = jest.fn();
-    const batch = new Batch(onTimeout);
+    const batch = new OperationsBatch(onTimeout);
 
     expect(batch.getEffectiveOperation()).toBeNull();
   });
@@ -271,7 +271,7 @@ describe('Batch', () => {
 
     const onTimeout = jest.fn();
 
-    const batch = new Batch(onTimeout, op1);
+    const batch = new OperationsBatch(onTimeout, op1);
 
     expect(batch.getEffectiveOperation()).toEqual(op1);
   });

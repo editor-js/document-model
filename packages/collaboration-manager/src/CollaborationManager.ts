@@ -8,7 +8,7 @@ import {
   TextFormattedEvent, TextRemovedEvent,
   TextUnformattedEvent
 } from '@editorjs/model';
-import { Batch } from './Batch.js';
+import { OperationsBatch } from './OperationsBatch.js';
 import { type ModifyOperationData, Operation, OperationType } from './Operation.js';
 import { UndoRedoManager } from './UndoRedoManager.js';
 
@@ -31,7 +31,7 @@ export class CollaborationManager {
    */
   #shouldHandleEvents = true;
 
-  #currentBatch: Batch | null = null;
+  #currentBatch: OperationsBatch | null = null;
 
   /**
    * Creates an instance of CollaborationManager
@@ -167,18 +167,24 @@ export class CollaborationManager {
       return;
     }
 
-    const onBatchTimeout = (batch: Batch, lastOp?: Operation): void => {
+    const onBatchTermination = (batch: OperationsBatch, lastOp?: Operation): void => {
       const effectiveOp = batch.getEffectiveOperation();
 
       if (effectiveOp) {
         this.#undoRedoManager.put(effectiveOp);
       }
 
-      this.#currentBatch = lastOp === undefined ? null : new Batch(onBatchTimeout, lastOp);
+      /**
+       * lastOp is the operation on which the batch was terminated.
+       * So if there is one, we need to create a new batch
+       *
+       * lastOp could be null if the batch was terminated by time out
+       */
+      this.#currentBatch = lastOp === undefined ? null : new OperationsBatch(onBatchTermination, lastOp);
     };
 
     if (this.#currentBatch === null) {
-      this.#currentBatch = new Batch(onBatchTimeout, operation);
+      this.#currentBatch = new OperationsBatch(onBatchTermination, operation);
 
       return;
     }

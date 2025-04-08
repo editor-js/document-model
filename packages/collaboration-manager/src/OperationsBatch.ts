@@ -12,14 +12,14 @@ const DEBOUNCE_TIMEOUT = 500;
  * @param batch - terminated batch
  * @param [lastOperation] - operation on which the batch was terminated
  */
-type OnBatchTimeout = (batch: Batch, lastOperation?: Operation) => void;
+type OnBatchTermination = (batch: OperationsBatch, lastOperation?: Operation) => void;
 
 /**
  * Class to batch Text operations (maybe others in the future) for Undo/Redo purposes
  *
  * Operations are batched on timeout basis or if batch is terminated from the outside
  */
-export class Batch {
+export class OperationsBatch {
   /**
    * Array of operations to batch
    *
@@ -28,27 +28,23 @@ export class Batch {
   #operations: Operation[] = [];
 
   /**
-   * Timeout callback
-   *
-   * @private
+   * Termination callback
    */
-  #onTimeout: OnBatchTimeout;
+  #onTermination: OnBatchTermination;
 
   /**
    * Termination timeout
-   *
-   * @private
    */
   #debounceTimer?: ReturnType<typeof setTimeout>;
 
   /**
    * Batch constructor function
    *
-   * @param onTimeOut - termination callback
+   * @param onTermination - termination callback
    * @param firstOperation - first operation to add
    */
-  constructor(onTimeOut: OnBatchTimeout = () => {}, firstOperation?: Operation) {
-    this.#onTimeout = onTimeOut;
+  constructor(onTermination: OnBatchTermination = () => {}, firstOperation?: Operation) {
+    this.#onTermination = onTermination;
 
     if (firstOperation !== undefined) {
       this.add(firstOperation);
@@ -112,7 +108,7 @@ export class Batch {
   public terminate(lastOp?: Operation): void {
     clearTimeout(this.#debounceTimer);
 
-    this.#onTimeout(this, lastOp);
+    this.#onTermination(this, lastOp);
   }
 
   /**
