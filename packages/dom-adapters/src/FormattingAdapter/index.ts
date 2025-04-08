@@ -175,7 +175,7 @@ export class FormattingAdapter {
 
       const inputContent = input.textContent;
 
-      const rangeStart = Math.max(0, textRange[0] - 1)
+      const rangeStart = Math.max(0, textRange[0] - 1);
       const rangeEnd = inputContent !== null ? Math.min(inputContent.length, textRange[1] + 1) : 0;
 
       const affectedFragments = this.#model.getFragments(blockIndex, dataKey, rangeStart, rangeEnd);
