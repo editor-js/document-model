@@ -28,6 +28,12 @@
   "references": [
     { 
       "path": "./tsconfig.node.json" 
+    },
+    {
+      "path": "../ui/tsconfig.json"
+    },
+    {
+      "path": "../core/tsconfig.json"
     }
   ]
 }

@@ -1,10 +1,12 @@
-import 'reflect-metadata';
-import { Inject, Service } from 'typedi';
-import { CoreConfigValidated } from '../../entities/index.js';
-import { EventBus } from '../../components/EventBus/index.js';
-import { BlockAddedCoreEvent, CoreEventType } from '../../components/EventBus/index.js';
-import { ToolboxRenderedUIEvent } from '../Toolbox/index.js';
-import { InlineToolbarRenderedUIEvent } from '../InlineToolbar/InlineToolbarRenderedUIEvent.js';
+import type { BlockAddedCoreEvent,
+  BlockRemovedCoreEvent,
+  EventBus,
+  EditorjsPlugin,
+  EditorjsPluginParams } from '@editorjs/core';
+import {
+  CoreEventType,
+  UiComponentType
+} from '@editorjs/core';
 
 /**
  * Editor's main UI renderer for HTML environment
@@ -12,8 +14,12 @@ import { InlineToolbarRenderedUIEvent } from '../InlineToolbar/InlineToolbarRend
  *  - adds and removes blocks on the page
  *  - handles user UI interactions
  */
-@Service()
-export class EditorUI {
+export class BlocksUI implements EditorjsPlugin {
+  /**
+   * Plugin type
+   */
+  public static readonly type = UiComponentType.Blocks;
+
   /**
    * Editor holder element
    */
@@ -23,16 +29,18 @@ export class EditorUI {
    */
   #blocks: HTMLElement[] = [];
 
+  /**
+   * EventBus instance to exchange events between components
+   */
   #eventBus: EventBus;
 
   /**
    * EditorUI constructor method
-   * @param config - EditorJS validated configuration
-   * @param eventBus - EventBus instance to exchange events between components
+   * @param params - Plugin parameters
    */
-  constructor(@Inject('EditorConfig') config: CoreConfigValidated, eventBus: EventBus) {
-    this.#holder = config.holder;
-    this.#eventBus = eventBus;
+  constructor(params: EditorjsPluginParams) {
+    this.#holder = params.config.holder;
+    this.#eventBus = params.eventBus;
 
     this.#eventBus.addEventListener(`core:${CoreEventType.BlockAdded}`, (event: BlockAddedCoreEvent<HTMLElement>) => {
       const { ui, index } = event.detail;
@@ -40,35 +48,30 @@ export class EditorUI {
       this.#addBlock(ui, index);
     });
 
-    this.#eventBus.addEventListener(`core:${CoreEventType.BlockRemoved}`, (event: BlockAddedCoreEvent<HTMLElement>) => {
+    this.#eventBus.addEventListener(`core:${CoreEventType.BlockRemoved}`, (event: BlockRemovedCoreEvent) => {
       const { index } = event.detail;
 
       this.#removeBlock(index);
     });
 
-    this.#eventBus.addEventListener(`ui:toolbox:rendered`, (event: ToolboxRenderedUIEvent) => {
-      this.#addToolbox(event.detail.toolbox);
-    });
-
-    this.#eventBus.addEventListener(`ui:inline-toolbar:rendered`, (event: InlineToolbarRenderedUIEvent) => {
-      this.#holder.appendChild(event.detail.toolbar);
-    });
+    this.#prepareBlocksHolder();
   }
 
   /**
    * Renders the editor UI
-   * @todo replace with the event handler
    */
   public render(): void {
-    // will add UI to holder element
   }
 
   /**
-   * Adds toolbox to the editor UI
-   * @param toolboxElement - toolbox HTML element to add to the page
+   * Prepares blocks holder element
    */
-  #addToolbox(toolboxElement: HTMLElement): void {
-    this.#holder.appendChild(toolboxElement);
+  #prepareBlocksHolder(): void {
+    const blocksHolder = document.createElement('div');
+
+    blocksHolder.classList.add('ejs-blocks-holder');
+
+    this.#holder.appendChild(blocksHolder);
   }
 
   /**
@@ -107,5 +110,13 @@ export class EditorUI {
     if (index < 0 || index > this.#blocks.length) {
       throw new Error('Index out of bounds');
     }
+  }
+
+  /**
+   * Cleanup when plugin is destroyed
+   */
+  public destroy(): void {
+    this.#blocks.forEach(block => block.remove());
+    this.#blocks = [];
   }
 }

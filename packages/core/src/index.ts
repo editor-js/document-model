@@ -7,10 +7,11 @@ import { CaretAdapter, FormattingAdapter } from '@editorjs/dom-adapters';
 import type { CoreConfigValidated } from './entities/Config.js';
 import type { CoreConfig } from '@editorjs/sdk';
 import { BlocksManager } from './components/BlockManager.js';
-import { EditorUI } from './ui/Editor/index.js';
-import { ToolboxUI } from './ui/Toolbox/index.js';
-import { InlineToolbarUI } from './ui/InlineToolbar/index.js';
 import { SelectionManager } from './components/SelectionManager.js';
+import { EventBus } from './components/EventBus/index.js';
+import type { EditorjsPluginConstructor } from './entities/EditorjsPlugin.js';
+import { EditorAPI } from './api/index.js';
+import { UiComponentType } from './entities/Ui.js';
 
 /**
  * If no holder is provided via config, the editor will be appended to the element with this id
@@ -23,7 +24,6 @@ const DEFAULT_HOLDER_ID = 'editorjs';
  * - subscribes to model updates
  * - creates Adapters for Tools
  * - creates Tools
- * - adds Blocks accodring to model updates
  */
 export default class Core {
   /**
@@ -71,10 +71,7 @@ export default class Core {
 
     this.#iocContainer.set('EditorConfig', this.#config);
 
-    const { blocks } = composeDataFromVersion2(config.data ?? { blocks: [] });
-
     this.#model = new EditorJSModel();
-
     this.#iocContainer.set(EditorJSModel, this.#model);
 
     this.#toolsManager = this.#iocContainer.get(ToolsManager);
@@ -92,8 +89,27 @@ export default class Core {
         config.onModelUpdate?.(this.#model);
       });
     }
+  }
 
-    this.#prepareUI();
+  /**
+   * Initialize and injects Plugin into the container
+   * @param plugin - allows to pass any implementation of editor plugins
+   */
+  public use(plugin: EditorjsPluginConstructor): Core {
+    const pluginType = plugin.type;
+
+    this.#iocContainer.set(pluginType, plugin);
+
+    return this;
+  }
+
+  /**
+   * Initializes the core
+   */
+  public initialize(): void {
+    const { blocks } = composeDataFromVersion2(this.#config.data ?? { blocks: [] });
+
+    this.initializePlugins();
 
     this.#toolsManager.prepareTools()
       .then(() => {
@@ -105,15 +121,36 @@ export default class Core {
   }
 
   /**
-   * Renders Editor`s UI
+   * Initialize all registered UI plugins
    */
-  #prepareUI(): void {
-    const editorUI = this.#iocContainer.get(EditorUI);
+  private initializePlugins(): void {
+    /**
+     * Get all registered plugin types from the container
+     */
+    const pluginTypes = Object.values(UiComponentType) as string[];
 
-    this.#iocContainer.get(ToolboxUI);
-    this.#iocContainer.get(InlineToolbarUI);
+    for (const pluginType of pluginTypes) {
+      const plugin = this.#iocContainer.get<EditorjsPluginConstructor>(pluginType);
 
-    editorUI.render();
+      if (plugin !== undefined && typeof plugin === 'function') {
+        this.initializePlugin(plugin);
+      }
+    }
+  }
+
+  /**
+   * Create instance of plugin
+   * @param plugin - Plugin constructor to initialize
+   */
+  private initializePlugin(plugin: EditorjsPluginConstructor): void {
+    const eventBus = this.#iocContainer.get(EventBus);
+    const api = this.#iocContainer.get(EditorAPI);
+
+    new plugin({
+      config: this.#config,
+      api,
+      eventBus,
+    });
   }
 
   /**
@@ -147,4 +184,10 @@ export default class Core {
   }
 }
 
+/**
+ * @todo move to "sdk" package
+ */
 export * from './entities/index.js';
+export * from './components/EventBus/index.js';
+export * from './api/index.js';
+export * from './tools/facades/index.js';
