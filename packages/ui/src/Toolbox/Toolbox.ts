@@ -1,19 +1,26 @@
-import 'reflect-metadata';
-import { Service } from 'typedi';
-import { BlockToolFacade } from '../../tools/facades/index.js';
 import { make } from '@editorjs/dom';
-import { CoreEventType, EventBus, ToolLoadedCoreEvent } from '../../components/EventBus/index.js';
+import { 
+  CoreEventType, 
+  EventBus, 
+  ToolLoadedCoreEvent, 
+  BlockToolFacade, 
+  EditorjsPlugin, 
+  EditorjsPluginParams 
+} from '@editorjs/core';
 import { ToolboxRenderedUIEvent } from './ToolboxRenderedUIEvent.js';
-import { EditorAPI } from '../../api/index.js';
-import { CoreConfigValidated } from '../../entities/Config.js';
+import { EditorAPI } from '@editorjs/core';
 
 /**
  * UI module responsible for rendering the toolbox
  *  - renders tool buttons in the toolbox
  *  - listens to the click event on the tool buttons to insert blocks
  */
-@Service()
-export class ToolboxUI {
+export class ToolboxUI implements EditorjsPlugin {
+  /**
+   * Plugin type
+   */
+  public static readonly type = 'toolbox';
+
   /**
    * EditorAPI instance to insert blocks
    */
@@ -31,16 +38,14 @@ export class ToolboxUI {
 
   /**
    * ToolboxUI class constructor
-   * @todo - unify the constructor parameters with the other UI plugins
-   * @param _config - EditorJS validated configuration, not used here
+   * @param config - EditorJS validated configuration
    * @param api - EditorAPI instance to insert blocks
    * @param eventBus - EventBus instance to exchange events between components
    */
-  constructor(
-    _config: CoreConfigValidated,
-    api: EditorAPI,
-    eventBus: EventBus
-  ) {
+  constructor({
+    api,
+    eventBus
+  }: EditorjsPluginParams) {
     this.#api = api;
     this.#eventBus = eventBus;
 
@@ -53,6 +58,13 @@ export class ToolboxUI {
         this.addTool(tool);
       }
     });
+  }
+
+  /**
+   * Cleanup when plugin is destroyed
+   */
+  public destroy(): void {
+    this.#nodes.holder?.remove();
   }
 
   /**

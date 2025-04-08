@@ -1,0 +1,44 @@
+{
+  "name": "@editorjs/ui",
+  "packageManager": "yarn@4.0.1",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "lint": "eslint ./src",
+    "lint:ci": "yarn lint --max-warnings 0",
+    "lint:fix": "yarn lint --fix",
+    "clear": "rm -rf ./dist && rm -rf ./tsconfig.build.tsbuildinfo"
+  },
+  "devDependencies": {
+    "eslint": "^9.9.1",
+    "eslint-config-codex": "^2.0.2",
+    "typescript": "^5.5.4",
+    "vite": "^6.2.5",
+    "vite-plugin-dts": "^4.5.3"
+  },
+  "dependencies": {
+    "@editorjs/core": "workspace:^",
+    "@editorjs/dom": "^1.0.0",
+    "@editorjs/dom-adapters": "workspace:^",
+    "@editorjs/editorjs": "^2.30.5",
+    "@editorjs/helpers": "^1.0.0",
+    "@editorjs/model": "workspace:^",
+    "@editorjs/sdk": "workspace:^",
+    "reflect-metadata": "^0.2.2",
+    "typedi": "^0.10.0"
+  }
+}

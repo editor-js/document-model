@@ -3,7 +3,7 @@ import { EditorDocument, EditorJSModel } from '@editorjs/model';
 import Core from '@editorjs/core';
 import { ref, onMounted } from 'vue';
 import { Node } from './components';
-
+import { EditorjsUI, BlocksUI, InlineToolbarUI, ToolboxUI } from '@editorjs/ui';
 /**
  * Editor document for visualizing
  */
@@ -20,7 +20,7 @@ const serialized = ref<EditorDocument['serialized'] | null>(null);
  */
 
 onMounted(() => {
-  new Core({
+  const core = new Core({
     holder: document.getElementById('editorjs') as HTMLElement,
     data: {
       blocks: [ {
@@ -35,6 +35,13 @@ onMounted(() => {
       editorDocument.value = model.devModeGetDocument();
     },
   });
+  
+  core.use(EditorjsUI);
+  core.use(BlocksUI);
+  core.use(InlineToolbarUI);
+  core.use(ToolboxUI);
+
+  core.initialize();
 });
 
 </script>

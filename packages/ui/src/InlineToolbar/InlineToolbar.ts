@@ -1,13 +1,14 @@
-import 'reflect-metadata';
-import { Service } from 'typedi';
-
 import { make } from '@editorjs/dom';
 import { InlineToolbarRenderedUIEvent } from './InlineToolbarRenderedUIEvent.js';
-import { CoreEventType, EventBus, SelectionChangedCoreEvent } from '../../components/EventBus/index.js';
-import { EditorAPI } from '../../api/index.js';
+import { 
+  EditorAPI, 
+  CoreEventType, 
+  EventBus, 
+  SelectionChangedCoreEvent, 
+  EditorjsPlugin, 
+  EditorjsPluginParams } from '@editorjs/core';
 import { InlineTool, InlineToolFormatData } from '@editorjs/sdk';
 import { InlineFragment, InlineToolName, TextRange } from '@editorjs/model';
-import { CoreConfigValidated } from '../../entities/index.js';
 
 /**
  * Inline Toolbar UI module
@@ -15,8 +16,12 @@ import { CoreConfigValidated } from '../../entities/index.js';
  * - listens to the selection change core event
  * - handles the inline tools actions via EditorAPI
  */
-@Service()
-export class InlineToolbarUI {
+export class InlineToolbarUI implements EditorjsPlugin {
+  /**
+   * Plugin type
+   */
+  public static readonly type = 'inline-toolbar';
+
   /**
    * EventBus instance to exchange events between components
    */
@@ -38,17 +43,23 @@ export class InlineToolbarUI {
    * @param api - EditorAPI instance to apply inline tools
    * @param eventBus - EventBus instance to exchange events between components
    */
-  constructor(
-    _config: CoreConfigValidated,
-    api: EditorAPI,
-    eventBus: EventBus
-  ) {
+  constructor({
+    api,
+    eventBus
+  }: EditorjsPluginParams) {    
     this.#eventBus = eventBus;
     this.#api = api;
 
     this.#render();
 
     this.#eventBus.addEventListener(`core:${CoreEventType.SelectionChanged}`, (event: SelectionChangedCoreEvent) => this.#handleSelectionChange(event));
+  }
+
+  /**
+   * Cleanup when plugin is destroyed
+   */
+  public destroy(): void {
+    this.#nodes.holder?.remove();
   }
 
   /**
@@ -97,7 +108,7 @@ export class InlineToolbarUI {
     this.#nodes.actions = make('div');
 
     this.#nodes.holder.appendChild(this.#nodes.actions);
-
+    
     this.#eventBus.dispatchEvent(new InlineToolbarRenderedUIEvent({ toolbar: this.#nodes.holder }));
   }
 

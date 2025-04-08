@@ -1,0 +1,32 @@
+<div id="editorjs"></div>
+
+<script type="module">
+  import Core from '@editorjs/core';
+  import { EditorjsUI, BlocksUI, InlineToolbarUI, ToolboxUI } from './src/index.ts';
+
+  const core = new Core({
+    holder: document.getElementById('editorjs'),
+    data: {
+      blocks: [ {
+        type: 'paragraph',
+        data: {
+          text: 'Hello, <b>World</b>!',
+        },
+      } ],
+    },
+  });
+
+  core.use(EditorjsUI);
+  core.use(BlocksUI);
+  core.use(InlineToolbarUI);
+  core.use(ToolboxUI);
+
+  core.initialize();
+</script>
+
+<style>
+  body, html {
+    background-color: #222;
+    color: #fff;
+  }
+</style>
