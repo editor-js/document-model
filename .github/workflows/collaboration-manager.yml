@@ -11,10 +11,10 @@ jobs:
 
       - run: yarn
 
-      - name: Build the model package
+      - name: Build the package
         uses: ./.github/actions/build
         with:
-          package-name: '@editorjs/model'
+          package-name: '@editorjs/collaboration-manager'
 
       - name: Run ESLint check
         uses: ./.github/actions/lint
