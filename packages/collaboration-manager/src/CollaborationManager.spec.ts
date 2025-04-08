@@ -9,6 +9,10 @@ import { Operation, OperationType } from './Operation.js';
 const config: Partial<CoreConfig> = { userId: 'user' };
 
 describe('CollaborationManager', () => {
+  beforeAll(() => {
+    jest.useFakeTimers();
+  });
+
   describe('applyOperation', () => {
     it('should throw an error on unknown operation type', () => {
       const model = new EditorJSModel();
