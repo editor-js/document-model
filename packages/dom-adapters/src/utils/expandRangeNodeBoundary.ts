@@ -13,20 +13,22 @@ export function expandRangeNodeBoundary(currentNode: Node, end?: boolean): Node 
 
   if (end === true) {
     while (!(node.parentNode instanceof HTMLElement && node.parentNode.getAttribute('contenteditable') === 'true')) {
-      if (node.parentNode && node === node.parentNode.lastChild) {
-        node = node.parentNode;
-      } else {
+      if (!(node.parentNode && node === node.parentNode.lastChild)) {
         return node;
-      }
+      } 
+
+      node = node.parentNode;
     }
-  } else {
-    while (!(node.parentNode instanceof HTMLElement && node.parentNode.getAttribute('contenteditable') === 'true')) {
-      if (node.parentNode && node === node.parentNode.firstChild) {
-        node = node.parentNode;
-      } else {
-        return node;
-      }
+
+    return node;
+  }
+
+  while (!(node.parentNode instanceof HTMLElement && node.parentNode.getAttribute('contenteditable') === 'true')) {
+    if (!(node.parentNode && node === node.parentNode.firstChild)) {
+      return node;
     }
+
+    node = node.parentNode;
   }
 
   return node;
