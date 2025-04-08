@@ -35,4 +35,18 @@ describe('Context util', () => {
 
     expect(instance.method('context')).toEqual('context');
   });
+
+  it('should return undefined as a context outside of run', () => {
+    expect(getContext()).toBeUndefined();
+  });
+
+  it('should return udnefined as a context after a function call in the context', () => {
+    const func = (): string | undefined => {
+      return getContext<string>();
+    };
+
+    runWithContext('context', func);
+
+    expect(getContext()).toBeUndefined();
+  });
 });
