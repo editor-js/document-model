@@ -11,6 +11,7 @@ import { SelectionManager } from './components/SelectionManager.js';
 import { EventBus } from './components/EventBus/index.js';
 import type { EditorjsPluginConstructor } from './entities/EditorjsPlugin.js';
 import { EditorAPI } from './api/index.js';
+import { UiComponentType } from './entities/Ui.js';
 
 /**
  * If no holder is provided via config, the editor will be appended to the element with this id
@@ -95,17 +96,9 @@ export default class Core {
    * @param plugin - allows to pass any implementation of editor plugins
    */
   public use(plugin: EditorjsPluginConstructor): void {
-    const eventBus = this.#iocContainer.get(EventBus);
     const pluginType = plugin.type;
-    const api = this.#iocContainer.get(EditorAPI);
 
-    const pluginInstance = new plugin({
-      config: this.#config,
-      api,
-      eventBus,
-    });
-
-    this.#iocContainer.set(pluginType, pluginInstance);
+    this.#iocContainer.set(pluginType, plugin);
   }
 
   /**
@@ -114,6 +107,8 @@ export default class Core {
   public initialize(): void {
     const { blocks } = composeDataFromVersion2(this.#config.data ?? { blocks: [] });
 
+    this.initializePlugins();
+
     this.#toolsManager.prepareTools()
       .then(() => {
         this.#model.initializeDocument({ blocks });
@@ -121,6 +116,39 @@ export default class Core {
       .catch((error) => {
         console.error('Editor.js initialization failed', error);
       });
+  }
+
+  /**
+   * Initialize all registered UI plugins
+   */
+  private initializePlugins(): void {
+    /**
+     * Get all registered plugin types from the container
+     */
+    const pluginTypes = Object.values(UiComponentType) as string[];
+
+    for (const pluginType of pluginTypes) {
+      const plugin = this.#iocContainer.get<EditorjsPluginConstructor>(pluginType);
+
+      if (plugin !== undefined && typeof plugin === 'function') {
+        this.initializePlugin(plugin);
+      }
+    }
+  }
+
+  /**
+   * Create instance of plugin
+   * @param plugin - Plugin constructor to initialize
+   */
+  private initializePlugin(plugin: EditorjsPluginConstructor): void {
+    const eventBus = this.#iocContainer.get(EventBus);
+    const api = this.#iocContainer.get(EditorAPI);
+
+    new plugin({
+      config: this.#config,
+      api,
+      eventBus,
+    });
   }
 
   /**
