@@ -1,16 +1,16 @@
 import { make } from '@editorjs/dom';
 import { InlineToolbarRenderedUIEvent } from './InlineToolbarRenderedUIEvent.js';
-import { 
-  EditorAPI, 
-  CoreEventType, 
-  EventBus, 
-  SelectionChangedCoreEvent, 
-  EditorjsPlugin, 
-  EditorjsPluginParams,
+import type { EditorAPI,
+  EventBus,
+  SelectionChangedCoreEvent,
+  EditorjsPlugin,
+  EditorjsPluginParams } from '@editorjs/core';
+import {
+  CoreEventType,
   UiComponentType
 } from '@editorjs/core';
-import { InlineTool, InlineToolFormatData } from '@editorjs/sdk';
-import { InlineFragment, InlineToolName, TextRange } from '@editorjs/model';
+import type { InlineTool, InlineToolFormatData } from '@editorjs/sdk';
+import type { InlineFragment, InlineToolName, TextRange } from '@editorjs/model';
 
 /**
  * Inline Toolbar UI module
@@ -41,14 +41,12 @@ export class InlineToolbarUI implements EditorjsPlugin {
 
   /**
    * InlineToolbarUI class constructor
-   * @param _config - EditorJS validated configuration, not used here
-   * @param api - EditorAPI instance to apply inline tools
-   * @param eventBus - EventBus instance to exchange events between components
+   * @param params - Plugin parameters
    */
   constructor({
     api,
-    eventBus
-  }: EditorjsPluginParams) {    
+    eventBus,
+  }: EditorjsPluginParams) {
     this.#eventBus = eventBus;
     this.#api = api;
 
@@ -110,7 +108,7 @@ export class InlineToolbarUI implements EditorjsPlugin {
     this.#nodes.actions = make('div');
 
     this.#nodes.holder.appendChild(this.#nodes.actions);
-    
+
     this.#eventBus.dispatchEvent(new InlineToolbarRenderedUIEvent({ toolbar: this.#nodes.holder }));
   }
 

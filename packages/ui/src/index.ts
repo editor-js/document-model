@@ -1,12 +1,12 @@
-import { 
-  CoreConfigValidated, 
-  EventBus, 
-  EditorjsPlugin, 
-  EditorjsPluginParams,
+import type { CoreConfigValidated,
+  EventBus,
+  EditorjsPlugin,
+  EditorjsPluginParams } from '@editorjs/core';
+import {
   UiComponentType
 } from '@editorjs/core';
-import { ToolboxRenderedUIEvent } from './Toolbox/ToolboxRenderedUIEvent.js';
-import { InlineToolbarRenderedUIEvent } from './InlineToolbar/InlineToolbarRenderedUIEvent.js';
+import type { ToolboxRenderedUIEvent } from './Toolbox/ToolboxRenderedUIEvent.js';
+import type { InlineToolbarRenderedUIEvent } from './InlineToolbar/InlineToolbarRenderedUIEvent.js';
 
 /**
  * EditorJS UI plugin

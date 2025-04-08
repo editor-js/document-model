@@ -1,15 +1,15 @@
 import { make } from '@editorjs/dom';
-import { 
-  CoreEventType, 
-  EventBus, 
-  ToolLoadedCoreEvent, 
-  BlockToolFacade, 
-  EditorjsPlugin, 
-  EditorjsPluginParams,
+import type { EventBus,
+  ToolLoadedCoreEvent,
+  BlockToolFacade,
+  EditorjsPlugin,
+  EditorjsPluginParams } from '@editorjs/core';
+import {
+  CoreEventType,
   UiComponentType
 } from '@editorjs/core';
 import { ToolboxRenderedUIEvent } from './ToolboxRenderedUIEvent.js';
-import { EditorAPI } from '@editorjs/core';
+import type { EditorAPI } from '@editorjs/core';
 
 /**
  * UI module responsible for rendering the toolbox
@@ -39,13 +39,11 @@ export class ToolboxUI implements EditorjsPlugin {
 
   /**
    * ToolboxUI class constructor
-   * @param config - EditorJS validated configuration
-   * @param api - EditorAPI instance to insert blocks
-   * @param eventBus - EventBus instance to exchange events between components
+   * @param params - Plugin parameters
    */
   constructor({
     api,
-    eventBus
+    eventBus,
   }: EditorjsPluginParams) {
     this.#api = api;
     this.#eventBus = eventBus;

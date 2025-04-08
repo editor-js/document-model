@@ -1,11 +1,11 @@
-import { 
-  BlockAddedCoreEvent, 
-  BlockRemovedCoreEvent, 
-  CoreEventType, 
-  EventBus, 
-  EditorjsPlugin, 
-  EditorjsPluginParams,
-  UiComponentType,
+import type { BlockAddedCoreEvent,
+  BlockRemovedCoreEvent,
+  EventBus,
+  EditorjsPlugin,
+  EditorjsPluginParams } from '@editorjs/core';
+import {
+  CoreEventType,
+  UiComponentType
 } from '@editorjs/core';
 
 /**
@@ -18,7 +18,7 @@ export class BlocksUI implements EditorjsPlugin {
   /**
    * Plugin type
    */
-  static readonly type = UiComponentType.Blocks;
+  public static readonly type = UiComponentType.Blocks;
 
   /**
    * Editor holder element
@@ -53,7 +53,7 @@ export class BlocksUI implements EditorjsPlugin {
 
       this.#removeBlock(index);
     });
-    
+
     this.#prepareBlocksHolder();
   }
 
@@ -74,7 +74,6 @@ export class BlocksUI implements EditorjsPlugin {
     this.#holder.appendChild(blocksHolder);
   }
 
-  
   /**
    * Renders block's content on the page
    * @param blockElement - block HTML element to add to the page
@@ -120,4 +119,4 @@ export class BlocksUI implements EditorjsPlugin {
     this.#blocks.forEach(block => block.remove());
     this.#blocks = [];
   }
-} 
+}
