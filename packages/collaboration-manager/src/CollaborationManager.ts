@@ -8,6 +8,7 @@ import {
   TextFormattedEvent, TextRemovedEvent,
   TextUnformattedEvent
 } from '@editorjs/model';
+import { OperationsBatch } from './OperationsBatch.js';
 import { type ModifyOperationData, Operation, OperationType } from './Operation.js';
 import { UndoRedoManager } from './UndoRedoManager.js';
 
@@ -30,6 +31,7 @@ export class CollaborationManager {
    */
   #shouldHandleEvents = true;
 
+  #currentBatch: OperationsBatch | null = null;
 
   /**
    * Creates an instance of CollaborationManager
@@ -46,6 +48,8 @@ export class CollaborationManager {
    * Undo last operation in the local stack
    */
   public undo(): void {
+    this.#currentBatch?.terminate();
+
     const operation = this.#undoRedoManager.undo();
 
     if (operation === undefined) {
@@ -65,6 +69,8 @@ export class CollaborationManager {
    * Redo last undone operation in the local stack
    */
   public redo(): void {
+    this.#currentBatch?.terminate();
+
     const operation = this.#undoRedoManager.redo();
 
     if (operation === undefined) {
@@ -157,8 +163,32 @@ export class CollaborationManager {
         console.error('Unknown event type', e);
     }
 
-    if (operation !== null) {
-      this.#undoRedoManager.put(operation);
+    if (operation === null) {
+      return;
     }
+
+    const onBatchTermination = (batch: OperationsBatch, lastOp?: Operation): void => {
+      const effectiveOp = batch.getEffectiveOperation();
+
+      if (effectiveOp) {
+        this.#undoRedoManager.put(effectiveOp);
+      }
+
+      /**
+       * lastOp is the operation on which the batch was terminated.
+       * So if there is one, we need to create a new batch
+       *
+       * lastOp could be null if the batch was terminated by time out
+       */
+      this.#currentBatch = lastOp === undefined ? null : new OperationsBatch(onBatchTermination, lastOp);
+    };
+
+    if (this.#currentBatch === null) {
+      this.#currentBatch = new OperationsBatch(onBatchTermination, operation);
+
+      return;
+    }
+
+    this.#currentBatch.add(operation);
   }
 }

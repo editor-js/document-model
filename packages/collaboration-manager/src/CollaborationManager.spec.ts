@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import { createDataKey, IndexBuilder } from '@editorjs/model';
 import { EditorJSModel } from '@editorjs/model';
+import { beforeAll, jest } from '@jest/globals';
 import { CollaborationManager } from './CollaborationManager.js';
 import { Operation, OperationType } from './Operation.js';
 
@@ -261,6 +262,10 @@ describe('CollaborationManager', () => {
   });
 
   describe('undo logic', () => {
+    beforeAll(() => {
+      jest.useFakeTimers();
+    });
+
     it('should invert Insert operation', () => {
       const model = new EditorJSModel();
 
@@ -764,6 +769,109 @@ describe('CollaborationManager', () => {
 
     expect(model.serialized).toStrictEqual({
       blocks: [],
+      properties: {},
+    });
+  });
+
+  it('should undo batch', () => {
+    const model = new EditorJSModel();
+
+    model.initializeDocument({
+      blocks: [ {
+        name: 'paragraph',
+        data: {
+          text: {
+            value: '',
+            $t: 't',
+          },
+        },
+      } ],
+    });
+    const collaborationManager = new CollaborationManager(model);
+    const index1 = new IndexBuilder().addBlockIndex(0)
+      .addDataKey(createDataKey('text'))
+      .addTextRange([0, 0])
+      .build();
+    const operation1 = new Operation(OperationType.Insert, index1, {
+      payload: 'te',
+    });
+
+    const index2 = new IndexBuilder().from(index1)
+      .addTextRange([1, 1])
+      .build();
+    const operation2 = new Operation(OperationType.Insert, index2, {
+      payload: 'st',
+    });
+
+    collaborationManager.applyOperation(operation1);
+    collaborationManager.applyOperation(operation2);
+
+    collaborationManager.undo();
+
+    expect(model.serialized).toStrictEqual({
+      blocks: [ {
+        name: 'paragraph',
+        tunes: {},
+        data: {
+          text: {
+            $t: 't',
+            value: '',
+            fragments: [],
+          },
+        },
+      } ],
+      properties: {},
+    });
+  });
+
+  it('should redo batch', () => {
+    const model = new EditorJSModel();
+
+    model.initializeDocument({
+      blocks: [ {
+        name: 'paragraph',
+        data: {
+          text: {
+            value: '',
+            $t: 't',
+          },
+        },
+      } ],
+    });
+    const collaborationManager = new CollaborationManager(model);
+    const index1 = new IndexBuilder().addBlockIndex(0)
+      .addDataKey(createDataKey('text'))
+      .addTextRange([0, 0])
+      .build();
+    const operation1 = new Operation(OperationType.Insert, index1, {
+      payload: 'te',
+    });
+
+    const index2 = new IndexBuilder().from(index1)
+      .addTextRange([1, 1])
+      .build();
+    const operation2 = new Operation(OperationType.Insert, index2, {
+      payload: 'st',
+    });
+
+    collaborationManager.applyOperation(operation1);
+    collaborationManager.applyOperation(operation2);
+
+    collaborationManager.undo();
+    collaborationManager.redo();
+
+    expect(model.serialized).toStrictEqual({
+      blocks: [ {
+        name: 'paragraph',
+        tunes: {},
+        data: {
+          text: {
+            $t: 't',
+            value: 'test',
+            fragments: [],
+          },
+        },
+      } ],
       properties: {},
     });
   });
