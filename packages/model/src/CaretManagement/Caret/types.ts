@@ -14,6 +14,11 @@ export interface CaretSerialized {
    * Caret index
    */
   readonly index: string | null;
+
+  /**
+   * User identifier
+   */
+  userId?: string | number
 }
 
 /**

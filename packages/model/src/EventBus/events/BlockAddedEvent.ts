@@ -13,9 +13,10 @@ export class BlockAddedEvent extends BaseDocumentEvent<EventAction.Added, BlockN
    *
    * @param index - index of the added BlockNode in the document
    * @param data - BlockNode serialized data
+   * @param userId - user identifier
    */
-  constructor(index: Index, data: BlockNodeSerialized) {
+  constructor(index: Index, data: BlockNodeSerialized, userId?: string | number) {
     // Stryker disable next-line ObjectLiteral
-    super(index, EventAction.Added, data);
+    super(index, EventAction.Added, data, userId);
   }
 }

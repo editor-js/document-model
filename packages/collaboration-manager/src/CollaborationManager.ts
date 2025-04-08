@@ -8,6 +8,7 @@ import {
   TextFormattedEvent, TextRemovedEvent,
   TextUnformattedEvent
 } from '@editorjs/model';
+import type { CoreConfig } from '@editorjs/sdk';
 import { OperationsBatch } from './OperationsBatch.js';
 import { type ModifyOperationData, Operation, OperationType } from './Operation.js';
 import { UndoRedoManager } from './UndoRedoManager.js';
@@ -31,14 +32,24 @@ export class CollaborationManager {
    */
   #shouldHandleEvents = true;
 
+  /**
+   * Current operations batch
+   */
   #currentBatch: OperationsBatch | null = null;
+
+  /**
+   * Editor's config
+   */
+  #config: CoreConfig;
 
   /**
    * Creates an instance of CollaborationManager
    *
+   * @param config - Editor's config
    * @param model - EditorJSModel instance to listen to and apply operations
    */
-  constructor(model: EditorJSModel) {
+  constructor(config: CoreConfig, model: EditorJSModel) {
+    this.#config = config;
     this.#model = model;
     this.#undoRedoManager = new UndoRedoManager();
     model.addEventListener(EventType.Changed, this.#handleEvent.bind(this));
@@ -94,13 +105,13 @@ export class CollaborationManager {
   public applyOperation(operation: Operation): void {
     switch (operation.type) {
       case OperationType.Insert:
-        this.#model.insertData(operation.index, operation.data.payload as string | BlockNodeSerialized[]);
+        this.#model.insertData(this.#config.userId, operation.index, operation.data.payload as string | BlockNodeSerialized[]);
         break;
       case OperationType.Delete:
-        this.#model.removeData(operation.index, operation.data.payload as string | BlockNodeSerialized[]);
+        this.#model.removeData(this.#config.userId, operation.index, operation.data.payload as string | BlockNodeSerialized[]);
         break;
       case OperationType.Modify:
-        this.#model.modifyData(operation.index, {
+        this.#model.modifyData(this.#config.userId, operation.index, {
           value: operation.data.payload,
           previous: (operation.data as ModifyOperationData).prevPayload,
         });
@@ -119,7 +130,9 @@ export class CollaborationManager {
     if (!this.#shouldHandleEvents) {
       return;
     }
+
     let operation: Operation | null = null;
+
 
     /**
      * @todo add all model events
@@ -128,34 +141,34 @@ export class CollaborationManager {
       case (e instanceof TextAddedEvent):
         operation = new Operation(OperationType.Insert, e.detail.index, {
           payload: e.detail.data,
-        });
+        }, e.detail.userId);
         break;
       case (e instanceof TextRemovedEvent):
         operation = new Operation(OperationType.Delete, e.detail.index, {
           payload: e.detail.data,
-        });
+        }, e.detail.userId);
         break;
       case (e instanceof TextFormattedEvent):
         operation = new Operation(OperationType.Modify, e.detail.index, {
           payload: e.detail.data,
           prevPayload: null,
-        });
+        }, e.detail.userId);
         break;
       case (e instanceof TextUnformattedEvent):
         operation = new Operation(OperationType.Modify, e.detail.index, {
           prevPayload: e.detail.data,
           payload: null,
-        });
+        }, e.detail.userId);
         break;
       case (e instanceof BlockAddedEvent):
         operation = new Operation(OperationType.Insert, e.detail.index, {
           payload: [ e.detail.data ],
-        });
+        }, e.detail.userId);
         break;
       case (e instanceof BlockRemovedEvent):
         operation = new Operation(OperationType.Delete, e.detail.index, {
           payload: [ e.detail.data ],
-        });
+        }, e.detail.userId);
         break;
       // Stryker disable next-line ConditionalExpression
       default:
@@ -166,6 +179,11 @@ export class CollaborationManager {
     if (operation === null) {
       return;
     }
+
+    if (e.detail.userId !== this.#config.userId) {
+      return;
+    }
+
 
     const onBatchTermination = (batch: OperationsBatch, lastOp?: Operation): void => {
       const effectiveOp = batch.getEffectiveOperation();

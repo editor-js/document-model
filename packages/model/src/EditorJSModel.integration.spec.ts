@@ -19,7 +19,7 @@ describe('[Integration tests] EditorJSModel', () => {
 
       model.addEventListener(EventType.Changed, handler);
 
-      model.addBlock({
+      model.addBlock('user', {
         name: 'paragraph',
         data: {
           text: {
