@@ -7,6 +7,7 @@ import {
   CoreEventType,
   UiComponentType
 } from '@editorjs/core';
+import Style from './Blocks.module.pcss';
 
 /**
  * Editor's main UI renderer for HTML environment
@@ -20,10 +21,12 @@ export class BlocksUI implements EditorjsPlugin {
    */
   public static readonly type = UiComponentType.Blocks;
 
+
   /**
-   * Editor holder element
+   * Blocks holder element
    */
-  #holder: HTMLElement;
+  #blocksHolder: HTMLElement;
+
   /**
    * Elements of the blocks added to the editor
    */
@@ -39,8 +42,8 @@ export class BlocksUI implements EditorjsPlugin {
    * @param params - Plugin parameters
    */
   constructor(params: EditorjsPluginParams) {
-    this.#holder = params.config.holder;
     this.#eventBus = params.eventBus;
+    this.#blocksHolder = this.#prepareBlocksHolder(params.config.holder);
 
     this.#eventBus.addEventListener(`core:${CoreEventType.BlockAdded}`, (event: BlockAddedCoreEvent<HTMLElement>) => {
       const { ui, index } = event.detail;
@@ -54,7 +57,7 @@ export class BlocksUI implements EditorjsPlugin {
       this.#removeBlock(index);
     });
 
-    this.#holder.addEventListener('keydown', (e) => {
+    this.#blocksHolder.addEventListener('keydown', (e) => {
       if (e.code !== 'KeyZ') {
         return;
       }
@@ -72,24 +75,21 @@ export class BlocksUI implements EditorjsPlugin {
       this.#eventBus.dispatchEvent(new Event('core:undo'));
     });
 
-    this.#prepareBlocksHolder();
-  }
-
-  /**
-   * Renders the editor UI
-   */
-  public render(): void {
   }
 
   /**
    * Prepares blocks holder element
    */
-  #prepareBlocksHolder(): void {
+  #prepareBlocksHolder(editorHolder: HTMLElement): HTMLElement {
     const blocksHolder = document.createElement('div');
 
-    blocksHolder.classList.add('ejs-blocks-holder');
+    blocksHolder.classList.add(Style['blocks']);
 
-    this.#holder.appendChild(blocksHolder);
+    blocksHolder.contentEditable = 'false';
+
+    editorHolder.appendChild(blocksHolder);
+
+    return blocksHolder;
   }
 
   /**
@@ -104,7 +104,7 @@ export class BlocksUI implements EditorjsPlugin {
       this.#blocks[index].insertAdjacentElement('beforebegin', blockElement);
       this.#blocks.splice(index, 0, blockElement);
     } else {
-      this.#holder.appendChild(blockElement);
+      this.#blocksHolder.appendChild(blockElement);
       this.#blocks.push(blockElement);
     }
   }

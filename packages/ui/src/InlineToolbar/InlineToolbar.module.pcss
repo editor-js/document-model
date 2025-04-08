@@ -1,0 +1,38 @@
+.inline-toolbar {
+  background: var(--color-bg);
+  transform: translateY(-100%);
+  font-size: var(--font-size-ui);
+  padding: var(--size-padding-toolbar);
+
+  button {
+    cursor: pointer;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
+  button, input {
+    font-size: inherit;
+    background: var(--color-bg-secondary);
+    border: none;
+    outline: none;
+    color: inherit;
+    border-radius: var(--radius-control);
+  }
+
+  input {
+    padding: var(--size-padding-toolbar);
+  }
+  
+}
+
+.inline-toolbar-list {
+  display: flex;
+  flex-direction: row;
+  gap: var(--size-padding-toolbar);
+}
+
+.inline-toolbar-actions {
+  margin-top: var(--size-padding-toolbar);
+}

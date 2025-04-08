@@ -25,6 +25,12 @@ export default defineConfig({
       '@': resolve(__dirname, 'src')
     }
   },
+  css: {
+    modules: {
+      generateScopedName: (name) => `editorjs-${name}`,
+      localsConvention: 'dashes'
+    }
+  },
   esbuild: {
     target: 'esnext'
   }

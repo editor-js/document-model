@@ -11,6 +11,8 @@ import {
 } from '@editorjs/core';
 import type { InlineTool, InlineToolFormatData } from '@editorjs/sdk';
 import type { InlineFragment, InlineToolName, TextRange } from '@editorjs/model';
+import Style from './InlineToolbar.module.pcss';
+
 
 /**
  * Inline Toolbar UI module
@@ -95,18 +97,15 @@ export class InlineToolbarUI implements EditorjsPlugin {
    * Renders the Inline Toolbar UI HTML nodes
    */
   #render(): void {
-    this.#nodes.holder = make('div');
+    this.#nodes.holder = make('div', Style['inline-toolbar']);
 
     this.#nodes.holder.style.display = 'none';
     this.#nodes.holder.style.position = 'absolute';
 
-    this.#nodes.buttons = make('div');
-    this.#nodes.buttons.style.display = 'flex';
-
+    this.#nodes.buttons = make('div', Style['inline-toolbar-list']);
     this.#nodes.holder.appendChild(this.#nodes.buttons);
 
-    this.#nodes.actions = make('div');
-
+    this.#nodes.actions = make('div', Style['inline-toolbar-actions']);
     this.#nodes.holder.appendChild(this.#nodes.actions);
 
     this.#eventBus.dispatchEvent(new InlineToolbarRenderedUIEvent({ toolbar: this.#nodes.holder }));

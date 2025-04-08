@@ -11,10 +11,10 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "types": ["jest"],
-    "rootDir": "src",
+    "rootDir": ".",
     "outDir": "dist"
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "postcss.config.ts", "src/types/**/*"],
   "exclude": [
     "node_modules/**/*",
     "dist/**/*"
