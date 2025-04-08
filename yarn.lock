@@ -666,6 +666,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@editorjs/core@workspace:packages/core"
   dependencies:
+    "@editorjs/collaboration-manager": "workspace:^"
     "@editorjs/dom": "npm:^1.0.0"
     "@editorjs/dom-adapters": "workspace:^"
     "@editorjs/editorjs": "npm:^2.30.5"
