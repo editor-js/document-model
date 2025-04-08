@@ -8,7 +8,7 @@ export enum UiComponentType {
   Shell = 'shell',
 
   /**
-   * Blocks wrappe
+   * Blocks wrapper
    */
   Blocks = 'blocks',
 
