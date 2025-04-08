@@ -139,7 +139,7 @@ export class ParentInlineNode extends EventBus implements InlineNode {
       end = Math.min(this.length, end + 1);
     }
 
-    const reduceResult = this.#reduceChildrenInRange<InlineFragment[]>(
+    return this.#reduceChildrenInRange<InlineFragment[]>(
       start,
       end,
       (acc, child, childStart, childEnd, offset) => {
@@ -178,8 +178,6 @@ export class ParentInlineNode extends EventBus implements InlineNode {
       },
       []
     );
-
-    return reduceResult;
   }
 
   /**
@@ -329,7 +327,7 @@ export class ParentInlineNode extends EventBus implements InlineNode {
        */
       const childLength = child.length;
 
-      if ((start < childLength && end > 0 && start < end)) {
+      if (start < childLength && end > 0 && start < end) {
         result = callback(result, child, Math.max(start, 0), Math.min(childLength, end), offset);
       }
 
