@@ -188,6 +188,8 @@ export class FormattingAdapter {
       }
 
       this.#rerenderRange(input, leftBoundary, rightBoundary, affectedFragments);
+
+      this.#caretAdapter.updateIndex(event.detail.index);
     }
   }
 
