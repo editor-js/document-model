@@ -20,6 +20,11 @@ export interface EventPayloadBase<Action extends EventAction, Data = unknown> {
    * The data of the changed information
    */
   data: Data;
+
+  /**
+   * User identifier
+   */
+  userId?: number | string;
 }
 
 /**
@@ -40,13 +45,15 @@ export class BaseDocumentEvent<Action extends EventAction, Data = unknown> exten
    * @param index - index of the modified value in the document
    * @param action - event action
    * @param data - event data
+   * @param userId - user identifier
    */
-  constructor(index: Index, action: Action, data: Data) {
+  constructor(index: Index, action: Action, data: Data, userId?: string | number) {
     super(EventType.Changed, {
       detail: {
         index,
         action,
         data,
+        userId,
       },
     });
   }

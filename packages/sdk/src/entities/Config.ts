@@ -17,4 +17,6 @@ export interface CoreConfig extends EditorConfig {
    * @param model - EditorJSModel instance
    */
   onModelUpdate?: (model: EditorJSModel) => void;
+
+  userId?: string | number;
 }

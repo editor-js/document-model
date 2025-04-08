@@ -12,8 +12,9 @@ export class TuneModifiedEvent<T = unknown> extends BaseDocumentEvent<EventActio
    *
    * @param index - index of the modified tune in the document
    * @param data - event data with new and previous values
+   * @param userId - user identifier
    */
-  constructor(index: Index, data: ModifiedEventData<T>) {
-    super(index, EventAction.Modified, data);
+  constructor(index: Index, data: ModifiedEventData<T>, userId?: string | number) {
+    super(index, EventAction.Modified, data, userId);
   }
 }

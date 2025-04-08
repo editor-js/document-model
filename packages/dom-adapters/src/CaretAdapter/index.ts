@@ -1,4 +1,5 @@
 import type { Caret, EditorJSModel, CaretManagerEvents } from '@editorjs/model';
+import type { CoreConfig } from '@editorjs/sdk';
 import { getAbsoluteRangeOffset, getBoundaryPointByAbsoluteOffset, useSelectionChange } from '../utils/index.js';
 import type { TextRange } from '@editorjs/model';
 import { EventType, IndexBuilder, Index } from '@editorjs/model';
@@ -38,17 +39,21 @@ export class CaretAdapter extends EventTarget {
    */
   #userCaret: Caret;
 
+  #config: CoreConfig;
+
   /**
    * @class
+   * @param config - Editor's config
    * @param container - Editor.js DOM container
    * @param model - Editor.js model
    */
-  constructor(container: HTMLElement, model: EditorJSModel) {
+  constructor(config: CoreConfig, container: HTMLElement, model: EditorJSModel) {
     super();
 
+    this.#config = config;
     this.#model = model;
     this.#container = container;
-    this.#userCaret = this.#model.createCaret();
+    this.#userCaret = this.#model.createCaret(this.#config.userId);
 
     const { on } = useSelectionChange();
 

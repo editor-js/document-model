@@ -12,8 +12,9 @@ export class ValueModifiedEvent<V = unknown> extends BaseDocumentEvent<EventActi
    *
    * @param index - index of the modified value in the document
    * @param data - event data with new and previous values
+   * @param userId - user identifier
    */
-  constructor(index: Index, data: ModifiedEventData<V>) {
-    super(index, EventAction.Modified, data);
+  constructor(index: Index, data: ModifiedEventData<V>, userId?: string | number) {
+    super(index, EventAction.Modified, data, userId);
   }
 }

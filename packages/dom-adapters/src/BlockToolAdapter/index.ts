@@ -20,7 +20,7 @@ import {
   isNonTextInput
 } from '../utils/index.js';
 import { InputType } from './types/InputType.js';
-import type { BlockToolAdapter as BlockToolAdapterInterface } from '@editorjs/sdk';
+import type { BlockToolAdapter as BlockToolAdapterInterface, CoreConfig } from '@editorjs/sdk';
 import type { FormattingAdapter } from '../FormattingAdapter/index.js';
 
 /**
@@ -54,16 +54,20 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    */
   #toolName: string;
 
+  #config: CoreConfig;
+
   /**
    * BlockToolAdapter constructor
    *
+   * @param config - Editor's config
    * @param model - EditorJSModel instance
    * @param caretAdapter - CaretAdapter instance
    * @param blockIndex - index of the block that this adapter is connected to
    * @param formattingAdapter - needed to render formatted text
    * @param toolName - tool name of the block
    */
-  constructor(model: EditorJSModel, caretAdapter: CaretAdapter, blockIndex: number, formattingAdapter: FormattingAdapter, toolName: string) {
+  constructor(config: CoreConfig, model: EditorJSModel, caretAdapter: CaretAdapter, blockIndex: number, formattingAdapter: FormattingAdapter, toolName: string) {
+    this.#config = config;
     this.#model = model;
     this.#blockIndex = blockIndex;
     this.#caretAdapter = caretAdapter;
@@ -134,7 +138,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
      * If selection is not collapsed, just remove selected text
      */
     if (start !== end) {
-      this.#model.removeText(this.#blockIndex, key, start, end);
+      this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, end);
 
       return;
     }
@@ -196,7 +200,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
        */
     }
 
-    this.#model.removeText(this.#blockIndex, key, start, end);
+    this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, end);
   };
 
   /**
@@ -213,7 +217,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     const start: number = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
     const end: number = getAbsoluteRangeOffset(input, range.endContainer, range.endOffset);
 
-    this.#model.removeText(this.#blockIndex, key, start, end);
+    this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, end);
   };
 
   /**
@@ -254,7 +258,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
       case InputType.InsertFromDrop:
       case InputType.InsertFromPaste: {
         if (start !== end) {
-          this.#model.removeText(this.#blockIndex, key, start, end);
+          this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, end);
         }
 
         let data: string;
@@ -271,7 +275,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
           data = event.dataTransfer!.getData('text/plain');
         }
 
-        this.#model.insertText(this.#blockIndex, key, data, start);
+        this.#model.insertText(this.#config.userId, this.#blockIndex, key, data, start);
 
         break;
       }
@@ -285,12 +289,12 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
          * it means that user selected some text and replaced it with new one
          */
         if (start !== end) {
-          this.#model.removeText(this.#blockIndex, key, start, end);
+          this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, end);
         }
 
         const data = event.data as string;
 
-        this.#model.insertText(this.#blockIndex, key, data, start);
+        this.#model.insertText(this.#config.userId, this.#blockIndex, key, data, start);
         break;
       }
 
@@ -322,7 +326,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
          * @todo Think if we need to keep that or not
          */
         if (isInputNative === true) {
-          this.#model.insertText(this.#blockIndex, key, '\n', start);
+          this.#model.insertText(this.#config.userId, this.#blockIndex, key, '\n', start);
         }
         break;
       default:
@@ -342,17 +346,21 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     const currentValue = this.#model.getText(this.#blockIndex, key);
     const newValueAfter = currentValue.slice(end);
 
-    this.#model.removeText(this.#blockIndex, key, start, currentValue.length);
-    this.#model.addBlock({
-      name: this.#toolName,
-      data : {
-        [key]: {
-          $t: 't',
-          value: newValueAfter,
-          fragments: [],
+    this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, currentValue.length);
+    this.#model.addBlock(
+      this.#config.userId,
+      {
+        name: this.#toolName,
+        data : {
+          [key]: {
+            $t: 't',
+            value: newValueAfter,
+            fragments: [],
+          },
         },
       },
-    }, this.#blockIndex + 1);
+      this.#blockIndex + 1
+    );
 
     /**
      * Raf is needed to ensure that the new block is added so caret can be moved to it
