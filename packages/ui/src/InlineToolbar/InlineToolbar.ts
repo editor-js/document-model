@@ -1,13 +1,16 @@
-import 'reflect-metadata';
-import { Service } from 'typedi';
-
 import { make } from '@editorjs/dom';
 import { InlineToolbarRenderedUIEvent } from './InlineToolbarRenderedUIEvent.js';
-import { CoreEventType, EventBus, SelectionChangedCoreEvent } from '../../components/EventBus/index.js';
-import { EditorAPI } from '../../api/index.js';
-import { InlineTool, InlineToolFormatData } from '@editorjs/sdk';
-import { InlineFragment, InlineToolName, TextRange } from '@editorjs/model';
-import { CoreConfigValidated } from '../../entities/index.js';
+import type { EditorAPI,
+  EventBus,
+  SelectionChangedCoreEvent,
+  EditorjsPlugin,
+  EditorjsPluginParams } from '@editorjs/core';
+import {
+  CoreEventType,
+  UiComponentType
+} from '@editorjs/core';
+import type { InlineTool, InlineToolFormatData } from '@editorjs/sdk';
+import type { InlineFragment, InlineToolName, TextRange } from '@editorjs/model';
 
 /**
  * Inline Toolbar UI module
@@ -15,8 +18,12 @@ import { CoreConfigValidated } from '../../entities/index.js';
  * - listens to the selection change core event
  * - handles the inline tools actions via EditorAPI
  */
-@Service()
-export class InlineToolbarUI {
+export class InlineToolbarUI implements EditorjsPlugin {
+  /**
+   * Plugin type
+   */
+  public static readonly type = UiComponentType.InlineToolbar;
+
   /**
    * EventBus instance to exchange events between components
    */
@@ -34,21 +41,25 @@ export class InlineToolbarUI {
 
   /**
    * InlineToolbarUI class constructor
-   * @param _config - EditorJS validated configuration, not used here
-   * @param api - EditorAPI instance to apply inline tools
-   * @param eventBus - EventBus instance to exchange events between components
+   * @param params - Plugin parameters
    */
-  constructor(
-    _config: CoreConfigValidated,
-    api: EditorAPI,
-    eventBus: EventBus
-  ) {
+  constructor({
+    api,
+    eventBus,
+  }: EditorjsPluginParams) {
     this.#eventBus = eventBus;
     this.#api = api;
 
     this.#render();
 
     this.#eventBus.addEventListener(`core:${CoreEventType.SelectionChanged}`, (event: SelectionChangedCoreEvent) => this.#handleSelectionChange(event));
+  }
+
+  /**
+   * Cleanup when plugin is destroyed
+   */
+  public destroy(): void {
+    this.#nodes.holder?.remove();
   }
 
   /**
