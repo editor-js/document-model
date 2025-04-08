@@ -95,10 +95,12 @@ export default class Core {
    * Initialize and injects Plugin into the container
    * @param plugin - allows to pass any implementation of editor plugins
    */
-  public use(plugin: EditorjsPluginConstructor): void {
+  public use(plugin: EditorjsPluginConstructor): Core {
     const pluginType = plugin.type;
 
     this.#iocContainer.set(pluginType, plugin);
+
+    return this;
   }
 
   /**

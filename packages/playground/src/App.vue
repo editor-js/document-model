@@ -36,12 +36,12 @@ onMounted(() => {
     },
   });
 
-  core.use(EditorjsUI);
-  core.use(BlocksUI);
-  core.use(InlineToolbarUI);
-  core.use(ToolboxUI);
-
-  core.initialize();
+  core
+    .use(EditorjsUI)
+    .use(BlocksUI)
+    .use(InlineToolbarUI)
+    .use(ToolboxUI)
+    .initialize();
 });
 
 </script>
