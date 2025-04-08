@@ -1,4 +1,4 @@
-import type { TextRange, InlineFragment, FormattingAction, IntersectType, InlineToolName } from '@editorjs/model';
+import type { TextRange, InlineFragment, FormattingAction, IntersectType } from '@editorjs/model';
 import type { InlineTool as InlineToolVersion2 } from '@editorjs/editorjs';
 import type { InlineToolConstructable as InlineToolConstructableV2 } from '@editorjs/editorjs';
 import type { InlineToolConstructorOptions as InlineToolConstructorOptionsVersion2 } from '@editorjs/editorjs';

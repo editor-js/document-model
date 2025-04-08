@@ -14,7 +14,7 @@ jobs:
       - name: Build the package
         uses: ./.github/actions/build
         with:
-          package-name: '@editorjs/model'
+          package-name: '@editorjs/collaboration-manager'
 
       - name: Run ESLint check
         uses: ./.github/actions/lint
@@ -31,7 +31,7 @@ jobs:
       - name: Build the package
         uses: ./.github/actions/build
         with:
-          package-name: '@editorjs/model'
+          package-name: '@editorjs/collaboration-manager'
 
       - name: Run unit tests
         uses: ./.github/actions/unit-tests

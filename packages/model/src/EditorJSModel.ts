@@ -5,6 +5,7 @@ import { type BlockNodeSerialized, EditorDocument } from './entities/index.js';
 import { EventBus, EventType } from './EventBus/index.js';
 import type { ModelEvents, CaretManagerCaretUpdatedEvent, CaretManagerEvents } from './EventBus/index.js';
 import { BaseDocumentEvent, type ModifiedEventData } from './EventBus/events/BaseEvent.js';
+import { getContext, WithContext } from './utils/Context.js';
 import type { Constructor } from './utils/types.js';
 import { CaretManager } from './CaretManagement/index.js';
 
@@ -79,8 +80,10 @@ export class EditorJSModel extends EventBus {
     this.#caretManager.addEventListener(
       EventType.CaretManagerUpdated,
       (event: CustomEvent) => {
+        const userId = getContext<string | number>();
+
         this.dispatchEvent(
-          new (event.constructor as Constructor<CaretManagerCaretUpdatedEvent>)(event.detail)
+          new (event.constructor as Constructor<CaretManagerCaretUpdatedEvent>)(event.detail, userId)
         );
       }
     );
@@ -101,20 +104,26 @@ export class EditorJSModel extends EventBus {
   /**
    *  Creates a new Caret instance in the model
    *
+   *  @param _userId - user identifier which is being set to the context
    *  @param parameters - createCaret method parameters
    *  @param [parameters.index] - initial caret index
    */
-  public createCaret(...parameters: Parameters<CaretManager['createCaret']>): ReturnType<CaretManager['createCaret']> {
+  @WithContext
+  public createCaret(_userId?: string | number, ...parameters: Parameters<CaretManager['createCaret']>): ReturnType<CaretManager['createCaret']> {
     return this.#caretManager.createCaret(...parameters);
   }
 
   /**
    * Updates caret instance in the model
    *
+   * @param _userId - user identifier which is being set to the context
    * @param parameters - updateCaret method parameters
    * @param parameters.caret - Caret instance to update
    */
-  public updateCaret(...parameters: Parameters<CaretManager['updateCaret']>): ReturnType<CaretManager['updateCaret']> {
+  @WithContext
+  public updateCaret(_userId?: string | number, ...parameters: Parameters<CaretManager['updateCaret']>): ReturnType<CaretManager['updateCaret']> {
+    console.trace();
+
     return this.#caretManager.updateCaret(...parameters);
   }
 
@@ -122,10 +131,12 @@ export class EditorJSModel extends EventBus {
   /**
    * Removes caret instance from the model
    *
+   * @param _userId - user identifier which is being set to the context
    * @param parameters - removeCaret method parameters
    * @param parameters.caret - Caret instance to remove
    */
-  public removeCaret(...parameters: Parameters<CaretManager['removeCaret']>): ReturnType<CaretManager['removeCaret']> {
+  @WithContext
+  public removeCaret(_userId?: string | number, ...parameters: Parameters<CaretManager['removeCaret']>): ReturnType<CaretManager['removeCaret']> {
     return this.#caretManager.removeCaret(...parameters);
   }
 
@@ -144,11 +155,13 @@ export class EditorJSModel extends EventBus {
    * Updates a property of the EditorDocument.
    * Adds the property if it does not exist.
    *
+   * @param _userId - user identifier which is being set to the context
    * @param parameters - setProperty method parameters
    * @param parameters.name - The name of the property to update
    * @param parameters.value - The value to update the property with
    */
-  public setProperty(...parameters: Parameters<EditorDocument['setProperty']>): ReturnType<EditorDocument['setProperty']> {
+  @WithContext
+  public setProperty(_userId?: string | number, ...parameters: Parameters<EditorDocument['setProperty']>): ReturnType<EditorDocument['setProperty']> {
     return this.#document.setProperty(...parameters);
   }
 
@@ -156,24 +169,28 @@ export class EditorJSModel extends EventBus {
    * Adds a BlockNode to the EditorDocument at the specified index.
    * If no index is provided, the BlockNode will be added to the end of the array.
    *
+   * @param _userId - user identifier which is being set to the context
    * @param parameters - addBlock method parameters
    * @param parameters.blockNodeData - The data to create the BlockNode with
    * @param parameters.index - The index at which to add the BlockNode
    * @throws Error if the index is out of bounds
    */
-  public addBlock(...parameters: Parameters<EditorDocument['addBlock']>): ReturnType<EditorDocument['addBlock']> {
+  @WithContext
+  public addBlock(_userId?: string | number, ...parameters: Parameters<EditorDocument['addBlock']>): ReturnType<EditorDocument['addBlock']> {
     return this.#document.addBlock(...parameters);
   }
 
   /**
    * Moves a BlockNode from one index to another
    *
+   * @param _userId - user identifier which is being set to the context
    * @param parameters = moveBlock method parameters
    * @param parameters.from - The index of the BlockNode to move
    * @param parameters.to - The index to move the BlockNode to
    * @throws Error if the index is out of bounds
    */
-  public moveBlock(...parameters: Parameters<EditorDocument['moveBlock']>): ReturnType<EditorDocument['moveBlock']> {
+  @WithContext
+  public moveBlock(_userId?: string | number, ...parameters: Parameters<EditorDocument['moveBlock']>): ReturnType<EditorDocument['moveBlock']> {
     return this.#document.moveBlock(...parameters);
   }
 
@@ -181,67 +198,79 @@ export class EditorJSModel extends EventBus {
   /**
    * Removes a BlockNode from the EditorDocument at the specified index.
    *
+   * @param _userId - user identifier which is being set to the context
    * @param parameters - removeBlock method parameters
    * @param parameters.index - The index of the BlockNode to remove
    * @throws Error if the index is out of bounds
    */
-  public removeBlock(...parameters: Parameters<EditorDocument['removeBlock']>): ReturnType<EditorDocument['removeBlock']> {
+  @WithContext
+  public removeBlock(_userId?: string | number, ...parameters: Parameters<EditorDocument['removeBlock']>): ReturnType<EditorDocument['removeBlock']> {
     return this.#document.removeBlock(...parameters);
   }
 
   /**
    * Inserts data to the specified index
    *
+   * @param _userId - user identifier which is being set to the context
    * @param index - index to insert data
    * @param data - data to insert (text or blocks)
    */
-  public insertData(index: Index, data: string | BlockNodeSerialized[]): void {
+  @WithContext
+  public insertData(_userId: string | number | undefined, index: Index, data: string | BlockNodeSerialized[]): void {
     this.#document.insertData(index, data);
   }
 
   /**
    * Removes data from the specified index
    *
+   * @param _userId - user identifier which is being set to the context
    * @param index - index to remove data from
    * @param data - text or blocks to remove
    */
-  public removeData(index: Index, data: string | BlockNodeSerialized[]): void {
+  @WithContext
+  public removeData(_userId: string | number | undefined, index: Index, data: string | BlockNodeSerialized[]): void {
     this.#document.removeData(index, data);
   }
 
   /**
    * Modifies data for the specific index
    *
+   * @param _userId - user identifier which is being set to the context
    * @param index - index of data to modify
    * @param data - data to modify (includes current and previous values)
    */
-  public modifyData(index: Index, data: ModifiedEventData): void {
+  @WithContext
+  public modifyData(_userId: string | number | undefined, index: Index, data: ModifiedEventData): void {
     this.#document.modifyData(index, data);
   }
 
   /**
    * Updates the ValueNode data associated with the BlockNode at the specified index.
    *
+   * @param _userId - user identifier which is being set to the context
    * @param parameters - updateValue method parameters
    * @param parameters.blockIndex - The index of the BlockNode to update
    * @param parameters.dataKey - The key of the ValueNode to update
    * @param parameters.value - The new value of the ValueNode
    * @throws Error if the index is out of bounds
    */
-  public updateValue(...parameters: Parameters<EditorDocument['updateValue']>): ReturnType<EditorDocument['updateValue']> {
+  @WithContext
+  public updateValue(_userId?: string | number, ...parameters: Parameters<EditorDocument['updateValue']>): ReturnType<EditorDocument['updateValue']> {
     return this.#document.updateValue(...parameters);
   }
 
   /**
    * Updates BlockTune data associated with the BlockNode at the specified index.
    *
+   * @param _userId - user identifier which is being set to the context
    * @param parameters - updateTuneData method parameters
    * @param parameters.blockIndex - The index of the BlockNode to update
    * @param parameters.tuneName - The name of the BlockTune to update
    * @param parameters.data - The data to update the BlockTune with
    * @throws Error if the index is out of bounds
    */
-  public updateTuneData(...parameters: Parameters<EditorDocument['updateTuneData']>): ReturnType<EditorDocument['updateTuneData']> {
+  @WithContext
+  public updateTuneData(_userId?: string | number, ...parameters: Parameters<EditorDocument['updateTuneData']>): ReturnType<EditorDocument['updateTuneData']> {
     return this.#document.updateTuneData(...parameters);
   }
 
@@ -259,32 +288,37 @@ export class EditorJSModel extends EventBus {
   /**
    * Inserts text to the specified block
    *
+   * @param _userId - user identifier which is being set to the context
    * @param parameters - insertText method parameters
    * @param parameters.blockIndex - index of the block
    * @param parameters.dataKey - key of the data
    * @param parameters.text - text to insert
    * @param [parameters.start] - char index where to insert text
    */
-  public insertText(...parameters: Parameters<EditorDocument['insertText']>): ReturnType<EditorDocument['insertText']> {
+  @WithContext
+  public insertText(_userId?: string | number, ...parameters: Parameters<EditorDocument['insertText']>): ReturnType<EditorDocument['insertText']> {
     return this.#document.insertText(...parameters);
   }
 
   /**
    * Removes text from specified block
    *
+   * @param _userId - user identifier which is being set to the context
    * @param parameters - removeText method parameters
    * @param parameters.blockIndex - index of the block
    * @param parameters.dataKey - key of the data
    * @param [parameters.start] - start char index of the range
    * @param [parameters.end] - end char index of the range
    */
-  public removeText(...parameters: Parameters<EditorDocument['removeText']>): ReturnType<EditorDocument['removeText']> {
+  @WithContext
+  public removeText(_userId?: string | number, ...parameters: Parameters<EditorDocument['removeText']>): ReturnType<EditorDocument['removeText']> {
     return this.#document.removeText(...parameters);
   }
 
   /**
    * Formats text in the specified block
    *
+   * @param _userId - user identifier which is being set to the context
    * @param parameters - format method parameters
    * @param parameters.blockIndex - index of the block
    * @param parameters.dataKey - key of the data
@@ -293,13 +327,15 @@ export class EditorJSModel extends EventBus {
    * @param parameters.end - end char index of the range
    * @param [parameters.data] - Inline Tool data if applicable
    */
-  public format(...parameters: Parameters<EditorDocument['format']>): ReturnType<EditorDocument['format']> {
+  @WithContext
+  public format(_userId?: string | number, ...parameters: Parameters<EditorDocument['format']>): ReturnType<EditorDocument['format']> {
     return this.#document.format(...parameters);
   }
 
   /**
    * Removes formatting from the specified block
    *
+   * @param _userId - user identifier which is being set to the context
    * @param parameters - unformat method parameters
    * @param parameters.blockIndex - index of the block
    * @param parameters.key - key of the data
@@ -307,7 +343,8 @@ export class EditorJSModel extends EventBus {
    * @param parameters.start - start char index of the range
    * @param parameters.end - end char index of the range
    */
-  public unformat(...parameters: Parameters<EditorDocument['unformat']>): ReturnType<EditorDocument['unformat']> {
+  @WithContext
+  public unformat(_userId?: string | number, ...parameters: Parameters<EditorDocument['unformat']>): ReturnType<EditorDocument['unformat']> {
     return this.#document.unformat(...parameters);
   }
 
@@ -349,12 +386,18 @@ export class EditorJSModel extends EventBus {
           return;
         }
 
+        const userId = getContext<string | number>();
+
         /**
          * Here could be any logic to filter EditorDocument events;
          */
 
         this.dispatchEvent(
-          new (event.constructor as Constructor<ModelEvents>)(event.detail.index, event.detail.data)
+          new (event.constructor as Constructor<ModelEvents>)(
+            event.detail.index,
+            event.detail.data,
+            userId
+          )
         );
       }
     );

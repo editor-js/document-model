@@ -13,6 +13,7 @@ import { SelectionManager } from './components/SelectionManager.js';
 import type { EditorjsPluginConstructor } from './entities/EditorjsPlugin.js';
 import { EditorAPI } from './api/index.js';
 import { UiComponentType } from './entities/Ui.js';
+import { generateId } from './utils/uid.js';
 
 /**
  * If no holder is provided via config, the editor will be appended to the element with this id
@@ -72,6 +73,10 @@ export default class Core {
 
     this.#config = config as CoreConfigValidated;
 
+    if (this.#config.userId === undefined) {
+      this.#config.userId = generateId();
+    }
+
     this.#iocContainer.set('EditorConfig', this.#config);
 
     this.#model = new EditorJSModel();
@@ -79,14 +84,14 @@ export default class Core {
 
     this.#toolsManager = this.#iocContainer.get(ToolsManager);
 
-    this.#caretAdapter = new CaretAdapter(this.#config.holder, this.#model);
+    this.#caretAdapter = new CaretAdapter(this.#config, this.#config.holder, this.#model);
     this.#iocContainer.set(CaretAdapter, this.#caretAdapter);
 
-    this.#collaborationManager = new CollaborationManager(this.#model);
+    this.#collaborationManager = new CollaborationManager(this.#config, this.#model);
 
     this.#iocContainer.set(CollaborationManager, this.#collaborationManager);
 
-    this.#formattingAdapter = new FormattingAdapter(this.#model, this.#caretAdapter);
+    this.#formattingAdapter = new FormattingAdapter(this.#config, this.#model, this.#caretAdapter);
 
     this.#iocContainer.set(FormattingAdapter, this.#formattingAdapter);
     this.#iocContainer.get(SelectionManager);

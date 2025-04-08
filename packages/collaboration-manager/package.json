@@ -17,7 +17,8 @@
     "clear": "rm -rf ./dist && rm -rf ./tsconfig.build.tsbuildinfo"
   },
   "dependencies": {
-    "@editorjs/model": "workspace:^"
+    "@editorjs/model": "workspace:^",
+    "@editorjs/sdk": "workspace:^"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
