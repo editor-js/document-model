@@ -605,7 +605,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@editorjs/collaboration-manager@workspace:packages/collaboration-manager":
+"@editorjs/collaboration-manager@workspace:^, @editorjs/collaboration-manager@workspace:packages/collaboration-manager":
   version: 0.0.0-use.local
   resolution: "@editorjs/collaboration-manager@workspace:packages/collaboration-manager"
   dependencies:
@@ -649,6 +649,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@editorjs/document-playground@workspace:packages/playground"
   dependencies:
+    "@editorjs/collaboration-manager": "workspace:^"
     "@editorjs/core": "workspace:^"
     "@editorjs/dom-adapters": "workspace:^"
     "@editorjs/model": "workspace:^"
