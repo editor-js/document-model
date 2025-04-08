@@ -640,7 +640,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@editorjs/collaboration-manager@workspace:packages/collaboration-manager":
+"@editorjs/collaboration-manager@workspace:^, @editorjs/collaboration-manager@workspace:packages/collaboration-manager":
   version: 0.0.0-use.local
   resolution: "@editorjs/collaboration-manager@workspace:packages/collaboration-manager"
   dependencies:
@@ -662,10 +662,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@editorjs/core@workspace:*, @editorjs/core@workspace:^, @editorjs/core@workspace:packages/core":
+"@editorjs/core@workspace:^, @editorjs/core@workspace:packages/core":
   version: 0.0.0-use.local
   resolution: "@editorjs/core@workspace:packages/core"
   dependencies:
+    "@editorjs/collaboration-manager": "workspace:^"
     "@editorjs/dom": "npm:^1.0.0"
     "@editorjs/dom-adapters": "workspace:^"
     "@editorjs/editorjs": "npm:^2.30.5"
@@ -684,7 +685,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@editorjs/document-playground@workspace:packages/playground"
   dependencies:
-    "@editorjs/core": "workspace:*"
+    "@editorjs/collaboration-manager": "workspace:^"
+    "@editorjs/core": "workspace:^"
     "@editorjs/dom-adapters": "workspace:^"
     "@editorjs/model": "workspace:^"
     "@editorjs/ui": "workspace:*"

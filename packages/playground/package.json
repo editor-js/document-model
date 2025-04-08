@@ -14,7 +14,8 @@
     "lint:fix": "yarn lint --fix"
   },
   "dependencies": {
-    "@editorjs/core": "workspace:*",
+    "@editorjs/collaboration-manager": "workspace:^",
+    "@editorjs/core": "workspace:^",
     "@editorjs/dom-adapters": "workspace:^",
     "@editorjs/model": "workspace:^",
     "@editorjs/ui": "workspace:*",

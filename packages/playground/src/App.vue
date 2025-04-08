@@ -26,7 +26,7 @@ onMounted(() => {
       blocks: [ {
         type: 'paragraph',
         data: {
-          text: 'Hello, <b>World</b>!',
+          text: 'Hello, World!',
         },
       } ],
     },

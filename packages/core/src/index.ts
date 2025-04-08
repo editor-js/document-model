@@ -1,6 +1,8 @@
+import { CollaborationManager } from '@editorjs/collaboration-manager';
 import { EditorJSModel, EventType } from '@editorjs/model';
 import type { ContainerInstance } from 'typedi';
 import { Container } from 'typedi';
+import { CoreEventType, EventBus } from './components/EventBus/index.js';
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
 import ToolsManager from './tools/ToolsManager.js';
 import { CaretAdapter, FormattingAdapter } from '@editorjs/dom-adapters';
@@ -8,7 +10,6 @@ import type { CoreConfigValidated } from './entities/Config.js';
 import type { CoreConfig } from '@editorjs/sdk';
 import { BlocksManager } from './components/BlockManager.js';
 import { SelectionManager } from './components/SelectionManager.js';
-import { EventBus } from './components/EventBus/index.js';
 import type { EditorjsPluginConstructor } from './entities/EditorjsPlugin.js';
 import { EditorAPI } from './api/index.js';
 import { UiComponentType } from './entities/Ui.js';
@@ -58,6 +59,8 @@ export default class Core {
    */
   #formattingAdapter: FormattingAdapter;
 
+  #collaborationManager: CollaborationManager;
+
   /**
    * @param config - Editor configuration
    */
@@ -79,7 +82,12 @@ export default class Core {
     this.#caretAdapter = new CaretAdapter(this.#config.holder, this.#model);
     this.#iocContainer.set(CaretAdapter, this.#caretAdapter);
 
+    this.#collaborationManager = new CollaborationManager(this.#model);
+
+    this.#iocContainer.set(CollaborationManager, this.#collaborationManager);
+
     this.#formattingAdapter = new FormattingAdapter(this.#model, this.#caretAdapter);
+
     this.#iocContainer.set(FormattingAdapter, this.#formattingAdapter);
     this.#iocContainer.get(SelectionManager);
     this.#iocContainer.get(BlocksManager);
@@ -89,6 +97,16 @@ export default class Core {
         config.onModelUpdate?.(this.#model);
       });
     }
+
+    const eventBus = this.#iocContainer.get(EventBus);
+
+    eventBus.addEventListener(`core:${CoreEventType.Undo}`, () => {
+      this.#collaborationManager.undo();
+    });
+
+    eventBus.addEventListener(`core:${CoreEventType.Redo}`, () => {
+      this.#collaborationManager.redo();
+    });
   }
 
   /**

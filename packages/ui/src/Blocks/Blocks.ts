@@ -54,6 +54,24 @@ export class BlocksUI implements EditorjsPlugin {
       this.#removeBlock(index);
     });
 
+    this.#holder.addEventListener('keydown', (e) => {
+      if (e.key !== 'z') {
+        return;
+      }
+
+      if (!(e.metaKey || e.ctrlKey)) {
+        return;
+      }
+
+      if (e.shiftKey) {
+        this.#eventBus.dispatchEvent(new Event('core:redo'));
+
+        return;
+      }
+
+      this.#eventBus.dispatchEvent(new Event('core:undo'));
+    });
+
     this.#prepareBlocksHolder();
   }
 
