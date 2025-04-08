@@ -53,9 +53,8 @@ export interface InlineNode {
    *
    * @param [start] - start char index of the range, by default 0
    * @param [end] - end char index of the range, by default length of the text value
-   * @param [includeEdges] - whether to include edges of the range
    */
-  getFragments?(start: number, end: number, includeEdges?: boolean): InlineFragment[];
+  getFragments?(start: number, end: number): InlineFragment[];
 
   /**
    * Inserts text at passed char index

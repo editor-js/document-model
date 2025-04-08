@@ -135,7 +135,7 @@ export class FormattingAdapter {
       throw new Error(`FormattingAdapter: tool ${toolName} is not attached`);
     }
 
-    const fragments = this.#model.getFragments(blockIndex, dataKey, ...textRange, false, toolName);
+    const fragments = this.#model.getFragments(blockIndex, dataKey, ...textRange, toolName);
 
     const { action, range } = tool.getFormattingOptions(textRange, fragments);
 
@@ -173,7 +173,12 @@ export class FormattingAdapter {
         return;
       }
 
-      const affectedFragments = this.#model.getFragments(blockIndex, dataKey, ...textRange, true);
+      const inputContent = input.textContent;
+
+      const rangeStart = Math.max(0, textRange[0] - 1)
+      const rangeEnd = inputContent !== null ? Math.min(inputContent.length, textRange[1] + 1) : 0;
+
+      const affectedFragments = this.#model.getFragments(blockIndex, dataKey, rangeStart, rangeEnd);
 
       const lowerBoundary = affectedFragments[0]?.range[0] ?? textRange[0];
       let upperBoundary = textRange[1];

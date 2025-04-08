@@ -129,15 +129,9 @@ export class ParentInlineNode extends EventBus implements InlineNode {
    *
    * @param [start] - start char index of the range, by default 0
    * @param [end] - end char index of the range, by default length of the text value
-   * @param [includeEdges] - whether to include edges of the range
    */
-  public getFragments(start = 0, end = this.length, includeEdges = false): InlineFragment[] {
+  public getFragments(start = 0, end = this.length): InlineFragment[] {
     this.validateRange(start, end);
-
-    if (includeEdges === true) {
-      start = Math.max(0, start - 1);
-      end = Math.min(this.length, end + 1);
-    }
 
     return this.#reduceChildrenInRange<InlineFragment[]>(
       start,
@@ -151,7 +145,7 @@ export class ParentInlineNode extends EventBus implements InlineNode {
         }
 
         const fragments = child
-          .getFragments(childStart, childEnd, includeEdges)
+          .getFragments(childStart, childEnd)
           .map(fragment => ({
             ...fragment,
             range: fragment.range.map(index => index + offset) as InlineFragment['range'],

@@ -39,11 +39,10 @@ export class TextNode extends ParentInlineNode {
    *
    * @param [start] - start char index of the range
    * @param [end] - end char index of the range
-   * @param [includeEdges] - whether to include edges of the range
    * @param [tool] - name of the Inline Tool
    */
-  public getFragments(start?: number, end?: number, includeEdges?: boolean, tool?: InlineToolName): InlineFragment[] {
-    let fragments = super.getFragments(start, end, includeEdges);
+  public getFragments(start?: number, end?: number, tool?: InlineToolName): InlineFragment[] {
+    let fragments = super.getFragments(start, end);
 
     if (tool) {
       fragments = fragments.filter((fragment) => fragment.tool === tool);
