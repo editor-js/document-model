@@ -4,7 +4,7 @@ import type { Index } from './entities/index.js';
 import { type BlockNodeSerialized, EditorDocument } from './entities/index.js';
 import { EventBus, EventType } from './EventBus/index.js';
 import type { ModelEvents, CaretManagerCaretUpdatedEvent, CaretManagerEvents } from './EventBus/index.js';
-import { BaseDocumentEvent } from './EventBus/events/BaseEvent.js';
+import { BaseDocumentEvent, type ModifiedEventData } from './EventBus/events/BaseEvent.js';
 import type { Constructor } from './utils/types.js';
 import { CaretManager } from './CaretManagement/index.js';
 
@@ -193,9 +193,9 @@ export class EditorJSModel extends EventBus {
    * Inserts data to the specified index
    *
    * @param index - index to insert data
-   * @param data - data to insert
+   * @param data - data to insert (text or blocks)
    */
-  public insertData(index: Index, data: unknown): void {
+  public insertData(index: Index, data: string | BlockNodeSerialized[]): void {
     this.#document.insertData(index, data);
   }
 
@@ -203,9 +203,20 @@ export class EditorJSModel extends EventBus {
    * Removes data from the specified index
    *
    * @param index - index to remove data from
+   * @param data - text or blocks to remove
    */
-  public removeData(index: Index): void {
-    this.#document.removeData(index);
+  public removeData(index: Index, data: string | BlockNodeSerialized[]): void {
+    this.#document.removeData(index, data);
+  }
+
+  /**
+   * Modifies data for the specific index
+   *
+   * @param index - index of data to modify
+   * @param data - data to modify (includes current and previous values)
+   */
+  public modifyData(index: Index, data: ModifiedEventData): void {
+    this.#document.modifyData(index, data);
   }
 
   /**

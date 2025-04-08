@@ -1,5 +1,4 @@
 import type { Operation } from './Operation.js';
-import { Transformer } from './Transformer.js';
 
 /**
  * Manages undo and redo operations
@@ -25,11 +24,11 @@ export class UndoRedoManager {
       return;
     }
 
-    const inversedOperation = Transformer.inverse(operation);
+    const invertedOperation = operation.inverse();
 
-    this.#redoStack.push(inversedOperation);
+    this.#redoStack.push(invertedOperation);
 
-    return inversedOperation;
+    return invertedOperation;
   }
 
   /**
@@ -42,11 +41,11 @@ export class UndoRedoManager {
       return;
     }
 
-    const inversedOperation = Transformer.inverse(operation);
+    const invertedOperation = operation.inverse();
 
-    this.#undoStack.push(Transformer.inverse(inversedOperation));
+    this.#undoStack.push(invertedOperation);
 
-    return inversedOperation;
+    return invertedOperation;
   }
 
   /**

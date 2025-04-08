@@ -3,7 +3,7 @@ import { BlockNode } from '../BlockNode/index.js';
 import { IndexBuilder } from '../Index/IndexBuilder.js';
 import type { EditorDocumentSerialized, EditorDocumentConstructorParameters, Properties } from './types';
 import type { BlockTuneName } from '../BlockTune';
-import type { InlineFragment, InlineToolData, InlineToolName } from '../inline-fragments';
+import { type InlineFragment, type InlineToolData, type InlineToolName } from '../inline-fragments/index.js';
 import { IoCContainer, TOOLS_REGISTRY } from '../../IoC/index.js';
 import { ToolsRegistry } from '../../tools/index.js';
 import type { BlockNodeSerialized } from '../BlockNode/types';
@@ -18,10 +18,10 @@ import type {
 import {
   BlockAddedEvent,
   BlockRemovedEvent,
-  PropertyModifiedEvent
+  PropertyModifiedEvent, type TextFormattedEventData, type TextUnformattedEventData
 } from '../../EventBus/events/index.js';
 import type { Constructor } from '../../utils/types.js';
-import { BaseDocumentEvent } from '../../EventBus/events/BaseEvent.js';
+import { BaseDocumentEvent, type ModifiedEventData } from '../../EventBus/events/BaseEvent.js';
 import type { Index } from '../Index/index.js';
 
 /**
@@ -340,17 +340,17 @@ export class EditorDocument extends EventBus {
    * Inserts data to the specified index
    *
    * @param index - index to insert data
-   * @param data - data to insert
+   * @param data - data to insert (text or blocks)
    */
-  public insertData(index: Index, data: unknown): void {
+  public insertData(index: Index, data: string | BlockNodeSerialized[]): void {
     switch (true) {
       case index.isTextIndex:
         this.insertText(index.blockIndex!, index.dataKey!, data as string, index.textRange![0]);
         break;
 
       case index.isBlockIndex:
-        // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-        this.addBlock(data as Parameters<EditorDocument['addBlock']>[0], index.blockIndex);
+        (data as BlockNodeSerialized[])
+          .forEach((blockData, i) => this.addBlock(blockData, index.blockIndex! + i));
         break;
       default:
         throw new Error('Unsupported index');
@@ -361,18 +361,41 @@ export class EditorDocument extends EventBus {
    * Removes data from the specified index
    *
    * @param index - index to remove data from
+   * @param data - text or blocks to remove
    */
-  public removeData(index: Index): void {
+  public removeData(index: Index, data: string | BlockNodeSerialized[]): void {
     switch (true) {
       case index.isTextIndex:
-        this.removeText(index.blockIndex!, index.dataKey!, index.textRange![0], index.textRange![1]);
+        this.removeText(index.blockIndex!, index.dataKey!, index.textRange![0], index.textRange![0] + data.length);
         break;
 
       case index.isBlockIndex:
-        this.removeBlock(index.blockIndex!);
+        (data as BlockNodeSerialized[]).forEach(() => this.removeBlock(index.blockIndex!));
         break;
       default:
         throw new Error('Unsupported index');
+    }
+  }
+
+  /**
+   * Modifies data for the specific index
+   *
+   * @param index - index of data to modify
+   * @param data - data to modify (includes current and previous values)
+   */
+  public modifyData(index: Index, data: ModifiedEventData): void {
+    switch (true) {
+      case index.isTextIndex:
+        if (data.value !== null) {
+          this.format(index.blockIndex!, index.dataKey!, (data.value as TextFormattedEventData).tool, index.textRange![0], index.textRange![1]);
+        } else if (data.previous !== null) {
+          this.unformat(index.blockIndex!, index.dataKey!, (data.previous as TextUnformattedEventData).tool, index.textRange![0], index.textRange![1]);
+        }
+
+      default:
+      /**
+       * @todo implement other actions
+       */
     }
   }
 
