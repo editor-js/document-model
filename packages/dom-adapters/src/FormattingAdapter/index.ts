@@ -180,14 +180,14 @@ export class FormattingAdapter {
 
       const affectedFragments = this.#model.getFragments(blockIndex, dataKey, rangeStart, rangeEnd);
 
-      const lowerBoundary = affectedFragments[0]?.range[0] ?? textRange[0];
-      let upperBoundary = textRange[1];
+      const leftBoundary = affectedFragments[0]?.range[0] ?? textRange[0];
+      let rightBoundary = textRange[1];
 
       for (const fragment of affectedFragments) {
-        upperBoundary = Math.max(upperBoundary, fragment.range[1]);
+        rightBoundary = Math.max(rightBoundary, fragment.range[1]);
       }
 
-      this.#rerenderRange(input, lowerBoundary, upperBoundary, affectedFragments);
+      this.#rerenderRange(input, leftBoundary, rightBoundary, affectedFragments);
     }
   }
 
@@ -195,14 +195,14 @@ export class FormattingAdapter {
    * Apply formatting of all affected fragments to the range with boundaries
    *
    * @param input - input element to apply formatting to
-   * @param lowerBoundary - lower boundary of the range
-   * @param upperBoundary - upper boundary of the range
+   * @param leftBoundary - lower boundary of the range
+   * @param rightBoundary - upper boundary of the range
    * @param affectedFragments - model fragments that are used to format the range
    */
-  #rerenderRange(input: HTMLElement, lowerBoundary: number, upperBoundary: number, affectedFragments: InlineFragment[]): void {
+  #rerenderRange(input: HTMLElement, leftBoundary: number, rightBoundary: number, affectedFragments: InlineFragment[]): void {
     const range = document.createRange();
-    const [startNode, startOffset] = getBoundaryPointByAbsoluteOffset(input, lowerBoundary);
-    const [endNode, endOffset] = getBoundaryPointByAbsoluteOffset(input, upperBoundary);
+    const [startNode, startOffset] = getBoundaryPointByAbsoluteOffset(input, leftBoundary);
+    const [endNode, endOffset] = getBoundaryPointByAbsoluteOffset(input, rightBoundary);
 
     if (startOffset === 0) {
       range.setStartBefore(expandRangeNodeBoundary(startNode));
@@ -232,8 +232,8 @@ export class FormattingAdapter {
         continue;
       }
 
-      const relativeStart = fragment.range[0] - lowerBoundary;
-      const relativeEnd = fragment.range[1] - lowerBoundary;
+      const relativeStart = fragment.range[0] - leftBoundary;
+      const relativeEnd = fragment.range[1] - leftBoundary;
 
       /**
        * Create wrapper element for the fragment
