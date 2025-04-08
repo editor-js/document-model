@@ -35,7 +35,7 @@ onMounted(() => {
       editorDocument.value = model.devModeGetDocument();
     },
   });
-  
+
   core.use(EditorjsUI);
   core.use(BlocksUI);
   core.use(InlineToolbarUI);
