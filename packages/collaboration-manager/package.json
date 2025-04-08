@@ -13,7 +13,7 @@
     "lint:fix": "yarn lint --fix",
     "test": "node --experimental-vm-modules $(yarn bin jest)",
     "test:coverage": "yarn test --coverage=true",
-    "test:mutations": "stryker run",
+    "test:mutations": "NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" stryker run",
     "clear": "rm -rf ./dist && rm -rf ./tsconfig.build.tsbuildinfo"
   },
   "dependencies": {
