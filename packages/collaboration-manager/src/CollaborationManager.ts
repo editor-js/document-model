@@ -8,6 +8,7 @@ import {
   TextFormattedEvent, TextRemovedEvent,
   TextUnformattedEvent
 } from '@editorjs/model';
+import { Batch } from './Batch.js';
 import { type ModifyOperationData, Operation, OperationType } from './Operation.js';
 import { UndoRedoManager } from './UndoRedoManager.js';
 
@@ -30,6 +31,7 @@ export class CollaborationManager {
    */
   #shouldHandleEvents = true;
 
+  #currentBatch: Batch | null = null;
 
   /**
    * Creates an instance of CollaborationManager
@@ -46,6 +48,8 @@ export class CollaborationManager {
    * Undo last operation in the local stack
    */
   public undo(): void {
+    this.#currentBatch?.terminate();
+
     const operation = this.#undoRedoManager.undo();
 
     if (operation === undefined) {
@@ -65,6 +69,8 @@ export class CollaborationManager {
    * Redo last undone operation in the local stack
    */
   public redo(): void {
+    this.#currentBatch?.terminate();
+
     const operation = this.#undoRedoManager.redo();
 
     if (operation === undefined) {
@@ -157,8 +163,26 @@ export class CollaborationManager {
         console.error('Unknown event type', e);
     }
 
-    if (operation !== null) {
-      this.#undoRedoManager.put(operation);
+    if (operation === null) {
+      return;
     }
+
+    const onBatchTimeout = (batch: Batch, lastOp?: Operation): void => {
+      const effectiveOp = batch.getEffectiveOperation();
+
+      if (effectiveOp) {
+        this.#undoRedoManager.put(effectiveOp);
+      }
+
+      this.#currentBatch = lastOp === undefined ? null : new Batch(onBatchTimeout, lastOp);
+    };
+
+    if (this.#currentBatch === null) {
+      this.#currentBatch = new Batch(onBatchTimeout, operation);
+
+      return;
+    }
+
+    this.#currentBatch.add(operation);
   }
 }

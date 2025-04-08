@@ -55,7 +55,7 @@ export class BlocksUI implements EditorjsPlugin {
     });
 
     this.#holder.addEventListener('keydown', (e) => {
-      if (e.key !== 'z') {
+      if (e.code !== 'KeyZ') {
         return;
       }
 
