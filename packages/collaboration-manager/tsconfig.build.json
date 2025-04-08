@@ -13,6 +13,9 @@
   "references": [
     {
       "path": "../model/tsconfig.build.json"
+    },
+    {
+      "path": "../ui/tsconfig.build.json"
     }
   ]
 }
