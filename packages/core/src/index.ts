@@ -1,6 +1,8 @@
+import { CollaborationManager } from "@editorjs/collaboration-manager";
 import { EditorJSModel, EventType } from '@editorjs/model';
 import type { ContainerInstance } from 'typedi';
 import { Container } from 'typedi';
+import { CoreEventType, EventBus } from "./components/EventBus/index";
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
 import ToolsManager from './tools/ToolsManager.js';
 import { CaretAdapter, FormattingAdapter } from '@editorjs/dom-adapters';
@@ -58,6 +60,8 @@ export default class Core {
    */
   #formattingAdapter: FormattingAdapter;
 
+  #collaborationManager: CollaborationManager;
+
   /**
    * @param config - Editor configuration
    */
@@ -82,7 +86,12 @@ export default class Core {
     this.#caretAdapter = new CaretAdapter(this.#config.holder, this.#model);
     this.#iocContainer.set(CaretAdapter, this.#caretAdapter);
 
+    this.#collaborationManager = new CollaborationManager(this.#model);
+
+    this.#iocContainer.set(CollaborationManager, this.#collaborationManager);
+
     this.#formattingAdapter = new FormattingAdapter(this.#model, this.#caretAdapter);
+
     this.#iocContainer.set(FormattingAdapter, this.#formattingAdapter);
     this.#iocContainer.get(SelectionManager);
     this.#iocContainer.get(BlocksManager);
@@ -114,6 +123,16 @@ export default class Core {
     this.#iocContainer.get(InlineToolbarUI);
 
     editorUI.render();
+
+    const eventBus = this.#iocContainer.get(EventBus);
+
+    eventBus.addEventListener(`core:${CoreEventType.Undo}`, () => {
+      this.#collaborationManager.undo();
+    });
+
+    eventBus.addEventListener(`core:${CoreEventType.Redo}`, () => {
+      this.#collaborationManager.redo();
+    });
   }
 
   /**

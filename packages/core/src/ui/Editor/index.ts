@@ -53,6 +53,24 @@ export class EditorUI {
     this.#eventBus.addEventListener(`ui:inline-toolbar:rendered`, (event: InlineToolbarRenderedUIEvent) => {
       this.#holder.appendChild(event.detail.toolbar);
     });
+
+    this.#holder.addEventListener('keydown', (e) => {
+      if (e.key !== 'z') {
+        return;
+      }
+
+      if (!(e.metaKey || e.ctrlKey)) {
+        return;
+      }
+
+      if (e.shiftKey) {
+        this.#eventBus.dispatchEvent(new Event('core:redo'));
+
+        return;
+      }
+
+      this.#eventBus.dispatchEvent(new Event('core:undo'));
+    });
   }
 
   /**

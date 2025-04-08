@@ -23,5 +23,15 @@ export enum CoreEventType {
   /**
    * Event is fired when the selection is changed
    */
-  SelectionChanged = 'selection:changed'
+  SelectionChanged = 'selection:changed',
+
+  /**
+   * Event is fired when undo action should be performed
+   */
+  Undo = 'undo',
+
+  /**
+   * Event is fired when redo action should be performed
+   */
+  Redo = 'redo',
 }
