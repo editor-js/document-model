@@ -12,6 +12,9 @@
     },
     {
       "path": "../dom-adapters/tsconfig.build.json"
+    },
+    {
+      "path": "../collaboration-manager/tsconfig.build.json"
     }
   ]
 }
