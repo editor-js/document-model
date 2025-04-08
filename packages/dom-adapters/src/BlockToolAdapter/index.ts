@@ -54,6 +54,9 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    */
   #toolName: string;
 
+  /**
+   * Editor's config
+   */
   #config: CoreConfig;
 
   /**

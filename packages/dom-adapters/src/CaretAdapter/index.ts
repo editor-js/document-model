@@ -39,6 +39,9 @@ export class CaretAdapter extends EventTarget {
    */
   #userCaret: Caret;
 
+  /**
+   * Editor's config
+   */
   #config: CoreConfig;
 
   /**

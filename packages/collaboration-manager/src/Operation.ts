@@ -69,16 +69,23 @@ export class Operation<T extends OperationType = OperationType> {
   public data: OperationTypeToData<T>;
 
   /**
+   * Identifier of a user who created an operation;
+   */
+  public userId?: string | number;
+
+  /**
    * Creates an instance of Operation
    *
    * @param type - operation type
    * @param index - index in the document model tree
    * @param data - operation data
+   * @param userId - user identifier
    */
-  constructor(type: T, index: Index, data: OperationTypeToData<T>) {
+  constructor(type: T, index: Index, data: OperationTypeToData<T>, userId?: string | number) {
     this.type = type;
     this.index = index;
     this.data = data;
+    this.userId = userId;
   }
 
   /**

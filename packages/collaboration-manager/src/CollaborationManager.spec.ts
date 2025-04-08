@@ -1,16 +1,19 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import { createDataKey, IndexBuilder } from '@editorjs/model';
 import { EditorJSModel } from '@editorjs/model';
+import type { CoreConfig } from '@editorjs/sdk';
 import { beforeAll, jest } from '@jest/globals';
 import { CollaborationManager } from './CollaborationManager.js';
 import { Operation, OperationType } from './Operation.js';
+
+const config: Partial<CoreConfig> = { userId: 'user' };
 
 describe('CollaborationManager', () => {
   describe('applyOperation', () => {
     it('should throw an error on unknown operation type', () => {
       const model = new EditorJSModel();
 
-      const collaborationManager = new CollaborationManager(model);
+      const collaborationManager = new CollaborationManager(config, model);
 
       // @ts-expect-error - for test purposes
       expect(() => collaborationManager.applyOperation(new Operation('unknown', new IndexBuilder().build(), 'hello'))).toThrow('Unknown operation type');
@@ -30,10 +33,10 @@ describe('CollaborationManager', () => {
           },
         } ],
       });
-      const collaborationManager = new CollaborationManager(model);
+      const collaborationManager = new CollaborationManager(config, model);
       const index = new IndexBuilder().addBlockIndex(0)
         .addDataKey(createDataKey('text'))
-        .addTextRange([0, 4])
+        .addTextRange([ 0, 4 ])
         .build();
       const operation = new Operation(OperationType.Insert, index, {
         payload: 'test',
@@ -70,11 +73,11 @@ describe('CollaborationManager', () => {
           },
         } ],
       });
-      const collaborationManager = new CollaborationManager(model);
+      const collaborationManager = new CollaborationManager(config, model);
       const index = new IndexBuilder().addBlockIndex(0)
         .addDataKey(createDataKey('text'))
         .addTextRange([
-          3, 5])
+          3, 5 ])
         .build();
       const operation = new Operation(OperationType.Delete, index, {
         payload: '11',
@@ -103,7 +106,7 @@ describe('CollaborationManager', () => {
       model.initializeDocument({
         blocks: [],
       });
-      const collaborationManager = new CollaborationManager(model);
+      const collaborationManager = new CollaborationManager(config, model);
       const index = new IndexBuilder().addBlockIndex(0)
         .build();
       const operation = new Operation(OperationType.Insert, index, {
@@ -150,7 +153,7 @@ describe('CollaborationManager', () => {
       model.initializeDocument({
         blocks: [ block ],
       });
-      const collaborationManager = new CollaborationManager(model);
+      const collaborationManager = new CollaborationManager(config, model);
       const index = new IndexBuilder().addBlockIndex(0)
         .build();
       const operation = new Operation(OperationType.Delete, index, {
@@ -178,10 +181,10 @@ describe('CollaborationManager', () => {
           },
         } ],
       });
-      const collaborationManager = new CollaborationManager(model);
+      const collaborationManager = new CollaborationManager(config, model);
       const index = new IndexBuilder().addBlockIndex(0)
         .addDataKey(createDataKey('text'))
-        .addTextRange([0, 5])
+        .addTextRange([ 0, 5 ])
         .build();
       const operation = new Operation(OperationType.Modify, index, {
         payload: {
@@ -201,7 +204,7 @@ describe('CollaborationManager', () => {
               value: 'Hello world',
               fragments: [ {
                 tool: 'bold',
-                range: [0, 5],
+                range: [ 0, 5 ],
               } ],
             },
           },
@@ -222,16 +225,16 @@ describe('CollaborationManager', () => {
               $t: 't',
               fragments: [ {
                 tool: 'bold',
-                range: [0, 5],
+                range: [ 0, 5 ],
               } ],
             },
           },
         } ],
       });
-      const collaborationManager = new CollaborationManager(model);
+      const collaborationManager = new CollaborationManager(config, model);
       const index = new IndexBuilder().addBlockIndex(0)
         .addDataKey(createDataKey('text'))
-        .addTextRange([0, 3])
+        .addTextRange([ 0, 3 ])
         .build();
       const operation = new Operation(OperationType.Modify, index, {
         payload: null,
@@ -251,7 +254,7 @@ describe('CollaborationManager', () => {
               value: 'Hello world',
               fragments: [ {
                 tool: 'bold',
-                range: [3, 5],
+                range: [ 3, 5 ],
               } ],
             },
           },
@@ -280,10 +283,10 @@ describe('CollaborationManager', () => {
           },
         } ],
       });
-      const collaborationManager = new CollaborationManager(model);
+      const collaborationManager = new CollaborationManager(config, model);
       const index = new IndexBuilder().addBlockIndex(0)
         .addDataKey(createDataKey('text'))
-        .addTextRange([0, 4])
+        .addTextRange([ 0, 4 ])
         .build();
       const operation = new Operation(OperationType.Insert, index, {
         payload: 'test',
@@ -321,11 +324,11 @@ describe('CollaborationManager', () => {
           },
         } ],
       });
-      const collaborationManager = new CollaborationManager(model);
+      const collaborationManager = new CollaborationManager(config, model);
       const index = new IndexBuilder().addBlockIndex(0)
         .addDataKey(createDataKey('text'))
         .addTextRange([
-          3, 5])
+          3, 5 ])
         .build();
       const operation = new Operation(OperationType.Delete, index, {
         payload: '11',
@@ -363,10 +366,10 @@ describe('CollaborationManager', () => {
           },
         } ],
       });
-      const collaborationManager = new CollaborationManager(model);
+      const collaborationManager = new CollaborationManager(config, model);
       const index = new IndexBuilder().addBlockIndex(0)
         .addDataKey(createDataKey('text'))
-        .addTextRange([0, 4])
+        .addTextRange([ 0, 4 ])
         .build();
       const operation = new Operation(OperationType.Insert, index, {
         payload: 'test',
@@ -405,10 +408,10 @@ describe('CollaborationManager', () => {
           },
         } ],
       });
-      const collaborationManager = new CollaborationManager(model);
+      const collaborationManager = new CollaborationManager(config, model);
       const index = new IndexBuilder().addBlockIndex(0)
         .addDataKey(createDataKey('text'))
-        .addTextRange([0, 4])
+        .addTextRange([ 0, 4 ])
         .build();
       const operation = new Operation(OperationType.Insert, index, {
         payload: 'test',
@@ -440,7 +443,7 @@ describe('CollaborationManager', () => {
       model.initializeDocument({
         blocks: [],
       });
-      const collaborationManager = new CollaborationManager(model);
+      const collaborationManager = new CollaborationManager(config, model);
       const index = new IndexBuilder().addBlockIndex(0)
         .build();
       const operation = new Operation(OperationType.Insert, index, {
@@ -479,10 +482,10 @@ describe('CollaborationManager', () => {
           },
         } ],
       });
-      const collaborationManager = new CollaborationManager(model);
+      const collaborationManager = new CollaborationManager(config, model);
       const index = new IndexBuilder().addBlockIndex(0)
         .addDataKey(createDataKey('text'))
-        .addTextRange([0, 5])
+        .addTextRange([ 0, 5 ])
         .build();
       const operation = new Operation(OperationType.Modify, index, {
         payload: {
@@ -522,16 +525,16 @@ describe('CollaborationManager', () => {
               $t: 't',
               fragments: [ {
                 tool: 'bold',
-                range: [0, 5],
+                range: [ 0, 5 ],
               } ],
             },
           },
         } ],
       });
-      const collaborationManager = new CollaborationManager(model);
+      const collaborationManager = new CollaborationManager(config, model);
       const index = new IndexBuilder().addBlockIndex(0)
         .addDataKey(createDataKey('text'))
-        .addTextRange([0, 3])
+        .addTextRange([ 0, 3 ])
         .build();
       const operation = new Operation(OperationType.Modify, index, {
         payload: null,
@@ -553,7 +556,7 @@ describe('CollaborationManager', () => {
               value: 'Hello world',
               fragments: [ {
                 tool: 'bold',
-                range: [0, 5],
+                range: [ 0, 5 ],
               } ],
             },
           },
@@ -574,16 +577,16 @@ describe('CollaborationManager', () => {
               $t: 't',
               fragments: [ {
                 tool: 'bold',
-                range: [0, 5],
+                range: [ 0, 5 ],
               } ],
             },
           },
         } ],
       });
-      const collaborationManager = new CollaborationManager(model);
+      const collaborationManager = new CollaborationManager(config, model);
       const index = new IndexBuilder().addBlockIndex(0)
         .addDataKey(createDataKey('text'))
-        .addTextRange([0, 3])
+        .addTextRange([ 0, 3 ])
         .build();
       const operation = new Operation(OperationType.Modify, index, {
         payload: null,
@@ -606,7 +609,7 @@ describe('CollaborationManager', () => {
               value: 'Hello world',
               fragments: [ {
                 tool: 'bold',
-                range: [3, 5],
+                range: [ 3, 5 ],
               } ],
             },
           },
@@ -632,7 +635,7 @@ describe('CollaborationManager', () => {
       model.initializeDocument({
         blocks: [ block ],
       });
-      const collaborationManager = new CollaborationManager(model);
+      const collaborationManager = new CollaborationManager(config, model);
       const index = new IndexBuilder().addBlockIndex(0)
         .build();
       const operation = new Operation(OperationType.Delete, index, {
@@ -667,7 +670,7 @@ describe('CollaborationManager', () => {
     model.initializeDocument({
       blocks: [ block ],
     });
-    const collaborationManager = new CollaborationManager(model);
+    const collaborationManager = new CollaborationManager(config, model);
     const index = new IndexBuilder().addBlockIndex(0)
       .build();
     const operation = new Operation(OperationType.Delete, index, {
@@ -705,7 +708,7 @@ describe('CollaborationManager', () => {
     model.initializeDocument({
       blocks: [ block ],
     });
-    const collaborationManager = new CollaborationManager(model);
+    const collaborationManager = new CollaborationManager(config, model);
     const index = new IndexBuilder().addBlockIndex(0)
       .build();
     const operation = new Operation(OperationType.Delete, index, {
@@ -747,7 +750,7 @@ describe('CollaborationManager', () => {
     model.initializeDocument({
       blocks: [ block ],
     });
-    const collaborationManager = new CollaborationManager(model);
+    const collaborationManager = new CollaborationManager(config, model);
     const index = new IndexBuilder().addBlockIndex(0)
       .build();
     const operation = new Operation(OperationType.Delete, index, {
@@ -787,17 +790,17 @@ describe('CollaborationManager', () => {
         },
       } ],
     });
-    const collaborationManager = new CollaborationManager(model);
+    const collaborationManager = new CollaborationManager(config, model);
     const index1 = new IndexBuilder().addBlockIndex(0)
       .addDataKey(createDataKey('text'))
-      .addTextRange([0, 0])
+      .addTextRange([ 0, 0 ])
       .build();
     const operation1 = new Operation(OperationType.Insert, index1, {
       payload: 'te',
     });
 
     const index2 = new IndexBuilder().from(index1)
-      .addTextRange([1, 1])
+      .addTextRange([ 1, 1 ])
       .build();
     const operation2 = new Operation(OperationType.Insert, index2, {
       payload: 'st',
@@ -838,17 +841,17 @@ describe('CollaborationManager', () => {
         },
       } ],
     });
-    const collaborationManager = new CollaborationManager(model);
+    const collaborationManager = new CollaborationManager(config, model);
     const index1 = new IndexBuilder().addBlockIndex(0)
       .addDataKey(createDataKey('text'))
-      .addTextRange([0, 0])
+      .addTextRange([ 0, 0 ])
       .build();
     const operation1 = new Operation(OperationType.Insert, index1, {
       payload: 'te',
     });
 
     const index2 = new IndexBuilder().from(index1)
-      .addTextRange([1, 1])
+      .addTextRange([ 1, 1 ])
       .build();
     const operation2 = new Operation(OperationType.Insert, index2, {
       payload: 'st',
@@ -875,4 +878,40 @@ describe('CollaborationManager', () => {
       properties: {},
     });
   });
+
+  it('should not undo operations from not a current user', () => {
+    const model = new EditorJSModel();
+
+    model.initializeDocument({
+      blocks: [ {
+        name: 'paragraph',
+        data: {
+          text: {
+            value: '',
+            $t: 't',
+          },
+        },
+      } ],
+    });
+    const collaborationManager = new CollaborationManager(config, model);
+
+    model.insertText('another-user', 0, createDataKey('text'), 'hello', 0);
+
+    collaborationManager.undo();
+
+    expect(model.serialized).toStrictEqual({
+      blocks: [ {
+        name: 'paragraph',
+        tunes: {},
+        data: {
+          text: {
+            $t: 't',
+            value: 'hello',
+            fragments: [],
+          },
+        },
+      } ],
+      properties: {},
+    });
+  })
 });

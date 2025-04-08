@@ -141,34 +141,34 @@ export class CollaborationManager {
       case (e instanceof TextAddedEvent):
         operation = new Operation(OperationType.Insert, e.detail.index, {
           payload: e.detail.data,
-        });
+        }, e.detail.userId);
         break;
       case (e instanceof TextRemovedEvent):
         operation = new Operation(OperationType.Delete, e.detail.index, {
           payload: e.detail.data,
-        });
+        }, e.detail.userId);
         break;
       case (e instanceof TextFormattedEvent):
         operation = new Operation(OperationType.Modify, e.detail.index, {
           payload: e.detail.data,
           prevPayload: null,
-        });
+        }, e.detail.userId);
         break;
       case (e instanceof TextUnformattedEvent):
         operation = new Operation(OperationType.Modify, e.detail.index, {
           prevPayload: e.detail.data,
           payload: null,
-        });
+        }, e.detail.userId);
         break;
       case (e instanceof BlockAddedEvent):
         operation = new Operation(OperationType.Insert, e.detail.index, {
           payload: [ e.detail.data ],
-        });
+        }, e.detail.userId);
         break;
       case (e instanceof BlockRemovedEvent):
         operation = new Operation(OperationType.Delete, e.detail.index, {
           payload: [ e.detail.data ],
-        });
+        }, e.detail.userId);
         break;
       // Stryker disable next-line ConditionalExpression
       default:
