@@ -15,9 +15,6 @@
       "path": "../model/tsconfig.build.json"
     },
     {
-      "path": "../ui/tsconfig.build.json"
-    },
-    {
       "path": "../sdk/tsconfig.build.json"
     }
   ]
