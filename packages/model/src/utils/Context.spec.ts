@@ -1,19 +1,15 @@
 import { getContext, runWithContext, WithContext } from './Context.js';
 
+const func = (): string | undefined => {
+  return getContext<string>();
+};
+
 describe('Context util', () => {
   it('should run function in context', () => {
-    const func = (): string | undefined => {
-      return getContext<string>();
-    };
-
     expect(runWithContext('context', func)).toEqual('context');
   });
 
   it('should run several functions in context respectively', () => {
-    const func = (): string | undefined => {
-      return getContext<string>();
-    };
-
     const result1 = runWithContext('context1', func);
     const result2 = runWithContext('context2', func);
 
@@ -41,10 +37,6 @@ describe('Context util', () => {
   });
 
   it('should return undefined as a context after a function call in the context', () => {
-    const func = (): string | undefined => {
-      return getContext<string>();
-    };
-
     runWithContext('context', func);
 
     expect(getContext()).toBeUndefined();
