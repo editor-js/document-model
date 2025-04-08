@@ -216,14 +216,12 @@ export class FormattingAdapter {
       range.setEnd(endNode, endOffset);
     }
 
-    const extractedContent = range.cloneContents();
-
     /**
      * Create temporary container to allow formatting of the extracted content
      */
     const template = document.createElement('template');
 
-    template.innerHTML = extractedContent.textContent!;
+    template.innerHTML = range.toString()!;
 
     for (const fragment of affectedFragments) {
       const tool = this.#tools.get(fragment.tool);
