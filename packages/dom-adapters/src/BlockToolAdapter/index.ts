@@ -57,7 +57,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
   /**
    * Editor's config
    */
-  #config: CoreConfig;
+  #config: Required<CoreConfig>;
 
   /**
    * BlockToolAdapter constructor
@@ -69,7 +69,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    * @param formattingAdapter - needed to render formatted text
    * @param toolName - tool name of the block
    */
-  constructor(config: CoreConfig, model: EditorJSModel, caretAdapter: CaretAdapter, blockIndex: number, formattingAdapter: FormattingAdapter, toolName: string) {
+  constructor(config: Required<CoreConfig>, model: EditorJSModel, caretAdapter: CaretAdapter, blockIndex: number, formattingAdapter: FormattingAdapter, toolName: string) {
     this.#config = config;
     this.#model = model;
     this.#blockIndex = blockIndex;
@@ -517,8 +517,6 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
 
       return;
     }
-
-    this.#caretAdapter.shiftIndexByModelEvent(event);
   };
 
   /**

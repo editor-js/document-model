@@ -25,7 +25,7 @@ export class DocumentManager {
    * @param identifier - identifier of the document to manage
    */
   constructor(identifier: string) {
-    this.#model = new EditorJSModel({ identifier });
+    this.#model = new EditorJSModel('server', { identifier });
   }
 
   /**
@@ -37,9 +37,10 @@ export class DocumentManager {
 
   /**
    * Process new operation
+   * - Transform relative to operations in stack if needed
+   * - Puts operation to the operations array
+   * - Updates models state
    * @todo ensure the operations are processed consequently
-   *
-   * Transform relative to operations in stack if needed
    * @param operation - operation from the client to process
    */
   public process(operation: Operation): Operation | null {

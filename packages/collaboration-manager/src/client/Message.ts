@@ -44,6 +44,8 @@ export interface Message<P = unknown> {
 
 /**
  * Handshake websocket message
+ *
+ * Client and server do handshake exchange to pass document information and initial state
  */
 export type HandshakeMessage = Message<HandshakePayload>;
 

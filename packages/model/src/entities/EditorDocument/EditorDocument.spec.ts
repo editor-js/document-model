@@ -1237,7 +1237,8 @@ describe('EditorDocument', () => {
           {
             value: 'value',
             previous: 'previous',
-          }
+          },
+          'user'
         )
       );
 
@@ -1263,7 +1264,8 @@ describe('EditorDocument', () => {
           {
             value: 'value',
             previous: 'previous',
-          }
+          },
+          'user'
         )
       );
 

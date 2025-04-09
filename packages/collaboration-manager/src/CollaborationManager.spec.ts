@@ -21,7 +21,7 @@ describe('CollaborationManager', () => {
 
   describe('applyOperation', () => {
     it('should throw an error on unknown operation type', () => {
-      const model = new EditorJSModel({ identifier: documentId });
+      const model = new EditorJSModel(userId, { identifier: documentId });
 
       const collaborationManager = new CollaborationManager(config, model);
 
@@ -30,7 +30,7 @@ describe('CollaborationManager', () => {
     });
 
     it('should add text on apply Insert Operation', () => {
-      const model = new EditorJSModel({ identifier: documentId });
+      const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
         blocks: [ {
@@ -71,7 +71,7 @@ describe('CollaborationManager', () => {
     });
 
     it('should remove text on apply Remove Operation', () => {
-      const model = new EditorJSModel({ identifier: documentId });
+      const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
         blocks: [ {
@@ -113,7 +113,7 @@ describe('CollaborationManager', () => {
     });
 
     it('should add Block on apply Insert Operation', () => {
-      const model = new EditorJSModel({ identifier: documentId });
+      const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
         blocks: [],
@@ -152,7 +152,7 @@ describe('CollaborationManager', () => {
     });
 
     it('should remove Block on apply Delete Operation', () => {
-      const model = new EditorJSModel({ identifier: documentId });
+      const model = new EditorJSModel(userId, { identifier: documentId });
       const block = {
         name: 'paragraph',
         data: {
@@ -182,7 +182,7 @@ describe('CollaborationManager', () => {
     });
 
     it('should format text on apply Modify Operation', () => {
-      const model = new EditorJSModel({ identifier: documentId });
+      const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
         blocks: [ {
@@ -229,7 +229,7 @@ describe('CollaborationManager', () => {
     });
 
     it('should unformat text on apply Modify Operation', () => {
-      const model = new EditorJSModel({ identifier: documentId });
+      const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
         blocks: [ {
@@ -286,7 +286,7 @@ describe('CollaborationManager', () => {
     });
 
     it('should invert Insert operation', () => {
-      const model = new EditorJSModel({ identifier: documentId });
+      const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
         blocks: [ {
@@ -328,7 +328,7 @@ describe('CollaborationManager', () => {
     });
 
     it('should invert Remove operation', () => {
-      const model = new EditorJSModel({ identifier: documentId });
+      const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
         blocks: [ {
@@ -371,7 +371,7 @@ describe('CollaborationManager', () => {
     });
 
     it('should revert only one operation if stack length is 1', () => {
-      const model = new EditorJSModel({ identifier: documentId });
+      const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
         blocks: [ {
@@ -414,7 +414,7 @@ describe('CollaborationManager', () => {
     });
 
     it('should revert back to original state after undo and redo operations', () => {
-      const model = new EditorJSModel({ identifier: documentId });
+      const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
         blocks: [ {
@@ -458,7 +458,7 @@ describe('CollaborationManager', () => {
     });
 
     it('should undo block insert', () => {
-      const model = new EditorJSModel({ identifier: documentId });
+      const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
         blocks: [],
@@ -490,7 +490,7 @@ describe('CollaborationManager', () => {
     });
 
     it('should undo text formatting', () => {
-      const model = new EditorJSModel({ identifier: documentId });
+      const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
         blocks: [ {
@@ -536,7 +536,7 @@ describe('CollaborationManager', () => {
     });
 
     it('should undo text unformatting', () => {
-      const model = new EditorJSModel({ identifier: documentId });
+      const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
         blocks: [ {
@@ -589,7 +589,7 @@ describe('CollaborationManager', () => {
     });
 
     it('should redo text unformatting', () => {
-      const model = new EditorJSModel({ identifier: documentId });
+      const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
         blocks: [ {
@@ -643,7 +643,7 @@ describe('CollaborationManager', () => {
     });
 
     it('should undo block deletion', () => {
-      const model = new EditorJSModel({ identifier: documentId });
+      const model = new EditorJSModel(userId, { identifier: documentId });
       const block = {
         name: 'paragraph',
         data: {
@@ -679,7 +679,7 @@ describe('CollaborationManager', () => {
   });
 
   it('should undo the next operation', () => {
-    const model = new EditorJSModel({ identifier: documentId });
+    const model = new EditorJSModel(userId, { identifier: documentId });
     const block = {
       name: 'paragraph',
       data: {
@@ -718,7 +718,7 @@ describe('CollaborationManager', () => {
   });
 
   it('should undo after redo', () => {
-    const model = new EditorJSModel({ identifier: documentId });
+    const model = new EditorJSModel(userId, { identifier: documentId });
     const block = {
       name: 'paragraph',
       data: {
@@ -761,7 +761,7 @@ describe('CollaborationManager', () => {
 
 
   it('should undo the next operation after redo', () => {
-    const model = new EditorJSModel({ identifier: documentId });
+    const model = new EditorJSModel(userId, { identifier: documentId });
     const block = {
       name: 'paragraph',
       data: {
@@ -805,7 +805,7 @@ describe('CollaborationManager', () => {
   });
 
   it('should undo batch', () => {
-    const model = new EditorJSModel({ identifier: documentId });
+    const model = new EditorJSModel(userId, { identifier: documentId });
 
     model.initializeDocument({
       blocks: [ {
@@ -857,7 +857,7 @@ describe('CollaborationManager', () => {
   });
 
   it('should redo batch', () => {
-    const model = new EditorJSModel({ identifier: documentId });
+    const model = new EditorJSModel(userId, { identifier: documentId });
 
     model.initializeDocument({
       blocks: [ {
@@ -910,7 +910,7 @@ describe('CollaborationManager', () => {
   });
 
   it('should not undo operations from not a current user', () => {
-    const model = new EditorJSModel({ identifier: documentId });
+    const model = new EditorJSModel(userId, { identifier: documentId });
 
     model.initializeDocument({
       blocks: [ {

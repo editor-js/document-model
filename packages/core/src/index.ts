@@ -86,7 +86,7 @@ export default class Core {
 
     this.#iocContainer.set('EditorConfig', this.#config);
 
-    this.#model = new EditorJSModel({ identifier: this.#config.documentId as DocumentId });
+    this.#model = new EditorJSModel(this.#config.userId, { identifier: this.#config.documentId as DocumentId });
 
     this.#iocContainer.set(EditorJSModel, this.#model);
 

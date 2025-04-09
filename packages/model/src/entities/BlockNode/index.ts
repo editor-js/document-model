@@ -1,3 +1,4 @@
+import { getContext } from '../../utils/Context.js';
 import type { EditorDocument } from '../EditorDocument';
 import type { BlockTuneName, BlockTuneSerialized } from '../BlockTune';
 import { BlockTune, createBlockTuneName } from '../BlockTune/index.js';
@@ -447,7 +448,8 @@ export class BlockNode extends EventBus {
         this.dispatchEvent(
           new ValueModifiedEvent(
             builder.build(),
-            event.detail.data
+            event.detail.data,
+            getContext<string | number>()!
           )
         );
       }
@@ -478,7 +480,8 @@ export class BlockNode extends EventBus {
         this.dispatchEvent(
           new TuneModifiedEvent(
             builder.build(),
-            event.detail.data
+            event.detail.data,
+            'user'
           )
         );
       }

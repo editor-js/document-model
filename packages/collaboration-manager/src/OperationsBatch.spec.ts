@@ -9,19 +9,22 @@ const templateIndex = new IndexBuilder()
   .addTextRange([0, 0])
   .build();
 
+const userId = 'user';
+
 describe('Batch', () => {
   beforeAll(() => {
     jest.useFakeTimers();
   });
 
   it('should add Insert operation to batch', () => {
-    const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' });
+    const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
     const op2 = new Operation(
       OperationType.Insert,
       new IndexBuilder().from(templateIndex)
         .addTextRange([1, 1])
         .build(),
-      { payload: 'b' }
+      { payload: 'b' },
+      userId,
     );
     const onTimeout = jest.fn();
 
@@ -38,17 +41,20 @@ describe('Batch', () => {
         .addTextRange([0, 1])
         .build(),
       data: { payload: 'ab' },
+      rev: undefined,
+      userId,
     });
   });
 
   it('should add Delete operation to batch', () => {
-    const op1 = new Operation(OperationType.Delete, templateIndex, { payload: 'a' });
+    const op1 = new Operation(OperationType.Delete, templateIndex, { payload: 'a' }, userId);
     const op2 = new Operation(
       OperationType.Delete,
       new IndexBuilder().from(templateIndex)
         .addTextRange([1, 1])
         .build(),
-      { payload: 'b' }
+      { payload: 'b' },
+      userId,
     );
     const onTimeout = jest.fn();
 
@@ -65,11 +71,13 @@ describe('Batch', () => {
         .addTextRange([0, 1])
         .build(),
       data: { payload: 'ab' },
+      rev: undefined,
+      userId,
     });
   });
 
   it('should terminate the batch if the new operation is not text operation', () => {
-    const op1 = new Operation(OperationType.Delete, templateIndex, { payload: 'a' });
+    const op1 = new Operation(OperationType.Delete, templateIndex, { payload: 'a' }, userId);
     const op2 = new Operation(
       OperationType.Delete,
       new IndexBuilder().from(templateIndex)
@@ -83,7 +91,8 @@ describe('Batch', () => {
             data: { text: '' },
           },
         ],
-      }
+      },
+      userId,
     );
 
     const onTimeout = jest.fn();
@@ -109,9 +118,10 @@ describe('Batch', () => {
             data: { text: '' },
           },
         ],
-      }
+      },
+      userId
     );
-    const op2 = new Operation(OperationType.Delete, templateIndex, { payload: 'a' });
+    const op2 = new Operation(OperationType.Delete, templateIndex, { payload: 'a' }, userId);
 
     const onTimeout = jest.fn();
 
@@ -134,9 +144,10 @@ describe('Batch', () => {
         prevPayload: {
           tool: 'bold',
         },
-      }
+      },
+      userId
     );
-    const op2 = new Operation(OperationType.Delete, templateIndex, { payload: 'a' });
+    const op2 = new Operation(OperationType.Delete, templateIndex, { payload: 'a' }, userId);
 
     const onTimeout = jest.fn();
 
@@ -148,7 +159,7 @@ describe('Batch', () => {
   });
 
   it('should terminate the batch if the new operation is Modify operation', () => {
-    const op1 = new Operation(OperationType.Delete, templateIndex, { payload: 'a' });
+    const op1 = new Operation(OperationType.Delete, templateIndex, { payload: 'a' }, userId);
     const op2 = new Operation(
       OperationType.Modify,
       new IndexBuilder().from(templateIndex)
@@ -160,7 +171,8 @@ describe('Batch', () => {
         prevPayload: {
           tool: 'bold',
         },
-      }
+      },
+      userId
     );
 
     const onTimeout = jest.fn();
@@ -173,13 +185,14 @@ describe('Batch', () => {
   });
 
   it('should terminate the batch if operations are of different type', () => {
-    const op1 = new Operation(OperationType.Delete, templateIndex, { payload: 'a' });
+    const op1 = new Operation(OperationType.Delete, templateIndex, { payload: 'a' }, userId);
     const op2 = new Operation(
       OperationType.Insert,
       new IndexBuilder().from(templateIndex)
         .addTextRange([1, 1])
         .build(),
-      { payload: 'b' }
+      { payload: 'b' },
+      userId
     );
     const onTimeout = jest.fn();
 
@@ -191,14 +204,15 @@ describe('Batch', () => {
   });
 
   it('should terminate the batch if operations block indexes are not the same', () => {
-    const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' });
+    const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
     const op2 = new Operation(
       OperationType.Insert,
       new IndexBuilder().from(templateIndex)
         .addBlockIndex(1)
         .addTextRange([1, 1])
         .build(),
-      { payload: 'b' }
+      { payload: 'b' },
+      userId
     );
     const onTimeout = jest.fn();
 
@@ -210,14 +224,15 @@ describe('Batch', () => {
   });
 
   it('should terminate the batch if operations data keys are not the same', () => {
-    const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' });
+    const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
     const op2 = new Operation(
       OperationType.Insert,
       new IndexBuilder().from(templateIndex)
         .addDataKey(createDataKey('differentKey'))
         .addTextRange([1, 1])
         .build(),
-      { payload: 'b' }
+      { payload: 'b' },
+      userId
     );
     const onTimeout = jest.fn();
 
@@ -229,13 +244,14 @@ describe('Batch', () => {
   });
 
   it('should terminate the batch if operations index ranges are not adjacent', () => {
-    const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' });
+    const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
     const op2 = new Operation(
       OperationType.Insert,
       new IndexBuilder().from(templateIndex)
         .addTextRange([2, 2])
         .build(),
-      { payload: 'b' }
+      { payload: 'b' },
+      userId
     );
     const onTimeout = jest.fn();
 
@@ -247,7 +263,7 @@ describe('Batch', () => {
   });
 
   it('should terminate the batch if timeout is exceeded', () => {
-    const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' });
+    const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
 
     const onTimeout = jest.fn();
 
@@ -267,7 +283,7 @@ describe('Batch', () => {
   });
 
   it('should return the only operation in the batch as effective operation', () => {
-    const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' });
+    const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
 
     const onTimeout = jest.fn();
 

@@ -14,7 +14,7 @@ export class TextAddedEvent extends BaseDocumentEvent<EventAction.Added, string>
    * @param text - added text
    * @param userId - user identifier
    */
-  constructor(index: Index, text: string, userId?: string | number) {
+  constructor(index: Index, text: string, userId: string | number) {
     super(index, EventAction.Added, text, userId);
   }
 }

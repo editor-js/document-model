@@ -41,7 +41,7 @@ export class FormattingAdapter {
   /**
    * Editor's config
    */
-  #config: CoreConfig;
+  #config: Required<CoreConfig>;
 
   /**
    * @class
@@ -49,7 +49,7 @@ export class FormattingAdapter {
    * @param model - editor model instance
    * @param caretAdapter - caret adapter instance
    */
-  constructor(config: CoreConfig, model: EditorJSModel, caretAdapter: CaretAdapter) {
+  constructor(config: Required<CoreConfig>, model: EditorJSModel, caretAdapter: CaretAdapter) {
     this.#config = config;
     this.#model = model;
     this.#caretAdapter = caretAdapter;

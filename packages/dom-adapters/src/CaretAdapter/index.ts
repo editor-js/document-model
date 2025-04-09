@@ -51,12 +51,15 @@ export class CaretAdapter extends EventTarget {
    */
   #currentUserCaret: Caret;
 
+  /**
+   * Map with users' carets by userId
+   */
   #userCarets = new Map<string | number, Caret>();
 
   /**
    * Editor's config
    */
-  #config: CoreConfig;
+  #config: Required<CoreConfig>;
 
   /**
    * @class
@@ -64,7 +67,7 @@ export class CaretAdapter extends EventTarget {
    * @param container - Editor.js DOM container
    * @param model - Editor.js model
    */
-  constructor(config: CoreConfig, container: HTMLElement, model: EditorJSModel) {
+  constructor(config: Required<CoreConfig>, container: HTMLElement, model: EditorJSModel) {
     super();
 
     this.#config = config;
@@ -117,61 +120,10 @@ export class CaretAdapter extends EventTarget {
     const caretToUpdate = this.#userCarets.get(userId);
 
     if (!caretToUpdate) {
-    }
-
-    caretToUpdate.update(index);
-  }
-
-  /**
-   * Shifts current user's caret by the model event not from the current user
-   *E.g. if another user inserts a character before the current user's caret, we need to update the caret
-   *
-   * @param event - model event to update caret by
-   */
-  public shiftIndexByModelEvent(event: ModelEvents): void {
-    const caretIndex = this.userCaretIndex;
-
-    if (caretIndex === null) {
       return;
     }
 
-    const newIndex = new IndexBuilder().from(caretIndex);
-    const index = event.detail.index;
-
-    switch (true) {
-      case (event instanceof TextAddedEvent):
-      case (event instanceof TextRemovedEvent): {
-        if (index.blockIndex !== caretIndex.blockIndex || index.dataKey !== caretIndex.dataKey) {
-          return;
-        }
-
-        if (index.textRange![0] > caretIndex.textRange![0]) {
-          return;
-        }
-
-        const delta = event.detail.data.length * (event.detail.action === EventAction.Added ? 1 : -1);
-
-        newIndex.addTextRange([caretIndex.textRange![0] + delta, caretIndex.textRange![1] + delta]);
-
-        break;
-      }
-
-      case (event instanceof BlockRemovedEvent):
-      case (event instanceof BlockAddedEvent): {
-        if (index.blockIndex! > caretIndex.blockIndex!) {
-          return;
-        }
-
-        newIndex.addBlockIndex(caretIndex.blockIndex! + (event.detail.action === EventAction.Added ? 1 : -1));
-
-        break;
-      }
-
-      default:
-        return;
-    }
-
-    this.updateIndex(newIndex.build());
+    caretToUpdate.update(index);
   }
 
   /**

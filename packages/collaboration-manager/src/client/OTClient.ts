@@ -78,7 +78,11 @@ export class OTClient {
       });
 
       ws.addEventListener('message', (message) => {
-        this.#onMessage(JSON.parse(message.data) as Message<SerializedOperation>);
+        try {
+          this.#onMessage(JSON.parse(message.data) as Message<SerializedOperation>);
+        } catch (e) {
+          console.error('[OTClient] Couldn\'t process a message', message.data);
+        }
       });
     });
   }
@@ -98,17 +102,21 @@ export class OTClient {
        * @param message - server message
        */
       const onMessage = (message: MessageEvent): void => {
-        const data = JSON.parse(message.data) as HandshakeMessage;
+        try {
+          const data = JSON.parse(message.data) as HandshakeMessage;
 
-        if (data.type !== MessageType.Handshake) {
-          return;
+          if (data.type !== MessageType.Handshake) {
+            return;
+          }
+
+          ws.removeEventListener('message', onMessage);
+
+          this.#onHandshake(data.payload.data);
+
+          resolve();
+        } catch (e) {
+          console.error('[OTClient] Couldn\'t process the handshake message', message.data);
         }
-
-        ws.removeEventListener('message', onMessage);
-
-        this.#onHandshake(data.payload.data);
-
-        resolve();
       };
 
       ws.addEventListener('message', onMessage);
@@ -167,25 +175,29 @@ export class OTClient {
      * @param message - server message
      */
     const onMessage = async (message: MessageEvent): Promise<void> => {
-      const data = JSON.parse(message.data) as Message<SerializedOperation>;
+      try {
+        const data = JSON.parse(message.data) as Message<SerializedOperation>;
 
-      if (data.type !== MessageType.Operation) {
-        return;
+        if (data.type !== MessageType.Operation) {
+          return;
+        }
+
+        if (data.payload.userId !== this.#userId) {
+          return;
+        }
+
+        this.#resolvedOperations.push(nextOperation);
+
+
+        ws.removeEventListener('message', onMessage);
+
+        this.#rev = data.payload.rev;
+
+        this.#awaitingAcknowledgement = false;
+        await this.#sendNextOperation();
+      } catch (e) {
+        console.error('[OTClient] Couldn\'t process the acknowledgement message', message.data);
       }
-
-      if (data.payload.userId !== this.#userId) {
-        return;
-      }
-
-      this.#resolvedOperations.push(nextOperation);
-
-
-      ws.removeEventListener('message', onMessage);
-
-      this.#rev = data.payload.rev;
-
-      this.#awaitingAcknowledgement = false;
-      await this.#sendNextOperation();
     };
 
     ws.addEventListener('message', onMessage);

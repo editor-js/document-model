@@ -107,7 +107,7 @@ export class Operation<T extends OperationType = OperationType> {
   /**
    * Identifier of a user who created an operation;
    */
-  public userId?: string | number;
+  public userId: string | number;
 
   /**
    * Operation revision
@@ -123,7 +123,7 @@ export class Operation<T extends OperationType = OperationType> {
    * @param userId - user identifier
    * @param rev - operation revision
    */
-  constructor(type: T, index: Index, data: OperationTypeToData<T>, userId?: string | number, rev?: number) {
+  constructor(type: T, index: Index, data: OperationTypeToData<T>, userId: string | number, rev?: number) {
     this.type = type;
     this.index = index;
     this.data = data;
@@ -134,16 +134,35 @@ export class Operation<T extends OperationType = OperationType> {
   /**
    * Creates an operation from another operation or serialized operation
    *
-   * @param opOrJSON - operation to copy
+   * @param op - operation to copy
+   */
+  public static from<T extends OperationType>(op: Operation<T>): Operation<T>;
+  /**
+   * Creates an operation from another operation or serialized operation
+   *
+   * @param json - serialized operation to copy
+   */
+  public static from<T extends OperationType>(json: SerializedOperation<T>): Operation<T>;
+  /**
+   * Creates an operation from another operation or serialized operation
+   *
+   * @param opOrJSON - operation or serialized operation to copy
    */
   public static from<T extends OperationType>(opOrJSON: Operation<T> | SerializedOperation<T>): Operation<T> {
-    if (!(opOrJSON instanceof Operation)) {
-      return new Operation(opOrJSON.type, new IndexBuilder().from(opOrJSON.index)
-        .build(), opOrJSON.data, opOrJSON.userId, opOrJSON.rev);
+    let index: Index;
+
+    /**
+     * Because of TypeScript guards we need to use an if statement here
+     */
+    if (typeof opOrJSON.index === 'string') {
+      index = new IndexBuilder().from(opOrJSON.index)
+        .build();
+    } else {
+      index = new IndexBuilder().from(opOrJSON.index)
+        .build();
     }
 
-    return new Operation(opOrJSON.type, new IndexBuilder().from(opOrJSON.index)
-      .build(), opOrJSON.data, opOrJSON.userId, opOrJSON.rev);
+    return new Operation(opOrJSON.type, index, opOrJSON.data, opOrJSON.userId, opOrJSON.rev);
   }
 
   /**
@@ -156,12 +175,12 @@ export class Operation<T extends OperationType = OperationType> {
       case OperationType.Insert: {
         const data = this.data as InsertOrDeleteOperationData;
 
-        return new Operation(OperationType.Delete, index, data) as Operation<InvertedOperationType<T>>;
+        return new Operation(OperationType.Delete, index, data, this.userId) as Operation<InvertedOperationType<T>>;
       }
       case OperationType.Delete: {
         const data = this.data as InsertOrDeleteOperationData;
 
-        return new Operation(OperationType.Insert, index, data) as Operation<InvertedOperationType<T>>;
+        return new Operation(OperationType.Insert, index, data, this.userId) as Operation<InvertedOperationType<T>>;
       }
       case OperationType.Modify: {
         const data = this.data as ModifyOperationData;
@@ -169,7 +188,7 @@ export class Operation<T extends OperationType = OperationType> {
         return new Operation(OperationType.Modify, index, {
           payload: data.prevPayload,
           prevPayload: data.payload,
-        }) as Operation<InvertedOperationType<T>>;
+        }, this.userId) as Operation<InvertedOperationType<T>>;
       }
 
       default:
@@ -247,7 +266,7 @@ export class Operation<T extends OperationType = OperationType> {
       type: this.type,
       index: this.index.serialize(),
       data: this.data,
-      userId: this.userId!,
+      userId: this.userId,
       rev: this.rev!,
     };
   }

@@ -25,10 +25,11 @@ const userId = crypto.randomUUID();
  */
 
 onMounted(() => {
-  console.log(userId);
   const core = new Core({
     holder: document.getElementById('editorjs') as HTMLElement,
     userId: userId,
+    // documentId: 'test',
+    // collaborationServer: 'ws://localhost:8080',
     data: {
       blocks: [
         // {

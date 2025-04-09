@@ -75,7 +75,6 @@ export class CollaborationManager {
         this.#model.initializeDocument(data);
       },
       (op) => {
-        console.log(op);
         this.applyOperation(op);
       }
     );

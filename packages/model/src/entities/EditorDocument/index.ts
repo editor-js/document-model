@@ -1,4 +1,5 @@
 import type { DocumentId } from '../../EventBus/index';
+import { getContext } from '../../utils/Context.js';
 import type { DataKey } from '../BlockNode';
 import { BlockNode } from '../BlockNode/index.js';
 import { IndexBuilder } from '../Index/IndexBuilder.js';
@@ -131,7 +132,7 @@ export class EditorDocument extends EventBus {
 
     builder.addBlockIndex(index);
 
-    this.dispatchEvent(new BlockAddedEvent(builder.build(), blockNode.serialized));
+    this.dispatchEvent(new BlockAddedEvent(builder.build(), blockNode.serialized, getContext<string | number>()!));
   }
 
   /**
@@ -165,7 +166,7 @@ export class EditorDocument extends EventBus {
 
     builder.addBlockIndex(index);
 
-    this.dispatchEvent(new BlockRemovedEvent(builder.build(), blockNode.serialized));
+    this.dispatchEvent(new BlockRemovedEvent(builder.build(), blockNode.serialized, getContext<string | number>()!));
   }
 
   /**
@@ -220,7 +221,9 @@ export class EditorDocument extends EventBus {
         {
           value,
           previous: previousValue,
-        })
+        },
+        getContext<string | number>()!
+      )
     );
   }
 
