@@ -256,7 +256,7 @@ export class CaretAdapter extends EventTarget {
     range.setStart(...start);
     range.setEnd(...end);
 
-    selection.removeAllRanges();
+    currentRange.detach();
 
     selection.addRange(range);
   }
