@@ -402,6 +402,9 @@ export class EditorJSModel extends EventBus {
         const userId = getContext<string | number>();
 
         if (userId !== this.#currentUserId) {
+          /**
+           * If update is made by a remote user, we might need to update current user's caret
+           */
           this.#updateUserCaretByRemoteChange(event);
         }
 
