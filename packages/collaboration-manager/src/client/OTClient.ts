@@ -198,7 +198,7 @@ export class OTClient {
 
 
   /**
-   * Handles remote operations from the serveri
+   * Handles remote operations from the server
    *
    * @param message - server message with the operation payload
    */
