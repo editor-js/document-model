@@ -33,12 +33,9 @@ export class Caret extends EventBus {
   #index: Index | null = null;
 
   /**
-   * Caret id
-   *
-   * @todo maybe replace ID generation method
+   * User identifier
    */
-  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-  #id: number = Math.floor(Math.random() * 1e10);
+  #userId: string | number;
 
   /**
    * Caret index getter
@@ -50,18 +47,20 @@ export class Caret extends EventBus {
   /**
    * Caret id getter
    */
-  public get id(): Readonly<number> {
-    return this.#id;
+  public get userId(): Readonly<string | number> {
+    return this.#userId;
   }
 
   /**
    * Caret constructor
    *
+   * @param userId - user identifier
    * @param index - initial caret index
    */
-  constructor(index: Index | null = null) {
+  constructor(userId: string | number, index: Index | null = null) {
     super();
 
+    this.#userId = userId;
     this.#index = index;
   }
 
@@ -81,7 +80,7 @@ export class Caret extends EventBus {
    */
   public toJSON(): CaretSerialized {
     return {
-      id: this.id,
+      userId: this.userId,
       index: this.index !== null ? this.index.serialize() : null,
     } as CaretSerialized;
   }

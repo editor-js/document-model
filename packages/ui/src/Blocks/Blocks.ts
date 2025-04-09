@@ -21,7 +21,6 @@ export class BlocksUI implements EditorjsPlugin {
    */
   public static readonly type = UiComponentType.Blocks;
 
-
   /**
    * Blocks holder element
    */
@@ -74,11 +73,11 @@ export class BlocksUI implements EditorjsPlugin {
 
       this.#eventBus.dispatchEvent(new Event('core:undo'));
     });
-
   }
 
   /**
    * Prepares blocks holder element
+   * @param editorHolder
    */
   #prepareBlocksHolder(editorHolder: HTMLElement): HTMLElement {
     const blocksHolder = document.createElement('div');

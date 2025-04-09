@@ -20,6 +20,20 @@ export interface CoreConfig extends EditorConfig {
 
   /**
    * Current user's identifier
+   *
+   * If not passed, a random one will be generated
    */
   userId?: string | number;
+
+  /**
+   * Document identifier
+   *
+   * If not passed, a random one will be generated
+   */
+  documentId?: string;
+
+  /**
+   * Collaboration server address
+   */
+  collaborationServer?: string;
 }

@@ -441,7 +441,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
       }
     }
 
-    this.#caretAdapter.updateIndex(caretIndexBuilder.build());
+    this.#caretAdapter.updateIndex(caretIndexBuilder.build(), event.detail.userId);
   };
 
   /**
@@ -512,14 +512,20 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
 
     input.normalize();
 
-    this.#caretAdapter.updateIndex(builder.build());
+    if (event.detail.userId === this.#config.userId) {
+      this.#caretAdapter.updateIndex(builder.build());
+
+      return;
+    }
+
+    this.#caretAdapter.shiftIndexByModelEvent(event);
   };
 
   /**
    * Handles model update events and updates DOM
    *
    * @param event - model update event
-   * @param input - attched input element
+   * @param input - attached input element
    * @param key - data key input is attached to
    */
   #handleModelUpdate(event: ModelEvents, input: HTMLElement, key: DataKey): void {

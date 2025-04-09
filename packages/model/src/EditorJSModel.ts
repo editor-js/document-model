@@ -104,12 +104,11 @@ export class EditorJSModel extends EventBus {
   /**
    *  Creates a new Caret instance in the model
    *
-   *  @param _userId - user identifier which is being set to the context
    *  @param parameters - createCaret method parameters
    *  @param [parameters.index] - initial caret index
    */
   @WithContext
-  public createCaret(_userId?: string | number, ...parameters: Parameters<CaretManager['createCaret']>): ReturnType<CaretManager['createCaret']> {
+  public createCaret(...parameters: Parameters<CaretManager['createCaret']>): ReturnType<CaretManager['createCaret']> {
     return this.#caretManager.createCaret(...parameters);
   }
 

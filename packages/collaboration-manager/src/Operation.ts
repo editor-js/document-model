@@ -38,10 +38,46 @@ export interface ModifyOperationData<T extends Record<any, any> = Record<any, an
   prevPayload?: T | null;
 }
 
+/**
+ * Serialized operation object
+ */
+export interface SerializedOperation<T extends OperationType = OperationType> {
+  /**
+   * Operation type
+   */
+  type: T;
+
+  /**
+   * Serialized index of the operation
+   */
+  index: string;
+
+  /**
+   * Operation data
+   */
+  data: OperationTypeToData<T>;
+
+  /**
+   * Revision of the document operation was applied at
+   */
+  rev: number;
+
+  /**
+   * Identifier of the user who caused the change
+   */
+  userId: string | number;
+}
+
+/**
+ * Helper type to convert operation type to operation data interface
+ */
 export type OperationTypeToData<T extends OperationType> = T extends OperationType.Modify
   ? ModifyOperationData
   : InsertOrDeleteOperationData;
 
+/**
+ * Helper type to get invert operation type
+ */
 export type InvertedOperationType<T extends OperationType> = T extends OperationType.Insert
   ? OperationType.Delete
   : T extends OperationType.Delete
@@ -74,18 +110,40 @@ export class Operation<T extends OperationType = OperationType> {
   public userId?: string | number;
 
   /**
+   * Operation revision
+   */
+  public rev?: number;
+
+  /**
    * Creates an instance of Operation
    *
    * @param type - operation type
    * @param index - index in the document model tree
    * @param data - operation data
    * @param userId - user identifier
+   * @param rev - operation revision
    */
-  constructor(type: T, index: Index, data: OperationTypeToData<T>, userId?: string | number) {
+  constructor(type: T, index: Index, data: OperationTypeToData<T>, userId?: string | number, rev?: number) {
     this.type = type;
     this.index = index;
     this.data = data;
     this.userId = userId;
+    this.rev = rev;
+  }
+
+  /**
+   * Creates an operation from another operation or serialized operation
+   *
+   * @param opOrJSON - operation to copy
+   */
+  public static from<T extends OperationType>(opOrJSON: Operation<T> | SerializedOperation<T>): Operation<T> {
+    if (!(opOrJSON instanceof Operation)) {
+      return new Operation(opOrJSON.type, new IndexBuilder().from(opOrJSON.index)
+        .build(), opOrJSON.data, opOrJSON.userId, opOrJSON.rev);
+    }
+
+    return new Operation(opOrJSON.type, new IndexBuilder().from(opOrJSON.index)
+      .build(), opOrJSON.data, opOrJSON.userId, opOrJSON.rev);
   }
 
   /**
@@ -174,11 +232,24 @@ export class Operation<T extends OperationType = OperationType> {
         throw new Error('Unsupported operation type');
     }
 
-    return new Operation(
-      this.type,
-      newIndexBuilder.build(),
-      this.data
-    );
+    const operation = Operation.from(this);
+
+    operation.index = newIndexBuilder.build();
+
+    return operation;
+  }
+
+  /**
+   * Serializes an operation
+   */
+  public serialize(): SerializedOperation {
+    return {
+      type: this.type,
+      index: this.index.serialize(),
+      data: this.data,
+      userId: this.userId!,
+      rev: this.rev!,
+    };
   }
 
   /**

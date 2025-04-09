@@ -15,27 +15,28 @@ export class CaretManager extends EventBus {
   /**
    * Caret instances registry
    */
-  #registry = new Map<number, Caret>();
+  #registry = new Map<number | string, Caret>();
 
   /**
    * Returns Caret instance by id
    *
    * @param id - Caret id
    */
-  public getCaret(id: number): Caret | undefined {
+  public getCaret(id: string | number): Caret | undefined {
     return this.#registry.get(id);
   }
 
   /**
    * Creates a new Caret instance
    *
+   * @param userId - user identifier
    * @param [index] - initial caret index
    * @returns {Caret} created Caret instance
    */
-  public createCaret(index?: Index): Caret {
-    const caret = new Caret(index);
+  public createCaret(userId: string | number, index?: Index): Caret {
+    const caret = new Caret(userId, index);
 
-    this.#registry.set(caret.id, caret);
+    this.#registry.set(caret.userId, caret);
 
     caret.addEventListener(CaretEvent.Updated, (event) => this.updateCaret(event.detail));
 
@@ -50,7 +51,7 @@ export class CaretManager extends EventBus {
    * @param caret - Caret instance to update
    */
   public updateCaret(caret: Caret): void {
-    this.#registry.set(caret.id, caret);
+    this.#registry.set(caret.userId, caret);
 
     this.dispatchEvent(new CaretManagerCaretUpdatedEvent(caret.toJSON()));
   }
@@ -61,7 +62,7 @@ export class CaretManager extends EventBus {
    * @param caret - Caret instance to remove
    */
   public removeCaret(caret: Caret): void {
-    const success = this.#registry.delete(caret.id);
+    const success = this.#registry.delete(caret.userId);
 
     if (success) {
       this.dispatchEvent(new CaretManagerCaretRemovedEvent(caret.toJSON()));

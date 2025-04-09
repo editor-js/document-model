@@ -13,7 +13,6 @@ import type { InlineTool, InlineToolFormatData } from '@editorjs/sdk';
 import type { InlineFragment, InlineToolName, TextRange } from '@editorjs/model';
 import Style from './InlineToolbar.module.pcss';
 
-
 /**
  * Inline Toolbar UI module
  * - renders the inline toolbar with available inline tools

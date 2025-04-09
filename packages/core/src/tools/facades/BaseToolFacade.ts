@@ -150,7 +150,6 @@ interface ConstructorOptions {
 /**
  * Base abstract class for Tools
  */
-// eslint-disable-next-line @stylistic/type-generic-spacing
 export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass extends (Tool | InlineTool | BlockTool) = (Tool | InlineTool | BlockTool)> {
   /**
    * Tool name specified in EditorJS config

@@ -1,3 +1,4 @@
+import type { DocumentId } from '../../EventBus/index';
 import type { DataKey } from '../BlockNode';
 import { BlockNode } from '../BlockNode/index.js';
 import { IndexBuilder } from '../Index/IndexBuilder.js';
@@ -24,11 +25,18 @@ import type { Constructor } from '../../utils/types.js';
 import { BaseDocumentEvent, type ModifiedEventData } from '../../EventBus/events/BaseEvent.js';
 import type { Index } from '../Index/index.js';
 
+export * from './types/index.js';
+
 /**
  * EditorDocument class represents the top-level container for a tree-like structure of BlockNodes in an editor document.
  * It contains an array of BlockNodes representing the root-level nodes of the document.
  */
 export class EditorDocument extends EventBus {
+  /**
+   * Document identifier
+   */
+  public identifier: DocumentId;
+
   /**
    * Private field representing the child BlockNodes of the EditorDocument
    */
@@ -44,15 +52,21 @@ export class EditorDocument extends EventBus {
    *
    * To fill the document with blocks, use the `initialize` method.
    *
+   * @todo remove tools registry?
+   *
    * @param [args] - EditorDocument constructor arguments.
+   * @param args.identifier - Document identifier
    * @param [args.properties] - The properties of the document.
    * @param [args.toolsRegistry] - ToolsRegistry instance for the current document. Defaults to a new ToolsRegistry instance.
    */
   constructor({
+    identifier,
     properties = {},
     toolsRegistry = new ToolsRegistry(),
-  }: EditorDocumentConstructorParameters = {}) {
+  }: EditorDocumentConstructorParameters) {
     super();
+
+    this.identifier = identifier as DocumentId;
 
     this.#properties = properties;
 
@@ -318,6 +332,7 @@ export class EditorDocument extends EventBus {
    */
   public get serialized(): EditorDocumentSerialized {
     return {
+      identifier: this.identifier,
       blocks: this.#children.map((block) => block.serialized),
       properties: this.#properties,
     };
@@ -416,7 +431,9 @@ export class EditorDocument extends EventBus {
 
       const builder = new IndexBuilder();
 
-      builder.from(event.detail.index).addBlockIndex(index);
+      builder.from(event.detail.index)
+        .addDocumentId(this.identifier)
+        .addBlockIndex(index);
 
       this.dispatchEvent(
         new (event.constructor as Constructor<TextNodeEvents | ValueNodeEvents | BlockTuneEvents>)(
