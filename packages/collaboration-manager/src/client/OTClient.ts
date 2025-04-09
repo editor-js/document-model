@@ -4,7 +4,7 @@ import type { HandshakeMessage, HandshakePayload, Message, OperationMessage } fr
 import { MessageType } from './MessageType.js';
 
 /**
- * Class to
+ * Class to send operations to websocket server and process remote operations
  */
 export class OTClient {
   /**
