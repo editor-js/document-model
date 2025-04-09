@@ -114,10 +114,9 @@ export class CaretAdapter extends EventTarget {
     }
 
 
-    const caretToUpdate = this.#userCarets.values().find((caret) => caret.userId === userId);
+    const caretToUpdate = this.#userCarets.get(userId);
 
-    if (caretToUpdate === undefined) {
-      return;
+    if (!caretToUpdate) {
     }
 
     caretToUpdate.update(index);
