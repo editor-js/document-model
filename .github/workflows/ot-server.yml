@@ -1,4 +1,4 @@
-name: Collaboration manager check
+name: OT server check
 on:
   pull_request:
   merge_group:
