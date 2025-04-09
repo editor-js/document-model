@@ -22,7 +22,7 @@ export class OTServer {
   #clients: Map<DocumentId, Set<WebSocket>> = new Map();
 
   /**
-   * Map od document managers by document id
+   * Map of document managers by document id
    */
   #managers: Map<DocumentId, DocumentManager> = new Map();
 
