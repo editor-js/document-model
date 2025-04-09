@@ -116,7 +116,7 @@ export class CaretAdapter extends EventTarget {
 
     const caretToUpdate = this.#userCarets.values().find((caret) => caret.userId === userId);
 
-    if (!caretToUpdate) {
+    if (caretToUpdate === undefined) {
       return;
     }
 
@@ -132,7 +132,7 @@ export class CaretAdapter extends EventTarget {
   public shiftIndexByModelEvent(event: ModelEvents): void {
     const caretIndex = this.userCaretIndex;
 
-    if (!caretIndex) {
+    if (caretIndex === null) {
       return;
     }
 
