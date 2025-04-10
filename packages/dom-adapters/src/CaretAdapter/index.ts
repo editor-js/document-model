@@ -236,13 +236,22 @@ export class CaretAdapter extends EventTarget {
     }
 
     const selection = document.getSelection()!;
-    const currentRange = selection.getRangeAt(0);
+
+    let absoluteStartOffset = getAbsoluteRangeOffset(input, selection.anchorNode!, selection.anchorOffset);
+    let absoluteEndOffset = getAbsoluteRangeOffset(input, selection.focusNode!, selection.focusOffset);
+
+    /**
+     * For right-to-left selection, we need to swap start and end offsets to compare with model range
+     */
+    if (absoluteStartOffset > absoluteEndOffset) {
+      [absoluteStartOffset, absoluteEndOffset] = [absoluteEndOffset, absoluteStartOffset];
+    }
 
     const start = getBoundaryPointByAbsoluteOffset(input, textRange[0]);
     const end = getBoundaryPointByAbsoluteOffset(input, textRange[1]);
 
-    const isStartEqualsCurrent = start[0] === currentRange.startContainer && start[1] === currentRange.startOffset;
-    const isEndEqualsCurrent = end[0] === currentRange.endContainer && end[1] === currentRange.endOffset;
+    const isStartEqualsCurrent = textRange[0] === absoluteStartOffset;
+    const isEndEqualsCurrent = textRange[1] === absoluteEndOffset;
 
     /**
      * If selection is already the same, we don't need to update it to not interrupt browser's behaviour
@@ -257,7 +266,6 @@ export class CaretAdapter extends EventTarget {
     range.setEnd(...end);
 
     selection.removeAllRanges();
-
     selection.addRange(range);
   }
 }
