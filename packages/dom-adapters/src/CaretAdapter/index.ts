@@ -236,10 +236,10 @@ export class CaretAdapter extends EventTarget {
     }
 
     const selection = document.getSelection()!;
-    
+
     let isStartEqualsCurrent = false;
     let isEndEqualsCurrent = false;
-    
+
     const start = getBoundaryPointByAbsoluteOffset(input, textRange[0]);
     const end = getBoundaryPointByAbsoluteOffset(input, textRange[1]);
 

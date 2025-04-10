@@ -351,13 +351,13 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     const currentValue = this.#model.getText(this.#blockIndex, key);
     const newValueAfter = currentValue.slice(end);
 
-    const relatedFragments = this.#model.getFragments(this.#blockIndex, key, start, currentValue.length);
+    const relatedFragments = this.#model.getFragments(this.#blockIndex, key, end, currentValue.length);
 
     /**
      * Adjust fragments ranges respectfully to the removed text
      */
     relatedFragments.forEach(fragment => {
-      fragment.range[0] = Math.max(0, fragment.range[0] - end);
+      fragment.range[0] -=end;
       fragment.range[1] -= end;
     });
 
