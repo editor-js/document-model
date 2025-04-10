@@ -110,7 +110,7 @@ export class Operation<T extends OperationType = OperationType> {
   public userId: string | number;
 
   /**
-   * Operation revision
+   * Document revision on which operation was applied
    */
   public rev?: number;
 
@@ -121,7 +121,7 @@ export class Operation<T extends OperationType = OperationType> {
    * @param index - index in the document model tree
    * @param data - operation data
    * @param userId - user identifier
-   * @param rev - operation revision
+   * @param rev - document revision
    */
   constructor(type: T, index: Index, data: OperationTypeToData<T>, userId: string | number, rev?: number) {
     this.type = type;
