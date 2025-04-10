@@ -22,6 +22,7 @@ export default [
         ignoreTypeImport: true,
       }],
       // @todo: remove when we setup eslint to correctly handle the types
+      'n/no-missing-import': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
