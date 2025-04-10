@@ -12,7 +12,7 @@ import {
   TuneModifiedEvent
 } from '../../EventBus/events/index.js';
 import { EventAction } from '../../EventBus/types/EventAction.js';
-import { jest } from '@jest/globals';
+import { describe, jest } from '@jest/globals';
 
 jest.mock('../BlockNode');
 
@@ -48,6 +48,72 @@ function createEditorDocumentWithSomeBlocks(): EditorDocument {
 describe('EditorDocument', () => {
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('.initalize()', () => {
+    it('should initalize the document', () => {
+      const doc = new EditorDocument({
+        identifier: 'document',
+        properties: {
+          readOnly: false,
+        },
+      });
+
+      const blocks = [ {
+        name: 'header' as BlockToolName,
+        data: {
+          text: {
+            $t: 't',
+            value: 'some long text',
+            fragments: [],
+          },
+        },
+        tunes: {},
+      } ];
+
+      doc.initialize(blocks);
+
+      expect(doc.serialized.blocks).toHaveLength(blocks.length);
+    });
+
+    it('should clear the document before initialization', () => {
+      const doc = new EditorDocument({
+        identifier: 'document',
+        properties: {
+          readOnly: false,
+        },
+      });
+
+      const blocks = [ {
+        name: 'header' as BlockToolName,
+        data: {
+          text: {
+            $t: 't',
+            value: 'some long text',
+            fragments: [],
+          },
+        },
+        tunes: {},
+      } ];
+
+      doc.initialize(blocks);
+
+      blocks[0].data.text.value = 'another text';
+
+      doc.initialize(blocks);
+
+      expect(doc.serialized.blocks).toHaveLength(1);
+    });
+  });
+
+  describe('.clear()', () => {
+    it('should clear the document', () => {
+      const doc = createEditorDocumentWithSomeBlocks();
+
+      doc.clear();
+
+      expect(doc.serialized.blocks).toHaveLength(0);
+    });
   });
 
   describe('.length', () => {

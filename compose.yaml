@@ -1,0 +1,11 @@
+services:
+  wsserver:
+    build:
+      context: .
+      args:
+        NODE_ENV: production
+        WSS_PORT: ${WSS_PORT}
+    ports:
+      - ${WSS_PORT}:${WSS_PORT}
+
+

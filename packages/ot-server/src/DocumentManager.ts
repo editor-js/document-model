@@ -60,6 +60,14 @@ export class DocumentManager {
   }
 
   /**
+   * Initialises document model with data from the first connected client
+   * @param data - document data to initialise
+   */
+  public initializeDocument(...data: Parameters<EditorJSModel['initializeDocument']>): void {
+    this.#model.initializeDocument(...data);
+  }
+
+  /**
    * Process next operation
    * - Transform relative to operations in stack if needed
    * - Puts operation to the operations array

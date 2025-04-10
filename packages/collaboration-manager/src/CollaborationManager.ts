@@ -1,6 +1,6 @@
 import {
   BlockAddedEvent, type BlockNodeSerialized,
-  BlockRemovedEvent, type DocumentId,
+  BlockRemovedEvent,
   type EditorJSModel,
   EventType,
   type ModelEvents,
@@ -59,7 +59,12 @@ export class CollaborationManager {
     this.#model = model;
     this.#undoRedoManager = new UndoRedoManager();
     model.addEventListener(EventType.Changed, this.#handleEvent.bind(this));
+  }
 
+  /**
+   * Connects to OT server
+   */
+  public connect(): void {
     if (this.#config.collaborationServer === undefined) {
       return;
     }
@@ -79,7 +84,7 @@ export class CollaborationManager {
       }
     );
 
-    void this.#client.connectDocument(this.#config.documentId! as DocumentId);
+    void this.#client.connectDocument(this.#model.serialized);
   }
 
   /**

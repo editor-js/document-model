@@ -82,6 +82,8 @@ export class EditorDocument extends EventBus {
    * @param blocks - document serialized blocks
    */
   public initialize(blocks: BlockNodeSerialized[]): void {
+    this.clear();
+
     blocks.forEach((block) => {
       this.addBlock(block);
     });
@@ -415,6 +417,13 @@ export class EditorDocument extends EventBus {
        * @todo implement other actions
        */
     }
+  }
+
+  /**
+   * Clear all document's blocks (doesn't emit an event)
+   */
+  public clear(): void {
+    Array.from(this.#children).forEach(() => this.removeBlock(0));
   }
 
   /**

@@ -145,6 +145,9 @@ export default class Core {
       .then(() => {
         this.#model.initializeDocument({ blocks });
       })
+      .then(() => {
+        this.#collaborationManager.connect();
+      })
       .catch((error) => {
         console.error('Editor.js initialization failed', error);
       });

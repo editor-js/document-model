@@ -32,12 +32,12 @@ onMounted(() => {
     // collaborationServer: 'ws://localhost:8080',
     data: {
       blocks: [
-        // {
-        //   type: 'paragraph',
-        //   data: {
-        //     text: 'Hello, World!',
-        //   },
-        // },
+        {
+          type: 'paragraph',
+          data: {
+            text: 'Hello, World!',
+          },
+        },
       ],
     },
     onModelUpdate: (m: EditorJSModel) => {
