@@ -149,14 +149,14 @@ export default class ToolsManager {
 
             const tool = this.#factory.get(toolName);
 
-            if ('isInline' in tool && tool.isInline()) {
+            if ('isInline' in tool && tool.isInline() === true) {
               /**
                * Some Tools validation
                */
               const inlineToolRequiredMethods = ['render'];
               const notImplementedMethods = inlineToolRequiredMethods.filter(method => tool.create()[method as keyof InlineTool] !== undefined);
 
-              if (notImplementedMethods.length) {
+              if (notImplementedMethods.length > 0) {
                 /**
                  * @todo implement logger
                  */
