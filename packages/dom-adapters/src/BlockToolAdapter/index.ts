@@ -22,6 +22,7 @@ import {
 import { InputType } from './types/InputType.js';
 import type { BlockToolAdapter as BlockToolAdapterInterface, CoreConfig } from '@editorjs/sdk';
 import type { FormattingAdapter } from '../FormattingAdapter/index.js';
+import type { EventBus } from '@editorjs/sdk';
 
 /**
  * BlockToolAdapter is using inside Block tools to connect browser DOM elements to the model
@@ -64,12 +65,13 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    *
    * @param config - Editor's config
    * @param model - EditorJSModel instance
+   * @param eventBus - Editor EventBus instance
    * @param caretAdapter - CaretAdapter instance
    * @param blockIndex - index of the block that this adapter is connected to
    * @param formattingAdapter - needed to render formatted text
    * @param toolName - tool name of the block
    */
-  constructor(config: CoreConfig, model: EditorJSModel, caretAdapter: CaretAdapter, blockIndex: number, formattingAdapter: FormattingAdapter, toolName: string) {
+  constructor(config: CoreConfig, model: EditorJSModel, eventBus: EventBus, caretAdapter: CaretAdapter, blockIndex: number, formattingAdapter: FormattingAdapter, toolName: string) {
     this.#config = config;
     this.#model = model;
     this.#blockIndex = blockIndex;

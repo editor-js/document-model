@@ -1,13 +1,15 @@
 import type { BlockAddedCoreEvent,
   BlockRemovedCoreEvent,
-  EventBus,
   EditorjsPlugin,
   EditorjsPluginParams } from '@editorjs/core';
 import {
-  CoreEventType,
-  UiComponentType
+  CoreEventType
 } from '@editorjs/core';
+import type { EventBus } from '@editorjs/sdk';
+import { UiComponentType } from '@editorjs/sdk';
+
 import Style from './Blocks.module.pcss';
+import { BeforeInputUIEvent } from './BeforeInputUIEvent.js';
 
 /**
  * Editor's main UI renderer for HTML environment
@@ -20,7 +22,6 @@ export class BlocksUI implements EditorjsPlugin {
    * Plugin type
    */
   public static readonly type = UiComponentType.Blocks;
-
 
   /**
    * Blocks holder element
@@ -74,11 +75,11 @@ export class BlocksUI implements EditorjsPlugin {
 
       this.#eventBus.dispatchEvent(new Event('core:undo'));
     });
-
   }
 
   /**
    * Prepares blocks holder element
+   * @param editorHolder - user provided holder element for editor
    */
   #prepareBlocksHolder(editorHolder: HTMLElement): HTMLElement {
     const blocksHolder = document.createElement('div');
@@ -86,6 +87,14 @@ export class BlocksUI implements EditorjsPlugin {
     blocksHolder.classList.add(Style['blocks']);
 
     blocksHolder.contentEditable = 'false';
+
+    blocksHolder.addEventListener('beforeinput', (e) => {
+      this.#eventBus.dispatchEvent(new BeforeInputUIEvent({
+        data: e.data,
+        inputType: e.inputType,
+        isComposing: e.isComposing,
+      }));
+    });
 
     editorHolder.appendChild(blocksHolder);
 

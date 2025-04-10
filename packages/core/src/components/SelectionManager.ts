@@ -4,7 +4,8 @@ import type { CaretManagerEvents, InlineFragment, InlineToolName } from '@editor
 import { CaretManagerCaretUpdatedEvent, Index, EditorJSModel, createInlineToolData, createInlineToolName } from '@editorjs/model';
 import { EventType } from '@editorjs/model';
 import { Service } from 'typedi';
-import { CoreEventType, EventBus, ToolLoadedCoreEvent } from './EventBus/index.js';
+import { CoreEventType, ToolLoadedCoreEvent } from './EventBus/index.js';
+import { EventBus } from '@editorjs/sdk';
 import { SelectionChangedCoreEvent } from './EventBus/core-events/SelectionChangedCoreEvent.js';
 import { InlineTool, InlineToolFormatData } from '@editorjs/sdk';
 
