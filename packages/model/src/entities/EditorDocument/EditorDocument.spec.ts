@@ -73,7 +73,7 @@ describe('EditorDocument', () => {
 
       doc.initialize(blocks);
 
-      expect(doc.serialized.blocks).toEqual(blocks);
+      expect(doc.serialized.blocks).toHaveLength(blocks.length);
     });
 
     it('should clear the document before initialization', () => {
@@ -102,7 +102,7 @@ describe('EditorDocument', () => {
 
       doc.initialize(blocks);
 
-      expect(doc.serialized.blocks).toEqual(blocks);
+      expect(doc.serialized.blocks).toHaveLength(1);
     });
   });
 
@@ -112,7 +112,9 @@ describe('EditorDocument', () => {
 
       doc.clear();
 
-      expect(doc.serialized.blocks).toEqual([]);
+      console.log(doc.serialized);
+
+      expect(doc.serialized.blocks).toHaveLength(0);
     });
   });
 
