@@ -466,10 +466,13 @@ export class EditorJSModel extends EventBus {
 
       case (event instanceof BlockRemovedEvent):
       case (event instanceof BlockAddedEvent): {
-        if (index.blockIndex! > caretIndex.blockIndex!) {
+        if (index.blockIndex! >= caretIndex.blockIndex!) {
           return;
         }
 
+        /**
+         * @todo if removed block is the one the caret currently in — move caret to the previous block
+         */
         newIndex.addBlockIndex(caretIndex.blockIndex! + (event.detail.action === EventAction.Added ? 1 : -1));
 
         break;
