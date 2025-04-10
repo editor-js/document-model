@@ -7,10 +7,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Run ESLint check
-        uses: ./.github/actions/lint
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          package-name: '@editorjs/core'
+          node-version-file: .nvmrc
+      - name: Install dependencies
+        run: yarn install
+      - name: Run ESLint check
+        run: yarn lint
 
   build:
     runs-on: ubuntu-latest
