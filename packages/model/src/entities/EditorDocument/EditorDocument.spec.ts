@@ -112,8 +112,6 @@ describe('EditorDocument', () => {
 
       doc.clear();
 
-      console.log(doc.serialized);
-
       expect(doc.serialized.blocks).toHaveLength(0);
     });
   });

@@ -1,9 +1,5 @@
 # syntax=docker/dockerfile:1
 
-# Comments are provided throughout this file to help you get started.
-# If you need more help, visit the Dockerfile reference guide at
-# https://docs.docker.com/go/dockerfile-reference/
-
 ARG NODE_VERSION=20.9.0
 
 ################################################################################
@@ -21,8 +17,6 @@ RUN corepack prepare yarn@4.0.1 --activate
 FROM base AS deps
 
 # Download dependencies as a separate step to take advantage of Docker's caching.
-# Leverage bind mounts to package.json and yarn.lock to avoid having to copy them
-# into this layer.
 COPY .yarnrc.yml package.json yarn.lock ./
 COPY .yarn .yarn
 COPY packages/model/package.json packages/model/package.json
