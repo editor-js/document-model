@@ -14,7 +14,7 @@ export class PropertyModifiedEvent<P = unknown> extends BaseDocumentEvent<EventA
    * @param data - event data with new and previous values
    * @param userId - user identifier
    */
-  constructor(index: Index, data: ModifiedEventData<P>, userId?: string | number) {
+  constructor(index: Index, data: ModifiedEventData<P>, userId: string | number) {
     super(index, EventAction.Modified, data, userId);
   }
 }

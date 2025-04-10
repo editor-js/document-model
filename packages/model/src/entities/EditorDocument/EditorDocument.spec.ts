@@ -12,6 +12,7 @@ import {
   TuneModifiedEvent
 } from '../../EventBus/events/index.js';
 import { EventAction } from '../../EventBus/types/EventAction.js';
+import { jest } from '@jest/globals';
 
 jest.mock('../BlockNode');
 
@@ -22,6 +23,7 @@ function createEditorDocumentWithSomeBlocks(): EditorDocument {
   const countOfBlocks = 3;
 
   const doc = new EditorDocument({
+    identifier: 'document',
     properties: {
       readOnly: false,
     },
@@ -30,7 +32,12 @@ function createEditorDocumentWithSomeBlocks(): EditorDocument {
   const blocks = new Array(countOfBlocks).fill(undefined)
     .map(() => ({
       name: 'header' as BlockToolName,
-      data: {},
+      data: {
+        text: {
+          $t: 't',
+          value: 'some long text',
+        },
+      },
     }));
 
   doc.initialize(blocks);
@@ -48,6 +55,7 @@ describe('EditorDocument', () => {
       // Arrange
       const blocksCount = 3;
       const document = new EditorDocument({
+        identifier: 'document',
         properties: {
           readOnly: false,
         },
@@ -75,6 +83,7 @@ describe('EditorDocument', () => {
       // Arrange
       const blocksCount = 3;
       const document = new EditorDocument({
+        identifier: 'document',
         properties: {
           readOnly: false,
         },
@@ -370,7 +379,9 @@ describe('EditorDocument', () => {
     it('should return the block from the specific index', () => {
       const countOfBlocks = 5;
       const blocksData = [];
-      const document = new EditorDocument();
+      const document = new EditorDocument({
+        identifier: 'document',
+      });
 
       for (let i = 0; i < countOfBlocks; i++) {
         const blockData = {
@@ -422,6 +433,7 @@ describe('EditorDocument', () => {
       };
 
       const document = new EditorDocument({
+        identifier: 'document',
         properties: {
           ...properties,
         },
@@ -437,6 +449,7 @@ describe('EditorDocument', () => {
       const propertyName = 'readOnly';
       const expectedValue = true;
       const document = new EditorDocument({
+        identifier: 'document',
         properties: {
           [propertyName]: expectedValue,
         },
@@ -451,6 +464,7 @@ describe('EditorDocument', () => {
     it('should return undefined if the property does not exist', () => {
       const propertyName = 'readOnly';
       const document = new EditorDocument({
+        identifier: 'document',
         properties: {},
       });
 
@@ -466,6 +480,7 @@ describe('EditorDocument', () => {
       const propertyName = 'readOnly';
       const expectedValue = true;
       const document = new EditorDocument({
+        identifier: 'document',
         properties: {
           [propertyName]: false,
         },
@@ -481,6 +496,7 @@ describe('EditorDocument', () => {
       const propertyName = 'readOnly';
       const expectedValue = true;
       const document = new EditorDocument({
+        identifier: 'document',
         properties: {},
       });
 
@@ -533,7 +549,9 @@ describe('EditorDocument', () => {
           data: {},
         },
       ];
-      const document = new EditorDocument();
+      const document = new EditorDocument({
+        identifier: 'document',
+      });
 
       document.initialize(blocksData);
 
@@ -572,7 +590,9 @@ describe('EditorDocument', () => {
           data: {},
         },
       ];
-      const document = new EditorDocument();
+      const document = new EditorDocument({
+        identifier: 'document',
+      });
 
       document.initialize(blocksData);
 
@@ -606,7 +626,9 @@ describe('EditorDocument', () => {
     });
 
     it('should throw an error if the index is out of bounds', () => {
-      const document = new EditorDocument();
+      const document = new EditorDocument({
+        identifier: 'document',
+      });
       const blockIndexOutOfBound = document.length + 1;
       const dataKey = 'data-key-1a2b' as DataKey;
       const expectedValue = 'new value';
@@ -638,7 +660,9 @@ describe('EditorDocument', () => {
           data: {},
         },
       ];
-      const document = new EditorDocument();
+      const document = new EditorDocument({
+        identifier: 'document',
+      });
 
       document.initialize(blocksData);
 
@@ -679,7 +703,9 @@ describe('EditorDocument', () => {
           data: {},
         },
       ];
-      const document = new EditorDocument();
+      const document = new EditorDocument({
+        identifier: 'document',
+      });
 
       document.initialize(blocksData);
 
@@ -715,7 +741,9 @@ describe('EditorDocument', () => {
     });
 
     it('should throw an error if the index is out of bounds', () => {
-      const document = new EditorDocument();
+      const document = new EditorDocument({
+        identifier: 'document',
+      });
       const blockIndexOutOfBound = document.length + 1;
       const tuneName = 'blockFormatting' as BlockTuneName;
       const updateData = {
@@ -739,11 +767,16 @@ describe('EditorDocument', () => {
       const blockData = {
         name: 'text' as BlockToolName,
         data: {
-          [dataKey]: text,
+          [dataKey]: {
+            $t: 't',
+            value: text,
+          },
         },
       };
 
-      document = new EditorDocument();
+      document = new EditorDocument({
+        identifier: 'document',
+      });
 
       document.initialize([ blockData ]);
 
@@ -775,10 +808,17 @@ describe('EditorDocument', () => {
     beforeEach(() => {
       const blockData = {
         name: 'header' as BlockToolName,
-        data: {},
+        data: {
+          [dataKey]: {
+            $t: 't',
+            value: text,
+          },
+        },
       };
 
-      document = new EditorDocument();
+      document = new EditorDocument({
+        identifier: 'document',
+      });
 
       document.initialize([ blockData ]);
 
@@ -823,7 +863,9 @@ describe('EditorDocument', () => {
         data: {},
       };
 
-      document = new EditorDocument();
+      document = new EditorDocument({
+        identifier: 'document',
+      });
 
       document.initialize([ blockData ]);
 
@@ -865,10 +907,17 @@ describe('EditorDocument', () => {
     beforeEach(() => {
       const blockData = {
         name: 'header' as BlockToolName,
-        data: {},
+        data: {
+          [dataKey]: {
+            $t: 't',
+            value: 'Some text',
+          },
+        },
       };
 
-      document = new EditorDocument();
+      document = new EditorDocument({
+        identifier: 'document',
+      });
 
       document.initialize([ blockData ]);
     });
@@ -908,6 +957,70 @@ describe('EditorDocument', () => {
     });
   });
 
+  describe('.modifyData()', () => {
+    let document: EditorDocument;
+    const dataKey = 'text' as DataKey;
+    const blockIndex = 0;
+
+    beforeEach(() => {
+      const blockData = {
+        name: 'header' as BlockToolName,
+        data: {
+          [dataKey]: {
+            $t: 't',
+            value: 'Some text',
+          },
+        },
+      };
+
+      document = new EditorDocument({
+        identifier: 'document',
+      });
+
+      document.initialize([ blockData ]);
+    });
+
+    it('should call .format() method if text index and modified value provided', () => {
+      const spy = jest.spyOn(document, 'format');
+      const rangeEnd = 5;
+      const index = new IndexBuilder()
+        .addBlockIndex(blockIndex)
+        .addDataKey(dataKey)
+        .addTextRange([0, rangeEnd])
+        .build();
+
+      document.modifyData(index, {
+        value: {
+          tool: 'bold',
+        },
+        previous: null,
+      });
+
+      expect(spy)
+        .toHaveBeenCalledWith(blockIndex, dataKey, 'bold', 0, rangeEnd);
+    });
+
+    it('should call .unformat() method if text index and previous modified value provided', () => {
+      const spy = jest.spyOn(document, 'unformat');
+      const rangeEnd = 5;
+      const index = new IndexBuilder()
+        .addBlockIndex(blockIndex)
+        .addDataKey(dataKey)
+        .addTextRange([0, rangeEnd])
+        .build();
+
+      document.modifyData(index, {
+        previous: {
+          tool: 'bold',
+        },
+        value: null,
+      });
+
+      expect(spy)
+        .toHaveBeenCalledWith(blockIndex, dataKey, 'bold', 0, rangeEnd);
+    });
+  });
+
   describe('.removeText()', () => {
     let document: EditorDocument;
     const dataKey = 'text' as DataKey;
@@ -917,10 +1030,17 @@ describe('EditorDocument', () => {
     beforeEach(() => {
       const blockData = {
         name: 'header' as BlockToolName,
-        data: {},
+        data: {
+          [dataKey]: {
+            $t: 't',
+            value: 'some long text',
+          },
+        },
       };
 
-      document = new EditorDocument();
+      document = new EditorDocument({
+        identifier: 'document',
+      });
 
       document.initialize([ blockData ]);
 
@@ -975,10 +1095,17 @@ describe('EditorDocument', () => {
     beforeEach(() => {
       const blockData = {
         name: 'header' as BlockToolName,
-        data: {},
+        data: {
+          [dataKey]: {
+            $t: 't',
+            value: 'some long text',
+          },
+        },
       };
 
-      document = new EditorDocument();
+      document = new EditorDocument({
+        identifier: 'document',
+      });
 
       document.initialize([ blockData ]);
 
@@ -1022,10 +1149,17 @@ describe('EditorDocument', () => {
     beforeEach(() => {
       const blockData = {
         name: 'header' as BlockToolName,
-        data: {},
+        data: {
+          [dataKey]: {
+            $t: 't',
+            value: 'some long text',
+          },
+        },
       };
 
-      document = new EditorDocument();
+      document = new EditorDocument({
+        identifier: 'document',
+      });
 
       document.initialize([ blockData ]);
 
@@ -1068,6 +1202,7 @@ describe('EditorDocument', () => {
         readOnly: true,
       };
       const document = new EditorDocument({
+        identifier: 'document',
         properties,
       });
 
@@ -1102,7 +1237,8 @@ describe('EditorDocument', () => {
           {
             value: 'value',
             previous: 'previous',
-          }
+          },
+          'user'
         )
       );
 
@@ -1128,7 +1264,8 @@ describe('EditorDocument', () => {
           {
             value: 'value',
             previous: 'previous',
-          }
+          },
+          'user'
         )
       );
 

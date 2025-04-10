@@ -107,7 +107,7 @@ export default class ToolsManager {
    */
   constructor(
     @Inject('EditorConfig') editorConfig: EditorConfig,
-      eventBus: EventBus
+    eventBus: EventBus
   ) {
     this.#config = this.#prepareConfig(editorConfig.tools ?? {});
     this.#eventBus = eventBus;

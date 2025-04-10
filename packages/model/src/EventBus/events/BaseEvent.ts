@@ -24,7 +24,7 @@ export interface EventPayloadBase<Action extends EventAction, Data = unknown> {
   /**
    * User identifier
    */
-  userId?: number | string;
+  userId: number | string;
 }
 
 /**
@@ -47,7 +47,7 @@ export class BaseDocumentEvent<Action extends EventAction, Data = unknown> exten
    * @param data - event data
    * @param userId - user identifier
    */
-  constructor(index: Index, action: Action, data: Data, userId?: string | number) {
+  constructor(index: Index, action: Action, data: Data, userId: string | number) {
     super(EventType.Changed, {
       detail: {
         index,

@@ -14,7 +14,7 @@ export class ValueModifiedEvent<V = unknown> extends BaseDocumentEvent<EventActi
    * @param data - event data with new and previous values
    * @param userId - user identifier
    */
-  constructor(index: Index, data: ModifiedEventData<V>, userId?: string | number) {
+  constructor(index: Index, data: ModifiedEventData<V>, userId: string | number) {
     super(index, EventAction.Modified, data, userId);
   }
 }

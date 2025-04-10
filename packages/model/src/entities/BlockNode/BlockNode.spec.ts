@@ -1163,7 +1163,7 @@ describe('BlockNode', () => {
       node.addEventListener(EventType.Changed, handler);
 
       textNode.dispatchEvent(new TextAddedEvent(new IndexBuilder().addTextRange(range)
-        .build(), 'Hello'));
+        .build(), 'Hello', 'user'));
 
       expect(event).toBeInstanceOf(TextAddedEvent);
       expect(event)
@@ -1218,7 +1218,8 @@ describe('BlockNode', () => {
           {
             value: newValue,
             previous: value,
-          }
+          },
+          'user'
         )
       );
 
@@ -1278,7 +1279,8 @@ describe('BlockNode', () => {
           {
             value: newValue,
             previous: value,
-          }
+          },
+          'user'
         )
       );
 

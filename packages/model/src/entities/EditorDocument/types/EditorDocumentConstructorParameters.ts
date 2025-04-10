@@ -3,6 +3,11 @@ import type { ToolsRegistry } from '../../../tools/ToolsRegistry';
 
 export interface EditorDocumentConstructorParameters {
   /**
+   * Document identifier
+   */
+  identifier: string;
+
+  /**
    * The properties of the document
    */
   properties?: Properties;

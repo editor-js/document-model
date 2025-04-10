@@ -58,7 +58,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
   /**
    * Editor's config
    */
-  #config: CoreConfig;
+  #config: Required<CoreConfig>;
 
   /**
    * BlockToolAdapter constructor
@@ -71,7 +71,15 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    * @param formattingAdapter - needed to render formatted text
    * @param toolName - tool name of the block
    */
-  constructor(config: CoreConfig, model: EditorJSModel, eventBus: EventBus, caretAdapter: CaretAdapter, blockIndex: number, formattingAdapter: FormattingAdapter, toolName: string) {
+  constructor(
+    config: Required<CoreConfig>,
+    model: EditorJSModel,
+    eventBus: EventBus,
+    caretAdapter: CaretAdapter,
+    blockIndex: number,
+    formattingAdapter: FormattingAdapter,
+    toolName: string
+  ) {
     this.#config = config;
     this.#model = model;
     this.#blockIndex = blockIndex;
@@ -453,7 +461,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
       }
     }
 
-    this.#caretAdapter.updateIndex(caretIndexBuilder.build());
+    this.#caretAdapter.updateIndex(caretIndexBuilder.build(), event.detail.userId);
   };
 
   /**
@@ -524,14 +532,14 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
 
     input.normalize();
 
-    this.#caretAdapter.updateIndex(builder.build());
+    this.#caretAdapter.updateIndex(builder.build(), this.#config.userId);
   };
 
   /**
    * Handles model update events and updates DOM
    *
    * @param event - model update event
-   * @param input - attched input element
+   * @param input - attached input element
    * @param key - data key input is attached to
    */
   #handleModelUpdate(event: ModelEvents, input: HTMLElement, key: DataKey): void {

@@ -1,0 +1,31 @@
+{
+  "name": "@editorjs/ot-server",
+  "packageManager": "yarn@4.0.1",
+  "type": "module",
+  "scripts": {
+    "build": "tsc --build tsconfig.build.json",
+    "dev": "yarn build --watch",
+    "start": "node --experimental-vm-modules dist/index.js",
+    "lint": "eslint ./src",
+    "lint:ci": "yarn lint --max-warnings 0",
+    "lint:fix": "yarn lint --fix",
+    "test": "node --experimental-vm-modules $(yarn bin jest)",
+    "test:coverage": "yarn test --coverage=true",
+    "clear": "rm -rf ./dist && rm -rf ./tsconfig.build.tsbuildinfo"
+  },
+  "dependencies": {
+    "@editorjs/collaboration-manager": "workspace:^",
+    "@editorjs/model": "workspace:^",
+    "ws": "^8.18.1"
+  },
+  "devDependencies": {
+    "@types/eslint": "^9.6.1",
+    "@types/jest": "^29.5.14",
+    "@types/ws": "^8.18.1",
+    "eslint": "^9.24.0",
+    "eslint-config-codex": "^2.0.3",
+    "jest": "^29.7.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}

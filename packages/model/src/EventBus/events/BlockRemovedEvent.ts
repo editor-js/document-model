@@ -15,7 +15,7 @@ export class BlockRemovedEvent extends BaseDocumentEvent<EventAction.Removed, Bl
    * @param data - removed BlockNode serialized data
    * @param userId - user identifier
    */
-  constructor(index: Index, data: BlockNodeSerialized, userId?: string | number) {
+  constructor(index: Index, data: BlockNodeSerialized, userId: string | number) {
     // Stryker disable next-line ObjectLiteral
     super(index, EventAction.Removed, data, userId);
   }

@@ -1,5 +1,5 @@
 import { CollaborationManager } from '@editorjs/collaboration-manager';
-import { EditorJSModel, EventType } from '@editorjs/model';
+import { type DocumentId, EditorJSModel, EventType } from '@editorjs/model';
 import type { ContainerInstance } from 'typedi';
 import { Container } from 'typedi';
 import { CoreEventType } from './components/EventBus/index.js';
@@ -60,6 +60,9 @@ export default class Core {
    */
   #formattingAdapter: FormattingAdapter;
 
+  /**
+   * Collaboration manager
+   */
   #collaborationManager: CollaborationManager;
 
   /**
@@ -77,12 +80,18 @@ export default class Core {
       this.#config.userId = generateId();
     }
 
+    if (this.#config.documentId === undefined) {
+      this.#config.documentId = generateId();
+    }
+
     this.#iocContainer.set('EditorConfig', this.#config);
 
     const eventBus = new EventBus();
+
     this.#iocContainer.set(EventBus, eventBus);
 
-    this.#model = new EditorJSModel();
+    this.#model = new EditorJSModel(this.#config.userId, { identifier: this.#config.documentId as DocumentId });
+
     this.#iocContainer.set(EditorJSModel, this.#model);
 
     this.#toolsManager = this.#iocContainer.get(ToolsManager);
@@ -211,7 +220,7 @@ export default class Core {
 /**
  * @todo move to "sdk" package
  */
-export * from './entities/index.js';
+export type * from './entities/index.js';
 export * from './components/EventBus/index.js';
 export * from './api/index.js';
 export * from './tools/facades/index.js';

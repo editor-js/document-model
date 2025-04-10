@@ -3,7 +3,7 @@ import type { Nominal } from '../../utils/Nominal.js';
 /**
  * Alias for a document id
  */
-type DocumentId = Nominal<string, 'DocumentId'>;
+export type DocumentId = Nominal<string, 'DocumentId'>;
 
 /**
  * Numeric id for a block node

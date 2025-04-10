@@ -3,6 +3,8 @@ import { describe } from '@jest/globals';
 import { Operation, OperationType } from './Operation.js';
 import { UndoRedoManager } from './UndoRedoManager.js';
 
+const userId = 'user';
+
 describe('UndoRedoManager', () => {
   it('should return inverted operation on undo', () => {
     const manager = new UndoRedoManager();
@@ -17,7 +19,9 @@ describe('UndoRedoManager', () => {
           name: 'paragraph',
           data: { text: 'editor.js' },
         } ],
-      });
+      },
+      userId
+    );
 
     manager.put(op);
 
@@ -51,7 +55,9 @@ describe('UndoRedoManager', () => {
           name: 'paragraph',
           data: { text: 'editor.js' },
         } ],
-      });
+      },
+      userId
+    );
 
     manager.put(op);
 
@@ -75,7 +81,9 @@ describe('UndoRedoManager', () => {
           name: 'paragraph',
           data: { text: 'editor.js' },
         } ],
-      });
+      },
+      userId
+    );
 
 
     const newOp = new Operation(
@@ -88,7 +96,9 @@ describe('UndoRedoManager', () => {
           name: 'paragraph',
           data: { text: 'hello' },
         } ],
-      });
+      },
+      userId
+    );
 
     manager.put(op);
     manager.undo();

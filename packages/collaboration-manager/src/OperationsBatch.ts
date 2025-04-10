@@ -96,7 +96,8 @@ export class OperationsBatch {
       new IndexBuilder().from(index)
         .addTextRange(range)
         .build(),
-      { payload }
+      { payload },
+      this.#operations[0].userId
     );
   }
 
