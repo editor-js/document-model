@@ -79,7 +79,7 @@ export class BlocksUI implements EditorjsPlugin {
 
   /**
    * Prepares blocks holder element
-   * @param editorHolder
+   * @param editorHolder - user provided holder element for editor
    */
   #prepareBlocksHolder(editorHolder: HTMLElement): HTMLElement {
     const blocksHolder = document.createElement('div');
