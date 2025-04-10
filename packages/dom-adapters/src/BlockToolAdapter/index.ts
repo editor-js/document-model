@@ -12,14 +12,14 @@ import {
   TextAddedEvent,
   TextRemovedEvent
 } from '@editorjs/model';
-import type { 
+import type {
   EventBus,
   BlockToolAdapter as BlockToolAdapterInterface,
   CoreConfig,
   BeforeInputUIEvent,
   BeforeInputUIEventPayload
- } from '@editorjs/sdk';
- import { BeforeInputUIEventName } from '@editorjs/sdk';
+} from '@editorjs/sdk';
+import { BeforeInputUIEventName } from '@editorjs/sdk';
 import type { CaretAdapter } from '../CaretAdapter/index.js';
 import type { FormattingAdapter } from '../FormattingAdapter/index.js';
 import {
@@ -148,7 +148,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
 
   /**
    * Check current selection and find it across all attached inputs
-   * 
+   *
    * @returns tuple of data key and input element or null if no focused input is found
    */
   #findFocusedInput(): [DataKey, HTMLElement] | null {
@@ -165,11 +165,14 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
        */
       if (input.isContentEditable) {
         const selection = window.getSelection();
+
         if (selection !== null && selection.rangeCount > 0) {
           const range = selection.getRangeAt(0);
+
           return input.contains(range.startContainer);
         }
       }
+
       return false;
     });
 

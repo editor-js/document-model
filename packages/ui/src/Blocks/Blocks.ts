@@ -112,8 +112,6 @@ export class BlocksUI implements EditorjsPlugin {
         data = e.dataTransfer?.getData('text/plain') ?? e.data ?? '';
       }
 
-      console.log('ragne', window.getSelection()?.getRangeAt(0));
-
       this.#eventBus.dispatchEvent(new BeforeInputUIEvent({
         data,
         inputType: e.inputType,
