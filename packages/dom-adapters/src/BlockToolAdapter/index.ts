@@ -1,8 +1,10 @@
 import { isNativeInput } from '@editorjs/dom';
 import {
-  type EditorJSModel,
-  type DataKey,
+  BlockAddedEvent,
+  BlockRemovedEvent,
   createDataKey,
+  type DataKey,
+  type EditorJSModel,
   EventAction,
   EventType,
   IndexBuilder,
@@ -10,19 +12,20 @@ import {
   TextAddedEvent,
   TextRemovedEvent
 } from '@editorjs/model';
+import type { EventBus } from '@editorjs/sdk';
+import { type BlockToolAdapter as BlockToolAdapterInterface, type CoreConfig } from '@editorjs/sdk';
 import type { CaretAdapter } from '../CaretAdapter/index.js';
+import type { FormattingAdapter } from '../FormattingAdapter/index.js';
 import {
   findNextHardLineBoundary,
-  findNextWordBoundary, findPreviousHardLineBoundary,
+  findNextWordBoundary,
+  findPreviousHardLineBoundary,
   findPreviousWordBoundary,
   getAbsoluteRangeOffset,
   getBoundaryPointByAbsoluteOffset,
   isNonTextInput
 } from '../utils/index.js';
 import { InputType } from './types/InputType.js';
-import { type BlockToolAdapter as BlockToolAdapterInterface, type CoreConfig } from '@editorjs/sdk';
-import type { FormattingAdapter } from '../FormattingAdapter/index.js';
-import type { EventBus } from '@editorjs/sdk';
 
 /**
  * BlockToolAdapter is using inside Block tools to connect browser DOM elements to the model
@@ -547,6 +550,12 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    * @param key - data key input is attached to
    */
   #handleModelUpdate(event: ModelEvents, input: HTMLElement, key: DataKey): void {
+    if (event instanceof BlockAddedEvent || event instanceof BlockRemovedEvent) {
+      if (event.detail.index.blockIndex! <= this.#blockIndex) {
+        this.#blockIndex += event.detail.action === EventAction.Added ? 1 : -1;
+      }
+    }
+
     const isInputNative = isNativeInput(input);
 
     if (isInputNative === true) {
