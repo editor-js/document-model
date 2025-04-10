@@ -1,18 +1,20 @@
 /* eslint-disable jsdoc/informative-docs */
-import type { BlockToolConstructor, InlineToolConstructor } from '@editorjs/sdk';
-import { InternalInlineToolSettings, InternalTuneSettings } from './BaseToolFacade.js';
-import { InlineToolFacade } from './InlineToolFacade.js';
-import { BlockTuneFacade } from './BlockTuneFacade.js';
-import { BlockToolFacade } from './BlockToolFacade.js';
-// import type ApiModule from '../modules/api';
+import type { BlockToolConstructor, EditorAPI, InlineToolConstructor, UnifiedToolConfig } from '@editorjs/sdk';
+import {
+  InternalInlineToolSettings,
+  InternalTuneSettings,
+  InlineToolFacade,
+  BlockTuneFacade,
+  BlockToolFacade
+} from '@editorjs/sdk'; ;
 import type {
   ToolConstructable,
   EditorConfig,
   InlineToolConstructable,
   BlockTuneConstructable
 } from '@editorjs/editorjs';
-import type { UnifiedToolConfig } from '../../entities/UnifiedToolConfig.js';
 
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 type ToolConstructor = typeof InlineToolFacade | typeof BlockToolFacade | typeof BlockTuneFacade;
 
 /**
@@ -27,8 +29,8 @@ export class ToolsFactory {
   /**
    * EditorJS API Module
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private api: any;
+
+  private api: EditorAPI;
 
   /**
    * EditorJS configuration
@@ -47,7 +49,6 @@ export class ToolsFactory {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     api: any
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     this.api = api;
     this.config = config;
     this.editorConfig = editorConfig;
@@ -57,13 +58,13 @@ export class ToolsFactory {
    * Returns Tool object based on it's type
    * @param name - tool name
    */
+  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   public get(name: string): InlineToolFacade | BlockToolFacade | BlockTuneFacade {
     const { class: constructable, isInternal = false, ...config } = this.config[name];
 
     const Constructor = this.getConstructor(constructable);
     // const isTune = constructable[InternalTuneSettings.IsTune];
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return new Constructor({
       name,
       constructable,
@@ -84,6 +85,7 @@ export class ToolsFactory {
    * Find appropriate Tool object constructor for Tool constructable
    * @param constructable - Tools constructable
    */
+  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   private getConstructor(constructable: ToolConstructable | BlockToolConstructor | InlineToolConstructor): ToolConstructor {
     switch (true) {
       case (constructable as InlineToolConstructable)[InternalInlineToolSettings.IsInline]:

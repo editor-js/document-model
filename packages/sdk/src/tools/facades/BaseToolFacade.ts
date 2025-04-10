@@ -8,9 +8,9 @@ import type {
 import { isFunction } from '@editorjs/helpers';
 import { type BlockToolFacade } from './BlockToolFacade.js';
 import { type InlineToolFacade } from './InlineToolFacade.js';
-import { ToolType } from './ToolType.js';
+import { ToolType } from '../ToolType.js';
 import { type BlockTuneFacade } from './BlockTuneFacade.js';
-import type { BlockTool, BlockToolConstructor, InlineTool, InlineToolConstructor } from '@editorjs/sdk';
+import type { BlockTool, BlockToolConstructor, InlineTool, InlineToolConstructor } from '@/entities';
 
 export type ToolConstructable = ToolConstructableV2 | BlockToolConstructor | InlineToolConstructor;
 

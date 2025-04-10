@@ -1,27 +1,30 @@
-import type { BlockToolConstructor } from '@editorjs/sdk';
+import type {
+  BlockToolConstructor,
+  UnifiedToolConfig
+} from '@editorjs/sdk';
 import 'reflect-metadata';
 import { deepMerge, isFunction, isObject, PromiseQueue } from '@editorjs/helpers';
 import { Inject, Service } from 'typedi';
-import {
-  BlockToolFacade, BlockTuneFacade,
-  InlineToolFacade,
-  ToolFacadeClass,
-  ToolsCollection,
-  ToolsFactory
-} from './facades/index.js';
+import { ToolsFactory } from './ToolsFactory.js';
 import { Paragraph } from './internal/block-tools/paragraph/index.js';
 import type {
   EditorConfig,
   ToolConstructable,
   ToolSettings
 } from '@editorjs/editorjs';
-import { InlineTool, InlineToolConstructor } from '@editorjs/sdk';
-import type { UnifiedToolConfig } from '../entities/index.js';
+import {
+  InlineTool,
+  InlineToolConstructor,
+  ToolLoadedCoreEvent,
+  BlockToolFacade, BlockTuneFacade,
+  InlineToolFacade,
+  ToolFacadeClass,
+  ToolsCollection,
+  EventBus
+} from '@editorjs/sdk';
 import BoldInlineTool from './internal/inline-tools/bold/index.js';
 import ItalicInlineTool from './internal/inline-tools/italic/index.js';
 import LinkInlineTool from './internal/inline-tools/link/index.js';
-import { ToolLoadedCoreEvent } from '../components/EventBus/index.js';
-import { EventBus } from '@editorjs/sdk';
 
 /**
  * Works with tools
@@ -146,14 +149,14 @@ export default class ToolsManager {
 
             const tool = this.#factory.get(toolName);
 
-            if (tool.isInline()) {
+            if ('isInline' in tool && tool.isInline() === true) {
               /**
                * Some Tools validation
                */
               const inlineToolRequiredMethods = ['render'];
               const notImplementedMethods = inlineToolRequiredMethods.filter(method => tool.create()[method as keyof InlineTool] !== undefined);
 
-              if (notImplementedMethods.length) {
+              if (notImplementedMethods.length > 0) {
                 /**
                  * @todo implement logger
                  */

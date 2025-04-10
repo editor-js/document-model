@@ -1,7 +1,7 @@
-import type { CoreConfigValidated,
+import type { EventBus,
+  CoreConfigValidated,
   EditorjsPlugin,
-  EditorjsPluginParams } from '@editorjs/core';
-import type { EventBus } from '@editorjs/sdk';
+  EditorjsPluginParams } from '@editorjs/sdk';
 import {
   UiComponentType
 } from '@editorjs/sdk';
@@ -79,4 +79,3 @@ export class EditorjsUI implements EditorjsPlugin {
 export * from './InlineToolbar/InlineToolbar.js';
 export * from './Blocks/Blocks.js';
 export * from './Toolbox/Toolbox.js';
-export * from './Blocks/BeforeInputUIEvent.js';

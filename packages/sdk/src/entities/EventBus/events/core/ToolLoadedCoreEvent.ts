@@ -1,4 +1,4 @@
-import type { ToolFacadeClass } from '../../../tools/facades/index.js';
+import type { ToolFacadeClass } from '@/tools/facades/index.js';
 import { CoreEventBase } from './CoreEventBase.js';
 import { CoreEventType } from './CoreEventType.js';
 

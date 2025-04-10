@@ -20,7 +20,7 @@ import {
   isNonTextInput
 } from '../utils/index.js';
 import { InputType } from './types/InputType.js';
-import type { BlockToolAdapter as BlockToolAdapterInterface, CoreConfig } from '@editorjs/sdk';
+import { type BlockToolAdapter as BlockToolAdapterInterface, type CoreConfig } from '@editorjs/sdk';
 import type { FormattingAdapter } from '../FormattingAdapter/index.js';
 import type { EventBus } from '@editorjs/sdk';
 
@@ -86,6 +86,10 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     this.#caretAdapter = caretAdapter;
     this.#formattingAdapter = formattingAdapter;
     this.#toolName = toolName;
+
+    // eventBus.addEventListener(BeforeInputUIEventName, (event: BeforeInputUIEvent) => {
+    //   console.log('BeforeInputUIEventName', event);
+    // });
   }
 
   /**

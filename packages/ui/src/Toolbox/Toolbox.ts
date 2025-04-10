@@ -1,15 +1,17 @@
 import { make } from '@editorjs/dom';
-import type { ToolLoadedCoreEvent,
+import type {
   BlockToolFacade,
   EditorjsPlugin,
-  EditorjsPluginParams } from '@editorjs/core';
+  EditorjsPluginParams,
+  EventBus,
+  EditorAPI,
+  ToolLoadedCoreEvent
+} from '@editorjs/sdk';
 import {
-  CoreEventType
-} from '@editorjs/core';
+  CoreEventType,
+  UiComponentType
+} from '@editorjs/sdk';
 import { ToolboxRenderedUIEvent } from './ToolboxRenderedUIEvent.js';
-import type { EditorAPI } from '@editorjs/core';
-import type { EventBus } from '@editorjs/sdk';
-import { UiComponentType } from '@editorjs/sdk';
 
 /**
  * UI module responsible for rendering the toolbox
@@ -53,7 +55,7 @@ export class ToolboxUI implements EditorjsPlugin {
     this.#eventBus.addEventListener(`core:${CoreEventType.ToolLoaded}`, (event: ToolLoadedCoreEvent) => {
       const { tool } = event.detail;
 
-      if (tool.isBlock()) {
+      if ('isBlock' in tool && tool.isBlock()) {
         this.addTool(tool);
       }
     });

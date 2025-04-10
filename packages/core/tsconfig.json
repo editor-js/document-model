@@ -25,6 +25,15 @@
   "references": [
     {
       "path": "../model/tsconfig.build.json"
+    },
+    {
+      "path": "../sdk/tsconfig.build.json"
+    },
+    {
+      "path": "../dom-adapters/tsconfig.build.json"
+    },
+    {
+      "path": "../collaboration-manager/tsconfig.build.json"
     }
   ]
 }

@@ -1,21 +1,22 @@
 {
   "name": "@editorjs/sdk",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "packageManager": "yarn@4.0.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "yarn clear && tsc --build tsconfig.build.json",
     "lint": "eslint",
     "lint:ci": "yarn lint --max-warnings 0",
-    "lint:fix": "yarn lint --fix"
+    "lint:fix": "yarn lint --fix",
+    "clear": "rm -rf dist && rm -f tsconfig.build.tsbuildinfo && rm -f tsconfig.tsbuildinfo"
   },
   "devDependencies": {
-    "@types/eslint": "^8",
-    "eslint": "^8.38.0",
-    "eslint-config-codex": "^1.7.2",
-    "eslint-plugin-import": "^2.29.0",
+    "@types/eslint": "^9.6.1",
+    "eslint": "^9.24.0",
+    "eslint-config-codex": "^2.0.3",
+    "eslint-plugin-import": "^2.31.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.4"
   },

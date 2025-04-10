@@ -2,16 +2,13 @@ import { CollaborationManager } from '@editorjs/collaboration-manager';
 import { type DocumentId, EditorJSModel, EventType } from '@editorjs/model';
 import type { ContainerInstance } from 'typedi';
 import { Container } from 'typedi';
-import { CoreEventType } from './components/EventBus/index.js';
-import { EventBus, UiComponentType } from '@editorjs/sdk';
+import { CoreEventType, EventBus, UiComponentType } from '@editorjs/sdk';
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
 import ToolsManager from './tools/ToolsManager.js';
 import { CaretAdapter, FormattingAdapter } from '@editorjs/dom-adapters';
-import type { CoreConfigValidated } from './entities/Config.js';
-import type { CoreConfig } from '@editorjs/sdk';
+import type { CoreConfigValidated, CoreConfig, EditorjsPluginConstructor } from '@editorjs/sdk';
 import { BlocksManager } from './components/BlockManager.js';
 import { SelectionManager } from './components/SelectionManager.js';
-import type { EditorjsPluginConstructor } from './entities/EditorjsPlugin.js';
 import { EditorAPI } from './api/index.js';
 import { generateId } from './utils/uid.js';
 
@@ -163,7 +160,7 @@ export default class Core {
     /**
      * Get all registered plugin types from the container
      */
-    const pluginTypes = Object.values(UiComponentType) as string[];
+    const pluginTypes = Object.values(UiComponentType);
 
     for (const pluginType of pluginTypes) {
       const plugin = this.#iocContainer.get<EditorjsPluginConstructor>(pluginType);
@@ -204,7 +201,7 @@ export default class Core {
       }
     }
 
-    if (config.data) {
+    if (config.data !== undefined) {
       if (config.data.blocks === undefined) {
         throw new Error('Editor configuration should contain blocks');
       }
@@ -219,11 +216,3 @@ export default class Core {
     }
   }
 }
-
-/**
- * @todo move to "sdk" package
- */
-export type * from './entities/index.js';
-export * from './components/EventBus/index.js';
-export * from './api/index.js';
-export * from './tools/facades/index.js';

@@ -1,6 +1,6 @@
 import { BaseToolFacade, InternalInlineToolSettings } from './BaseToolFacade.js';
-import type { InlineTool as IInlineTool, InlineToolConstructor as InlineToolConstructable } from '@editorjs/sdk';
-import { ToolType } from './ToolType.js';
+import type { InlineTool as IInlineTool, InlineToolConstructor as InlineToolConstructable } from '@/entities';
+import { ToolType } from '../ToolType.js';
 
 /**
  * InlineTool object to work with Inline Tools constructables

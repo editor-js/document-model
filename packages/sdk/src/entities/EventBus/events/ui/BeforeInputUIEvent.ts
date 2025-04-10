@@ -1,9 +1,9 @@
-import { UIEventBase } from '@editorjs/core';
+import { UIEventBase } from './UIEventBase.js';
 
 /**
  * Name of the event
  */
-export const BeforeInputUIEventName = 'ui:before-input';
+export const BeforeInputUIEventName = 'before-input';
 
 /**
  * Payload of the BeforeInputUIEvent

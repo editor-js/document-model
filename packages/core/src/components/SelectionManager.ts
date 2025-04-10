@@ -3,10 +3,8 @@ import { FormattingAdapter } from '@editorjs/dom-adapters';
 import type { CaretManagerEvents, InlineFragment, InlineToolName } from '@editorjs/model';
 import { CaretManagerCaretUpdatedEvent, Index, EditorJSModel, createInlineToolData, createInlineToolName } from '@editorjs/model';
 import { EventType } from '@editorjs/model';
-import { CoreEventType, ToolLoadedCoreEvent } from './EventBus/index.js';
-import { EventBus } from '@editorjs/sdk';
+import { CoreEventType, ToolLoadedCoreEvent, EventBus, SelectionChangedCoreEvent } from '@editorjs/sdk';
 import { Inject, Service } from 'typedi';
-import { SelectionChangedCoreEvent } from './EventBus/core-events/SelectionChangedCoreEvent.js';
 import { type CoreConfig, InlineTool, InlineToolFormatData } from '@editorjs/sdk';
 
 /**
@@ -61,7 +59,7 @@ export class SelectionManager {
     this.#eventBus.addEventListener(`core:${CoreEventType.ToolLoaded}`, (event: ToolLoadedCoreEvent) => {
       const { tool } = event.detail;
 
-      if (!tool.isInline()) {
+      if ('isInline' in tool && tool.isInline() === false) {
         return;
       }
 
