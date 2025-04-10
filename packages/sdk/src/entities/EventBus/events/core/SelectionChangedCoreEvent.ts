@@ -11,6 +11,7 @@ export interface SelectionChangedCoreEventPayload {
   /**
    * Updated caret index
    */
+  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   readonly index: Index | null;
 
   /**

@@ -149,7 +149,7 @@ export default class ToolsManager {
 
             const tool = this.#factory.get(toolName);
 
-            if (tool.isInline()) {
+            if ('isInline' in tool && tool.isInline()) {
               /**
                * Some Tools validation
                */

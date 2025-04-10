@@ -160,7 +160,7 @@ export default class Core {
     /**
      * Get all registered plugin types from the container
      */
-    const pluginTypes = Object.values(UiComponentType) as string[];
+    const pluginTypes = Object.values(UiComponentType);
 
     for (const pluginType of pluginTypes) {
       const plugin = this.#iocContainer.get<EditorjsPluginConstructor>(pluginType);
@@ -201,7 +201,7 @@ export default class Core {
       }
     }
 
-    if (config.data) {
+    if (config.data !== undefined) {
       if (config.data.blocks === undefined) {
         throw new Error('Editor configuration should contain blocks');
       }

@@ -14,6 +14,7 @@ import type {
   BlockTuneConstructable
 } from '@editorjs/editorjs';
 
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 type ToolConstructor = typeof InlineToolFacade | typeof BlockToolFacade | typeof BlockTuneFacade;
 
 /**
@@ -57,6 +58,7 @@ export class ToolsFactory {
    * Returns Tool object based on it's type
    * @param name - tool name
    */
+  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   public get(name: string): InlineToolFacade | BlockToolFacade | BlockTuneFacade {
     const { class: constructable, isInternal = false, ...config } = this.config[name];
 
@@ -83,6 +85,7 @@ export class ToolsFactory {
    * Find appropriate Tool object constructor for Tool constructable
    * @param constructable - Tools constructable
    */
+  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   private getConstructor(constructable: ToolConstructable | BlockToolConstructor | InlineToolConstructor): ToolConstructor {
     switch (true) {
       case (constructable as InlineToolConstructable)[InternalInlineToolSettings.IsInline]:
