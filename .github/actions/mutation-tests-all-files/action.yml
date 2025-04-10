@@ -19,7 +19,20 @@ runs:
       - name: Setup environment
         uses: ./.github/actions/setup
 
+      - name: Get changed files
+        uses: tj-actions/changed-files@v39.0.0
+        id: changed-files
+        with:
+          files_yaml: |
+            src:
+              - 'src/**/*.ts'
+              - '!src/**/*.spec.ts'
+              - '!src/**/__mocks__/**'
+          separator: "','"
+          path: ${{ inputs.working-directory }}
+
       - name: Run mutation tests
+        if: steps.changed-files.outputs.src_any_changed == 'true'
         env:
           STRYKER_DASHBOARD_API_KEY: ${{ inputs.stryker_dashboard_api_key }}
         shell: bash
