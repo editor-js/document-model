@@ -10,7 +10,6 @@ config();
  */
 function main(): void {
   if (process.env.NODE_ENV === 'production' && process.env.HAWK_TOKEN !== undefined) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
     HawkCatcher.init(process.env.HAWK_TOKEN);
   }
 
