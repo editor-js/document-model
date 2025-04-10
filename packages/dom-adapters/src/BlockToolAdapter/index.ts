@@ -365,7 +365,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
      * Fragment ranges bounds should be decreased by end index, because end is the index of the first character of the new block
      */
     relatedFragments.forEach(fragment => {
-      fragment.range[0] = Math.max(0, fragment.range[0] - start);
+      fragment.range[0] = Math.max(0, fragment.range[0] - end);
       fragment.range[1] -= end;
     });
 
