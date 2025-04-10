@@ -357,7 +357,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
      * Adjust fragments ranges respectfully to the removed text
      */
     relatedFragments.forEach(fragment => {
-      fragment.range[0] -=end;
+      fragment.range[0] -= Math.max(0, end);
       fragment.range[1] -= end;
     });
 
