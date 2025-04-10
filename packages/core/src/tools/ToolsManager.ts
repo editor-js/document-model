@@ -20,7 +20,8 @@ import type { UnifiedToolConfig } from '../entities/index.js';
 import BoldInlineTool from './internal/inline-tools/bold/index.js';
 import ItalicInlineTool from './internal/inline-tools/italic/index.js';
 import LinkInlineTool from './internal/inline-tools/link/index.js';
-import { EventBus, ToolLoadedCoreEvent } from '../components/EventBus/index.js';
+import { ToolLoadedCoreEvent } from '../components/EventBus/index.js';
+import { EventBus } from '@editorjs/sdk';
 
 /**
  * Works with tools

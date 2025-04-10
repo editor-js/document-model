@@ -1,15 +1,14 @@
 import { make } from '@editorjs/dom';
 import { InlineToolbarRenderedUIEvent } from './InlineToolbarRenderedUIEvent.js';
 import type { EditorAPI,
-  EventBus,
   SelectionChangedCoreEvent,
   EditorjsPlugin,
   EditorjsPluginParams } from '@editorjs/core';
+import { UiComponentType } from '@editorjs/sdk';
 import {
-  CoreEventType,
-  UiComponentType
+  CoreEventType
 } from '@editorjs/core';
-import type { InlineTool, InlineToolFormatData } from '@editorjs/sdk';
+import type { InlineTool, InlineToolFormatData, EventBus } from '@editorjs/sdk';
 import type { InlineFragment, InlineToolName, TextRange } from '@editorjs/model';
 import Style from './InlineToolbar.module.pcss';
 

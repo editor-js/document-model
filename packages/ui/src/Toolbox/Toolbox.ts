@@ -1,15 +1,15 @@
 import { make } from '@editorjs/dom';
-import type { EventBus,
-  ToolLoadedCoreEvent,
+import type { ToolLoadedCoreEvent,
   BlockToolFacade,
   EditorjsPlugin,
   EditorjsPluginParams } from '@editorjs/core';
 import {
-  CoreEventType,
-  UiComponentType
+  CoreEventType
 } from '@editorjs/core';
 import { ToolboxRenderedUIEvent } from './ToolboxRenderedUIEvent.js';
 import type { EditorAPI } from '@editorjs/core';
+import type { EventBus } from '@editorjs/sdk';
+import { UiComponentType } from '@editorjs/sdk';
 
 /**
  * UI module responsible for rendering the toolbox
