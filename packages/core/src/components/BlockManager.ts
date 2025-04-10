@@ -4,9 +4,7 @@ import { Inject, Service } from 'typedi';
 import { BlockToolAdapter, CaretAdapter, FormattingAdapter } from '@editorjs/dom-adapters';
 import ToolsManager from '../tools/ToolsManager.js';
 import { BlockAPI, BlockToolData } from '@editorjs/editorjs';
-import { CoreConfigValidated } from '../entities/Config.js';
-import { BlockAddedCoreEvent, BlockRemovedCoreEvent } from './EventBus/index.js';
-import { EventBus } from '@editorjs/sdk';
+import { CoreConfigValidated, EventBus, BlockAddedCoreEvent, BlockRemovedCoreEvent } from '@editorjs/sdk';
 /**
  * Parameters for the BlocksManager.insert() method
  */

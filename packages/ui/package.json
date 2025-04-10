@@ -22,7 +22,7 @@
     "lint": "eslint ./src",
     "lint:ci": "yarn lint --max-warnings 0",
     "lint:fix": "yarn lint --fix",
-    "clear": "rm -rf ./dist"
+    "clear": "rm -rf ./dist && rm -f tsconfig.tsbuildinfo && rm -f tsconfig.tsbuildinfo.json"
   },
   "devDependencies": {
     "eslint": "^9.9.1",

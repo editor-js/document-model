@@ -18,6 +18,15 @@ rules:
     - always
   '@typescript-eslint/no-unsafe-declaration-merging':
     - 0
+  # @todo: remove when we setup eslint to correctly handle the types
+  '@typescript-eslint/no-unsafe-call':
+    - 0
+  '@typescript-eslint/no-unsafe-member-access':
+    - 0
+  '@typescript-eslint/no-unsafe-assignment':
+    - 0
+  '@typescript-eslint/no-unsafe-argument':
+    - 0
 env:
   browser: true
 

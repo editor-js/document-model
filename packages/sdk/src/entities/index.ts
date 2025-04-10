@@ -4,3 +4,5 @@ export * from './Config.js'
 export * from './BlockToolAdapter.js'
 export * from './EventBus/index.js';
 export * from './Ui.js';
+export * from './UnifiedToolConfig.js'; 
+export * from './EditorjsPlugin.js';

@@ -1,17 +1,18 @@
 /* eslint-disable jsdoc/informative-docs */
-import type { BlockToolConstructor, InlineToolConstructor } from '@editorjs/sdk';
-import { InternalInlineToolSettings, InternalTuneSettings } from './BaseToolFacade.js';
-import { InlineToolFacade } from './InlineToolFacade.js';
-import { BlockTuneFacade } from './BlockTuneFacade.js';
-import { BlockToolFacade } from './BlockToolFacade.js';
-// import type ApiModule from '../modules/api';
+import type { BlockToolConstructor, EditorAPI, InlineToolConstructor, UnifiedToolConfig } from '@editorjs/sdk';
+import {
+  InternalInlineToolSettings,
+  InternalTuneSettings,
+  InlineToolFacade,
+  BlockTuneFacade,
+  BlockToolFacade
+} from '@editorjs/sdk'; ;
 import type {
   ToolConstructable,
   EditorConfig,
   InlineToolConstructable,
   BlockTuneConstructable
 } from '@editorjs/editorjs';
-import type { UnifiedToolConfig } from '../../entities/UnifiedToolConfig.js';
 
 type ToolConstructor = typeof InlineToolFacade | typeof BlockToolFacade | typeof BlockTuneFacade;
 
@@ -27,8 +28,8 @@ export class ToolsFactory {
   /**
    * EditorJS API Module
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private api: any;
+
+  private api: EditorAPI;
 
   /**
    * EditorJS configuration

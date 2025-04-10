@@ -1,15 +1,14 @@
 import type { BlockAddedCoreEvent,
   BlockRemovedCoreEvent,
   EditorjsPlugin,
-  EditorjsPluginParams } from '@editorjs/core';
+  EditorjsPluginParams } from '@editorjs/sdk';
 import {
-  CoreEventType
-} from '@editorjs/core';
+  CoreEventType,
+  UiComponentType,
+  BeforeInputUIEvent
+} from '@editorjs/sdk';
 import type { EventBus } from '@editorjs/sdk';
-import { UiComponentType } from '@editorjs/sdk';
-
 import Style from './Blocks.module.pcss';
-import { BeforeInputUIEvent } from './BeforeInputUIEvent.js';
 
 /**
  * Editor's main UI renderer for HTML environment
@@ -86,7 +85,7 @@ export class BlocksUI implements EditorjsPlugin {
 
     blocksHolder.classList.add(Style['blocks']);
 
-    blocksHolder.contentEditable = 'false';
+    blocksHolder.contentEditable = 'true';
 
     blocksHolder.addEventListener('beforeinput', (e) => {
       this.#eventBus.dispatchEvent(new BeforeInputUIEvent({

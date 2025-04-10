@@ -1,6 +1,6 @@
 import { BaseToolFacade } from './BaseToolFacade.js';
 import type { BlockAPI, BlockTune as IBlockTune, BlockTuneConstructable } from '@editorjs/editorjs';
-import { ToolType } from './ToolType.js';
+import { ToolType } from '../ToolType.js';
 // import type { BlockTuneData } from '@editorjs/editorjs';
 
 /**

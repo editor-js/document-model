@@ -3,12 +3,11 @@ import { InlineToolbarRenderedUIEvent } from './InlineToolbarRenderedUIEvent.js'
 import type { EditorAPI,
   SelectionChangedCoreEvent,
   EditorjsPlugin,
-  EditorjsPluginParams } from '@editorjs/core';
-import { UiComponentType } from '@editorjs/sdk';
-import {
-  CoreEventType
-} from '@editorjs/core';
-import type { InlineTool, InlineToolFormatData, EventBus } from '@editorjs/sdk';
+  EditorjsPluginParams,
+  InlineTool,
+  InlineToolFormatData,
+  EventBus } from '@editorjs/sdk';
+import { CoreEventType, UiComponentType } from '@editorjs/sdk';
 import type { InlineFragment, InlineToolName, TextRange } from '@editorjs/model';
 import Style from './InlineToolbar.module.pcss';
 
@@ -181,7 +180,7 @@ export class InlineToolbarUI implements EditorjsPlugin {
    * @param name - name of the inline tool to render actions for
    * @param tool - inline tool instance
    */
-  #renderToolActions(name: string, tool: InlineTool): void {
+  #renderToolActions(name: InlineToolName, tool: InlineTool): void {
     const { element } = tool.renderActions?.((data: InlineToolFormatData) => {
       this.#api.selection.applyInlineToolForCurrentSelection(name, data);
     }) ?? { element: null };

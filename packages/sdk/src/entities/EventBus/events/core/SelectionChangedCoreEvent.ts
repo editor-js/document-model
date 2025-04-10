@@ -1,4 +1,4 @@
-import type { InlineTool } from '@editorjs/sdk';
+import type { InlineTool } from '@/entities/InlineTool.js';
 import { CoreEventBase } from './CoreEventBase.js';
 import { CoreEventType } from './CoreEventType.js';
 import type { Index, InlineFragment, InlineToolName } from '@editorjs/model';

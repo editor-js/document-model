@@ -8,10 +8,10 @@ import type {
 } from '@editorjs/editorjs';
 import { isEmpty, cacheable, isObject } from '@editorjs/helpers';
 import { type InlineToolFacade } from './InlineToolFacade.js';
-import { ToolType } from './ToolType.js';
+import { ToolType } from '../ToolType.js';
 import { type BlockTuneFacade } from './BlockTuneFacade.js';
-import { ToolsCollection } from './ToolsCollection.js';
-import { BlockToolConstructor as BlockToolConstructable, BlockToolConstructorOptions, BlockTool as IBlockTool } from '@editorjs/sdk';
+import { ToolsCollection } from '../ToolsCollection.js';
+import { BlockToolConstructor as BlockToolConstructable, BlockToolConstructorOptions, BlockTool as IBlockTool } from '@/entities';
 
 /**
  * Class to work with Block tools constructables

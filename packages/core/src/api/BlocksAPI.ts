@@ -2,14 +2,15 @@ import 'reflect-metadata';
 import { Inject, Service } from 'typedi';
 import { BlocksManager } from '../components/BlockManager.js';
 import { BlockToolData, ToolConfig } from '@editorjs/editorjs';
-import { CoreConfigValidated } from '../entities/index.js';
+import { CoreConfigValidated } from '@editorjs/sdk';
+import { BlocksAPI as BlocksApiInterface } from '@editorjs/sdk';
 
 /**
  * Blocks API
  *  - provides methods to work with blocks
  */
 @Service()
-export class BlocksAPI {
+export class BlocksAPI implements BlocksApiInterface {
   /**
    * BlocksManager instance to work with blocks
    */

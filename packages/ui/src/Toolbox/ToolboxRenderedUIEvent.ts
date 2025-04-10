@@ -1,4 +1,4 @@
-import { UIEventBase } from '@editorjs/core';
+import { UIEventBase } from '@editorjs/sdk';
 
 /**
  * Payload of the ToolboxRenderedUIEvent
