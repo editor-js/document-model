@@ -21,7 +21,8 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
-    "@editorjs/editorjs": "^2.30.5",
+    "@editorjs/editorjs": "^2.30.8",
+    "@editorjs/helpers": "^1.0.1",
     "@editorjs/model": "workspace:^"
   }
 }
