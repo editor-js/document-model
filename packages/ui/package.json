@@ -2,21 +2,22 @@
   "name": "@editorjs/ui",
   "packageManager": "yarn@4.0.1",
   "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
+  "main": "./dist/ui.cjs",
+  "module": "./dist/ui.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.js"
+      "import": "./dist/ui.js",
+      "require": "./dist/ui.cjs",
+      "default": "./dist/ui.js"
     }
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "vite build",
+    "build": "yarn clear && vite build",
     "dev": "vite",
     "lint": "eslint ./src",
     "lint:ci": "yarn lint --max-warnings 0",

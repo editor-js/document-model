@@ -2,7 +2,8 @@ import { CollaborationManager } from '@editorjs/collaboration-manager';
 import { EditorJSModel, EventType } from '@editorjs/model';
 import type { ContainerInstance } from 'typedi';
 import { Container } from 'typedi';
-import { CoreEventType, EventBus } from './components/EventBus/index.js';
+import { CoreEventType } from './components/EventBus/index.js';
+import { EventBus, UiComponentType } from '@editorjs/sdk';
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
 import ToolsManager from './tools/ToolsManager.js';
 import { CaretAdapter, FormattingAdapter } from '@editorjs/dom-adapters';
@@ -12,7 +13,6 @@ import { BlocksManager } from './components/BlockManager.js';
 import { SelectionManager } from './components/SelectionManager.js';
 import type { EditorjsPluginConstructor } from './entities/EditorjsPlugin.js';
 import { EditorAPI } from './api/index.js';
-import { UiComponentType } from './entities/Ui.js';
 import { generateId } from './utils/uid.js';
 
 /**
@@ -79,6 +79,9 @@ export default class Core {
 
     this.#iocContainer.set('EditorConfig', this.#config);
 
+    const eventBus = new EventBus();
+    this.#iocContainer.set(EventBus, eventBus);
+
     this.#model = new EditorJSModel();
     this.#iocContainer.set(EditorJSModel, this.#model);
 
@@ -102,8 +105,6 @@ export default class Core {
         config.onModelUpdate?.(this.#model);
       });
     }
-
-    const eventBus = this.#iocContainer.get(EventBus);
 
     eventBus.addEventListener(`core:${CoreEventType.Undo}`, () => {
       this.#collaborationManager.undo();
