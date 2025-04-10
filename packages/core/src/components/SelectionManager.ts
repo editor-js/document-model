@@ -59,7 +59,7 @@ export class SelectionManager {
     this.#eventBus.addEventListener(`core:${CoreEventType.ToolLoaded}`, (event: ToolLoadedCoreEvent) => {
       const { tool } = event.detail;
 
-      if (!tool.isInline()) {
+      if ('isInline' in tool && tool.isInline() === false) {
         return;
       }
 

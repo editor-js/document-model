@@ -48,7 +48,6 @@ export class ToolsFactory {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     api: any
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     this.api = api;
     this.config = config;
     this.editorConfig = editorConfig;
@@ -64,7 +63,6 @@ export class ToolsFactory {
     const Constructor = this.getConstructor(constructable);
     // const isTune = constructable[InternalTuneSettings.IsTune];
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return new Constructor({
       name,
       constructable,

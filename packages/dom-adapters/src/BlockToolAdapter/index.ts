@@ -20,9 +20,9 @@ import {
   isNonTextInput
 } from '../utils/index.js';
 import { InputType } from './types/InputType.js';
-import { BeforeInputUIEventName, type BlockToolAdapter as BlockToolAdapterInterface, type CoreConfig } from '@editorjs/sdk';
+import { type BlockToolAdapter as BlockToolAdapterInterface, type CoreConfig } from '@editorjs/sdk';
 import type { FormattingAdapter } from '../FormattingAdapter/index.js';
-import type { BeforeInputUIEvent, EventBus } from '@editorjs/sdk';
+import type { EventBus } from '@editorjs/sdk';
 
 /**
  * BlockToolAdapter is using inside Block tools to connect browser DOM elements to the model

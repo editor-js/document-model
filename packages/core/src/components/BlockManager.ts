@@ -119,7 +119,6 @@ export class BlocksManager {
       newIndex = this.#model.length + (replace ? 0 : 1);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     this.#model.addBlock(this.#config.userId, {
       ...data,
       name: type,

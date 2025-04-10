@@ -59,7 +59,6 @@ export class BlocksAPI implements BlocksApiInterface {
   ): void {
     this.#blocksManager.insert({
       type,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       data,
       index,
       replace,

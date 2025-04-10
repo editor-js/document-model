@@ -55,7 +55,7 @@ export class ToolboxUI implements EditorjsPlugin {
     this.#eventBus.addEventListener(`core:${CoreEventType.ToolLoaded}`, (event: ToolLoadedCoreEvent) => {
       const { tool } = event.detail;
 
-      if (tool.isBlock()) {
+      if ('isBlock' in tool && tool.isBlock()) {
         this.addTool(tool);
       }
     });
