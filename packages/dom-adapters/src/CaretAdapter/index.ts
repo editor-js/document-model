@@ -236,22 +236,30 @@ export class CaretAdapter extends EventTarget {
     }
 
     const selection = document.getSelection()!;
-
-    let absoluteStartOffset = getAbsoluteRangeOffset(input, selection.anchorNode!, selection.anchorOffset);
-    let absoluteEndOffset = getAbsoluteRangeOffset(input, selection.focusNode!, selection.focusOffset);
-
-    /**
-     * For right-to-left selection, we need to swap start and end offsets to compare with model range
-     */
-    if (absoluteStartOffset > absoluteEndOffset) {
-      [absoluteStartOffset, absoluteEndOffset] = [absoluteEndOffset, absoluteStartOffset];
-    }
-
+    
+    let isStartEqualsCurrent = false;
+    let isEndEqualsCurrent = false;
+    
     const start = getBoundaryPointByAbsoluteOffset(input, textRange[0]);
     const end = getBoundaryPointByAbsoluteOffset(input, textRange[1]);
 
-    const isStartEqualsCurrent = textRange[0] === absoluteStartOffset;
-    const isEndEqualsCurrent = textRange[1] === absoluteEndOffset;
+    /**
+     * If selection is outside of the input, it is different from the model range
+     */
+    if (input.contains(selection.anchorNode!) && input.contains(selection.focusNode!)) {
+      let absoluteStartOffset = getAbsoluteRangeOffset(input, selection.anchorNode!, selection.anchorOffset);
+      let absoluteEndOffset = getAbsoluteRangeOffset(input, selection.focusNode!, selection.focusOffset);
+
+      /**
+       * For right-to-left selection, we need to swap start and end offsets to compare with model range
+       */
+      if (absoluteStartOffset > absoluteEndOffset) {
+        [absoluteStartOffset, absoluteEndOffset] = [absoluteEndOffset, absoluteStartOffset];
+      }
+
+      isStartEqualsCurrent = textRange[0] === absoluteStartOffset;
+      isEndEqualsCurrent = textRange[1] === absoluteEndOffset;
+    }
 
     /**
      * If selection is already the same, we don't need to update it to not interrupt browser's behaviour
