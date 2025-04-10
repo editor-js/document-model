@@ -21,6 +21,11 @@ export class DocumentManager {
   #model: EditorJSModel;
 
   /**
+   * Promise resolving with currently processed operation
+   */
+  #operationInProcessing: Promise<Operation | null> | null = null;
+
+  /**
    * DocumentManager constructor function
    * @param identifier - identifier of the document to manage
    */
@@ -37,31 +42,14 @@ export class DocumentManager {
 
   /**
    * Process new operation
-   * - Transform relative to operations in stack if needed
-   * - Puts operation to the operations array
-   * - Updates models state
-   * @todo ensure the operations are processed consequently
+   * - awaits previous operation to finish processing
+   * - processes the new one
    * @param operation - operation from the client to process
    */
-  public process(operation: Operation): Operation | null {
-    if (operation.rev! > this.#currentRev) {
-      console.error('Operation rejected due to incorrect revision %o', operation);
+  public async process(operation: Operation): Promise<Operation | null> {
+    await this.#operationInProcessing;
 
-      return null;
-    }
-
-    const conflictingOps = this.#operations.filter(op => op.rev! >= operation.rev!);
-    const transformedOp = conflictingOps.reduce((result, op) => result.transform(op), operation);
-
-    transformedOp.rev = this.#currentRev;
-
-    this.#currentRev += 1;
-
-    this.#operations.push(transformedOp);
-
-    this.#applyOperationToModel(transformedOp);
-
-    return transformedOp;
+    return this.#processNextOperation(operation);
   }
 
   /**
@@ -69,6 +57,38 @@ export class DocumentManager {
    */
   public currentModelState(): EditorDocumentSerialized {
     return this.#model.serialized;
+  }
+
+  /**
+   * Process next operation
+   * - Transform relative to operations in stack if needed
+   * - Puts operation to the operations array
+   * - Updates models state
+   * @param operation - operation to process
+   */
+  #processNextOperation(operation: Operation): Promise<Operation | null> {
+    this.#operationInProcessing = new Promise((resolve) => {
+      if (operation.rev! > this.#currentRev) {
+        console.error('Operation rejected due to incorrect revision %o', operation);
+
+        return resolve(null);
+      }
+
+      const conflictingOps = this.#operations.filter(op => op.rev! >= operation.rev!);
+      const transformedOp = conflictingOps.reduce((result, op) => result.transform(op), operation);
+
+      transformedOp.rev = this.#currentRev;
+
+      this.#currentRev += 1;
+
+      this.#operations.push(transformedOp);
+
+      this.#applyOperationToModel(transformedOp);
+
+      resolve(transformedOp);
+    });
+
+    return this.#operationInProcessing;
   }
 
   /**

@@ -61,7 +61,7 @@ export class OTServer {
 
         return;
       case MessageType.Operation:
-        this.#onOperation(ws, message.payload as SerializedOperation);
+        void this.#onOperation(ws, message.payload as SerializedOperation);
 
         return;
     }
@@ -104,7 +104,7 @@ export class OTServer {
    * @param ws - client websocket
    * @param payload - operation payload
    */
-  #onOperation(ws: WebSocket, payload: SerializedOperation): void {
+  async #onOperation(ws: WebSocket, payload: SerializedOperation): Promise<void> {
     const operation = Operation.from(payload);
     const documentId = operation.index.documentId;
 
@@ -121,7 +121,7 @@ export class OTServer {
     const manager = this.#managers.get(documentId)!;
     const clients = this.#clients.get(documentId)!;
 
-    const processedOperation = manager.process(operation);
+    const processedOperation = await manager.process(operation);
 
     if (processedOperation === null) {
       ws.close(BAD_REQUEST_CODE, 'Operation couldn\'t be processed');

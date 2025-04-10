@@ -25,10 +25,10 @@ function createOperation<T extends OperationType>(
 }
 
 describe('DocumentManager', () => {
-  it('should process consequential operations', () => {
+  it('should process consequential operations', async () => {
     const manager = new DocumentManager('document');
 
-    manager.process(
+    await manager.process(
       createOperation(
         OperationType.Insert,
         'doc@0:block@0',
@@ -48,7 +48,7 @@ describe('DocumentManager', () => {
         0
       )
     );
-    manager.process(
+    await manager.process(
       createOperation(
         OperationType.Insert,
         'doc@0:block@0:data@text:[0,0]',
@@ -57,7 +57,7 @@ describe('DocumentManager', () => {
         1
       )
     );
-    manager.process(
+    await manager.process(
       createOperation(
         OperationType.Insert,
         'doc@0:block@0:data@text:[0,0]',
@@ -66,7 +66,7 @@ describe('DocumentManager', () => {
         2
       )
     );
-    manager.process(
+    await manager.process(
       createOperation(
         OperationType.Insert,
         'doc@0:block@0:data@text:[0,0]',
@@ -95,10 +95,10 @@ describe('DocumentManager', () => {
     });
   });
 
-  it('should process concurrent operations', () => {
+  it('should process concurrent operations', async () => {
     const manager = new DocumentManager('document');
 
-    manager.process(
+    await manager.process(
       createOperation(
         OperationType.Insert,
         'doc@0:block@0',
@@ -118,7 +118,7 @@ describe('DocumentManager', () => {
         0
       )
     );
-    manager.process(
+    await manager.process(
       createOperation(
         OperationType.Insert,
         'doc@0:block@0:data@text:[0,0]',
@@ -127,7 +127,7 @@ describe('DocumentManager', () => {
         1
       )
     );
-    manager.process(
+    await manager.process(
       createOperation(
         OperationType.Insert,
         'doc@0:block@0:data@text:[0,0]',
@@ -156,10 +156,10 @@ describe('DocumentManager', () => {
     });
   });
 
-  it('should process older operations', () => {
+  it('should process older operations', async () => {
     const manager = new DocumentManager('document');
 
-    manager.process(
+    await manager.process(
       createOperation(
         OperationType.Insert,
         'doc@0:block@0',
@@ -179,7 +179,7 @@ describe('DocumentManager', () => {
         0
       )
     );
-    manager.process(
+    await manager.process(
       createOperation(
         OperationType.Insert,
         'doc@0:block@0:data@text:[0,0]',
@@ -188,7 +188,7 @@ describe('DocumentManager', () => {
         1
       )
     );
-    manager.process(
+    await manager.process(
       createOperation(
         OperationType.Insert,
         'doc@0:block@0:data@text:[0,0]',
@@ -197,7 +197,7 @@ describe('DocumentManager', () => {
         2
       )
     );
-    manager.process(
+    await manager.process(
       createOperation(
         OperationType.Insert,
         'doc@0:block@0:data@text:[0,0]',
@@ -217,6 +217,79 @@ describe('DocumentManager', () => {
             text: {
               $t: 't',
               value: 'AAB',
+              fragments: [],
+            },
+          },
+        },
+      ],
+      properties: {},
+    });
+  });
+
+  it('should correctly process async operations', async () => {
+    const manager = new DocumentManager('document');
+
+    void manager.process(
+      createOperation(
+        OperationType.Insert,
+        'doc@0:block@0',
+        {
+          payload: [{
+            name: 'paragraph',
+            data: {
+              text: {
+                $t: 't',
+                value: '',
+                fragments: [],
+              },
+            },
+          }],
+        },
+        'user',
+        0
+      )
+    );
+    void manager.process(
+      createOperation(
+        OperationType.Insert,
+        'doc@0:block@0:data@text:[0,0]',
+        { payload: 'A' },
+        'user',
+        1
+      )
+    );
+    void manager.process(
+      createOperation(
+        OperationType.Insert,
+        'doc@0:block@0:data@text:[0,0]',
+        { payload: 'A' },
+        'user',
+        2
+      )
+    );
+    /**
+     * Waiting for the last operation so expect is executed after it is processed
+     */
+    await manager.process(
+      createOperation(
+        OperationType.Insert,
+        'doc@0:block@0:data@text:[0,0]',
+        { payload: 'A' },
+        'user',
+        3
+      )
+    );
+
+    expect(manager.currentModelState()).toEqual({
+      identifier: 'document',
+      blocks: [
+        {
+          name: 'paragraph',
+          tunes: {},
+          data: {
+            text: {
+              $t: 't',
+              value: 'AAA',
               fragments: [],
             },
           },
