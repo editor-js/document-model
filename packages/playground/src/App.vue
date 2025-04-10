@@ -28,7 +28,7 @@ onMounted(() => {
   const core = new Core({
     holder: document.getElementById('editorjs') as HTMLElement,
     userId: userId,
-    // documentId: 'test',
+    documentId: 'test',
     // collaborationServer: 'ws://localhost:8080',
     data: {
       blocks: [
