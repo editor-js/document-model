@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import { beforeEach, describe } from '@jest/globals';
 import { EditorJSModel } from './EditorJSModel.js';
-import { createDataKey, IndexBuilder } from './entities/index';
+import { createDataKey, IndexBuilder } from './entities/index.js';
 import type { DocumentId } from './EventBus/index';
 
 describe('EditorJSModel', () => {
