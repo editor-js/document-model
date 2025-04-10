@@ -1,3 +1,15 @@
 .blocks {
   outline: none;
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+/**
+ * Zero-width space wrapper that will prevent Safari from deleting blocks if there is no content in host
+ */
+.host-holder {
+  line-height: 0;
+  width: 0;
+  height: 0;
+  user-select: none;
 }

@@ -20,9 +20,9 @@ import {
   isNonTextInput
 } from '../utils/index.js';
 import { InputType } from './types/InputType.js';
-import { type BlockToolAdapter as BlockToolAdapterInterface, type CoreConfig } from '@editorjs/sdk';
+import { BeforeInputUIEventName, type BlockToolAdapter as BlockToolAdapterInterface, type CoreConfig } from '@editorjs/sdk';
 import type { FormattingAdapter } from '../FormattingAdapter/index.js';
-import type { EventBus } from '@editorjs/sdk';
+import type { BeforeInputUIEvent, BeforeInputUIEventPayload, EventBus } from '@editorjs/sdk';
 
 /**
  * BlockToolAdapter is using inside Block tools to connect browser DOM elements to the model
@@ -61,6 +61,13 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
   #config: Required<CoreConfig>;
 
   /**
+   * Inputs that bound to the model
+   *
+   * @todo handle inputs deletion — remove inputs from the map when they are removed from the DOM
+   */
+  #attachedInputs = new Map<DataKey, HTMLElement>();
+
+  /**
    * BlockToolAdapter constructor
    *
    * @param config - Editor's config
@@ -87,9 +94,9 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     this.#formattingAdapter = formattingAdapter;
     this.#toolName = toolName;
 
-    // eventBus.addEventListener(BeforeInputUIEventName, (event: BeforeInputUIEvent) => {
-    //   console.log('BeforeInputUIEventName', event);
-    // });
+    eventBus.addEventListener(`ui:${BeforeInputUIEventName}`, (event: BeforeInputUIEvent) => {
+      this.#processDelegatedBeforeInput(event);
+    });
   }
 
   /**
@@ -106,7 +113,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
 
     const key = createDataKey(keyRaw);
 
-    input.addEventListener('beforeinput', event => this.#handleBeforeInputEvent(event, input, key));
+    this.#attachedInputs.set(key, input);
 
     this.#model.addEventListener(EventType.Changed, (event: ModelEvents) => this.#handleModelUpdate(event, input, key));
 
@@ -131,15 +138,60 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
   }
 
   /**
+   * Check current selection and find it across all attached inputs
+   * 
+   * @returns tuple of data key and input element or null if no focused input is found
+   */
+  #findFocusedInput(): [DataKey, HTMLElement] | null {
+    const currentInput = Array.from(this.#attachedInputs.entries()).find(([_, input]) => {
+      /**
+       * Case 1: Input is a native input — check if it has selection
+       */
+      if (input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement) {
+        return input.selectionStart !== null && input.selectionEnd !== null;
+      }
+
+      /**
+       * Case 2: Input is a contenteditable element — check if it has range start container
+       */
+      if (input.isContentEditable) {
+        const selection = window.getSelection();
+        if (selection !== null && selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          return input.contains(range.startContainer);
+        }
+      }
+      return false;
+    });
+
+    return currentInput !== undefined ? [currentInput[0], currentInput[1]] : null;
+  }
+
+  /**
+   * Handles 'beforeinput' event delegated from the blocks host element
+   *
+   * @param event - event containig necessary data
+   */
+  #processDelegatedBeforeInput(event: BeforeInputUIEvent): void {
+    const [dataKey, currentInput] = this.#findFocusedInput() ?? [];
+
+    if (!currentInput || !dataKey) {
+      return;
+    }
+
+    this.#handleBeforeInputEvent(event.detail, currentInput, dataKey);
+  }
+
+  /**
    * Handles delete events in native input
    *
-   * @param event - beforeinput event
+   * @param payload - beforeinput event payload
    * @param input - input element
    * @param key - data key input is attached to
    * @private
    */
-  #handleDeleteInNativeInput(event: InputEvent, input: HTMLInputElement | HTMLTextAreaElement, key: DataKey): void {
-    const inputType = event.inputType as InputType;
+  #handleDeleteInNativeInput(payload: BeforeInputUIEventPayload, input: HTMLInputElement | HTMLTextAreaElement, key: DataKey): void {
+    const inputType = payload.inputType;
 
     /**
      * Check that selection exists in current input
@@ -223,12 +275,12 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
   /**
    * Handles delete events in contenteditable element
    *
-   * @param event - beforeinput event
+   * @param payload - beforeinput event payload
    * @param input - input element
    * @param key - data key input is attached to
    */
-  #handleDeleteInContentEditable(event: InputEvent, input: HTMLElement, key: DataKey): void {
-    const targetRanges = event.getTargetRanges();
+  #handleDeleteInContentEditable(payload: BeforeInputUIEventPayload, input: HTMLElement, key: DataKey): void {
+    const { targetRanges } = payload;
     const range = targetRanges[0];
 
     const start: number = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
@@ -242,23 +294,18 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    *
    * We prevent beforeinput event of any type to handle it manually via model update
    *
-   * @param event - beforeinput event
+   * @param payload - payload of input event
    * @param input - input element
    * @param key - data key input is attached to
    */
-  #handleBeforeInputEvent(event: InputEvent, input: HTMLElement, key: DataKey): void {
-    /**
-     * We prevent all events to handle them manually via model update
-     */
-    event.preventDefault();
+  #handleBeforeInputEvent(payload: BeforeInputUIEventPayload, input: HTMLElement, key: DataKey): void {
+    const { data, inputType, targetRanges } = payload;
 
     const isInputNative = isNativeInput(input);
-    const inputType = event.inputType as InputType;
     let start: number;
     let end: number;
 
     if (isInputNative === false) {
-      const targetRanges = event.getTargetRanges();
       const range = targetRanges[0];
 
       start = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
@@ -278,20 +325,6 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
           this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, end);
         }
 
-        let data: string;
-
-        /**
-         * For native inputs data for those events comes from event.data property
-         * while for contenteditable elements it's stored in event.dataTransfer
-         *
-         * @see https://www.w3.org/TR/input-events-2/#overview
-         */
-        if (isInputNative) {
-          data = event.data ?? '';
-        } else {
-          data = event.dataTransfer!.getData('text/plain');
-        }
-
         this.#model.insertText(this.#config.userId, this.#blockIndex, key, data, start);
 
         break;
@@ -308,8 +341,6 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
         if (start !== end) {
           this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, end);
         }
-
-        const data = event.data as string;
 
         this.#model.insertText(this.#config.userId, this.#blockIndex, key, data, start);
         break;
@@ -328,9 +359,9 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
       case InputType.DeleteWordBackward:
       case InputType.DeleteWordForward: {
         if (isInputNative === true) {
-          this.#handleDeleteInNativeInput(event, input as HTMLInputElement | HTMLTextAreaElement, key);
+          this.#handleDeleteInNativeInput(payload, input as HTMLInputElement | HTMLTextAreaElement, key);
         } else {
-          this.#handleDeleteInContentEditable(event, input, key);
+          this.#handleDeleteInContentEditable(payload, input, key);
         }
         break;
       }
