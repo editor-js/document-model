@@ -47,10 +47,12 @@ FROM base AS final
 
 ARG NODE_ENV=production
 ARG WSS_PORT=8080
+ARG HAWK_TOKEN
 
 # Use production node environment by default.
 ENV NODE_ENV $NODE_ENV
 ENV WSS_PORT $WSS_PORT
+ENV HAWK_TOKEN $HAWK_TOKEN
 
 COPY --from=build /usr/src/app/.yarn /usr/src/app/.yarn
 COPY --from=build /usr/src/app/package.json /usr/src/app/.yarnrc.yml /usr/src/app/yarn.lock /usr/src/app/
