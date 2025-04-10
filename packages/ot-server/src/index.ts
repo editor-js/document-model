@@ -1,4 +1,7 @@
 import { OTServer } from './OTServer.js';
+import { config } from 'dotenv';
+
+config();
 
 /**
  * main function

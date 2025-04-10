@@ -8,6 +8,7 @@ import {
 import type { DocumentId } from '@editorjs/model';
 import { type WebSocket, WebSocketServer } from 'ws';
 import { DocumentManager } from './DocumentManager.js';
+import process from 'process';
 
 const BAD_REQUEST_CODE = 4400;
 
@@ -35,7 +36,7 @@ export class OTServer {
    * Start websocket servier
    */
   public start(): void {
-    this.#wss = new WebSocketServer({ port: 8080 });
+    this.#wss = new WebSocketServer({ port: parseInt(process.env.WSS_PORT ?? '8080') });
 
     this.#wss.on('connection', ws => this.#onConnection(ws));
   }
@@ -47,6 +48,7 @@ export class OTServer {
   #onConnection(ws: WebSocket): void {
     // eslint-disable-next-line @typescript-eslint/no-base-to-string
     ws.on('message', message => this.#onMessage(ws, JSON.parse(message.toString()) as Message));
+    ws.on('close', () => this.#onClose(ws));
   }
 
   /**
@@ -68,6 +70,25 @@ export class OTServer {
   }
 
   /**
+   * Client websocket close event callback
+   * @param ws - client websocket
+   */
+  #onClose(ws: WebSocket): void {
+    const [documentId, documentClient] = this.#clients.entries().find(([, clients]) => clients.has(ws)) ?? [];
+
+    if (documentId === undefined || documentClient === undefined) {
+      return;
+    }
+
+    documentClient.delete(ws);
+
+    if (documentClient.size === 0) {
+      this.#clients.delete(documentId);
+      this.#managers.delete(documentId);
+    }
+  }
+
+  /**
    * Handshake callback
    * @param ws - client websocket
    * @param payload - handshake payload
@@ -81,7 +102,11 @@ export class OTServer {
       return;
     }
 
+    let firstConnection = false;
+
     if (!this.#managers.has(documentId)) {
+      firstConnection = true;
+
       this.#managers.set(documentId, new DocumentManager(documentId));
       this.#clients.set(documentId, new Set());
     }
@@ -89,12 +114,16 @@ export class OTServer {
     this.#clients.get(documentId)!.add(ws);
     const manager = this.#managers.get(documentId)!;
 
+    if (firstConnection && payload.data) {
+      manager.initializeDocument(payload.data);
+    }
+
     ws.send(JSON.stringify({
       type: MessageType.Handshake,
       payload: {
         ...payload,
         rev: manager.currentRev,
-        data: manager.currentModelState(),
+        data: firstConnection ? undefined : manager.currentModelState(),
       },
     }));
   }
