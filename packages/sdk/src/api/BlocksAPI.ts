@@ -24,4 +24,4 @@ export interface BlocksAPI {
     replace?: boolean,
     id?: string
   ): void;
-} 
+}

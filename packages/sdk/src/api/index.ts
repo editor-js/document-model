@@ -1,3 +1,3 @@
-export * from './EditorAPI.js';
-export * from './BlocksAPI.js';
-export * from './SelectionAPI.js';
+export type * from './EditorAPI.js';
+export type * from './BlocksAPI.js';
+export type * from './SelectionAPI.js';

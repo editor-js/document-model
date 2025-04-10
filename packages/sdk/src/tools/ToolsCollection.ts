@@ -1,7 +1,7 @@
 import { type BlockToolFacade } from './facades/BlockToolFacade.js';
 import { type InlineToolFacade } from './facades/InlineToolFacade.js';
 import { type BlockTuneFacade } from './facades/BlockTuneFacade.js';
-import { ToolFacadeClass } from './facades/index.js';
+import type { ToolFacadeClass } from './facades/index.js';
 
 /**
  * Class to store Editor Tools

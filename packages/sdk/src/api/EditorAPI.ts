@@ -15,4 +15,4 @@ export interface EditorAPI {
    * Selection API instance to work with selection and inline formatting
    */
   selection: SelectionAPI;
-} 
+}

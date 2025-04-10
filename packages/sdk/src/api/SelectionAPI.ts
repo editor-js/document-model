@@ -11,4 +11,4 @@ export interface SelectionAPI {
    * @param data - optional data for the inline tool
    */
   applyInlineToolForCurrentSelection(tool: InlineToolName, data?: Record<string, unknown>): void;
-} 
+}

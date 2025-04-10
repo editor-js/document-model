@@ -11,7 +11,7 @@ import { type InlineToolFacade } from './InlineToolFacade.js';
 import { ToolType } from '../ToolType.js';
 import { type BlockTuneFacade } from './BlockTuneFacade.js';
 import { ToolsCollection } from '../ToolsCollection.js';
-import { BlockToolConstructor as BlockToolConstructable, BlockToolConstructorOptions, BlockTool as IBlockTool } from '@/entities';
+import type { BlockToolConstructor as BlockToolConstructable, BlockToolConstructorOptions, BlockTool as IBlockTool } from '@/entities';
 
 /**
  * Class to work with Block tools constructables

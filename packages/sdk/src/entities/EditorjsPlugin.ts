@@ -1,4 +1,4 @@
-import { EventBus } from '@/entities/EventBus/EventBus.js';
+import type { EventBus } from '@/entities/EventBus/EventBus.js';
 import type { CoreConfigValidated } from '@/entities/Config.js';
 import type { EditorAPI } from '@/api/EditorAPI.js';
 

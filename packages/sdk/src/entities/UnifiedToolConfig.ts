@@ -1,6 +1,6 @@
 import type { ToolSettings, ToolConstructable } from '@editorjs/editorjs';
-import type { BlockToolConstructor, InlineToolConstructor } from '@/entities';
-
+import type { BlockToolConstructor } from '@/entities/BlockTool.js';
+import type { InlineToolConstructor } from '@/entities/InlineTool.js';
 /**
  * Users can pass tool's config in two ways:
  *   toolName: ToolClass
