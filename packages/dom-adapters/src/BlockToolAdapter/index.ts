@@ -23,7 +23,7 @@ import { InputType } from './types/InputType.js';
 import type { BlockToolAdapter as BlockToolAdapterInterface, CoreConfig } from '@editorjs/sdk';
 import type { FormattingAdapter } from '../FormattingAdapter/index.js';
 import type { EventBus } from '@editorjs/sdk';
-import { BeforeInputUIEventName, BeforeInputUIEvent, BeforeInputUIEventPayload } from '@editorjs/ui';
+
 /**
  * BlockToolAdapter is using inside Block tools to connect browser DOM elements to the model
  * It can handle beforeinput events and update model data
@@ -65,6 +65,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    *
    * @param config - Editor's config
    * @param model - EditorJSModel instance
+   * @param eventBus - Editor EventBus instance
    * @param caretAdapter - CaretAdapter instance
    * @param blockIndex - index of the block that this adapter is connected to
    * @param formattingAdapter - needed to render formatted text
