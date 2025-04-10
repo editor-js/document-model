@@ -176,7 +176,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
       return false;
     });
 
-    return currentInput !== undefined ? [currentInput[0], currentInput[1]] : null;
+    return currentInput !== undefined ? currentInput : null;
   }
 
   /**
@@ -187,7 +187,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
   #processDelegatedBeforeInput(event: BeforeInputUIEvent): void {
     const [dataKey, currentInput] = this.#findFocusedInput() ?? [];
 
-    if (!currentInput || !dataKey) {
+    if (currentInput === undefined || dataKey === undefined) {
       return;
     }
 
