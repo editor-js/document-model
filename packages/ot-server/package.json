@@ -16,6 +16,7 @@
   "dependencies": {
     "@editorjs/collaboration-manager": "workspace:^",
     "@editorjs/model": "workspace:^",
+    "dotenv": "^16.4.7",
     "ws": "^8.18.1"
   },
   "devDependencies": {

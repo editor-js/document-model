@@ -90,9 +90,9 @@ export class OTClient {
   /**
    * Sends handshake event to the server to connect the client to passed document
    *
-   * @param documentId - document identifier
+   * @param document - serialized document data
    */
-  public async connectDocument(documentId: DocumentId): Promise<void> {
+  public async connectDocument(document: EditorDocumentSerialized): Promise<void> {
     const ws = await this.#ws;
 
     this.#handshake = new Promise(resolve => {
@@ -125,9 +125,10 @@ export class OTClient {
     ws.send(JSON.stringify({
       type: MessageType.Handshake,
       payload: {
-        document: documentId,
+        document: document.identifier,
         userId: this.#userId,
         rev: this.#rev,
+        data: document,
       } as HandshakePayload,
     }));
   }
