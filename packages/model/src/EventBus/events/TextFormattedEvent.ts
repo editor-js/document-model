@@ -19,7 +19,7 @@ export class TextFormattedEvent extends BaseDocumentEvent<EventAction.Modified, 
    * @param data - data of the InlineTool that was used to format the fragment. Optional
    * @param userId - user identifier
    */
-  constructor(index: Index, data: TextFormattedEventData, userId?: string | number) {
+  constructor(index: Index, data: TextFormattedEventData, userId: string | number) {
     super(index, EventAction.Modified, data, userId);
   }
 }

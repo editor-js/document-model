@@ -8,6 +8,11 @@ import type { Properties } from './Properties';
  */
 export interface EditorDocumentSerialized {
   /**
+   * Document identifier
+   */
+  identifier: string;
+
+  /**
    * Array of serialized BlockNodes
    */
   blocks: BlockNodeSerialized[];

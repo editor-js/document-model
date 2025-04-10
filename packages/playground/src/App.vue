@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// import CaretIndex from '@/components/CaretIndex.vue';
 import { EditorDocument, EditorJSModel } from '@editorjs/model';
 import Core from '@editorjs/core';
 import { ref, onMounted } from 'vue';
@@ -14,6 +15,10 @@ const editorDocument = ref<EditorDocument | null>(null);
  */
 const serialized = ref<EditorDocument['serialized'] | null>(null);
 
+const model = ref<EditorJSModel | null>(null);
+
+const userId = crypto.randomUUID();
+
 
 /**
  * @todo display caret index somewhere
@@ -22,18 +27,25 @@ const serialized = ref<EditorDocument['serialized'] | null>(null);
 onMounted(() => {
   const core = new Core({
     holder: document.getElementById('editorjs') as HTMLElement,
+    userId: userId,
+    documentId: 'test',
+    // collaborationServer: 'ws://localhost:8080',
     data: {
-      blocks: [ {
-        type: 'paragraph',
-        data: {
-          text: 'Hello, World!',
-        },
-      } ],
+      blocks: [
+        // {
+        //   type: 'paragraph',
+        //   data: {
+        //     text: 'Hello, World!',
+        //   },
+        // },
+      ],
     },
-    onModelUpdate: (model: EditorJSModel) => {
-      serialized.value = model.serialized;
-      editorDocument.value = model.devModeGetDocument();
+    onModelUpdate: (m: EditorJSModel) => {
+      model.value = m;
+      serialized.value = m.serialized;
+      editorDocument.value = m.devModeGetDocument();
     },
+
   });
 
   core
@@ -59,6 +71,10 @@ onMounted(() => {
     </div>
 
     <div :class="$style.body">
+      <!--      <CaretIndex-->
+      <!--        :user-id="userId"-->
+      <!--        :model="model"-->
+      <!--      />-->
       <div>
         <h2 :class="$style.sectionHeading">
           Editor
@@ -72,7 +88,6 @@ onMounted(() => {
         <h2 :class="$style.sectionHeading">
           Model Serialized
         </h2>
-        <!-- <CaretIndex :model="model" /> -->
         <pre v-if="serialized">{{ serialized }}</pre>
       </div>
       <div :class="$style.output">

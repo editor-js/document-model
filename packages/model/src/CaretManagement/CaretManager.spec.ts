@@ -7,21 +7,22 @@ import {
 } from '../EventBus/index.js';
 import { Caret } from './Caret/index.js';
 import { CaretManager } from './CaretManager.js';
+import { jest } from '@jest/globals';
 
 describe('CaretManager', () => {
   it('should create new caret', () => {
     const manager = new CaretManager();
 
-    const caret = manager.createCaret();
+    const caret = manager.createCaret('userId');
 
-    expect(manager.getCaret(caret.id)).toBe(caret);
+    expect(manager.getCaret(caret.userId)).toBe(caret);
   });
 
   it('should create new caret with passed index', () => {
     const manager = new CaretManager();
     const index = new Index();
 
-    const caret = manager.createCaret(index);
+    const caret = manager.createCaret('userId', index);
 
     expect(caret.index).toBe(index);
   });
@@ -33,12 +34,12 @@ describe('CaretManager', () => {
     manager.addEventListener(EventType.CaretManagerUpdated, handler);
 
     const index = new Index();
-    const caret = manager.createCaret(index);
+    const caret = manager.createCaret('userId', index);
 
     expect(handler).toHaveBeenCalledWith(expect.any(CaretManagerCaretAddedEvent));
     expect(handler).toHaveBeenCalledWith(expect.objectContaining({
       detail: {
-        id: caret.id,
+        userId: caret.userId,
         index: index.serialize(),
       },
     }));
@@ -46,18 +47,18 @@ describe('CaretManager', () => {
 
   it('should update caret', () => {
     const manager = new CaretManager();
-    const caret = manager.createCaret();
+    const caret = manager.createCaret('userId');
 
     const index = new Index();
 
     caret.update(index);
 
-    expect(manager.getCaret(caret.id)?.index).toBe(index);
+    expect(manager.getCaret(caret.userId)?.index).toBe(index);
   });
 
   it('should dispatch caret updated event on caret update', () => {
     const manager = new CaretManager();
-    const caret = manager.createCaret();
+    const caret = manager.createCaret('userId');
     const handler = jest.fn();
 
     manager.addEventListener(EventType.CaretManagerUpdated, handler);
@@ -69,7 +70,7 @@ describe('CaretManager', () => {
     expect(handler).toHaveBeenCalledWith(expect.any(CaretManagerCaretUpdatedEvent));
     expect(handler).toHaveBeenCalledWith(expect.objectContaining({
       detail: {
-        id: caret.id,
+        userId: caret.userId,
         index: index.serialize(),
       },
     }));
@@ -77,16 +78,16 @@ describe('CaretManager', () => {
 
   it('should remove caret', () => {
     const manager = new CaretManager();
-    const caret = manager.createCaret();
+    const caret = manager.createCaret('userId');
 
     manager.removeCaret(caret);
 
-    expect(manager.getCaret(caret.id)).toBeUndefined();
+    expect(manager.getCaret(caret.userId)).toBeUndefined();
   });
 
   it('should dispatch caret removed event on caret removal', () => {
     const manager = new CaretManager();
-    const caret = manager.createCaret();
+    const caret = manager.createCaret('userId');
     const handler = jest.fn();
 
     manager.addEventListener(EventType.CaretManagerUpdated, handler);
@@ -96,7 +97,7 @@ describe('CaretManager', () => {
     expect(handler).toHaveBeenCalledWith(expect.any(CaretManagerCaretRemovedEvent));
     expect(handler).toHaveBeenCalledWith(expect.objectContaining({
       detail: {
-        id: caret.id,
+        userId: caret.userId,
         index: null,
       },
     }));
@@ -104,7 +105,7 @@ describe('CaretManager', () => {
 
   it('should not dispatch caret removed event if caret is not in the registry', () => {
     const manager = new CaretManager();
-    const caret = new Caret();
+    const caret = new Caret('userId');
 
     const handler = jest.fn();
 

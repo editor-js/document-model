@@ -1,9 +1,15 @@
-import type { Caret, EditorJSModel, CaretManagerEvents } from '@editorjs/model';
+import { isNativeInput } from '@editorjs/dom';
+import {
+  type Caret,
+  type CaretManagerEvents,
+  type EditorJSModel,
+  EventType,
+  Index,
+  IndexBuilder,
+  type TextRange
+} from '@editorjs/model';
 import type { CoreConfig } from '@editorjs/sdk';
 import { getAbsoluteRangeOffset, getBoundaryPointByAbsoluteOffset, useSelectionChange } from '../utils/index.js';
-import type { TextRange } from '@editorjs/model';
-import { EventType, IndexBuilder, Index } from '@editorjs/model';
-import { isNativeInput } from '@editorjs/dom';
 
 /**
  * Caret adapter watches selection change and saves it to the model
@@ -37,12 +43,17 @@ export class CaretAdapter extends EventTarget {
    *
    * @private
    */
-  #userCaret: Caret;
+  #currentUserCaret: Caret;
+
+  /**
+   * Map with users' carets by userId
+   */
+  #userCarets = new Map<string | number, Caret>();
 
   /**
    * Editor's config
    */
-  #config: CoreConfig;
+  #config: Required<CoreConfig>;
 
   /**
    * @class
@@ -50,13 +61,14 @@ export class CaretAdapter extends EventTarget {
    * @param container - Editor.js DOM container
    * @param model - Editor.js model
    */
-  constructor(config: CoreConfig, container: HTMLElement, model: EditorJSModel) {
+  constructor(config: Required<CoreConfig>, container: HTMLElement, model: EditorJSModel) {
     super();
 
     this.#config = config;
     this.#model = model;
     this.#container = container;
-    this.#userCaret = this.#model.createCaret(this.#config.userId);
+    this.#currentUserCaret = this.#model.createCaret(this.#config.userId);
+    this.#userCarets.set(this.#config.userId, this.#currentUserCaret);
 
     const { on } = useSelectionChange();
 
@@ -72,7 +84,7 @@ export class CaretAdapter extends EventTarget {
    * Getter for internal caret index of the user
    */
   public get userCaretIndex(): Index | null {
-    return this.#userCaret.index;
+    return this.#currentUserCaret.index;
   }
 
   /**
@@ -89,9 +101,23 @@ export class CaretAdapter extends EventTarget {
    * Updates current user's caret index
    *
    * @param index - new caret index
+   * @param [userId] - user identifier
    */
-  public updateIndex(index: Index | null): void {
-    this.#userCaret.update(index);
+  public updateIndex(index: Index | null, userId?: string | number): void {
+    if (userId === undefined) {
+      this.#currentUserCaret.update(index);
+
+      return;
+    }
+
+
+    const caretToUpdate = this.#userCarets.get(userId);
+
+    if (caretToUpdate === undefined) {
+      return;
+    }
+
+    caretToUpdate.update(index);
   }
 
   /**
@@ -105,16 +131,17 @@ export class CaretAdapter extends EventTarget {
 
     if (index !== undefined) {
       builder.from(index);
-    } else if (this.#userCaret.index !== null) {
-      builder.from(this.#userCaret.index);
+    } else if (this.#currentUserCaret.index !== null) {
+      builder.from(this.#currentUserCaret.index);
     } else {
       throw new Error('[CaretManager] No index provided and no user caret index found');
     }
 
     /**
      * Inputs are stored in the hashmap with serialized index as a key
-     * Those keys are serialized without text range to cover the whole input, so we need to remove it here to find the input
+     * Those keys are serialized without document id and text range to cover the input only, so we need to remove them here to find the input
      */
+    builder.addDocumentId(undefined);
     builder.addTextRange(undefined);
 
     return this.#inputs.get(builder.build().serialize());
@@ -206,9 +233,9 @@ export class CaretAdapter extends EventTarget {
       return;
     }
 
-    const caretId = event.detail.id;
+    const userId = event.detail.userId;
 
-    if (caretId !== this.#userCaret.id) {
+    if (userId !== this.#currentUserCaret.userId) {
       return;
     }
 

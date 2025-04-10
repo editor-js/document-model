@@ -8,7 +8,7 @@ describe('[Integration tests] EditorJSModel', () => {
     let model: EditorJSModel;
 
     beforeEach(() => {
-      model = new EditorJSModel(data);
+      model = new EditorJSModel('user', data);
     });
 
     /**

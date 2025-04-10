@@ -9,15 +9,11 @@ export class CaretManagerCaretAddedEvent extends CustomEvent<CaretSerialized> {
    * CaretManagerCaretAddedEvent class constructor
    *
    * @param payload - event payload
-   * @param userId - user identifier
    */
-  constructor(payload: CaretSerialized, userId?: string | number) {
+  constructor(payload: CaretSerialized) {
     // Stryker disable next-line ObjectLiteral
     super(EventType.CaretManagerUpdated, {
-      detail: {
-        ...payload,
-        userId,
-      },
+      detail: payload,
     });
   }
 }

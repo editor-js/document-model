@@ -1,3 +1,4 @@
+import { getContext } from '../../utils/Context.js';
 import { IndexBuilder } from '../Index/IndexBuilder.js';
 import type { ValueNodeConstructorParameters, ValueSerialized } from './types';
 import { BlockChildType } from '../BlockNode/types/index.js';
@@ -44,7 +45,7 @@ export class ValueNode<ValueType = unknown> extends EventBus {
       new ValueModifiedEvent(builder.build(), {
         value: this.#value,
         previous: previousValue,
-      })
+      }, getContext<string | number>()!)
     );
   }
 

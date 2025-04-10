@@ -3,11 +3,11 @@ import { FormattingAdapter } from '@editorjs/dom-adapters';
 import type { CaretManagerEvents, InlineFragment, InlineToolName } from '@editorjs/model';
 import { CaretManagerCaretUpdatedEvent, Index, EditorJSModel, createInlineToolData, createInlineToolName } from '@editorjs/model';
 import { EventType } from '@editorjs/model';
-import { Service } from 'typedi';
 import { CoreEventType, ToolLoadedCoreEvent } from './EventBus/index.js';
 import { EventBus } from '@editorjs/sdk';
+import { Inject, Service } from 'typedi';
 import { SelectionChangedCoreEvent } from './EventBus/core-events/SelectionChangedCoreEvent.js';
-import { InlineTool, InlineToolFormatData } from '@editorjs/sdk';
+import { type CoreConfig, InlineTool, InlineToolFormatData } from '@editorjs/sdk';
 
 /**
  * SelectionManager responsible for handling selection changes and applying inline tools formatting
@@ -37,15 +37,23 @@ export class SelectionManager {
   #inlineTools: Map<InlineToolName, InlineTool> = new Map();
 
   /**
+   * Editor's config
+   */
+  #config: CoreConfig;
+
+  /**
+   * @param config - Editor's config
    * @param model - editor model instance
    * @param formattingAdapter - needed for applying format to the model
    * @param eventBus - EventBus instance to exchange events between components
    */
   constructor(
+    @Inject('EditorConfig') config: CoreConfig,
     model: EditorJSModel,
     formattingAdapter: FormattingAdapter,
     eventBus: EventBus
   ) {
+    this.#config = config;
     this.#model = model;
     this.#formattingAdapter = formattingAdapter;
     this.#eventBus = eventBus;
@@ -73,6 +81,10 @@ export class SelectionManager {
    * @param event - CaretManager event
    */
   #handleCaretManagerUpdate(event: CaretManagerEvents): void {
+    if (event.detail.userId !== this.#config.userId) {
+      return;
+    }
+
     switch (true) {
       case event instanceof CaretManagerCaretUpdatedEvent: {
         const { index: serializedIndex } = event.detail;

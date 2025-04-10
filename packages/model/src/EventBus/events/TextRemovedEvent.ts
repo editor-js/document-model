@@ -14,7 +14,7 @@ export class TextRemovedEvent extends BaseDocumentEvent<EventAction.Removed, str
    * @param text - removed text
    * @param userId - user identifier
    */
-  constructor(index: Index, text: string, userId?: string | number) {
+  constructor(index: Index, text: string, userId: string | number) {
     super(index, EventAction.Removed, text, userId);
   }
 }

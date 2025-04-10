@@ -33,7 +33,8 @@ const createOperation = (
   return new Operation(
     type,
     index.build(),
-    data
+    data,
+    'user'
   );
 };
 

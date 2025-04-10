@@ -1,6 +1,6 @@
 import {
   BlockAddedEvent, type BlockNodeSerialized,
-  BlockRemovedEvent,
+  BlockRemovedEvent, type DocumentId,
   type EditorJSModel,
   EventType,
   type ModelEvents,
@@ -9,6 +9,7 @@ import {
   TextUnformattedEvent
 } from '@editorjs/model';
 import type { CoreConfig } from '@editorjs/sdk';
+import { OTClient } from './client/index.js';
 import { OperationsBatch } from './OperationsBatch.js';
 import { type ModifyOperationData, Operation, OperationType } from './Operation.js';
 import { UndoRedoManager } from './UndoRedoManager.js';
@@ -40,7 +41,12 @@ export class CollaborationManager {
   /**
    * Editor's config
    */
-  #config: CoreConfig;
+  #config: Required<CoreConfig>;
+
+  /**
+   * OT Client
+   */
+  #client: OTClient | null = null;
 
   /**
    * Creates an instance of CollaborationManager
@@ -48,11 +54,32 @@ export class CollaborationManager {
    * @param config - Editor's config
    * @param model - EditorJSModel instance to listen to and apply operations
    */
-  constructor(config: CoreConfig, model: EditorJSModel) {
+  constructor(config: Required<CoreConfig>, model: EditorJSModel) {
     this.#config = config;
     this.#model = model;
     this.#undoRedoManager = new UndoRedoManager();
     model.addEventListener(EventType.Changed, this.#handleEvent.bind(this));
+
+    if (this.#config.collaborationServer === undefined) {
+      return;
+    }
+
+    this.#client = new OTClient(
+      this.#config.collaborationServer,
+      this.#config.userId,
+      (data) => {
+        if (!data) {
+          return;
+        }
+
+        this.#model.initializeDocument(data);
+      },
+      (op) => {
+        this.applyOperation(op);
+      }
+    );
+
+    void this.#client.connectDocument(this.#config.documentId! as DocumentId);
   }
 
   /**
@@ -105,13 +132,13 @@ export class CollaborationManager {
   public applyOperation(operation: Operation): void {
     switch (operation.type) {
       case OperationType.Insert:
-        this.#model.insertData(this.#config.userId, operation.index, operation.data.payload as string | BlockNodeSerialized[]);
+        this.#model.insertData(operation.userId, operation.index, operation.data.payload as string | BlockNodeSerialized[]);
         break;
       case OperationType.Delete:
-        this.#model.removeData(this.#config.userId, operation.index, operation.data.payload as string | BlockNodeSerialized[]);
+        this.#model.removeData(operation.userId, operation.index, operation.data.payload as string | BlockNodeSerialized[]);
         break;
       case OperationType.Modify:
-        this.#model.modifyData(this.#config.userId, operation.index, {
+        this.#model.modifyData(operation.userId, operation.index, {
           value: operation.data.payload,
           previous: (operation.data as ModifyOperationData).prevPayload,
         });
@@ -180,10 +207,11 @@ export class CollaborationManager {
       return;
     }
 
-    if (e.detail.userId !== this.#config.userId) {
+    if (operation.userId === this.#config.userId) {
+      void this.#client?.send(operation);
+    } else {
       return;
     }
-
 
     const onBatchTermination = (batch: OperationsBatch, lastOp?: Operation): void => {
       const effectiveOp = batch.getEffectiveOperation();

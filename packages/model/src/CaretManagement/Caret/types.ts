@@ -8,17 +8,12 @@ export interface CaretSerialized {
   /**
    * Caret id
    */
-  readonly id: number;
+  readonly userId: string | number;
 
   /**
    * Caret index
    */
   readonly index: string | null;
-
-  /**
-   * User identifier
-   */
-  userId?: string | number
 }
 
 /**

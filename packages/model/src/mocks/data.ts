@@ -3,6 +3,7 @@
 import type { EditorDocumentSerialized } from '../entities/EditorDocument/types/index.js';
 
 export const data: EditorDocumentSerialized = {
+  identifier: 'document',
   properties: {},
   blocks: [
     {

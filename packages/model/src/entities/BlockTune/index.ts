@@ -1,3 +1,4 @@
+import { getContext } from '../../utils/Context.js';
 import { IndexBuilder } from '../Index/IndexBuilder.js';
 import type { BlockTuneConstructorParameters, BlockTuneSerialized, BlockTuneName } from './types';
 import { createBlockTuneName } from './types/index.js';
@@ -52,7 +53,7 @@ export class BlockTune extends EventBus {
       new TuneModifiedEvent(builder.build(), {
         value: this.#data[key],
         previous: previousValue,
-      })
+      }, getContext<string | number>()!)
     );
   }
 

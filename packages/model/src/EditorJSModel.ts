@@ -1,8 +1,15 @@
 // Stryker disable all -- we don't count mutation test coverage fot this file as it just proxy calls to EditorDocument
 /* istanbul ignore file -- we don't count test coverage fot this file as it just proxy calls to EditorDocument */
-import type { Index } from './entities/index.js';
+import { type Index, IndexBuilder } from './entities/index.js';
 import { type BlockNodeSerialized, EditorDocument } from './entities/index.js';
-import { EventBus, EventType } from './EventBus/index.js';
+import {
+  BlockAddedEvent,
+  BlockRemovedEvent, EventAction,
+  EventBus,
+  EventType,
+  TextAddedEvent,
+  TextRemovedEvent
+} from './EventBus/index.js';
 import type { ModelEvents, CaretManagerCaretUpdatedEvent, CaretManagerEvents } from './EventBus/index.js';
 import { BaseDocumentEvent, type ModifiedEventData } from './EventBus/events/BaseEvent.js';
 import { getContext, WithContext } from './utils/Context.js';
@@ -39,6 +46,11 @@ export class EditorJSModel extends EventBus {
   #caretManager: CaretManager;
 
   /**
+   * Current user identifier
+   */
+  #currentUserId: string | number;
+
+  /**
    * Returns serialized data associated with the document
    *
    * Data contains:
@@ -66,14 +78,16 @@ export class EditorJSModel extends EventBus {
   /**
    * Constructor for EditorJSModel class.
    *
+   * @param currentUserId - current user identifier
    * @param [parameters] - EditorDocument constructor arguments.
    * @param [parameters.children] - The child BlockNodes of the EditorDocument.
    * @param [parameters.properties] - The properties of the document.
    * @param [parameters.toolsRegistry] - ToolsRegistry instance for the current document. Defaults to a new ToolsRegistry instance.
    */
-  constructor(...parameters: ConstructorParameters<typeof EditorDocument>) {
+  constructor(currentUserId: string | number, ...parameters: ConstructorParameters<typeof EditorDocument>) {
     super();
 
+    this.#currentUserId = currentUserId;
     this.#document = new EditorDocument(...parameters);
     this.#caretManager = new CaretManager();
 
@@ -104,12 +118,11 @@ export class EditorJSModel extends EventBus {
   /**
    *  Creates a new Caret instance in the model
    *
-   *  @param _userId - user identifier which is being set to the context
    *  @param parameters - createCaret method parameters
    *  @param [parameters.index] - initial caret index
    */
   @WithContext
-  public createCaret(_userId?: string | number, ...parameters: Parameters<CaretManager['createCaret']>): ReturnType<CaretManager['createCaret']> {
+  public createCaret(...parameters: Parameters<CaretManager['createCaret']>): ReturnType<CaretManager['createCaret']> {
     return this.#caretManager.createCaret(...parameters);
   }
 
@@ -121,7 +134,7 @@ export class EditorJSModel extends EventBus {
    * @param parameters.caret - Caret instance to update
    */
   @WithContext
-  public updateCaret(_userId?: string | number, ...parameters: Parameters<CaretManager['updateCaret']>): ReturnType<CaretManager['updateCaret']> {
+  public updateCaret(_userId: string | number, ...parameters: Parameters<CaretManager['updateCaret']>): ReturnType<CaretManager['updateCaret']> {
     console.trace();
 
     return this.#caretManager.updateCaret(...parameters);
@@ -136,7 +149,7 @@ export class EditorJSModel extends EventBus {
    * @param parameters.caret - Caret instance to remove
    */
   @WithContext
-  public removeCaret(_userId?: string | number, ...parameters: Parameters<CaretManager['removeCaret']>): ReturnType<CaretManager['removeCaret']> {
+  public removeCaret(_userId: string | number, ...parameters: Parameters<CaretManager['removeCaret']>): ReturnType<CaretManager['removeCaret']> {
     return this.#caretManager.removeCaret(...parameters);
   }
 
@@ -161,7 +174,7 @@ export class EditorJSModel extends EventBus {
    * @param parameters.value - The value to update the property with
    */
   @WithContext
-  public setProperty(_userId?: string | number, ...parameters: Parameters<EditorDocument['setProperty']>): ReturnType<EditorDocument['setProperty']> {
+  public setProperty(_userId: string | number, ...parameters: Parameters<EditorDocument['setProperty']>): ReturnType<EditorDocument['setProperty']> {
     return this.#document.setProperty(...parameters);
   }
 
@@ -176,7 +189,7 @@ export class EditorJSModel extends EventBus {
    * @throws Error if the index is out of bounds
    */
   @WithContext
-  public addBlock(_userId?: string | number, ...parameters: Parameters<EditorDocument['addBlock']>): ReturnType<EditorDocument['addBlock']> {
+  public addBlock(_userId: string | number, ...parameters: Parameters<EditorDocument['addBlock']>): ReturnType<EditorDocument['addBlock']> {
     return this.#document.addBlock(...parameters);
   }
 
@@ -190,7 +203,7 @@ export class EditorJSModel extends EventBus {
    * @throws Error if the index is out of bounds
    */
   @WithContext
-  public moveBlock(_userId?: string | number, ...parameters: Parameters<EditorDocument['moveBlock']>): ReturnType<EditorDocument['moveBlock']> {
+  public moveBlock(_userId: string | number, ...parameters: Parameters<EditorDocument['moveBlock']>): ReturnType<EditorDocument['moveBlock']> {
     return this.#document.moveBlock(...parameters);
   }
 
@@ -204,7 +217,7 @@ export class EditorJSModel extends EventBus {
    * @throws Error if the index is out of bounds
    */
   @WithContext
-  public removeBlock(_userId?: string | number, ...parameters: Parameters<EditorDocument['removeBlock']>): ReturnType<EditorDocument['removeBlock']> {
+  public removeBlock(_userId: string | number, ...parameters: Parameters<EditorDocument['removeBlock']>): ReturnType<EditorDocument['removeBlock']> {
     return this.#document.removeBlock(...parameters);
   }
 
@@ -255,7 +268,7 @@ export class EditorJSModel extends EventBus {
    * @throws Error if the index is out of bounds
    */
   @WithContext
-  public updateValue(_userId?: string | number, ...parameters: Parameters<EditorDocument['updateValue']>): ReturnType<EditorDocument['updateValue']> {
+  public updateValue(_userId: string | number, ...parameters: Parameters<EditorDocument['updateValue']>): ReturnType<EditorDocument['updateValue']> {
     return this.#document.updateValue(...parameters);
   }
 
@@ -270,7 +283,7 @@ export class EditorJSModel extends EventBus {
    * @throws Error if the index is out of bounds
    */
   @WithContext
-  public updateTuneData(_userId?: string | number, ...parameters: Parameters<EditorDocument['updateTuneData']>): ReturnType<EditorDocument['updateTuneData']> {
+  public updateTuneData(_userId: string | number, ...parameters: Parameters<EditorDocument['updateTuneData']>): ReturnType<EditorDocument['updateTuneData']> {
     return this.#document.updateTuneData(...parameters);
   }
 
@@ -296,7 +309,7 @@ export class EditorJSModel extends EventBus {
    * @param [parameters.start] - char index where to insert text
    */
   @WithContext
-  public insertText(_userId?: string | number, ...parameters: Parameters<EditorDocument['insertText']>): ReturnType<EditorDocument['insertText']> {
+  public insertText(_userId: string | number, ...parameters: Parameters<EditorDocument['insertText']>): ReturnType<EditorDocument['insertText']> {
     return this.#document.insertText(...parameters);
   }
 
@@ -311,7 +324,7 @@ export class EditorJSModel extends EventBus {
    * @param [parameters.end] - end char index of the range
    */
   @WithContext
-  public removeText(_userId?: string | number, ...parameters: Parameters<EditorDocument['removeText']>): ReturnType<EditorDocument['removeText']> {
+  public removeText(_userId: string | number, ...parameters: Parameters<EditorDocument['removeText']>): ReturnType<EditorDocument['removeText']> {
     return this.#document.removeText(...parameters);
   }
 
@@ -328,7 +341,7 @@ export class EditorJSModel extends EventBus {
    * @param [parameters.data] - Inline Tool data if applicable
    */
   @WithContext
-  public format(_userId?: string | number, ...parameters: Parameters<EditorDocument['format']>): ReturnType<EditorDocument['format']> {
+  public format(_userId: string | number, ...parameters: Parameters<EditorDocument['format']>): ReturnType<EditorDocument['format']> {
     return this.#document.format(...parameters);
   }
 
@@ -344,7 +357,7 @@ export class EditorJSModel extends EventBus {
    * @param parameters.end - end char index of the range
    */
   @WithContext
-  public unformat(_userId?: string | number, ...parameters: Parameters<EditorDocument['unformat']>): ReturnType<EditorDocument['unformat']> {
+  public unformat(_userId: string | number, ...parameters: Parameters<EditorDocument['unformat']>): ReturnType<EditorDocument['unformat']> {
     return this.#document.unformat(...parameters);
   }
 
@@ -388,18 +401,87 @@ export class EditorJSModel extends EventBus {
 
         const userId = getContext<string | number>();
 
+        if (userId !== this.#currentUserId) {
+          /**
+           * If update is made by a remote user, we might need to update current user's caret
+           */
+          this.#updateUserCaretByRemoteChange(event);
+        }
+
+        const index = new IndexBuilder()
+          .from(event.detail.index)
+          .addDocumentId(this.#document.identifier)
+          .build();
+
         /**
          * Here could be any logic to filter EditorDocument events;
          */
 
         this.dispatchEvent(
           new (event.constructor as Constructor<ModelEvents>)(
-            event.detail.index,
+            index,
             event.detail.data,
             userId
           )
         );
       }
     );
+  }
+
+  /**
+   * Update current user's caret by the model event not from the current user
+   * E.g. if another user inserts a character before the current user's caret, we need to update the caret
+   *
+   * @param event - model event to update caret by
+   */
+  #updateUserCaretByRemoteChange(event: ModelEvents): void {
+    const userCaret = this.#caretManager.getCaret(this.#currentUserId);
+
+    if (userCaret === undefined || userCaret.index === null) {
+      return;
+    }
+
+    const caretIndex = userCaret.index;
+
+    const newIndex = new IndexBuilder().from(caretIndex);
+    const index = event.detail.index;
+
+    switch (true) {
+      case (event instanceof TextAddedEvent):
+      case (event instanceof TextRemovedEvent): {
+        if (index.blockIndex !== caretIndex.blockIndex || index.dataKey !== caretIndex.dataKey) {
+          return;
+        }
+
+        if (index.textRange![0] > caretIndex.textRange![0]) {
+          return;
+        }
+
+        const delta = event.detail.data.length * (event.detail.action === EventAction.Added ? 1 : -1);
+
+        newIndex.addTextRange([caretIndex.textRange![0] + delta, caretIndex.textRange![1] + delta]);
+
+        break;
+      }
+
+      case (event instanceof BlockRemovedEvent):
+      case (event instanceof BlockAddedEvent): {
+        if (index.blockIndex! >= caretIndex.blockIndex!) {
+          return;
+        }
+
+        /**
+         * @todo if removed block is the one the caret currently in — move caret to the previous block
+         */
+        newIndex.addBlockIndex(caretIndex.blockIndex! + (event.detail.action === EventAction.Added ? 1 : -1));
+
+        break;
+      }
+
+      default:
+        return;
+    }
+
+    userCaret.update(newIndex.build());
   }
 }

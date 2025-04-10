@@ -1,3 +1,4 @@
+import { getContext } from '../../../utils/Context.js';
 import { IndexBuilder } from '../../Index/IndexBuilder.js';
 import type { InlineFragment, InlineNode, InlineTreeNodeSerialized } from '../InlineNode';
 import type { ParentNodeConstructorOptions } from '../mixins/ParentNode';
@@ -72,7 +73,7 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
     builder.addTextRange([index, index]);
 
-    this.dispatchEvent(new TextAddedEvent(builder.build(), text));
+    this.dispatchEvent(new TextAddedEvent(builder.build(), text, getContext<string | number>()!));
   }
 
   /**
@@ -100,7 +101,7 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
     builder.addTextRange([start, end]);
 
-    this.dispatchEvent(new TextRemovedEvent(builder.build(), removedText));
+    this.dispatchEvent(new TextRemovedEvent(builder.build(), removedText, getContext<string | number>()!));
 
     return removedText;
   }
@@ -209,7 +210,8 @@ export class ParentInlineNode extends EventBus implements InlineNode {
         {
           tool,
           data,
-        }
+        },
+        getContext<string | number>()!
       )
     );
 
@@ -251,7 +253,7 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
     builder.addTextRange([start, end]);
 
-    this.dispatchEvent(new TextUnformattedEvent(builder.build(), { tool }));
+    this.dispatchEvent(new TextUnformattedEvent(builder.build(), { tool }, getContext<string | number>()!));
 
     return newNodes;
   }
