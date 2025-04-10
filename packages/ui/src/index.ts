@@ -1,10 +1,10 @@
 import type { CoreConfigValidated,
-  EventBus,
   EditorjsPlugin,
   EditorjsPluginParams } from '@editorjs/core';
+import type { EventBus } from '@editorjs/sdk';
 import {
   UiComponentType
-} from '@editorjs/core';
+} from '@editorjs/sdk';
 import type { ToolboxRenderedUIEvent } from './Toolbox/ToolboxRenderedUIEvent.js';
 import type { InlineToolbarRenderedUIEvent } from './InlineToolbar/InlineToolbarRenderedUIEvent.js';
 import Style from './main.module.pcss';
@@ -79,3 +79,4 @@ export class EditorjsUI implements EditorjsPlugin {
 export * from './InlineToolbar/InlineToolbar.js';
 export * from './Blocks/Blocks.js';
 export * from './Toolbox/Toolbox.js';
+export * from './Blocks/BeforeInputUIEvent.js';

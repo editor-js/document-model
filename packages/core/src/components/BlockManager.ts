@@ -5,8 +5,8 @@ import { BlockToolAdapter, CaretAdapter, FormattingAdapter } from '@editorjs/dom
 import ToolsManager from '../tools/ToolsManager.js';
 import { BlockAPI, BlockToolData } from '@editorjs/editorjs';
 import { CoreConfigValidated } from '../entities/Config.js';
-import { BlockAddedCoreEvent, BlockRemovedCoreEvent, EventBus } from './EventBus/index.js';
-
+import { BlockAddedCoreEvent, BlockRemovedCoreEvent } from './EventBus/index.js';
+import { EventBus } from '@editorjs/sdk';
 /**
  * Parameters for the BlocksManager.insert() method
  */
@@ -164,6 +164,7 @@ export class BlocksManager {
     const blockToolAdapter = new BlockToolAdapter(
       this.#config,
       this.#model,
+      this.#eventBus,
       this.#caretAdapter,
       index.blockIndex,
       this.#formattingAdapter,
