@@ -1214,6 +1214,7 @@ __metadata:
   dependencies:
     "@editorjs/collaboration-manager": "workspace:^"
     "@editorjs/model": "workspace:^"
+    "@hawk.so/nodejs": "npm:^3.1.5"
     "@types/eslint": "npm:^9.6.1"
     "@types/jest": "npm:^29.5.14"
     "@types/ws": "npm:^8.18.1"
@@ -1729,6 +1730,26 @@ __metadata:
     "@eslint/core": "npm:^0.13.0"
     levn: "npm:^0.4.1"
   checksum: 2e7fe7a88ebdbbf805e9e7265347b7dcfb6bf50beec314def997572b2e8ae4a7b9504fb67b1698a70c348a0dd87251d1e9028292a96fd49b58cb5277d88bdea7
+  languageName: node
+  linkType: hard
+
+"@hawk.so/nodejs@npm:^3.1.5":
+  version: 3.1.5
+  resolution: "@hawk.so/nodejs@npm:3.1.5"
+  dependencies:
+    "@hawk.so/types": "npm:^0.1.15"
+    axios: "npm:^0.21.1"
+    stack-trace: "npm:^0.0.10"
+  checksum: 9fcf55f6bec4ebbd3ff14a7be4145359dbf48c6c26d76e61245c9e9fcae5580cbbd891bb053d75b813131b0b1cb22445f64d7f5178f0414ae18880bf0043fb2b
+  languageName: node
+  linkType: hard
+
+"@hawk.so/types@npm:^0.1.15":
+  version: 0.1.28
+  resolution: "@hawk.so/types@npm:0.1.28"
+  dependencies:
+    "@types/mongodb": "npm:^3.5.34"
+  checksum: 6bc8fd78eaea5c4e8c59c4d9ff5028ea17e7d7d259798ad33955b3f735080f5b7ab3bf3800ec20ff5fe9feff05979d81359e14646ee4c4d1afc2cbfc596dc2c8
   languageName: node
   linkType: hard
 
@@ -2682,6 +2703,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/bson@npm:*":
+  version: 4.0.5
+  resolution: "@types/bson@npm:4.0.5"
+  dependencies:
+    "@types/node": "npm:*"
+  checksum: b3e94a2832de82ea6d101fe2efcc65f32de131d25b22b1ff585cb74bc904fbcdb6cb976fc21adf608b8fcb43075e100693f5f321ffa170ff9a7847a3d1e8fdeb
+  languageName: node
+  linkType: hard
+
 "@types/eslint@npm:^8":
   version: 8.56.12
   resolution: "@types/eslint@npm:8.56.12"
@@ -2764,6 +2794,16 @@ __metadata:
   version: 0.0.29
   resolution: "@types/json5@npm:0.0.29"
   checksum: 4e5aed58cabb2bbf6f725da13421aa50a49abb6bc17bfab6c31b8774b073fa7b50d557c61f961a09a85f6056151190f8ac95f13f5b48136ba5841f7d4484ec56
+  languageName: node
+  linkType: hard
+
+"@types/mongodb@npm:^3.5.34":
+  version: 3.6.20
+  resolution: "@types/mongodb@npm:3.6.20"
+  dependencies:
+    "@types/bson": "npm:*"
+    "@types/node": "npm:*"
+  checksum: b85770dfa009cd919f680bdf7e152f9cab21d0ea6aab3d3a4133a9e78a1a2dfd966ed1503594191051985cb7157df6e830740d8bdc2b45d4b31050849f84f33d
   languageName: node
   linkType: hard
 
@@ -3595,6 +3635,15 @@ __metadata:
   dependencies:
     possible-typed-array-names: "npm:^1.0.0"
   checksum: 6c9da3a66caddd83c875010a1ca8ef11eac02ba15fb592dc9418b2b5e7b77b645fa7729380a92d9835c2f05f2ca1b6251f39b993e0feb3f1517c74fa1af02cab
+  languageName: node
+  linkType: hard
+
+"axios@npm:^0.21.1":
+  version: 0.21.4
+  resolution: "axios@npm:0.21.4"
+  dependencies:
+    follow-redirects: "npm:^1.14.0"
+  checksum: da644592cb6f8f9f8c64fdabd7e1396d6769d7a4c1ea5f8ae8beb5c2eb90a823e3a574352b0b934ac62edc762c0f52647753dc54f7d07279127a7e5c4cd20272
   languageName: node
   linkType: hard
 
@@ -5571,6 +5620,16 @@ __metadata:
   version: 3.3.3
   resolution: "flatted@npm:3.3.3"
   checksum: 8c96c02fbeadcf4e8ffd0fa24983241e27698b0781295622591fc13585e2f226609d95e422bcf2ef044146ffacb6b68b1f20871454eddf75ab3caa6ee5f4a1fe
+  languageName: node
+  linkType: hard
+
+"follow-redirects@npm:^1.14.0":
+  version: 1.15.9
+  resolution: "follow-redirects@npm:1.15.9"
+  peerDependenciesMeta:
+    debug:
+      optional: true
+  checksum: e3ab42d1097e90d28b913903841e6779eb969b62a64706a3eb983e894a5db000fbd89296f45f08885a0e54cd558ef62e81be1165da9be25a6c44920da10f424c
   languageName: node
   linkType: hard
 
@@ -9283,6 +9342,13 @@ __metadata:
   dependencies:
     minipass: "npm:^7.0.3"
   checksum: 7024c1a6e39b3f18aa8f1c8290e884fe91b0f9ca5a6c6d410544daad54de0ba664db879afe16412e187c6c292fd60b937f047ee44292e5c2af2dcc6d8e1a9b48
+  languageName: node
+  linkType: hard
+
+"stack-trace@npm:^0.0.10":
+  version: 0.0.10
+  resolution: "stack-trace@npm:0.0.10"
+  checksum: 7bd633f0e9ac46e81a0b0fe6538482c1d77031959cf94478228731709db4672fbbed59176f5b9a9fd89fec656b5dae03d084ef2d1b0c4c2f5683e05f2dbb1405
   languageName: node
   linkType: hard
 

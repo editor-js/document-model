@@ -16,6 +16,7 @@
   "dependencies": {
     "@editorjs/collaboration-manager": "workspace:^",
     "@editorjs/model": "workspace:^",
+    "@hawk.so/nodejs": "^3.1.5",
     "dotenv": "^16.4.7",
     "ws": "^8.18.1"
   },

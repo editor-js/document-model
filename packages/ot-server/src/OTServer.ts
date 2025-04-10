@@ -74,7 +74,8 @@ export class OTServer {
    * @param ws - client websocket
    */
   #onClose(ws: WebSocket): void {
-    const [documentId, documentClient] = this.#clients.entries().find(([, clients]) => clients.has(ws)) ?? [];
+    const [documentId, documentClient] = Array.from(this.#clients.entries())
+      .find(([, clients]) => clients.has(ws)) ?? [];
 
     if (documentId === undefined || documentClient === undefined) {
       return;

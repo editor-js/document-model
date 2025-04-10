@@ -25,3 +25,6 @@ reports/
 *.tsbuildinfo
 
 .DS_Store
+
+# ENV
+**/.env
