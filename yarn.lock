@@ -1173,7 +1173,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@editorjs/editorjs@npm:^2.30.5":
+"@editorjs/editorjs@npm:^2.30.5, @editorjs/editorjs@npm:^2.30.8":
   version: 2.30.8
   resolution: "@editorjs/editorjs@npm:2.30.8"
   checksum: 83fd2d536201071c1daca5202241e1f479ce79fa89b03a3467e08432bba6b779f4d5b3ce32cfb269106dbef088649618689aad8670f7203739d3c54d472c4643
@@ -1232,7 +1232,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@editorjs/sdk@workspace:packages/sdk"
   dependencies:
-    "@editorjs/editorjs": "npm:^2.30.5"
+    "@editorjs/editorjs": "npm:^2.30.8"
+    "@editorjs/helpers": "npm:^1.0.1"
     "@editorjs/model": "workspace:^"
     "@types/eslint": "npm:^9.6.1"
     eslint: "npm:^9.24.0"
