@@ -15,7 +15,7 @@ export interface BeforeInputUIEventPayload {
    * This may be an empty string if the change doesn't insert text
    * (for example, when deleting characters).
    */
-  data: string | null;
+  data: string;
 
   /**
    * Same as 'beforeinput' event's inputType
@@ -26,6 +26,11 @@ export interface BeforeInputUIEventPayload {
    * Same as 'beforeinput' event's isComposing
    */
   isComposing: boolean;
+
+  /**
+   * Objects that will be affected by a change to the DOM if the input event is not canceled.
+   */
+  targetRanges: StaticRange[];
 }
 
 /**

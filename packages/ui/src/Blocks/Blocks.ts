@@ -9,6 +9,7 @@ import {
 } from '@editorjs/sdk';
 import type { EventBus } from '@editorjs/sdk';
 import Style from './Blocks.module.pcss';
+import { isNativeInput } from '@editorjs/dom';
 
 /**
  * Editor's main UI renderer for HTML environment
@@ -85,19 +86,57 @@ export class BlocksUI implements EditorjsPlugin {
 
     blocksHolder.classList.add(Style['blocks']);
 
-    blocksHolder.contentEditable = 'false';
+    blocksHolder.contentEditable = 'true';
+
+    /**
+     * Workaround Safari behavior when it deletes blocks if there is no content in them
+     * E.g. when you delete all content in the only block, it deletes the block
+     */
+    this.#addHostHolder(blocksHolder);
 
     blocksHolder.addEventListener('beforeinput', (e) => {
+      e.preventDefault();
+
+      const isInputNative = isNativeInput(e.target as HTMLElement);
+
+      let data: string;
+
+      /**
+       * For native inputs data for those events comes from event.data property
+       * while for contenteditable elements it's stored in event.dataTransfer
+       * @see https://www.w3.org/TR/input-events-2/#overview
+       */
+      if (isInputNative) {
+        data = e.data ?? '';
+      } else {
+        data = e.dataTransfer?.getData('text/plain') ?? e.data ?? '';
+      }
+
       this.#eventBus.dispatchEvent(new BeforeInputUIEvent({
-        data: e.data,
+        data,
         inputType: e.inputType,
         isComposing: e.isComposing,
+        targetRanges: e.getTargetRanges(),
       }));
     });
 
     editorHolder.appendChild(blocksHolder);
 
     return blocksHolder;
+  }
+
+  /**
+   * Adds host holder that will prevent Safari from deleting blocks if there is no content host
+   * @param blocksHolder - blocks holder element
+   */
+  #addHostHolder(blocksHolder: HTMLElement): void {
+    const zeroWidthSpaceWrapper = document.createElement('span');
+    const zeroWidthSpace = document.createTextNode('\u200B');
+
+    zeroWidthSpaceWrapper.classList.add(Style['host-holder']);
+    zeroWidthSpaceWrapper.appendChild(zeroWidthSpace);
+
+    blocksHolder.appendChild(zeroWidthSpaceWrapper);
   }
 
   /**

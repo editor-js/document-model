@@ -50,6 +50,8 @@ export class Paragraph implements BlockTool<ParagraphData, ParagraphConfig> {
   public render(): HTMLElement {
     const wrapper = document.createElement('div');
 
+    wrapper.classList.add('editorjs-paragraph');
+
     wrapper.contentEditable = 'true';
     wrapper.style.outline = 'none';
     wrapper.style.whiteSpace = 'pre-wrap';

@@ -27,6 +27,8 @@ rules:
     - 0
   '@typescript-eslint/no-unsafe-argument':
     - 0
+  'jsdoc/require-returns-type':
+    - 0
 env:
   browser: true
 
