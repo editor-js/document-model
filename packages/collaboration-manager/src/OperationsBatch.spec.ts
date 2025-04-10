@@ -24,7 +24,7 @@ describe('Batch', () => {
         .addTextRange([1, 1])
         .build(),
       { payload: 'b' },
-      userId,
+      userId
     );
     const onTimeout = jest.fn();
 
@@ -54,7 +54,7 @@ describe('Batch', () => {
         .addTextRange([1, 1])
         .build(),
       { payload: 'b' },
-      userId,
+      userId
     );
     const onTimeout = jest.fn();
 
@@ -92,7 +92,7 @@ describe('Batch', () => {
           },
         ],
       },
-      userId,
+      userId
     );
 
     const onTimeout = jest.fn();

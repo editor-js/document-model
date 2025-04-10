@@ -6,7 +6,7 @@ import {
   EventType,
   Index,
   IndexBuilder,
-  type TextRange,
+  type TextRange
 } from '@editorjs/model';
 import type { CoreConfig } from '@editorjs/sdk';
 import { getAbsoluteRangeOffset, getBoundaryPointByAbsoluteOffset, useSelectionChange } from '../utils/index.js';
