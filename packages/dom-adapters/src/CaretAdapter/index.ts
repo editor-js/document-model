@@ -67,8 +67,8 @@ export class CaretAdapter extends EventTarget {
     this.#config = config;
     this.#model = model;
     this.#container = container;
-    this.#currentUserCaret = this.#model.createCaret(this.#config.userId!);
-    this.#userCarets.set(this.#config.userId!, this.#currentUserCaret);
+    this.#currentUserCaret = this.#model.createCaret(this.#config.userId);
+    this.#userCarets.set(this.#config.userId, this.#currentUserCaret);
 
     const { on } = useSelectionChange();
 

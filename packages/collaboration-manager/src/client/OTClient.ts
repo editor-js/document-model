@@ -138,10 +138,6 @@ export class OTClient {
    * @param operation - operation to send
    */
   public async send(operation: Operation): Promise<void> {
-    if (operation.userId === undefined) {
-      return;
-    }
-
     await this.#handshake;
 
     this.#pendingOperations.push(operation);

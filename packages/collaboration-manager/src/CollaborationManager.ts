@@ -41,7 +41,7 @@ export class CollaborationManager {
   /**
    * Editor's config
    */
-  #config: CoreConfig;
+  #config: Required<CoreConfig>;
 
   /**
    * OT Client
@@ -54,7 +54,7 @@ export class CollaborationManager {
    * @param config - Editor's config
    * @param model - EditorJSModel instance to listen to and apply operations
    */
-  constructor(config: CoreConfig, model: EditorJSModel) {
+  constructor(config: Required<CoreConfig>, model: EditorJSModel) {
     this.#config = config;
     this.#model = model;
     this.#undoRedoManager = new UndoRedoManager();
@@ -66,7 +66,7 @@ export class CollaborationManager {
 
     this.#client = new OTClient(
       this.#config.collaborationServer,
-      this.#config.userId!,
+      this.#config.userId,
       (data) => {
         if (!data) {
           return;
