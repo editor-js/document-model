@@ -359,6 +359,16 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     const currentValue = this.#model.getText(this.#blockIndex, key);
     const newValueAfter = currentValue.slice(end);
 
+    const relatedFragments = this.#model.getFragments(this.#blockIndex, key, end, currentValue.length);
+
+    /**
+     * Fragment ranges bounds should be decreased by end index, because end is the index of the first character of the new block
+     */
+    relatedFragments.forEach(fragment => {
+      fragment.range[0] = Math.max(0, fragment.range[0] - end);
+      fragment.range[1] -= end;
+    });
+
     this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, currentValue.length);
     this.#model.addBlock(
       this.#config.userId,
@@ -368,7 +378,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
           [key]: {
             $t: 't',
             value: newValueAfter,
-            fragments: [],
+            fragments: relatedFragments,
           },
         },
       },
