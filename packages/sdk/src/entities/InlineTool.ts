@@ -29,7 +29,11 @@ export interface ToolFormattingOptions {
  * Interface that represents options handled by toolbar element
  */
 export interface ToolbarOptions {
-  fakeSelectionRequired: boolean
+  /**
+   * Some tools require fake selection to be applied when 'actions' is open
+   * Example: Link tool
+   */
+  fakeSelectionRequired: boolean;
 }
 
 /**
@@ -40,7 +44,7 @@ export interface ActionsElementWithOptions {
   /**
    * HTML element rendered by tool for data forming
    */
-  element: HTMLElement,
+  element: HTMLElement;
 
   /**
    * Oprions of custom toolbar behaviour
@@ -70,7 +74,7 @@ export interface InlineTool extends Omit<InlineToolVersion2, 'save' | 'checkStat
 
   /**
    * Returns formatting action and range for it to be applied
-   * @param index - index of current selection
+   * @param range - current selection range
    * @param fragments - all fragments of the inline tool inside of the current input
    */
   getFormattingOptions(range: TextRange, fragments: InlineFragment[]): ToolFormattingOptions;

@@ -12,7 +12,7 @@ export interface CoreConfig extends EditorConfig {
 
   /**
    * DEV MODE ONLY
-   * 
+   *
    * Allows to subscribe to model updates. Used in playground for visualizing model changes
    * @param model - EditorJSModel instance
    */
@@ -37,3 +37,8 @@ export interface CoreConfig extends EditorConfig {
    */
   collaborationServer?: string;
 }
+
+/**
+ * After validation we can be sure that all required fields are set
+ */
+export type CoreConfigValidated = Required<CoreConfig>;

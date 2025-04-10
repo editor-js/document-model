@@ -1,0 +1,22 @@
+name: Core check
+on:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run ESLint check
+        uses: ./.github/actions/lint
+        with:
+          package-name: '@editorjs/core'
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the package
+        uses: ./.github/actions/build
+        with:
+          package-name: '@editorjs/core'

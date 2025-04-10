@@ -8,7 +8,7 @@
     "build": "yarn clear && tsc --build tsconfig.build.json",
     "dev": "yarn build --watch",
     "lint": "eslint ./src",
-    "lint:ci": "yarn lint --max-warnings 0",
+    "lint:ci": "eslint --config ./eslint.config.mjs ./src --max-warnings 0",
     "lint:fix": "yarn lint --fix",
     "clear": "rm -rf ./dist && rm -rf ./tsconfig.build.tsbuildinfo"
   },

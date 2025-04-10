@@ -4,13 +4,14 @@ import { Service } from 'typedi';
 import { SelectionManager } from '../components/SelectionManager.js';
 import { createInlineToolName } from '@editorjs/model';
 import { InlineToolFormatData } from '@editorjs/sdk';
+import { SelectionAPI as SelectionApiInterface } from '@editorjs/sdk';
 
 /**
  * Selection API class
  * - provides methods to work with selection
  */
 @Service()
-export class SelectionAPI {
+export class SelectionAPI implements SelectionApiInterface {
   #selectionManager: SelectionManager;
 
   /**
