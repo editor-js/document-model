@@ -85,7 +85,7 @@ export class BlocksUI implements EditorjsPlugin {
 
     blocksHolder.classList.add(Style['blocks']);
 
-    blocksHolder.contentEditable = 'true';
+    blocksHolder.contentEditable = 'false';
 
     blocksHolder.addEventListener('beforeinput', (e) => {
       this.#eventBus.dispatchEvent(new BeforeInputUIEvent({
