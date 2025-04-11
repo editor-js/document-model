@@ -71,8 +71,6 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
 
   /**
    * Inputs that bound to the model
-   *
-   * @todo handle inputs deletion — remove inputs from the map when they are removed from the DOM
    */
   #attachedInputs = new Map<DataKey, HTMLElement>();
 
@@ -165,6 +163,9 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
       return;
     }
 
+    /**
+     * @todo Let BlockTool handle DOM update
+     */
     input.remove();
     this.#caretAdapter.detachInput(
       new IndexBuilder()
