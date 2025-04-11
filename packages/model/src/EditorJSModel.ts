@@ -1,6 +1,6 @@
 // Stryker disable all -- we don't count mutation test coverage fot this file as it just proxy calls to EditorDocument
 /* istanbul ignore file -- we don't count test coverage fot this file as it just proxy calls to EditorDocument */
-import { type Index, IndexBuilder } from './entities/index.js';
+import { type EditorDocumentSerialized, type Index, IndexBuilder } from './entities/index.js';
 import { type BlockNodeSerialized, EditorDocument } from './entities/index.js';
 import {
   BlockAddedEvent,
@@ -108,11 +108,17 @@ export class EditorJSModel extends EventBus {
   /**
    * Fills the EditorDocument with the provided blocks.
    *
-   * @param doc - document options
-   * @param doc.blocks - The blocks to fill the EditorDocument with.
+   * @param document - document data to initialize
    */
-  public initializeDocument({ blocks }: { blocks: BlockNodeSerialized[] }): void {
-    this.#document.initialize(blocks);
+  public initializeDocument(document: Partial<EditorDocumentSerialized> & Pick<EditorDocumentSerialized, 'blocks'>): void {
+    this.#document.initialize(document);
+  }
+
+  /**
+   * Clear all blocks
+   */
+  public clearBlocks(): void {
+    this.#document.clear();
   }
 
   /**
@@ -192,21 +198,6 @@ export class EditorJSModel extends EventBus {
   public addBlock(_userId: string | number, ...parameters: Parameters<EditorDocument['addBlock']>): ReturnType<EditorDocument['addBlock']> {
     return this.#document.addBlock(...parameters);
   }
-
-  /**
-   * Moves a BlockNode from one index to another
-   *
-   * @param _userId - user identifier which is being set to the context
-   * @param parameters = moveBlock method parameters
-   * @param parameters.from - The index of the BlockNode to move
-   * @param parameters.to - The index to move the BlockNode to
-   * @throws Error if the index is out of bounds
-   */
-  @WithContext
-  public moveBlock(_userId: string | number, ...parameters: Parameters<EditorDocument['moveBlock']>): ReturnType<EditorDocument['moveBlock']> {
-    return this.#document.moveBlock(...parameters);
-  }
-
 
   /**
    * Removes a BlockNode from the EditorDocument at the specified index.
