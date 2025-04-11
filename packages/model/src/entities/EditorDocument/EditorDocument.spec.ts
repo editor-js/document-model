@@ -595,6 +595,225 @@ describe('EditorDocument', () => {
     });
   });
 
+  describe('.createDataNode()', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should call .createDataNode() method of the BlockNode at the specific index', () => {
+      const blocksData = [
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+      ];
+      const document = new EditorDocument({
+        identifier: 'document',
+      });
+
+      document.initialize(blocksData);
+
+      blocksData.forEach((_, i) => {
+        const blockNode = document.getBlock(i);
+
+        jest
+          .spyOn(blockNode, 'createDataNode')
+          // eslint-disable-next-line @typescript-eslint/no-empty-function -- mock of the method
+          .mockImplementation(() => {
+          });
+      });
+
+      const blockIndexToUpdate = 1;
+      const dataKey = 'data-key-1a2b';
+      const value = 'Some value';
+
+      document.createDataNode(blockIndexToUpdate, dataKey, value);
+
+      expect(document.getBlock(blockIndexToUpdate).createDataNode)
+        .toHaveBeenCalledWith(dataKey, value);
+    });
+
+    it('should not call .createDataNode() method of other BlockNodes', () => {
+      const blocksData = [
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+      ];
+      const document = new EditorDocument({
+        identifier: 'document',
+      });
+
+      document.initialize(blocksData);
+
+      const blockNodes = blocksData.map((_, i) => {
+        const blockNode = document.getBlock(i);
+
+        jest
+          .spyOn(blockNode, 'createDataNode')
+          // eslint-disable-next-line @typescript-eslint/no-empty-function -- mock of the method
+          .mockImplementation(() => {
+          });
+
+        return blockNode;
+      });
+
+      const blockIndexToUpdate = 1;
+      const dataKey = 'data-key-1a2b';
+      const value = 'Some value';
+
+      document.createDataNode(blockIndexToUpdate, dataKey, value);
+
+      blockNodes.forEach((blockNode, index) => {
+        if (index === blockIndexToUpdate) {
+          return;
+        }
+
+        expect(blockNode.createDataNode)
+          .not
+          .toHaveBeenCalled();
+      });
+    });
+
+    it('should throw an error if the index is out of bounds', () => {
+      const document = new EditorDocument({
+        identifier: 'document',
+      });
+      const blockIndexOutOfBound = document.length + 1;
+      const dataKey = 'data-key-1a2b';
+      const expectedValue = 'new value';
+
+      const action = (): void => document.createDataNode(blockIndexOutOfBound, dataKey, expectedValue);
+
+      expect(action)
+        .toThrowError('Index out of bounds');
+    });
+  });
+
+  describe('.removeDataNode()', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should call .removeDataNode() method of the BlockNode at the specific index', () => {
+      const blocksData = [
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+      ];
+      const document = new EditorDocument({
+        identifier: 'document',
+      });
+
+      document.initialize(blocksData);
+
+      blocksData.forEach((_, i) => {
+        const blockNode = document.getBlock(i);
+
+        jest
+          .spyOn(blockNode, 'removeDataNode')
+          // eslint-disable-next-line @typescript-eslint/no-empty-function -- mock of the method
+          .mockImplementation(() => {
+          });
+      });
+
+      const blockIndexToUpdate = 1;
+      const dataKey = 'data-key-1a2b';
+
+      document.removeDataNode(blockIndexToUpdate, dataKey);
+
+      expect(document.getBlock(blockIndexToUpdate).removeDataNode)
+        .toHaveBeenCalledWith(dataKey);
+    });
+
+    it('should not call .removeDataNode() method of other BlockNodes', () => {
+      const blocksData = [
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+      ];
+      const document = new EditorDocument({
+        identifier: 'document',
+      });
+
+      document.initialize(blocksData);
+
+      const blockNodes = blocksData.map((_, i) => {
+        const blockNode = document.getBlock(i);
+
+        jest
+          .spyOn(blockNode, 'removeDataNode')
+          // eslint-disable-next-line @typescript-eslint/no-empty-function -- mock of the method
+          .mockImplementation(() => {
+          });
+
+        return blockNode;
+      });
+
+      const blockIndexToUpdate = 1;
+      const dataKey = 'data-key-1a2b';
+
+      document.removeDataNode(blockIndexToUpdate, dataKey);
+
+      blockNodes.forEach((blockNode, index) => {
+        if (index === blockIndexToUpdate) {
+          return;
+        }
+
+        expect(blockNode.removeDataNode)
+          .not
+          .toHaveBeenCalled();
+      });
+    });
+
+    it('should throw an error if the index is out of bounds', () => {
+      const document = new EditorDocument({
+        identifier: 'document',
+      });
+      const blockIndexOutOfBound = document.length + 1;
+      const dataKey = 'data-key-1a2b';
+
+      const action = (): void => document.removeDataNode(blockIndexOutOfBound, dataKey);
+
+      expect(action)
+        .toThrowError('Index out of bounds');
+    });
+  });
+
   describe('.updateValue()', () => {
     beforeEach(() => {
       jest.clearAllMocks();
@@ -951,6 +1170,21 @@ describe('EditorDocument', () => {
         .toHaveBeenCalledWith(blockIndex, dataKey, text, 0);
     });
 
+    it('should call .createDatNode() if data key index is provided', () => {
+      const spy = jest.spyOn(document, 'createDataNode');
+      const index = new IndexBuilder()
+        .addBlockIndex(blockIndex)
+        .addDataKey(dataKey)
+        .build();
+      const value = { value: text, $t: 't' };
+
+
+      document.insertData(index, value);
+
+      expect(spy)
+        .toHaveBeenCalledWith(blockIndex, dataKey, value);
+    });
+
     it('should call .addBlock() if block index is provided', () => {
       const spy = jest.spyOn(document, 'addBlock');
       const index = new IndexBuilder()
@@ -1001,6 +1235,19 @@ describe('EditorDocument', () => {
 
       expect(spy)
         .toHaveBeenCalledWith(blockIndex, dataKey, 0, rangeEnd);
+    });
+
+    it('should call .removeDatNode() if data key index is provided', () => {
+      const spy = jest.spyOn(document, 'removeDataNode');
+      const index = new IndexBuilder()
+        .addBlockIndex(blockIndex)
+        .addDataKey(dataKey)
+        .build();
+
+      document.removeData(index, {});
+
+      expect(spy)
+        .toHaveBeenCalledWith(blockIndex, dataKey);
     });
 
     it('should call .removeBlock() if block index is provided', () => {

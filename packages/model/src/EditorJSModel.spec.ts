@@ -22,6 +22,8 @@ describe('EditorJSModel', () => {
       'updateValue',
       'removeBlock',
       'moveBlock',
+      'createDataNode',
+      'removeDataNode',
       'getText',
       'insertText',
       'removeText',

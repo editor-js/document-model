@@ -1,4 +1,4 @@
-import { expect } from '@jest/globals';
+import { EventAction } from '../../EventBus/index.js';
 import { Index } from '../Index/index.js';
 import { IndexBuilder } from '../Index/IndexBuilder.js';
 import { BlockNode, createBlockToolName, createDataKey } from './index.js';
@@ -418,6 +418,145 @@ describe('BlockNode', () => {
         expect(tune)
           .toBeInstanceOf(BlockTune);
       });
+    });
+  });
+
+  describe('.createDataNode()', () => {
+    it('should create value data node', () => {
+      const blockNodeName = createBlockToolName('paragraph');
+
+      const blockNode = new BlockNode({
+        name: blockNodeName,
+        data: {},
+        parent: {} as EditorDocument,
+      });
+
+      const key = createDataKey('url');
+      const value = 'https://editorjs.io';
+
+
+      blockNode.createDataNode(key, value);
+
+      expect(blockNode.data[key]).toBeInstanceOf(ValueNode);
+    });
+
+    it('should create text data node', () => {
+      const blockNodeName = createBlockToolName('paragraph');
+
+      const blockNode = new BlockNode({
+        name: blockNodeName,
+        data: {},
+        parent: {} as EditorDocument,
+      });
+
+      const key = createDataKey('text');
+      const value = {
+        $t: 't',
+        value: 'text',
+      };
+
+      blockNode.createDataNode(key, value);
+
+      expect(blockNode.data[key]).toBeInstanceOf(TextNode);
+    });
+
+    it('should emit DataNodeAddedEvent', () => {
+      const blockNodeName = createBlockToolName('paragraph');
+
+      const blockNode = new BlockNode({
+        name: blockNodeName,
+        data: {},
+        parent: {} as EditorDocument,
+      });
+
+      const listener = jest.fn();
+
+      blockNode.addEventListener(EventType.Changed, listener);
+
+      const key = createDataKey('text');
+      const value = {
+        $t: 't',
+        value: 'text',
+      };
+
+      blockNode.createDataNode(key, value);
+
+      expect(listener).toBeCalledWith(expect.objectContaining({
+        detail: {
+          action: EventAction.Added,
+          index: expect.objectContaining({ dataKey: key }),
+          data: value,
+        },
+      }));
+    });
+
+    it('should not change the node if key already exists', () => {
+      const key = createDataKey('url');
+      const value = 'https://editorjs.io';
+      const blockNode = createBlockNodeWithData({ [key]: value });
+
+      const currentNode = blockNode.data[key];
+
+      blockNode.createDataNode(key, 'another value');
+
+      expect(blockNode.data[key]).toStrictEqual(currentNode);
+    });
+
+    it('should not emit DataNodeAddedEvent if key already exists', () => {
+      const key = createDataKey('url');
+      const value = 'https://editorjs.io';
+      const blockNode = createBlockNodeWithData({ [key]: value });
+      const listener = jest.fn();
+
+      blockNode.addEventListener(EventType.Changed, listener);
+
+      blockNode.createDataNode(key, value);
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('.removeDataNode()', () => {
+    it('should remove data from the block', () => {
+      const key = createDataKey('url');
+      const blockNode = createBlockNodeWithData({ [key]: 'editorjs.io' });
+
+      blockNode.removeDataNode(key);
+
+      expect(blockNode.data[key]).toBeUndefined();
+    });
+
+    it('should emit DataNodeRemovedEvent', () => {
+      const key = createDataKey('url');
+      const value = 'https://editorjs.io';
+      const blockNode = createBlockNodeWithData({ [key]: value });
+      const listener = jest.fn();
+
+      jest.spyOn(ValueNode.prototype, 'serialized', 'get').mockReturnValueOnce(value);
+
+      blockNode.addEventListener(EventType.Changed, listener);
+
+      blockNode.removeDataNode(key);
+
+      expect(listener).toBeCalledWith(expect.objectContaining({
+        detail: {
+          action: EventAction.Added,
+          index: expect.objectContaining({ dataKey: key }),
+          data: value,
+        },
+      }));
+    });
+
+    it('should not emit DataNodeRemovedEvent if key doesnt exist', () => {
+      const key = createDataKey('url');
+      const blockNode = createBlockNodeWithData({});
+      const listener = jest.fn();
+
+      blockNode.addEventListener(EventType.Changed, listener);
+
+      blockNode.removeDataNode(key);
+
+      expect(listener).not.toHaveBeenCalled();
     });
   });
 
@@ -1139,7 +1278,7 @@ describe('BlockNode', () => {
     const dataKey = createDataKey('text');
     const start = 0;
     const end = 5;
-    const range: [number, number] = [start, end];
+    const range: [ number, number ] = [start, end];
 
     beforeEach(() => {
       node = createBlockNodeWithData({

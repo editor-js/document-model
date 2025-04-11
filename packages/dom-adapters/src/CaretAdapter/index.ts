@@ -98,6 +98,14 @@ export class CaretAdapter extends EventTarget {
   }
 
   /**
+   * Removes input from the caret adapter
+   * @param index - index of the input to remove
+   */
+  public detachInput(index: Index): void {
+    this.#inputs.delete(index.serialize());
+  }
+
+  /**
    * Updates current user's caret index
    *
    * @param index - new caret index

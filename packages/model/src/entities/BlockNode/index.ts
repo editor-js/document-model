@@ -1,3 +1,4 @@
+import { DataNodeAddedEvent } from '../../EventBus/events/DataNodeAddedEvent';
 import { getContext } from '../../utils/Context.js';
 import type { EditorDocument } from '../EditorDocument';
 import type { BlockTuneName, BlockTuneSerialized } from '../BlockTune';
@@ -128,19 +129,10 @@ export class BlockNode extends EventBus {
    * Returns serialized object representing the BlockNode
    */
   public get serialized(): BlockNodeSerialized {
-    const map = (data: BlockNodeDataValue): BlockNodeDataSerializedValue => {
-      if (Array.isArray(data)) {
-        return data.map(map) as BlockNodeDataSerialized[];
-      }
-
-      if (data instanceof ValueNode || data instanceof TextNode) {
-        return data.serialized;
-      }
-
-      return mapObject(data, map);
-    };
-
-    const serializedData = mapObject(this.#data, map);
+    const serializedData = mapObject(
+      this.#data,
+      (entry) => this.#serializeData(entry)
+    );
 
     const serializedTunes = mapObject(
       this.#tunes,
@@ -152,6 +144,47 @@ export class BlockNode extends EventBus {
       data: serializedData,
       tunes: serializedTunes,
     };
+  }
+
+  /**
+   * Creates a node at passed key with initial data
+   *
+   * @param dataKey - key for the node
+   * @param data - initial data of the node
+   */
+  public createDataNode(dataKey: DataKey, data: BlockNodeDataSerializedValue): void {
+    if (this.#data[dataKey] !== undefined) {
+      return;
+    }
+
+    this.#data[dataKey] = this.#mapSerializedDataToNodes(data, dataKey as string);
+
+    const index = new IndexBuilder()
+      .addDataKey(dataKey)
+      .build();
+
+    this.dispatchEvent(new DataNodeAddedEvent(index, data, getContext<string | number>()!));
+  };
+
+  /**
+   * Removes a node with the passed key
+   *
+   * @param dataKey - key of the node to remove
+   */
+  public removeDataNode(dataKey: DataKey): void {
+    if (this.#data[dataKey] === undefined) {
+      return;
+    }
+
+    const nodeData = this.#serializeData(this.#data[dataKey]);
+
+    delete this.#data[dataKey];
+
+    const index = new IndexBuilder()
+      .addDataKey(dataKey)
+      .build();
+
+    this.dispatchEvent(new DataNodeAddedEvent(index, nodeData, getContext<string | number>()!));
   }
 
   /**
@@ -303,48 +336,69 @@ export class BlockNode extends EventBus {
    * @param data - block data
    */
   #initialize(data: BlockNodeDataSerialized): void {
-    /**
-     * Recursively maps serialized data to BlockNodeData
-     *
-     * 1. If value is an object with NODE_TYPE_HIDDEN_PROP, then it's a serialized node.
-     *  a. If NODE_TYPE_HIDDEN_PROP is BlockChildType.Value, then it's a serialized ValueNode
-     *  b. If NODE_TYPE_HIDDEN_PROP is BlockChildType.Text, then it's a serialized TextNode
-     * 2. If value is an array, then it's an array of serialized nodes, so map it recursively
-     * 3. If value is an object without NODE_TYPE_HIDDEN_PROP, then it's a JSON object, so map it recursively
-     * 4. Otherwise, it's a primitive value, so create a ValueNode with it
-     *
-     * @param value - serialized value
-     * @param key - keypath of the current value
-     */
-    const mapSerializedToNodes = (value: BlockNodeDataSerializedValue, key: string): BlockNodeData | BlockNodeDataValue => {
-      if (Array.isArray(value)) {
-        return value.map((v, i) => mapSerializedToNodes(v, `${key}.${i}`)) as BlockNodeData[] | ChildNode[];
-      }
+    this.#data = mapObject(
+      data,
+      (value, key) => this.#mapSerializedDataToNodes(value, key)
+    );
+  }
 
-      if (typeof value === 'object' && value !== null) {
-        if (NODE_TYPE_HIDDEN_PROP in value) {
-          switch (value[NODE_TYPE_HIDDEN_PROP]) {
-            case BlockChildType.Value: {
-              return this.#createValueNode(createDataKey(key), value);
-            }
-            case BlockChildType.Text: {
-              return this.#createTextNode(createDataKey(key), value as TextNodeSerialized);
-            }
+  /**
+   * Recursively serializes data value
+   *
+   * @param data - data to serialize
+   */
+  #serializeData(data: BlockNodeDataValue): BlockNodeDataSerializedValue {
+    if (Array.isArray(data)) {
+      return data.map((entry) => this.#serializeData(entry)) as BlockNodeDataSerialized[];
+    }
+
+    if (data instanceof ValueNode || data instanceof TextNode) {
+      return data.serialized;
+    }
+
+    return mapObject(data, (entry) => this.#serializeData(entry));
+  };
+
+
+  /**
+   * Recursively maps serialized data to BlockNodeData
+   *
+   * 1. If value is an object with NODE_TYPE_HIDDEN_PROP, then it's a serialized node.
+   *  a. If NODE_TYPE_HIDDEN_PROP is BlockChildType.Value, then it's a serialized ValueNode
+   *  b. If NODE_TYPE_HIDDEN_PROP is BlockChildType.Text, then it's a serialized TextNode
+   * 2. If value is an array, then it's an array of serialized nodes, so map it recursively
+   * 3. If value is an object without NODE_TYPE_HIDDEN_PROP, then it's a JSON object, so map it recursively
+   * 4. Otherwise, it's a primitive value, so create a ValueNode with it
+   *
+   * @param value - serialized value
+   * @param key - keypath of the current value
+   */
+  #mapSerializedDataToNodes(value: BlockNodeDataSerializedValue, key: string): BlockNodeData | BlockNodeDataValue {
+    if (Array.isArray(value)) {
+      return value.map((v, i) => this.#mapSerializedDataToNodes(v, `${key}.${i}`)) as BlockNodeData[] | ChildNode[];
+    }
+
+    if (typeof value === 'object' && value !== null) {
+      if (NODE_TYPE_HIDDEN_PROP in value) {
+        switch (value[NODE_TYPE_HIDDEN_PROP]) {
+          case BlockChildType.Value: {
+            return this.#createValueNode(createDataKey(key), value);
+          }
+          case BlockChildType.Text: {
+            return this.#createTextNode(createDataKey(key), value as TextNodeSerialized);
           }
         }
-
-        return mapObject(value as BlockNodeDataSerialized, (v, k) => mapSerializedToNodes(v, `${key}.${k}`));
       }
 
-      const node = new ValueNode({ value });
+      return mapObject(value as BlockNodeDataSerialized, (v, k) => this.#mapSerializedDataToNodes(v, `${key}.${k}`));
+    }
 
-      this.#listenAndBubbleValueNodeEvent(node, key as DataKey);
+    const node = new ValueNode({ value });
 
-      return node;
-    };
+    this.#listenAndBubbleValueNodeEvent(node, key as DataKey);
 
-    this.#data = mapObject(data, mapSerializedToNodes);
-  }
+    return node;
+  };
 
   /**
    * Creates new text node with passed key and initial value

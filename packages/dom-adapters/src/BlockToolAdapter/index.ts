@@ -3,7 +3,7 @@ import {
   BlockAddedEvent,
   BlockRemovedEvent,
   createDataKey,
-  type DataKey,
+  type DataKey, DataNodeAddedEvent, DataNodeRemovedEvent,
   type EditorJSModel,
   EventAction,
   EventType,
@@ -103,6 +103,8 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     this.#formattingAdapter = formattingAdapter;
     this.#toolName = toolName;
 
+    this.#model.addEventListener(EventType.Changed, (event: ModelEvents) => this.#handleModelUpdate(event));
+
     eventBus.addEventListener(`ui:${BeforeInputUIEventName}`, (event: BeforeInputUIEvent) => {
       this.#processDelegatedBeforeInput(event);
     });
@@ -124,7 +126,15 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
 
     this.#attachedInputs.set(key, input);
 
-    this.#model.addEventListener(EventType.Changed, (event: ModelEvents) => this.#handleModelUpdate(event, input, key));
+    this.#model.createDataNode(
+      this.#config.userId,
+      this.#blockIndex,
+      key,
+      {
+        $t: 't',
+        value: '',
+      }
+    );
 
     const builder = new IndexBuilder();
 
@@ -132,18 +142,40 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
 
     this.#caretAdapter.attachInput(input, builder.build());
 
-    try {
-      const value = this.#model.getText(this.#blockIndex, key);
-      const fragments = this.#model.getFragments(this.#blockIndex, key);
+    const value = this.#model.getText(this.#blockIndex, key);
+    const fragments = this.#model.getFragments(this.#blockIndex, key);
 
-      input.textContent = value;
+    input.textContent = value;
 
-      fragments.forEach(fragment => {
-        this.#formattingAdapter.formatElementContent(input, fragment);
-      });
-    } catch (_) {
-      // do nothing — TextNode is not created yet as there is no initial data in the model
+    fragments.forEach(fragment => {
+      this.#formattingAdapter.formatElementContent(input, fragment);
+    });
+  }
+
+  /**
+   * Removes the input from the DOM by key
+   *
+   * @param keyRaw - key of the input to remove
+   */
+  public detachInput(keyRaw: string): void {
+    const key = createDataKey(keyRaw);
+    const input = this.#attachedInputs.get(key);
+
+    if (!input) {
+      return;
     }
+
+    input.remove();
+    this.#caretAdapter.detachInput(
+      new IndexBuilder()
+        .addBlockIndex(this.#blockIndex)
+        .addDataKey(key)
+        .build()
+    );
+
+    this.#attachedInputs.delete(key);
+
+    this.#model.removeDataNode(this.#config.userId, this.#blockIndex, key);
   }
 
   /**
@@ -151,7 +183,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    *
    * @returns tuple of data key and input element or null if no focused input is found
    */
-  #findFocusedInput(): [DataKey, HTMLElement] | null {
+  #findFocusedInput(): [ DataKey, HTMLElement ] | null {
     const currentInput = Array.from(this.#attachedInputs.entries()).find(([_, input]) => {
       /**
        * Case 1: Input is a native input — check if it has selection
@@ -421,7 +453,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
       this.#config.userId,
       {
         name: this.#toolName,
-        data : {
+        data: {
           [key]: {
             $t: 't',
             value: newValueAfter,
@@ -454,32 +486,10 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    * @param key - data key input is attached to
    */
   #handleModelUpdateForNativeInput(event: ModelEvents, input: HTMLInputElement | HTMLTextAreaElement, key: DataKey): void {
-    if (!(event instanceof TextAddedEvent) && !(event instanceof TextRemovedEvent)) {
-      return;
-    }
-
-    const { textRange, dataKey, blockIndex } = event.detail.index;
-
-    if (textRange === undefined) {
-      return;
-    }
-
-    /**
-     * Event is not related to the attached block
-     */
-    if (blockIndex !== this.#blockIndex) {
-      return;
-    }
-
-    /**
-     * Event is not related to the attached data key
-     */
-    if (dataKey !== key) {
-      return;
-    }
+    const { textRange } = event.detail.index;
 
     const currentElement = input;
-    const [start, end] = textRange;
+    const [start, end] = textRange!;
 
     const action = event.detail.action;
 
@@ -519,31 +529,10 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    * @param key - data key input is attached to
    */
   #handleModelUpdateForContentEditableElement(event: ModelEvents, input: HTMLElement, key: DataKey): void {
-    if (!(event instanceof TextAddedEvent) && !(event instanceof TextRemovedEvent)) {
-      return;
-    }
-
-    const { textRange, dataKey, blockIndex } = event.detail.index;
-
-    if (blockIndex !== this.#blockIndex) {
-      return;
-    }
-
-    /**
-     * Event is not related to the attached data key
-     */
-    if (dataKey !== key) {
-      return;
-    }
-
-    if (textRange === undefined) {
-      return;
-    }
-
+    const { textRange } = event.detail.index;
     const action = event.detail.action;
 
-    const start = textRange[0];
-    const end = textRange[1];
+    const [start, end] = textRange!;
 
     const [startNode, startOffset] = getBoundaryPointByAbsoluteOffset(input, start);
     const [endNode, endOffset] = getBoundaryPointByAbsoluteOffset(input, end);
@@ -589,19 +578,50 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    * @param input - attached input element
    * @param key - data key input is attached to
    */
-  #handleModelUpdate(event: ModelEvents, input: HTMLElement, key: DataKey): void {
+  #handleModelUpdate(event: ModelEvents): void {
     if (event instanceof BlockAddedEvent || event instanceof BlockRemovedEvent) {
       if (event.detail.index.blockIndex! <= this.#blockIndex) {
         this.#blockIndex += event.detail.action === EventAction.Added ? 1 : -1;
       }
+
+      return;
+    }
+
+    const { textRange, dataKey, blockIndex } = event.detail.index;
+
+    if (blockIndex !== this.#blockIndex) {
+      return;
+    }
+
+
+    if (event instanceof DataNodeRemovedEvent) {
+      this.detachInput(dataKey as string);
+
+      return;
+    }
+
+    if (event instanceof DataNodeAddedEvent) {
+      /**
+       * @todo Decide how to handle this case as only BlockTool knows how to render an input
+       */
+    }
+
+    if (!(event instanceof TextAddedEvent) && !(event instanceof TextRemovedEvent)) {
+      return;
+    }
+
+    const input = this.#attachedInputs.get(dataKey!);
+
+    if (!input || textRange === undefined) {
+      return;
     }
 
     const isInputNative = isNativeInput(input);
 
     if (isInputNative === true) {
-      this.#handleModelUpdateForNativeInput(event, input as HTMLInputElement | HTMLTextAreaElement, key);
+      this.#handleModelUpdateForNativeInput(event, input as HTMLInputElement | HTMLTextAreaElement, dataKey!);
     } else {
-      this.#handleModelUpdateForContentEditableElement(event, input, key);
+      this.#handleModelUpdateForContentEditableElement(event, input, dataKey!);
     }
   };
 }
