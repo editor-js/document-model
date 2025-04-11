@@ -1176,7 +1176,8 @@ describe('EditorDocument', () => {
         .addBlockIndex(blockIndex)
         .addDataKey(dataKey)
         .build();
-      const value = { value: text, $t: 't' };
+      const value = { value: text,
+        $t: 't' };
 
 
       document.insertData(index, value);

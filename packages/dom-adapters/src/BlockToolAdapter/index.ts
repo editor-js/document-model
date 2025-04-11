@@ -483,9 +483,8 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    *
    * @param event - model update event
    * @param input - input element
-   * @param key - data key input is attached to
    */
-  #handleModelUpdateForNativeInput(event: ModelEvents, input: HTMLInputElement | HTMLTextAreaElement, key: DataKey): void {
+  #handleModelUpdateForNativeInput(event: ModelEvents, input: HTMLInputElement | HTMLTextAreaElement): void {
     const { textRange } = event.detail.index;
 
     const currentElement = input;
@@ -575,8 +574,6 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    * Handles model update events and updates DOM
    *
    * @param event - model update event
-   * @param input - attached input element
-   * @param key - data key input is attached to
    */
   #handleModelUpdate(event: ModelEvents): void {
     if (event instanceof BlockAddedEvent || event instanceof BlockRemovedEvent) {
@@ -619,7 +616,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     const isInputNative = isNativeInput(input);
 
     if (isInputNative === true) {
-      this.#handleModelUpdateForNativeInput(event, input as HTMLInputElement | HTMLTextAreaElement, dataKey!);
+      this.#handleModelUpdateForNativeInput(event, input as HTMLInputElement | HTMLTextAreaElement);
     } else {
       this.#handleModelUpdateForContentEditableElement(event, input, dataKey!);
     }

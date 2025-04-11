@@ -1,4 +1,4 @@
-import { DataNodeAddedEvent } from '../../EventBus/events/DataNodeAddedEvent';
+import { DataNodeAddedEvent } from '../../EventBus/events/DataNodeAddedEvent.js';
 import { getContext } from '../../utils/Context.js';
 import type { EditorDocument } from '../EditorDocument';
 import type { BlockTuneName, BlockTuneSerialized } from '../BlockTune';

@@ -1,6 +1,6 @@
 import { EventBus } from '../../../EventBus/EventBus.js';
-import { create } from "../../../utils/index";
-import type { DataKey } from "../types/index";
+import { create } from '../../../utils/index.js';
+import type { DataKey } from '../types/index';
 
 export const createDataKey = create<DataKey>();
 
