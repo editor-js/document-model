@@ -6,7 +6,8 @@ import { IndexBuilder, type Index, type BlockNodeSerialized } from '@editorjs/mo
 export enum OperationType {
   Insert = 'insert',
   Delete = 'delete',
-  Modify = 'modify'
+  Modify = 'modify',
+  Neutral = 'neutral',
 }
 
 /**
@@ -37,6 +38,13 @@ export interface ModifyOperationData<T extends Record<any, any> = Record<any, an
    */
   prevPayload?: T | null;
 }
+
+export interface NeutralOperationData {
+  /**
+   * Payload for neutral operation could be anything, we dont care about it
+   */
+  payload: string | BlockNodeSerialized[];
+};
 
 /**
  * Serialized operation object
@@ -73,7 +81,9 @@ export interface SerializedOperation<T extends OperationType = OperationType> {
  */
 export type OperationTypeToData<T extends OperationType> = T extends OperationType.Modify
   ? ModifyOperationData
-  : InsertOrDeleteOperationData;
+  : T extends OperationType.Neutral
+    ? NeutralOperationData 
+    : InsertOrDeleteOperationData;
 
 /**
  * Helper type to get invert operation type
@@ -82,7 +92,9 @@ export type InvertedOperationType<T extends OperationType> = T extends Operation
   ? OperationType.Delete
   : T extends OperationType.Delete
     ? OperationType.Insert
-    : OperationType.Modify;
+    : T extends OperationType.Neutral
+      ? OperationType.Neutral
+      : OperationType.Modify;
 
 
 /**
@@ -92,7 +104,7 @@ export class Operation<T extends OperationType = OperationType> {
   /**
    * Operation type
    */
-  public type: T;
+  public type: T | OperationType.Neutral;
 
   /**
    * Index in the document model tree
@@ -123,10 +135,10 @@ export class Operation<T extends OperationType = OperationType> {
    * @param userId - user identifier
    * @param rev - document revision
    */
-  constructor(type: T, index: Index, data: OperationTypeToData<T>, userId: string | number, rev?: number) {
+  constructor(type: T | OperationType.Neutral, index: Index, data: OperationTypeToData<T> | OperationTypeToData<OperationType.Neutral>, userId: string | number, rev?: number) {
     this.type = type;
     this.index = index;
-    this.data = data;
+    this.data = data as OperationTypeToData<T>;
     this.userId = userId;
     this.rev = rev;
   }
@@ -136,7 +148,7 @@ export class Operation<T extends OperationType = OperationType> {
    *
    * @param op - operation to copy
    */
-  public static from<T extends OperationType>(op: Operation<T>): Operation<T>;
+  public static from<T extends OperationType>(op: Operation<T> | Operation<OperationType.Neutral>): Operation<T>;
   /**
    * Creates an operation from another operation or serialized operation
    *
@@ -198,10 +210,11 @@ export class Operation<T extends OperationType = OperationType> {
 
   /**
    * Transforms the operation against another operation
+   * If operation is not transformable returns null
    *
    * @param againstOp - operation to transform against
    */
-  public transform(againstOp: Operation): Operation<T> {
+  public transform<K extends OperationType>(againstOp: Operation<K> | Operation<OperationType.Neutral>): Operation<T | OperationType.Neutral> {
     /**
      * Do not transform operations if they are on different documents
      */
@@ -218,37 +231,194 @@ export class Operation<T extends OperationType = OperationType> {
 
     const newIndexBuilder = new IndexBuilder().from(this.index);
 
-    switch (againstOp.type) {
-      case OperationType.Insert: {
-        const payload = (againstOp as Operation<OperationType.Insert>).data.payload;
-
+    switch (true) {
+      /**
+       * If one of the operations is neutral, return this operation
+       */
+      case (this.type === OperationType.Neutral || againstOp.type === OperationType.Neutral): {
+        return Operation.from(this);
+      }
+      /**
+       * Every operation against modify operation stays the same
+       */
+      case (againstOp.type === OperationType.Modify): {
+        break;
+      }
+      case (this.type === OperationType.Insert && againstOp.type === OperationType.Insert): {
+        /**
+         * Update block index if againstOp is insert of a block
+         */
         if (againstOp.index.isBlockIndex) {
-          newIndexBuilder.addBlockIndex(this.index.blockIndex! + payload.length);
+          newIndexBuilder.addBlockIndex(this.index.blockIndex!++);
 
           break;
         }
 
-        newIndexBuilder.addTextRange([this.index.textRange![0] + payload.length, this.index.textRange![1] + payload.length]);
+        /**
+         * Move current insert to the right on amount on chars, inserted by againstOp 
+         */
+        if (this.index.isTextIndex && againstOp.index.isTextIndex) {
+          const againstOpLength = againstOp.data.payload!.length;
 
-        break;
+          newIndexBuilder.addTextRange([this.index.textRange![0] + againstOpLength, this.index.textRange![1] + againstOpLength])
+
+          break;
+        }
       }
-
-      case OperationType.Delete: {
-        const payload = (againstOp as Operation<OperationType.Delete>).data.payload;
-
-        if (againstOp.index.isBlockIndex) {
-          newIndexBuilder.addBlockIndex(this.index.blockIndex! - payload.length);
+      case (this.type === OperationType.Insert && againstOp.type === OperationType.Delete): {
+        /**
+         * Decrease block index if againstOp is Delete block before current insert
+         */
+        if (againstOp.index.isBlockIndex && this.index.blockIndex! > againstOp.index.blockIndex!) {
+          newIndexBuilder.addBlockIndex(this.index.blockIndex!--);
 
           break;
         }
 
-        newIndexBuilder.addTextRange([this.index.textRange![0] - payload.length, this.index.textRange![1] - payload.length]);
+        if (this.index.isTextIndex && againstOp.index.isTextIndex) {
+          /**
+           * Deleted the range on the left of the current insert
+           */
+          if (this.index.textRange![0] > againstOp.index.textRange![1]) {
+            newIndexBuilder.addTextRange([this.index.textRange![0] - againstOp.index.textRange![1], this.index.textRange![1] - againstOp.index.textRange![1]]);
+
+            break;
+          }
+
+          /**
+           * Deleted the range, then trying to insert new text inside of the deleted range
+           * Then insert should be done in the start of the deleted range
+           */
+          if ((this.index.textRange![0] <= againstOp.index.textRange![0]) && (this.index.textRange![0] > againstOp.index.textRange![0])) {
+            newIndexBuilder.addTextRange([againstOp.index.textRange![0], againstOp.index.textRange![0]]);
+          }          
+        }
 
         break;
       }
+      case (this.type === OperationType.Modify && againstOp.type === OperationType.Insert): {
+        /**
+         * Increase block index of the modify operation if againstOp insert a block before
+         */
+        if (againstOp.index.isBlockIndex) {
+          newIndexBuilder.addBlockIndex(this.index.blockIndex!++);
 
-      default:
+          break;
+        }
+
+        /**
+         * Extend modify operation range if againstOp insert a text inside of the modify bounds
+         */
+        if (againstOp.index.textRange![0] < this.index.textRange![0] && againstOp.index.textRange![1] > this.index.textRange![0]) {
+          const againstOpLength = againstOp.index.textRange![1] - againstOp.index.textRange![0];
+
+          newIndexBuilder.addTextRange([this.index.textRange![0], this.index.textRange![1] + againstOpLength]);
+        }
+        break;
+      }
+      case (this.type === OperationType.Modify && againstOp.type === OperationType.Delete): {
+        /**
+         * Decrease block index of the modify operation if againstOp delete a block before
+         */
+        if (againstOp.index.isBlockIndex && this.index.blockIndex! > againstOp.index.blockIndex!) {
+          newIndexBuilder.addBlockIndex(this.index.blockIndex!--);
+
+          break;
+        }
+        
+        /**
+         * Make modify operation neutral if againstOp deleted a block, to apply modify to 
+         */
+        if (againstOp.index.isBlockIndex && this.index.blockIndex! === againstOp.index.blockIndex!) {
+          return new Operation(OperationType.Neutral, this.index, { payload: [] }, this.userId);
+
+        }
+        break;
+      }
+      case (this.type === OperationType.Delete && againstOp.type === OperationType.Insert): {
+        /**
+         * Increase block index if againstOp insert a block before
+         */
+        if (againstOp.index.isBlockIndex) {
+          newIndexBuilder.addBlockIndex(this.index.blockIndex!++);
+
+          break;
+        }
+
+        if (this.index.isTextIndex && againstOp.index.isTextIndex) {
+          const againstOpLength = againstOp.data.payload?.length;
+
+          /**
+           * Extend delete operation range if againstOp insert a text inside of the delete bounds
+           */
+          if ((againstOp.index.textRange![0] > this.index.textRange![0]) && (againstOp.index.textRange![0] < this.index.textRange![1])) {
+            newIndexBuilder.addTextRange([this.index.textRange![0], this.index.textRange![1] + againstOpLength]);
+
+            break;
+          }
+
+          /**
+           * Move deletion bounds to the right by amount of inserted text
+           */
+          if (this.index.textRange![0] > againstOp.index.textRange![0]) {
+            newIndexBuilder.addTextRange([this.index.textRange![0] + againstOpLength, this.index.textRange![1] + againstOpLength]);
+          }
+        }
+        break;
+      }
+      case (this.type === OperationType.Delete && againstOp.type === OperationType.Delete): {
+        /**
+         * Decrease block index if againstOp delete a block before
+         */
+        if (againstOp.index.isBlockIndex && this.index.blockIndex! > againstOp.index.blockIndex!) {
+          newIndexBuilder.addBlockIndex(this.index.blockIndex!--);
+
+          break;
+        }
+        
+        if (this.index.isTextIndex && againstOp.index.isTextIndex) {
+          const againstOpLength = againstOp.index.textRange![1] - againstOp.index.textRange![0];
+
+          /**
+           * Move deletion bounds to the left by amount of deleted text
+           */
+          if (this.index.textRange![0] > againstOp.index.textRange![1]) {
+            newIndexBuilder.addTextRange([this.index.textRange![0] - againstOpLength, this.index.textRange![1] - againstOpLength]);
+
+            break;
+          }
+
+          /**
+           * If operation tries to delete a range that is already deleted, return neutral operation
+           */
+          if (this.index.textRange![0] >= againstOp.index.textRange![0] && this.index.textRange![1] <= againstOp.index.textRange![1]) {
+            return new Operation(OperationType.Neutral, this.index, { payload: [] }, this.userId);
+          }
+
+          /**
+           * Remove part of the delete operation range if it is already deleted by againstOp
+           * Cover three possible overlaps
+           */
+          if (this.index.textRange![0] > againstOp.index.textRange![0] && this.index.textRange![1] > againstOp.index.textRange![1]) {
+            newIndexBuilder.addTextRange([againstOp.index.textRange![1], this.index.textRange![1]]);
+
+            break;
+          }
+          if (this.index.textRange![0] < againstOp.index.textRange![0] && this.index.textRange![1] < againstOp.index.textRange![1]) {
+            newIndexBuilder.addTextRange([this.index.textRange![0], againstOp.index.textRange![0]]);
+
+            break;
+          }
+          if (this.index.textRange![0] < againstOp.index.textRange![0] && this.index.textRange![1] > againstOp.index.textRange![1]) {
+            newIndexBuilder.addTextRange([this.index.textRange![0], againstOp.index.textRange![1] - againstOpLength]);
+
+            break;
+          }
+        }
+      }
+      default: {
         throw new Error('Unsupported operation type');
+      }
     }
 
     const operation = Operation.from(this);
@@ -289,4 +459,12 @@ export class Operation<T extends OperationType = OperationType> {
 
     return false;
   }
+
+  // #removeOverlappingTextRange(range: TextRange, againstRange: TextRange): TextRange {
+  //   if (range[0] <= againstRange[0] && range[1] >= againstRange[0]) {
+  //     return [againstRange[0], range[1]];
+  //   }
+
+  //   return range;
+  // }
 }

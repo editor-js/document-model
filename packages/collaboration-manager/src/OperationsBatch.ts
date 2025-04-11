@@ -1,5 +1,4 @@
-import { IndexBuilder, type TextRange } from '@editorjs/model';
-import { Operation, OperationType } from './Operation.js';
+import { InvertedOperationType, Operation, OperationType, SerializedOperation } from './Operation.js';
 
 /**
  * Batch debounce time
@@ -7,44 +6,23 @@ import { Operation, OperationType } from './Operation.js';
 const DEBOUNCE_TIMEOUT = 500;
 
 /**
- * Batch termination callback
- *
- * @param batch - terminated batch
- * @param [lastOperation] - operation on which the batch was terminated
- */
-type OnBatchTermination = (batch: OperationsBatch, lastOperation?: Operation) => void;
-
-/**
  * Class to batch Text operations (maybe others in the future) for Undo/Redo purposes
  *
  * Operations are batched on timeout basis or if batch is terminated from the outside
  */
-export class OperationsBatch {
+export class OperationsBatch<T extends OperationType> extends Operation<T> {
   /**
    * Array of operations to batch
-   *
-   * @private
    */
-  #operations: Operation[] = [];
-
-  /**
-   * Termination callback
-   */
-  #onTermination: OnBatchTermination;
-
-  /**
-   * Termination timeout
-   */
-  #debounceTimer?: ReturnType<typeof setTimeout>;
+  operations: (Operation<T> | Operation<OperationType.Neutral>)[] = [];
 
   /**
    * Batch constructor function
    *
-   * @param onTermination - termination callback
    * @param firstOperation - first operation to add
    */
-  constructor(onTermination: OnBatchTermination = () => {}, firstOperation?: Operation) {
-    this.#onTermination = onTermination;
+  constructor(firstOperation: Operation<T> | Operation<OperationType.Neutral>) {
+    super(firstOperation.type, firstOperation.index, firstOperation.data, firstOperation.userId, firstOperation.rev);
 
     if (firstOperation !== undefined) {
       this.add(firstOperation);
@@ -53,63 +31,96 @@ export class OperationsBatch {
 
   /**
    * Adds an operation to the batch
+   * Make sure, that operation could be added to the batch
    *
    * @param op - operation to add
    */
-  public add(op: Operation): void {
-    if (!this.#canAdd(op)) {
-      this.terminate(op);
-
-      return;
-    }
-
-    this.#operations.push(op);
-
-    clearTimeout(this.#debounceTimer);
-    this.#debounceTimer = setTimeout(() => this.terminate(), DEBOUNCE_TIMEOUT);
+  public add(op: Operation<T> | Operation<OperationType.Neutral>): void {
+    this.operations.push(op);
   }
 
+  /**
+   * Create a new operation batch from an array of operations
+   * 
+   * @param opBatch - operation batch to clone
+   */ 
+  public static from<T extends OperationType>(opBatch: OperationsBatch<T>): OperationsBatch<T>;
 
   /**
-   * Returns and effective operations for all the operations in the batch
+   * Create a new operation batch from a serialized operation
+   * 
+   * @param json - serialized operation
    */
-  public getEffectiveOperation(): Operation | null {
-    if (this.#operations.length === 0) {
-      return null;
+  public static from<T extends OperationType>(json: SerializedOperation<T>): OperationsBatch<T>;
+
+  /**
+   * Create a new operation batch from an operation batch or a serialized operation
+   * 
+   * @param opBatchOrJSON - operation batch or serialized operation
+   */ 
+  public static from<T extends OperationType>(opBatchOrJSON: OperationsBatch<T> | SerializedOperation<T>): OperationsBatch<T> {
+    if (opBatchOrJSON instanceof OperationsBatch) {
+      /**
+       * Every batch should have at least one operation
+       */
+      const batch = new OperationsBatch(opBatchOrJSON.operations.shift()!);
+
+      opBatchOrJSON.operations.forEach((op) => {
+        /**
+         * Deep clone operation to the new batch
+         */
+        batch.add(Operation.from(op));
+      });
+    
+      return batch as OperationsBatch<T>;
+    } else {
+      const batch = new OperationsBatch<T>(Operation.from(opBatchOrJSON));
+
+      return batch;  
     }
-
-    if (this.#operations.length === 1) {
-      return this.#operations[0];
-    }
-
-    const type = this.#operations[0].type;
-    const index = this.#operations[0].index;
-
-    const range: TextRange = [
-      this.#operations[0].index.textRange![0],
-      this.#operations[this.#operations.length - 1].index.textRange![1],
-    ];
-    const payload = this.#operations.reduce((text, operation) => text + operation.data.payload, '');
-
-    return new Operation(
-      type,
-      new IndexBuilder().from(index)
-        .addTextRange(range)
-        .build(),
-      { payload },
-      this.#operations[0].userId
-    );
   }
 
   /**
-   * Terminates the batch, passes operation on which batch was terminated to the callback
+   * Method that inverses all of the operations in the batch
    *
-   * @param lastOp - operation on which the batch is terminated
+   * @returns new batch with inversed operations
    */
-  public terminate(lastOp?: Operation): void {
-    clearTimeout(this.#debounceTimer);
+  public inverse(): OperationsBatch<InvertedOperationType<T>> {
+    /**
+     * Every batch should have at least one operation
+     */
+    const newOperationsBatch = new OperationsBatch<InvertedOperationType<T> | OperationType.Neutral>(this.operations.pop()!.inverse())
 
-    this.#onTermination(this, lastOp);
+    while (this.operations.length > 0) {
+      const op = this.operations.pop()!.inverse();
+
+      newOperationsBatch.add(op);
+    }
+
+    return newOperationsBatch as OperationsBatch<InvertedOperationType<T>>;
+  }
+
+  /**
+   * Method that transforms all of the operations in the batch against another operation
+   *
+   * @param againstOp - operation to transform against
+   * @returns new batch with transformed operations
+   */
+  public transform<K extends OperationType>(againstOp: Operation<K>): OperationsBatch<T | OperationType.Neutral> {
+    const transformedOp = this.operations.shift()!.transform(againstOp);
+
+    const newOperationsBatch = new OperationsBatch(transformedOp);
+
+    /**
+     * We either have a new operations batch or all operations were not transformable
+     */
+    for (const op of this.operations) {
+      const transformedOp = op.transform(againstOp);
+
+      newOperationsBatch.add(transformedOp);
+    }
+
+    return newOperationsBatch;
   }
 
   /**
@@ -119,8 +130,8 @@ export class OperationsBatch {
    *
    * @param op - operation to check
    */
-  #canAdd(op: Operation): boolean {
-    const lastOp = this.#operations[this.#operations.length - 1];
+  canAdd(op: Operation): boolean {
+    const lastOp = this.operations[this.operations.length - 1];
 
     if (lastOp === undefined) {
       return true;
