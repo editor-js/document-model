@@ -1,7 +1,6 @@
 import { createDataKey, IndexBuilder } from '@editorjs/model';
 import { OperationsBatch } from './OperationsBatch.js';
-import { Operation, OperationType } from './Operation.js';
-import { jest } from '@jest/globals';
+import { Operation, OperationType, SerializedOperation } from './Operation.js';
 
 const templateIndex = new IndexBuilder()
   .addBlockIndex(0)
@@ -12,10 +11,6 @@ const templateIndex = new IndexBuilder()
 const userId = 'user';
 
 describe('Batch', () => {
-  beforeAll(() => {
-    jest.useFakeTimers();
-  });
-
   it('should add Insert operation to batch', () => {
     const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
     const op2 = new Operation(
@@ -26,24 +21,14 @@ describe('Batch', () => {
       { payload: 'b' },
       userId
     );
-    const onTimeout = jest.fn();
 
-    const batch = new OperationsBatch(onTimeout, op1);
+    const batch = new OperationsBatch(op1);
 
     batch.add(op2);
 
-    const effectiveOp = batch.getEffectiveOperation();
+    const operations = batch.operations;
 
-    expect(effectiveOp).toEqual({
-      type: OperationType.Insert,
-      index: new IndexBuilder()
-        .from(templateIndex)
-        .addTextRange([0, 1])
-        .build(),
-      data: { payload: 'ab' },
-      rev: undefined,
-      userId,
-    });
+    expect(operations).toEqual([op1, op2]);
   });
 
   it('should add Delete operation to batch', () => {
@@ -56,239 +41,155 @@ describe('Batch', () => {
       { payload: 'b' },
       userId
     );
-    const onTimeout = jest.fn();
 
-    const batch = new OperationsBatch(onTimeout, op1);
+    const batch = new OperationsBatch(op1);
 
     batch.add(op2);
 
-    const effectiveOp = batch.getEffectiveOperation();
+    const operations = batch.operations;
 
-    expect(effectiveOp).toEqual({
-      type: OperationType.Delete,
-      index: new IndexBuilder()
-        .from(templateIndex)
-        .addTextRange([0, 1])
-        .build(),
-      data: { payload: 'ab' },
-      rev: undefined,
-      userId,
+    expect(operations).toEqual([op1, op2]);
+  });
+
+  describe('from()', () => {
+    it('should create a new batch from an existing batch', () => {
+      const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
+      const op2 = new Operation(
+        OperationType.Insert,
+        new IndexBuilder().from(templateIndex).addTextRange([1, 1]).build(),
+        { payload: 'b' },
+        userId
+      );
+      const originalBatch = new OperationsBatch(op1);
+      originalBatch.add(op2);
+
+      const newBatch = OperationsBatch.from(originalBatch);
+
+      expect(newBatch.operations).toEqual(originalBatch.operations);
+      expect(newBatch).not.toBe(originalBatch); // Should be a new instance
+    });
+
+    it('should create a new batch from serialized operation', () => {
+      const serializedOp: SerializedOperation<OperationType> = new Operation(OperationType.Delete, templateIndex, { payload: 'a' }, userId).serialize();
+
+      const batch = OperationsBatch.from(serializedOp);
+
+      expect(batch.operations[0].type).toBe(serializedOp.type);
+      expect(batch.operations[0].data).toEqual(serializedOp.data);
     });
   });
 
-  it('should terminate the batch if the new operation is not text operation', () => {
-    const op1 = new Operation(OperationType.Delete, templateIndex, { payload: 'a' }, userId);
-    const op2 = new Operation(
-      OperationType.Delete,
-      new IndexBuilder().from(templateIndex)
-        .addDataKey(undefined)
-        .addTextRange(undefined)
-        .build(),
-      {
-        payload: [
-          {
-            name: 'paragraph',
-            data: { text: '' },
-          },
-        ],
-      },
-      userId
-    );
+  describe('inverse()', () => {
+    it('should inverse all operations in the batch', () => {
+      const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
+      const op2 = new Operation(
+        OperationType.Insert,
+        new IndexBuilder().from(templateIndex).addTextRange([1, 1]).build(),
+        { payload: 'b' },
+        userId
+      );
+      const batch = new OperationsBatch(op1);
+      batch.add(op2);
 
-    const onTimeout = jest.fn();
+      const inversedBatch = batch.inverse();
 
-    const batch = new OperationsBatch(onTimeout, op1);
-
-    batch.add(op2);
-
-    expect(onTimeout).toBeCalledWith(batch, op2);
+      expect(inversedBatch.operations[0].type).toBe(OperationType.Delete);
+      expect(inversedBatch.operations[1].type).toBe(OperationType.Delete);
+    });
   });
 
-  it('should terminate the batch if operation in the batch is not text operation', () => {
-    const op1 = new Operation(
-      OperationType.Delete,
-      new IndexBuilder().from(templateIndex)
-        .addDataKey(undefined)
-        .addTextRange(undefined)
-        .build(),
-      {
-        payload: [
-          {
-            name: 'paragraph',
-            data: { text: '' },
-          },
-        ],
-      },
-      userId
-    );
-    const op2 = new Operation(OperationType.Delete, templateIndex, { payload: 'a' }, userId);
+  describe('transform()', () => {
+    it('should transform operations against another operation', () => {
+      const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
+      const op2 = new Operation(
+        OperationType.Insert,
+        new IndexBuilder().from(templateIndex).addTextRange([1, 1]).build(),
+        { payload: 'b' },
+        userId
+      );
+      const batch = new OperationsBatch(op1);
+      batch.add(op2);
 
-    const onTimeout = jest.fn();
+      const againstOp = new Operation(
+        OperationType.Insert,
+        new IndexBuilder().from(templateIndex).addTextRange([0, 0]).build(),
+        { payload: 'x' },
+        'other-user'
+      );
 
-    const batch = new OperationsBatch(onTimeout, op1);
+      const transformedBatch = batch.transform(againstOp);
 
-    batch.add(op2);
+      expect(transformedBatch).not.toBeNull();
+      expect(transformedBatch!.operations.length).toBe(2);
+      // Check if text ranges were shifted by 1 due to insertion
+      expect(transformedBatch!.operations[0].index.textRange![0]).toBe(1);
+      expect(transformedBatch!.operations[1].index.textRange![0]).toBe(2);
+    });
 
-    expect(onTimeout).toBeCalledWith(batch, op2);
+    it('should return null if no operations can be transformed', () => {
+      const op = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
+      const batch = new OperationsBatch(op);
+      
+      // An operation that would make transformation impossible
+      const againstOp = new Operation(OperationType.Delete, templateIndex, { payload: 'a' }, 'other-user');
+
+      const transformedBatch = batch.transform(againstOp);
+
+      expect(transformedBatch).toBeNull();
+    });
   });
 
-  it('should terminate the batch if operation in the batch is Modify operation', () => {
-    const op1 = new Operation(
-      OperationType.Modify,
-      new IndexBuilder().from(templateIndex)
-        .build(),
-      {
-        payload: {
-          tool: 'bold',
-        },
-        prevPayload: {
-          tool: 'bold',
-        },
-      },
-      userId
-    );
-    const op2 = new Operation(OperationType.Delete, templateIndex, { payload: 'a' }, userId);
+  describe('canAdd()', () => {
+    it('should return true for consecutive text operations of same type', () => {
+      const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
+      const op2 = new Operation(
+        OperationType.Insert,
+        new IndexBuilder().from(templateIndex).addTextRange([1, 1]).build(),
+        { payload: 'b' },
+        userId
+      );
+      const batch = new OperationsBatch(op1);
 
-    const onTimeout = jest.fn();
+      expect(batch.canAdd(op2)).toBe(true);
+    });
 
-    const batch = new OperationsBatch(onTimeout, op1);
+    it('should return false for non-consecutive text operations', () => {
+      const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
+      const op2 = new Operation(
+        OperationType.Insert,
+        new IndexBuilder().from(templateIndex).addTextRange([2, 2]).build(),
+        { payload: 'b' },
+        userId
+      );
+      const batch = new OperationsBatch(op1);
 
-    batch.add(op2);
+      expect(batch.canAdd(op2)).toBe(false);
+    });
 
-    expect(onTimeout).toBeCalledWith(batch, op2);
-  });
+    it('should return false for different operation types', () => {
+      const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
+      const op2 = new Operation(
+        OperationType.Delete,
+        new IndexBuilder().from(templateIndex).addTextRange([1, 1]).build(),
+        { payload: 'b' },
+        userId
+      );
+      const batch = new OperationsBatch(op1);
 
-  it('should terminate the batch if the new operation is Modify operation', () => {
-    const op1 = new Operation(OperationType.Delete, templateIndex, { payload: 'a' }, userId);
-    const op2 = new Operation(
-      OperationType.Modify,
-      new IndexBuilder().from(templateIndex)
-        .build(),
-      {
-        payload: {
-          tool: 'bold',
-        },
-        prevPayload: {
-          tool: 'bold',
-        },
-      },
-      userId
-    );
+      expect(batch.canAdd(op2)).toBe(false);
+    });
 
-    const onTimeout = jest.fn();
+    it('should return false for modify operations', () => {
+      const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
+      const op2 = new Operation(
+        OperationType.Modify,
+        new IndexBuilder().from(templateIndex).addTextRange([1, 1]).build(),
+        { payload: { tool: 'bold' } },
+        userId
+      );
+      const batch = new OperationsBatch(op1);
 
-    const batch = new OperationsBatch(onTimeout, op1);
-
-    batch.add(op2);
-
-    expect(onTimeout).toBeCalledWith(batch, op2);
-  });
-
-  it('should terminate the batch if operations are of different type', () => {
-    const op1 = new Operation(OperationType.Delete, templateIndex, { payload: 'a' }, userId);
-    const op2 = new Operation(
-      OperationType.Insert,
-      new IndexBuilder().from(templateIndex)
-        .addTextRange([1, 1])
-        .build(),
-      { payload: 'b' },
-      userId
-    );
-    const onTimeout = jest.fn();
-
-    const batch = new OperationsBatch(onTimeout, op1);
-
-    batch.add(op2);
-
-    expect(onTimeout).toBeCalledWith(batch, op2);
-  });
-
-  it('should terminate the batch if operations block indexes are not the same', () => {
-    const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
-    const op2 = new Operation(
-      OperationType.Insert,
-      new IndexBuilder().from(templateIndex)
-        .addBlockIndex(1)
-        .addTextRange([1, 1])
-        .build(),
-      { payload: 'b' },
-      userId
-    );
-    const onTimeout = jest.fn();
-
-    const batch = new OperationsBatch(onTimeout, op1);
-
-    batch.add(op2);
-
-    expect(onTimeout).toBeCalledWith(batch, op2);
-  });
-
-  it('should terminate the batch if operations data keys are not the same', () => {
-    const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
-    const op2 = new Operation(
-      OperationType.Insert,
-      new IndexBuilder().from(templateIndex)
-        .addDataKey(createDataKey('differentKey'))
-        .addTextRange([1, 1])
-        .build(),
-      { payload: 'b' },
-      userId
-    );
-    const onTimeout = jest.fn();
-
-    const batch = new OperationsBatch(onTimeout, op1);
-
-    batch.add(op2);
-
-    expect(onTimeout).toBeCalledWith(batch, op2);
-  });
-
-  it('should terminate the batch if operations index ranges are not adjacent', () => {
-    const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
-    const op2 = new Operation(
-      OperationType.Insert,
-      new IndexBuilder().from(templateIndex)
-        .addTextRange([2, 2])
-        .build(),
-      { payload: 'b' },
-      userId
-    );
-    const onTimeout = jest.fn();
-
-    const batch = new OperationsBatch(onTimeout, op1);
-
-    batch.add(op2);
-
-    expect(onTimeout).toBeCalledWith(batch, op2);
-  });
-
-  it('should terminate the batch if timeout is exceeded', () => {
-    const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
-
-    const onTimeout = jest.fn();
-
-    const batch = new OperationsBatch(onTimeout, op1);
-
-    // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-    jest.advanceTimersByTime(1000);
-
-    expect(onTimeout).toBeCalledWith(batch, undefined);
-  });
-
-  it('should return null if there\'s no operations as effective operation in the batch', () => {
-    const onTimeout = jest.fn();
-    const batch = new OperationsBatch(onTimeout);
-
-    expect(batch.getEffectiveOperation()).toBeNull();
-  });
-
-  it('should return the only operation in the batch as effective operation', () => {
-    const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
-
-    const onTimeout = jest.fn();
-
-    const batch = new OperationsBatch(onTimeout, op1);
-
-    expect(batch.getEffectiveOperation()).toEqual(op1);
+      expect(batch.canAdd(op2)).toBe(false);
+    });
   });
 });

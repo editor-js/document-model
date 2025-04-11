@@ -36,7 +36,7 @@ export class CollaborationManager {
   /**
    * Current operations batch
    */
-  #currentBatch: OperationsBatch | null = null;
+  #currentBatch: OperationsBatch<OperationType> | null = null;
 
   /**
    * Editor's config
@@ -91,7 +91,11 @@ export class CollaborationManager {
    * Undo last operation in the local stack
    */
   public undo(): void {
-    this.#currentBatch?.terminate();
+    if (this.#currentBatch !== null) {
+      this.#undoRedoManager.put(this.#currentBatch);
+
+      this.#currentBatch = null;
+    }
 
     const operation = this.#undoRedoManager.undo();
 
@@ -99,10 +103,16 @@ export class CollaborationManager {
       return;
     }
 
-    // Disable event handling
+    // Disable  handling
     this.#shouldHandleEvents = false;
 
-    this.applyOperation(operation);
+    if (operation instanceof OperationsBatch) {
+      operation.operations.forEach((op) => {
+        this.applyOperation(op);
+      });
+    } else {
+      this.applyOperation(operation);
+    }
 
     // Re-enable event handling
     this.#shouldHandleEvents = true;
@@ -112,7 +122,11 @@ export class CollaborationManager {
    * Redo last undone operation in the local stack
    */
   public redo(): void {
-    this.#currentBatch?.terminate();
+    if (this.#currentBatch !== null) {
+      this.#undoRedoManager.put(this.#currentBatch);
+
+      this.#currentBatch = null;
+    }
 
     const operation = this.#undoRedoManager.redo();
 
@@ -123,7 +137,13 @@ export class CollaborationManager {
     // Disable event handling
     this.#shouldHandleEvents = false;
 
-    this.applyOperation(operation);
+    if (operation instanceof OperationsBatch) {
+      operation.operations.forEach((op) => {
+        this.applyOperation(op);
+      });
+    } else {
+      this.applyOperation(operation);
+    }
 
     // Re-enable event handling
     this.#shouldHandleEvents = true;
@@ -135,6 +155,10 @@ export class CollaborationManager {
    * @param operation - operation to apply
    */
   public applyOperation(operation: Operation): void {
+    if (operation.type === OperationType.Neutral) {
+      return;
+    }
+
     switch (operation.type) {
       case OperationType.Insert:
         this.#model.insertData(operation.userId, operation.index, operation.data.payload as string | BlockNodeSerialized[]);
@@ -159,12 +183,7 @@ export class CollaborationManager {
    * @param e - event to handle
    */
   #handleEvent(e: ModelEvents): void {
-    if (!this.#shouldHandleEvents) {
-      return;
-    }
-
     let operation: Operation | null = null;
-
 
     /**
      * @todo add all model events
@@ -212,30 +231,47 @@ export class CollaborationManager {
       return;
     }
 
+    /**
+     * If operation is local, send it to the server
+     */
     if (operation.userId === this.#config.userId) {
       void this.#client?.send(operation);
     } else {
+      /**
+       * If operation is remote, transform undo/redo stacks
+       */
+      this.#undoRedoManager.transformUndoStack(operation);
+      this.#undoRedoManager.transformRedoStack(operation);
+
+      /**
+       * If we got a new remote operation - transform current batch
+       * If batch is not transormable - clear it
+       */
+      this.#currentBatch = this.#currentBatch?.transform(operation) ?? null;
+
       return;
     }
 
-    const onBatchTermination = (batch: OperationsBatch, lastOp?: Operation): void => {
-      const effectiveOp = batch.getEffectiveOperation();
+    if (!this.#shouldHandleEvents) {
+      return;
+    }
 
-      if (effectiveOp) {
-        this.#undoRedoManager.put(effectiveOp);
-      }
-
-      /**
-       * lastOp is the operation on which the batch was terminated.
-       * So if there is one, we need to create a new batch
-       *
-       * lastOp could be null if the batch was terminated by time out
-       */
-      this.#currentBatch = lastOp === undefined ? null : new OperationsBatch(onBatchTermination, lastOp);
-    };
-
+    /**
+     * If there is no current batch, create a new one with current operation
+     */
     if (this.#currentBatch === null) {
-      this.#currentBatch = new OperationsBatch(onBatchTermination, operation);
+      this.#currentBatch = new OperationsBatch(operation);
+
+      return;
+    }
+
+    /**
+     * If current operation could not be added to the batch, then terminate current batch and create a new one with current operation
+     */
+    if (!this.#currentBatch.canAdd(operation)) {
+      this.#undoRedoManager.put(this.#currentBatch);
+
+      this.#currentBatch = new OperationsBatch(operation);
 
       return;
     }

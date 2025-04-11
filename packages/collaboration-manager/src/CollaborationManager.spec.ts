@@ -945,4 +945,124 @@ describe('CollaborationManager', () => {
       properties: {},
     });
   });
+
+  describe('remote operations', () => {
+    it('should transform current batch when remote operation arrives', () => {
+      const model = new EditorJSModel(userId, { identifier: documentId });
+      model.initializeDocument({
+        blocks: [{
+          name: 'paragraph',
+          data: {
+            text: {
+              value: '',
+              $t: 't',
+            },
+          },
+        }],
+      });
+
+      const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
+
+      // Create local operation
+      const localIndex = new IndexBuilder().addBlockIndex(0)
+        .addDataKey(createDataKey('text'))
+        .addTextRange([0, 4])
+        .build();
+        
+      const localOp = new Operation(OperationType.Insert, localIndex, {
+        payload: 'test',
+      }, userId);
+
+      collaborationManager.applyOperation(localOp);
+
+      // Apply remote operation
+      const remoteIndex = new IndexBuilder().addBlockIndex(0)
+        .addDataKey(createDataKey('text'))
+        .addTextRange([0, 5])
+        .build();
+        
+      const remoteOp = new Operation(OperationType.Insert, remoteIndex, {
+        payload: 'hello',
+      }, 'other-user');
+
+      collaborationManager.applyOperation(remoteOp);
+
+      // Verify the operations were transformed correctly
+      expect(model.serialized).toStrictEqual({
+        identifier: documentId,
+        blocks: [{
+          name: 'paragraph',
+          tunes: {},
+          data: {
+            text: {
+              $t: 't',
+              value: 'hellotest',
+              fragments: [],
+            },
+          },
+        }],
+        properties: {},
+      });
+    });
+
+    it('should clear current batch if not transformable with remote operation', () => {
+      const model = new EditorJSModel(userId, { identifier: documentId });
+      model.initializeDocument({
+        blocks: [{
+          name: 'paragraph',
+          data: {
+            text: {
+              value: 'initial',
+              $t: 't',
+            },
+          },
+        }],
+      });
+
+      const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
+
+      // Create local delete operation
+      const localIndex = new IndexBuilder().addBlockIndex(0)
+        .addDataKey(createDataKey('text'))
+        .addTextRange([0, 7])
+        .build();
+        
+      const localOp = new Operation(OperationType.Insert, localIndex, {
+        payload: 'initial',
+      }, userId);
+
+      collaborationManager.applyOperation(localOp);
+
+      // Apply conflicting remote operation
+      const remoteIndex = new IndexBuilder().addBlockIndex(0)
+        .addDataKey(createDataKey('text'))
+        .addTextRange([0, 7])
+        .build();
+        
+      const remoteOp = new Operation(OperationType.Delete, remoteIndex, {
+        payload: 'initial',
+      }, 'other-user');
+
+      collaborationManager.applyOperation(remoteOp);
+
+      // Verify the current batch was cleared by checking undo doesn't restore text
+      collaborationManager.undo();
+
+      expect(model.serialized).toStrictEqual({
+        identifier: documentId,
+        blocks: [{
+          name: 'paragraph',
+          tunes: {},
+          data: {
+            text: {
+              $t: 't',
+              value: '',
+              fragments: [],
+            },
+          },
+        }],
+        properties: {},
+      });
+    });
+  });
 });
