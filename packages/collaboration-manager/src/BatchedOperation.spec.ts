@@ -1,5 +1,5 @@
 import { createDataKey, IndexBuilder } from '@editorjs/model';
-import { OperationsBatch } from './OperationsBatch.js';
+import { OperationsBatch } from './BatchedOperation.js';
 import { Operation, OperationType, SerializedOperation } from './Operation.js';
 
 const templateIndex = new IndexBuilder()

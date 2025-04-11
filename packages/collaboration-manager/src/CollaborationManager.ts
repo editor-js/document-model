@@ -10,7 +10,7 @@ import {
 } from '@editorjs/model';
 import type { CoreConfig } from '@editorjs/sdk';
 import { OTClient } from './client/index.js';
-import { OperationsBatch } from './OperationsBatch.js';
+import { OperationsBatch } from './BatchedOperation.js';
 import { type ModifyOperationData, Operation, OperationType } from './Operation.js';
 import { UndoRedoManager } from './UndoRedoManager.js';
 
