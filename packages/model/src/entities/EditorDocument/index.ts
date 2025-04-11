@@ -79,14 +79,23 @@ export class EditorDocument extends EventBus {
   /**
    * Initializes EditorDocument with passed blocks
    *
-   * @param blocks - document serialized blocks
+   * @param document - document serialized data
    */
-  public initialize(blocks: BlockNodeSerialized[]): void {
+  public initialize(document: Partial<EditorDocumentSerialized> & Pick<EditorDocumentSerialized, 'blocks'>): void {
     this.clear();
 
-    blocks.forEach((block) => {
+    if (document.identifier !== undefined) {
+      this.identifier = document.identifier as DocumentId;
+    }
+
+    document.blocks.forEach((block) => {
       this.addBlock(block);
     });
+
+    if (document.properties) {
+      Object.entries(document.properties)
+        .forEach(([name, value]) => this.setProperty(name, value));
+    }
   }
 
   /**
@@ -135,22 +144,6 @@ export class EditorDocument extends EventBus {
     builder.addBlockIndex(index);
 
     this.dispatchEvent(new BlockAddedEvent(builder.build(), blockNode.serialized, getContext<string | number>()!));
-  }
-
-  /**
-   * Moves a BlockNode from one index to another
-   *
-   * @param from - The index of the BlockNode to move
-   * @param to - The index to move the BlockNode to
-   * @throws Error if the index is out of bounds
-   */
-  public moveBlock(from: number, to: number): void {
-    this.#checkIndexOutOfBounds(from);
-    this.#checkIndexOutOfBounds(to);
-
-    const blockToMove = this.#children.splice(from, 1)[0];
-
-    this.#children.splice(to, 0, blockToMove);
   }
 
   /**

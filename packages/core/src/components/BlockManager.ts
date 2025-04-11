@@ -1,4 +1,11 @@
-import { BlockAddedEvent, BlockRemovedEvent, EditorJSModel, EventType, ModelEvents } from '@editorjs/model';
+import {
+  BlockAddedEvent, type BlockNodeSerialized,
+  BlockRemovedEvent,
+  type EditorDocumentSerialized,
+  EditorJSModel,
+  EventType,
+  ModelEvents
+} from '@editorjs/model';
 import 'reflect-metadata';
 import { Inject, Service } from 'typedi';
 import { BlockToolAdapter, CaretAdapter, FormattingAdapter } from '@editorjs/dom-adapters';
@@ -69,6 +76,13 @@ export class BlocksManager {
   #formattingAdapter: FormattingAdapter;
 
   /**
+   * Returns Blocks count
+   */
+  public get blocksCount(): number {
+    return this.#model.length;
+  }
+
+  /**
    * BlocksManager constructor
    * All parameters are injected thorugh the IoC container
    * @param model - Editor's Document Model instance
@@ -102,6 +116,7 @@ export class BlocksManager {
    * @param parameters.type - block tool name to insert
    * @param parameters.data - block's initial data
    * @param parameters.index - index to insert block at
+   // * @param parameters.needToFocus - flag indicates if caret should be set to block after insert
    * @param parameters.replace - flag indicates if block at index should be replaced
    */
   public insert({
@@ -119,10 +134,78 @@ export class BlocksManager {
       newIndex = this.#model.length + (replace ? 0 : 1);
     }
 
+    if (replace) {
+      this.#model.removeBlock(this.#config.userId, newIndex);
+    }
+
     this.#model.addBlock(this.#config.userId, {
       ...data,
       name: type,
-    }, index);
+    }, newIndex);
+  }
+
+  /**
+   * Inserts several Blocks to specified index
+   * @param blocks - array of blocks to insert
+   * @param [index] - index to insert blocks at. If undefined, inserts at the end
+   */
+  public insertMany(blocks: BlockNodeSerialized[], index: number = this.#model.length + 1): void {
+    blocks.forEach((block, i) => this.#model.addBlock(this.#config.userId, block, index + i));
+  }
+
+  /**
+   * Re-initialize document
+   * @param document - serialized document data
+   */
+  public render(document: EditorDocumentSerialized): void {
+    this.#model.initializeDocument(document);
+  }
+
+  /**
+   * Remove all blocks from Document
+   */
+  public clear(): void {
+    this.#model.clearBlocks();
+  }
+
+  /**
+   * Removes Block by index, or current block if index is not passed
+   * @param index - index of a block to delete
+   */
+  public deleteBlock(index: number | undefined = this.#getCurrentBlockIndex()): void {
+    if (index === undefined) {
+      /**
+       * @todo see what happens in legacy
+       */
+      throw new Error('No block selected to delete');
+    }
+
+    this.#model.removeBlock(this.#config.userId, index);
+  }
+
+  /**
+   * Moves a block to a new index
+   * @param toIndex - index where the block is moved to
+   * @param [fromIndex] - block to move. Current block if not passed
+   */
+  public move(toIndex: number, fromIndex: number | undefined = this.#getCurrentBlockIndex()): void {
+    if (fromIndex === undefined) {
+      throw new Error('No block selected to move');
+    }
+
+    const block = this.#model.serialized.blocks[fromIndex];
+
+    this.#model.removeBlock(this.#config.userId, fromIndex);
+    this.#model.addBlock(this.#config.userId, block, toIndex + (fromIndex <= toIndex ? 1 : 0));
+  }
+
+  /**
+   * Returns block index where user caret is placed
+   */
+  #getCurrentBlockIndex(): number | undefined {
+    const caretIndex = this.#caretAdapter.userCaretIndex;
+
+    return caretIndex?.blockIndex;
   }
 
   /**
