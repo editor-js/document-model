@@ -70,10 +70,14 @@ export class BlocksUI implements EditorjsPlugin {
       if (e.shiftKey) {
         this.#eventBus.dispatchEvent(new Event('core:redo'));
 
+        e.preventDefault();
+
         return;
       }
 
       this.#eventBus.dispatchEvent(new Event('core:undo'));
+
+      e.preventDefault();
     });
   }
 

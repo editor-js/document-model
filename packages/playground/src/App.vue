@@ -29,7 +29,8 @@ onMounted(() => {
     holder: document.getElementById('editorjs') as HTMLElement,
     userId: userId,
     documentId: 'test',
-    // collaborationServer: 'ws://localhost:8080',
+    // collaborationServer: 'wss://lirili-larila.codex.so/',
+    collaborationServer: 'ws://localhost:8080',
     data: {
       blocks: [
         {

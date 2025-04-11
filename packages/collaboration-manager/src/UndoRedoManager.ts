@@ -57,4 +57,28 @@ export class UndoRedoManager {
     this.#undoStack.push(operation);
     this.#redoStack = [];
   }
+
+  public transformUndoStack(operation: Operation): void {
+    this.transformStack(operation, this.#undoStack);
+  }
+
+  public transformRedoStack(operation: Operation): void {
+    this.transformStack(operation, this.#redoStack);
+  }
+
+  public transformStack(operation: Operation, stack: Operation[]): void {
+    const transformed = stack.flatMap((op) => {
+      const transformedOp = op.transform(operation);
+
+      if (transformedOp === null) {
+        return []
+      }
+
+      return [ transformedOp ];
+    })
+
+    stack.length = 0;
+    stack.push(...transformed);
+
+  }
 }

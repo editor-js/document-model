@@ -103,7 +103,7 @@ describe('Operation', () => {
         const localOp = createOperation(OperationType.Insert, 0, 'abc');
         const transformedOp = receivedOp.transform(localOp);
 
-        expect(transformedOp.index.textRange).toEqual([6, 6]);
+        expect(transformedOp?.index.textRange).toEqual([6, 6]);
       });
 
       it('should transform a received operation if it is at the same position as a local one', () => {
@@ -111,7 +111,7 @@ describe('Operation', () => {
         const localOp = createOperation(OperationType.Insert, 0, 'def');
         const transformedOp = receivedOp.transform(localOp);
 
-        expect(transformedOp.index.textRange).toEqual([3, 3]);
+        expect(transformedOp?.index.textRange).toEqual([3, 3]);
       });
 
       it('should not change the text index if local op is a Block operation', () => {
@@ -122,7 +122,7 @@ describe('Operation', () => {
         } ]);
         const transformedOp = receivedOp.transform(localOp);
 
-        expect(transformedOp.index.textRange).toEqual([0, 0]);
+        expect(transformedOp?.index.textRange).toEqual([0, 0]);
       });
 
       it('should not change the operation if local op is a Block operation after a received one', () => {
@@ -152,7 +152,7 @@ describe('Operation', () => {
 
         const transformedOp = receivedOp.transform(localOp);
 
-        expect(transformedOp.index.blockIndex).toEqual(2);
+        expect(transformedOp?.index.blockIndex).toEqual(2);
       });
 
       it('should adjust the block index if local op is a Block operation at the same index as a received one', () => {
@@ -167,7 +167,7 @@ describe('Operation', () => {
 
         const transformedOp = receivedOp.transform(localOp);
 
-        expect(transformedOp.index.blockIndex).toEqual(1);
+        expect(transformedOp?.index.blockIndex).toEqual(1);
       });
     });
 
@@ -185,7 +185,7 @@ describe('Operation', () => {
         const localOp = createOperation(OperationType.Delete, 0, 'abc');
         const transformedOp = receivedOp.transform(localOp);
 
-        expect(transformedOp.index.textRange).toEqual([0, 0]);
+        expect(transformedOp?.index.textRange).toEqual([0, 0]);
       });
 
       it('should transform a received operation if it is at the same position as a local one', () => {
@@ -193,7 +193,7 @@ describe('Operation', () => {
         const localOp = createOperation(OperationType.Delete, 3, 'def');
         const transformedOp = receivedOp.transform(localOp);
 
-        expect(transformedOp.index.textRange).toEqual([0, 0]);
+        expect(transformedOp?.index.textRange).toEqual([0, 0]);
       });
 
       it('should not change the text index if local op is a Block operation', () => {
@@ -204,7 +204,7 @@ describe('Operation', () => {
         } ]);
         const transformedOp = receivedOp.transform(localOp);
 
-        expect(transformedOp.index.textRange).toEqual([1, 1]);
+        expect(transformedOp?.index.textRange).toEqual([1, 1]);
       });
 
       it('should not change the text index if local op is a Block operation', () => {
@@ -215,7 +215,7 @@ describe('Operation', () => {
         } ]);
         const transformedOp = receivedOp.transform(localOp);
 
-        expect(transformedOp.index.textRange).toEqual([0, 0]);
+        expect(transformedOp?.index.textRange).toEqual([0, 0]);
       });
 
       it('should not change the operation if local op is a Block operation after a received one', () => {
@@ -245,7 +245,7 @@ describe('Operation', () => {
 
         const transformedOp = receivedOp.transform(localOp);
 
-        expect(transformedOp.index.blockIndex).toEqual(0);
+        expect(transformedOp?.index.blockIndex).toEqual(0);
       });
 
       it('should adjust the block index if local op is a Block operation at the same index as a received one', () => {
@@ -260,7 +260,23 @@ describe('Operation', () => {
 
         const transformedOp = receivedOp.transform(localOp);
 
-        expect(transformedOp.index.blockIndex).toEqual(0);
+        expect(transformedOp?.index.blockIndex).toEqual(0);
+      });
+
+      it('should return null if the transformed text range becomes negative', () => {
+        const receivedOp = createOperation(OperationType.Delete, 1, 'abc');
+        const localOp = createOperation(OperationType.Delete, 0, 'defghijk');  // Delete more characters than available
+        const transformedOp = receivedOp.transform(localOp);
+
+        expect(transformedOp).toBeNull();
+      });
+
+      it('should return null if the transformed text range becomes negative for Insert operation', () => {
+        const receivedOp = createOperation(OperationType.Insert, 1, 'abc');
+        const localOp = createOperation(OperationType.Delete, 0, 'defghijk');  // Delete more characters than available
+        const transformedOp = receivedOp.transform(localOp);
+
+        expect(transformedOp).toBeNull();
       });
     });
   });
