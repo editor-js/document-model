@@ -258,6 +258,35 @@ export class EditorJSModel extends EventBus {
   }
 
   /**
+   * Creates a data node (ValueNode or TextNode) with the specified key in the BlockNode at the specified index.
+   *
+   * @param _userId - user identifier which is being set to the context
+   * @param parameters - updateValue method parameters
+   * @param parameters.blockIndex - The index of the BlockNode to update
+   * @param parameters.dataKey - The key of the data node to create
+   * @param parameters.value - The initial value of the data node
+   * @throws Error if the index is out of bounds
+   */
+  @WithContext
+  public createDataNode(_userId: string | number, ...parameters: Parameters<EditorDocument['createDataNode']>): ReturnType<EditorDocument['createDataNode']> {
+    return this.#document.createDataNode(...parameters);
+  }
+
+  /**
+   * Removes a data node (ValueNode or TextNode) with the specified key in the BlockNode at the specified index.
+   *
+   * @param _userId - user identifier which is being set to the context
+   * @param parameters - updateValue method parameters
+   * @param parameters.blockIndex - The index of the BlockNode to update
+   * @param parameters.dataKey - The key of the data node to remove
+   * @throws Error if the index is out of bounds
+   */
+  @WithContext
+  public removeDataNode(_userId: string | number, ...parameters: Parameters<EditorDocument['removeDataNode']>): ReturnType<EditorDocument['removeDataNode']> {
+    return this.#document.removeDataNode(...parameters);
+  }
+
+  /**
    * Updates the ValueNode data associated with the BlockNode at the specified index.
    *
    * @param _userId - user identifier which is being set to the context
