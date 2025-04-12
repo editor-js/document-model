@@ -10,7 +10,8 @@ import {
   IndexBuilder,
   type ModelEvents,
   TextAddedEvent,
-  TextRemovedEvent
+  TextRemovedEvent,
+  Index
 } from '@editorjs/model';
 import type {
   EventBus,
@@ -138,8 +139,6 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
 
     builder.addBlockIndex(this.#blockIndex).addDataKey(key);
 
-    this.#caretAdapter.attachInput(input, builder.build());
-
     const value = this.#model.getText(this.#blockIndex, key);
     const fragments = this.#model.getFragments(this.#blockIndex, key);
 
@@ -167,12 +166,6 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
      * @todo Let BlockTool handle DOM update
      */
     input.remove();
-    this.#caretAdapter.detachInput(
-      new IndexBuilder()
-        .addBlockIndex(this.#blockIndex)
-        .addDataKey(key)
-        .build()
-    );
 
     this.#attachedInputs.delete(key);
 
@@ -481,7 +474,21 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
 
     const isInputNative = isNativeInput(input);
     let start: number;
-    let end: number;
+
+    /**
+     * @todo support input merging
+     */
+
+    /**
+     * In all cases we need to handle delete selected text if range is not collapsed
+     */
+    if (!range.collapsed) {
+      if (isInputNative) {
+        this.#handleDeleteInNativeInput(payload, input as HTMLInputElement | HTMLTextAreaElement, key, range);
+      } else {
+        this.#handleDeleteInContentEditable(input, key, range);
+      }
+    }
 
     switch (inputType) {
       case InputType.InsertReplacementText:
@@ -523,25 +530,13 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
       case InputType.DeleteEntireSoftLine:
       case InputType.DeleteWordBackward:
       case InputType.DeleteWordForward: {
-        if (isInputNative === true) {
-          this.#handleDeleteInNativeInput(payload, input as HTMLInputElement | HTMLTextAreaElement, key, range);
-        } else {
-          this.#handleDeleteInContentEditable(input, key, range);
-        }
+        /**
+         * We already handle delete above
+         */
         break;
       }
 
       case InputType.InsertParagraph:
-        console.log('insert paragraph', input);
-
-        if (isInputNative) {
-          // start = (input as HTMLInputElement | HTMLTextAreaElement).selectionStart as number;
-          this.#handleDeleteInNativeInput(payload, input as HTMLInputElement | HTMLTextAreaElement, key, range);
-        } else {
-          this.#handleDeleteInContentEditable(input, key, range, true);
-          // start = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
-        }
-
         /**
          *
          */
@@ -767,4 +762,29 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
       this.#handleModelUpdateForContentEditableElement(event, input, dataKey!);
     }
   };
+
+  /**
+   * Public getter for block index.
+   * Can be used to find a particular block, for example, in caret adapter
+   */
+  public getBlockIndex(): Index {
+    return new IndexBuilder()
+      .addBlockIndex(this.#blockIndex)
+      .build();
+  }
+
+  /**
+   * Public getter for all attached inputs.
+   * Can be used to loop through all inputs to find a particular input(s)
+   */
+  public getAttachedInputs(): Map<DataKey, HTMLElement> {
+    return this.#attachedInputs;
+  }
+
+  /**
+   * Allows access to a particular input by key
+   */
+  public getInput(key: DataKey): HTMLElement | undefined {
+    return this.#attachedInputs.get(key);
+  }
 }
