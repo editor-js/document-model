@@ -497,7 +497,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     /**
      * In all cases we need to handle delete selected text if range is not collapsed
      */
-    if (!range.collapsed) {
+    if (range.collapsed === false) {
       if (isInputNative) {
         this.#handleDeleteInNativeInput(payload, input as HTMLInputElement | HTMLTextAreaElement, key, range);
       } else {
@@ -509,7 +509,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
       case InputType.InsertReplacementText:
       case InputType.InsertFromDrop:
       case InputType.InsertFromPaste: {
-        if (data && input.contains(range.startContainer)) {
+        if (data !== undefined && input.contains(range.startContainer)) {
           start = isInputNative ?
             (input as HTMLInputElement | HTMLTextAreaElement).selectionStart as number :
             getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
@@ -523,7 +523,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
        * @todo Handle composition events
        */
       case InputType.InsertCompositionText: {
-        if (data && input.contains(range.startContainer)) {
+        if (data !== undefined && input.contains(range.startContainer)) {
           start = isInputNative ?
             (input as HTMLInputElement | HTMLTextAreaElement).selectionStart as number :
             getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
@@ -557,7 +557,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
          */
         if (
           (this.#isInputContainsOnlyStartOfSelection(input, range) || this.#isInputContainsWholeSelection(input, range)) &&
-          !payload.isCrossInputSelection
+          payload.isCrossInputSelection === false
         ) {
           start = isInputNative ?
             (input as HTMLInputElement | HTMLTextAreaElement).selectionStart as number :
