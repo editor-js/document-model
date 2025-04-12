@@ -10,3 +10,5 @@ export * from './ValueModifiedEvent.js';
 export * from './CaretManagerCaretUpdatedEvent.js';
 export * from './CaretManagerCaretAddedEvent.js';
 export * from './CaretManagerCaretRemovedEvent.js';
+export * from './DataNodeAddedEvent.js';
+export * from './DataNodeRemovedEvent.js';

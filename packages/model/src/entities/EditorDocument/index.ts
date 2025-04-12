@@ -1,6 +1,6 @@
 import type { DocumentId } from '../../EventBus/index';
 import { getContext } from '../../utils/Context.js';
-import type { DataKey } from '../BlockNode';
+import { createDataKey, type DataKey } from '../BlockNode/index.js';
 import { BlockNode } from '../BlockNode/index.js';
 import { IndexBuilder } from '../Index/IndexBuilder.js';
 import type { EditorDocumentSerialized, EditorDocumentConstructorParameters, Properties } from './types';
@@ -8,7 +8,7 @@ import type { BlockTuneName } from '../BlockTune';
 import { type InlineFragment, type InlineToolData, type InlineToolName } from '../inline-fragments/index.js';
 import { IoCContainer, TOOLS_REGISTRY } from '../../IoC/index.js';
 import { ToolsRegistry } from '../../tools/index.js';
-import type { BlockNodeSerialized } from '../BlockNode/types';
+import type { BlockNodeDataSerializedValue, BlockNodeSerialized } from '../BlockNode/types';
 import type { DeepReadonly } from '../../utils/DeepReadonly';
 import { EventBus } from '../../EventBus/EventBus.js';
 import { EventType } from '../../EventBus/types/EventType.js';
@@ -183,6 +183,33 @@ export class EditorDocument extends EventBus {
 
     return this.#children[index];
   }
+
+  /**
+   * Creates a data node with passed key with initial data for the BlockNode at specified index
+   * Throws an error if the index is out of bounds.
+   *
+   * @param index - block index
+   * @param key - key for the node
+   * @param data - initial data of the node
+   */
+  public createDataNode(index: number, key: DataKey | string, data: BlockNodeDataSerializedValue): void {
+    this.#checkIndexOutOfBounds(index, this.length - 1);
+
+    this.#children[index].createDataNode(createDataKey(key), data);
+  }
+
+  /**
+   * Removes a data node with the passed key in the BlockNode at the specified index
+   *
+   * @param index - block index
+   * @param key - key of the node to remove
+   */
+  public removeDataNode(index: number, key: DataKey | string): void {
+    this.#checkIndexOutOfBounds(index, this.length - 1);
+
+    this.#children[index].removeDataNode(createDataKey(key));
+  }
+
 
   /**
    * Returns the serialised properties of the EditorDocument.
@@ -362,10 +389,14 @@ export class EditorDocument extends EventBus {
    * @param index - index to insert data
    * @param data - data to insert (text or blocks)
    */
-  public insertData(index: Index, data: string | BlockNodeSerialized[]): void {
+  public insertData(index: Index, data: string | BlockNodeSerialized[] | BlockNodeDataSerializedValue): void {
     switch (true) {
       case index.isTextIndex:
         this.insertText(index.blockIndex!, index.dataKey!, data as string, index.textRange![0]);
+        break;
+
+      case index.isDataIndex:
+        this.createDataNode(index.blockIndex!, index.dataKey!, data as BlockNodeDataSerializedValue);
         break;
 
       case index.isBlockIndex:
@@ -383,10 +414,14 @@ export class EditorDocument extends EventBus {
    * @param index - index to remove data from
    * @param data - text or blocks to remove
    */
-  public removeData(index: Index, data: string | BlockNodeSerialized[]): void {
+  public removeData(index: Index, data: string | BlockNodeSerialized[] | BlockNodeDataSerializedValue): void {
     switch (true) {
       case index.isTextIndex:
-        this.removeText(index.blockIndex!, index.dataKey!, index.textRange![0], index.textRange![0] + data.length);
+        this.removeText(index.blockIndex!, index.dataKey!, index.textRange![0], index.textRange![0] + (data as string).length);
+        break;
+
+      case index.isDataIndex:
+        this.removeDataNode(index.blockIndex!, index.dataKey!);
         break;
 
       case index.isBlockIndex:

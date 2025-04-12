@@ -233,6 +233,43 @@ describe('Index', () => {
     });
   });
 
+  describe('.isDataIndex', () => {
+    const dataKey = 'key' as DataKey;
+
+    it('should return true if index points to the data node', () => {
+      const index = new IndexBuilder()
+        .addBlockIndex(0)
+        .addDataKey(dataKey)
+        .build();
+
+      expect(index.isDataIndex).toBe(true);
+    });
+
+    it('should return false if index does not data key', () => {
+      const index = new Index();
+
+      expect(index.isDataIndex).toBe(false);
+    });
+
+    it('should return false if index points to the text range', () => {
+      const index = new IndexBuilder().addBlockIndex(0)
+        .addDataKey('dataKey' as DataKey)
+        .addTextRange([0, 0])
+        .build();
+
+      expect(index.isDataIndex).toBe(false);
+    });
+
+    it('should return false if index points to the tune data', () => {
+      const index = new IndexBuilder().addBlockIndex(0)
+        .addTuneName('tuneName' as BlockTuneName)
+        .addTuneKey('tuneKey')
+        .build();
+
+      expect(index.isDataIndex).toBe(false);
+    });
+  });
+
   describe('.isTextIndex', () => {
     it('should return true if index points to the text', () => {
       const index = new IndexBuilder().addBlockIndex(0)

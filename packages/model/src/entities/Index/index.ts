@@ -159,4 +159,11 @@ export class Index {
   public get isBlockIndex(): boolean {
     return this.blockIndex !== undefined && this.tuneName === undefined && this.dataKey === undefined && this.textRange === undefined;
   }
+
+  /**
+   * Returns true if index points to the block node data key
+   */
+  public get isDataIndex(): boolean {
+    return this.blockIndex !== undefined && this.tuneName === undefined && this.dataKey !== undefined && this.textRange === undefined;
+  }
 }
