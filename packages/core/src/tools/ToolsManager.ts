@@ -5,7 +5,7 @@ import type {
 import 'reflect-metadata';
 import { deepMerge, isFunction, isObject, PromiseQueue } from '@editorjs/helpers';
 import { Inject, Service } from 'typedi';
-import { ToolsFactory } from './ToolsFactory.js';
+import { type ExtendedToolSettings, ToolsFactory } from './ToolsFactory.js';
 import { Paragraph } from './internal/block-tools/paragraph/index.js';
 import type {
   EditorConfig,
@@ -33,8 +33,6 @@ import LinkInlineTool from './internal/inline-tools/link/index.js';
  */
 @Service()
 export default class ToolsManager {
-  #tools: EditorConfig['tools'];
-
   /**
    * ToolsFactory instance
    */
@@ -122,9 +120,9 @@ export default class ToolsManager {
 
   /**
    * Calls tools prepare method if it exists and adds tools to relevant collection (available or unavailable tools)
-   * @returns Promise<void>
+   * @param tools - tools to prepare and their settings
    */
-  public async prepareTools(): Promise<void> {
+  public async prepareTools(tools: [InlineToolConstructor | BlockToolConstructor, ExtendedToolSettings][]): Promise<void> {
     const promiseQueue = new PromiseQueue();
 
     const setToAvailableToolsCollection = (toolName: string, tool: ToolFacadeClass): void => {
@@ -135,15 +133,20 @@ export default class ToolsManager {
       }));
     };
 
-    Object.entries(this.#config).forEach(([toolName, config]) => {
-      if (isFunction(config.class.prepare)) {
+    this.#factory.setTools(tools);
+
+    tools.forEach(([toolConstructor, config]) => {
+      const toolName = toolConstructor.name;
+
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      if (isFunction(toolConstructor.prepare)) {
         void promiseQueue.add(async () => {
           try {
             /**
              * TypeScript doesn't get type guard here, so non-null assertion is used
              */
-            await config.class.prepare!({
-              toolName: toolName,
+            await toolConstructor.prepare!({
+              toolName,
               config: config,
             });
 

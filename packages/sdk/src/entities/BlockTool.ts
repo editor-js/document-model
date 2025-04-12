@@ -1,4 +1,8 @@
-import type { BlockTool as BlockToolVersion2, BlockToolConstructable as BlockToolConstructableV2, ToolConfig } from '@editorjs/editorjs';
+import type {
+  BlockTool as BlockToolVersion2,
+  BlockToolConstructable as BlockToolConstructableV2,
+  ToolConfig
+} from '@editorjs/editorjs';
 import type { BlockToolConstructorOptions as BlockToolConstructorOptionsVersion2 } from '@editorjs/editorjs';
 import type { ValueSerialized } from '@editorjs/model';
 import type { BlockToolAdapter } from './BlockToolAdapter.js';
@@ -11,7 +15,6 @@ export interface BlockToolConstructorOptions<
    * Data structure describing the tool's input/output data
    */
   Data extends BlockToolData = BlockToolData,
-
   /**
    * User-end configuration for the tool
    */
@@ -46,7 +49,6 @@ export type BlockTool<
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
   Data extends BlockToolData = any,
-
   /**
    * User-end configuration for the tool
    *
@@ -59,7 +61,21 @@ export type BlockTool<
 /**
  * Block Tool constructor class
  */
-export type BlockToolConstructor = BlockToolConstructableV2 & (new (options: BlockToolConstructorOptions) => BlockTool);
+export type BlockToolConstructor<
+  /**
+   * Data structure describing the tool's input/output data
+   */
+  Data extends BlockToolData = BlockToolData,
+  /**
+   * User-end configuration for the tool
+   */
+  Config extends ToolConfig = ToolConfig
+> = BlockToolConstructableV2 & (new (options: BlockToolConstructorOptions<Data, Config>) => BlockTool) & {
+  /**
+   * Property specifies that the class is a Tool
+   */
+  type: 'tool';
+};
 
 /**
  * Data structure describing the tool's input/output data

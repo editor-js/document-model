@@ -26,6 +26,10 @@ export type ParagraphConfig = ToolConfig<{
  * Base text block tool
  */
 export class Paragraph implements BlockTool<ParagraphData, ParagraphConfig> {
+  public static type = 'tool';
+
+  public static name = 'paragraph';
+
   /**
    * Adapter for linking block data with the DOM
    */
