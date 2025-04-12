@@ -368,9 +368,6 @@ export class CaretAdapter extends EventTarget {
         return;
       }
 
-      /**
-       * Find all blocks that match the removed block index
-       */
       const blocksToRemove = this.#blocks.find(block => block.getBlockIndex().blockIndex === removedBlockIndex);
 
       if (blocksToRemove) {
