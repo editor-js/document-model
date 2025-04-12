@@ -11,11 +11,18 @@ import type {
   ToolConstructable,
   EditorConfig,
   InlineToolConstructable,
-  BlockTuneConstructable
+  BlockTuneConstructable, ToolSettings
 } from '@editorjs/editorjs';
 
-// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 type ToolConstructor = typeof InlineToolFacade | typeof BlockToolFacade | typeof BlockTuneFacade;
+
+export type ExtendedToolSettings = ToolSettings & {
+  /**
+   * Flag shows if a Tool is an internal tool
+   * @todo do we need this distinction any more?
+   */
+  isInternal: boolean;
+};
 
 /**
  * Factory to construct classes to work with tools
@@ -24,18 +31,23 @@ export class ToolsFactory {
   /**
    * Tools configuration specified by user
    */
-  private config: UnifiedToolConfig;
+  #config: UnifiedToolConfig;
 
   /**
    * EditorJS API Module
    */
 
-  private api: EditorAPI;
+  #api: EditorAPI;
 
   /**
    * EditorJS configuration
    */
-  private editorConfig: EditorConfig;
+  #editorConfig: EditorConfig;
+
+  /**
+   * Map of tool settings
+   */
+  #toolsSettings = new Map<string, ExtendedToolSettings>();
 
   /**
    * ToolsFactory
@@ -49,20 +61,38 @@ export class ToolsFactory {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     api: any
   ) {
-    this.api = api;
-    this.config = config;
-    this.editorConfig = editorConfig;
+    this.#api = api;
+    this.#config = config;
+    this.#editorConfig = editorConfig;
+  }
+
+  /**
+   * Register tools in the factory
+   * @param tools - tools to register in the factory
+   */
+  public setTools(tools: [InlineToolConstructor | BlockToolConstructor, ExtendedToolSettings][]): void {
+    tools.forEach(([tool, settings]) => {
+      this.#toolsSettings.set(tool.name, {
+        ...settings,
+        class: tool,
+      });
+    });
   }
 
   /**
    * Returns Tool object based on it's type
    * @param name - tool name
    */
-  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   public get(name: string): InlineToolFacade | BlockToolFacade | BlockTuneFacade {
-    const { class: constructable, isInternal = false, ...config } = this.config[name];
+    const toolSettings = this.#toolsSettings.get(name);
 
-    const Constructor = this.getConstructor(constructable);
+    if (!toolSettings) {
+      throw new Error(`Tool ${name} is not registered`);
+    }
+
+    const { class: constructable, isInternal = false, ...config } = toolSettings;
+
+    const Constructor = this.#getConstructor(constructable!);
     // const isTune = constructable[InternalTuneSettings.IsTune];
 
     return new Constructor({
@@ -71,8 +101,8 @@ export class ToolsFactory {
       config,
       api: {},
       // api: this.api.getMethodsForTool(name, isTune),
-      isDefault: name === this.editorConfig.defaultBlock,
-      defaultPlaceholder: this.editorConfig.placeholder,
+      isDefault: name === this.#editorConfig.defaultBlock,
+      defaultPlaceholder: this.#editorConfig.placeholder,
       isInternal,
       /**
        * @todo implement api.getMethodsForTool
@@ -85,8 +115,7 @@ export class ToolsFactory {
    * Find appropriate Tool object constructor for Tool constructable
    * @param constructable - Tools constructable
    */
-  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
-  private getConstructor(constructable: ToolConstructable | BlockToolConstructor | InlineToolConstructor): ToolConstructor {
+  #getConstructor(constructable: ToolConstructable | BlockToolConstructor | InlineToolConstructor): ToolConstructor {
     switch (true) {
       case (constructable as InlineToolConstructable)[InternalInlineToolSettings.IsInline]:
         return InlineToolFacade;

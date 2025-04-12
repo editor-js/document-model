@@ -1,8 +1,17 @@
 import { CollaborationManager } from '@editorjs/collaboration-manager';
+import type { ToolSettings } from '@editorjs/editorjs/types/tools/index';
 import { type DocumentId, EditorJSModel, EventType } from '@editorjs/model';
 import type { ContainerInstance } from 'typedi';
 import { Container } from 'typedi';
-import { CoreEventType, EventBus, UiComponentType } from '@editorjs/sdk';
+import {
+  type BlockToolConstructor,
+  CoreEventType,
+  EventBus,
+  type InlineToolConstructor,
+  UiComponentType
+} from '@editorjs/sdk';
+import { Paragraph } from './tools/internal/block-tools/paragraph/index';
+import type { ExtendedToolSettings } from './tools/ToolsFactory';
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
 import ToolsManager from './tools/ToolsManager.js';
 import { CaretAdapter, FormattingAdapter } from '@editorjs/dom-adapters';
@@ -69,7 +78,7 @@ export default class Core {
     // eslint-disable-next-line @typescript-eslint/no-magic-numbers
     this.#iocContainer = Container.of(Math.floor(Math.random() * 1e10).toString());
 
-    this.validateConfig(config);
+    this.#validateConfig(config);
 
     this.#config = config as CoreConfigValidated;
 
@@ -119,16 +128,44 @@ export default class Core {
     eventBus.addEventListener(`core:${CoreEventType.Redo}`, () => {
       this.#collaborationManager.redo();
     });
+
+    // @ts-expect-error - weird TS error, will resolve later
+    this.use(Paragraph);
   }
 
   /**
-   * Initialize and injects Plugin into the container
+   * Injects Tool constructor and it's config into the container
+   * @param tool
+   * @param config
+   */
+  public use(tool: BlockToolConstructor | InlineToolConstructor, config?: Omit<ToolSettings, 'class'>): Core;
+  /**
+   * Injects Plugin into the container to initialize on Editor's init
    * @param plugin - allows to pass any implementation of editor plugins
    */
-  public use(plugin: EditorjsPluginConstructor): Core {
-    const pluginType = plugin.type;
+  public use(plugin: EditorjsPluginConstructor): Core;
+  /**
+   * Overloaded method to register Editor.js Plugins/Tools/etc
+   * @param pluginOrTool - entity to register
+   * @param toolConfig - entity configuration
+   */
+  public use(
+    pluginOrTool: BlockToolConstructor | InlineToolConstructor | EditorjsPluginConstructor,
+    toolConfig?: Omit<ToolSettings, 'class'>
+  ): Core {
+    const pluginType = pluginOrTool.type;
 
-    this.#iocContainer.set(pluginType, plugin);
+    switch (pluginType) {
+      case 'tool':
+        this.#iocContainer.set({
+          id: pluginType,
+          multiple: true,
+          value: [pluginOrTool, toolConfig],
+        });
+        break;
+      default:
+        this.#iocContainer.set(pluginType, pluginOrTool);
+    }
 
     return this;
   }
@@ -136,27 +173,34 @@ export default class Core {
   /**
    * Initializes the core
    */
-  public initialize(): void {
-    const { blocks } = composeDataFromVersion2(this.#config.data ?? { blocks: [] });
+  public async initialize(): Promise<void> {
+    try {
+      const { blocks } = composeDataFromVersion2(this.#config.data ?? { blocks: [] });
 
-    this.initializePlugins();
+      this.#initializePlugins();
 
-    this.#toolsManager.prepareTools()
-      .then(() => {
-        this.#model.initializeDocument({ blocks });
-      })
-      .then(() => {
-        this.#collaborationManager.connect();
-      })
-      .catch((error) => {
-        console.error('Editor.js initialization failed', error);
-      });
+      await this.#initializeTools();
+
+      this.#model.initializeDocument({ blocks });
+      this.#collaborationManager.connect();
+    } catch (error) {
+      console.error('Editor.js initialization failed', error);
+    }
+  }
+
+  /**
+   * Initalizes loaded tools
+   */
+  async #initializeTools(): Promise<void> {
+    const tools = this.#iocContainer.getMany<[ BlockToolConstructor | InlineToolConstructor, ExtendedToolSettings]>('tool');
+
+    return this.#toolsManager.prepareTools(tools);
   }
 
   /**
    * Initialize all registered UI plugins
    */
-  private initializePlugins(): void {
+  #initializePlugins(): void {
     /**
      * Get all registered plugin types from the container
      */
@@ -166,7 +210,7 @@ export default class Core {
       const plugin = this.#iocContainer.get<EditorjsPluginConstructor>(pluginType);
 
       if (plugin !== undefined && typeof plugin === 'function') {
-        this.initializePlugin(plugin);
+        this.#initializePlugin(plugin);
       }
     }
   }
@@ -175,7 +219,7 @@ export default class Core {
    * Create instance of plugin
    * @param plugin - Plugin constructor to initialize
    */
-  private initializePlugin(plugin: EditorjsPluginConstructor): void {
+  #initializePlugin(plugin: EditorjsPluginConstructor): void {
     const eventBus = this.#iocContainer.get(EventBus);
     const api = this.#iocContainer.get(EditorAPI);
 
@@ -190,7 +234,7 @@ export default class Core {
    * Validate configuration
    * @param config - Editor configuration
    */
-  private validateConfig(config: CoreConfig): void {
+  #validateConfig(config: CoreConfig): void {
     if (config.holder === undefined) {
       const holder = document.getElementById(DEFAULT_HOLDER_ID);
 

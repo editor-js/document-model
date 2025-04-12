@@ -47,7 +47,7 @@ export interface ActionsElementWithOptions {
   element: HTMLElement;
 
   /**
-   * Oprions of custom toolbar behaviour
+   * Options of custom toolbar behaviour
    */
   toolbarOptions?: ToolbarOptions;
 }
@@ -68,14 +68,14 @@ export interface InlineTool extends Omit<InlineToolVersion2, 'save' | 'checkStat
   /**
    * Function that returns the state of the tool for the current selection
    * @param index - index of current text selection
-   * @param fragments - all fragments of the inline tool inside of the current input
+   * @param fragments - all fragments of the inline tool inside the current input
    */
   isActive(index: TextRange, fragments: InlineFragment[]): boolean;
 
   /**
    * Returns formatting action and range for it to be applied
    * @param range - current selection range
-   * @param fragments - all fragments of the inline tool inside of the current input
+   * @param fragments - all fragments of the inline tool inside the current input
    */
   getFormattingOptions(range: TextRange, fragments: InlineFragment[]): ToolFormattingOptions;
 
@@ -101,4 +101,9 @@ export interface InlineToolsConfig extends Record<string, InlineToolConstructor>
  * @todo support options: InlineToolConstructableOptions
  * Inline Tool constructor class
  */
-export type InlineToolConstructor = InlineToolConstructableV2 & (new () => InlineTool);
+export type InlineToolConstructor = InlineToolConstructableV2 & (new () => InlineTool) & {
+  /**
+   * Property specifies the class is a Tool
+   */
+  type: 'tool';
+};
