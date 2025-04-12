@@ -11,14 +11,14 @@ import {
   type ModelEvents,
   TextAddedEvent,
   TextRemovedEvent,
-  Index
+  type Index
 } from '@editorjs/model';
 import type {
   EventBus,
   BlockToolAdapter as BlockToolAdapterInterface,
   CoreConfig,
   BeforeInputUIEvent,
-  BeforeInputUIEventPayload,
+  BeforeInputUIEventPayload
 } from '@editorjs/sdk';
 import { BeforeInputUIEventName } from '@editorjs/sdk';
 import type { CaretAdapter } from '../CaretAdapter/index.js';
@@ -306,6 +306,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
      */
     if (start !== end) {
       this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, end);
+
       return;
     }
 
@@ -359,18 +360,42 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, end);
   }
 
+  /**
+   * True if input contains only the start of the cross-input selection
+   *
+   * @param input - input element
+   * @param range - selection range
+   */
   #isInputContainsOnlyStartOfSelection(input: HTMLElement, range: StaticRange): boolean {
     return input.contains(range.startContainer) && !input.contains(range.endContainer);
   }
 
+  /**
+   * True if input contains only the end of the cross-input selection
+   *
+   * @param input - input element
+   * @param range - selection range
+   */
   #isInputContainsOnlyEndOfSelection(input: HTMLElement, range: StaticRange): boolean {
     return input.contains(range.endContainer) && !input.contains(range.startContainer);
   }
 
+  /**
+   * True if input contains the whole selection (not cross-input)
+   *
+   * @param input - input element
+   * @param range - selection range
+   */
   #isInputContainsWholeSelection(input: HTMLElement, range: StaticRange): boolean {
     return input.contains(range.startContainer) && input.contains(range.endContainer);
   }
 
+  /**
+   * True if input is in between cross-input selection
+   *
+   * @param input - input element
+   * @param range - selection range
+   */
   #isInputInBetweenSelection(input: HTMLElement, range: StaticRange): boolean {
     return !this.#isInputContainsWholeSelection(input, range) &&
            !this.#isInputContainsOnlyStartOfSelection(input, range) &&
@@ -397,22 +422,15 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     let end: number;
     let newCaretIndex: number | null = null;
 
-    // console.log('delete in input', input);
-
     /**
      * If range is fully contained within this input
      */
     if (this.#isInputContainsWholeSelection(input, range)) {
-      // console.log('range is fully contained within this input');
-
       start = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
       end = getAbsoluteRangeOffset(input, range.endContainer, range.endOffset);
 
       this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, end);
-
-      // newCaretIndex = start;
     } else if (this.#isInputContainsOnlyStartOfSelection(input, range)) {
-      // console.log('only start is in this input');
       /**
        * If only start is in this input, delete from start to end of input
        */
@@ -425,20 +443,18 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
         newCaretIndex = start;
       }
     } else if (this.#isInputContainsOnlyEndOfSelection(input, range)) {
-      // console.log('only end is in this input');
       /**
        * If only end is in this input, delete from start of input to end
-      */
-     start = 0;
-     end = getAbsoluteRangeOffset(input, range.endContainer, range.endOffset);
+       */
+      start = 0;
+      end = getAbsoluteRangeOffset(input, range.endContainer, range.endOffset);
 
+      const removedText = this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, end);
 
-     const removedText = this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, end);
-     if (isRestoreCaretToTheEnd) {
-       newCaretIndex = end - removedText.length;
-     }
+      if (isRestoreCaretToTheEnd) {
+        newCaretIndex = end - removedText.length;
+      }
     } else if (this.#isInputInBetweenSelection(input, range)) {
-      // console.log('range spans across this input');
       /**
        * If range spans across this input, delete everything
        */
@@ -448,7 +464,6 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     }
 
     if (newCaretIndex !== null) {
-      console.info('restore caret: block %o index %o caret %o', this.#blockIndex, newCaretIndex);
       this.#caretAdapter.updateIndex(
         new IndexBuilder()
           .addBlockIndex(this.#blockIndex)
@@ -544,7 +559,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
           (this.#isInputContainsOnlyStartOfSelection(input, range) || this.#isInputContainsWholeSelection(input, range)) &&
           !payload.isCrossInputSelection
         ) {
-          const start = isInputNative ?
+          start = isInputNative ?
             (input as HTMLInputElement | HTMLTextAreaElement).selectionStart as number :
             getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
 
@@ -783,6 +798,8 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
 
   /**
    * Allows access to a particular input by key
+   *
+   * @param key - data key of the input
    */
   public getInput(key: DataKey): HTMLElement | undefined {
     return this.#attachedInputs.get(key);

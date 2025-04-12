@@ -1,4 +1,6 @@
 import { isNativeInput } from '@editorjs/dom';
+import type {
+  ModelEvents } from '@editorjs/model';
 import {
   BlockRemovedEvent,
   type Caret,
@@ -7,7 +9,6 @@ import {
   EventType,
   Index,
   IndexBuilder,
-  ModelEvents,
   type TextRange,
   createDataKey
 } from '@editorjs/model';
@@ -90,9 +91,8 @@ export class CaretAdapter extends EventTarget {
    * Adds block to the caret adapter
    *
    * @param block - block tool adapter
-   * @param index - index of the block in the model tree
    */
-  public attachBlock(block: BlockToolAdapter, index: Index): void {
+  public attachBlock(block: BlockToolAdapter): void {
     this.#blocks.push(block);
   }
 
@@ -103,10 +103,12 @@ export class CaretAdapter extends EventTarget {
    */
   public detachBlock(index: Index): void {
     const block = this.getBlock(index);
+
     if (block) {
-      const index = this.#blocks.indexOf(block);
-      if (index !== -1) {
-        this.#blocks.splice(index, 1);
+      const blockIndex = this.#blocks.indexOf(block);
+
+      if (blockIndex !== -1) {
+        this.#blocks.splice(blockIndex, 1);
       }
     }
   }
@@ -148,6 +150,7 @@ export class CaretAdapter extends EventTarget {
     }
 
     const blockIndex = index.blockIndex;
+
     if (blockIndex === undefined) {
       return undefined;
     }
@@ -159,11 +162,12 @@ export class CaretAdapter extends EventTarget {
    * Finds input by block index and data key
    *
    * @param blockIndex - index of the block
-   * @param dataKey - data key of the input
+   * @param dataKeyRaw - data key of the input
    * @returns input element or undefined if not found
    */
   public findInput(blockIndex: number, dataKeyRaw: string): HTMLElement | undefined {
     const builder = new IndexBuilder();
+
     builder.addBlockIndex(blockIndex);
     const block = this.getBlock(builder.build());
 
@@ -172,6 +176,7 @@ export class CaretAdapter extends EventTarget {
     }
 
     const dataKey = createDataKey(dataKeyRaw);
+
     return block.getInput(dataKey);
   }
 
@@ -208,7 +213,10 @@ export class CaretAdapter extends EventTarget {
 
           const builder = new IndexBuilder();
 
-          builder.from(block.getBlockIndex()).addDataKey(key).addTextRange(textRange);
+          builder
+            .from(block.getBlockIndex())
+            .addDataKey(key)
+            .addTextRange(textRange);
 
           this.updateIndex(builder.build());
 
@@ -230,7 +238,10 @@ export class CaretAdapter extends EventTarget {
 
         const builder = new IndexBuilder();
 
-        builder.from(block.getBlockIndex()).addDataKey(key).addTextRange(textRange);
+        builder
+          .from(block.getBlockIndex())
+          .addDataKey(key)
+          .addTextRange(textRange);
 
         this.updateIndex(builder.build());
 

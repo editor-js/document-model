@@ -173,7 +173,7 @@ export class BlocksManager {
      * without additional storing inputs in the caret adapter
      * Thus, it won't care about block index change (block removed, block added, block moved)
      */
-    this.#caretAdapter.attachBlock(blockToolAdapter, index);
+    this.#caretAdapter.attachBlock(blockToolAdapter);
 
     const tool = this.#toolsManager.blockTools.get(data.name);
 
