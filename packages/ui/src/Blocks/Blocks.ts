@@ -112,11 +112,14 @@ export class BlocksUI implements EditorjsPlugin {
         data = e.dataTransfer?.getData('text/plain') ?? e.data ?? '';
       }
 
+      const isCrossInputSelection = e.getTargetRanges().some(range => range.startContainer !== range.endContainer);
+
       this.#eventBus.dispatchEvent(new BeforeInputUIEvent({
         data,
         inputType: e.inputType,
         isComposing: e.isComposing,
         targetRanges: e.getTargetRanges(),
+        isCrossInputSelection,
       }));
     });
 

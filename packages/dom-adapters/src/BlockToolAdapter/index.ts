@@ -10,7 +10,8 @@ import {
   IndexBuilder,
   type ModelEvents,
   TextAddedEvent,
-  TextRemovedEvent
+  TextRemovedEvent,
+  type Index
 } from '@editorjs/model';
 import type {
   EventBus,
@@ -138,8 +139,6 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
 
     builder.addBlockIndex(this.#blockIndex).addDataKey(key);
 
-    this.#caretAdapter.attachInput(input, builder.build());
-
     const value = this.#model.getText(this.#blockIndex, key);
     const fragments = this.#model.getFragments(this.#blockIndex, key);
 
@@ -167,12 +166,6 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
      * @todo Let BlockTool handle DOM update
      */
     input.remove();
-    this.#caretAdapter.detachInput(
-      new IndexBuilder()
-        .addBlockIndex(this.#blockIndex)
-        .addDataKey(key)
-        .build()
-    );
 
     this.#attachedInputs.delete(key);
 
@@ -180,36 +173,74 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
   }
 
   /**
-   * Check current selection and find it across all attached inputs
+   * Check current selection and find all inputs that contain target ranges
    *
-   * @returns tuple of data key and input element or null if no focused input is found
+   * @param targetRanges - ranges to find inputs for
+   * @returns array of tuples containing data key and input element
    */
-  #findFocusedInput(): [ DataKey, HTMLElement ] | null {
-    const currentInput = Array.from(this.#attachedInputs.entries()).find(([_, input]) => {
-      /**
-       * Case 1: Input is a native input — check if it has selection
-       */
-      if (input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement) {
-        return input.selectionStart !== null && input.selectionEnd !== null;
-      }
+  #findInputsByRanges(targetRanges: StaticRange[]): [DataKey, HTMLElement][] {
+    return Array.from(this.#attachedInputs.entries()).filter(([_, input]) => {
+      return targetRanges.some(range => {
+        const startContainer = range.startContainer;
+        const endContainer = range.endContainer;
+        const isCollapsed = range.collapsed;
 
-      /**
-       * Case 2: Input is a contenteditable element — check if it has range start container
-       */
-      if (input.isContentEditable) {
-        const selection = window.getSelection();
+        /**
+         * Case 1: Input is a native input — check if it has selection or is between selected inputs
+         */
+        if (input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement) {
+          /**
+           * If this input has selection, include it
+           */
+          if (input.selectionStart !== null && input.selectionEnd !== null) {
+            return true;
+          }
 
-        if (selection !== null && selection.rangeCount > 0) {
-          const range = selection.getRangeAt(0);
+          /**
+           * Check if this input is between the range boundaries
+           */
+          const startPosition = startContainer.compareDocumentPosition(input);
+          const endPosition = input.compareDocumentPosition(endContainer);
 
-          return input.contains(range.startContainer);
+          return (startPosition & Node.DOCUMENT_POSITION_FOLLOWING) &&
+                 (endPosition & Node.DOCUMENT_POSITION_FOLLOWING);
         }
-      }
 
-      return false;
+        /**
+         * Case 2: Input is a contenteditable element — check if it's between start and end
+         */
+        if (input.isContentEditable) {
+          /**
+           * Casw 2.1 — input contains either start or end of selection
+           */
+          if (input.contains(startContainer) || input.contains(endContainer)) {
+            return true;
+          }
+
+          /**
+           * Case 2.2 — collapsed selection inside the input
+           */
+          if (isCollapsed) {
+            return input.contains(startContainer);
+          }
+
+          /**
+           * Case 2.3 — input is between start and end
+           */
+          const startPosition = startContainer.compareDocumentPosition(input);
+          const endPosition = endContainer.compareDocumentPosition(input);
+
+          const isBetween = (
+            Boolean(startPosition & Node.DOCUMENT_POSITION_FOLLOWING) &&
+            Boolean(endPosition & Node.DOCUMENT_POSITION_PRECEDING)
+          );
+
+          return isBetween;
+        }
+
+        return false;
+      });
     });
-
-    return currentInput !== undefined ? currentInput : null;
   }
 
   /**
@@ -218,13 +249,16 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    * @param event - event containig necessary data
    */
   #processDelegatedBeforeInput(event: BeforeInputUIEvent): void {
-    const [dataKey, currentInput] = this.#findFocusedInput() ?? [];
+    const { targetRanges } = event.detail;
+    const inputs = this.#findInputsByRanges(targetRanges);
 
-    if (currentInput === undefined || dataKey === undefined) {
+    if (inputs.length === 0) {
       return;
     }
 
-    this.#handleBeforeInputEvent(event.detail, currentInput, dataKey);
+    inputs.forEach(([dataKey, input]) => {
+      this.#handleBeforeInputEvent(event.detail, input, dataKey);
+    });
   }
 
   /**
@@ -233,20 +267,39 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    * @param payload - beforeinput event payload
    * @param input - input element
    * @param key - data key input is attached to
+   * @param range - target range for this input
    * @private
    */
-  #handleDeleteInNativeInput(payload: BeforeInputUIEventPayload, input: HTMLInputElement | HTMLTextAreaElement, key: DataKey): void {
+  #handleDeleteInNativeInput(
+    payload: BeforeInputUIEventPayload,
+    input: HTMLInputElement | HTMLTextAreaElement,
+    key: DataKey,
+    range: StaticRange
+  ): void {
     const inputType = payload.inputType;
+    const inputValue = input.value;
+    const inputLength = inputValue.length;
+
+    let start = 0;
+    let end = inputLength;
 
     /**
-     * Check that selection exists in current input
+     * If range is fully contained within this input
      */
-    if (input.selectionStart === null || input.selectionEnd === null) {
-      return;
+    if (input.contains(range.startContainer) && input.contains(range.endContainer)) {
+      start = range.startOffset;
+      end = range.endOffset;
+    } else if (input.contains(range.startContainer)) {
+      /**
+       * If only start is in this input, delete from start to end of input
+       */
+      start = range.startOffset;
+    } else if (input.contains(range.endContainer)) {
+      /**
+       * If only end is in this input, delete from start of input to end
+       */
+      end = range.endOffset;
     }
-
-    let start = input.selectionStart;
-    let end = input.selectionEnd;
 
     /**
      * If selection is not collapsed, just remove selected text
@@ -262,7 +315,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
         /**
          * If selection end is already after the last element, then there is nothing to delete
          */
-        end = end !== input.value.length ? end + 1 : end;
+        end = end !== inputValue.length ? end + 1 : end;
         break;
       }
       case InputType.DeleteContentBackward: {
@@ -270,69 +323,156 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
          * If start is already 0, then there is nothing to delete
          */
         start = start !== 0 ? start - 1 : start;
-
         break;
       }
-
       case InputType.DeleteWordBackward: {
-        start = findPreviousWordBoundary(input.value, start);
-
+        start = findPreviousWordBoundary(inputValue, start);
         break;
       }
-
       case InputType.DeleteWordForward: {
-        end = findNextWordBoundary(input.value, start);
-
+        end = findNextWordBoundary(inputValue, start);
         break;
       }
-
       case InputType.DeleteHardLineBackward: {
-        start = findPreviousHardLineBoundary(input.value, start);
-
+        start = findPreviousHardLineBoundary(inputValue, start);
         break;
       }
       case InputType.DeleteHardLineForward: {
-        end = findNextHardLineBoundary(input.value, start);
-
+        end = findNextHardLineBoundary(inputValue, start);
         break;
       }
-
       case InputType.DeleteSoftLineBackward:
       case InputType.DeleteSoftLineForward:
       case InputType.DeleteEntireSoftLine:
-      /**
-       * @todo Think of how to find soft line boundaries
-       */
-
+        /**
+         * @todo Think of how to find soft line boundaries
+         */
+        break;
       case InputType.DeleteByDrag:
       case InputType.DeleteByCut:
       case InputType.DeleteContent:
-
       default:
-      /**
-       * do nothing, use start and end from user selection
-       */
+        /**
+         * do nothing, use start and end from range
+         */
     }
 
     this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, end);
-  };
+  }
+
+  /**
+   * True if input contains only the start of the cross-input selection
+   *
+   * @param input - input element
+   * @param range - selection range
+   */
+  #isInputContainsOnlyStartOfSelection(input: HTMLElement, range: StaticRange): boolean {
+    return input.contains(range.startContainer) && !input.contains(range.endContainer);
+  }
+
+  /**
+   * True if input contains only the end of the cross-input selection
+   *
+   * @param input - input element
+   * @param range - selection range
+   */
+  #isInputContainsOnlyEndOfSelection(input: HTMLElement, range: StaticRange): boolean {
+    return input.contains(range.endContainer) && !input.contains(range.startContainer);
+  }
+
+  /**
+   * True if input contains the whole selection (not cross-input)
+   *
+   * @param input - input element
+   * @param range - selection range
+   */
+  #isInputContainsWholeSelection(input: HTMLElement, range: StaticRange): boolean {
+    return input.contains(range.startContainer) && input.contains(range.endContainer);
+  }
+
+  /**
+   * True if input is in between cross-input selection
+   *
+   * @param input - input element
+   * @param range - selection range
+   */
+  #isInputInBetweenSelection(input: HTMLElement, range: StaticRange): boolean {
+    return !this.#isInputContainsWholeSelection(input, range) &&
+           !this.#isInputContainsOnlyStartOfSelection(input, range) &&
+           !this.#isInputContainsOnlyEndOfSelection(input, range);
+  }
 
   /**
    * Handles delete events in contenteditable element
    *
-   * @param payload - beforeinput event payload
    * @param input - input element
    * @param key - data key input is attached to
+   * @param range - target range for this input
+   * @param isRestoreCaretToTheEnd - by default caret is restored to the range start,
+   *                                 but sometimes (e.g. when inserting paragraph)
+   *                                 it should be restored to the end of the input
    */
-  #handleDeleteInContentEditable(payload: BeforeInputUIEventPayload, input: HTMLElement, key: DataKey): void {
-    const { targetRanges } = payload;
-    const range = targetRanges[0];
+  #handleDeleteInContentEditable(
+    input: HTMLElement,
+    key: DataKey,
+    range: StaticRange,
+    isRestoreCaretToTheEnd: boolean = false
+  ): void {
+    let start: number;
+    let end: number;
+    let newCaretIndex: number | null = null;
 
-    const start: number = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
-    const end: number = getAbsoluteRangeOffset(input, range.endContainer, range.endOffset);
+    /**
+     * If range is fully contained within this input
+     */
+    if (this.#isInputContainsWholeSelection(input, range)) {
+      start = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
+      end = getAbsoluteRangeOffset(input, range.endContainer, range.endOffset);
 
-    this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, end);
-  };
+      this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, end);
+    } else if (this.#isInputContainsOnlyStartOfSelection(input, range)) {
+      /**
+       * If only start is in this input, delete from start to end of input
+       */
+      start = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
+      end = input.textContent?.length ?? 0;
+
+      this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, end);
+
+      if (!isRestoreCaretToTheEnd) {
+        newCaretIndex = start;
+      }
+    } else if (this.#isInputContainsOnlyEndOfSelection(input, range)) {
+      /**
+       * If only end is in this input, delete from start of input to end
+       */
+      start = 0;
+      end = getAbsoluteRangeOffset(input, range.endContainer, range.endOffset);
+
+      const removedText = this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, end);
+
+      if (isRestoreCaretToTheEnd) {
+        newCaretIndex = end - removedText.length;
+      }
+    } else if (this.#isInputInBetweenSelection(input, range)) {
+      /**
+       * If range spans across this input, delete everything
+       */
+      start = 0;
+      end = getAbsoluteRangeOffset(input, input, input.childNodes.length);
+      this.#model.removeBlock(this.#config.userId, this.#blockIndex);
+    }
+
+    if (newCaretIndex !== null) {
+      this.#caretAdapter.updateIndex(
+        new IndexBuilder()
+          .addBlockIndex(this.#blockIndex)
+          .addDataKey(key)
+          .addTextRange([newCaretIndex, newCaretIndex])
+          .build()
+      );
+    }
+  }
 
   /**
    * Handles beforeinput event from user input and updates model data
@@ -345,33 +485,37 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    */
   #handleBeforeInputEvent(payload: BeforeInputUIEventPayload, input: HTMLElement, key: DataKey): void {
     const { data, inputType, targetRanges } = payload;
+    const range = targetRanges[0];
 
     const isInputNative = isNativeInput(input);
     let start: number;
-    let end: number;
 
-    if (isInputNative === false) {
-      const range = targetRanges[0];
+    /**
+     * @todo support input merging
+     */
 
-      start = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
-      end = getAbsoluteRangeOffset(input, range.endContainer, range.endOffset);
-    } else {
-      const currentElement = input as HTMLInputElement | HTMLTextAreaElement;
-
-      start = currentElement.selectionStart as number;
-      end = currentElement.selectionEnd as number;
+    /**
+     * In all cases we need to handle delete selected text if range is not collapsed
+     */
+    if (range.collapsed === false) {
+      if (isInputNative) {
+        this.#handleDeleteInNativeInput(payload, input as HTMLInputElement | HTMLTextAreaElement, key, range);
+      } else {
+        this.#handleDeleteInContentEditable(input, key, range);
+      }
     }
 
     switch (inputType) {
       case InputType.InsertReplacementText:
       case InputType.InsertFromDrop:
       case InputType.InsertFromPaste: {
-        if (start !== end) {
-          this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, end);
+        if (data !== undefined && input.contains(range.startContainer)) {
+          start = isInputNative ?
+            (input as HTMLInputElement | HTMLTextAreaElement).selectionStart as number :
+            getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
+
+          this.#model.insertText(this.#config.userId, this.#blockIndex, key, data, start);
         }
-
-        this.#model.insertText(this.#config.userId, this.#blockIndex, key, data, start);
-
         break;
       }
       case InputType.InsertText:
@@ -379,15 +523,13 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
        * @todo Handle composition events
        */
       case InputType.InsertCompositionText: {
-        /**
-         * If start and end aren't equal,
-         * it means that user selected some text and replaced it with new one
-         */
-        if (start !== end) {
-          this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, end);
-        }
+        if (data !== undefined && input.contains(range.startContainer)) {
+          start = isInputNative ?
+            (input as HTMLInputElement | HTMLTextAreaElement).selectionStart as number :
+            getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
 
-        this.#model.insertText(this.#config.userId, this.#blockIndex, key, data, start);
+          this.#model.insertText(this.#config.userId, this.#blockIndex, key, data, start);
+        }
         break;
       }
 
@@ -403,28 +545,39 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
       case InputType.DeleteEntireSoftLine:
       case InputType.DeleteWordBackward:
       case InputType.DeleteWordForward: {
-        if (isInputNative === true) {
-          this.#handleDeleteInNativeInput(payload, input as HTMLInputElement | HTMLTextAreaElement, key);
-        } else {
-          this.#handleDeleteInContentEditable(payload, input, key);
-        }
+        /**
+         * We already handle delete above
+         */
         break;
       }
 
       case InputType.InsertParagraph:
-        this.#handleSplit(key, start, end);
+        /**
+         *
+         */
+        if (
+          (this.#isInputContainsOnlyStartOfSelection(input, range) || this.#isInputContainsWholeSelection(input, range)) &&
+          payload.isCrossInputSelection === false
+        ) {
+          start = isInputNative ?
+            (input as HTMLInputElement | HTMLTextAreaElement).selectionStart as number :
+            getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
+
+          this.#handleSplit(key, start, start);
+        }
         break;
       case InputType.InsertLineBreak:
         /**
          * @todo Think if we need to keep that or not
          */
-        if (isInputNative === true) {
+        if (isInputNative && input.contains(range.startContainer)) {
+          start = (input as HTMLInputElement | HTMLTextAreaElement).selectionStart as number;
           this.#model.insertText(this.#config.userId, this.#blockIndex, key, '\n', start);
         }
         break;
       default:
     }
-  };
+  }
 
   /**
    * Splits the current block's data field at the specified index
@@ -544,6 +697,8 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
 
     builder.addDataKey(key).addBlockIndex(this.#blockIndex);
 
+    let newCaretIndex: number | null = null;
+
     switch (action) {
       case EventAction.Added: {
         const text = event.detail.data as string;
@@ -551,8 +706,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
 
         range.insertNode(textNode);
 
-        builder.addTextRange([start + text.length, start + text.length]);
-
+        newCaretIndex = start + text.length;
         break;
       }
       case EventAction.Removed: {
@@ -560,15 +714,16 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
 
         range.deleteContents();
 
-        builder.addTextRange([start, start]);
-
         break;
       }
     }
 
     input.normalize();
 
-    this.#caretAdapter.updateIndex(builder.build(), this.#config.userId);
+    if (newCaretIndex !== null) {
+      builder.addTextRange([newCaretIndex, newCaretIndex]);
+      this.#caretAdapter.updateIndex(builder.build(), this.#config.userId);
+    }
   };
 
   /**
@@ -622,4 +777,31 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
       this.#handleModelUpdateForContentEditableElement(event, input, dataKey!);
     }
   };
+
+  /**
+   * Public getter for block index.
+   * Can be used to find a particular block, for example, in caret adapter
+   */
+  public getBlockIndex(): Index {
+    return new IndexBuilder()
+      .addBlockIndex(this.#blockIndex)
+      .build();
+  }
+
+  /**
+   * Public getter for all attached inputs.
+   * Can be used to loop through all inputs to find a particular input(s)
+   */
+  public getAttachedInputs(): Map<DataKey, HTMLElement> {
+    return this.#attachedInputs;
+  }
+
+  /**
+   * Allows access to a particular input by key
+   *
+   * @param key - data key of the input
+   */
+  public getInput(key: DataKey): HTMLElement | undefined {
+    return this.#attachedInputs.get(key);
+  }
 }

@@ -1,15 +1,20 @@
 import { isNativeInput } from '@editorjs/dom';
+import type {
+  ModelEvents } from '@editorjs/model';
 import {
+  BlockRemovedEvent,
   type Caret,
   type CaretManagerEvents,
   type EditorJSModel,
   EventType,
   Index,
   IndexBuilder,
-  type TextRange
+  type TextRange,
+  createDataKey
 } from '@editorjs/model';
 import type { CoreConfig } from '@editorjs/sdk';
 import { getAbsoluteRangeOffset, getBoundaryPointByAbsoluteOffset, useSelectionChange } from '../utils/index.js';
+import type { BlockToolAdapter } from '../BlockToolAdapter/index.ts';
 
 /**
  * Caret adapter watches selection change and saves it to the model
@@ -19,29 +24,23 @@ import { getAbsoluteRangeOffset, getBoundaryPointByAbsoluteOffset, useSelectionC
 export class CaretAdapter extends EventTarget {
   /**
    * Editor.js DOM container
-   *
-   * @private
    */
   #container: HTMLElement;
 
   /**
    * Editor.js model
-   *
-   * @private
    */
   #model: EditorJSModel;
 
   /**
-   * Map of inputs
-   *
-   * @private
+   * We store blocks in caret adapter to give it access to blocks` inputs
+   * without additional storing inputs in the caret adapter
+   * Thus, it won't care about block index change (block removed, block added, block moved)
    */
-  #inputs = new Map<string, HTMLElement>();
+  #blocks: Array<BlockToolAdapter> = [];
 
   /**
    * Current user's caret
-   *
-   * @private
    */
   #currentUserCaret: Caret;
 
@@ -77,7 +76,8 @@ export class CaretAdapter extends EventTarget {
      */
     on(container, (selection) => this.#onSelectionChange(selection), this);
 
-    this.#model.addEventListener(EventType.CaretManagerUpdated, (event) => this.#onModelUpdate(event));
+    this.#model.addEventListener(EventType.CaretManagerUpdated, (event) => this.#onModelCaretUpdate(event));
+    this.#model.addEventListener(EventType.Changed, (event: ModelEvents) => this.#handleModelUpdate(event));
   }
 
   /**
@@ -88,22 +88,29 @@ export class CaretAdapter extends EventTarget {
   }
 
   /**
-   * Adds input to the caret adapter
+   * Adds block to the caret adapter
    *
-   * @param input - input element
-   * @param index - index of the input in the model tree
+   * @param block - block tool adapter
    */
-  public attachInput(input: HTMLElement, index: Index): void {
-    this.#inputs.set(index.serialize(), input);
+  public attachBlock(block: BlockToolAdapter): void {
+    this.#blocks.push(block);
   }
 
   /**
-   * Removes input from the caret adapter
+   * Removes block from the caret adapter
    *
-   * @param index - index of the input to remove
+   * @param index - index of the block to remove
    */
-  public detachInput(index: Index): void {
-    this.#inputs.delete(index.serialize());
+  public detachBlock(index: Index): void {
+    const block = this.getBlock(index);
+
+    if (block) {
+      const blockIndex = this.#blocks.indexOf(block);
+
+      if (blockIndex !== -1) {
+        this.#blocks.splice(blockIndex, 1);
+      }
+    }
   }
 
   /**
@@ -130,30 +137,47 @@ export class CaretAdapter extends EventTarget {
   }
 
   /**
-   * Finds input by index
+   * Finds block by index
    *
-   * @param index - index of the input in the model tree
+   * @param index - index of the block in the model tree
    */
-  public getInput(index?: Index): HTMLElement | undefined {
-    const builder = new IndexBuilder();
-
-
-    if (index !== undefined) {
-      builder.from(index);
-    } else if (this.#currentUserCaret.index !== null) {
-      builder.from(this.#currentUserCaret.index);
-    } else {
-      throw new Error('[CaretManager] No index provided and no user caret index found');
+  public getBlock(index?: Index): BlockToolAdapter | undefined {
+    if (index === undefined) {
+      if (this.#currentUserCaret.index === null) {
+        throw new Error('[CaretManager] No index provided and no user caret index found');
+      }
+      index = this.#currentUserCaret.index;
     }
 
-    /**
-     * Inputs are stored in the hashmap with serialized index as a key
-     * Those keys are serialized without document id and text range to cover the input only, so we need to remove them here to find the input
-     */
-    builder.addDocumentId(undefined);
-    builder.addTextRange(undefined);
+    const blockIndex = index.blockIndex;
 
-    return this.#inputs.get(builder.build().serialize());
+    if (blockIndex === undefined) {
+      return undefined;
+    }
+
+    return this.#blocks.find(block => block.getBlockIndex().blockIndex === blockIndex);
+  }
+
+  /**
+   * Finds input by block index and data key
+   *
+   * @param blockIndex - index of the block
+   * @param dataKeyRaw - data key of the input
+   * @returns input element or undefined if not found
+   */
+  public findInput(blockIndex: number, dataKeyRaw: string): HTMLElement | undefined {
+    const builder = new IndexBuilder();
+
+    builder.addBlockIndex(blockIndex);
+    const block = this.getBlock(builder.build());
+
+    if (!block) {
+      return undefined;
+    }
+
+    const dataKey = createDataKey(dataKeyRaw);
+
+    return block.getInput(dataKey);
   }
 
   /**
@@ -173,20 +197,51 @@ export class CaretAdapter extends EventTarget {
      */
     const activeElement = document.activeElement;
 
-    for (const [index, input] of this.#inputs) {
-      if (input !== activeElement) {
-        continue;
-      }
+    for (const block of this.#blocks) {
+      const inputs = block.getAttachedInputs();
 
-      if (isNativeInput(input) === true) {
+      for (const [key, input] of inputs.entries()) {
+        if (input !== activeElement) {
+          continue;
+        }
+
+        if (isNativeInput(input) === true) {
+          const textRange = [
+            (input as HTMLInputElement | HTMLTextAreaElement).selectionStart,
+            (input as HTMLInputElement | HTMLTextAreaElement).selectionEnd,
+          ] as TextRange;
+
+          const builder = new IndexBuilder();
+
+          builder
+            .from(block.getBlockIndex())
+            .addDataKey(key)
+            .addTextRange(textRange);
+
+          this.updateIndex(builder.build());
+
+          /**
+           * For now we handle only first found input
+           */
+          break;
+        }
+
+        const range = selection.getRangeAt(0);
+
+        /**
+         * @todo think of cross-block selection
+         */
         const textRange = [
-          (input as HTMLInputElement | HTMLTextAreaElement).selectionStart,
-          (input as HTMLInputElement | HTMLTextAreaElement).selectionEnd,
+          getAbsoluteRangeOffset(input, range.startContainer, range.startOffset),
+          getAbsoluteRangeOffset(input, range.endContainer, range.endOffset),
         ] as TextRange;
 
         const builder = new IndexBuilder();
 
-        builder.from(index).addTextRange(textRange);
+        builder
+          .from(block.getBlockIndex())
+          .addDataKey(key)
+          .addTextRange(textRange);
 
         this.updateIndex(builder.build());
 
@@ -195,27 +250,6 @@ export class CaretAdapter extends EventTarget {
          */
         break;
       }
-
-      const range = selection.getRangeAt(0);
-
-      /**
-       * @todo think of cross-block selection
-       */
-      const textRange = [
-        getAbsoluteRangeOffset(input, range.startContainer, range.startOffset),
-        getAbsoluteRangeOffset(input, range.endContainer, range.endOffset),
-      ] as TextRange;
-
-      const builder = new IndexBuilder();
-
-      builder.from(index).addTextRange(textRange);
-
-      this.updateIndex(builder.build());
-
-      /**
-       * For now we handle only first found input
-       */
-      break;
     }
   }
 
@@ -227,7 +261,7 @@ export class CaretAdapter extends EventTarget {
    *
    * @param event - model update event
    */
-  #onModelUpdate(event: CaretManagerEvents): void {
+  #onModelCaretUpdate(event: CaretManagerEvents): void {
     const { index: serializedIndex } = event.detail;
 
     if (serializedIndex === null) {
@@ -235,10 +269,9 @@ export class CaretAdapter extends EventTarget {
     }
 
     const index = Index.parse(serializedIndex);
+    const { textRange, dataKey } = index;
 
-    const { textRange } = index;
-
-    if (textRange === undefined) {
+    if (textRange === undefined || dataKey === undefined) {
       return;
     }
 
@@ -248,7 +281,13 @@ export class CaretAdapter extends EventTarget {
       return;
     }
 
-    const input = this.getInput(index);
+    const block = this.getBlock(index);
+
+    if (!block) {
+      return;
+    }
+
+    const input = block.getInput(dataKey);
 
     if (!input) {
       return;
@@ -311,5 +350,29 @@ export class CaretAdapter extends EventTarget {
 
     selection.removeAllRanges();
     selection.addRange(range);
+  }
+
+  /**
+   * Handles model update events
+   *
+   * @param event - model update event
+   */
+  #handleModelUpdate(event: ModelEvents): void {
+    /**
+     * When block is removed, we need to remove it from this.#blocks
+     */
+    if (event instanceof BlockRemovedEvent) {
+      const removedBlockIndex = event.detail.index.blockIndex;
+
+      if (removedBlockIndex === undefined) {
+        return;
+      }
+
+      const blocksToRemove = this.#blocks.find(block => block.getBlockIndex().blockIndex === removedBlockIndex);
+
+      if (blocksToRemove) {
+        this.detachBlock(blocksToRemove.getBlockIndex());
+      }
+    }
   }
 }

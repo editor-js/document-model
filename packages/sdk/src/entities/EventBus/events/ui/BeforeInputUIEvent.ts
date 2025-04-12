@@ -31,6 +31,11 @@ export interface BeforeInputUIEventPayload {
    * Objects that will be affected by a change to the DOM if the input event is not canceled.
    */
   targetRanges: StaticRange[];
+
+  /**
+   * Whether the selection is across multiple inputs
+   */
+  isCrossInputSelection: boolean;
 }
 
 /**

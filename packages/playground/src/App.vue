@@ -35,9 +35,22 @@ onMounted(() => {
         {
           type: 'paragraph',
           data: {
-            text: 'Hello, World!',
+            text: '111',
           },
         },
+        {
+          type: 'paragraph',
+          data: {
+            text: '222',
+          },
+        },
+        {
+          type: 'paragraph',
+          data: {
+            text: '333',
+          },
+        },
+
       ],
     },
     onModelUpdate: (m: EditorJSModel) => {
