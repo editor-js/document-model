@@ -10,7 +10,7 @@ const DEBOUNCE_TIMEOUT = 500;
  *
  * Operations are batched on timeout basis or if batch is terminated from the outside
  */
-export class OperationsBatch<T extends OperationType> extends Operation<T> {
+export class BatchedOperation<T extends OperationType> extends Operation<T> {
   /**
    * Array of operations to batch
    */
@@ -44,26 +44,26 @@ export class OperationsBatch<T extends OperationType> extends Operation<T> {
    * 
    * @param opBatch - operation batch to clone
    */ 
-  public static from<T extends OperationType>(opBatch: OperationsBatch<T>): OperationsBatch<T>;
+  public static from<T extends OperationType>(opBatch: BatchedOperation<T>): BatchedOperation<T>;
 
   /**
    * Create a new operation batch from a serialized operation
    * 
    * @param json - serialized operation
    */
-  public static from<T extends OperationType>(json: SerializedOperation<T>): OperationsBatch<T>;
+  public static from<T extends OperationType>(json: SerializedOperation<T>): BatchedOperation<T>;
 
   /**
    * Create a new operation batch from an operation batch or a serialized operation
    * 
    * @param opBatchOrJSON - operation batch or serialized operation
    */ 
-  public static from<T extends OperationType>(opBatchOrJSON: OperationsBatch<T> | SerializedOperation<T>): OperationsBatch<T> {
-    if (opBatchOrJSON instanceof OperationsBatch) {
+  public static from<T extends OperationType>(opBatchOrJSON: BatchedOperation<T> | SerializedOperation<T>): BatchedOperation<T> {
+    if (opBatchOrJSON instanceof BatchedOperation) {
       /**
        * Every batch should have at least one operation
        */
-      const batch = new OperationsBatch(opBatchOrJSON.operations.shift()!);
+      const batch = new BatchedOperation(opBatchOrJSON.operations.shift()!);
 
       opBatchOrJSON.operations.forEach((op) => {
         /**
@@ -72,9 +72,9 @@ export class OperationsBatch<T extends OperationType> extends Operation<T> {
         batch.add(Operation.from(op));
       });
     
-      return batch as OperationsBatch<T>;
+      return batch as BatchedOperation<T>;
     } else {
-      const batch = new OperationsBatch<T>(Operation.from(opBatchOrJSON));
+      const batch = new BatchedOperation<T>(Operation.from(opBatchOrJSON));
 
       return batch;  
     }
@@ -85,19 +85,19 @@ export class OperationsBatch<T extends OperationType> extends Operation<T> {
    *
    * @returns new batch with inversed operations
    */
-  public inverse(): OperationsBatch<InvertedOperationType<T>> {
+  public inverse(): BatchedOperation<InvertedOperationType<T>> {
     /**
      * Every batch should have at least one operation
      */
-    const newOperationsBatch = new OperationsBatch<InvertedOperationType<T> | OperationType.Neutral>(this.operations.pop()!.inverse())
+    const newBatchedOperation = new BatchedOperation<InvertedOperationType<T> | OperationType.Neutral>(this.operations.pop()!.inverse())
 
     while (this.operations.length > 0) {
       const op = this.operations.pop()!.inverse();
 
-      newOperationsBatch.add(op);
+      newBatchedOperation.add(op);
     }
 
-    return newOperationsBatch as OperationsBatch<InvertedOperationType<T>>;
+    return newBatchedOperation as BatchedOperation<InvertedOperationType<T>>;
   }
 
   /**
@@ -106,21 +106,21 @@ export class OperationsBatch<T extends OperationType> extends Operation<T> {
    * @param againstOp - operation to transform against
    * @returns new batch with transformed operations
    */
-  public transform<K extends OperationType>(againstOp: Operation<K>): OperationsBatch<T | OperationType.Neutral> {
+  public transform<K extends OperationType>(againstOp: Operation<K>): BatchedOperation<T | OperationType.Neutral> {
     const transformedOp = this.operations.shift()!.transform(againstOp);
 
-    const newOperationsBatch = new OperationsBatch(transformedOp);
-
+    const newBatchedOperation = new BatchedOperation(transformedOp);
+  
     /**
      * We either have a new operations batch or all operations were not transformable
      */
     for (const op of this.operations) {
       const transformedOp = op.transform(againstOp);
 
-      newOperationsBatch.add(transformedOp);
+      newBatchedOperation.add(transformedOp);
     }
 
-    return newOperationsBatch;
+    return newBatchedOperation;
   }
 
   /**
