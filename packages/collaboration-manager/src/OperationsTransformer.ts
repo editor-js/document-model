@@ -15,7 +15,7 @@ export class OperationsTransformer {
       return Operation.from(operation);
     }
 
-    return this.#determineTransformation<T>(operation, againstOp);
+    return this.#applyTransformation<T>(operation, againstOp);
   }
 
   /**
@@ -37,7 +37,7 @@ export class OperationsTransformer {
    * @param againstOp - operation against which the current operation should be transformed
    * @returns new operation
    */
-  #determineTransformation<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
+  #applyTransformation<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
     const currentIndex = operation.index;
     const againstIndex = againstOp.index;
 

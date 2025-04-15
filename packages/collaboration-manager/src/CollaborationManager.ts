@@ -10,7 +10,7 @@ import {
 } from '@editorjs/model';
 import type { CoreConfig } from '@editorjs/sdk';
 import { OTClient } from './client/index.js';
-import { OperationsBatch } from './BatchedOperation.js';
+import { BatchedOperation } from './BatchedOperation.js';
 import { type ModifyOperationData, Operation, OperationType } from './Operation.js';
 import { UndoRedoManager } from './UndoRedoManager.js';
 
@@ -36,7 +36,7 @@ export class CollaborationManager {
   /**
    * Current operations batch
    */
-  #currentBatch: OperationsBatch<OperationType> | null = null;
+  #currentBatch: BatchedOperation<OperationType> | null = null;
 
   /**
    * Editor's config
@@ -106,7 +106,7 @@ export class CollaborationManager {
     // Disable  handling
     this.#shouldHandleEvents = false;
 
-    if (operation instanceof OperationsBatch) {
+    if (operation instanceof BatchedOperation) {
       operation.operations.forEach((op) => {
         this.applyOperation(op);
       });
@@ -137,7 +137,7 @@ export class CollaborationManager {
     // Disable event handling
     this.#shouldHandleEvents = false;
 
-    if (operation instanceof OperationsBatch) {
+    if (operation instanceof BatchedOperation) {
       operation.operations.forEach((op) => {
         this.applyOperation(op);
       });
@@ -240,8 +240,7 @@ export class CollaborationManager {
       /**
        * If operation is remote, transform undo/redo stacks
        */
-      this.#undoRedoManager.transformUndoStack(operation);
-      this.#undoRedoManager.transformRedoStack(operation);
+      this.#undoRedoManager.transformStacks(operation);
 
       /**
        * If we got a new remote operation - transform current batch
@@ -260,7 +259,7 @@ export class CollaborationManager {
      * If there is no current batch, create a new one with current operation
      */
     if (this.#currentBatch === null) {
-      this.#currentBatch = new OperationsBatch(operation);
+      this.#currentBatch = new BatchedOperation(operation);
 
       return;
     }
@@ -271,7 +270,7 @@ export class CollaborationManager {
     if (!this.#currentBatch.canAdd(operation)) {
       this.#undoRedoManager.put(this.#currentBatch);
 
-      this.#currentBatch = new OperationsBatch(operation);
+      this.#currentBatch = new BatchedOperation(operation);
 
       return;
     }
