@@ -91,11 +91,7 @@ export class CollaborationManager {
    * Undo last operation in the local stack
    */
   public undo(): void {
-    if (this.#currentBatch !== null) {
-      this.#undoRedoManager.put(this.#currentBatch);
-
-      this.#currentBatch = null;
-    }
+    this.#emptyBatch();
 
     const operation = this.#undoRedoManager.undo();
 
@@ -106,13 +102,7 @@ export class CollaborationManager {
     // Disable  handling
     this.#shouldHandleEvents = false;
 
-    if (operation instanceof BatchedOperation) {
-      operation.operations.forEach((op) => {
-        this.applyOperation(op);
-      });
-    } else {
-      this.applyOperation(operation);
-    }
+    this.applyOperation(operation);
 
     // Re-enable event handling
     this.#shouldHandleEvents = true;
@@ -122,11 +112,7 @@ export class CollaborationManager {
    * Redo last undone operation in the local stack
    */
   public redo(): void {
-    if (this.#currentBatch !== null) {
-      this.#undoRedoManager.put(this.#currentBatch);
-
-      this.#currentBatch = null;
-    }
+    this.#emptyBatch();
 
     const operation = this.#undoRedoManager.redo();
 
@@ -154,7 +140,16 @@ export class CollaborationManager {
    *
    * @param operation - operation to apply
    */
-  public applyOperation(operation: Operation): void {
+  public applyOperation(operation: Operation | BatchedOperation): void {
+    /**
+     * If operation is a batcher operation, apply all operations in the batch
+     */
+    if (operation instanceof BatchedOperation) {
+      operation.operations.forEach(op => this.applyOperation(op));
+
+      return;
+    }
+
     if (operation.type === OperationType.Neutral) {
       return;
     }
@@ -244,7 +239,7 @@ export class CollaborationManager {
 
       /**
        * If we got a new remote operation - transform current batch
-       * If batch is not transormable - clear it
+       * If batch is empty leave it as it is
        */
       this.#currentBatch = this.#currentBatch?.transform(operation) ?? null;
 
@@ -266,6 +261,7 @@ export class CollaborationManager {
 
     /**
      * If current operation could not be added to the batch, then terminate current batch and create a new one with current operation
+     * @todo - add debounce timeout 500ms
      */
     if (!this.#currentBatch.canAdd(operation)) {
       this.#undoRedoManager.put(this.#currentBatch);
@@ -276,5 +272,16 @@ export class CollaborationManager {
     }
 
     this.#currentBatch.add(operation);
+  }
+
+  /**
+   * Puts current batch to the undo stack and clears the batch
+   */
+  #emptyBatch(): void {
+    if (this.#currentBatch !== null) {
+      this.#undoRedoManager.put(this.#currentBatch);
+
+      this.#currentBatch = null;
+    }
   }
 }

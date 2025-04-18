@@ -155,10 +155,20 @@ export class OperationsTransformer {
    * @returns New operation
    */
   #transformAgainstTextOperation<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
+    const index = operation.index;
+    const againstIndex = againstOp.index;
+    
     /**
      * Cover case 1
      */
-    if (operation.index.isBlockIndex) {
+    if (index.isBlockIndex) {
+      return Operation.from(operation);
+    }
+
+    /**
+     * Check that againstOp affects current operation
+     */
+    if (index.dataKey === againstIndex.dataKey && index.blockIndex === againstIndex.blockIndex && againstIndex.textRange![0] > index.textRange![1]) {
       return Operation.from(operation);
     }
 

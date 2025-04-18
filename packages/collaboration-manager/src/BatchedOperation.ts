@@ -1,16 +1,11 @@
-import { InvertedOperationType, Operation, OperationType, SerializedOperation } from './Operation.js';
-
-/**
- * Batch debounce time
- */
-const DEBOUNCE_TIMEOUT = 500;
+import { InvertedOperationType, Operation, OperationType, type SerializedOperation } from './Operation.js';
 
 /**
  * Class to batch Text operations (maybe others in the future) for Undo/Redo purposes
  *
  * Operations are batched on timeout basis or if batch is terminated from the outside
  */
-export class BatchedOperation<T extends OperationType> extends Operation<T> {
+export class BatchedOperation<T extends OperationType = OperationType> extends Operation<T> {
   /**
    * Array of operations to batch
    */
@@ -27,16 +22,6 @@ export class BatchedOperation<T extends OperationType> extends Operation<T> {
     if (firstOperation !== undefined) {
       this.add(firstOperation);
     }
-  }
-
-  /**
-   * Adds an operation to the batch
-   * Make sure, that operation could be added to the batch
-   *
-   * @param op - operation to add
-   */
-  public add(op: Operation<T> | Operation<OperationType.Neutral>): void {
-    this.operations.push(op);
   }
 
   /**
@@ -63,7 +48,7 @@ export class BatchedOperation<T extends OperationType> extends Operation<T> {
       /**
        * Every batch should have at least one operation
        */
-      const batch = new BatchedOperation(opBatchOrJSON.operations.shift()!);
+      const batch = new BatchedOperation(Operation.from(opBatchOrJSON.operations.shift()!));
 
       opBatchOrJSON.operations.forEach((op) => {
         /**
@@ -81,6 +66,16 @@ export class BatchedOperation<T extends OperationType> extends Operation<T> {
   }
 
   /**
+   * Adds an operation to the batch
+   * Make sure, that operation could be added to the batch
+   *
+   * @param op - operation to add
+   */
+  public add(op: Operation<T> | Operation<OperationType.Neutral>): void {
+    this.operations.push(op);
+  }
+
+  /**
    * Method that inverses all of the operations in the batch
    *
    * @returns new batch with inversed operations
@@ -91,11 +86,7 @@ export class BatchedOperation<T extends OperationType> extends Operation<T> {
      */
     const newBatchedOperation = new BatchedOperation<InvertedOperationType<T> | OperationType.Neutral>(this.operations.pop()!.inverse())
 
-    while (this.operations.length > 0) {
-      const op = this.operations.pop()!.inverse();
-
-      newBatchedOperation.add(op);
-    }
+    this.operations.toReversed().map(op => newBatchedOperation.add(op.inverse()));
 
     return newBatchedOperation as BatchedOperation<InvertedOperationType<T>>;
   }
@@ -110,15 +101,8 @@ export class BatchedOperation<T extends OperationType> extends Operation<T> {
     const transformedOp = this.operations.shift()!.transform(againstOp);
 
     const newBatchedOperation = new BatchedOperation(transformedOp);
-  
-    /**
-     * We either have a new operations batch or all operations were not transformable
-     */
-    for (const op of this.operations) {
-      const transformedOp = op.transform(againstOp);
 
-      newBatchedOperation.add(transformedOp);
-    }
+    this.operations.map(op => newBatchedOperation.add(op.transform(againstOp)));
 
     return newBatchedOperation;
   }
