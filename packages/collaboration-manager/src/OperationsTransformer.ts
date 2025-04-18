@@ -1,5 +1,6 @@
 import { IndexBuilder } from "@editorjs/model";
 import { Operation, OperationType } from "./Operation";
+import { getRangesIntersectionType, RangeIntersectionType } from "./utils/getRangesIntersectionType";
 
 /**
  * Class that transforms operation against another operation
@@ -19,63 +20,40 @@ export class OperationsTransformer {
   }
 
   /**
-   * Method that desides what kind of transformation should be applied to the operation
+   * Method that returns new operation based on the type of againstOp index
    * Cases:
-   * 1. Against operations is a block operation and current operation is also a block operation
-   * - check that againstOp affects current operation and transform against block operation
+   * 1. Against operation is a block operation and current operation is also a block operation
+   * - check if againstOp affects current operation, update operation's block index
    * 
    * 2. Against operation is a block operation and current operation is a text operation
-   * - same as above, check that againstOp affects current operation and transform against block operation
+   * - same as above, check if againstOp affects current operation and update operation's block index
    * 
    * 3. Against operation is a text operation and current operation is a block operation
    * - text operation does not afftect block operation - so return copy of current operation
    * 
    * 4. Against operation is a text operation and current operation is also a text operation
-   * - check that againstOp affects current operation and transform against text operation
+   * - check if againstOp affects current operation and update operation's text index
    * 
    * @param operation - operation to be transformed
    * @param againstOp - operation against which the current operation should be transformed
    * @returns new operation
    */
   #applyTransformation<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
-    const currentIndex = operation.index;
     const againstIndex = againstOp.index;
 
-    /**
-     * Cover 1 and 2 cases
-     * 
-     * Check that againstOp is a block operation
-     */
-    if (againstIndex.isBlockIndex && currentIndex.blockIndex !== undefined) {
-      /**
-       * Check that againstOp affects current operation
-       */
-      if (againstIndex.blockIndex! <= currentIndex.blockIndex) {
-        return this.#transformAgainstBlockOperation(operation, againstOp);
-      }
-    }
+    switch (true) {
+      case (againstIndex.isBlockIndex):
+        return this.#transformAgainstBlockOperation(operation, againstOp); 
 
-    /**
-     * Cover 4 case
-     * 
-     * Check that againstOp is a text operation and current operation is also a text operation
-     */
-    if (againstIndex.isTextIndex && currentIndex.isTextIndex) {
-      /**
-       * Check that againstOp affects current operation (text operation on the same block and same input)
-       * and against op happened on the left side or has overlapping range
-       */
-      if (currentIndex.dataKey === againstIndex.dataKey && currentIndex.blockIndex === againstIndex.blockIndex && againstIndex.textRange![0] <= currentIndex.textRange![0]) {
+      case (againstIndex.isTextIndex):
         return this.#transformAgainstTextOperation(operation, againstOp);
-      }
-    }
 
-    /**
-     * Cover 3 case
-     * 
-     * Return copy of current operation
-     */
-    return Operation.from(operation);
+      /**
+       * @todo Cover all index types
+       */
+      default:
+        throw new Error('Unsupported index type');
+    }
   }
 
   /**
@@ -100,7 +78,21 @@ export class OperationsTransformer {
    */
   #transformAgainstBlockOperation<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
     const newIndexBuilder = new IndexBuilder().from(operation.index);
-    
+
+    /**
+     * If current operation has no block index, return copy of the current operation
+     */
+    if (!operation.index.isBlockIndex) {
+      return Operation.from(operation);
+    }
+
+    /**
+     * Check that againstOp affects current operation
+     */
+    if (againstOp.index.blockIndex! <= operation.index.blockIndex!) {
+      return Operation.from(operation);
+    }
+
     /**
      * Update the index of the current operation
      */
@@ -136,7 +128,11 @@ export class OperationsTransformer {
     /**
      * Return new operation with the updated index
      */
-    return new Operation(operation.type, newIndexBuilder.build(), operation.data, operation.userId, operation.rev);
+    const newOp = Operation.from(operation);
+
+    newOp.index = newIndexBuilder.build();
+
+    return newOp;
   }
 
   /**
@@ -195,31 +191,36 @@ export class OperationsTransformer {
   #transformAgainstTextInsert<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
     const newIndexBuilder = new IndexBuilder().from(operation.index);
 
-    const amountOfInsertedCharacters = againstOp.data.payload!.length;
-    const againstOpIsOnTheLeft = againstOp.index.textRange![0] < operation.index.textRange![0];
-    const currentOpAgregatesAgainstOp = (operation.index.textRange![0] <= againstOp.index.textRange![0]) && (operation.index.textRange![1] >= againstOp.index.textRange![1]);
+    const insertedLength = againstOp.data.payload!.length;
+
+    const index = operation.index;
+    const againstIndex = againstOp.index;
 
     /**
-     * Cover case 1
+     * In this case, againstOp is insert operatioin, there would be only two possible intersections
+     * - None - inserted text is on the left side of the current operation
+     * - Includes - inserted text is inside of the current operation text range
      */
-    if (againstOpIsOnTheLeft) {
-      /**
-       * Move text index of the current operation to the right by amount of inserted characters
-       */
-      newIndexBuilder.addTextRange([againstOp.index.textRange![0] + amountOfInsertedCharacters, againstOp.index.textRange![1] + amountOfInsertedCharacters]);
+    const intersectionType = getRangesIntersectionType(index.textRange!, againstIndex.textRange!);
+
+    switch (intersectionType) {
+      case (RangeIntersectionType.None):
+        newIndexBuilder.addTextRange([index.textRange![0] + insertedLength, index.textRange![1] + insertedLength]);
+        break;
+
+      case (RangeIntersectionType.Includes):
+        newIndexBuilder.addTextRange([index.textRange![0], index.textRange![1] + insertedLength]);
+        break;
     }
 
     /**
-     * Cover case 2
+     * Return new operation with the updated index
      */
-    if (currentOpAgregatesAgainstOp) {
-      /**
-       * Move right bound of the current operation to the right by amount of inserted characters to include the inserted text
-       */
-      newIndexBuilder.addTextRange([operation.index.textRange![0], operation.index.textRange![1] + amountOfInsertedCharacters]);
-    }
+    const newOp = Operation.from(operation);
 
-    return new Operation(operation.type, newIndexBuilder.build(), operation.data, operation.userId, operation.rev);
+    newOp.index = newIndexBuilder.build();
+
+    return newOp;
   }
 
   /**
@@ -248,67 +249,58 @@ export class OperationsTransformer {
    */
   #transformAgainstTextDelete<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
     const newIndexBuilder = new IndexBuilder().from(operation.index);
-
     const deletedAmount = againstOp.data.payload!.length;
 
-    const deleteIsOnTheLeft = againstOp.index.textRange![1] < operation.index.textRange![0];
+    const index = operation.index;
+    const againstIndex = againstOp.index;
+    
+    const intersectionType = getRangesIntersectionType(index.textRange!, againstIndex.textRange!);
 
-    const deletedLeftSide = (againstOp.index.textRange![0] <= operation.index.textRange![0])
-      && (againstOp.index.textRange![1] < operation.index.textRange![1])
-      && (againstOp.index.textRange![1] > operation.index.textRange![0]);
+    switch (intersectionType) {
+      /**
+       * Cover case 1
+       */
+      case (RangeIntersectionType.None):
+        newIndexBuilder.addTextRange([index.textRange![0] - deletedAmount, index.textRange![1] - deletedAmount]);
+        break;
 
-    const deletedRightSide = (againstOp.index.textRange![0] > operation.index.textRange![0])
-      && (againstOp.index.textRange![0] < operation.index.textRange![1])
-      && (againstOp.index.textRange![1] <= operation.index.textRange![1]);
+      /**
+       * Cover case 2.1
+       */
+      case (RangeIntersectionType.Left):
+        newIndexBuilder.addTextRange([againstIndex.textRange![0], index.textRange![1] - deletedAmount]);
+        break;
 
-    const deletedInside = (againstOp.index.textRange![0] > operation.index.textRange![0])
-      && (againstOp.index.textRange![1] < operation.index.textRange![1]);
+      /**
+       * Cover case 2.2
+       */
+      case (RangeIntersectionType.Right):
+        const overlapLength = index.textRange![1] - againstIndex.textRange![0];
 
-    const deletedFull = (againstOp.index.textRange![0] <= operation.index.textRange![0])
-      && (againstOp.index.textRange![1] >= operation.index.textRange![1]);
+        newIndexBuilder.addTextRange([index.textRange![0], index.textRange![1] - overlapLength]);
+        break;
 
-    /**
-     * Cover case 1
-     */
-    if (deleteIsOnTheLeft) {
-      newIndexBuilder.addTextRange([operation.index.textRange![0] - deletedAmount, operation.index.textRange![1] - deletedAmount]);
-    }
+      /**
+       * Cover case 3
+       */
+      case (RangeIntersectionType.Includes):
+        newIndexBuilder.addTextRange([index.textRange![0], index.textRange![1] - deletedAmount]);
+        break;
 
-    /**
-     * Cover case 2.1
-     */
-    if (deletedLeftSide) {
-      const deletedFromCurrentOpRange = operation.index.textRange![0] - againstOp.index.textRange![1];
-
-      newIndexBuilder.addTextRange([againstOp.index.textRange![0], operation.index.textRange![1] - deletedFromCurrentOpRange]);
-    }
-
-    /**
-     * Cover case 2.2
-     */
-    if (deletedRightSide) {
-      const deletedFromCurrentOpRange = operation.index.textRange![1] - againstOp.index.textRange![0];
-
-      newIndexBuilder.addTextRange([operation.index.textRange![0], operation.index.textRange![1] - deletedFromCurrentOpRange]);
-    }
-
-    /**
-     * Cover case 3
-     */
-    if (deletedInside) {
-      newIndexBuilder.addTextRange([operation.index.textRange![0], operation.index.textRange![1] - deletedAmount]);
-    }
-
-    /**
-     * Cover case 4
-     */
-    if (deletedFull) {
-      return new Operation(OperationType.Neutral, newIndexBuilder.build(), { payload: [] }, operation.userId, operation.rev);
+      /**
+       * Cover case 4
+       */
+      case (RangeIntersectionType.Included):
+        return new Operation(OperationType.Neutral, newIndexBuilder.build(), { payload: [] }, operation.userId, operation.rev);
     }
 
     /**
      * Return new operation with updated index
      */
-    return new Operation(operation.type, newIndexBuilder.build(), operation.data, operation.userId, operation.rev);
+    const newOp = Operation.from(operation);
+
+    newOp.index = newIndexBuilder.build();
+
+    return newOp;
   }
 }
