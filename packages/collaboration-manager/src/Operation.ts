@@ -1,4 +1,5 @@
 import { IndexBuilder, type Index, type BlockNodeSerialized } from '@editorjs/model';
+import { OperationsTransformer } from './OperationsTransformer';
 
 /**
  * Type of the operation
@@ -6,7 +7,8 @@ import { IndexBuilder, type Index, type BlockNodeSerialized } from '@editorjs/mo
 export enum OperationType {
   Insert = 'insert',
   Delete = 'delete',
-  Modify = 'modify'
+  Modify = 'modify',
+  Neutral = 'neutral',
 }
 
 /**
@@ -37,6 +39,13 @@ export interface ModifyOperationData<T extends Record<any, any> = Record<any, an
    */
   prevPayload?: T | null;
 }
+
+export interface NeutralOperationData {
+  /**
+   * Payload for neutral operation could be anything, we dont care about it
+   */
+  payload: string | BlockNodeSerialized[];
+};
 
 /**
  * Serialized operation object
@@ -73,7 +82,9 @@ export interface SerializedOperation<T extends OperationType = OperationType> {
  */
 export type OperationTypeToData<T extends OperationType> = T extends OperationType.Modify
   ? ModifyOperationData
-  : InsertOrDeleteOperationData;
+  : T extends OperationType.Neutral
+    ? NeutralOperationData 
+    : InsertOrDeleteOperationData;
 
 /**
  * Helper type to get invert operation type
@@ -82,7 +93,9 @@ export type InvertedOperationType<T extends OperationType> = T extends Operation
   ? OperationType.Delete
   : T extends OperationType.Delete
     ? OperationType.Insert
-    : OperationType.Modify;
+    : T extends OperationType.Neutral
+      ? OperationType.Neutral
+      : OperationType.Modify;
 
 
 /**
@@ -92,7 +105,7 @@ export class Operation<T extends OperationType = OperationType> {
   /**
    * Operation type
    */
-  public type: T;
+  public type: T | OperationType.Neutral;
 
   /**
    * Index in the document model tree
@@ -115,6 +128,11 @@ export class Operation<T extends OperationType = OperationType> {
   public rev?: number;
 
   /**
+   * Transformer for operations
+   */
+  #transformer: OperationsTransformer = new OperationsTransformer();
+
+  /**
    * Creates an instance of Operation
    *
    * @param type - operation type
@@ -123,10 +141,10 @@ export class Operation<T extends OperationType = OperationType> {
    * @param userId - user identifier
    * @param rev - document revision
    */
-  constructor(type: T, index: Index, data: OperationTypeToData<T>, userId: string | number, rev?: number) {
+  constructor(type: T | OperationType.Neutral, index: Index, data: OperationTypeToData<T> | OperationTypeToData<OperationType.Neutral>, userId: string | number, rev?: number) {
     this.type = type;
     this.index = index;
-    this.data = data;
+    this.data = data as OperationTypeToData<T>;
     this.userId = userId;
     this.rev = rev;
   }
@@ -136,7 +154,7 @@ export class Operation<T extends OperationType = OperationType> {
    *
    * @param op - operation to copy
    */
-  public static from<T extends OperationType>(op: Operation<T>): Operation<T>;
+  public static from<T extends OperationType>(op: Operation<T> | Operation<OperationType.Neutral>): Operation<T>;
   /**
    * Creates an operation from another operation or serialized operation
    *
@@ -198,64 +216,12 @@ export class Operation<T extends OperationType = OperationType> {
 
   /**
    * Transforms the operation against another operation
+   * If operation is not transformable returns null
    *
    * @param againstOp - operation to transform against
    */
-  public transform(againstOp: Operation): Operation<T> {
-    /**
-     * Do not transform operations if they are on different documents
-     */
-    if (this.index.documentId !== againstOp.index.documentId) {
-      return this;
-    }
-
-    /**
-     * Do not transform if the againstOp index is greater or if againstOp is Modify op
-     */
-    if (!this.#shouldTransform(againstOp.index) || againstOp.type === OperationType.Modify) {
-      return this;
-    }
-
-    const newIndexBuilder = new IndexBuilder().from(this.index);
-
-    switch (againstOp.type) {
-      case OperationType.Insert: {
-        const payload = (againstOp as Operation<OperationType.Insert>).data.payload;
-
-        if (againstOp.index.isBlockIndex) {
-          newIndexBuilder.addBlockIndex(this.index.blockIndex! + payload.length);
-
-          break;
-        }
-
-        newIndexBuilder.addTextRange([this.index.textRange![0] + payload.length, this.index.textRange![1] + payload.length]);
-
-        break;
-      }
-
-      case OperationType.Delete: {
-        const payload = (againstOp as Operation<OperationType.Delete>).data.payload;
-
-        if (againstOp.index.isBlockIndex) {
-          newIndexBuilder.addBlockIndex(this.index.blockIndex! - payload.length);
-
-          break;
-        }
-
-        newIndexBuilder.addTextRange([this.index.textRange![0] - payload.length, this.index.textRange![1] - payload.length]);
-
-        break;
-      }
-
-      default:
-        throw new Error('Unsupported operation type');
-    }
-
-    const operation = Operation.from(this);
-
-    operation.index = newIndexBuilder.build();
-
-    return operation;
+  public transform<K extends OperationType>(againstOp: Operation<K> | Operation<OperationType.Neutral>): Operation<T | OperationType.Neutral> {
+    return this.#transformer.transform(this, againstOp);
   }
 
   /**
@@ -269,24 +235,5 @@ export class Operation<T extends OperationType = OperationType> {
       userId: this.userId,
       rev: this.rev!,
     };
-  }
-
-  /**
-   * Checks if operation needs to be transformed:
-   * 1. If relative operation (againstOp) happened in the block before or at the same index of the Block of _this_ operation
-   * 2. If relative operation happened in the same block and same data key and before the text range of _this_ operation
-   *
-   * @param indexToCompare - index of a relative operation
-   */
-  #shouldTransform(indexToCompare: Index): boolean {
-    if (indexToCompare.isBlockIndex && this.index.blockIndex !== undefined) {
-      return indexToCompare.blockIndex! <= this.index.blockIndex;
-    }
-
-    if (indexToCompare.isTextIndex && this.index.isTextIndex) {
-      return indexToCompare.dataKey === this.index.dataKey && indexToCompare.textRange![0] <= this.index.textRange![0];
-    }
-
-    return false;
   }
 }
