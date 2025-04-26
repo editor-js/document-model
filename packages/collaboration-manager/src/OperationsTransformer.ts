@@ -1,13 +1,18 @@
-import { IndexBuilder } from "@editorjs/model";
-import { Operation, OperationType } from "./Operation";
-import { getRangesIntersectionType, RangeIntersectionType } from "./utils/getRangesIntersectionType";
+import { IndexBuilder } from '@editorjs/model';
+import { Operation, OperationType } from './Operation.js';
+import { getRangesIntersectionType, RangeIntersectionType } from './utils/getRangesIntersectionType.js';
 
 /**
  * Class that transforms operation against another operation
  */
 export class OperationsTransformer {
-  constructor() {}
-
+  /**
+   * Method that transforms operation against another operation
+   *
+   * @param operation - operation to be transformed
+   * @param againstOp - operation against which the current operation should be transformed
+   * @returns {Operation<OperationType>} new operation
+   */
   public transform<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
     /**
      * Do not transform operations if they are on different documents
@@ -24,28 +29,30 @@ export class OperationsTransformer {
    * Cases:
    * 1. Against operation is a block operation and current operation is also a block operation
    * - check if againstOp affects current operation, update operation's block index
-   * 
+   *
    * 2. Against operation is a block operation and current operation is a text operation
    * - same as above, check if againstOp affects current operation and update operation's block index
-   * 
+   *
    * 3. Against operation is a text operation and current operation is a block operation
    * - text operation does not afftect block operation - so return copy of current operation
-   * 
+   *
    * 4. Against operation is a text operation and current operation is also a text operation
    * - check if againstOp affects current operation and update operation's text index
-   * 
+   *
    * @param operation - operation to be transformed
    * @param againstOp - operation against which the current operation should be transformed
-   * @returns new operation
+   * @returns {Operation<OperationType>} new operation
    */
   #applyTransformation<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
     const againstIndex = againstOp.index;
 
     switch (true) {
       case (againstIndex.isBlockIndex):
-        return this.#transformAgainstBlockOperation(operation, againstOp); 
+        console.log('is block index')
+        return this.#transformAgainstBlockOperation(operation, againstOp);
 
       case (againstIndex.isTextIndex):
+        console.log('is text index')
         return this.#transformAgainstTextOperation(operation, againstOp);
 
       /**
@@ -58,23 +65,23 @@ export class OperationsTransformer {
 
   /**
    * Method that transforms operation against block operation
-   * 
+   *
    * Cases:
-   * 1. Against operation is an Insert operation  
+   * 1. Against operation is an Insert operation
    *    - Increase block index of the current operation
-   * 
-   * 2. Against operation is a Delete operation  
+   *
+   * 2. Against operation is a Delete operation
    *    - Against operation deleted a block before the current operation
    *        - Decrease block index of the current operation
    *    - Against operation deleted exactly the block of the current operation
    *        - Return Neutral operation
-   * 
-   * 3. Against operation is a Modify or Neutral operation  
+   *
+   * 3. Against operation is a Modify or Neutral operation
    *    - Modify and Neutral operations do not affect any operations so return copy of the current operation
-   * 
+   *
    * @param operation - Operation to be transformed
    * @param againstOp - Operation against which the current operation should be transformed
-   * @returns New operation
+   * @returns {Operation<OperationType>} new operation
    */
   #transformAgainstBlockOperation<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
     const newIndexBuilder = new IndexBuilder().from(operation.index);
@@ -82,14 +89,14 @@ export class OperationsTransformer {
     /**
      * If current operation has no block index, return copy of the current operation
      */
-    if (!operation.index.isBlockIndex) {
+    if (operation.index.blockIndex === undefined) {
       return Operation.from(operation);
     }
 
     /**
      * Check that againstOp affects current operation
      */
-    if (againstOp.index.blockIndex! <= operation.index.blockIndex!) {
+    if (againstOp.index.blockIndex! > operation.index.blockIndex!) {
       return Operation.from(operation);
     }
 
@@ -108,7 +115,7 @@ export class OperationsTransformer {
        * Cover case 2
        */
       case OperationType.Delete:
-        if (operation.index.isBlockIndex) {
+        if (operation.index.blockIndex !== undefined) {
           if (againstOp.index.blockIndex! < operation.index.blockIndex!) {
             newIndexBuilder.addBlockIndex(operation.index.blockIndex! - 1);
           } else {
@@ -122,7 +129,7 @@ export class OperationsTransformer {
        * Cover case 3
        */
       default:
-        return Operation.from(operation);      
+        return Operation.from(operation);
     }
 
     /**
@@ -137,11 +144,11 @@ export class OperationsTransformer {
 
   /**
    * Method that transforms operation against text operation
-   * 
+   *
    * Cases:
    * 1. Current operation is a block operation
    *    - Text opearation cant affect block operation so return copy of the current one
-   * 
+   *
    * 2. Current operation is a text operation
    *    - Against operation is Insert
    *        - Transform current operation against textInsert
@@ -149,15 +156,15 @@ export class OperationsTransformer {
    *        - Check that againstOp affects current operation and transform against text operation
    *    - Against operation is Modify or Neutral
    *        - Modify and Neutral operations do not affect any of the text operations so return copy of the current operation
-   * 
+   *
    * @param operation - Operation to be transformed
    * @param againstOp - Operation against which the current operation should be transformed
-   * @returns New operation
+   * @returns {Operation<OperationType>} new operation
    */
   #transformAgainstTextOperation<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
     const index = operation.index;
     const againstIndex = againstOp.index;
-    
+
     /**
      * Cover case 1
      */
@@ -168,7 +175,7 @@ export class OperationsTransformer {
     /**
      * Check that againstOp affects current operation
      */
-    if (index.dataKey === againstIndex.dataKey && index.blockIndex === againstIndex.blockIndex && againstIndex.textRange![0] > index.textRange![1]) {
+    if (index.dataKey === againstIndex.dataKey && index.blockIndex === againstIndex.blockIndex && againstIndex.textRange![0] >= index.textRange![1]) {
       return Operation.from(operation);
     }
 
@@ -186,17 +193,17 @@ export class OperationsTransformer {
 
   /**
    * Method that transforms operation against text insert operation happened on the left side of the current operation
-   * 
+   *
    * Cases:
    * 1. Against operation is fully on the left of the current operation
    *    - Move text range of the current operation to the right by amount of inserted characters
-   * 
+   *
    * 2. Against operation is inside of the current operation text range
    *    - Move right bound of the current operation to the right by amount of inserted characters to include the inserted text
-   * 
+   *
    * @param operation - Operation to be transformed
    * @param againstOp - Operation against which the current operation should be transformed
-   * @returns New operation
+   * @returns {Operation<OperationType>} new operation
    */
   #transformAgainstTextInsert<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
     const newIndexBuilder = new IndexBuilder().from(operation.index);
@@ -235,27 +242,27 @@ export class OperationsTransformer {
 
   /**
    * Method that transforms operation against text delete operation
-   * 
+   *
    * Cases:
    * 1. Delete range is fully on the left of the current operation
    *    - Move text range of the current operation to the left by amount of deleted characters
-   * 
+   *
    * 2. Delete range covers part of the current operation
    *    - Deleted left side of the current operation
    *        - Move left bound of the current operation to the start of the against Delete operation
    *        - Move right bound of the current operation to the left by (amount of deleted characters - amount of characters in the current operation that were deleted)
    *    - Deleted right side of the current operation
    *        - Move right bound of the current operation to the left by amount of deleted intersection
-   * 
+   *
    * 3. Delete range is inside of the current operation text range
    *    - Move right bound of the current operation to the left by amount of deleted characters
-   * 
+   *
    * 4. Delete range fully covers the current operation text rannge
    *    - Return Neutral operation
-   * 
+   *
    * @param operation - Operation to be transformed
    * @param againstOp - Operation against which the current operation should be transformed
-   * @returns New operation
+   * @returns {Operation<OperationType>} new operation
    */
   #transformAgainstTextDelete<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
     const newIndexBuilder = new IndexBuilder().from(operation.index);
@@ -263,7 +270,7 @@ export class OperationsTransformer {
 
     const index = operation.index;
     const againstIndex = againstOp.index;
-    
+
     const intersectionType = getRangesIntersectionType(index.textRange!, againstIndex.textRange!);
 
     switch (intersectionType) {

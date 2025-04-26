@@ -824,14 +824,14 @@ describe('CollaborationManager', () => {
       .addTextRange([0, 0])
       .build();
     const operation1 = new Operation(OperationType.Insert, index1, {
-      payload: 'te',
+      payload: 't',
     }, userId);
 
     const index2 = new IndexBuilder().from(index1)
       .addTextRange([1, 1])
       .build();
     const operation2 = new Operation(OperationType.Insert, index2, {
-      payload: 'st',
+      payload: 's',
     }, userId);
 
     collaborationManager.applyOperation(operation1);
@@ -876,14 +876,14 @@ describe('CollaborationManager', () => {
       .addTextRange([0, 0])
       .build();
     const operation1 = new Operation(OperationType.Insert, index1, {
-      payload: 'te',
+      payload: 't',
     }, userId);
 
     const index2 = new IndexBuilder().from(index1)
       .addTextRange([1, 1])
       .build();
     const operation2 = new Operation(OperationType.Insert, index2, {
-      payload: 'st',
+      payload: 's',
     }, userId);
 
     collaborationManager.applyOperation(operation1);
@@ -900,7 +900,7 @@ describe('CollaborationManager', () => {
         data: {
           text: {
             $t: 't',
-            value: 'test',
+            value: 'ts',
             fragments: [],
           },
         },
@@ -949,8 +949,9 @@ describe('CollaborationManager', () => {
   describe('remote operations', () => {
     it('should transform current batch when remote operation arrives', () => {
       const model = new EditorJSModel(userId, { identifier: documentId });
+
       model.initializeDocument({
-        blocks: [{
+        blocks: [ {
           name: 'paragraph',
           data: {
             text: {
@@ -958,7 +959,7 @@ describe('CollaborationManager', () => {
               $t: 't',
             },
           },
-        }],
+        } ],
       });
 
       const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
@@ -968,7 +969,7 @@ describe('CollaborationManager', () => {
         .addDataKey(createDataKey('text'))
         .addTextRange([0, 4])
         .build();
-        
+
       const localOp = new Operation(OperationType.Insert, localIndex, {
         payload: 'test',
       }, userId);
@@ -980,7 +981,7 @@ describe('CollaborationManager', () => {
         .addDataKey(createDataKey('text'))
         .addTextRange([0, 5])
         .build();
-        
+
       const remoteOp = new Operation(OperationType.Insert, remoteIndex, {
         payload: 'hello',
       }, 'other-user');
@@ -990,7 +991,7 @@ describe('CollaborationManager', () => {
       // Verify the operations were transformed correctly
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [{
+        blocks: [ {
           name: 'paragraph',
           tunes: {},
           data: {
@@ -1000,15 +1001,16 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        }],
+        } ],
         properties: {},
       });
     });
 
     it('should clear current batch if not transformable with remote operation', () => {
       const model = new EditorJSModel(userId, { identifier: documentId });
+
       model.initializeDocument({
-        blocks: [{
+        blocks: [ {
           name: 'paragraph',
           data: {
             text: {
@@ -1016,7 +1018,7 @@ describe('CollaborationManager', () => {
               $t: 't',
             },
           },
-        }],
+        } ],
       });
 
       const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
@@ -1026,7 +1028,7 @@ describe('CollaborationManager', () => {
         .addDataKey(createDataKey('text'))
         .addTextRange([0, 7])
         .build();
-        
+
       const localOp = new Operation(OperationType.Insert, localIndex, {
         payload: 'initial',
       }, userId);
@@ -1038,7 +1040,7 @@ describe('CollaborationManager', () => {
         .addDataKey(createDataKey('text'))
         .addTextRange([0, 7])
         .build();
-        
+
       const remoteOp = new Operation(OperationType.Delete, remoteIndex, {
         payload: 'initial',
       }, 'other-user');
@@ -1050,7 +1052,7 @@ describe('CollaborationManager', () => {
 
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [{
+        blocks: [ {
           name: 'paragraph',
           tunes: {},
           data: {
@@ -1060,7 +1062,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        }],
+        } ],
         properties: {},
       });
     });

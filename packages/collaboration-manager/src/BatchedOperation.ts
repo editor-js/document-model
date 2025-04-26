@@ -1,15 +1,14 @@
-import { InvertedOperationType, Operation, OperationType, type SerializedOperation } from './Operation.js';
+import type { InvertedOperationType } from './Operation.js';
+import { Operation, OperationType, type SerializedOperation } from './Operation.js';
 
 /**
  * Class to batch Text operations (maybe others in the future) for Undo/Redo purposes
- *
- * Operations are batched on timeout basis or if batch is terminated from the outside
  */
 export class BatchedOperation<T extends OperationType = OperationType> extends Operation<T> {
   /**
    * Array of operations to batch
    */
-  operations: (Operation<T> | Operation<OperationType.Neutral>)[] = [];
+  public operations: (Operation<T> | Operation<OperationType.Neutral>)[] = [];
 
   /**
    * Batch constructor function
@@ -26,42 +25,42 @@ export class BatchedOperation<T extends OperationType = OperationType> extends O
 
   /**
    * Create a new operation batch from an array of operations
-   * 
+   *
    * @param opBatch - operation batch to clone
-   */ 
+   */
   public static from<T extends OperationType>(opBatch: BatchedOperation<T>): BatchedOperation<T>;
 
   /**
    * Create a new operation batch from a serialized operation
-   * 
+   *
    * @param json - serialized operation
    */
   public static from<T extends OperationType>(json: SerializedOperation<T>): BatchedOperation<T>;
 
   /**
    * Create a new operation batch from an operation batch or a serialized operation
-   * 
+   *
    * @param opBatchOrJSON - operation batch or serialized operation
-   */ 
+   */
   public static from<T extends OperationType>(opBatchOrJSON: BatchedOperation<T> | SerializedOperation<T>): BatchedOperation<T> {
     if (opBatchOrJSON instanceof BatchedOperation) {
       /**
        * Every batch should have at least one operation
        */
-      const batch = new BatchedOperation(Operation.from(opBatchOrJSON.operations.shift()!));
+      const batch = new BatchedOperation(Operation.from(opBatchOrJSON.operations[0]));
 
-      opBatchOrJSON.operations.forEach((op) => {
+      opBatchOrJSON.operations.slice(1).forEach((op) => {
         /**
          * Deep clone operation to the new batch
          */
         batch.add(Operation.from(op));
       });
-    
+
       return batch as BatchedOperation<T>;
     } else {
       const batch = new BatchedOperation<T>(Operation.from(opBatchOrJSON));
 
-      return batch;  
+      return batch;
     }
   }
 
@@ -78,15 +77,17 @@ export class BatchedOperation<T extends OperationType = OperationType> extends O
   /**
    * Method that inverses all of the operations in the batch
    *
-   * @returns new batch with inversed operations
+   * @returns {BatchedOperation<InvertedOperationType<OperationType>>} new batch with inversed operations
    */
   public inverse(): BatchedOperation<InvertedOperationType<T>> {
+    const lastOp = this.operations[this.operations.length - 1];
+
     /**
      * Every batch should have at least one operation
      */
-    const newBatchedOperation = new BatchedOperation<InvertedOperationType<T> | OperationType.Neutral>(this.operations.pop()!.inverse())
+    const newBatchedOperation = new BatchedOperation<InvertedOperationType<T>>(lastOp.inverse());
 
-    this.operations.toReversed().map(op => newBatchedOperation.add(op.inverse()));
+    this.operations.toReversed().slice(1).map(op => newBatchedOperation.add(op.inverse()));
 
     return newBatchedOperation as BatchedOperation<InvertedOperationType<T>>;
   }
@@ -95,14 +96,14 @@ export class BatchedOperation<T extends OperationType = OperationType> extends O
    * Method that transforms all of the operations in the batch against another operation
    *
    * @param againstOp - operation to transform against
-   * @returns new batch with transformed operations
+   * @returns {BatchedOperation} new batch with transformed operations
    */
   public transform<K extends OperationType>(againstOp: Operation<K>): BatchedOperation<T | OperationType.Neutral> {
-    const transformedOp = this.operations.shift()!.transform(againstOp);
+    const transformedOp = this.operations[0].transform(againstOp);
 
     const newBatchedOperation = new BatchedOperation(transformedOp);
 
-    this.operations.map(op => newBatchedOperation.add(op.transform(againstOp)));
+    this.operations.slice(1).map(op => newBatchedOperation.add(op.transform(againstOp)));
 
     return newBatchedOperation;
   }
@@ -114,7 +115,14 @@ export class BatchedOperation<T extends OperationType = OperationType> extends O
    *
    * @param op - operation to check
    */
-  canAdd(op: Operation): boolean {
+  public canAdd(op: Operation): boolean {
+    /**
+     * Can't add to batch insertion or deletion of several characters
+     */
+    if (typeof op.data.payload === 'string' && op.data.payload?.length > 1) {
+      return false;
+    }
+
     const lastOp = this.operations[this.operations.length - 1];
 
     if (lastOp === undefined) {

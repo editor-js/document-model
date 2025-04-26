@@ -1,4 +1,4 @@
-import { TextRange } from "@editorjs/model";
+import type { TextRange } from '@editorjs/model';
 
 /**
  * Represents the type of intersection between two text ranges.
@@ -13,7 +13,7 @@ export enum RangeIntersectionType {
 
 /**
  * Returns the type of intersection between two text ranges
- * 
+ *
  * @param range - Range to check
  * @param rangeToCompare - Range to compare with
  * @returns Type of intersection
@@ -35,7 +35,7 @@ export function getRangesIntersectionType(range: TextRange, rangeToCompare: Text
    */
   if (start <= startToCompare && end >= endToCompare) {
     return RangeIntersectionType.Includes;
-  } 
+  }
 
   /**
    * Range is included in the range to compare

@@ -1,5 +1,5 @@
 import { IndexBuilder, type Index, type BlockNodeSerialized } from '@editorjs/model';
-import { OperationsTransformer } from './OperationsTransformer';
+import { OperationsTransformer } from './OperationsTransformer.js';
 
 /**
  * Type of the operation
@@ -83,7 +83,7 @@ export interface SerializedOperation<T extends OperationType = OperationType> {
 export type OperationTypeToData<T extends OperationType> = T extends OperationType.Modify
   ? ModifyOperationData
   : T extends OperationType.Neutral
-    ? NeutralOperationData 
+    ? NeutralOperationData
     : InsertOrDeleteOperationData;
 
 /**

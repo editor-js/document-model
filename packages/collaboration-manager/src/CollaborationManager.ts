@@ -261,6 +261,7 @@ export class CollaborationManager {
 
     /**
      * If current operation could not be added to the batch, then terminate current batch and create a new one with current operation
+     *
      * @todo - add debounce timeout 500ms
      */
     if (!this.#currentBatch.canAdd(operation)) {

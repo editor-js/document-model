@@ -1,3 +1,4 @@
+import { BatchedOperation } from './BatchedOperation.js';
 import type { Operation } from './Operation.js';
 
 /**
@@ -26,6 +27,8 @@ export class UndoRedoManager {
 
     const invertedOperation = operation.inverse();
 
+    console.log('inverted operation', JSON.stringify(invertedOperation));
+
     this.#redoStack.push(invertedOperation);
 
     return invertedOperation;
@@ -42,6 +45,7 @@ export class UndoRedoManager {
     }
 
     const invertedOperation = operation.inverse();
+
 
     this.#undoStack.push(invertedOperation);
 
@@ -60,30 +64,33 @@ export class UndoRedoManager {
 
   /**
    * Transforms undo and redo stacks
-   * 
+   *
    * @param operation - operation to transform against
    */
   public transformStacks(operation: Operation): void {
+    console.log('transform undo')
     this.transformStack(operation, this.#undoStack);
+    console.log('transform redo')
     this.transformStack(operation, this.#redoStack);
   }
 
   /**
    * Transforms passed operations stack against the operation
-   * 
+   *
    * @param operation - operation to transform against
    * @param stack - stack to transform
    */
   public transformStack(operation: Operation, stack: Operation[]): void {
     const transformed = stack.flatMap((op) => {
+      console.log('op in stack', op)
       const transformedOp = op.transform(operation);
 
       if (transformedOp === null) {
-        return []
+        return [];
       }
 
       return [ transformedOp ];
-    })
+    });
 
     stack.length = 0;
     stack.push(...transformed);
