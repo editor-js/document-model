@@ -87,7 +87,8 @@ export class BatchedOperation<T extends OperationType = OperationType> extends O
      */
     const newBatchedOperation = new BatchedOperation<InvertedOperationType<T>>(lastOp.inverse());
 
-    this.operations.toReversed().slice(1).map(op => newBatchedOperation.add(op.inverse()));
+    this.operations.toReversed().slice(1)
+      .map(op => newBatchedOperation.add(op.inverse()));
 
     return newBatchedOperation as BatchedOperation<InvertedOperationType<T>>;
   }

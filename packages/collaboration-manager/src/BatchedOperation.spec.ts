@@ -1,4 +1,4 @@
-import { createDataKey, Index, IndexBuilder } from '@editorjs/model';
+import { createDataKey, IndexBuilder } from '@editorjs/model';
 import { BatchedOperation } from './BatchedOperation.js';
 import type { SerializedOperation } from './Operation.js';
 import { Operation, OperationType } from './Operation.js';
@@ -67,11 +67,8 @@ describe('Batch', () => {
 
       originalBatch.add(op2);
 
-      
-      const newBatch = BatchedOperation.from(originalBatch);
-      console.log('original operations', originalBatch.operations);
 
-      console.log('new operations', newBatch.operations)
+      const newBatch = BatchedOperation.from(originalBatch);
 
       expect(newBatch.operations).toStrictEqual(originalBatch.operations);
       expect(newBatch).not.toBe(originalBatch); // Should be a new instance
@@ -156,7 +153,7 @@ describe('Batch', () => {
 
       const transformedBatch = batch.transform(againstOp);
 
-      const neutralOp = new Operation(OperationType.Neutral, templateIndex, { payload: 'a' }, userId)
+      const neutralOp = new Operation(OperationType.Neutral, templateIndex, { payload: 'a' }, userId);
 
       expect(transformedBatch.operations[0]).toEqual(neutralOp);
     });

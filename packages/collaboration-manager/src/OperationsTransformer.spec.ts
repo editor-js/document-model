@@ -1,7 +1,9 @@
-import { createDataKey, DocumentId, IndexBuilder } from '@editorjs/model';
+import type { DocumentId } from '@editorjs/model';
+import { createDataKey, IndexBuilder } from '@editorjs/model';
 import { Operation, OperationType } from './Operation.js';
 import { OperationsTransformer } from './OperationsTransformer.js';
 
+/* eslint-disable @typescript-eslint/no-magic-numbers */
 describe('OperationsTransformer', () => {
   let transformer: OperationsTransformer;
 
@@ -13,7 +15,9 @@ describe('OperationsTransformer', () => {
     it('should not transform operations on different documents', () => {
       const operation = new Operation(
         OperationType.Insert,
-        new IndexBuilder().addDocumentId('doc1' as DocumentId).addBlockIndex(0).build(),
+        new IndexBuilder().addDocumentId('doc1' as DocumentId)
+          .addBlockIndex(0)
+          .build(),
         { payload: 'test' },
         'user1',
         1
@@ -21,23 +25,27 @@ describe('OperationsTransformer', () => {
 
       const againstOp = new Operation(
         OperationType.Insert,
-        new IndexBuilder().addDocumentId('doc2' as DocumentId).addBlockIndex(0).build(),
+        new IndexBuilder().addDocumentId('doc2' as DocumentId)
+          .addBlockIndex(0)
+          .build(),
         { payload: 'test' },
         'user2',
         1
       );
 
       const result = transformer.transform(operation, againstOp);
+
       expect(result).toEqual(operation);
     });
 
     describe('Block operations transformation', () => {
       describe('Against block operations', () => {
-        
         it('should increase block index when transforming against Insert operation', () => {
           const operation = new Operation(
             OperationType.Insert,
-            new IndexBuilder().addDocumentId('doc1' as DocumentId).addBlockIndex(2).build(),
+            new IndexBuilder().addDocumentId('doc1' as DocumentId)
+              .addBlockIndex(2)
+              .build(),
             { payload: 'test' },
             'user1',
             1
@@ -45,20 +53,25 @@ describe('OperationsTransformer', () => {
 
           const againstOp = new Operation(
             OperationType.Insert,
-            new IndexBuilder().addDocumentId('doc1' as DocumentId).addBlockIndex(1).build(),
+            new IndexBuilder().addDocumentId('doc1' as DocumentId)
+              .addBlockIndex(1)
+              .build(),
             { payload: 'test' },
             'user2',
             1
           );
 
           const result = transformer.transform(operation, againstOp);
+
           expect(result.index.blockIndex).toBe(3);
         });
 
         it('should decrease block index when transforming against Delete operation before current block', () => {
           const operation = new Operation(
             OperationType.Insert,
-            new IndexBuilder().addDocumentId('doc1' as DocumentId).addBlockIndex(2).build(),
+            new IndexBuilder().addDocumentId('doc1' as DocumentId)
+              .addBlockIndex(2)
+              .build(),
             { payload: 'test' },
             'user1',
             1
@@ -66,20 +79,25 @@ describe('OperationsTransformer', () => {
 
           const againstOp = new Operation(
             OperationType.Delete,
-            new IndexBuilder().addDocumentId('doc1' as DocumentId).addBlockIndex(1).build(),
+            new IndexBuilder().addDocumentId('doc1' as DocumentId)
+              .addBlockIndex(1)
+              .build(),
             { payload: 'test' },
             'user2',
             1
           );
 
           const result = transformer.transform(operation, againstOp);
+
           expect(result.index.blockIndex).toBe(1);
         });
 
         it('should return Neutral operation when transforming against Delete operation of the same block', () => {
           const operation = new Operation(
             OperationType.Modify,
-            new IndexBuilder().addDocumentId('doc1' as DocumentId).addBlockIndex(1).build(),
+            new IndexBuilder().addDocumentId('doc1' as DocumentId)
+              .addBlockIndex(1)
+              .build(),
             { payload: 'test' },
             'user1',
             1
@@ -87,13 +105,16 @@ describe('OperationsTransformer', () => {
 
           const againstOp = new Operation(
             OperationType.Delete,
-            new IndexBuilder().addDocumentId('doc1' as DocumentId).addBlockIndex(1).build(),
+            new IndexBuilder().addDocumentId('doc1' as DocumentId)
+              .addBlockIndex(1)
+              .build(),
             { payload: 'test' },
             'user2',
             1
           );
 
           const result = transformer.transform(operation, againstOp);
+
           expect(result.type).toBe(OperationType.Neutral);
         });
       });
@@ -102,7 +123,9 @@ describe('OperationsTransformer', () => {
         it('should not transform block operation against text operation', () => {
           const operation = new Operation(
             OperationType.Insert,
-            new IndexBuilder().addDocumentId('doc1' as DocumentId).addBlockIndex(1).build(),
+            new IndexBuilder().addDocumentId('doc1' as DocumentId)
+              .addBlockIndex(1)
+              .build(),
             { payload: 'test' },
             'user1',
             1
@@ -122,6 +145,7 @@ describe('OperationsTransformer', () => {
           );
 
           const result = transformer.transform(operation, againstOp);
+
           expect(result).toEqual(operation);
         });
       });
@@ -157,6 +181,7 @@ describe('OperationsTransformer', () => {
           );
 
           const result = transformer.transform(operation, againstOp);
+
           expect(result.index.textRange).toEqual([8, 11]);
         });
 
@@ -188,6 +213,7 @@ describe('OperationsTransformer', () => {
           );
 
           const result = transformer.transform(operation, againstOp);
+
           expect(result.index.textRange).toEqual([2, 11]);
         });
       });
@@ -221,6 +247,7 @@ describe('OperationsTransformer', () => {
           );
 
           const result = transformer.transform(operation, againstOp);
+
           expect(result.index.textRange).toEqual([5, 7]);
         });
 
@@ -252,9 +279,10 @@ describe('OperationsTransformer', () => {
           );
 
           const result = transformer.transform(operation, againstOp);
+
           expect(result.type).toBe(OperationType.Neutral);
         });
       });
     });
   });
-}); 
+});

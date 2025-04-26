@@ -48,11 +48,9 @@ export class OperationsTransformer {
 
     switch (true) {
       case (againstIndex.isBlockIndex):
-        console.log('is block index')
         return this.#transformAgainstBlockOperation(operation, againstOp);
 
       case (againstIndex.isTextIndex):
-        console.log('is text index')
         return this.#transformAgainstTextOperation(operation, againstOp);
 
       /**

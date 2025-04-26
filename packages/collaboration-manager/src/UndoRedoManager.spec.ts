@@ -182,10 +182,11 @@ describe('UndoRedoManager', () => {
       const transformingOp = createOperation(0, 'transform');
 
       // Mock transforms to return operations with shifted indices
+      /* eslint-disable @typescript-eslint/no-magic-numbers */
       jest.spyOn(op1, 'transform').mockReturnValue(createOperation(1, 'transformed-1'));
       jest.spyOn(op2, 'transform').mockReturnValue(createOperation(2, 'transformed-2'));
       jest.spyOn(op3, 'transform').mockReturnValue(createOperation(3, 'transformed-3'));
-
+      /* eslint-enable @typescript-eslint/no-magic-numbers */
       manager.transformStacks(transformingOp);
 
       // Verify operations can be redone in correct order
