@@ -1,27 +1,22 @@
-import { createDataKey, IndexBuilder } from '@editorjs/model';
+import { createDataKey, IndexBuilder, TextRange } from '@editorjs/model';
 import { BatchedOperation } from './BatchedOperation.js';
 import type { SerializedOperation } from './Operation.js';
 import { Operation, OperationType } from './Operation.js';
 
-const templateIndex = new IndexBuilder()
+const createIndexByRange = (range: TextRange) => new IndexBuilder()
   .addBlockIndex(0)
   .addDataKey(createDataKey('key'))
-  .addTextRange([0, 0])
+  .addTextRange(range)
   .build();
+
+const templateIndex = createIndexByRange([0, 0])
 
 const userId = 'user';
 
 describe('Batch', () => {
   it('should add Insert operation to batch', () => {
     const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
-    const op2 = new Operation(
-      OperationType.Insert,
-      new IndexBuilder().from(templateIndex)
-        .addTextRange([1, 1])
-        .build(),
-      { payload: 'b' },
-      userId
-    );
+    const op2 = new Operation(OperationType.Insert, createIndexByRange([1, 1]), { payload: 'b' }, userId);
 
     const batch = new BatchedOperation(op1);
 
@@ -34,14 +29,7 @@ describe('Batch', () => {
 
   it('should add Delete operation to batch', () => {
     const op1 = new Operation(OperationType.Delete, templateIndex, { payload: 'a' }, userId);
-    const op2 = new Operation(
-      OperationType.Delete,
-      new IndexBuilder().from(templateIndex)
-        .addTextRange([1, 1])
-        .build(),
-      { payload: 'b' },
-      userId
-    );
+    const op2 = new Operation(OperationType.Delete, createIndexByRange([1, 1]), { payload: 'b' }, userId);
 
     const batch = new BatchedOperation(op1);
 
@@ -55,14 +43,8 @@ describe('Batch', () => {
   describe('from()', () => {
     it('should create a new batch from an existing batch', () => {
       const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
-      const op2 = new Operation(
-        OperationType.Insert,
-        new IndexBuilder().from(templateIndex)
-          .addTextRange([1, 1])
-          .build(),
-        { payload: 'b' },
-        userId
-      );
+      const op2 = new Operation(OperationType.Insert, createIndexByRange([1, 1]), { payload: 'b' }, userId);
+
       const originalBatch = new BatchedOperation(op1);
 
       originalBatch.add(op2);
@@ -87,14 +69,8 @@ describe('Batch', () => {
   describe('inverse()', () => {
     it('should inverse all operations in the batch', () => {
       const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
-      const op2 = new Operation(
-        OperationType.Insert,
-        new IndexBuilder().from(templateIndex)
-          .addTextRange([1, 1])
-          .build(),
-        { payload: 'b' },
-        userId
-      );
+      const op2 = new Operation(OperationType.Insert, createIndexByRange([1, 1]), { payload: 'b' }, userId);
+
       const batch = new BatchedOperation(op1);
 
       batch.add(op2);
@@ -108,52 +84,37 @@ describe('Batch', () => {
 
   describe('transform()', () => {
     it('should transform operations against another operation', () => {
-      const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
-      const op2 = new Operation(
-        OperationType.Insert,
-        new IndexBuilder().from(templateIndex)
-          .addTextRange([1, 1])
-          .build(),
-        { payload: 'b' },
-        userId
-      );
+      const op1 = new Operation(OperationType.Insert, createIndexByRange([1, 1]), { payload: 'a' }, userId);
+      const op2 = new Operation(OperationType.Insert, createIndexByRange([2, 2]), { payload: 'b' }, userId);
+
       const batch = new BatchedOperation(op1);
 
       batch.add(op2);
 
-      const againstOp = new Operation(
-        OperationType.Insert,
-        new IndexBuilder().from(templateIndex)
-          .addTextRange([0, 0])
-          .build(),
-        { payload: 'x' },
-        'other-user'
-      );
+      const againstOp = new Operation(OperationType.Insert, createIndexByRange([0, 0]), { payload: 'x' }, 'other-user');
 
       const transformedBatch = batch.transform(againstOp);
 
       expect(transformedBatch).not.toBeNull();
       expect(transformedBatch!.operations.length).toBe(2);
       // Check if text ranges were shifted by 1 due to insertion
-      expect(transformedBatch!.operations[0].index.textRange![0]).toBe(1);
-      expect(transformedBatch!.operations[1].index.textRange![0]).toBe(2);
+      expect(transformedBatch!.operations[0].index.textRange![0]).toBe(2);
+      expect(transformedBatch!.operations[1].index.textRange![0]).toBe(3);
     });
 
     it('should return batch with Neutral operations if no operations can be transformed', () => {
-      const op = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
+      const op = new Operation(OperationType.Insert, createIndexByRange([1, 1]), { payload: 'a' }, userId);
+
       const batch = new BatchedOperation(op);
 
-      const deleteIndex = new IndexBuilder()
-        .from(templateIndex)
-        .addTextRange([0, 2])
-        .build();
+      const deleteIndex = createIndexByRange([0, 2])
 
       // An operation that would make transformation impossible
       const againstOp = new Operation(OperationType.Delete, deleteIndex, { payload: 'a' }, 'other-user');
 
       const transformedBatch = batch.transform(againstOp);
 
-      const neutralOp = new Operation(OperationType.Neutral, templateIndex, { payload: 'a' }, userId);
+      const neutralOp = new Operation(OperationType.Neutral, createIndexByRange([1, 1]), { payload: [] }, userId);
 
       expect(transformedBatch.operations[0]).toEqual(neutralOp);
     });
@@ -162,14 +123,8 @@ describe('Batch', () => {
   describe('canAdd()', () => {
     it('should return true for consecutive text operations of same type', () => {
       const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
-      const op2 = new Operation(
-        OperationType.Insert,
-        new IndexBuilder().from(templateIndex)
-          .addTextRange([1, 1])
-          .build(),
-        { payload: 'b' },
-        userId
-      );
+      const op2 = new Operation(OperationType.Insert, createIndexByRange([1, 1]), { payload: 'b' }, userId);
+
       const batch = new BatchedOperation(op1);
 
       expect(batch.canAdd(op2)).toBe(true);
@@ -177,14 +132,8 @@ describe('Batch', () => {
 
     it('should return false for non-consecutive text operations', () => {
       const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
-      const op2 = new Operation(
-        OperationType.Insert,
-        new IndexBuilder().from(templateIndex)
-          .addTextRange([2, 2])
-          .build(),
-        { payload: 'b' },
-        userId
-      );
+      const op2 = new Operation(OperationType.Insert, createIndexByRange([2, 2]), { payload: 'b' }, userId);
+
       const batch = new BatchedOperation(op1);
 
       expect(batch.canAdd(op2)).toBe(false);
@@ -192,14 +141,8 @@ describe('Batch', () => {
 
     it('should return false for different operation types', () => {
       const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
-      const op2 = new Operation(
-        OperationType.Delete,
-        new IndexBuilder().from(templateIndex)
-          .addTextRange([1, 1])
-          .build(),
-        { payload: 'b' },
-        userId
-      );
+      const op2 = new Operation(OperationType.Delete, createIndexByRange([1, 1]), { payload: 'b' }, userId);
+
       const batch = new BatchedOperation(op1);
 
       expect(batch.canAdd(op2)).toBe(false);
@@ -207,14 +150,8 @@ describe('Batch', () => {
 
     it('should return false for modify operations', () => {
       const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
-      const op2 = new Operation(
-        OperationType.Modify,
-        new IndexBuilder().from(templateIndex)
-          .addTextRange([1, 1])
-          .build(),
-        { payload: { tool: 'bold' } },
-        userId
-      );
+      const op2 = new Operation(OperationType.Modify, createIndexByRange([1, 1]), { payload: 'b' }, userId);
+
       const batch = new BatchedOperation(op1);
 
       expect(batch.canAdd(op2)).toBe(false);
