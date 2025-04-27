@@ -1026,7 +1026,7 @@ describe('CollaborationManager', () => {
       // Create local delete operation
       const localIndex = new IndexBuilder().addBlockIndex(0)
         .addDataKey(createDataKey('text'))
-        .addTextRange([0, 7])
+        .addTextRange([0, 0])
         .build();
 
       const localOp = new Operation(OperationType.Insert, localIndex, {

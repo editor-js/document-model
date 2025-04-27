@@ -1,15 +1,15 @@
-import { createDataKey, IndexBuilder, TextRange } from '@editorjs/model';
+import { createDataKey, Index, IndexBuilder, type TextRange } from '@editorjs/model';
 import { BatchedOperation } from './BatchedOperation.js';
 import type { SerializedOperation } from './Operation.js';
 import { Operation, OperationType } from './Operation.js';
 
-const createIndexByRange = (range: TextRange) => new IndexBuilder()
+const createIndexByRange = (range: TextRange): Index => new IndexBuilder()
   .addBlockIndex(0)
   .addDataKey(createDataKey('key'))
   .addTextRange(range)
   .build();
 
-const templateIndex = createIndexByRange([0, 0])
+const templateIndex = createIndexByRange([0, 0]);
 
 const userId = 'user';
 
@@ -98,8 +98,10 @@ describe('Batch', () => {
       expect(transformedBatch).not.toBeNull();
       expect(transformedBatch!.operations.length).toBe(2);
       // Check if text ranges were shifted by 1 due to insertion
+      /* eslint-disable @typescript-eslint-no-magic-numbers */
       expect(transformedBatch!.operations[0].index.textRange![0]).toBe(2);
       expect(transformedBatch!.operations[1].index.textRange![0]).toBe(3);
+      /* eslint-enable @typescript-eslint-no-magic-numbers */
     });
 
     it('should return batch with Neutral operations if no operations can be transformed', () => {
@@ -107,7 +109,7 @@ describe('Batch', () => {
 
       const batch = new BatchedOperation(op);
 
-      const deleteIndex = createIndexByRange([0, 2])
+      const deleteIndex = createIndexByRange([0, 2]);
 
       // An operation that would make transformation impossible
       const againstOp = new Operation(OperationType.Delete, deleteIndex, { payload: 'a' }, 'other-user');

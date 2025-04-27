@@ -170,10 +170,13 @@ export class OperationsTransformer {
       return Operation.from(operation);
     }
 
+    const sameInput = index.dataKey === againstIndex.dataKey;
+    const sameBlock = index.blockIndex === againstIndex.blockIndex;
+
     /**
      * Check that againstOp affects current operation
      */
-    if (index.dataKey === againstIndex.dataKey && index.blockIndex === againstIndex.blockIndex && againstIndex.textRange![0] >= index.textRange![1]) {
+    if (sameInput && sameBlock && againstIndex.textRange![0] > index.textRange![1]) {
       return Operation.from(operation);
     }
 
@@ -220,6 +223,7 @@ export class OperationsTransformer {
 
     switch (intersectionType) {
       case (RangeIntersectionType.None):
+      case (RangeIntersectionType.Left):
         newIndexBuilder.addTextRange([index.textRange![0] + insertedLength, index.textRange![1] + insertedLength]);
         break;
 

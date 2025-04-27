@@ -25,7 +25,7 @@ export function getRangesIntersectionType(range: TextRange, rangeToCompare: Text
   /**
    * Range is fully on the left or right of the range to compare
    */
-  if (end <= startToCompare || start >= endToCompare) {
+  if (end < startToCompare || start > endToCompare) {
     return RangeIntersectionType.None;
   }
 
@@ -33,7 +33,7 @@ export function getRangesIntersectionType(range: TextRange, rangeToCompare: Text
    * Range includes the range to compare
    * If two ranges are the same, intersection type is "includes"
    */
-  if (start <= startToCompare && end >= endToCompare) {
+  if (start <= startToCompare && end >= endToCompare && start != end) {
     return RangeIntersectionType.Includes;
   }
 
