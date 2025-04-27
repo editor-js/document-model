@@ -1,4 +1,5 @@
-import { createDataKey, Index, IndexBuilder, type TextRange } from '@editorjs/model';
+import type { Index } from '@editorjs/model';
+import { createDataKey, IndexBuilder, type TextRange } from '@editorjs/model';
 import { BatchedOperation } from './BatchedOperation.js';
 import type { SerializedOperation } from './Operation.js';
 import { Operation, OperationType } from './Operation.js';
@@ -98,10 +99,10 @@ describe('Batch', () => {
       expect(transformedBatch).not.toBeNull();
       expect(transformedBatch!.operations.length).toBe(2);
       // Check if text ranges were shifted by 1 due to insertion
-      /* eslint-disable @typescript-eslint-no-magic-numbers */
+      /* eslint-disable @typescript-eslint/no-magic-numbers */
       expect(transformedBatch!.operations[0].index.textRange![0]).toBe(2);
       expect(transformedBatch!.operations[1].index.textRange![0]).toBe(3);
-      /* eslint-enable @typescript-eslint-no-magic-numbers */
+      /* eslint-enable @typescript-eslint/no-magic-numbers */
     });
 
     it('should return batch with Neutral operations if no operations can be transformed', () => {
