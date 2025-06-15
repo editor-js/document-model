@@ -74,7 +74,7 @@ export class UndoRedoManager {
    *
    * @param operation - operation to transform against
    * @param stack - stack to transform
-   * @returns - new transformed list of operations
+   * @returns {Operation[]} - new transformed list of operations
    */
   private transformStack(operation: Operation, stack: Operation[]): Operation[] {
     return stack.map((op: Operation) => op.transform(operation));

@@ -10,8 +10,7 @@ const createOperation = (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value: string | [ BlockNodeSerialized ] | Record<any, any>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  prevValue?: Record<any, any>,
-  endIndex?: number
+  prevValue?: Record<any, any>
 ): Operation => {
   const index = new IndexBuilder()
     .addBlockIndex(0);
@@ -194,7 +193,7 @@ describe('Operation', () => {
 
       it('should transform a received operation if it is at the same position as a local one', () => {
         const receivedOp = createOperation(OperationType.Modify, 3, 'abc');
-        const localOp = createOperation(OperationType.Delete, 0, 'def', undefined, 3);
+        const localOp = createOperation(OperationType.Delete, 0, 'def');
         const transformedOp = receivedOp.transform(localOp);
 
         expect(transformedOp.index.textRange).toEqual([0, 0]);

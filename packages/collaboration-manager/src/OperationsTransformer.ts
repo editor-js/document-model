@@ -20,12 +20,12 @@ export class OperationsTransformer {
     if (operation.index.documentId !== againstOp.index.documentId) {
       return Operation.from(operation);
     }
-    
+
     /**
      * Throw unsupported operation type error if operation type is not supported
      */
     if (!Object.values(OperationType).includes(againstOp.type) || !Object.values(OperationType).includes(operation.type)) {
-      throw new Error('Unsupported operation type')
+      throw new Error('Unsupported operation type');
     }
 
     return this.#applyTransformation<T>(operation, againstOp);
