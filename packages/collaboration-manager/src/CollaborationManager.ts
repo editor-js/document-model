@@ -14,6 +14,8 @@ import { BatchedOperation } from './BatchedOperation.js';
 import { type ModifyOperationData, Operation, OperationType } from './Operation.js';
 import { UndoRedoManager } from './UndoRedoManager.js';
 
+const DEBOUCE_TIMEOUT = 500;
+
 /**
  * CollaborationManager listens to EditorJSModel events and applies operations
  */
@@ -47,6 +49,11 @@ export class CollaborationManager {
    * OT Client
    */
   #client: OTClient | null = null;
+
+  /**
+   * Debounce timer to move current batch to undo stack after a delay
+   */
+  #debounceTimer?: ReturnType<typeof setTimeout>;
 
   /**
    * Creates an instance of CollaborationManager
@@ -249,24 +256,25 @@ export class CollaborationManager {
      */
     if (this.#currentBatch === null) {
       this.#currentBatch = new BatchedOperation(operation);
+      this.#debounce();
 
       return;
     }
 
     /**
      * If current operation could not be added to the batch, then terminate current batch and create a new one with current operation
-     *
-     * @todo - add debounce timeout 500ms
      */
     if (!this.#currentBatch.canAdd(operation)) {
       this.#moveBatchToUndo();
 
       this.#currentBatch = new BatchedOperation(operation);
+      this.#debounce();
 
       return;
     }
 
     this.#currentBatch.add(operation);
+    this.#debounce();
   }
 
   /**
@@ -278,5 +286,16 @@ export class CollaborationManager {
 
       this.#currentBatch = null;
     }
+  }
+
+  /**
+   * Debouneces timer of #moveBatchToUndo method
+   */
+  #debounce(): void {
+    clearTimeout(this.#debounceTimer);
+
+    this.#debounceTimer = setTimeout(() => {
+      this.#moveBatchToUndo();
+    }, DEBOUCE_TIMEOUT);
   }
 }
