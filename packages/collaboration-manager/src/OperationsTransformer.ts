@@ -120,13 +120,11 @@ export class OperationsTransformer {
        * Cover case 2
        */
       case OperationType.Delete:
-        if (operation.index.blockIndex !== undefined) {
-          if (againstOp.index.blockIndex! < operation.index.blockIndex!) {
-            newIndexBuilder.addBlockIndex(operation.index.blockIndex! - 1);
-          } else {
-            return new Operation(OperationType.Neutral, newIndexBuilder.build(), { payload: [] }, operation.userId, operation.rev);
-          }
+        if (againstOp.index.blockIndex! >= operation.index.blockIndex!) {
+          return new Operation(OperationType.Neutral, newIndexBuilder.build(), { payload: [] }, operation.userId, operation.rev);
         }
+
+        newIndexBuilder.addBlockIndex(operation.index.blockIndex! - 1);
 
         break;
 
@@ -301,9 +299,7 @@ export class OperationsTransformer {
        * Cover case 2.2
        */
       case (RangeIntersectionType.Right):
-        const overlapLength = index.textRange![1] - againstIndex.textRange![0];
-
-        newIndexBuilder.addTextRange([index.textRange![0], index.textRange![1] - overlapLength]);
+        newIndexBuilder.addTextRange([index.textRange![0], againstIndex.textRange![0]]);
         break;
 
       /**

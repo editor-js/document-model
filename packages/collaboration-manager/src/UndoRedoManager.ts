@@ -15,6 +15,17 @@ export class UndoRedoManager {
   #redoStack: Operation[] = [];
 
   /**
+   * Transforms passed operations stack against the operation
+   *
+   * @param operation - operation to transform against
+   * @param stack - stack to transform
+   * @returns - new transformed list of operations
+   */
+  private transformStack(operation: Operation, stack: Operation[]): Operation[] {
+    return stack.map((op: Operation) => op.transform(operation));
+  }
+
+  /**
    * Returns operation to undo (if any)
    */
   public undo(): Operation | undefined {
@@ -65,28 +76,7 @@ export class UndoRedoManager {
    * @param operation - operation to transform against
    */
   public transformStacks(operation: Operation): void {
-    this.transformStack(operation, this.#undoStack);
-    this.transformStack(operation, this.#redoStack);
-  }
-
-  /**
-   * Transforms passed operations stack against the operation
-   *
-   * @param operation - operation to transform against
-   * @param stack - stack to transform
-   */
-  public transformStack(operation: Operation, stack: Operation[]): void {
-    const transformed = stack.flatMap((op) => {
-      const transformedOp = op.transform(operation);
-
-      if (transformedOp === null) {
-        return [];
-      }
-
-      return [ transformedOp ];
-    });
-
-    stack.length = 0;
-    stack.push(...transformed);
+    this.#undoStack = this.transformStack(operation, this.#undoStack);
+    this.#redoStack = this.transformStack(operation, this.#redoStack);
   }
 }
