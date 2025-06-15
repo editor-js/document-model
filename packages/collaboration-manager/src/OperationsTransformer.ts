@@ -20,6 +20,13 @@ export class OperationsTransformer {
     if (operation.index.documentId !== againstOp.index.documentId) {
       return Operation.from(operation);
     }
+    
+    /**
+     * Throw unsupported operation type error if operation type is not supported
+     */
+    if (!Object.values(OperationType).includes(againstOp.type) || !Object.values(OperationType).includes(operation.type)) {
+      throw new Error('Unsupported operation type')
+    }
 
     return this.#applyTransformation<T>(operation, againstOp);
   }
@@ -176,7 +183,7 @@ export class OperationsTransformer {
     /**
      * Check that againstOp affects current operation
      */
-    if (sameInput && sameBlock && againstIndex.textRange![0] > index.textRange![1]) {
+    if (!sameInput || !sameBlock || againstIndex.textRange![0] > index.textRange![1]) {
       return Operation.from(operation);
     }
 

@@ -91,7 +91,7 @@ export class CollaborationManager {
    * Undo last operation in the local stack
    */
   public undo(): void {
-    this.#emptyBatch();
+    this.#moveBatchToUndo();
 
     const operation = this.#undoRedoManager.undo();
 
@@ -112,7 +112,7 @@ export class CollaborationManager {
    * Redo last undone operation in the local stack
    */
   public redo(): void {
-    this.#emptyBatch();
+    this.#moveBatchToUndo();
 
     const operation = this.#undoRedoManager.redo();
 
@@ -123,13 +123,7 @@ export class CollaborationManager {
     // Disable event handling
     this.#shouldHandleEvents = false;
 
-    if (operation instanceof BatchedOperation) {
-      operation.operations.forEach((op) => {
-        this.applyOperation(op);
-      });
-    } else {
-      this.applyOperation(operation);
-    }
+    this.applyOperation(operation);
 
     // Re-enable event handling
     this.#shouldHandleEvents = true;
@@ -265,7 +259,7 @@ export class CollaborationManager {
      * @todo - add debounce timeout 500ms
      */
     if (!this.#currentBatch.canAdd(operation)) {
-      this.#undoRedoManager.put(this.#currentBatch);
+      this.#moveBatchToUndo();
 
       this.#currentBatch = new BatchedOperation(operation);
 
@@ -278,7 +272,7 @@ export class CollaborationManager {
   /**
    * Puts current batch to the undo stack and clears the batch
    */
-  #emptyBatch(): void {
+  #moveBatchToUndo(): void {
     if (this.#currentBatch !== null) {
       this.#undoRedoManager.put(this.#currentBatch);
 
