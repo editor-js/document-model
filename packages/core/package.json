@@ -6,6 +6,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "yarn clear && tsc --build tsconfig.build.json",
+    "build:declaration": "yarn build --emitDeclarationOnly",
     "dev": "yarn build --watch",
     "lint": "eslint ./src",
     "lint:ci": "eslint --config ./eslint.config.mjs ./src --max-warnings 0",
