@@ -1,6 +1,6 @@
 // Stryker disable all -- we don't count mutation test coverage fot this file as it just proxy calls to EditorDocument
 /* istanbul ignore file -- we don't count test coverage fot this file as it just proxy calls to EditorDocument */
-import { type Index, IndexBuilder } from './entities';
+import { type Index, IndexBuilder } from './entities/index.js';
 import { type BlockNodeSerialized, EditorDocument } from './entities/index.js';
 import {
   BlockAddedEvent,

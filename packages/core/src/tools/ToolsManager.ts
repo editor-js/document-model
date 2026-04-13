@@ -120,7 +120,6 @@ export default class ToolsManager {
     tools.forEach(([toolConstructor, config]) => {
       const toolName = toolConstructor.name;
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       if (isFunction(toolConstructor.prepare)) {
         void promiseQueue.add(async () => {
           try {
