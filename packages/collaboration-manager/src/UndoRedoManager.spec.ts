@@ -1,8 +1,9 @@
-import { IndexBuilder } from '@editorjs/model';
+import type { DocumentId } from '@editorjs/model';
+import { createDataKey, IndexBuilder } from '@editorjs/model';
 import { describe } from '@jest/globals';
+import { jest } from '@jest/globals';
 import { Operation, OperationType } from './Operation.js';
 import { UndoRedoManager } from './UndoRedoManager.js';
-import { jest } from '@jest/globals';
 
 const userId = 'user';
 
@@ -195,6 +196,50 @@ describe('UndoRedoManager', () => {
 
       expect(redoOp1?.index.blockIndex?.toString()).toBe('2'); // transformed op2
       expect(redoOp2?.index.blockIndex?.toString()).toBe('3'); // transformed op3
+    });
+
+    it('should transform stacked text operations against a remote text insert', () => {
+      const manager = new UndoRedoManager();
+      const doc = 'doc' as DocumentId;
+
+      const stacked = new Operation(
+        OperationType.Insert,
+        new IndexBuilder()
+          .addDocumentId(doc)
+          .addBlockIndex(0)
+          .addDataKey(createDataKey('text'))
+          /* eslint-disable @typescript-eslint/no-magic-numbers */
+          .addTextRange([2, 5])
+          /* eslint-enable @typescript-eslint/no-magic-numbers */
+          .build(),
+        { payload: 'abc' },
+        userId
+      );
+
+      manager.put(stacked);
+
+      const remoteInsert = new Operation(
+        OperationType.Insert,
+        new IndexBuilder()
+          .addDocumentId(doc)
+          .addBlockIndex(0)
+          .addDataKey(createDataKey('text'))
+          /* eslint-disable @typescript-eslint/no-magic-numbers */
+          .addTextRange([0, 0])
+          /* eslint-enable @typescript-eslint/no-magic-numbers */
+          .build(),
+        { payload: 'xx' },
+        'remote'
+      );
+
+      manager.transformStacks(remoteInsert);
+
+      const undone = manager.undo();
+
+      expect(undone?.type).toBe(OperationType.Delete);
+      /* eslint-disable @typescript-eslint/no-magic-numbers */
+      expect(undone?.index.textRange).toEqual([4, 7]);
+      /* eslint-enable @typescript-eslint/no-magic-numbers */
     });
   });
 });

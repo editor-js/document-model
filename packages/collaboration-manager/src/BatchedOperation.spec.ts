@@ -159,5 +159,14 @@ describe('Batch', () => {
 
       expect(batch.canAdd(op2)).toBe(false);
     });
+
+    it('should return false when payload is a multi-character string', () => {
+      const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
+      const op2 = new Operation(OperationType.Insert, createIndexByRange([1, 1]), { payload: 'bc' }, userId);
+
+      const batch = new BatchedOperation(op1);
+
+      expect(batch.canAdd(op2)).toBe(false);
+    });
   });
 });

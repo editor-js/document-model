@@ -117,6 +117,33 @@ describe('OperationsTransformer', () => {
 
           expect(result.type).toBe(OperationType.Neutral);
         });
+
+        it('should not change block operation when against block operation is Modify', () => {
+          const operation = new Operation(
+            OperationType.Insert,
+            new IndexBuilder().addDocumentId('doc1' as DocumentId)
+              .addBlockIndex(2)
+              .build(),
+            { payload: 'test' },
+            'user1',
+            1
+          );
+
+          const againstOp = new Operation(
+            OperationType.Modify,
+            new IndexBuilder().addDocumentId('doc1' as DocumentId)
+              .addBlockIndex(1)
+              .build(),
+            { payload: 'x',
+              prevPayload: null },
+            'user2',
+            1
+          );
+
+          const result = transformer.transform(operation, againstOp);
+
+          expect(result.index.blockIndex).toBe(2);
+        });
       });
 
       describe('Against text operations', () => {
@@ -281,6 +308,139 @@ describe('OperationsTransformer', () => {
           const result = transformer.transform(operation, againstOp);
 
           expect(result.type).toBe(OperationType.Neutral);
+        });
+
+        it('should apply Left intersection when delete removes the left part of the current range', () => {
+          const operation = new Operation(
+            OperationType.Insert,
+            new IndexBuilder()
+              .addDocumentId('doc1' as DocumentId)
+              .addBlockIndex(1)
+              .addDataKey(createDataKey('text'))
+              .addTextRange([8, 10])
+              .build(),
+            { payload: 'ab' },
+            'user1',
+            1
+          );
+
+          const againstOp = new Operation(
+            OperationType.Delete,
+            new IndexBuilder()
+              .addDocumentId('doc1' as DocumentId)
+              .addBlockIndex(1)
+              .addDataKey(createDataKey('text'))
+              .addTextRange([5, 9])
+              .build(),
+            { payload: 'xxxx' },
+            'user2',
+            1
+          );
+
+          const result = transformer.transform(operation, againstOp);
+
+          expect(result.index.textRange).toEqual([5, 6]);
+        });
+
+        it('should apply Right intersection when delete removes the right part of the current range', () => {
+          const operation = new Operation(
+            OperationType.Insert,
+            new IndexBuilder()
+              .addDocumentId('doc1' as DocumentId)
+              .addBlockIndex(1)
+              .addDataKey(createDataKey('text'))
+              .addTextRange([5, 8])
+              .build(),
+            { payload: 'abc' },
+            'user1',
+            1
+          );
+
+          const againstOp = new Operation(
+            OperationType.Delete,
+            new IndexBuilder()
+              .addDocumentId('doc1' as DocumentId)
+              .addBlockIndex(1)
+              .addDataKey(createDataKey('text'))
+              .addTextRange([7, 11])
+              .build(),
+            { payload: 'abcd' },
+            'user2',
+            1
+          );
+
+          const result = transformer.transform(operation, againstOp);
+
+          expect(result.index.textRange).toEqual([5, 7]);
+        });
+
+        it('should shrink range when delete is strictly inside the current text range', () => {
+          const operation = new Operation(
+            OperationType.Modify,
+            new IndexBuilder()
+              .addDocumentId('doc1' as DocumentId)
+              .addBlockIndex(1)
+              .addDataKey(createDataKey('text'))
+              .addTextRange([4, 14])
+              .build(),
+            { payload: { tool: 'bold' } },
+            'user1',
+            1
+          );
+
+          const againstOp = new Operation(
+            OperationType.Delete,
+            new IndexBuilder()
+              .addDocumentId('doc1' as DocumentId)
+              .addBlockIndex(1)
+              .addDataKey(createDataKey('text'))
+              .addTextRange([6, 9])
+              .build(),
+            { payload: 'abc' },
+            'user2',
+            1
+          );
+
+          const result = transformer.transform(operation, againstOp);
+
+          expect(result.index.textRange).toEqual([4, 11]);
+        });
+      });
+
+      describe('Against text Modify operations', () => {
+        it('should leave text operation unchanged when against operation is Modify', () => {
+          const operation = new Operation(
+            OperationType.Insert,
+            new IndexBuilder()
+              .addDocumentId('doc1' as DocumentId)
+              .addBlockIndex(1)
+              .addDataKey(createDataKey('text'))
+              .addTextRange([2, 5])
+              .build(),
+            { payload: 'abc' },
+            'user1',
+            1
+          );
+
+          const againstOp = new Operation(
+            OperationType.Modify,
+            new IndexBuilder()
+              .addDocumentId('doc1' as DocumentId)
+              .addBlockIndex(1)
+              .addDataKey(createDataKey('text'))
+              .addTextRange([3, 4])
+              .build(),
+            { payload: { tool: 'bold' },
+              prevPayload: null },
+            'user2',
+            1
+          );
+
+          const result = transformer.transform(operation, againstOp);
+
+          expect(result.type).toBe(operation.type);
+          expect(result.index.textRange).toEqual(operation.index.textRange);
+          expect(result.data).toEqual(operation.data);
         });
       });
     });

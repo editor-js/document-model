@@ -31,7 +31,8 @@ export class CollaborationManager {
   #undoRedoManager: UndoRedoManager;
 
   /**
-   * Flag to control whether events should be handled to avoid putting operations to the stack on undo/redo. Used for preventing operations infinity loop on undo/redo
+   * Flag to control whether events should be handled to avoid putting operations to the stack on undo/redo.
+   * Used for preventing operations infinity loop on undo/redo
    */
   #shouldHandleEvents = true;
 
@@ -98,7 +99,7 @@ export class CollaborationManager {
    * Undo last operation in the local stack
    */
   public undo(): void {
-    this.#moveBatchToUndo();
+    this.#putBatchToUndo();
 
     const operation = this.#undoRedoManager.undo();
 
@@ -119,7 +120,7 @@ export class CollaborationManager {
    * Redo last undone operation in the local stack
    */
   public redo(): void {
-    this.#moveBatchToUndo();
+    this.#putBatchToUndo();
 
     const operation = this.#undoRedoManager.redo();
 
@@ -265,7 +266,7 @@ export class CollaborationManager {
      * If current operation could not be added to the batch, then terminate current batch and create a new one with current operation
      */
     if (!this.#currentBatch.canAdd(operation)) {
-      this.#moveBatchToUndo();
+      this.#putBatchToUndo();
 
       this.#currentBatch = new BatchedOperation(operation);
       this.#debounce();
@@ -280,7 +281,7 @@ export class CollaborationManager {
   /**
    * Puts current batch to the undo stack and clears the batch
    */
-  #moveBatchToUndo(): void {
+  #putBatchToUndo(): void {
     if (this.#currentBatch !== null) {
       this.#undoRedoManager.put(this.#currentBatch);
 
@@ -289,13 +290,13 @@ export class CollaborationManager {
   }
 
   /**
-   * Debouneces timer of #moveBatchToUndo method
+   * Debouneces timer of #putBatchToUndo method
    */
   #debounce(): void {
     clearTimeout(this.#debounceTimer);
 
     this.#debounceTimer = setTimeout(() => {
-      this.#moveBatchToUndo();
+      this.#putBatchToUndo();
     }, DEBOUCE_TIMEOUT);
   }
 }

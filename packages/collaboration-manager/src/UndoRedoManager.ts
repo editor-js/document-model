@@ -43,7 +43,6 @@ export class UndoRedoManager {
 
     const invertedOperation = operation.inverse();
 
-
     this.#undoStack.push(invertedOperation);
 
     return invertedOperation;

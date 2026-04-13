@@ -120,7 +120,7 @@ export class OperationsTransformer {
        * Cover case 2
        */
       case OperationType.Delete:
-        if (againstOp.index.blockIndex! >= operation.index.blockIndex!) {
+        if (againstOp.index.blockIndex! === operation.index.blockIndex!) {
           return new Operation(OperationType.Neutral, newIndexBuilder.build(), { payload: [] }, operation.userId, operation.rev);
         }
 

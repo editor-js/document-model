@@ -56,7 +56,7 @@ export class BatchedOperation<T extends OperationType = OperationType> extends O
         batch.add(Operation.from(op));
       });
 
-      return batch as BatchedOperation<T>;
+      return batch;
     } else {
       const batch = new BatchedOperation<T>(Operation.from(opBatchOrJSON));
 
@@ -90,7 +90,7 @@ export class BatchedOperation<T extends OperationType = OperationType> extends O
     this.operations.toReversed().slice(1)
       .map(op => newBatchedOperation.add(op.inverse()));
 
-    return newBatchedOperation as BatchedOperation<InvertedOperationType<T>>;
+    return newBatchedOperation;
   }
 
   /**
@@ -130,6 +130,9 @@ export class BatchedOperation<T extends OperationType = OperationType> extends O
       return true;
     }
 
+    /**
+     * @todo - implement other index types
+     */
     if (!op.index.isTextIndex || !lastOp.index.isTextIndex) {
       return false;
     }
