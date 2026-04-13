@@ -1,7 +1,9 @@
 import type { TextRange, InlineFragment, FormattingAction, IntersectType } from '@editorjs/model';
 import type { InlineTool as InlineToolVersion2 } from '@editorjs/editorjs';
-import type { InlineToolConstructable as InlineToolConstructableV2 } from '@editorjs/editorjs';
 import type { InlineToolConstructorOptions as InlineToolConstructorOptionsVersion2 } from '@editorjs/editorjs';
+import type { ToolType } from '@/entities/EntityType.js';
+import type { InternalInlineToolSettings } from '@/tools';
+import type { BaseToolConstructor } from '@/entities/BaseTool';
 
 /**
  * Extended InlineToolConstructorOptions interface for version 3.
@@ -47,7 +49,7 @@ export interface ActionsElementWithOptions {
   element: HTMLElement;
 
   /**
-   * Oprions of custom toolbar behaviour
+   * Options of custom toolbar behaviour
    */
   toolbarOptions?: ToolbarOptions;
 }
@@ -68,14 +70,14 @@ export interface InlineTool extends Omit<InlineToolVersion2, 'save' | 'checkStat
   /**
    * Function that returns the state of the tool for the current selection
    * @param index - index of current text selection
-   * @param fragments - all fragments of the inline tool inside of the current input
+   * @param fragments - all fragments of the inline tool inside the current input
    */
   isActive(index: TextRange, fragments: InlineFragment[]): boolean;
 
   /**
    * Returns formatting action and range for it to be applied
    * @param range - current selection range
-   * @param fragments - all fragments of the inline tool inside of the current input
+   * @param fragments - all fragments of the inline tool inside the current input
    */
   getFormattingOptions(range: TextRange, fragments: InlineFragment[]): ToolFormattingOptions;
 
@@ -101,4 +103,16 @@ export interface InlineToolsConfig extends Record<string, InlineToolConstructor>
  * @todo support options: InlineToolConstructableOptions
  * Inline Tool constructor class
  */
-export type InlineToolConstructor = InlineToolConstructableV2 & (new () => InlineTool);
+export interface InlineToolConstructor extends BaseToolConstructor {
+  new(): InlineTool;
+
+  /**
+   * Property specifies the entity is an Inline Tool
+   */
+  type: ToolType.Inline;
+
+  /**
+   * Tool title
+   */
+  [InternalInlineToolSettings.Title]: string;
+};

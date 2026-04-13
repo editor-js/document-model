@@ -1,6 +1,13 @@
 import type { ToolConfig } from '@editorjs/editorjs';
 import type { TextNodeSerialized } from '@editorjs/model';
-import type { BlockTool, BlockToolAdapter, BlockToolConstructorOptions, BlockToolData } from '@editorjs/sdk';
+import type {
+  BlockTool,
+  BlockToolAdapter,
+  BlockToolConstructor,
+  BlockToolConstructorOptions,
+  BlockToolData
+} from '@editorjs/sdk';
+import { ToolType } from '@editorjs/sdk';
 
 /**
  * Data structure describing the tool's input/output data
@@ -26,6 +33,10 @@ export type ParagraphConfig = ToolConfig<{
  * Base text block tool
  */
 export class Paragraph implements BlockTool<ParagraphData, ParagraphConfig> {
+  public static type = ToolType.Block as const;
+
+  public static name = 'paragraph';
+
   /**
    * Adapter for linking block data with the DOM
    */
@@ -61,3 +72,5 @@ export class Paragraph implements BlockTool<ParagraphData, ParagraphConfig> {
     return wrapper;
   }
 }
+
+Paragraph satisfies BlockToolConstructor<ParagraphData>;

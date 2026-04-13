@@ -173,6 +173,8 @@ export class CaretAdapter extends EventTarget {
      */
     const activeElement = document.activeElement;
 
+
+    console.log(activeElement);
     for (const [index, input] of this.#inputs) {
       if (input !== activeElement) {
         continue;

@@ -7,6 +7,7 @@
   "type": "module",
   "scripts": {
     "build": "yarn clear && tsc --build tsconfig.build.json",
+    "build:declaration": "yarn build --emitDeclarationOnly",
     "dev": "yarn build --watch",
     "lint": "eslint ./src",
     "lint:ci": "yarn lint --max-warnings 0",

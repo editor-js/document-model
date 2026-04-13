@@ -18,6 +18,7 @@
   ],
   "scripts": {
     "build": "yarn clear && vite build",
+    "build:declaration": "",
     "dev": "vite",
     "lint": "eslint ./src",
     "lint:ci": "yarn lint --max-warnings 0",

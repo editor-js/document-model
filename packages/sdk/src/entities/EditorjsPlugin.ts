@@ -1,6 +1,7 @@
 import type { EventBus } from '@/entities/EventBus/EventBus.js';
 import type { CoreConfigValidated } from '@/entities/Config.js';
 import type { EditorAPI } from '@/api/EditorAPI.js';
+import type { EntityType } from '@/entities/EntityType.js';
 
 /**
  * Parameters for EditorjsPlugin constructor
@@ -42,7 +43,7 @@ export interface EditorjsPluginConstructor {
   new (params: EditorjsPluginParams): EditorjsPlugin;
 
   /**
-   * Plugin type
+   * Plugin's entity type: UI plugin, Tool, etc.
    */
-  type: string;
+  type: EntityType;
 }

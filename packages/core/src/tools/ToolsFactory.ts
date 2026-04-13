@@ -1,21 +1,28 @@
 /* eslint-disable jsdoc/informative-docs */
-import type { BlockToolConstructor, EditorAPI, InlineToolConstructor, UnifiedToolConfig } from '@editorjs/sdk';
+import type { EditorAPI } from '@editorjs/sdk';
+import { ToolType } from '@editorjs/sdk';
+import type { ToolConstructable } from '@editorjs/sdk';
 import {
-  InternalInlineToolSettings,
-  InternalTuneSettings,
   InlineToolFacade,
   BlockTuneFacade,
   BlockToolFacade
-} from '@editorjs/sdk'; ;
+} from '@editorjs/sdk';
 import type {
-  ToolConstructable,
   EditorConfig,
-  InlineToolConstructable,
-  BlockTuneConstructable
+  ToolSettings as ToolSettingsV2
 } from '@editorjs/editorjs';
 
-// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 type ToolConstructor = typeof InlineToolFacade | typeof BlockToolFacade | typeof BlockTuneFacade;
+
+/**
+ * Need this utility type to override some V2 options
+ */
+export type ToolSettings = Omit<ToolSettingsV2, 'constructable' | 'class'> & {
+  /**
+   * Redefine constructable to match V3
+   */
+  class: ToolConstructable;
+};
 
 /**
  * Factory to construct classes to work with tools
@@ -24,45 +31,68 @@ export class ToolsFactory {
   /**
    * Tools configuration specified by user
    */
-  private config: UnifiedToolConfig;
+  #config: Record<string, ToolSettings>;
 
   /**
    * EditorJS API Module
    */
 
-  private api: EditorAPI;
+  #api: EditorAPI;
 
   /**
    * EditorJS configuration
    */
-  private editorConfig: EditorConfig;
+  #editorConfig: EditorConfig;
+
+  /**
+   * Map of tool settings
+   */
+  #toolsSettings = new Map<string, ToolSettings>();
 
   /**
    * ToolsFactory
-   * @param config - unified tools config for user`s and internal tools
+   * @param config - unified tools config for user's and internal tools
    * @param editorConfig - full Editor.js configuration
    * @param api - EditorJS module with all Editor methods
    */
   constructor(
-    config: UnifiedToolConfig,
+    config: Record<string, ToolSettings>,
     editorConfig: EditorConfig,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     api: any
   ) {
-    this.api = api;
-    this.config = config;
-    this.editorConfig = editorConfig;
+    this.#api = api;
+    this.#config = config;
+    this.#editorConfig = editorConfig;
+  }
+
+  /**
+   * Register tools in the factory
+   * @param tools - tools to register in the factory
+   */
+  public setTools(tools: [ToolConstructable, ToolSettings][]): void {
+    tools.forEach(([tool, settings]) => {
+      this.#toolsSettings.set(tool.name, {
+        ...settings,
+        class: tool,
+      });
+    });
   }
 
   /**
    * Returns Tool object based on it's type
    * @param name - tool name
    */
-  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   public get(name: string): InlineToolFacade | BlockToolFacade | BlockTuneFacade {
-    const { class: constructable, isInternal = false, ...config } = this.config[name];
+    const toolSettings = this.#toolsSettings.get(name);
 
-    const Constructor = this.getConstructor(constructable);
+    if (!toolSettings) {
+      throw new Error(`Tool ${name} is not registered`);
+    }
+
+    const { class: constructable, ...config } = toolSettings;
+
+    const Constructor = this.#getConstructor(constructable);
     // const isTune = constructable[InternalTuneSettings.IsTune];
 
     return new Constructor({
@@ -71,9 +101,8 @@ export class ToolsFactory {
       config,
       api: {},
       // api: this.api.getMethodsForTool(name, isTune),
-      isDefault: name === this.editorConfig.defaultBlock,
-      defaultPlaceholder: this.editorConfig.placeholder,
-      isInternal,
+      isDefault: name === this.#editorConfig.defaultBlock,
+      defaultPlaceholder: this.#editorConfig.placeholder,
       /**
        * @todo implement api.getMethodsForTool
        */
@@ -85,12 +114,11 @@ export class ToolsFactory {
    * Find appropriate Tool object constructor for Tool constructable
    * @param constructable - Tools constructable
    */
-  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
-  private getConstructor(constructable: ToolConstructable | BlockToolConstructor | InlineToolConstructor): ToolConstructor {
-    switch (true) {
-      case (constructable as InlineToolConstructable)[InternalInlineToolSettings.IsInline]:
+  #getConstructor(constructable: ToolConstructable): ToolConstructor {
+    switch (constructable.type) {
+      case ToolType.Inline:
         return InlineToolFacade;
-      case (constructable as BlockTuneConstructable)[InternalTuneSettings.IsTune]:
+      case ToolType.Tune:
         return BlockTuneFacade;
       default:
         return BlockToolFacade;

@@ -14,6 +14,10 @@ runs:
     - name: Setup environment
       uses: ./.github/actions/setup
 
+    - name: Emit declaration for ESLint TypeScript integration
+      shell: bash
+      run: yarn workspace ${{ inputs.package-name }} build:declaration
+
     - name: Run ESLint check
       shell: bash
       run: yarn workspace ${{ inputs.package-name }} lint:ci
