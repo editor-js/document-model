@@ -16,7 +16,7 @@ runs:
 
     - name: Emit declaration for ESLint TypeScript integration
       shell: bash
-      run: yarn workspace ${{ inputs.package-name }} build --emitDeclarationOnly
+      run: yarn workspace ${{ inputs.package-name }} build:declaration
 
     - name: Run ESLint check
       shell: bash

@@ -43,7 +43,7 @@ export interface EditorjsPluginConstructor {
   new (params: EditorjsPluginParams): EditorjsPlugin;
 
   /**
-   * Plugin's entity type
+   * Plugin's entity type: UI plugin, Tool, etc.
    */
   type: EntityType;
 }
