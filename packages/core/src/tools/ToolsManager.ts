@@ -202,7 +202,7 @@ export default class ToolsManager {
        * If Tool is an object not a Tool's class then
        * save class and settings separately
        */
-      if (isObject(config)) {
+      if (isObject(config[toolName])) {
         unifiedConfig[toolName] = config[toolName] as UnifiedToolConfig[string];
       } else {
         unifiedConfig[toolName] = { class: config[toolName] as ToolConstructable };
