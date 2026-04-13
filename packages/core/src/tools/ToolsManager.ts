@@ -187,7 +187,7 @@ export default class ToolsManager {
        * If Tool is an object not a Tool's class then
        * save class and settings separately
        */
-      if (isObject(config)) {
+      if (isObject(config[toolName])) {
         preparedConfig[toolName] = config[toolName] as object as ToolSettings;
       } else {
         preparedConfig[toolName] = { class: config[toolName] as ToolConstructable };
