@@ -10,7 +10,7 @@ export interface BaseToolConstructor<Config extends ToolConfig = ToolConfig> {
    * @param data.toolName - Tool's own name
    * @param data.config - Tool's configuration
    */
-  // eslint-disable-next-line
+  // eslint-disable-next-line -- ESLint doesn't understand it's a type
   prepare?(data: { toolName: string, config: Config }): void | Promise<void>;
 
   /**

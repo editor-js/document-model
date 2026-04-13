@@ -35,6 +35,6 @@ export class InlineToolFacade extends BaseToolFacade<ToolType.Inline, IInlineToo
       //   api: this.api,
       //   config: this.settings,
       // }
-    ) as unknown as IInlineTool;
+    );
   }
 }

@@ -14,7 +14,7 @@ import type { ToolSettings } from './tools/ToolsFactory';
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
 import ToolsManager from './tools/ToolsManager.js';
 import { CaretAdapter, FormattingAdapter } from '@editorjs/dom-adapters';
-import type { CoreConfigValidated, CoreConfig, EditorjsPluginConstructor, BlockTuneConstructor } from '@editorjs/sdk';
+import type { CoreConfigValidated, CoreConfig, EditorjsPluginConstructor, BlockTuneConstructor, ToolConstructable } from '@editorjs/sdk';
 import { BlocksManager } from './components/BlockManager.js';
 import { SelectionManager } from './components/SelectionManager.js';
 import { EditorAPI } from './api/index.js';
@@ -137,10 +137,10 @@ export default class Core {
 
   /**
    * Injects Tool constructor and it's config into the container
-   * @param tool
-   * @param config
+   * @param tool - Tool constructor class
+   * @param config - Tool's config
    */
-  public use(tool: BlockToolConstructor | InlineToolConstructor, config?: Omit<ToolSettings, 'class'>): Core;
+  public use(tool: ToolConstructable, config?: Omit<ToolSettings, 'class'>): Core;
   /**
    * Injects Plugin into the container to initialize on Editor's init
    * @param plugin - allows to pass any implementation of editor plugins
@@ -152,7 +152,7 @@ export default class Core {
    * @param toolConfig - entity configuration
    */
   public use(
-    pluginOrTool: BlockToolConstructor | InlineToolConstructor | EditorjsPluginConstructor,
+    pluginOrTool: ToolConstructable | EditorjsPluginConstructor,
     toolConfig?: Omit<ToolSettings, 'class'>
   ): Core {
     const pluginType = pluginOrTool.type;
