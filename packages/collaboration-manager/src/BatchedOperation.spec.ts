@@ -14,7 +14,7 @@ const templateIndex = createIndexByRange([0, 0]);
 
 const userId = 'user';
 
-describe('Batch', () => {
+describe('BatchedOperation', () => {
   it('should add Insert operation to batch', () => {
     const op1 = new Operation(OperationType.Insert, templateIndex, { payload: 'a' }, userId);
     const op2 = new Operation(OperationType.Insert, createIndexByRange([1, 1]), { payload: 'b' }, userId);

@@ -49,12 +49,14 @@ export class BatchedOperation<T extends OperationType = OperationType> extends O
        */
       const batch = new BatchedOperation(Operation.from(opBatchOrJSON.operations[0]));
 
-      opBatchOrJSON.operations.slice(1).forEach((op) => {
-        /**
-         * Deep clone operation to the new batch
-         */
-        batch.add(Operation.from(op));
-      });
+      opBatchOrJSON.operations.slice(1)
+        .forEach((op) => {
+          /**
+           * Deep clone operation to the new batch
+           */
+          batch.add(Operation.from(op));
+        }
+      );
 
       return batch;
     } else {
