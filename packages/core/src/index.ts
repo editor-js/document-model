@@ -1,5 +1,4 @@
 import { CollaborationManager } from '@editorjs/collaboration-manager';
-import type { ToolSettings } from '@editorjs/editorjs/types/tools/index';
 import { type DocumentId, EditorJSModel, EventType } from '@editorjs/model';
 import type { ContainerInstance } from 'typedi';
 import { Container } from 'typedi';
@@ -8,18 +7,19 @@ import {
   CoreEventType,
   EventBus,
   type InlineToolConstructor,
+  ToolType,
   UiComponentType
 } from '@editorjs/sdk';
-import { Paragraph } from './tools/internal/block-tools/paragraph/index';
-import type { ExtendedToolSettings } from './tools/ToolsFactory';
+import type { ToolSettings } from './tools/ToolsFactory';
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
 import ToolsManager from './tools/ToolsManager.js';
 import { CaretAdapter, FormattingAdapter } from '@editorjs/dom-adapters';
-import type { CoreConfigValidated, CoreConfig, EditorjsPluginConstructor } from '@editorjs/sdk';
+import type { CoreConfigValidated, CoreConfig, EditorjsPluginConstructor, BlockTuneConstructor } from '@editorjs/sdk';
 import { BlocksManager } from './components/BlockManager.js';
 import { SelectionManager } from './components/SelectionManager.js';
 import { EditorAPI } from './api/index.js';
 import { generateId } from './utils/uid.js';
+import { Paragraph, BoldInlineTool, LinkInlineTool, ItalicInlineTool } from './tools/internal';
 
 /**
  * If no holder is provided via config, the editor will be appended to the element with this id
@@ -129,8 +129,10 @@ export default class Core {
       this.#collaborationManager.redo();
     });
 
-    // @ts-expect-error - weird TS error, will resolve later
     this.use(Paragraph);
+    this.use(BoldInlineTool);
+    this.use(ItalicInlineTool);
+    this.use(LinkInlineTool);
   }
 
   /**
@@ -156,7 +158,9 @@ export default class Core {
     const pluginType = pluginOrTool.type;
 
     switch (pluginType) {
-      case 'tool':
+      case ToolType.Block:
+      case ToolType.Inline:
+      case ToolType.Tune:
         this.#iocContainer.set({
           id: pluginType,
           multiple: true,
@@ -192,9 +196,11 @@ export default class Core {
    * Initalizes loaded tools
    */
   async #initializeTools(): Promise<void> {
-    const tools = this.#iocContainer.getMany<[ BlockToolConstructor | InlineToolConstructor, ExtendedToolSettings]>('tool');
+    const blockTools = this.#iocContainer.getMany<[ BlockToolConstructor, ToolSettings]>(ToolType.Block);
+    const inlineTools = this.#iocContainer.getMany<[ InlineToolConstructor, ToolSettings]>(ToolType.Inline);
+    const blockTunes = this.#iocContainer.getMany<[ BlockTuneConstructor, ToolSettings]>(ToolType.Tune);
 
-    return this.#toolsManager.prepareTools(tools);
+    return this.#toolsManager.prepareTools([...blockTools, ...inlineTools, ...blockTunes]);
   }
 
   /**

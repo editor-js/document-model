@@ -1,18 +1,17 @@
 import type {
-  SanitizerConfig,
+  // SanitizerConfig,
   API as ApiMethods,
   Tool,
-  ToolConstructable as ToolConstructableV2,
   ToolSettings
 } from '@editorjs/editorjs';
 import { isFunction } from '@editorjs/helpers';
 import { type BlockToolFacade } from './BlockToolFacade.js';
 import { type InlineToolFacade } from './InlineToolFacade.js';
-import { ToolType } from '../ToolType.js';
+import { ToolType } from '../../entities/EntityType.js';
 import { type BlockTuneFacade } from './BlockTuneFacade.js';
-import type { BlockTool, BlockToolConstructor, InlineTool, InlineToolConstructor } from '@/entities';
+import type { BlockTool, BlockToolConstructor, InlineTool, InlineToolConstructor, BlockTuneConstructor } from '../../entities';
 
-export type ToolConstructable = ToolConstructableV2 | BlockToolConstructor | InlineToolConstructor;
+export type ToolConstructable = BlockToolConstructor | InlineToolConstructor | BlockTuneConstructor;
 
 /**
  * Enum of Tool options provided by user
@@ -86,10 +85,6 @@ export enum InternalBlockToolSettings {
  */
 export enum InternalInlineToolSettings {
   /**
-   * Flag specifies Tool is inline
-   */
-  IsInline = 'isInline',
-  /**
    * Inline Tool title for toolbar
    */
   Title = 'title' // for Inline Tools. Block Tools can pass title along with icon through the 'toolbox' static prop.
@@ -137,11 +132,6 @@ interface ConstructorOptions {
   isDefault: boolean;
 
   /**
-   * Is tool internal
-   */
-  isInternal: boolean;
-
-  /**
    * Defualt placaholder for the Tol
    */
   defaultPlaceholder?: string | false;
@@ -155,11 +145,6 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
    * Tool name specified in EditorJS config
    */
   public name: string;
-
-  /**
-   * Flag show is current Tool internal (bundled with EditorJS core) or not
-   */
-  public readonly isInternal: boolean;
 
   /**
    * Flag show is current Tool default or not
@@ -201,7 +186,6 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
     config,
     api,
     isDefault,
-    isInternal = false,
     defaultPlaceholder,
   }: ConstructorOptions) {
     this.api = api;
@@ -209,7 +193,6 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
     this.constructable = constructable;
     this.config = config;
     this.isDefault = isDefault;
-    this.isInternal = isInternal;
     this.defaultPlaceholder = defaultPlaceholder;
   }
 
@@ -233,6 +216,7 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
    * Calls Tool's reset method
    */
   public reset(): void | Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     if (isFunction(this.constructable.reset)) {
       return this.constructable.reset();
     }
@@ -242,6 +226,7 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
    * Calls Tool's prepare method
    */
   public prepare(): void | Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     if (isFunction(this.constructable.prepare)) {
       return this.constructable.prepare({
         toolName: this.name,
@@ -263,12 +248,12 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
     return userShortcut; // || toolShortcut;
   }
 
-  /**
-   * Returns Tool's sanitizer configuration
-   */
-  public get sanitizeConfig(): SanitizerConfig {
-    return this.constructable[CommonInternalSettings.SanitizeConfig] || {};
-  }
+  // /**
+  //  * Returns Tool's sanitizer configuration
+  //  */
+  // public get sanitizeConfig(): SanitizerConfig {
+  //   return this.constructable[CommonInternalSettings.SanitizeConfig] || {};
+  // }
 
   /**
    * Returns true if Tools is inline

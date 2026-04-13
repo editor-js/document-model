@@ -1,6 +1,6 @@
 import { BaseToolFacade, InternalInlineToolSettings } from './BaseToolFacade.js';
-import type { InlineTool as IInlineTool, InlineToolConstructor as InlineToolConstructable } from '@/entities';
-import { ToolType } from '../ToolType.js';
+import type { InlineTool as IInlineTool, InlineToolConstructor } from '../../entities';
+import { ToolType } from '../../entities';
 
 /**
  * InlineTool object to work with Inline Tools constructables
@@ -14,7 +14,7 @@ export class InlineToolFacade extends BaseToolFacade<ToolType.Inline, IInlineToo
   /**
    * Tool's constructable blueprint
    */
-  protected declare constructable: InlineToolConstructable;
+  protected declare constructable: InlineToolConstructor;
 
   /**
    * Returns title for Inline Tool if specified by user
@@ -30,9 +30,11 @@ export class InlineToolFacade extends BaseToolFacade<ToolType.Inline, IInlineToo
     /**
      * @todo fix types
      */
-    return new this.constructable({
-      api: this.api,
-      config: this.settings,
-    }) as unknown as IInlineTool;
+    return new this.constructable(
+      // {
+      //   api: this.api,
+      //   config: this.settings,
+      // }
+    ) as unknown as IInlineTool;
   }
 }

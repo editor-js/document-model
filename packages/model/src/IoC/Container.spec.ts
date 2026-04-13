@@ -1,5 +1,5 @@
 import { IoCContainer } from './Container.js';
-import { EditorDocument } from '../entities/index.js';
+import { EditorDocument } from '../entities';
 
 jest.mock('../entities/EditorDocument');
 

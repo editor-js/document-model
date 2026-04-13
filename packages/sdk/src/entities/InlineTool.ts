@@ -1,7 +1,9 @@
 import type { TextRange, InlineFragment, FormattingAction, IntersectType } from '@editorjs/model';
 import type { InlineTool as InlineToolVersion2 } from '@editorjs/editorjs';
-import type { InlineToolConstructable as InlineToolConstructableV2 } from '@editorjs/editorjs';
 import type { InlineToolConstructorOptions as InlineToolConstructorOptionsVersion2 } from '@editorjs/editorjs';
+import type { ToolType } from '@/entities/EntityType.js';
+import type { InternalInlineToolSettings } from '@/tools';
+import type { BaseToolConstructor } from '@/entities/BaseTool';
 
 /**
  * Extended InlineToolConstructorOptions interface for version 3.
@@ -101,9 +103,16 @@ export interface InlineToolsConfig extends Record<string, InlineToolConstructor>
  * @todo support options: InlineToolConstructableOptions
  * Inline Tool constructor class
  */
-export type InlineToolConstructor = InlineToolConstructableV2 & (new () => InlineTool) & {
+export interface InlineToolConstructor extends BaseToolConstructor {
+  new(): InlineTool;
+
   /**
-   * Property specifies the class is a Tool
+   * Property specifies the entity is an Inline Tool
    */
-  type: 'tool';
+  type: ToolType.Inline;
+
+  /**
+   * Tool title
+   */
+  [InternalInlineToolSettings.Title]: string;
 };

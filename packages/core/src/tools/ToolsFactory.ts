@@ -1,27 +1,27 @@
 /* eslint-disable jsdoc/informative-docs */
-import type { BlockToolConstructor, EditorAPI, InlineToolConstructor, UnifiedToolConfig } from '@editorjs/sdk';
+import type { EditorAPI } from '@editorjs/sdk';
+import { ToolType } from '@editorjs/sdk';
+import type { ToolConstructable } from '@editorjs/sdk';
 import {
-  InternalInlineToolSettings,
-  InternalTuneSettings,
   InlineToolFacade,
   BlockTuneFacade,
   BlockToolFacade
-} from '@editorjs/sdk'; ;
+} from '@editorjs/sdk';
 import type {
-  ToolConstructable,
   EditorConfig,
-  InlineToolConstructable,
-  BlockTuneConstructable, ToolSettings
+  ToolSettings as ToolSettingsV2
 } from '@editorjs/editorjs';
 
 type ToolConstructor = typeof InlineToolFacade | typeof BlockToolFacade | typeof BlockTuneFacade;
 
-export type ExtendedToolSettings = ToolSettings & {
+/**
+ * Need this utility type to override some V2 options
+ */
+export type ToolSettings = Omit<ToolSettingsV2, 'constructable' | 'class'> & {
   /**
-   * Flag shows if a Tool is an internal tool
-   * @todo do we need this distinction any more?
+   * Redefine constructable to match V3
    */
-  isInternal: boolean;
+  class: ToolConstructable;
 };
 
 /**
@@ -31,7 +31,7 @@ export class ToolsFactory {
   /**
    * Tools configuration specified by user
    */
-  #config: UnifiedToolConfig;
+  #config: Record<string, ToolSettings>;
 
   /**
    * EditorJS API Module
@@ -47,16 +47,16 @@ export class ToolsFactory {
   /**
    * Map of tool settings
    */
-  #toolsSettings = new Map<string, ExtendedToolSettings>();
+  #toolsSettings = new Map<string, ToolSettings>();
 
   /**
    * ToolsFactory
-   * @param config - unified tools config for user`s and internal tools
+   * @param config - unified tools config for user's and internal tools
    * @param editorConfig - full Editor.js configuration
    * @param api - EditorJS module with all Editor methods
    */
   constructor(
-    config: UnifiedToolConfig,
+    config: Record<string, ToolSettings>,
     editorConfig: EditorConfig,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     api: any
@@ -70,7 +70,7 @@ export class ToolsFactory {
    * Register tools in the factory
    * @param tools - tools to register in the factory
    */
-  public setTools(tools: [InlineToolConstructor | BlockToolConstructor, ExtendedToolSettings][]): void {
+  public setTools(tools: [ToolConstructable, ToolSettings][]): void {
     tools.forEach(([tool, settings]) => {
       this.#toolsSettings.set(tool.name, {
         ...settings,
@@ -90,9 +90,9 @@ export class ToolsFactory {
       throw new Error(`Tool ${name} is not registered`);
     }
 
-    const { class: constructable, isInternal = false, ...config } = toolSettings;
+    const { class: constructable, ...config } = toolSettings;
 
-    const Constructor = this.#getConstructor(constructable!);
+    const Constructor = this.#getConstructor(constructable);
     // const isTune = constructable[InternalTuneSettings.IsTune];
 
     return new Constructor({
@@ -103,7 +103,6 @@ export class ToolsFactory {
       // api: this.api.getMethodsForTool(name, isTune),
       isDefault: name === this.#editorConfig.defaultBlock,
       defaultPlaceholder: this.#editorConfig.placeholder,
-      isInternal,
       /**
        * @todo implement api.getMethodsForTool
        */
@@ -115,11 +114,11 @@ export class ToolsFactory {
    * Find appropriate Tool object constructor for Tool constructable
    * @param constructable - Tools constructable
    */
-  #getConstructor(constructable: ToolConstructable | BlockToolConstructor | InlineToolConstructor): ToolConstructor {
-    switch (true) {
-      case (constructable as InlineToolConstructable)[InternalInlineToolSettings.IsInline]:
+  #getConstructor(constructable: ToolConstructable): ToolConstructor {
+    switch (constructable.type) {
+      case ToolType.Inline:
         return InlineToolFacade;
-      case (constructable as BlockTuneConstructable)[InternalTuneSettings.IsTune]:
+      case ToolType.Tune:
         return BlockTuneFacade;
       default:
         return BlockToolFacade;

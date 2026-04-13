@@ -1,11 +1,13 @@
 import type {
-  BlockTool as BlockToolVersion2,
-  BlockToolConstructable as BlockToolConstructableV2,
+  BlockTool as BlockToolVersion2, ToolboxConfigEntry,
   ToolConfig
 } from '@editorjs/editorjs';
 import type { BlockToolConstructorOptions as BlockToolConstructorOptionsVersion2 } from '@editorjs/editorjs';
 import type { ValueSerialized } from '@editorjs/model';
 import type { BlockToolAdapter } from './BlockToolAdapter.js';
+import type { ToolType } from '@/entities/EntityType.js';
+import type { InternalBlockToolSettings } from '@/tools';
+import type { BaseToolConstructor } from '@/entities/BaseTool';
 
 /**
  * Extended BlockToolConstructorOptions interface for version 3.
@@ -61,7 +63,7 @@ export type BlockTool<
 /**
  * Block Tool constructor class
  */
-export type BlockToolConstructor<
+export interface BlockToolConstructor<
   /**
    * Data structure describing the tool's input/output data
    */
@@ -70,12 +72,24 @@ export type BlockToolConstructor<
    * User-end configuration for the tool
    */
   Config extends ToolConfig = ToolConfig
-> = BlockToolConstructableV2 & (new (options: BlockToolConstructorOptions<Data, Config>) => BlockTool) & {
+> extends BaseToolConstructor {
+  new(options: BlockToolConstructorOptions<Data, Config>): BlockTool;
+
   /**
-   * Property specifies that the class is a Tool
+   * Property specifies that the class is a Block Tool
    */
-  type: 'tool';
-};
+  type: ToolType.Block;
+
+  /**
+   * If Tool supports read-only mode, this property should return true
+   */
+  [InternalBlockToolSettings.IsReadOnlySupported]?: boolean;
+
+  /**
+   * Returns Tool toolbox configuration (internal or user-specified)
+   */
+  [InternalBlockToolSettings.Toolbox]?: ToolboxConfigEntry[];
+}
 
 /**
  * Data structure describing the tool's input/output data
