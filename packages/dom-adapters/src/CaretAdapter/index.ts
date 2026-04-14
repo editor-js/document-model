@@ -98,6 +98,15 @@ export class CaretAdapter extends EventTarget {
   }
 
   /**
+   * Removes input from the caret adapter
+   *
+   * @param index - index of the input to remove
+   */
+  public detachInput(index: Index): void {
+    this.#inputs.delete(index.serialize());
+  }
+
+  /**
    * Updates current user's caret index
    *
    * @param index - new caret index
@@ -164,6 +173,8 @@ export class CaretAdapter extends EventTarget {
      */
     const activeElement = document.activeElement;
 
+
+    console.log(activeElement);
     for (const [index, input] of this.#inputs) {
       if (input !== activeElement) {
         continue;

@@ -1,49 +1,36 @@
-import type {
-  BlockToolConstructor,
-  UnifiedToolConfig
-} from '@editorjs/sdk';
 import 'reflect-metadata';
-import { deepMerge, isFunction, isObject, PromiseQueue } from '@editorjs/helpers';
+import { isFunction, isObject, PromiseQueue } from '@editorjs/helpers';
 import { Inject, Service } from 'typedi';
-import { ToolsFactory } from './ToolsFactory.js';
-import { Paragraph } from './internal/block-tools/paragraph/index.js';
+import { type ToolSettings, ToolsFactory } from './ToolsFactory.js';
 import type {
-  EditorConfig,
-  ToolConstructable,
-  ToolSettings
+  EditorConfig
 } from '@editorjs/editorjs';
 import {
   InlineTool,
-  InlineToolConstructor,
   ToolLoadedCoreEvent,
   BlockToolFacade, BlockTuneFacade,
   InlineToolFacade,
   ToolFacadeClass,
   ToolsCollection,
-  EventBus
+  EventBus,
+  ToolConstructable
 } from '@editorjs/sdk';
-import BoldInlineTool from './internal/inline-tools/bold/index.js';
-import ItalicInlineTool from './internal/inline-tools/italic/index.js';
-import LinkInlineTool from './internal/inline-tools/link/index.js';
 
 /**
  * Works with tools
  * @todo - validate tools configurations
- * @todo - merge internal tools
  */
 @Service()
 export default class ToolsManager {
-  #tools: EditorConfig['tools'];
-
   /**
    * ToolsFactory instance
    */
   #factory: ToolsFactory;
 
   /**
-   * Unified config with internal and internal tools
+   * Processed tools config
    */
-  #config: UnifiedToolConfig;
+  #config: Record<string, ToolSettings>;
 
   /**
    * EventBus instance to exchange events between components
@@ -97,13 +84,6 @@ export default class ToolsManager {
   }
 
   /**
-   * Returns internal tools
-   */
-  public get internal(): ToolsCollection {
-    return this.available.internalTools;
-  }
-
-  /**
    * @param editorConfig - EditorConfig object
    * @param editorConfig.tools - Tools configuration passed by user
    * @param eventBus - EventBus instance to exchange events between components
@@ -122,9 +102,9 @@ export default class ToolsManager {
 
   /**
    * Calls tools prepare method if it exists and adds tools to relevant collection (available or unavailable tools)
-   * @returns Promise<void>
+   * @param tools - tools to prepare and their settings
    */
-  public async prepareTools(): Promise<void> {
+  public async prepareTools(tools: [ToolConstructable, ToolSettings][]): Promise<void> {
     const promiseQueue = new PromiseQueue();
 
     const setToAvailableToolsCollection = (toolName: string, tool: ToolFacadeClass): void => {
@@ -135,21 +115,25 @@ export default class ToolsManager {
       }));
     };
 
-    Object.entries(this.#config).forEach(([toolName, config]) => {
-      if (isFunction(config.class.prepare)) {
+    this.#factory.setTools(tools);
+
+    tools.forEach(([toolConstructor, config]) => {
+      const toolName = toolConstructor.name;
+
+      if (isFunction(toolConstructor.prepare)) {
         void promiseQueue.add(async () => {
           try {
             /**
              * TypeScript doesn't get type guard here, so non-null assertion is used
              */
-            await config.class.prepare!({
-              toolName: toolName,
+            await toolConstructor.prepare!({
+              toolName,
               config: config,
             });
 
             const tool = this.#factory.get(toolName);
 
-            if ('isInline' in tool && tool.isInline() === true) {
+            if (tool.isInline()) {
               /**
                * Some Tools validation
                */
@@ -191,8 +175,8 @@ export default class ToolsManager {
    * Unify tools config
    * @param config - user's tools config
    */
-  #prepareConfig(config: EditorConfig['tools']): UnifiedToolConfig {
-    const unifiedConfig: UnifiedToolConfig = {} as UnifiedToolConfig;
+  #prepareConfig(config: EditorConfig['tools']): Record<string, ToolSettings> {
+    const preparedConfig: Record<string, ToolSettings> = {} as Record<string, ToolSettings>;
 
     /**
      * Save Tools settings to a map
@@ -202,16 +186,14 @@ export default class ToolsManager {
        * If Tool is an object not a Tool's class then
        * save class and settings separately
        */
-      if (isObject(config)) {
-        unifiedConfig[toolName] = config[toolName] as UnifiedToolConfig[string];
+      if (isObject(config[toolName])) {
+        preparedConfig[toolName] = config[toolName] as object as ToolSettings;
       } else {
-        unifiedConfig[toolName] = { class: config[toolName] as ToolConstructable };
+        preparedConfig[toolName] = { class: config[toolName] as ToolConstructable };
       }
     }
 
-    deepMerge(unifiedConfig, this.#internalTools);
-
-    return unifiedConfig;
+    return preparedConfig;
   }
 
   /**
@@ -223,47 +205,14 @@ export default class ToolsManager {
      */
     for (const toolName in this.#config) {
       if (Object.prototype.hasOwnProperty.call(this.#config, toolName)) {
-        // if (toolName in this.internalTools) {
-        //   return;
-        // }
-
         const tool = this.#config[toolName];
 
-        if (!isFunction(tool) && !isFunction((tool as ToolSettings).class)) {
+        if (!isFunction(tool) && !isFunction((tool).class)) {
           throw Error(
             `Tool «${toolName}» must be a constructor function or an object with function in the «class» property`
           );
         }
       }
     }
-  }
-
-  /**
-   * Returns internal tools
-   * Includes Bold, Italic, Link and Paragraph
-   */
-  get #internalTools(): UnifiedToolConfig {
-    return {
-      paragraph: {
-        /**
-         * @todo solve problems with types
-         */
-        class: Paragraph as unknown as BlockToolConstructor,
-        inlineToolbar: true,
-        isInternal: true,
-      },
-      bold: {
-        class: BoldInlineTool as unknown as InlineToolConstructor,
-        isInternal: true,
-      },
-      italic: {
-        class: ItalicInlineTool as unknown as InlineToolConstructor,
-        isInternal: true,
-      },
-      link: {
-        class: LinkInlineTool as unknown as InlineToolConstructor,
-        isInternal: true,
-      },
-    };
   }
 }

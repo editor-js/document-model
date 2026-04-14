@@ -1,7 +1,13 @@
-import type { BlockTool as BlockToolVersion2, BlockToolConstructable as BlockToolConstructableV2, ToolConfig } from '@editorjs/editorjs';
+import type {
+  BlockTool as BlockToolVersion2, ToolboxConfigEntry,
+  ToolConfig
+} from '@editorjs/editorjs';
 import type { BlockToolConstructorOptions as BlockToolConstructorOptionsVersion2 } from '@editorjs/editorjs';
 import type { ValueSerialized } from '@editorjs/model';
 import type { BlockToolAdapter } from './BlockToolAdapter.js';
+import type { ToolType } from '@/entities/EntityType.js';
+import type { InternalBlockToolSettings } from '@/tools';
+import type { BaseToolConstructor } from '@/entities/BaseTool';
 
 /**
  * Extended BlockToolConstructorOptions interface for version 3.
@@ -11,7 +17,6 @@ export interface BlockToolConstructorOptions<
    * Data structure describing the tool's input/output data
    */
   Data extends BlockToolData = BlockToolData,
-
   /**
    * User-end configuration for the tool
    */
@@ -46,7 +51,6 @@ export type BlockTool<
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
   Data extends BlockToolData = any,
-
   /**
    * User-end configuration for the tool
    *
@@ -59,7 +63,33 @@ export type BlockTool<
 /**
  * Block Tool constructor class
  */
-export type BlockToolConstructor = BlockToolConstructableV2 & (new (options: BlockToolConstructorOptions) => BlockTool);
+export interface BlockToolConstructor<
+  /**
+   * Data structure describing the tool's input/output data
+   */
+  Data extends BlockToolData = BlockToolData,
+  /**
+   * User-end configuration for the tool
+   */
+  Config extends ToolConfig = ToolConfig
+> extends BaseToolConstructor {
+  new(options: BlockToolConstructorOptions<Data, Config>): BlockTool;
+
+  /**
+   * Property specifies that the class is a Block Tool
+   */
+  type: ToolType.Block;
+
+  /**
+   * If Tool supports read-only mode, this property should return true
+   */
+  [InternalBlockToolSettings.IsReadOnlySupported]?: boolean;
+
+  /**
+   * Returns Tool toolbox configuration (internal or user-specified)
+   */
+  [InternalBlockToolSettings.Toolbox]?: ToolboxConfigEntry[];
+}
 
 /**
  * Data structure describing the tool's input/output data
