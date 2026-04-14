@@ -1,4 +1,3 @@
-
 import type {
   EditorJSModel,
   InlineFragment,
@@ -172,7 +171,7 @@ export class FormattingAdapter {
         return;
       }
 
-      const input = this.#caretAdapter.getInput(event.detail.index);
+      const input = this.#caretAdapter.findInput(blockIndex, dataKey.toString());
 
       if (input === undefined) {
         console.warn('No input found for the index', event.detail.index);
