@@ -39,26 +39,4 @@ export class ToolsCollection<V extends ToolFacadeClass = ToolFacadeClass> extend
 
     return new ToolsCollection<BlockTuneFacade>(tools);
   }
-
-  /**
-   * Returns internal Tools collection
-   */
-  public get internalTools(): ToolsCollection<V> {
-    const tools = Array
-      .from(this.entries())
-      .filter(([, tool]) => tool.isInternal);
-
-    return new ToolsCollection<V>(tools);
-  }
-
-  /**
-   * Returns Tools collection provided by user
-   */
-  public get externalTools(): ToolsCollection<V> {
-    const tools = Array
-      .from(this.entries())
-      .filter(([, tool]) => !tool.isInternal);
-
-    return new ToolsCollection<V>(tools);
-  }
 }

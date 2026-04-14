@@ -1,4 +1,12 @@
-import type { ActionsElementWithOptions, ToolFormattingOptions, InlineTool, InlineToolFormatData } from '@editorjs/sdk';
+import type {
+  ActionsElementWithOptions,
+  ToolFormattingOptions,
+  InlineTool,
+  InlineToolFormatData, InlineToolConstructor
+} from '@editorjs/sdk';
+import {
+  ToolType
+} from '@editorjs/sdk';
 import type { InlineFragment, TextRange } from '@editorjs/model';
 import { FormattingAction } from '@editorjs/model';
 import { IntersectType } from '@editorjs/model';
@@ -11,12 +19,14 @@ import { make } from '@editorjs/dom';
  *
  * Makes selected text linked
  */
-export default class LinkInlineTool implements InlineTool {
+export class LinkInlineTool implements InlineTool {
   /**
    * Specifies Tool as Inline Toolbar Tool
-   * @returns {boolean}
+   * @returns {ToolType.Inline}
    */
-  public static isInline = true;
+  public static type = ToolType.Inline as const;
+
+  public static title = 'Link';
 
   /**
    * Type of behaviour of the tool if new selection range intersect with existing fragment
@@ -94,3 +104,5 @@ export default class LinkInlineTool implements InlineTool {
     return { element: linkInput };
   }
 }
+
+LinkInlineTool satisfies InlineToolConstructor;

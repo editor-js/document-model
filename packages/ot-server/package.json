@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
+    "build:declaration": "yarn build --emitDeclarationOnly",
     "dev": "yarn build --watch",
     "start": "node --experimental-vm-modules dist/index.js",
     "lint": "eslint ./src",

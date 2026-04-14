@@ -1,4 +1,5 @@
-import type { ToolFormattingOptions, InlineTool } from '@editorjs/sdk';
+import type { ToolFormattingOptions, InlineTool, InlineToolConstructor } from '@editorjs/sdk';
+import { ToolType } from '@editorjs/sdk';
 import type { InlineFragment, TextRange } from '@editorjs/model';
 import { FormattingAction } from '@editorjs/model';
 import { IntersectType } from '@editorjs/model';
@@ -11,12 +12,14 @@ import { make } from '@editorjs/dom';
  *
  * Makes selected text bolder
  */
-export default class BoldInlineTool implements InlineTool {
+export class BoldInlineTool implements InlineTool {
   /**
    * Specifies Tool as Inline Toolbar Tool
-   * @returns {boolean}
+   * @returns {ToolType.Inline}
    */
-  public static isInline = true;
+  public static type = ToolType.Inline as const;
+
+  public static title = 'Bold';
 
   /**
    * Type of behaviour of the tool if new selection range intersect with existing fragment
@@ -70,3 +73,5 @@ export default class BoldInlineTool implements InlineTool {
     return isActive;
   }
 }
+
+BoldInlineTool satisfies InlineToolConstructor;
