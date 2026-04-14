@@ -5,7 +5,7 @@ import Core from '@editorjs/core';
 import { ref, onMounted } from 'vue';
 import { Node } from './components';
 import { EditorjsUI, BlocksUI, InlineToolbarUI, ToolboxUI } from '@editorjs/ui';
-import { Header }  from '@editorjs/header';
+import { Header } from '@editorjs/header';
 
 /**
  * Editor document for visualizing
