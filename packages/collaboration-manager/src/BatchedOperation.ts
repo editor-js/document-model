@@ -55,8 +55,7 @@ export class BatchedOperation<T extends OperationType = OperationType> extends O
            * Deep clone operation to the new batch
            */
           batch.add(Operation.from(op));
-        }
-      );
+        });
 
       return batch;
     } else {
