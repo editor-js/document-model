@@ -1,4 +1,8 @@
 import CodeX from 'eslint-config-codex';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default [
   ...CodeX,
@@ -11,7 +15,7 @@ export default [
     languageOptions: {
       parserOptions: {
         project: './tsconfig.json',
-        tsconfigRootDir: './',
+        tsconfigRootDir: __dirname,
         sourceType: 'module',
       },
     },
