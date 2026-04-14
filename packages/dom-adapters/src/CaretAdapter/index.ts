@@ -104,12 +104,14 @@ export class CaretAdapter extends EventTarget {
   public detachBlock(index: Index): void {
     const block = this.getBlock(index);
 
-    if (block) {
-      const blockIndex = this.#blocks.indexOf(block);
+    if (!block) {
+      return;
+    }
 
-      if (blockIndex !== -1) {
-        this.#blocks.splice(blockIndex, 1);
-      }
+    const blockIndex = this.#blocks.indexOf(block);
+
+    if (blockIndex !== -1) {
+      this.#blocks.splice(blockIndex, 1);
     }
   }
 

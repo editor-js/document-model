@@ -200,10 +200,14 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
            * Check if this input is between the range boundaries
            */
           const startPosition = startContainer.compareDocumentPosition(input);
-          const endPosition = input.compareDocumentPosition(endContainer);
+          const endPosition = endContainer.compareDocumentPosition(input);
 
-          return (startPosition & Node.DOCUMENT_POSITION_FOLLOWING) &&
-                 (endPosition & Node.DOCUMENT_POSITION_FOLLOWING);
+          const isBetween = (
+            Boolean(startPosition & Node.DOCUMENT_POSITION_FOLLOWING) &&
+            Boolean(endPosition & Node.DOCUMENT_POSITION_PRECEDING)
+          );
+
+          return isBetween;
         }
 
         /**
@@ -211,7 +215,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
          */
         if (input.isContentEditable) {
           /**
-           * Casw 2.1 — input contains either start or end of selection
+           * Case 2.1 — input contains either start  or end of selection
            */
           if (input.contains(startContainer) || input.contains(endContainer)) {
             return true;
@@ -552,8 +556,9 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
       }
 
       case InputType.InsertParagraph:
+
         /**
-         *
+         * In case of cross-input selection we don't need to split the block, just remove range
          */
         if (
           (this.#isInputContainsOnlyStartOfSelection(input, range) || this.#isInputContainsWholeSelection(input, range)) &&
