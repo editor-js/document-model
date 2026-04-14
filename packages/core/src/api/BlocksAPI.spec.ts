@@ -2,7 +2,7 @@
 import { jest } from '@jest/globals';
 
 // Mock BlocksManager before importing BlocksAPI
-await jest.unstable_mockModule('../components/BlockManager', () => ({
+jest.unstable_mockModule('../components/BlockManager', () => ({
   BlocksManager: jest.fn(() => ({
     clear: jest.fn(),
     render: jest.fn(),
@@ -16,15 +16,16 @@ await jest.unstable_mockModule('../components/BlockManager', () => ({
 
 const { BlocksManager } = await import('../components/BlockManager');
 const { BlocksAPI } = await import('./BlocksAPI.js');
+
 import type { CoreConfigValidated } from '@editorjs/sdk';
 
 describe('BlocksAPI', () => {
   const defaultBlock = 'paragraph';
-  // @ts-ignore - mock object, don't need to pass any arguments
+  // @ts-expect-error - mock object, don't need to pass any arguments
   const blocksManager = new BlocksManager();
 
   it('clear should call blocksManager.clear', () => {
-    const api = new BlocksAPI(blocksManager, { defaultBlock } as CoreConfigValidated)
+    const api = new BlocksAPI(blocksManager, { defaultBlock } as CoreConfigValidated);
 
     api.clear();
 
@@ -33,7 +34,9 @@ describe('BlocksAPI', () => {
 
   it('render should call to blocksManager.render', () => {
     const api = new BlocksAPI(blocksManager, { defaultBlock } as CoreConfigValidated);
-    const doc = { identifier: 'doc', blocks: [], properties: {} };
+    const doc = { identifier: 'doc',
+      blocks: [],
+      properties: {} };
 
     api.render(doc);
 
@@ -59,7 +62,6 @@ describe('BlocksAPI', () => {
   it('move should call to blocksManager.move', () => {
     const api = new BlocksAPI(blocksManager, { defaultBlock } as CoreConfigValidated);
 
-
     api.move(3, 1);
 
     expect(blocksManager.move).toHaveBeenCalledWith(3, 1);
@@ -68,7 +70,7 @@ describe('BlocksAPI', () => {
   it('getBlocksCount should return blocksManager.blocksCount', () => {
     const api = new BlocksAPI(blocksManager, { defaultBlock } as CoreConfigValidated);
 
-    // @ts-ignore - need to assign a value to check the method
+    // @ts-expect-error - need to assign a value to check the method
     blocksManager.blocksCount = 5;
 
     expect(api.getBlocksCount()).toBe(5);
@@ -77,7 +79,8 @@ describe('BlocksAPI', () => {
   it('insertMany should pass blocks and index to blocksManager.insertMany', () => {
     const api = new BlocksAPI(blocksManager, { defaultBlock } as CoreConfigValidated);
 
-    const blocks = [{ name: 'a', data: {} }];
+    const blocks = [{ name: 'a',
+      data: {} }];
 
     api.insertMany(blocks as never, 4);
 
@@ -87,7 +90,8 @@ describe('BlocksAPI', () => {
   it('insertMany should pass undefined index to blocksManager.insertMany when omitted', () => {
     const api = new BlocksAPI(blocksManager, { defaultBlock } as CoreConfigValidated);
 
-    const blocks = [{ name: 'a', data: {} }];
+    const blocks = [{ name: 'a',
+      data: {} }];
 
     api.insertMany(blocks as never);
 
@@ -128,4 +132,3 @@ describe('BlocksAPI', () => {
     });
   });
 });
-

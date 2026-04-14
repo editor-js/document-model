@@ -19,11 +19,15 @@ export default [
       'n/no-unpublished-import': ['error', {
         allowModules: [
           'eslint-config-codex',
+          '@jest/globals',
         ],
         ignoreTypeImport: true,
       }],
       // @todo: remove when we setup eslint to correctly handle the types
       'n/no-missing-import': 'off',
+      '@typescript-eslint/unbound-method': 'off',
+      '@typescript-eslint/naming-convention': 'off',
+      'n/no-unsupported-features/node-builtins': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',

@@ -1,18 +1,19 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers, jsdoc/require-jsdoc, @stylistic/comma-dangle */
 
-import {jest} from '@jest/globals';
-import type {CoreConfig, ToolLoadedCoreEvent} from "@editorjs/sdk";
-import type {CaretManagerEvents, InlineFragment, InlineToolName} from "@editorjs/model";
+import { jest } from '@jest/globals';
+import type { CoreConfig, ToolLoadedCoreEvent } from '@editorjs/sdk';
+// @ts-expect-error - TS don't import types via import() so have to import them here as well
+import type { CaretManagerEvents, InlineFragment, InlineToolName, EventType, Index } from '@editorjs/model';
 
 // Register ESM mocks before importing the module under test
-await jest.unstable_mockModule('@editorjs/dom-adapters', () => ({
+jest.unstable_mockModule('@editorjs/dom-adapters', () => ({
   FormattingAdapter: jest.fn(() => ({
     attachTool: jest.fn(),
     applyFormat: jest.fn(),
   })),
 }));
 
-await jest.unstable_mockModule('@editorjs/model', () => {
+jest.unstable_mockModule('@editorjs/model', () => {
   const caretManagerCaretUpdatedEvent = function (
     this: { detail: Record<string, unknown> },
     detail: Record<string, unknown>
@@ -27,45 +28,45 @@ await jest.unstable_mockModule('@editorjs/model', () => {
   const EditorJSModel = jest.fn(() => ({
     addEventListener: jest.fn(),
     getFragments: jest.fn(() => []),
-    serialized: {blocks: []},
+    serialized: { blocks: [] },
   }));
 
   return {
     EditorJSModel,
     CaretManagerCaretUpdatedEvent: caretManagerCaretUpdatedEvent,
-    Index: {parse: jest.fn()},
+    Index: { parse: jest.fn() },
     EventType: eventType,
     createInlineToolData: (data: Record<string, unknown>) => data,
     createInlineToolName: (name: string) => name,
   };
 });
 
-await jest.unstable_mockModule('@editorjs/sdk', () => ({
-  CoreEventType: {ToolLoaded: 'tool-loaded'},
+jest.unstable_mockModule('@editorjs/sdk', () => ({
+  CoreEventType: { ToolLoaded: 'tool-loaded' },
   SelectionChangedCoreEvent: jest.fn(function (this: { detail: unknown }, detail: unknown) {
     this.detail = detail;
   }),
-  EventBus: jest.fn(() => ({dispatchEvent: jest.fn()})),
+  EventBus: jest.fn(() => ({ dispatchEvent: jest.fn() })),
 }));
 
-const {EditorJSModel, EventType, CaretManagerCaretUpdatedEvent, Index} = await import('@editorjs/model');
-const {SelectionChangedCoreEvent, CoreEventType, EventBus} = await import('@editorjs/sdk');
-const {FormattingAdapter} = await import('@editorjs/dom-adapters');
-const {SelectionManager} = await import('./SelectionManager.js');
+const { EditorJSModel, EventType, CaretManagerCaretUpdatedEvent, Index } = await import('@editorjs/model');
+const { SelectionChangedCoreEvent, CoreEventType, EventBus } = await import('@editorjs/sdk');
+const { FormattingAdapter } = await import('@editorjs/dom-adapters');
+const { SelectionManager } = await import('./SelectionManager.js');
 
 describe('SelectionManager', () => {
-  // @ts-ignore - Mocked instance
+  // @ts-expect-error - Mocked instance
   const model = new EditorJSModel();
 
   let caretEventsListener: (e: CustomEvent) => void;
 
-  model.addEventListener = (type: string, callback: (e: Event) => void) => {
+  model.addEventListener = (type: EventType, callback: (e: Event) => void) => {
     if (type === EventType.CaretManagerUpdated) {
       caretEventsListener = callback;
     }
-  }
+  };
 
-  // @ts-ignore - Mocked instance
+  // @ts-expect-error - Mocked instance
   const formattingAdapter = new FormattingAdapter();
   const eventBus = new EventBus();
 
@@ -75,9 +76,9 @@ describe('SelectionManager', () => {
     if (type === `core:${CoreEventType.ToolLoaded}`) {
       toolLoadedListener = callback;
     }
-  }
+  };
 
-  const selectionManager = new SelectionManager({userId: 'user'} as CoreConfig, model, formattingAdapter, eventBus);
+  const selectionManager = new SelectionManager({ userId: 'user' } as CoreConfig, model, formattingAdapter, eventBus);
 
   beforeEach(() => {
     jest.resetAllMocks();
@@ -91,14 +92,14 @@ describe('SelectionManager', () => {
     };
 
     toolLoadedListener({
-      detail: {tool},
+      detail: { tool },
     } as unknown as ToolLoadedCoreEvent);
 
     expect(formattingAdapter.attachTool).not.toHaveBeenCalled();
   });
 
   it('should register inline tool and attach it to formatting adapter', () => {
-    const inlineToolInstance = {render: jest.fn()};
+    const inlineToolInstance = { render: jest.fn() };
     const tool = {
       name: 'bold',
       isInline: jest.fn(() => true),
@@ -106,7 +107,7 @@ describe('SelectionManager', () => {
     };
 
     toolLoadedListener({
-      detail: {tool},
+      detail: { tool },
     } as unknown as ToolLoadedCoreEvent);
 
     expect(tool.create).toHaveBeenCalled();
@@ -115,8 +116,8 @@ describe('SelectionManager', () => {
 
   it('should ignore caret events of other users', () => {
     const event = new CaretManagerCaretUpdatedEvent({
-        userId: 'another-user',
-        index: null,
+      userId: 'another-user',
+      index: null,
     });
 
     caretEventsListener(event);
@@ -126,9 +127,9 @@ describe('SelectionManager', () => {
 
   it('should dispatch empty selection info when index is null', () => {
     const event = new CaretManagerCaretUpdatedEvent({
-        userId: 'user',
-        index: null,
-      }
+      userId: 'user',
+      index: null,
+    }
     );
 
     caretEventsListener(event);
@@ -148,7 +149,7 @@ describe('SelectionManager', () => {
       index: 'serialized',
     });
 
-    jest.spyOn(Index, 'parse').mockReturnValue({blockIndex: 1} as any);
+    jest.spyOn(Index, 'parse').mockReturnValue({ blockIndex: 1 } as Index);
 
     caretEventsListener(event);
 
@@ -159,7 +160,7 @@ describe('SelectionManager', () => {
   });
 
   it('should dispatch selection with fragments when parsed index has text range', () => {
-    const fragments = [{tool: 'bold'}] as InlineFragment[];
+    const fragments = [{ tool: 'bold' }] as InlineFragment[];
 
     jest.spyOn(model, 'getFragments').mockReturnValue(fragments);
 
@@ -172,8 +173,7 @@ describe('SelectionManager', () => {
       blockIndex: 1,
       dataKey: 'text',
       textRange: [1, 3]
-    } as any);
-
+    } as Index);
 
     caretEventsListener(event);
 
@@ -202,32 +202,32 @@ describe('SelectionManager', () => {
   });
 
   it('should apply inline tool format with provided data', () => {
-    selectionManager.applyInlineToolForCurrentSelection('link' as InlineToolName, {href: 'https://example.com'});
+    selectionManager.applyInlineToolForCurrentSelection('link' as InlineToolName, { href: 'https://example.com' });
 
-    expect(formattingAdapter.applyFormat).toHaveBeenCalledWith('link', {href: 'https://example.com'},);
+    expect(formattingAdapter.applyFormat).toHaveBeenCalledWith('link', { href: 'https://example.com' },);
   });
 
   it('should keep loaded inline tools map in selection changed payload', () => {
     const tool = {
       name: 'italic',
       isInline: jest.fn(() => true),
-      create: jest.fn(() => ({render: jest.fn()})),
+      create: jest.fn(() => ({ render: jest.fn() })),
     };
 
     toolLoadedListener({
-      detail: {tool},
+      detail: { tool },
     } as unknown as ToolLoadedCoreEvent);
 
     const event = new CaretManagerCaretUpdatedEvent({
-        userId: 'user',
-        index: 'serialized',
+      userId: 'user',
+      index: 'serialized',
     });
 
     jest.spyOn(Index, 'parse').mockReturnValue({
       blockIndex: 1,
       dataKey: 'text',
       textRange: [1, 3]
-    } as any);
+    } as Index);
 
     caretEventsListener(event);
 
@@ -236,7 +236,3 @@ describe('SelectionManager', () => {
     }));
   });
 });
-
-
-
-

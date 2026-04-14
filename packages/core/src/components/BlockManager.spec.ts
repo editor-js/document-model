@@ -1,14 +1,13 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers, jsdoc/require-jsdoc, @stylistic/comma-dangle */
-import {beforeEach, jest} from '@jest/globals';
-import type {BlockToolFacade, CoreConfigValidated} from '@editorjs/sdk';
-import {json} from "node:stream/consumers";
-import {Index, IndexBuilder} from "@editorjs/model";
+import { beforeEach, jest } from '@jest/globals';
+import type { BlockToolFacade, CoreConfigValidated } from '@editorjs/sdk';
+import type { Index } from '@editorjs/model';
 
 const BLOCKS_COUNT = 7;
 const USER_ID = 'user';
 
 // Register ESM mocks before importing the module under test
-await jest.unstable_mockModule('@editorjs/model', () => {
+jest.unstable_mockModule('@editorjs/model', () => {
   const EditorJSModel = jest.fn(() => ({
     serialized: { blocks: [] },
     addEventListener: jest.fn(),
@@ -16,17 +15,25 @@ await jest.unstable_mockModule('@editorjs/model', () => {
     removeBlock: jest.fn(),
     initializeDocument: jest.fn(),
     clearBlocks: jest.fn(),
-    get length() { return BLOCKS_COUNT; },
+    get length() {
+      return BLOCKS_COUNT;
+    },
   }));
 
   const EventBus = jest.fn(() => ({ dispatchEvent: jest.fn() }));
 
-  const BlockAddedEvent = function (this: { detail: unknown }, index: Index, data: unknown) {
-    this.detail = { index, data };
+  const BlockAddedEvent = function (this: { detail: unknown }, index: Index, data: unknown): void {
+    this.detail = {
+      index,
+      data
+    };
   };
 
-  const BlockRemovedEvent = function (this: { detail: unknown }, index: Index, data: unknown) {
-    this.detail = { index, data };
+  const BlockRemovedEvent = function (this: { detail: unknown }, index: Index, data: unknown): void {
+    this.detail = {
+      index,
+      data
+    };
   };
 
   const EventType = { Changed: 'changed' };
@@ -40,7 +47,7 @@ await jest.unstable_mockModule('@editorjs/model', () => {
   };
 });
 
-await jest.unstable_mockModule('@editorjs/dom-adapters', () => ({
+jest.unstable_mockModule('@editorjs/dom-adapters', () => ({
   BlockToolAdapter: jest.fn(() => ({})),
   CaretAdapter: jest.fn(() => ({
     attachBlock: jest.fn(),
@@ -48,10 +55,11 @@ await jest.unstable_mockModule('@editorjs/dom-adapters', () => ({
   FormattingAdapter: jest.fn(() => ({})),
 }));
 
-await jest.unstable_mockModule('../tools/ToolsManager', () => ({
+jest.unstable_mockModule('../tools/ToolsManager', () => ({
   default: jest.fn(() => ({
     blockTools: {
-      get: jest.fn(() => ({ name: 'tool', create: jest.fn(() => ({ render: jest.fn(() => Promise.resolve({})) })) })),
+      get: jest.fn(() => ({ name: 'tool',
+        create: jest.fn(() => ({ render: jest.fn(() => Promise.resolve({})) })) })),
     },
   })),
 }));
@@ -63,7 +71,7 @@ const ToolsManager = (await import('../tools/ToolsManager')).default;
 const { BlocksManager } = await import('./BlockManager.js');
 
 describe('BlocksManager (unit, mocked deps)', () => {
-  // @ts-ignore - mock object, dont need to pass any arguments
+  // @ts-expect-error - mock object, dont need to pass any arguments
   const model = new EditorJSModel();
   let changedListener: (event: unknown) => void | Promise<void> = () => undefined;
 
@@ -75,14 +83,14 @@ describe('BlocksManager (unit, mocked deps)', () => {
   });
 
   const eventBus = new EventBus();
-  // @ts-ignore
+  // @ts-expect-error - Mock instance
   const caretAdapter = new CaretAdapter();
-  // @ts-ignore
+  // @ts-expect-error - Mock instance
   const toolsManager = new ToolsManager();
-  // @ts-ignore
+  // @ts-expect-error - Mock instance
   const formattingAdapter = new FormattingAdapter();
 
-  const defaultBlock = 'paragraph'
+  const defaultBlock = 'paragraph';
 
   const blocksManager = new BlocksManager(
     model,
@@ -90,12 +98,13 @@ describe('BlocksManager (unit, mocked deps)', () => {
     caretAdapter,
     toolsManager,
     formattingAdapter,
-    { defaultBlock, userId: USER_ID } as CoreConfigValidated
-  )
+    { defaultBlock,
+      userId: USER_ID } as CoreConfigValidated
+  );
 
   beforeEach(() => {
     jest.resetAllMocks();
-  })
+  });
 
   it('insert should call model.addBlock with default tool name and computed index', () => {
     blocksManager.insert();
@@ -261,7 +270,7 @@ describe('BlocksManager (unit, mocked deps)', () => {
   });
 
   it('move should call removeBlock and addBlock with adjusted index when moving current block', () => {
-    // @ts-ignore - need to assign read only property to mock it
+    // @ts-expect-error - need to assign read only property to mock it
     model.serialized = {
       blocks: [
         {
@@ -275,7 +284,7 @@ describe('BlocksManager (unit, mocked deps)', () => {
         }
       ]
     };
-    // @ts-ignore - need to assign read only property to mock it
+    // @ts-expect-error - need to assign read only property to mock it
     caretAdapter.userCaretIndex = {
       blockIndex: 0
     };
@@ -293,14 +302,14 @@ describe('BlocksManager (unit, mocked deps)', () => {
   });
 
   it('move should throw when there is no current block', () => {
-    // @ts-ignore - need to assign read only property to mock it
+    // @ts-expect-error - need to assign read only property to mock it
     caretAdapter.userCaretIndex = undefined;
 
     expect(() => blocksManager.move(1)).toThrow('No block selected to move');
   });
 
   it('move should not offset target index when fromIndex is greater than toIndex', () => {
-    // @ts-ignore - need to assign read only property to mock it
+    // @ts-expect-error - need to assign read only property to mock it
     model.serialized = {
       blocks: [
         {
@@ -322,7 +331,7 @@ describe('BlocksManager (unit, mocked deps)', () => {
   });
 
   it('move should offset target index when fromIndex equals toIndex', () => {
-    // @ts-ignore - need to assign read only property to mock it
+    // @ts-expect-error - need to assign read only property to mock it
     model.serialized = {
       blocks: [
         {
@@ -407,7 +416,6 @@ describe('BlocksManager (unit, mocked deps)', () => {
       USER_ID,
     );
 
-
     const eventPromise = changedListener(event);
 
     try {
@@ -485,5 +493,3 @@ describe('BlocksManager (unit, mocked deps)', () => {
     }).toThrow('Block index should be defined');
   });
 });
-
-

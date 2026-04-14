@@ -1,15 +1,13 @@
-/* eslint-disable jsdoc/require-jsdoc, @stylistic/comma-dangle */
-
 import { jest } from '@jest/globals';
 
 // Mock dependencies before importing the module under test
-await jest.unstable_mockModule('../components/SelectionManager', () => ({
+jest.unstable_mockModule('../components/SelectionManager', () => ({
   SelectionManager: jest.fn(() => ({
     applyInlineToolForCurrentSelection: jest.fn(),
   })),
 }));
 
-await jest.unstable_mockModule('@editorjs/model', () => ({
+jest.unstable_mockModule('@editorjs/model', () => ({
   createInlineToolName: jest.fn((name: string) => `inline:${name}`),
 }));
 
@@ -18,7 +16,7 @@ const { SelectionManager } = await import('../components/SelectionManager');
 const { createInlineToolName } = await import('@editorjs/model');
 
 describe('SelectionAPI', () => {
-  // @ts-ignore - mock object
+  // @ts-expect-error - mock object
   const selectionManager = new SelectionManager();
 
   it('applyInlineToolForCurrentSelection should convert toolName and delegate to SelectionManager', () => {

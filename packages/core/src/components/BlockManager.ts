@@ -107,6 +107,7 @@ export class BlocksManager {
     this.#formattingAdapter = formattingAdapter;
     this.#config = config;
 
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises -- Need to bubble the promise up in case of errors
     this.#model.addEventListener(EventType.Changed, event => this.#handleModelUpdate(event));
   }
 
