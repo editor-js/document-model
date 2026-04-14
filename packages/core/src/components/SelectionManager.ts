@@ -109,8 +109,6 @@ export class SelectionManager {
 
         break;
       }
-      default:
-        break;
     }
   }
 

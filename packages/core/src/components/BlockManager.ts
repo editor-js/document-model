@@ -1,4 +1,11 @@
-import { BlockAddedEvent, BlockRemovedEvent, EditorJSModel, EventType, ModelEvents } from '@editorjs/model';
+import {
+  BlockAddedEvent, type BlockNodeSerialized,
+  BlockRemovedEvent,
+  type EditorDocumentSerialized,
+  EditorJSModel,
+  EventType,
+  ModelEvents
+} from '@editorjs/model';
 import 'reflect-metadata';
 import { Inject, Service } from 'typedi';
 import { BlockToolAdapter, CaretAdapter, FormattingAdapter } from '@editorjs/dom-adapters';
@@ -69,6 +76,13 @@ export class BlocksManager {
   #formattingAdapter: FormattingAdapter;
 
   /**
+   * Returns Blocks count
+   */
+  public get blocksCount(): number {
+    return this.#model.length;
+  }
+
+  /**
    * BlocksManager constructor
    * All parameters are injected thorugh the IoC container
    * @param model - Editor's Document Model instance
@@ -93,6 +107,7 @@ export class BlocksManager {
     this.#formattingAdapter = formattingAdapter;
     this.#config = config;
 
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises -- Need to bubble the promise up in case of errors
     this.#model.addEventListener(EventType.Changed, event => this.#handleModelUpdate(event));
   }
 
@@ -102,6 +117,7 @@ export class BlocksManager {
    * @param parameters.type - block tool name to insert
    * @param parameters.data - block's initial data
    * @param parameters.index - index to insert block at
+   // * @param parameters.needToFocus - flag indicates if caret should be set to block after insert
    * @param parameters.replace - flag indicates if block at index should be replaced
    */
   public insert({
@@ -116,13 +132,88 @@ export class BlocksManager {
     let newIndex = index;
 
     if (newIndex === undefined) {
-      newIndex = this.#model.length + (replace ? 0 : 1);
+      newIndex = this.#model.length + (replace ? -1 : 0);
+    }
+
+    if (replace) {
+      this.#model.removeBlock(this.#config.userId, newIndex);
     }
 
     this.#model.addBlock(this.#config.userId, {
       ...data,
       name: type,
-    }, index);
+    }, newIndex);
+  }
+
+  /**
+   * Inserts several Blocks to specified index
+   * @param blocks - array of blocks to insert
+   * @param [index] - index to insert blocks at. If undefined, inserts at the end
+   */
+  public insertMany(blocks: BlockNodeSerialized[], index: number = this.#model.length): void {
+    blocks.forEach((block, i) => this.#model.addBlock(this.#config.userId, block, index + i));
+  }
+
+  /**
+   * Re-initialize document
+   * @param document - serialized document data
+   */
+  public render(document: EditorDocumentSerialized): void {
+    this.#model.initializeDocument(document);
+  }
+
+  /**
+   * Remove all blocks from Document
+   */
+  public clear(): void {
+    this.#model.clearBlocks();
+  }
+
+  /**
+   * Removes Block by index, or current block if index is not passed
+   * @param index - index of a block to delete
+   */
+  public deleteBlock(index: number | undefined = this.#getCurrentBlockIndex()): void {
+    if (index === undefined) {
+      /**
+       * @todo see what happens in legacy
+       */
+      throw new Error('No block selected to delete');
+    }
+
+    this.#model.removeBlock(this.#config.userId, index);
+  }
+
+  /**
+   * Moves a block to a new index
+   * @param toIndex - index where the block is moved to
+   * @param [fromIndex] - block to move. Current block if not passed
+   */
+  public move(toIndex: number, fromIndex: number | undefined = this.#getCurrentBlockIndex()): void {
+    if (fromIndex === undefined) {
+      throw new Error('No block selected to move');
+    }
+
+    /**
+     * Do nothing if fromIndex and toIndex are the same
+     */
+    if (fromIndex === toIndex) {
+      return;
+    }
+
+    const block = this.#model.serialized.blocks[fromIndex];
+
+    this.#model.removeBlock(this.#config.userId, fromIndex);
+    this.#model.addBlock(this.#config.userId, block, toIndex);
+  }
+
+  /**
+   * Returns block index where user caret is placed
+   */
+  #getCurrentBlockIndex(): number | undefined {
+    const caretIndex = this.#caretAdapter.userCaretIndex;
+
+    return caretIndex?.blockIndex;
   }
 
   /**
@@ -130,11 +221,10 @@ export class BlocksManager {
    * Filters only BlockAddedEvent and BlockRemovedEvent
    * @param event - Model update event
    */
-  #handleModelUpdate(event: ModelEvents): void {
+  #handleModelUpdate(event: ModelEvents): Promise<void> | void {
     switch (true) {
       case event instanceof BlockAddedEvent:
-        void this.#handleBlockAddedEvent(event);
-        break;
+        return this.#handleBlockAddedEvent(event);
       case event instanceof BlockRemovedEvent:
         this.#handleBlockRemovedEvent(event);
         break;

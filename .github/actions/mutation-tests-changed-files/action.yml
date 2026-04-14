@@ -22,6 +22,10 @@ runs:
       - name: Setup environment
         uses: ./.github/actions/setup
 
+      - uses: ./.github/actions/build
+        with:
+          package-name: ${{ inputs.package-name }}
+
       - name: Get changed files
         uses: tj-actions/changed-files@v39.0.0
         id: changed-files
@@ -55,7 +59,7 @@ runs:
             ✅ Mutation testing passed for `${{ inputs.working-directory }}`
 
             Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${{ steps.findPr.outputs.number }}?module=${{ inputs.package-name }}
-            
+
             <details>
               <summary>Mutated files</summary>
               <pre>
@@ -73,7 +77,7 @@ runs:
             ❌ Mutation testing hasn't passed score threshold for `${{ inputs.working-directory }}`
 
             Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${{ steps.findPr.outputs.number }}?module=${{ inputs.package-name }}
-            
+
             <details>
               <summary>Mutated files</summary>
               <pre>

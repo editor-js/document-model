@@ -12,6 +12,17 @@ jobs:
         with:
           package-name: '@editorjs/core'
 
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run unit tests
+        uses: ./.github/actions/unit-tests
+        with:
+          package-name: '@editorjs/core'
+          working-directory: './packages/core'
+
   build:
     runs-on: ubuntu-latest
     steps:
@@ -20,3 +31,24 @@ jobs:
         uses: ./.github/actions/build
         with:
           package-name: '@editorjs/core'
+
+  mutation-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run mutation tests for changed files
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: ./.github/actions/mutation-tests-changed-files
+        with:
+          package-name: '@editorjs/core'
+          working-directory: './packages/core'
+          stryker_dashboard_api_key: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
+
+      - name: Run mutation tests for all files
+        if: ${{ github.event_name == 'merge_group' }}
+        uses: ./.github/actions/mutation-tests-all-files
+        with:
+          package-name: '@editorjs/core'
+          working-directory: './packages/core'
+          stryker_dashboard_api_key: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}

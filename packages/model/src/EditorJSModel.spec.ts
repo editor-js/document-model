@@ -21,7 +21,7 @@ describe('EditorJSModel', () => {
       'updateTuneData',
       'updateValue',
       'removeBlock',
-      'moveBlock',
+      'clearBlocks',
       'createDataNode',
       'removeDataNode',
       'getText',

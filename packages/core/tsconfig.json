@@ -10,7 +10,7 @@
     "skipLibCheck": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "types": ["jest"],
+    "types": ["jest", "node"],
     "rootDir": "src",
     "outDir": "dist",
     "declaration": true,

@@ -40,7 +40,7 @@ function createEditorDocumentWithSomeBlocks(): EditorDocument {
       },
     }));
 
-  doc.initialize(blocks);
+  doc.initialize({ blocks });
 
   return doc;
 }
@@ -50,7 +50,7 @@ describe('EditorDocument', () => {
     jest.clearAllMocks();
   });
 
-  describe('.initalize()', () => {
+  describe('.initialize()', () => {
     it('should initalize the document', () => {
       const doc = new EditorDocument({
         identifier: 'document',
@@ -71,9 +71,43 @@ describe('EditorDocument', () => {
         tunes: {},
       } ];
 
-      doc.initialize(blocks);
+      doc.initialize({ blocks });
 
       expect(doc.serialized.blocks).toHaveLength(blocks.length);
+    });
+
+    it('should update the identifier if provided in document data', () => {
+      const doc = new EditorDocument({
+        identifier: 'document',
+      });
+
+      const newIdentifier = 'new-document-id';
+
+      doc.initialize({
+        identifier: newIdentifier,
+        blocks: [],
+      });
+
+      expect(doc.identifier).toBe(newIdentifier);
+    });
+
+    it('should set properties if provided in document data', () => {
+      const doc = new EditorDocument({
+        identifier: 'document',
+      });
+
+      const properties = {
+        readOnly: true,
+        customProp: 'value',
+      };
+
+      doc.initialize({
+        blocks: [],
+        properties,
+      });
+
+      expect(doc.getProperty('readOnly')).toBe(true);
+      expect(doc.getProperty('customProp')).toBe('value');
     });
 
     it('should clear the document before initialization', () => {
@@ -96,11 +130,11 @@ describe('EditorDocument', () => {
         tunes: {},
       } ];
 
-      doc.initialize(blocks);
+      doc.initialize({ blocks });
 
       blocks[0].data.text.value = 'another text';
 
-      doc.initialize(blocks);
+      doc.initialize({ blocks });
 
       expect(doc.serialized.blocks).toHaveLength(1);
     });
@@ -313,38 +347,6 @@ describe('EditorDocument', () => {
         index: expect.objectContaining({ blockIndex: index }),
         data: blockData,
       }));
-    });
-  });
-
-  describe('.moveBlock()', () => {
-    it('should move block from passed index to passed index', () => {
-      const document = createEditorDocumentWithSomeBlocks();
-      const block = document.getBlock(0);
-
-      document.moveBlock(0, 1);
-
-      expect(document.getBlock(1))
-        .toBe(block);
-    });
-
-    it('should not change the block before moved block if moving to the end of the document', () => {
-      const document = createEditorDocumentWithSomeBlocks();
-      const blockBeforeMoved = document.getBlock(0);
-
-      document.moveBlock(1, document.length);
-
-      expect(document.getBlock(0))
-        .toBe(blockBeforeMoved);
-    });
-
-    it('should not change the block after moved block if moving to the beginning of the document', () => {
-      const document = createEditorDocumentWithSomeBlocks();
-      const blockAfterMoved = document.getBlock(2);
-
-      document.moveBlock(1, 0);
-
-      expect(document.getBlock(2))
-        .toBe(blockAfterMoved);
     });
   });
 
@@ -619,7 +621,7 @@ describe('EditorDocument', () => {
         identifier: 'document',
       });
 
-      document.initialize(blocksData);
+      document.initialize({ blocks: blocksData });
 
       blocksData.forEach((_, i) => {
         const blockNode = document.getBlock(i);
@@ -660,7 +662,7 @@ describe('EditorDocument', () => {
         identifier: 'document',
       });
 
-      document.initialize(blocksData);
+      document.initialize({ blocks: blocksData });
 
       const blockNodes = blocksData.map((_, i) => {
         const blockNode = document.getBlock(i);
@@ -730,7 +732,7 @@ describe('EditorDocument', () => {
         identifier: 'document',
       });
 
-      document.initialize(blocksData);
+      document.initialize({ blocks: blocksData });
 
       blocksData.forEach((_, i) => {
         const blockNode = document.getBlock(i);
@@ -770,7 +772,7 @@ describe('EditorDocument', () => {
         identifier: 'document',
       });
 
-      document.initialize(blocksData);
+      document.initialize({ blocks: blocksData });
 
       const blockNodes = blocksData.map((_, i) => {
         const blockNode = document.getBlock(i);
@@ -838,7 +840,7 @@ describe('EditorDocument', () => {
         identifier: 'document',
       });
 
-      document.initialize(blocksData);
+      document.initialize({ blocks: blocksData });
 
       blocksData.forEach((_, i) => {
         const blockNode = document.getBlock(i);
@@ -879,7 +881,7 @@ describe('EditorDocument', () => {
         identifier: 'document',
       });
 
-      document.initialize(blocksData);
+      document.initialize({ blocks: blocksData });
 
       const blockNodes = blocksData.map((_, i) => {
         const blockNode = document.getBlock(i);
@@ -949,7 +951,7 @@ describe('EditorDocument', () => {
         identifier: 'document',
       });
 
-      document.initialize(blocksData);
+      document.initialize({ blocks: blocksData });
 
       blocksData.forEach((_, i) => {
         const blockNode = document.getBlock(i);
@@ -992,7 +994,7 @@ describe('EditorDocument', () => {
         identifier: 'document',
       });
 
-      document.initialize(blocksData);
+      document.initialize({ blocks: blocksData });
 
       const blockNodes = blocksData.map((_, i) => {
         const blockNode = document.getBlock(i);
@@ -1063,7 +1065,7 @@ describe('EditorDocument', () => {
         identifier: 'document',
       });
 
-      document.initialize([ blockData ]);
+      document.initialize({ blocks: [ blockData ] });
 
       block = document.getBlock(0);
     });
@@ -1105,7 +1107,7 @@ describe('EditorDocument', () => {
         identifier: 'document',
       });
 
-      document.initialize([ blockData ]);
+      document.initialize({ blocks: [ blockData ] });
 
       block = document.getBlock(0);
     });
@@ -1152,7 +1154,7 @@ describe('EditorDocument', () => {
         identifier: 'document',
       });
 
-      document.initialize([ blockData ]);
+      document.initialize({ blocks: [ blockData ] });
 
       block = document.getBlock(0);
     });
@@ -1198,6 +1200,15 @@ describe('EditorDocument', () => {
       expect(spy)
         .toHaveBeenCalledWith(block.serialized, blockIndex);
     });
+
+    it('should throw an error if index is not supported', () => {
+      const index = new IndexBuilder()
+        .addPropertyName('readOnly')
+        .build();
+
+      expect(() => document.insertData(index, 'data'))
+        .toThrow('Unsupported index');
+    });
   });
 
   describe('.removeData()', () => {
@@ -1220,7 +1231,7 @@ describe('EditorDocument', () => {
         identifier: 'document',
       });
 
-      document.initialize([ blockData ]);
+      document.initialize({ blocks: [ blockData ] });
     });
 
     it('should call .removeText() method if text index provided', () => {
@@ -1269,6 +1280,15 @@ describe('EditorDocument', () => {
       expect(spy)
         .toHaveBeenCalledWith(blockIndex);
     });
+
+    it('should throw an error if index is not supported', () => {
+      const index = new IndexBuilder()
+        .addPropertyName('readOnly')
+        .build();
+
+      expect(() => document.removeData(index, 'data'))
+        .toThrow('Unsupported index');
+    });
   });
 
   describe('.modifyData()', () => {
@@ -1291,7 +1311,7 @@ describe('EditorDocument', () => {
         identifier: 'document',
       });
 
-      document.initialize([ blockData ]);
+      document.initialize({ blocks: [ blockData ] });
     });
 
     it('should call .format() method if text index and modified value provided', () => {
@@ -1356,7 +1376,7 @@ describe('EditorDocument', () => {
         identifier: 'document',
       });
 
-      document.initialize([ blockData ]);
+      document.initialize({ blocks: [ blockData ] });
 
       block = document.getBlock(0);
     });
@@ -1421,7 +1441,7 @@ describe('EditorDocument', () => {
         identifier: 'document',
       });
 
-      document.initialize([ blockData ]);
+      document.initialize({ blocks: [ blockData ] });
 
       block = document.getBlock(0);
     });
@@ -1475,7 +1495,7 @@ describe('EditorDocument', () => {
         identifier: 'document',
       });
 
-      document.initialize([ blockData ]);
+      document.initialize({ blocks: [ blockData ] });
 
       block = document.getBlock(0);
     });

@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@editorjs/editorjs": "^2.30.8",
-    "@editorjs/helpers": "^1.0.1",
+    "@editorjs/helpers": "^1.1.0",
     "@editorjs/model": "workspace:^"
   }
 }
