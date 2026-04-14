@@ -214,7 +214,7 @@ export class OperationsTransformer {
    */
   #transformAgainstTextInsert<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
     console.log('transforming against text insert operation');
-    
+
     const newIndexBuilder = new IndexBuilder().from(operation.index);
 
     const insertedLength = againstOp.data.payload!.length;
@@ -279,7 +279,7 @@ export class OperationsTransformer {
    * @param againstOp - Operation against which the current operation should be transformed
    * @returns {Operation<OperationType>} new operation
    */
-  #transformAgainstTextDelete<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {    
+  #transformAgainstTextDelete<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
     const newIndexBuilder = new IndexBuilder().from(operation.index);
     let newPayload = operation.data.payload as string;
     const deletedAmount = againstOp.data.payload!.length;
@@ -321,8 +321,8 @@ export class OperationsTransformer {
        */
       case (RangeIntersectionType.Includes):
         newIndexBuilder.addTextRange([index.textRange![0], index.textRange![1] - deletedAmount]);
-        newPayload = typeof newPayload === 'string' 
-          ? newPayload.slice(0, againstTextRange[0]) + newPayload.slice(againstTextRange[1]) 
+        newPayload = typeof newPayload === 'string'
+          ? newPayload.slice(0, againstTextRange[0]) + newPayload.slice(againstTextRange[1])
           : newPayload;
         break;
 

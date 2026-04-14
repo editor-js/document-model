@@ -22,7 +22,7 @@ describe('getRangesIntersectionType', () => {
     it('returns None when one range is empty to the left of the other', () => {
       expect(getRangesIntersectionType([0, 0], [2, 10])).toBe(RangeIntersectionType.None);
     });
-    
+
     it('returns None when ranges touch', () => {
       expect(getRangesIntersectionType([0, 2], [2, 4])).toBe(RangeIntersectionType.None);
       expect(getRangesIntersectionType([2, 4], [0, 2])).toBe(RangeIntersectionType.None);

@@ -235,12 +235,12 @@ export class CollaborationManager {
       void this.#client?.send(operation);
     } else {
       this.#putBatchToUndo();
-      
+
       /**
        * If operation is remote, transform undo/redo stacks
        */
       this.#undoRedoManager.transformStacks(operation);
-     
+
       return;
     }
 

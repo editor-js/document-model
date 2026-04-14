@@ -1,4 +1,5 @@
-import { IndexBuilder, type Index, type BlockNodeSerialized, TextRange } from '@editorjs/model';
+import type { TextRange } from '@editorjs/model';
+import { IndexBuilder, type Index, type BlockNodeSerialized } from '@editorjs/model';
 import { OperationsTransformer } from './OperationsTransformer.js';
 
 /**
@@ -193,7 +194,7 @@ export class Operation<T extends OperationType = OperationType> {
     if (this.type === OperationType.Insert) {
       return [this.index.textRange![0], Math.max(this.index.textRange![1], this.index.textRange![0] + this.data.payload!.length)];
     }
-    
+
     return this.index.textRange!;
   }
 
