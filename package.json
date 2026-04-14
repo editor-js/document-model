@@ -4,7 +4,8 @@
   "private": true,
   "packageManager": "yarn@4.0.1",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "packages/external-tools/*"
   ],
   "scripts": {
     "lint": "yarn workspaces foreach -A run lint",

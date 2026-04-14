@@ -1180,9 +1180,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@editorjs/header@workspace:packages/header":
+"@editorjs/header@workspace:packages/external-tools/header":
   version: 0.0.0-use.local
-  resolution: "@editorjs/header@workspace:packages/header"
+  resolution: "@editorjs/header@workspace:packages/external-tools/header"
   dependencies:
     "@editorjs/editorjs": "npm:^2.30.8"
     "@editorjs/model": "workspace:^"
