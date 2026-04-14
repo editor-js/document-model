@@ -236,16 +236,13 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
   }
 
   /**
-   * Returns shortcut for Tool (internal or specified by user)
+   * Returns shortcut for Tool (user config overrides static shortcut on the class)
    */
   public get shortcut(): string | undefined {
-    /**
-     * @todo check if we support user shortcuts as static property as it is not specified in types
-     */
-    // const toolShortcut = this.constructable[CommonInternalSettings.Shortcut];
-    const userShortcut = this.config[UserSettings.Shortcut];
+    const userShortcut = this.config[UserSettings.Shortcut] as string | undefined;
+    const constructableWithShortcut = this.constructable as { shortcut?: string };
 
-    return userShortcut; // || toolShortcut;
+    return userShortcut ?? constructableWithShortcut.shortcut;
   }
 
   // /**

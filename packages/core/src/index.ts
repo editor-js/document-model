@@ -109,7 +109,7 @@ export default class Core {
 
     this.#iocContainer.set(CollaborationManager, this.#collaborationManager);
 
-    this.#formattingAdapter = new FormattingAdapter(this.#config, this.#model, this.#caretAdapter);
+    this.#formattingAdapter = new FormattingAdapter(this.#config, this.#model, this.#caretAdapter, eventBus);
 
     this.#iocContainer.set(FormattingAdapter, this.#formattingAdapter);
     this.#iocContainer.get(SelectionManager);

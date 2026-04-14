@@ -3,7 +3,12 @@ import { FormattingAdapter } from '@editorjs/dom-adapters';
 import type { CaretManagerEvents, InlineFragment, InlineToolName } from '@editorjs/model';
 import { CaretManagerCaretUpdatedEvent, Index, EditorJSModel, createInlineToolData, createInlineToolName } from '@editorjs/model';
 import { EventType } from '@editorjs/model';
-import { CoreEventType, ToolLoadedCoreEvent, EventBus, SelectionChangedCoreEvent } from '@editorjs/sdk';
+import {
+  CoreEventType,
+  ToolLoadedCoreEvent,
+  EventBus,
+  SelectionChangedCoreEvent
+} from '@editorjs/sdk';
 import { Inject, Service } from 'typedi';
 import { type CoreConfig, InlineTool, InlineToolFormatData } from '@editorjs/sdk';
 
@@ -68,7 +73,7 @@ export class SelectionManager {
 
       this.#inlineTools.set(name, toolInstance);
 
-      this.#formattingAdapter.attachTool(name, toolInstance);
+      this.#formattingAdapter.attachTool(name, toolInstance, tool.shortcut);
     });
 
     this.#model.addEventListener(EventType.CaretManagerUpdated, (event: CaretManagerEvents) => this.#handleCaretManagerUpdate(event));

@@ -115,4 +115,11 @@ export interface InlineToolConstructor extends BaseToolConstructor {
    * Tool title
    */
   [InternalInlineToolSettings.Title]: string;
+
+  /**
+   * Optional keyboard shortcut (e.g. CMD+B)
+   *
+   * @see https://editorjs.io/inline-tools-api-1/#shortcut
+   */
+  shortcut?: string;
 };

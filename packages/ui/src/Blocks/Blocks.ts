@@ -5,7 +5,8 @@ import type { BlockAddedCoreEvent,
 import {
   CoreEventType,
   UiComponentType,
-  BeforeInputUIEvent
+  BeforeInputUIEvent,
+  KeydownUIEvent
 } from '@editorjs/sdk';
 import type { EventBus } from '@editorjs/sdk';
 import Style from './Blocks.module.pcss';
@@ -59,6 +60,8 @@ export class BlocksUI implements EditorjsPlugin {
     });
 
     this.#blocksHolder.addEventListener('keydown', (e) => {
+      this.#eventBus.dispatchEvent(new KeydownUIEvent({ nativeEvent: e }));
+
       if (e.code !== 'KeyZ') {
         return;
       }

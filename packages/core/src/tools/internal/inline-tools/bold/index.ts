@@ -22,6 +22,11 @@ export class BoldInlineTool implements InlineTool {
   public static title = 'Bold';
 
   /**
+   * Keyboard shortcut (Editor.js 2 inline tools API)
+   */
+  public static shortcut = 'CMD+B';
+
+  /**
    * Type of behaviour of the tool if new selection range intersect with existing fragment
    * If two fragment intersect, they should be merged
    */

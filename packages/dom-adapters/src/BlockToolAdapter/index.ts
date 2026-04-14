@@ -479,6 +479,15 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
   }
 
   /**
+   * True when beforeinput inputType is a formatting command (formatBold, formatItalic, …)
+   *
+   * @param inputType - inputType from beforeinput
+   */
+  #isFormattingInputType(inputType: string): boolean {
+    return inputType.startsWith('format');
+  }
+
+  /**
    * Handles beforeinput event from user input and updates model data
    *
    * We prevent beforeinput event of any type to handle it manually via model update
@@ -499,9 +508,9 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
      */
 
     /**
-     * In all cases we need to handle delete selected text if range is not collapsed
+     * In all cases (except formatting commands) we need to handle delete selected text if range is not collapsed.
      */
-    if (range.collapsed === false) {
+    if (range.collapsed === false && !this.#isFormattingInputType(inputType)) {
       if (isInputNative) {
         this.#handleDeleteInNativeInput(payload, input as HTMLInputElement | HTMLTextAreaElement, key, range);
       } else {

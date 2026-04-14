@@ -22,6 +22,11 @@ export class ItalicInlineTool implements InlineTool {
   public static title = 'Italic';
 
   /**
+   * Keyboard shortcut (Editor.js 2 inline tools API)
+   */
+  public static shortcut = 'CMD+I';
+
+  /**
    * Type of behaviour of the tool if new selection range intersect with existing fragment
    * If two fragment intersect, they should be merged
    */
