@@ -19,6 +19,10 @@ runs:
       - name: Setup environment
         uses: ./.github/actions/setup
 
+      - uses: ./.github/actions/build
+        with:
+          package-name: ${{ inputs.package-name }}
+
       - name: Get changed files
         uses: tj-actions/changed-files@v39.0.0
         id: changed-files
