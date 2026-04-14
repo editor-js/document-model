@@ -109,12 +109,12 @@ describe('Operation', () => {
         expect(transformedOp.index.textRange).toEqual([6, 6]);
       });
 
-      it('should transform a received operation if it is at the same position as a local one', () => {
+      it('should not transform a received operation if it is at the same position as a local one', () => {
         const receivedOp = createOperation(OperationType.Modify, 0, 'abc');
         const localOp = createOperation(OperationType.Insert, 0, 'def');
         const transformedOp = receivedOp.transform(localOp);
 
-        expect(transformedOp.index.textRange).toEqual([3, 3]);
+        expect(transformedOp.index.textRange).toEqual([0, 0]);
       });
 
       it('should not change the text index if local op is a Block operation', () => {

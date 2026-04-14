@@ -234,17 +234,13 @@ export class CollaborationManager {
     if (operation.userId === this.#config.userId) {
       void this.#client?.send(operation);
     } else {
+      this.#putBatchToUndo();
+      
       /**
        * If operation is remote, transform undo/redo stacks
        */
       this.#undoRedoManager.transformStacks(operation);
-
-      /**
-       * If we got a new remote operation - transform current batch
-       * If batch is empty leave it as it is
-       */
-      this.#currentBatch = this.#currentBatch?.transform(operation) ?? null;
-
+     
       return;
     }
 

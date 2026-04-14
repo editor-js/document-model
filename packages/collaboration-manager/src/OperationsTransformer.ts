@@ -181,7 +181,8 @@ export class OperationsTransformer {
     /**
      * Check that againstOp affects current operation
      */
-    if (!sameInput || !sameBlock || againstIndex.textRange![0] > index.textRange![1]) {
+    if (
+      !sameInput || !sameBlock || againstOp.getEffectiveRange()[0] >= operation.getEffectiveRange()[1]) {
       return Operation.from(operation);
     }
 
@@ -212,19 +213,22 @@ export class OperationsTransformer {
    * @returns {Operation<OperationType>} new operation
    */
   #transformAgainstTextInsert<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
+    console.log('transforming against text insert operation');
+    
     const newIndexBuilder = new IndexBuilder().from(operation.index);
 
     const insertedLength = againstOp.data.payload!.length;
 
+    const textRange = operation.getEffectiveRange();
+
     const index = operation.index;
-    const againstIndex = againstOp.index;
 
     /**
      * In this case, againstOp is insert operatioin, there would be only two possible intersections
      * - None - inserted text is on the left side of the current operation
      * - Includes - inserted text is inside of the current operation text range
      */
-    const intersectionType = getRangesIntersectionType(index.textRange!, againstIndex.textRange!);
+    const intersectionType = getRangesIntersectionType(textRange, againstOp.index.textRange!);
 
     switch (intersectionType) {
       case (RangeIntersectionType.None):
@@ -253,16 +257,20 @@ export class OperationsTransformer {
    * Cases:
    * 1. Delete range is fully on the left of the current operation
    *    - Move text range of the current operation to the left by amount of deleted characters
+   *    - Payload of the operations stays the same
    *
    * 2. Delete range covers part of the current operation
    *    - Deleted left side of the current operation
    *        - Move left bound of the current operation to the start of the against Delete operation
    *        - Move right bound of the current operation to the left by (amount of deleted characters - amount of characters in the current operation that were deleted)
+   *        - Deleted intersection is removed from the payload of the current operation
    *    - Deleted right side of the current operation
    *        - Move right bound of the current operation to the left by amount of deleted intersection
+   *        - Deleted intersection is removed from the payload of the current operation
    *
    * 3. Delete range is inside of the current operation text range
    *    - Move right bound of the current operation to the left by amount of deleted characters
+   *    - Deleted intersection is removed from the payload of the current operation
    *
    * 4. Delete range fully covers the current operation text rannge
    *    - Return Neutral operation
@@ -271,14 +279,18 @@ export class OperationsTransformer {
    * @param againstOp - Operation against which the current operation should be transformed
    * @returns {Operation<OperationType>} new operation
    */
-  #transformAgainstTextDelete<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
+  #transformAgainstTextDelete<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {    
     const newIndexBuilder = new IndexBuilder().from(operation.index);
+    let newPayload = operation.data.payload as string;
     const deletedAmount = againstOp.data.payload!.length;
+
+    const textRange = operation.getEffectiveRange();
+    const againstTextRange = againstOp.getEffectiveRange();
 
     const index = operation.index;
     const againstIndex = againstOp.index;
 
-    const intersectionType = getRangesIntersectionType(index.textRange!, againstIndex.textRange!);
+    const intersectionType = getRangesIntersectionType(textRange, againstTextRange);
 
     switch (intersectionType) {
       /**
@@ -293,6 +305,7 @@ export class OperationsTransformer {
        */
       case (RangeIntersectionType.Left):
         newIndexBuilder.addTextRange([againstIndex.textRange![0], index.textRange![1] - deletedAmount]);
+        newPayload = typeof newPayload === 'string' ? newPayload.slice(againstTextRange[1] - textRange[0]) : newPayload;
         break;
 
       /**
@@ -300,6 +313,7 @@ export class OperationsTransformer {
        */
       case (RangeIntersectionType.Right):
         newIndexBuilder.addTextRange([index.textRange![0], againstIndex.textRange![0]]);
+        newPayload = typeof newPayload === 'string' ? newPayload.slice(0, againstTextRange[0] - textRange[0]) : newPayload;
         break;
 
       /**
@@ -307,6 +321,9 @@ export class OperationsTransformer {
        */
       case (RangeIntersectionType.Includes):
         newIndexBuilder.addTextRange([index.textRange![0], index.textRange![1] - deletedAmount]);
+        newPayload = typeof newPayload === 'string' 
+          ? newPayload.slice(0, againstTextRange[0]) + newPayload.slice(againstTextRange[1]) 
+          : newPayload;
         break;
 
       /**
@@ -322,6 +339,7 @@ export class OperationsTransformer {
     const newOp = Operation.from(operation);
 
     newOp.index = newIndexBuilder.build();
+    newOp.data.payload = newPayload;
 
     return newOp;
   }

@@ -372,6 +372,7 @@ describe('OperationsTransformer', () => {
           const result = transformer.transform(operation, againstOp);
 
           expect(result.index.textRange).toEqual([5, 7]);
+          expect(result.data.payload).toEqual('ab');
         });
 
         it('should shrink range when delete is strictly inside the current text range', () => {

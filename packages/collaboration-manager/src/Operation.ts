@@ -1,4 +1,4 @@
-import { IndexBuilder, type Index, type BlockNodeSerialized } from '@editorjs/model';
+import { IndexBuilder, type Index, type BlockNodeSerialized, TextRange } from '@editorjs/model';
 import { OperationsTransformer } from './OperationsTransformer.js';
 
 /**
@@ -184,6 +184,20 @@ export class Operation<T extends OperationType = OperationType> {
   }
 
   /**
+   * Returns effective text range of the operation
+   * This method is used to get actual text range for multi-symbol text insertions
+   *
+   * @returns {TextRange} effective text range of the operation
+   */
+  public getEffectiveRange(): TextRange {
+    if (this.type === OperationType.Insert) {
+      return [this.index.textRange![0], Math.max(this.index.textRange![1], this.index.textRange![0] + this.data.payload!.length)];
+    }
+    
+    return this.index.textRange!;
+  }
+
+  /**
    * Returns an inverted operation
    */
   public inverse(): Operation<InvertedOperationType<T>> {
@@ -208,9 +222,12 @@ export class Operation<T extends OperationType = OperationType> {
           prevPayload: data.payload,
         }, this.userId) as Operation<InvertedOperationType<T>>;
       }
+      case OperationType.Neutral: {
+        return new Operation(OperationType.Neutral, index, { payload: [] }, this.userId) as Operation<InvertedOperationType<T>>;
+      }
 
       default:
-        throw Error('Unsupported operation type');
+        throw Error(`Unsupported operation type`);
     }
   }
 

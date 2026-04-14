@@ -1165,7 +1165,7 @@ describe('CollaborationManager', () => {
           name: 'paragraph',
           data: {
             text: {
-              value: 'initial',
+              value: '',
               $t: 't',
             },
           },
@@ -1187,16 +1187,7 @@ describe('CollaborationManager', () => {
       collaborationManager.applyOperation(localOp);
 
       // Apply conflicting remote operation
-      const remoteIndex = new IndexBuilder().addBlockIndex(0)
-        .addDataKey(createDataKey('text'))
-        .addTextRange([0, 7])
-        .build();
-
-      const remoteOp = new Operation(OperationType.Delete, remoteIndex, {
-        payload: 'initial',
-      }, 'other-user');
-
-      collaborationManager.applyOperation(remoteOp);
+      model.removeText('other-user', 0, createDataKey('text'), 1, 7);
 
       // Verify the current batch was cleared by checking undo doesn't restore text
       collaborationManager.undo();
