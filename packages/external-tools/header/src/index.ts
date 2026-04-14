@@ -58,14 +58,19 @@ export class Header implements BlockTool<HeaderData, HeaderConfig> {
   public static name = 'header';
 
   /**
+   * Default valid HTML heading level
+   */
+  static readonly #defaultLevel = 2;
+
+  /**
    * Minimum valid HTML heading level
    */
   static readonly #minLevel = 1;
 
   /**
-   * Maximum HTML heading level (h6)
+   * Maximum valid HTML heading level
    */
-  static readonly #maxLevel = 2 + 2 + 2;
+  static readonly #maxLevel = 6;
 
   /**
    * Adapter for linking block data with the DOM
@@ -93,28 +98,14 @@ export class Header implements BlockTool<HeaderData, HeaderConfig> {
 
   /**
    * Normalizes a raw value to a valid HeadingLevel (1–6).
-   * If `config.levels` is provided, the value must also be present in that list.
-   * Falls back to the configured default level, then to 2.
    * @param raw - Raw level value from persisted data or config
    */
   #normalizeLevel(raw: unknown): HeadingLevel {
-    const fallback: HeadingLevel = this.#config.defaultLevel ?? 2;
-    const allowed = this.#config.levels;
-    const isGloballyValid = typeof raw === 'number'
-      && Number.isInteger(raw)
-      && raw >= Header.#minLevel
-      && raw <= Header.#maxLevel;
-    const candidate = isGloballyValid ? raw as HeadingLevel : null;
-
-    if (candidate !== null && (allowed === undefined || allowed.includes(candidate))) {
-      return candidate;
+    if (typeof raw !== 'number' || (typeof raw === 'number' && (raw < Header.#minLevel || raw > Header.#maxLevel))) {
+      return Header.#defaultLevel;
     }
 
-    if (allowed !== undefined && !allowed.includes(fallback)) {
-      return allowed[0] ?? 2;
-    }
-
-    return fallback;
+    return raw as HeadingLevel;
   }
 
   /**
