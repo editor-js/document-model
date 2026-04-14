@@ -83,7 +83,10 @@ describe('EditorDocument', () => {
 
       const newIdentifier = 'new-document-id';
 
-      doc.initialize({ identifier: newIdentifier, blocks: [] });
+      doc.initialize({
+        identifier: newIdentifier,
+        blocks: [],
+      });
 
       expect(doc.identifier).toBe(newIdentifier);
     });
@@ -93,9 +96,15 @@ describe('EditorDocument', () => {
         identifier: 'document',
       });
 
-      const properties = { readOnly: true, customProp: 'value' };
+      const properties = {
+        readOnly: true,
+        customProp: 'value',
+      };
 
-      doc.initialize({ blocks: [], properties });
+      doc.initialize({
+        blocks: [],
+        properties,
+      });
 
       expect(doc.getProperty('readOnly')).toBe(true);
       expect(doc.getProperty('customProp')).toBe('value');
