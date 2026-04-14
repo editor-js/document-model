@@ -76,6 +76,31 @@ describe('EditorDocument', () => {
       expect(doc.serialized.blocks).toHaveLength(blocks.length);
     });
 
+    it('should update the identifier if provided in document data', () => {
+      const doc = new EditorDocument({
+        identifier: 'document',
+      });
+
+      const newIdentifier = 'new-document-id';
+
+      doc.initialize({ identifier: newIdentifier, blocks: [] });
+
+      expect(doc.identifier).toBe(newIdentifier);
+    });
+
+    it('should set properties if provided in document data', () => {
+      const doc = new EditorDocument({
+        identifier: 'document',
+      });
+
+      const properties = { readOnly: true, customProp: 'value' };
+
+      doc.initialize({ blocks: [], properties });
+
+      expect(doc.getProperty('readOnly')).toBe(true);
+      expect(doc.getProperty('customProp')).toBe('value');
+    });
+
     it('should clear the document before initialization', () => {
       const doc = new EditorDocument({
         identifier: 'document',
@@ -1166,6 +1191,15 @@ describe('EditorDocument', () => {
       expect(spy)
         .toHaveBeenCalledWith(block.serialized, blockIndex);
     });
+
+    it('should throw an error if index is not supported', () => {
+      const index = new IndexBuilder()
+        .addPropertyName('readOnly')
+        .build();
+
+      expect(() => document.insertData(index, 'data'))
+        .toThrow('Unsupported index');
+    });
   });
 
   describe('.removeData()', () => {
@@ -1236,6 +1270,15 @@ describe('EditorDocument', () => {
 
       expect(spy)
         .toHaveBeenCalledWith(blockIndex);
+    });
+
+    it('should throw an error if index is not supported', () => {
+      const index = new IndexBuilder()
+        .addPropertyName('readOnly')
+        .build();
+
+      expect(() => document.removeData(index, 'data'))
+        .toThrow('Unsupported index');
     });
   });
 
