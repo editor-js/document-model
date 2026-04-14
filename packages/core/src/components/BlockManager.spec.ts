@@ -42,7 +42,9 @@ await jest.unstable_mockModule('@editorjs/model', () => {
 
 await jest.unstable_mockModule('@editorjs/dom-adapters', () => ({
   BlockToolAdapter: jest.fn(() => ({})),
-  CaretAdapter: jest.fn(() => ({})),
+  CaretAdapter: jest.fn(() => ({
+    attachBlock: jest.fn(),
+  })),
   FormattingAdapter: jest.fn(() => ({})),
 }));
 
