@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-magic-numbers, jsdoc/require-jsdoc, @stylistic/comma-dangle */
+/* eslint-disable jsdoc/require-jsdoc, @stylistic/comma-dangle,@typescript-eslint/naming-convention */
 import { beforeEach, jest } from '@jest/globals';
 import type { BlockToolFacade, CoreConfigValidated } from '@editorjs/sdk';
 import type { Index } from '@editorjs/model';
@@ -106,390 +106,410 @@ describe('BlocksManager (unit, mocked deps)', () => {
     jest.resetAllMocks();
   });
 
-  it('insert should call model.addBlock with default tool name and computed index', () => {
-    blocksManager.insert();
-
-    expect(model.addBlock).toHaveBeenCalledTimes(1);
-    expect(model.addBlock).toHaveBeenCalledWith(
-      USER_ID,
-      expect.objectContaining({
-        name: 'paragraph'
-      }),
-      BLOCKS_COUNT + 1
-    );
-    expect(model.removeBlock).not.toHaveBeenCalled();
+  describe('.blocksCount', () => {
+    it('should proxy model.length', () => {
+      expect(blocksManager.blocksCount).toBe(BLOCKS_COUNT);
+    });
   });
 
-  it('insert with explicit index should not use default computed index path', () => {
-    blocksManager.insert({
-      index: 2,
-      type: 'paragraph'
+  describe('.insert()', () => {
+    it('should call model.addBlock with default tool name and computed index', () => {
+      blocksManager.insert();
+
+      expect(model.addBlock).toHaveBeenCalledTimes(1);
+      expect(model.addBlock).toHaveBeenCalledWith(
+        USER_ID,
+        expect.objectContaining({
+          name: 'paragraph'
+        }),
+        BLOCKS_COUNT
+      );
+      expect(model.removeBlock).not.toHaveBeenCalled();
     });
 
-    expect(model.addBlock).toHaveBeenCalledWith(
-      USER_ID,
-      expect.objectContaining({
-        name: 'paragraph'
-      }),
-      2
-    );
-  });
+    it('should use explicit index when provided', () => {
+      blocksManager.insert({
+        index: 2,
+        type: 'paragraph'
+      });
 
-  it('blocksCount should proxy model.length', () => {
-    expect(blocksManager.blocksCount).toBe(BLOCKS_COUNT);
-  });
-
-  it('insert with replace should call removeBlock then addBlock with provided index', () => {
-    blocksManager.insert({
-      type: 'new',
-      index: 0,
-      replace: true
+      expect(model.addBlock).toHaveBeenCalledWith(
+        USER_ID,
+        expect.objectContaining({
+          name: 'paragraph'
+        }),
+        2
+      );
     });
 
-    expect(model.removeBlock).toHaveBeenCalledWith(USER_ID, 0);
-    expect(model.addBlock).toHaveBeenCalledWith(
-      USER_ID,
-      expect.objectContaining({
-        name: 'new'
-      }),
-      0
-    );
-  });
+    it('should call removeBlock then addBlock when replace is true and index is provided', () => {
+      blocksManager.insert({
+        type: 'new',
+        index: 0,
+        replace: true
+      });
 
-  it('insert with replace and without index should use model.length as insertion/removal index', () => {
-    blocksManager.insert({
-      replace: true
+      expect(model.removeBlock).toHaveBeenCalledWith(USER_ID, 0);
+      expect(model.addBlock).toHaveBeenCalledWith(
+        USER_ID,
+        expect.objectContaining({
+          name: 'new'
+        }),
+        0
+      );
     });
 
-    expect(model.removeBlock).toHaveBeenCalledWith(USER_ID, BLOCKS_COUNT);
-    expect(model.addBlock).toHaveBeenCalledWith(
-      USER_ID,
-      expect.objectContaining({
-        name: 'paragraph'
-      }),
-      BLOCKS_COUNT
-    );
+    it('should use model.length as insertion/removal index when replace is true and index is omitted', () => {
+      blocksManager.insert({
+        replace: true
+      });
+
+      expect(model.removeBlock).toHaveBeenCalledWith(USER_ID, BLOCKS_COUNT - 1);
+      expect(model.addBlock).toHaveBeenCalledWith(
+        USER_ID,
+        expect.objectContaining({
+          name: 'paragraph'
+        }),
+        BLOCKS_COUNT - 1
+      );
+    });
   });
 
-  it('insertMany should call model.addBlock for each block with increasing indexes', () => {
-    blocksManager.insertMany([
-      {
-        name: 'one',
-        data: {}
-      },
-      {
-        name: 'two',
-        data: {}
-      }
-    ], 1);
-
-    expect(model.addBlock).toHaveBeenCalledTimes(2);
-    expect(model.addBlock).toHaveBeenNthCalledWith(
-      1,
-      USER_ID,
-      {
-        name: 'one',
-        data: {}
-      },
-      1
-    );
-    expect(model.addBlock).toHaveBeenNthCalledWith(
-      2,
-      USER_ID,
-      {
-        name: 'two',
-        data: {}
-      },
-      2
-    );
-  });
-
-  it('insertMany without index should use default model.length + 1 as start index', () => {
-    blocksManager.insertMany([
-      {
-        name: 'first',
-        data: {}
-      },
-      {
-        name: 'second',
-        data: {}
-      }
-    ]);
-
-    expect(model.addBlock).toHaveBeenNthCalledWith(
-      1,
-      USER_ID,
-      {
-        name: 'first',
-        data: {}
-      },
-      BLOCKS_COUNT + 1
-    );
-    expect(model.addBlock).toHaveBeenNthCalledWith(
-      2,
-      USER_ID,
-      {
-        name: 'second',
-        data: {}
-      },
-      BLOCKS_COUNT + 2
-    );
-  });
-
-  it('render should call model.initializeDocument with provided document', () => {
-    const doc = {
-      identifier: 'doc',
-      blocks: [
+  describe('.insertMany()', () => {
+    it('should call model.addBlock for each block with increasing indexes', () => {
+      blocksManager.insertMany([
         {
-          name: 'x',
+          name: 'one',
+          data: {}
+        },
+        {
+          name: 'two',
           data: {}
         }
-      ],
-      properties: {}
-    };
+      ], 1);
 
-    blocksManager.render(doc);
-
-    expect(model.initializeDocument).toHaveBeenCalledWith(doc);
-  });
-
-  it('clear should call model.clearBlocks', () => {
-    blocksManager.clear();
-
-    expect(model.clearBlocks).toHaveBeenCalled();
-  });
-
-  it('deleteBlock without caret and without index should throw', () => {
-    expect(() => blocksManager.deleteBlock()).toThrow('No block selected to delete');
-  });
-
-  it('deleteBlock with index should call model.removeBlock with index', () => {
-    blocksManager.deleteBlock(0);
-
-    expect(model.removeBlock).toHaveBeenCalledWith(USER_ID, 0);
-  });
-
-  it('move should call removeBlock and addBlock with adjusted index when moving current block', () => {
-    // @ts-expect-error - need to assign read only property to mock it
-    model.serialized = {
-      blocks: [
+      expect(model.addBlock).toHaveBeenCalledTimes(2);
+      expect(model.addBlock).toHaveBeenNthCalledWith(
+        1,
+        USER_ID,
         {
-          name: 'a'
+          name: 'one',
+          data: {}
         },
+        1
+      );
+      expect(model.addBlock).toHaveBeenNthCalledWith(
+        2,
+        USER_ID,
         {
-          name: 'b'
+          name: 'two',
+          data: {}
         },
-        {
-          name: 'c'
-        }
-      ]
-    };
-    // @ts-expect-error - need to assign read only property to mock it
-    caretAdapter.userCaretIndex = {
-      blockIndex: 0
-    };
-
-    blocksManager.move(2);
-
-    expect(model.removeBlock).toHaveBeenCalledWith(USER_ID, 0);
-    expect(model.addBlock).toHaveBeenCalledWith(
-      USER_ID,
-      {
-        name: 'a'
-      },
-      3
-    );
-  });
-
-  it('move should throw when there is no current block', () => {
-    // @ts-expect-error - need to assign read only property to mock it
-    caretAdapter.userCaretIndex = undefined;
-
-    expect(() => blocksManager.move(1)).toThrow('No block selected to move');
-  });
-
-  it('move should not offset target index when toIndex is less than fromIndex', () => {
-    // @ts-expect-error - need to assign read only property to mock it
-    model.serialized = {
-      blocks: [
-        {
-          name: 'a'
-        },
-        {
-          name: 'b'
-        },
-        {
-          name: 'c'
-        }
-      ]
-    };
-
-    blocksManager.move(0, 2);
-
-    expect(model.removeBlock).toHaveBeenCalledWith(USER_ID, 2);
-    expect(model.addBlock).toHaveBeenCalledWith(USER_ID, { name: 'c' }, 0);
-  });
-
-  it('move should do nothing when toIndex equals fromIndex', () => {
-    // @ts-expect-error - need to assign read only property to mock it
-    model.serialized = {
-      blocks: [
-        {
-          name: 'a'
-        },
-        {
-          name: 'b'
-        },
-        {
-          name: 'c'
-        }
-      ]
-    };
-
-    blocksManager.move(1, 1);
-
-    expect(model.removeBlock).not.toHaveBeenCalled();
-    expect(model.addBlock).not.toHaveBeenCalled();
-  });
-
-  it('should ignore unknown model events in #handleModelUpdate default branch', () => {
-    void changedListener({
-      type: 'unknown-event'
+        2
+      );
     });
 
-    expect(eventBus.dispatchEvent).not.toHaveBeenCalled();
+    it('should use model.length as start index when index is omitted', () => {
+      blocksManager.insertMany([
+        {
+          name: 'first',
+          data: {}
+        },
+        {
+          name: 'second',
+          data: {}
+        }
+      ]);
+
+      expect(model.addBlock).toHaveBeenNthCalledWith(
+        1,
+        USER_ID,
+        {
+          name: 'first',
+          data: {}
+        },
+        BLOCKS_COUNT
+      );
+      expect(model.addBlock).toHaveBeenNthCalledWith(
+        2,
+        USER_ID,
+        {
+          name: 'second',
+          data: {}
+        },
+        BLOCKS_COUNT + 1
+      );
+    });
   });
 
-  it('should handle BlockAddedEvent and dispatch BlockAddedCoreEvent via EventBus', async () => {
-    const createMock = jest.fn(() => ({ render: jest.fn() }));
+  describe('.render()', () => {
+    it('should call model.initializeDocument with provided document', () => {
+      const doc = {
+        identifier: 'doc',
+        blocks: [
+          {
+            name: 'x',
+            data: {}
+          }
+        ],
+        properties: {}
+      };
 
-    jest.spyOn(toolsManager.blockTools, 'get').mockReturnValue({
-      name: 'tool',
-      create: createMock
-    } as unknown as BlockToolFacade);
+      blocksManager.render(doc);
 
-    const event = new BlockAddedEvent(
-      {
+      expect(model.initializeDocument).toHaveBeenCalledWith(doc);
+    });
+  });
+
+  describe('.clear()', () => {
+    it('should call model.clearBlocks', () => {
+      blocksManager.clear();
+
+      expect(model.clearBlocks).toHaveBeenCalled();
+    });
+  });
+
+  describe('.deleteBlock()', () => {
+    it('should throw when no caret and no index is provided', () => {
+      expect(() => blocksManager.deleteBlock()).toThrow('No block selected to delete');
+    });
+
+    it('should call model.removeBlock with provided index', () => {
+      blocksManager.deleteBlock(0);
+
+      expect(model.removeBlock).toHaveBeenCalledWith(USER_ID, 0);
+    });
+  });
+
+  describe('.move()', () => {
+    it('should call removeBlock and addBlock when moving current block forward', () => {
+      // @ts-expect-error - need to assign read only property to mock it
+      model.serialized = {
+        blocks: [
+          {
+            name: 'a'
+          },
+          {
+            name: 'b'
+          },
+          {
+            name: 'c'
+          }
+        ]
+      };
+      // @ts-expect-error - need to assign read only property to mock it
+      caretAdapter.userCaretIndex = {
         blockIndex: 0
-      } as Index,
-      {
-        name: 'tool',
-        data: {}
-      },
-      USER_ID,
-    );
+      };
 
-    await changedListener(event);
+      blocksManager.move(2);
 
-    expect(toolsManager.blockTools.get).toHaveBeenCalledWith('tool');
-    expect(createMock).toHaveBeenCalled();
-    expect(createMock).toHaveBeenCalledWith(expect.objectContaining({
-      readOnly: false
-    }));
-    expect(eventBus.dispatchEvent).toHaveBeenCalled();
+      expect(model.removeBlock).toHaveBeenCalledWith(USER_ID, 0);
+      expect(model.addBlock).toHaveBeenCalledWith(
+        USER_ID,
+        {
+          name: 'a'
+        },
+        2
+      );
+    });
+
+    it('should throw when there is no current block and no index provided', () => {
+      // @ts-expect-error - need to assign read only property to mock it
+      caretAdapter.userCaretIndex = undefined;
+
+      expect(() => blocksManager.move(1)).toThrow('No block selected to move');
+    });
+
+    it('should pass toIndex directly when toIndex is less than fromIndex', () => {
+      // @ts-expect-error - need to assign read only property to mock it
+      model.serialized = {
+        blocks: [
+          {
+            name: 'a'
+          },
+          {
+            name: 'b'
+          },
+          {
+            name: 'c'
+          }
+        ]
+      };
+
+      blocksManager.move(0, 2);
+
+      expect(model.removeBlock).toHaveBeenCalledWith(USER_ID, 2);
+      expect(model.addBlock).toHaveBeenCalledWith(USER_ID, { name: 'c' }, 0);
+    });
+
+    it('should do nothing when toIndex equals fromIndex', () => {
+      // @ts-expect-error - need to assign read only property to mock it
+      model.serialized = {
+        blocks: [
+          {
+            name: 'a'
+          },
+          {
+            name: 'b'
+          },
+          {
+            name: 'c'
+          }
+        ]
+      };
+
+      blocksManager.move(1, 1);
+
+      expect(model.removeBlock).not.toHaveBeenCalled();
+      expect(model.addBlock).not.toHaveBeenCalled();
+    });
   });
 
-  it('should handle BlockRemovedEvent and dispatch BlockRemovedCoreEvent via EventBus', () => {
-    const event = new BlockRemovedEvent(
-      {
-        blockIndex: 1
-      } as Index,
-      {
-        name: 'tool',
-        data: {}
-      },
-      USER_ID,
-    );
+  describe('#handleModelUpdate()', () => {
+    it('should ignore unknown model events', () => {
+      void changedListener({
+        type: 'unknown-event'
+      });
 
-    void changedListener(event);
+      expect(eventBus.dispatchEvent).not.toHaveBeenCalled();
+    });
 
-    expect(eventBus.dispatchEvent).toHaveBeenCalled();
-  });
+    describe('BlockAddedEvent handling', () => {
+      it('should create tool and dispatch BlockAddedCoreEvent via EventBus', async () => {
+        const createMock = jest.fn(() => ({ render: jest.fn() }));
 
-  it('should surface missing block index via unhandledRejection event for BlockAddedEvent', async () => {
-    const event = new BlockAddedEvent(
-      {} as Index,
-      {
-        name: 'tool',
-        data: {}
-      },
-      USER_ID,
-    );
+        jest.spyOn(toolsManager.blockTools, 'get').mockReturnValue({
+          name: 'tool',
+          create: createMock
+        } as unknown as BlockToolFacade);
 
-    const eventPromise = changedListener(event);
+        const event = new BlockAddedEvent(
+          {
+            blockIndex: 0
+          } as Index,
+          {
+            name: 'tool',
+            data: {}
+          },
+          USER_ID,
+        );
 
-    try {
-      await eventPromise;
-    } catch (error: unknown) {
-      expect((error as Error).message).toContain('[BlockManager] Block index should be defined');
-    }
-  });
+        await changedListener(event);
 
-  it('should surface missing tool via unhandledRejection event for BlockAddedEvent', async () => {
-    jest.spyOn(toolsManager.blockTools, 'get').mockReturnValue(undefined);
+        expect(toolsManager.blockTools.get).toHaveBeenCalledWith('tool');
+        expect(createMock).toHaveBeenCalled();
+        expect(createMock).toHaveBeenCalledWith(expect.objectContaining({
+          readOnly: false
+        }));
+        expect(eventBus.dispatchEvent).toHaveBeenCalled();
+      });
 
-    const event = new BlockAddedEvent(
-      {
-        blockIndex: 0
-      } as Index,
-      {
-        name: 'missing-tool',
-        data: {}
-      },
-      USER_ID,
-    );
+      it('should throw when blockIndex is undefined', async () => {
+        const event = new BlockAddedEvent(
+          {} as Index,
+          {
+            name: 'tool',
+            data: {}
+          },
+          USER_ID,
+        );
 
-    try {
-      await changedListener(event);
-    } catch (error: unknown) {
-      expect((error as Error).message).toContain('[BlockManager] Block Tool missing-tool not found');
-    }
-  });
+        const eventPromise = changedListener(event);
 
-  it('should log error when tool render fails', async () => {
-    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    const createMock = jest.fn(() => ({
-      render: jest.fn(() => Promise.reject(new Error('render failed')))
-    }));
+        try {
+          await eventPromise;
+        } catch (error: unknown) {
+          expect((error as Error).message).toContain('[BlockManager] Block index should be defined');
+        }
+      });
 
-    jest.spyOn(toolsManager.blockTools, 'get').mockReturnValue({
-      name: 'tool',
-      create: createMock
-    } as unknown as BlockToolFacade);
+      it('should throw when tool is not found', async () => {
+        jest.spyOn(toolsManager.blockTools, 'get').mockReturnValue(undefined);
 
-    const event = new BlockAddedEvent(
-      {
-        blockIndex: 0
-      } as Index,
-      {
-        name: 'tool',
-        data: {}
-      },
-      USER_ID,
-    );
+        const event = new BlockAddedEvent(
+          {
+            blockIndex: 0
+          } as Index,
+          {
+            name: 'missing-tool',
+            data: {}
+          },
+          USER_ID,
+        );
 
-    await changedListener(event);
+        try {
+          await changedListener(event);
+        } catch (error: unknown) {
+          expect((error as Error).message).toContain('[BlockManager] Block Tool missing-tool not found');
+        }
+      });
 
-    expect(errorSpy).toHaveBeenCalled();
-    expect(errorSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[BlockManager] Block Tool tool failed to render'),
-      expect.any(Error)
-    );
-    errorSpy.mockRestore();
-  });
+      it('should log error when tool render fails', async () => {
+        const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+        const createMock = jest.fn(() => ({
+          render: jest.fn(() => Promise.reject(new Error('render failed')))
+        }));
 
-  it('should throw on BlockRemovedEvent when blockIndex is undefined', () => {
-    const event = new BlockRemovedEvent(
-      {} as Index,
-      {
-        name: 'tool',
-        data: {}
-      },
-      USER_ID,
-    );
+        jest.spyOn(toolsManager.blockTools, 'get').mockReturnValue({
+          name: 'tool',
+          create: createMock
+        } as unknown as BlockToolFacade);
 
-    expect(() => {
-      void changedListener(event);
-    }).toThrow('Block index should be defined');
+        const event = new BlockAddedEvent(
+          {
+            blockIndex: 0
+          } as Index,
+          {
+            name: 'tool',
+            data: {}
+          },
+          USER_ID,
+        );
+
+        await changedListener(event);
+
+        expect(errorSpy).toHaveBeenCalled();
+        expect(errorSpy).toHaveBeenCalledWith(
+          expect.stringContaining('[BlockManager] Block Tool tool failed to render'),
+          expect.any(Error)
+        );
+        errorSpy.mockRestore();
+      });
+    });
+
+    describe('BlockRemovedEvent handling', () => {
+      it('should dispatch BlockRemovedCoreEvent via EventBus', () => {
+        const event = new BlockRemovedEvent(
+          {
+            blockIndex: 1
+          } as Index,
+          {
+            name: 'tool',
+            data: {}
+          },
+          USER_ID,
+        );
+
+        void changedListener(event);
+
+        expect(eventBus.dispatchEvent).toHaveBeenCalled();
+      });
+
+      it('should throw when blockIndex is undefined', () => {
+        const event = new BlockRemovedEvent(
+          {} as Index,
+          {
+            name: 'tool',
+            data: {}
+          },
+          USER_ID,
+        );
+
+        expect(() => {
+          void changedListener(event);
+        }).toThrow('Block index should be defined');
+      });
+    });
   });
 });

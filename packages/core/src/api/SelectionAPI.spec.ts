@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import { jest } from '@jest/globals';
 
 // Mock dependencies before importing the module under test
@@ -19,12 +20,14 @@ describe('SelectionAPI', () => {
   // @ts-expect-error - mock object
   const selectionManager = new SelectionManager();
 
-  it('applyInlineToolForCurrentSelection should convert toolName and delegate to SelectionManager', () => {
-    const api = new SelectionAPI(selectionManager as never as InstanceType<typeof SelectionManager>);
+  describe('.applyInlineToolForCurrentSelection()', () => {
+    it('should convert toolName and delegate to SelectionManager', () => {
+      const api = new SelectionAPI(selectionManager as never as InstanceType<typeof SelectionManager>);
 
-    api.applyInlineToolForCurrentSelection('bold', { level: 1 } as never);
+      api.applyInlineToolForCurrentSelection('bold', { level: 1 } as never);
 
-    expect(createInlineToolName).toHaveBeenCalledWith('bold');
-    expect(selectionManager.applyInlineToolForCurrentSelection).toHaveBeenCalledWith('inline:bold', { level: 1 });
+      expect(createInlineToolName).toHaveBeenCalledWith('bold');
+      expect(selectionManager.applyInlineToolForCurrentSelection).toHaveBeenCalledWith('inline:bold', { level: 1 });
+    });
   });
 });

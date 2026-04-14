@@ -132,7 +132,7 @@ export class BlocksManager {
     let newIndex = index;
 
     if (newIndex === undefined) {
-      newIndex = this.#model.length + (replace ? 0 : 1);
+      newIndex = this.#model.length + (replace ? -1 : 0);
     }
 
     if (replace) {
@@ -150,7 +150,7 @@ export class BlocksManager {
    * @param blocks - array of blocks to insert
    * @param [index] - index to insert blocks at. If undefined, inserts at the end
    */
-  public insertMany(blocks: BlockNodeSerialized[], index: number = this.#model.length + 1): void {
+  public insertMany(blocks: BlockNodeSerialized[], index: number = this.#model.length): void {
     blocks.forEach((block, i) => this.#model.addBlock(this.#config.userId, block, index + i));
   }
 
@@ -204,7 +204,7 @@ export class BlocksManager {
     const block = this.#model.serialized.blocks[fromIndex];
 
     this.#model.removeBlock(this.#config.userId, fromIndex);
-    this.#model.addBlock(this.#config.userId, block, toIndex + (fromIndex < toIndex ? 1 : 0));
+    this.#model.addBlock(this.#config.userId, block, toIndex);
   }
 
   /**

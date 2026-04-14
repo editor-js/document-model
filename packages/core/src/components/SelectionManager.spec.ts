@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-magic-numbers, jsdoc/require-jsdoc, @stylistic/comma-dangle */
+/* eslint-disable @typescript-eslint/no-magic-numbers, jsdoc/require-jsdoc, @stylistic/comma-dangle,@typescript-eslint/naming-convention */
 
 import { jest } from '@jest/globals';
 import type { CoreConfig, ToolLoadedCoreEvent } from '@editorjs/sdk';
@@ -84,155 +84,161 @@ describe('SelectionManager', () => {
     jest.resetAllMocks();
   });
 
-  it('should ignore non-inline loaded tool', () => {
-    const tool = {
-      name: 'paragraph',
-      isInline: jest.fn(() => false),
-      create: jest.fn(),
-    };
+  describe('tool registration (ToolLoaded event)', () => {
+    it('should ignore non-inline loaded tool', () => {
+      const tool = {
+        name: 'paragraph',
+        isInline: jest.fn(() => false),
+        create: jest.fn(),
+      };
 
-    toolLoadedListener({
-      detail: { tool },
-    } as unknown as ToolLoadedCoreEvent);
+      toolLoadedListener({
+        detail: { tool },
+      } as unknown as ToolLoadedCoreEvent);
 
-    expect(formattingAdapter.attachTool).not.toHaveBeenCalled();
-  });
-
-  it('should register inline tool and attach it to formatting adapter', () => {
-    const inlineToolInstance = { render: jest.fn() };
-    const tool = {
-      name: 'bold',
-      isInline: jest.fn(() => true),
-      create: jest.fn(() => inlineToolInstance),
-    };
-
-    toolLoadedListener({
-      detail: { tool },
-    } as unknown as ToolLoadedCoreEvent);
-
-    expect(tool.create).toHaveBeenCalled();
-    expect(formattingAdapter.attachTool).toHaveBeenCalledWith('bold', inlineToolInstance);
-  });
-
-  it('should ignore caret events of other users', () => {
-    const event = new CaretManagerCaretUpdatedEvent({
-      userId: 'another-user',
-      index: null,
+      expect(formattingAdapter.attachTool).not.toHaveBeenCalled();
     });
 
-    caretEventsListener(event);
+    it('should register inline tool and attach it to formatting adapter', () => {
+      const inlineToolInstance = { render: jest.fn() };
+      const tool = {
+        name: 'bold',
+        isInline: jest.fn(() => true),
+        create: jest.fn(() => inlineToolInstance),
+      };
 
-    expect(eventBus.dispatchEvent).not.toHaveBeenCalled();
+      toolLoadedListener({
+        detail: { tool },
+      } as unknown as ToolLoadedCoreEvent);
+
+      expect(tool.create).toHaveBeenCalled();
+      expect(formattingAdapter.attachTool).toHaveBeenCalledWith('bold', inlineToolInstance);
+    });
   });
 
-  it('should dispatch empty selection info when index is null', () => {
-    const event = new CaretManagerCaretUpdatedEvent({
-      userId: 'user',
-      index: null,
-    }
-    );
+  describe('Caret Events handling', () => {
+    it('should ignore caret events of other users', () => {
+      const event = new CaretManagerCaretUpdatedEvent({
+        userId: 'another-user',
+        index: null,
+      });
 
-    caretEventsListener(event);
+      caretEventsListener(event);
 
-    expect(model.getFragments).not.toHaveBeenCalled();
-    expect(SelectionChangedCoreEvent).toHaveBeenCalledWith(expect.objectContaining({
-      index: null,
-      fragments: [],
-      availableInlineTools: expect.any(Map),
-    }));
-    expect(eventBus.dispatchEvent).toHaveBeenCalled();
-  });
-
-  it('should dispatch selection with empty fragments when parsed index is incomplete', () => {
-    const event = new CaretManagerCaretUpdatedEvent({
-      userId: 'user',
-      index: 'serialized',
+      expect(eventBus.dispatchEvent).not.toHaveBeenCalled();
     });
 
-    jest.spyOn(Index, 'parse').mockReturnValue({ blockIndex: 1 } as Index);
-
-    caretEventsListener(event);
-
-    expect(model.getFragments).not.toHaveBeenCalled();
-    expect(SelectionChangedCoreEvent).toHaveBeenCalledWith(expect.objectContaining({
-      fragments: [],
-    }));
-  });
-
-  it('should dispatch selection with fragments when parsed index has text range', () => {
-    const fragments = [{ tool: 'bold' }] as InlineFragment[];
-
-    jest.spyOn(model, 'getFragments').mockReturnValue(fragments);
-
-    const event = new CaretManagerCaretUpdatedEvent({
-      userId: 'user',
-      index: 'serialized',
-    });
-
-    jest.spyOn(Index, 'parse').mockReturnValue({
-      blockIndex: 1,
-      dataKey: 'text',
-      textRange: [1, 3]
-    } as Index);
-
-    caretEventsListener(event);
-
-    expect(model.getFragments).toHaveBeenCalledWith(1, 'text', 1, 3);
-    expect(SelectionChangedCoreEvent).toHaveBeenCalledWith(expect.objectContaining({
-      fragments,
-    }));
-    expect(eventBus.dispatchEvent).toHaveBeenCalled();
-  });
-
-  it('should ignore unknown caret manager event types', () => {
-    caretEventsListener({
-      detail: {
+    it('should dispatch empty selection info when index is null', () => {
+      const event = new CaretManagerCaretUpdatedEvent({
         userId: 'user',
-      },
-    } as CaretManagerEvents);
+        index: null,
+      }
+      );
 
-    expect(SelectionChangedCoreEvent).not.toHaveBeenCalled();
-    expect(eventBus.dispatchEvent).not.toHaveBeenCalled();
-  });
+      caretEventsListener(event);
 
-  it('should apply inline tool format with default data', () => {
-    selectionManager.applyInlineToolForCurrentSelection('bold' as InlineToolName);
-
-    expect(formattingAdapter.applyFormat).toHaveBeenCalledWith('bold', {});
-  });
-
-  it('should apply inline tool format with provided data', () => {
-    selectionManager.applyInlineToolForCurrentSelection('link' as InlineToolName, { href: 'https://example.com' });
-
-    expect(formattingAdapter.applyFormat).toHaveBeenCalledWith('link', { href: 'https://example.com' },);
-  });
-
-  it('should keep loaded inline tools map in selection changed payload', () => {
-    const tool = {
-      name: 'italic',
-      isInline: jest.fn(() => true),
-      create: jest.fn(() => ({ render: jest.fn() })),
-    };
-
-    toolLoadedListener({
-      detail: { tool },
-    } as unknown as ToolLoadedCoreEvent);
-
-    const event = new CaretManagerCaretUpdatedEvent({
-      userId: 'user',
-      index: 'serialized',
+      expect(model.getFragments).not.toHaveBeenCalled();
+      expect(SelectionChangedCoreEvent).toHaveBeenCalledWith(expect.objectContaining({
+        index: null,
+        fragments: [],
+        availableInlineTools: expect.any(Map),
+      }));
+      expect(eventBus.dispatchEvent).toHaveBeenCalled();
     });
 
-    jest.spyOn(Index, 'parse').mockReturnValue({
-      blockIndex: 1,
-      dataKey: 'text',
-      textRange: [1, 3]
-    } as Index);
+    it('should dispatch selection with empty fragments when parsed index is incomplete', () => {
+      const event = new CaretManagerCaretUpdatedEvent({
+        userId: 'user',
+        index: 'serialized',
+      });
 
-    caretEventsListener(event);
+      jest.spyOn(Index, 'parse').mockReturnValue({ blockIndex: 1 } as Index);
 
-    expect(SelectionChangedCoreEvent).toHaveBeenCalledWith(expect.objectContaining({
-      availableInlineTools: new Map([['italic', jest.fn()]])
-    }));
+      caretEventsListener(event);
+
+      expect(model.getFragments).not.toHaveBeenCalled();
+      expect(SelectionChangedCoreEvent).toHaveBeenCalledWith(expect.objectContaining({
+        fragments: [],
+      }));
+    });
+
+    it('should dispatch selection with fragments when parsed index has text range', () => {
+      const fragments = [{ tool: 'bold' }] as InlineFragment[];
+
+      jest.spyOn(model, 'getFragments').mockReturnValue(fragments);
+
+      const event = new CaretManagerCaretUpdatedEvent({
+        userId: 'user',
+        index: 'serialized',
+      });
+
+      jest.spyOn(Index, 'parse').mockReturnValue({
+        blockIndex: 1,
+        dataKey: 'text',
+        textRange: [1, 3]
+      } as Index);
+
+      caretEventsListener(event);
+
+      expect(model.getFragments).toHaveBeenCalledWith(1, 'text', 1, 3);
+      expect(SelectionChangedCoreEvent).toHaveBeenCalledWith(expect.objectContaining({
+        fragments,
+      }));
+      expect(eventBus.dispatchEvent).toHaveBeenCalled();
+    });
+
+    it('should ignore unknown caret manager event types', () => {
+      caretEventsListener({
+        detail: {
+          userId: 'user',
+        },
+      } as CaretManagerEvents);
+
+      expect(SelectionChangedCoreEvent).not.toHaveBeenCalled();
+      expect(eventBus.dispatchEvent).not.toHaveBeenCalled();
+    });
+
+    it('should keep loaded inline tools map in selection changed payload', () => {
+      const tool = {
+        name: 'italic',
+        isInline: jest.fn(() => true),
+        create: jest.fn(() => ({ render: jest.fn() })),
+      };
+
+      toolLoadedListener({
+        detail: { tool },
+      } as unknown as ToolLoadedCoreEvent);
+
+      const event = new CaretManagerCaretUpdatedEvent({
+        userId: 'user',
+        index: 'serialized',
+      });
+
+      jest.spyOn(Index, 'parse').mockReturnValue({
+        blockIndex: 1,
+        dataKey: 'text',
+        textRange: [1, 3]
+      } as Index);
+
+      caretEventsListener(event);
+
+      expect(SelectionChangedCoreEvent).toHaveBeenCalledWith(expect.objectContaining({
+        availableInlineTools: new Map([['italic', jest.fn()]])
+      }));
+    });
+  });
+
+  describe('.applyInlineToolForCurrentSelection()', () => {
+    it('should apply inline tool format with default data', () => {
+      selectionManager.applyInlineToolForCurrentSelection('bold' as InlineToolName);
+
+      expect(formattingAdapter.applyFormat).toHaveBeenCalledWith('bold', {});
+    });
+
+    it('should apply inline tool format with provided data', () => {
+      selectionManager.applyInlineToolForCurrentSelection('link' as InlineToolName, { href: 'https://example.com' });
+
+      expect(formattingAdapter.applyFormat).toHaveBeenCalledWith('link', { href: 'https://example.com' },);
+    });
   });
 });
