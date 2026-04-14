@@ -12,6 +12,7 @@ export default [
         project: './tsconfig.json',
         tsconfigRootDir: './',
         sourceType: 'module',
+        tsconfig: './tsconfig.json',
       },
     },
     rules: {

@@ -213,11 +213,10 @@ export class BlocksManager {
    * Filters only BlockAddedEvent and BlockRemovedEvent
    * @param event - Model update event
    */
-  #handleModelUpdate(event: ModelEvents): void {
+  #handleModelUpdate(event: ModelEvents): Promise<void> | void {
     switch (true) {
       case event instanceof BlockAddedEvent:
-        void this.#handleBlockAddedEvent(event);
-        break;
+        return this.#handleBlockAddedEvent(event);
       case event instanceof BlockRemovedEvent:
         this.#handleBlockRemovedEvent(event);
         break;
