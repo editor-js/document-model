@@ -5,6 +5,8 @@ import Core from '@editorjs/core';
 import { ref, onMounted } from 'vue';
 import { Node } from './components';
 import { EditorjsUI, BlocksUI, InlineToolbarUI, ToolboxUI } from '@editorjs/ui';
+import { Header }  from '@editorjs/header';
+
 /**
  * Editor document for visualizing
  */
@@ -66,6 +68,7 @@ onMounted(() => {
     .use(BlocksUI)
     .use(InlineToolbarUI)
     .use(ToolboxUI)
+    .use(Header)
     .initialize();
 });
 

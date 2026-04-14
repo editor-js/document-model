@@ -1,0 +1,43 @@
+{
+  "name": "@editorjs/header",
+  "version": "0.1.0",
+  "packageManager": "yarn@4.0.1",
+  "type": "module",
+  "main": "./dist/header.cjs",
+  "module": "./dist/header.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/header.js",
+      "require": "./dist/header.cjs",
+      "default": "./dist/header.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "yarn clear && vite build",
+    "dev": "vite build --watch",
+    "lint": "eslint ./src",
+    "lint:ci": "yarn lint --max-warnings 0",
+    "lint:fix": "yarn lint --fix",
+    "clear": "rm -rf ./dist && rm -f tsconfig.tsbuildinfo"
+  },
+  "devDependencies": {
+    "eslint": "^9.24.0",
+    "eslint-config-codex": "^2.0.3",
+    "postcss-apply": "^0.12.0",
+    "postcss-preset-env": "^10.1.5",
+    "typescript": "^5.5.4",
+    "vite": "^8.0.8",
+    "vite-plugin-css-injected-by-js": "^3.5.2",
+    "vite-plugin-dts": "^3.7.3"
+  },
+  "dependencies": {
+    "@editorjs/editorjs": "^2.30.8",
+    "@editorjs/model": "workspace:^",
+    "@editorjs/sdk": "workspace:^"
+  }
+}
