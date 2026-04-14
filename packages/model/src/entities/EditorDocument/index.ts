@@ -128,7 +128,7 @@ export class EditorDocument extends EventBus {
       this.#children.splice(index, 0, blockNode);
     }
 
-    this.#listenAndBubbleBlockEvent(blockNode, index);
+    this.#listenAndBubbleBlockEvent(blockNode);
 
     const builder = new IndexBuilder();
 
@@ -465,9 +465,8 @@ export class EditorDocument extends EventBus {
    * Listens to BlockNode events and bubbles them to the EditorDocument
    *
    * @param block - BlockNode to listen to
-   * @param index - index of the BlockNode
    */
-  #listenAndBubbleBlockEvent(block: BlockNode, index: number): void {
+  #listenAndBubbleBlockEvent(block: BlockNode): void {
     block.addEventListener(EventType.Changed, (event: Event) => {
       if (!(event instanceof BaseDocumentEvent)) {
         // Stryker disable next-line StringLiteral
@@ -477,6 +476,7 @@ export class EditorDocument extends EventBus {
       }
 
       const builder = new IndexBuilder();
+      const index = this.#children.indexOf(block);
 
       builder.from(event.detail.index)
         .addDocumentId(this.identifier)
