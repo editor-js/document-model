@@ -194,10 +194,17 @@ export class BlocksManager {
       throw new Error('No block selected to move');
     }
 
+    /**
+     * Do nothing if fromIndex and toIndex are the same
+     */
+    if (fromIndex === toIndex) {
+      return;
+    }
+
     const block = this.#model.serialized.blocks[fromIndex];
 
     this.#model.removeBlock(this.#config.userId, fromIndex);
-    this.#model.addBlock(this.#config.userId, block, toIndex + (fromIndex <= toIndex ? 1 : 0));
+    this.#model.addBlock(this.#config.userId, block, toIndex + (fromIndex < toIndex ? 1 : 0));
   }
 
   /**

@@ -308,7 +308,7 @@ describe('BlocksManager (unit, mocked deps)', () => {
     expect(() => blocksManager.move(1)).toThrow('No block selected to move');
   });
 
-  it('move should not offset target index when fromIndex is greater than toIndex', () => {
+  it('move should not offset target index when toIndex is less than fromIndex', () => {
     // @ts-expect-error - need to assign read only property to mock it
     model.serialized = {
       blocks: [
@@ -330,7 +330,7 @@ describe('BlocksManager (unit, mocked deps)', () => {
     expect(model.addBlock).toHaveBeenCalledWith(USER_ID, { name: 'c' }, 0);
   });
 
-  it('move should offset target index when fromIndex equals toIndex', () => {
+  it('move should do nothing when toIndex equals fromIndex', () => {
     // @ts-expect-error - need to assign read only property to mock it
     model.serialized = {
       blocks: [
@@ -348,8 +348,8 @@ describe('BlocksManager (unit, mocked deps)', () => {
 
     blocksManager.move(1, 1);
 
-    expect(model.removeBlock).toHaveBeenCalledWith(USER_ID, 1);
-    expect(model.addBlock).toHaveBeenCalledWith(USER_ID, { name: 'b' }, 2);
+    expect(model.removeBlock).not.toHaveBeenCalled();
+    expect(model.addBlock).not.toHaveBeenCalled();
   });
 
   it('should ignore unknown model events in #handleModelUpdate default branch', () => {
