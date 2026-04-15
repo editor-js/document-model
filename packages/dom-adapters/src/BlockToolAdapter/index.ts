@@ -687,8 +687,8 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    * @param key - data key input is attached to
    */
   #handleModelUpdateForContentEditableElement(event: ModelEvents, input: HTMLElement, key: DataKey): void {
-    const { textRange } = event.detail.index;
-    const action = event.detail.action;
+    const { userId, index, action } = event.detail;
+    const { textRange } = index;
 
     const [start, end] = textRange!;
 
@@ -727,7 +727,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
 
     if (newCaretIndex !== null) {
       builder.addTextRange([newCaretIndex, newCaretIndex]);
-      this.#caretAdapter.updateIndex(builder.build(), this.#config.userId);
+      this.#caretAdapter.updateIndex(builder.build(), userId);
     }
   };
 
