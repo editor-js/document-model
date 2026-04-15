@@ -205,7 +205,7 @@ export class OperationsTransformer {
    * 1. Operation is an Insert operation
    *    - if op range and against op effective range don't intersect (Left or None) — move text range of the operation to the right by amount of inserted characters
    *    - if op range and against op effective range intersect — insert payload of against operation to the related index of the current operation
-   * 
+   *
    * For non-insert operations:
    * 2. Against operation is fully on the left of the current operation
    *    - Move text range of the current operation to the right by amount of inserted characters
@@ -220,7 +220,7 @@ export class OperationsTransformer {
   #transformAgainstTextInsert<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
     const newIndexBuilder = new IndexBuilder().from(operation.index);
     let newPayload = operation.data.payload as string;
-    
+
     const insertedLength = againstOp.data.payload!.length;
 
     const index = operation.index;
@@ -240,7 +240,7 @@ export class OperationsTransformer {
           newIndexBuilder.addTextRange([index.textRange![0] + insertedLength, index.textRange![1] + insertedLength]);
           break;
         case RangeIntersectionType.Includes:
-          /** 
+          /**
            * Insert against op payload inside of the current operation payload to related index
            */
           newPayload = typeof newPayload === 'string'

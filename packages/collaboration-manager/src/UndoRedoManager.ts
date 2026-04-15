@@ -1,4 +1,4 @@
-import type { Operation } from './Operation.js';
+import { OperationType, type Operation } from './Operation.js';
 
 /**
  * Manages undo and redo operations
@@ -70,12 +70,15 @@ export class UndoRedoManager {
 
   /**
    * Transforms passed operations stack against the operation
+   * Filters out neutral operations
    *
    * @param operation - operation to transform against
    * @param stack - stack to transform
    * @returns {Operation[]} - new transformed list of operations
    */
   private transformStack(operation: Operation, stack: Operation[]): Operation[] {
-    return stack.map((op: Operation) => op.transform(operation));
+    const transformed = stack.map((op: Operation) => op.transform(operation));
+
+    return transformed.filter((op: Operation) => op.type !== OperationType.Neutral);
   }
 }

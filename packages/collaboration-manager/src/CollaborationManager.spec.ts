@@ -9,10 +9,16 @@ import { Operation, OperationType } from './Operation.js';
 import { UndoRedoManager } from './UndoRedoManager.js';
 
 const userId = 'user';
+const remoteUserId = 'remote-user';
 const documentId = 'document';
 
 const config: CoreConfig = {
   userId,
+  documentId: documentId,
+};
+
+const remoteConfig: CoreConfig = {
+  userId: remoteUserId,
   documentId: documentId,
 };
 
@@ -1157,7 +1163,7 @@ describe('CollaborationManager', () => {
       });
     });
 
-    it('should undo all changes if second user writes inside of the local user text and local user calls undo', () => {
+    it('should undo only local changes if remote user inserts inside of the local user char-by-char written text', () => {
       const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
@@ -1173,8 +1179,77 @@ describe('CollaborationManager', () => {
       });
 
       const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
+      const remoteCollaborationManager = new CollaborationManager(remoteConfig as Required<CoreConfig>, model);
 
-      // Create local insert index
+      // Char-by-char insert text 'hello' from local user
+      const localText = 'hello';
+
+      for (let i = 0; i < localText.length; i++) {
+        const char = localText[i];
+
+        const localIndex = new IndexBuilder().addBlockIndex(0)
+          .addDataKey(createDataKey('text'))
+          .addTextRange([i, i])
+          .build();
+
+        const localOp = new Operation(OperationType.Insert, localIndex, {
+          payload: char,
+        }, userId);
+
+        collaborationManager.applyOperation(localOp);
+      }
+
+      // Insert 'world' from remote user
+      const remoteIndex = new IndexBuilder().addBlockIndex(0)
+        .addDataKey(createDataKey('text'))
+        .addTextRange([2, 2])
+        .build();
+
+      const remoteOp = new Operation(OperationType.Insert, remoteIndex, {
+        payload: 'world',
+      }, remoteUserId);
+
+      remoteCollaborationManager.applyOperation(remoteOp);
+
+      // Undo should remove only local operations because local char-by-char batched insert is not extended by remote insert
+      collaborationManager.undo();
+
+      expect(model.serialized).toStrictEqual({
+        identifier: documentId,
+        blocks: [ {
+          name: 'paragraph',
+          tunes: {},
+          data: {
+            text: {
+              $t: 't',
+              value: 'world',
+              fragments: [],
+            },
+          },
+        } ],
+        properties: {},
+      });
+    });
+
+    it('should undo all changes if remote user inserts inside of the local user inserted text', () => {
+      const model = new EditorJSModel(userId, { identifier: documentId });
+
+      model.initializeDocument({
+        blocks: [ {
+          name: 'paragraph',
+          data: {
+            text: {
+              value: '',
+              $t: 't',
+            },
+          },
+        } ],
+      });
+
+      const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
+      const remoteCollaborationManager = new CollaborationManager(remoteConfig as Required<CoreConfig>, model);
+
+      // Isert line 'hello' from local user
       const localIndex = new IndexBuilder().addBlockIndex(0)
         .addDataKey(createDataKey('text'))
         .addTextRange([0, 0])
@@ -1184,10 +1259,18 @@ describe('CollaborationManager', () => {
         payload: 'hello',
       }, userId);
 
-      collaborationManager.applyOperation(localOp);
+      // Create remote insert index
+      const remoteIndex = new IndexBuilder().addBlockIndex(0)
+        .addDataKey(createDataKey('text'))
+        .addTextRange([2, 2])
+        .build();
 
-      // Apply remote insert operation
-      model.insertText('other-user', 0, createDataKey('text'), 'world', 2);
+      const remoteOp = new Operation(OperationType.Insert, remoteIndex, {
+        payload: 'world',
+      }, remoteUserId);
+
+      collaborationManager.applyOperation(localOp);
+      remoteCollaborationManager.applyOperation(remoteOp);
 
       // Undo should remove all of the text because local insert is extended by remote insert
       collaborationManager.undo();
