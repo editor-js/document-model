@@ -11,7 +11,6 @@
     "preview": "yarn build:dependencies && vite preview",
     "build:dependencies": "yarn workspaces foreach -Rpt --from $npm_package_name --exclude $npm_package_name run build",
     "dev:dependencies": "yarn workspaces foreach -Rp --from $npm_package_name --exclude $npm_package_name run dev",
-    "test": "echo 'No tests'",
     "lint": "eslint src --ext .ts,.vue",
     "lint:ci": "yarn lint --max-warnings 0",
     "lint:fix": "yarn lint --fix"

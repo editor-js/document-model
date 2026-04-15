@@ -23,7 +23,6 @@
     "lint": "eslint ./src",
     "lint:ci": "yarn lint --max-warnings 0",
     "lint:fix": "yarn lint --fix",
-    "test": "echo 'No tests'",
     "clear": "rm -rf ./dist && rm -f tsconfig.tsbuildinfo && rm -f tsconfig.tsbuildinfo.json"
   },
   "devDependencies": {
