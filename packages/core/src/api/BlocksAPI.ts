@@ -4,6 +4,7 @@ import { BlocksManager } from '../components/BlockManager.js';
 import { BlockToolData, ToolConfig } from '@editorjs/editorjs';
 import { CoreConfigValidated } from '@editorjs/sdk';
 import { BlocksAPI as BlocksApiInterface } from '@editorjs/sdk';
+import { type BlockNodeSerialized, EditorDocumentSerialized } from '@editorjs/model';
 
 /**
  * Blocks API
@@ -28,10 +29,58 @@ export class BlocksAPI implements BlocksApiInterface {
    */
   constructor(
     blocksManager: BlocksManager,
-     @Inject('EditorConfig') config: CoreConfigValidated
+    @Inject('EditorConfig') config: CoreConfigValidated
   ) {
     this.#blocksManager = blocksManager;
     this.#config = config;
+  }
+
+  /**
+   * Remove all blocks from Document
+   */
+  public clear(): void {
+    return this.#blocksManager.clear();
+  }
+
+  /**
+   * Render passed data
+   * @param document - serialized document data to render
+   */
+  public render(document: EditorDocumentSerialized): void {
+    return this.#blocksManager.render(document);
+  }
+
+  /**
+   * Removes Block by index, or current block if index is not passed
+   * @param index - index of a block to delete
+   */
+  public delete(index?: number): void {
+    return this.#blocksManager.deleteBlock(index);
+  }
+
+  /**
+   * Moves a block to a new index
+   * @param toIndex - index where the block is moved to
+   * @param [fromIndex] - block to move. Current block if not passed
+   */
+  public move(toIndex: number, fromIndex?: number): void {
+    return this.#blocksManager.move(toIndex, fromIndex);
+  }
+
+  /**
+   * Returns Blocks count
+   */
+  public getBlocksCount(): number {
+    return this.#blocksManager.blocksCount;
+  }
+
+  /**
+   * Inserts several Blocks to specified index
+   * @param blocks - array of blocks to insert
+   * @param [index] - index to insert blocks at. If undefined, inserts at the end
+   */
+  public insertMany(blocks: BlockNodeSerialized[], index?: number): void {
+    return this.#blocksManager.insertMany(blocks, index);
   }
 
   /**
@@ -62,6 +111,7 @@ export class BlocksAPI implements BlocksApiInterface {
       data,
       index,
       replace,
+      // needToFocus,
     });
   }
 }
