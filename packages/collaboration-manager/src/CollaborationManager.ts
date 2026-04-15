@@ -14,7 +14,7 @@ import { BatchedOperation } from './BatchedOperation.js';
 import { type ModifyOperationData, Operation, OperationType } from './Operation.js';
 import { UndoRedoManager } from './UndoRedoManager.js';
 
-const DEBOUCE_TIMEOUT = 500;
+const DEBOUNCE_TIMEOUT = 500;
 
 /**
  * CollaborationManager listens to EditorJSModel events and applies operations
@@ -293,6 +293,6 @@ export class CollaborationManager {
 
     this.#debounceTimer = setTimeout(() => {
       this.#putBatchToUndo();
-    }, DEBOUCE_TIMEOUT);
+    }, DEBOUNCE_TIMEOUT);
   }
 }
