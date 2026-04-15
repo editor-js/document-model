@@ -7,7 +7,7 @@ export enum RangeIntersectionType {
   Left = 'left',
   Right = 'right',
   Includes = 'includes',
-  Included = 'included',
+  IncludedBy = 'included',
   None = 'none',
 }
 
@@ -41,7 +41,7 @@ export function getRangesIntersectionType(range: TextRange, rangeToCompare: Text
    * Range is included in the range to compare
    */
   if (start >= startToCompare && end <= endToCompare && startToCompare !== endToCompare) {
-    return RangeIntersectionType.Included;
+    return RangeIntersectionType.IncludedBy;
   }
 
   /**

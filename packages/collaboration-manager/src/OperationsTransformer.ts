@@ -202,10 +202,15 @@ export class OperationsTransformer {
    * Method that transforms operation against text insert operation happened on the left side of the current operation
    *
    * Cases:
-   * 1. Against operation is fully on the left of the current operation
+   * 1. Operation is an Insert operation
+   *    - if op range and against op effective range don't intersect (Left or None) — move text range of the operation to the right by amount of inserted characters
+   *    - if op range and against op effective range intersect — insert payload of against operation to the related index of the current operation
+   * 
+   * For non-insert operations:
+   * 2. Against operation is fully on the left of the current operation
    *    - Move text range of the current operation to the right by amount of inserted characters
    *
-   * 2. Against operation is inside of the current operation text range
+   * 3. Against operation is inside of the current operation text range
    *    - Move right bound of the current operation to the right by amount of inserted characters to include the inserted text
    *
    * @param operation - Operation to be transformed
@@ -213,22 +218,55 @@ export class OperationsTransformer {
    * @returns {Operation<OperationType>} new operation
    */
   #transformAgainstTextInsert<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
-    console.log('transforming against text insert operation');
-
     const newIndexBuilder = new IndexBuilder().from(operation.index);
-
+    let newPayload = operation.data.payload as string;
+    
     const insertedLength = againstOp.data.payload!.length;
 
-    const textRange = operation.getEffectiveRange();
-
     const index = operation.index;
+    const againstIndex = againstOp.index;
 
     /**
-     * In this case, againstOp is insert operatioin, there would be only two possible intersections
+     * Cover case 1
+     */
+    if (operation.type === OperationType.Insert) {
+      const textRange = operation.getEffectiveRange();
+
+      const effectiveIntersectionType = getRangesIntersectionType(textRange, againstIndex.textRange!);
+
+      switch (effectiveIntersectionType) {
+        case RangeIntersectionType.None:
+        case RangeIntersectionType.Left:
+          newIndexBuilder.addTextRange([index.textRange![0] + insertedLength, index.textRange![1] + insertedLength]);
+          break;
+        case RangeIntersectionType.Includes:
+          /** 
+           * Insert against op payload inside of the current operation payload to related index
+           */
+          newPayload = typeof newPayload === 'string'
+            ? newPayload.slice(0, againstIndex.textRange![0] - textRange[0]) + againstOp.data.payload! + newPayload.slice(againstIndex.textRange![1] - textRange[0])
+            : newPayload;
+          break;
+      }
+
+      /**
+       * Return new operation with the updated index
+       */
+      const newOp = Operation.from(operation);
+
+      newOp.index = newIndexBuilder.build();
+      newOp.data.payload = newPayload;
+
+      return newOp;
+    }
+
+    /**
+     * For non-insert operations:
+     * In this case, againstOp is insert, there would be only two possible intersections:
      * - None - inserted text is on the left side of the current operation
      * - Includes - inserted text is inside of the current operation text range
      */
-    const intersectionType = getRangesIntersectionType(textRange, againstOp.index.textRange!);
+    const intersectionType = getRangesIntersectionType(operation.index.textRange!, againstOp.index.textRange!);
 
     switch (intersectionType) {
       case (RangeIntersectionType.None):
@@ -322,14 +360,14 @@ export class OperationsTransformer {
       case (RangeIntersectionType.Includes):
         newIndexBuilder.addTextRange([index.textRange![0], index.textRange![1] - deletedAmount]);
         newPayload = typeof newPayload === 'string'
-          ? newPayload.slice(0, againstTextRange[0]) + newPayload.slice(againstTextRange[1])
+          ? newPayload.slice(0, againstTextRange[0] - textRange[0]) + newPayload.slice(againstTextRange[1] - textRange[0])
           : newPayload;
         break;
 
       /**
        * Cover case 4
        */
-      case (RangeIntersectionType.Included):
+      case (RangeIntersectionType.IncludedBy):
         return new Operation(OperationType.Neutral, newIndexBuilder.build(), { payload: [] }, operation.userId, operation.rev);
     }
 

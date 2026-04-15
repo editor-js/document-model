@@ -31,6 +31,11 @@ describe('getRangesIntersectionType', () => {
     it('returs None for identical empty ranges', () => {
       expect(getRangesIntersectionType([1, 1], [1, 1])).toBe(RangeIntersectionType.None);
     });
+
+    it('returns None when range touches empty range', () => {
+      expect(getRangesIntersectionType([0, 2], [2, 2])).toBe(RangeIntersectionType.None);
+      expect(getRangesIntersectionType([0, 0], [0, 2])).toBe(RangeIntersectionType.None);
+    });
   });
 
   describe('RangeIntersectionType.Includes', () => {
@@ -51,17 +56,17 @@ describe('getRangesIntersectionType', () => {
     });
   });
 
-  describe('RangeIntersectionType.Included', () => {
-    it('returns Included when range lies strictly inside the compared range', () => {
-      expect(getRangesIntersectionType([4, 6], [2, 9])).toBe(RangeIntersectionType.Included);
+  describe('RangeIntersectionType.IncludedBy', () => {
+    it('returns IncludedBy when range lies strictly inside the compared range', () => {
+      expect(getRangesIntersectionType([4, 6], [2, 9])).toBe(RangeIntersectionType.IncludedBy);
     });
 
-    it('returns Included when range boundaries match right boundary of compared range', () => {
-      expect(getRangesIntersectionType([5, 10], [3, 10])).toBe(RangeIntersectionType.Included);
+    it('returns IncludedBy when range boundaries match right boundary of compared range', () => {
+      expect(getRangesIntersectionType([5, 10], [3, 10])).toBe(RangeIntersectionType.IncludedBy);
     });
 
-    it('returns Included when range boundaries match left boundary of compared range', () => {
-      expect(getRangesIntersectionType([4, 9], [4, 12])).toBe(RangeIntersectionType.Included);
+    it('returns IncludedBy when range boundaries match left boundary of compared range', () => {
+      expect(getRangesIntersectionType([4, 9], [4, 12])).toBe(RangeIntersectionType.IncludedBy);
     });
   });
 

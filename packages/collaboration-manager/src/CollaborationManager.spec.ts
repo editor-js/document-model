@@ -1157,6 +1157,58 @@ describe('CollaborationManager', () => {
       });
     });
 
+    it('should undo all changes if second user writes inside of the local user text and local user calls undo', () => {
+      const model = new EditorJSModel(userId, { identifier: documentId });
+
+      model.initializeDocument({
+        blocks: [ {
+          name: 'paragraph',
+          data: {
+            text: {
+              value: '',
+              $t: 't',
+            },
+          },
+        } ],
+      });
+
+      const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
+
+      // Create local insert index
+      const localIndex = new IndexBuilder().addBlockIndex(0)
+        .addDataKey(createDataKey('text'))
+        .addTextRange([0, 0])
+        .build();
+
+      const localOp = new Operation(OperationType.Insert, localIndex, {
+        payload: 'hello',
+      }, userId);
+
+      collaborationManager.applyOperation(localOp);
+
+      // Apply remote insert operation
+      model.insertText('other-user', 0, createDataKey('text'), 'world', 2);
+
+      // Undo should remove all of the text because local insert is extended by remote insert
+      collaborationManager.undo();
+
+      expect(model.serialized).toStrictEqual({
+        identifier: documentId,
+        blocks: [ {
+          name: 'paragraph',
+          tunes: {},
+          data: {
+            text: {
+              $t: 't',
+              value: '',
+              fragments: [],
+            },
+          },
+        } ],
+        properties: {},
+      });
+    });
+
     it('should clear current batch if not transformable with remote operation', () => {
       const model = new EditorJSModel(userId, { identifier: documentId });
 
