@@ -308,5 +308,11 @@ export class BlocksManager {
       tool: data.name,
       index: index.blockIndex,
     }));
+
+    /**
+     * @todo Detach block tool adapter from caret adapter,
+     *      make sure Formtatting Adapter and others are destroyed
+     *      along with their dependencies
+     */
   }
 }
