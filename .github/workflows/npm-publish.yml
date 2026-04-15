@@ -1,0 +1,77 @@
+name: Publish packages to NPM
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  PUBLISH_EXCLUDE: >-
+    @editorjs/ot-server
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - run: corepack enable
+
+      - name: Setup environment
+        uses: ./.github/actions/setup
+
+      - name: Lint all packages
+        run: yarn lint
+
+      - name: Test packages
+        run: yarn workspaces foreach -Ap --no-private run test
+
+  publish:
+    needs: ci
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: https://registry.npmjs.org/
+
+      - run: corepack enable
+
+      - name: Setup environment
+        uses: ./.github/actions/setup
+
+      - name: Build all packages
+        run: yarn workspaces foreach -Apt run build
+
+      - name: Publish changed packages
+        env:
+          YARN_NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          exclude_args=()
+          
+          for pkg in $PUBLISH_EXCLUDE; do
+            exclude_args+=(--exclude "$pkg")
+          done
+          
+          yarn workspaces foreach -At \
+            --no-private \
+            "${exclude_args[@]}" \
+            exec bash -c '
+              NAME=$(jq -r .name package.json)
+              VERSION=$(jq -r .version package.json)
+              PUBLISHED=$(npm view "$NAME" version 2>/dev/null || echo "")
+             
+              if [ "$PUBLISHED" = "$VERSION" ]; then
+                echo "Skipping $NAME@$VERSION (already published)"
+              else
+                echo "Publishing $NAME@$VERSION"
+                yarn npm publish --access public
+              fi
+            '

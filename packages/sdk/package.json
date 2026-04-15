@@ -11,6 +11,7 @@
     "lint": "eslint",
     "lint:ci": "yarn lint --max-warnings 0",
     "lint:fix": "yarn lint --fix",
+    "test": "echo 'No tests'",
     "clear": "rm -rf dist && rm -f tsconfig.build.tsbuildinfo && rm -f tsconfig.tsbuildinfo"
   },
   "devDependencies": {
