@@ -62,15 +62,18 @@ describe('Operation', () => {
       expect(transformedOp).toEqual(receivedOp);
     });
 
-    it('should not change operation if operation is not Block or Text operation', () => {
+    it('should throw Unsupppoted index type error if op is not Block or Text operation', () => {
       const receivedOp = createOperation(OperationType.Insert, 0, 'abc');
       const localOp = createOperation(OperationType.Insert, 0, 'def');
 
       localOp.index.textRange = undefined;
 
-      const transformedOp = receivedOp.transform(localOp);
-
-      expect(transformedOp).toEqual(receivedOp);
+      try {
+        receivedOp.transform(localOp);
+      } catch (e) {
+        expect(e).toBeInstanceOf(Error);
+        expect((e as Error).message).toContain('Unsupported index type');
+      }
     });
 
     it('should throw an error if unsupported operation type is provided', () => {
@@ -106,12 +109,12 @@ describe('Operation', () => {
         expect(transformedOp.index.textRange).toEqual([6, 6]);
       });
 
-      it('should transform a received operation if it is at the same position as a local one', () => {
+      it('should not transform a received operation if it is at the same position as a local one', () => {
         const receivedOp = createOperation(OperationType.Modify, 0, 'abc');
         const localOp = createOperation(OperationType.Insert, 0, 'def');
         const transformedOp = receivedOp.transform(localOp);
 
-        expect(transformedOp.index.textRange).toEqual([3, 3]);
+        expect(transformedOp.index.textRange).toEqual([0, 0]);
       });
 
       it('should not change the text index if local op is a Block operation', () => {
@@ -190,7 +193,7 @@ describe('Operation', () => {
 
       it('should transform a received operation if it is at the same position as a local one', () => {
         const receivedOp = createOperation(OperationType.Modify, 3, 'abc');
-        const localOp = createOperation(OperationType.Delete, 3, 'def');
+        const localOp = createOperation(OperationType.Delete, 0, 'def');
         const transformedOp = receivedOp.transform(localOp);
 
         expect(transformedOp.index.textRange).toEqual([0, 0]);
@@ -248,7 +251,7 @@ describe('Operation', () => {
         expect(transformedOp.index.blockIndex).toEqual(0);
       });
 
-      it('should adjust the block index if local op is a Block operation at the same index as a received one', () => {
+      it('should return Neutral operation if local op is a Block operation at the same index as a received one', () => {
         const receivedOp = createOperation(OperationType.Insert, 1, [ {
           name: 'paragraph',
           data: { text: 'abc' },
@@ -260,7 +263,7 @@ describe('Operation', () => {
 
         const transformedOp = receivedOp.transform(localOp);
 
-        expect(transformedOp.index.blockIndex).toEqual(0);
+        expect(transformedOp.type).toBe(OperationType.Neutral);
       });
     });
   });
