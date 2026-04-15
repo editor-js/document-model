@@ -185,6 +185,46 @@ export class CaretAdapter extends EventTarget {
   }
 
   /**
+   * Pushes the current user's caret into the model via {@link updateIndex}: serialised block
+   * index, data field key, and {@link TextRange} — the selected span **inside this `input` only**
+   * (not the whole document selection when it spans several blocks).
+   *
+   * Maps `selectionRange` boundary points to absolute offsets under this contenteditable root with
+   * {@link getAbsoluteRangeOffset}.
+   *
+   * The caller must already know that this `input` and `key` are the right scope (focused
+   * field, or nested-CE fallback where the range still lies inside this element).
+   *
+   * @param selectionRange - `Selection.getRangeAt(0)` from the document
+   * @param block - block adapter that owns the input
+   * @param key - data key of the field in that block
+   * @param input - contenteditable host previously passed to `attachInput` for that key
+   */
+  #syncUserCaretIndexFromSelectionForInput(
+    selectionRange: Range,
+    block: BlockToolAdapter,
+    key: DataKey,
+    input: HTMLElement
+  ): void {
+    /**
+     * @todo think of cross-block selection
+     */
+    const textRange = [
+      getAbsoluteRangeOffset(input, selectionRange.startContainer, selectionRange.startOffset),
+      getAbsoluteRangeOffset(input, selectionRange.endContainer, selectionRange.endOffset),
+    ] as TextRange;
+
+    const builder = new IndexBuilder();
+
+    builder
+      .from(block.getBlockIndex())
+      .addDataKey(key)
+      .addTextRange(textRange);
+
+    this.updateIndex(builder.build());
+  }
+
+  /**
    * Selection change handler
    *
    * @param selection - new document selection
@@ -203,73 +243,16 @@ export class CaretAdapter extends EventTarget {
     const selectionRange = selection.getRangeAt(0);
 
     /**
-     * Writes caret index from the current selection for one attached input
-     *
-     * @param block - block that owns the input
-     * @param key - data key for the input
-     * @param input - attached input element
-     */
-    const applySelectionToInput = (block: BlockToolAdapter, key: DataKey, input: HTMLElement): void => {
-      if (isNativeInput(input) === true) {
-        const native = input as HTMLInputElement | HTMLTextAreaElement;
-        const textRange = [
-          native.selectionStart,
-          native.selectionEnd,
-        ] as TextRange;
-
-        const builder = new IndexBuilder();
-
-        builder
-          .from(block.getBlockIndex())
-          .addDataKey(key)
-          .addTextRange(textRange);
-
-        this.updateIndex(builder.build());
-
-        return;
-      }
-
-      /**
-       * @todo think of cross-block selection
-       */
-      const textRange = [
-        getAbsoluteRangeOffset(input, selectionRange.startContainer, selectionRange.startOffset),
-        getAbsoluteRangeOffset(input, selectionRange.endContainer, selectionRange.endOffset),
-      ] as TextRange;
-
-      const builder = new IndexBuilder();
-
-      builder
-        .from(block.getBlockIndex())
-        .addDataKey(key)
-        .addTextRange(textRange);
-
-      this.updateIndex(builder.build());
-    };
-
-    /**
-     * Single pass over all attached inputs. Resolution order:
-     * 1. Native input that has focus (only source of truth for selectionStart/End).
-     * 2. Contenteditable input that has focus and fully contains the selection range.
-     * 3. Otherwise the first contenteditable that fully contains the range.
-     *
-     * Why (3): the blocks surface is often wrapped in an outer contenteditable host, while each
-     * block tool also mounts its own inner contenteditable (e.g. paragraph). After load, the user
-     * can select text inside the block while focus stays on the outer wrapper — then
-     * document.activeElement is not the block input, but the range still lies inside it. We store
-     * that match as a fallback and apply it if no focused input matched above.
+     * Single pass over contenteditable attached inputs only (native inputs are ignored). Order:
+     * 1. Input that has focus and fully contains the selection range.
+     * 2. Otherwise the first input that fully contains the range (nested CE: activeElement may be
+     *    the outer blocks surface while the range lies inside the block input).
      */
     let contentEditableFallback: { block: BlockToolAdapter; key: DataKey; input: HTMLElement } | null = null;
 
     for (const block of this.#blocks) {
       for (const [key, input] of block.getAttachedInputs().entries()) {
         if (isNativeInput(input) === true) {
-          if (input === activeElement) {
-            applySelectionToInput(block, key, input);
-
-            return;
-          }
-
           continue;
         }
 
@@ -282,7 +265,7 @@ export class CaretAdapter extends EventTarget {
         }
 
         if (input === activeElement) {
-          applySelectionToInput(block, key, input);
+          this.#syncUserCaretIndexFromSelectionForInput(selectionRange, block, key, input);
 
           return;
         }
@@ -296,7 +279,7 @@ export class CaretAdapter extends EventTarget {
     if (contentEditableFallback !== null) {
       const { block, key, input } = contentEditableFallback;
 
-      applySelectionToInput(block, key, input);
+      this.#syncUserCaretIndexFromSelectionForInput(selectionRange, block, key, input);
 
       return;
     }
