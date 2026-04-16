@@ -50,6 +50,6 @@
     "@editorjs/helpers": "^1.2.1",
     "@editorjs/model": "workspace:^",
     "@editorjs/sdk": "workspace:^",
-    "@editorjs/ui-kit": "^1.1.3"
+    "@editorjs/ui-kit": "^1.1.2"
   }
 }
