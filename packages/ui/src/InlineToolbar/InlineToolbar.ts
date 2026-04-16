@@ -68,11 +68,15 @@ export class InlineToolbarUI implements EditorjsPlugin {
   #handleSelectionChange(event: SelectionChangedCoreEvent): void {
     const { availableInlineTools, index, fragments } = event.detail;
     const selection = window.getSelection();
+    const segments = index?.getTextSegments() ?? [];
+    const hasNonCollapsedRange = segments.some(
+      segment => segment.textRange !== undefined && segment.textRange[0] !== segment.textRange[1]
+    );
 
     if (
       !index
-      || index.textRange === undefined
-      || (index.textRange[0] === index.textRange[1])
+      || segments.length === 0
+      || !hasNonCollapsedRange
       /**
        * Index could contain textRange for native inputs,
        * so we need to check if there are ranges in the document selection
@@ -85,7 +89,9 @@ export class InlineToolbarUI implements EditorjsPlugin {
       return;
     }
 
-    this.#updateToolsList(availableInlineTools, index.textRange, fragments);
+    const textRange = segments[0].textRange!;
+
+    this.#updateToolsList(availableInlineTools, textRange, fragments);
     this.#move();
     this.#show();
   }

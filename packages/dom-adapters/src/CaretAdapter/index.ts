@@ -1,8 +1,5 @@
 import { isNativeInput } from '@editorjs/dom';
-import type {
-  DataKey,
-  ModelEvents
-} from '@editorjs/model';
+import type { ModelEvents } from '@editorjs/model';
 import {
   BlockRemovedEvent,
   type Caret,
@@ -11,11 +8,15 @@ import {
   EventType,
   Index,
   IndexBuilder,
-  type TextRange,
   createDataKey
 } from '@editorjs/model';
 import type { CoreConfig } from '@editorjs/sdk';
-import { getAbsoluteRangeOffset, getBoundaryPointByAbsoluteOffset, useSelectionChange } from '../utils/index.js';
+import {
+  getAbsoluteRangeOffset,
+  getBoundaryPointByAbsoluteOffset,
+  getClippedTextRangeForInput,
+  useSelectionChange
+} from '../utils/index.js';
 import type { BlockToolAdapter } from '../BlockToolAdapter/index.ts';
 
 /**
@@ -185,37 +186,74 @@ export class CaretAdapter extends EventTarget {
   }
 
   /**
-   * Writes the caret into the model for one contenteditable field: converts `selectionRange` to
-   * offsets inside `input`, then calls `updateIndex` with block index, `key`, and that {@link TextRange}.
-   * Only covers a range fully inside this `input` (caller picks the right block/field).
+   * Restores a multi-block selection from a composite caret index (cross-input selection).
    *
-   * @param selectionRange - document selection range (e.g. `getRangeAt(0)`)
-   * @param block - block that owns this input
-   * @param key - field data key
-   * @param input - same contenteditable node as for `attachInput`
+   * @param index - composite index with {@link Index.compositeSegments}
    */
-  #syncUserCaretIndexFromSelectionForInput(
-    selectionRange: Range,
-    block: BlockToolAdapter,
-    key: DataKey,
-    input: HTMLElement
-  ): void {
-    /**
-     * @todo think of cross-block selection
-     */
-    const textRange = [
-      getAbsoluteRangeOffset(input, selectionRange.startContainer, selectionRange.startOffset),
-      getAbsoluteRangeOffset(input, selectionRange.endContainer, selectionRange.endOffset),
-    ] as TextRange;
+  #restoreDomSelectionFromCompositeIndex(index: Index): void {
+    const segments = index.compositeSegments;
 
-    const builder = new IndexBuilder();
+    if (segments === undefined || segments.length === 0) {
+      return;
+    }
 
-    builder
-      .from(block.getBlockIndex())
-      .addDataKey(key)
-      .addTextRange(textRange);
+    const first = segments[0];
+    const last = segments[segments.length - 1];
 
-    this.updateIndex(builder.build());
+    if (
+      first.textRange === undefined ||
+      first.dataKey === undefined ||
+      first.blockIndex === undefined ||
+      last.textRange === undefined ||
+      last.dataKey === undefined ||
+      last.blockIndex === undefined
+    ) {
+      return;
+    }
+
+    const startBlock = this.getBlock(first);
+    const endBlock = this.getBlock(last);
+
+    if (startBlock === undefined || endBlock === undefined) {
+      return;
+    }
+
+    const startInput = startBlock.getInput(first.dataKey);
+    const endInput = endBlock.getInput(last.dataKey);
+
+    if (startInput === undefined || endInput === undefined) {
+      return;
+    }
+
+    if (isNativeInput(startInput) === true || isNativeInput(endInput) === true) {
+      return;
+    }
+
+    const selection = document.getSelection()!;
+
+    const startBoundary = getBoundaryPointByAbsoluteOffset(startInput, first.textRange[0]);
+    const endBoundary = getBoundaryPointByAbsoluteOffset(endInput, last.textRange[1]);
+
+    if (selection.rangeCount > 0) {
+      const current = selection.getRangeAt(0);
+
+      if (
+        current.startContainer === startBoundary[0] &&
+        current.startOffset === startBoundary[1] &&
+        current.endContainer === endBoundary[0] &&
+        current.endOffset === endBoundary[1]
+      ) {
+        return;
+      }
+    }
+
+    const range = new Range();
+
+    range.setStart(...startBoundary);
+    range.setEnd(...endBoundary);
+
+    selection.removeAllRanges();
+    selection.addRange(range);
   }
 
   /**
@@ -230,19 +268,8 @@ export class CaretAdapter extends EventTarget {
       return;
     }
 
-    /**
-     * @todo Think of cross-block selection
-     */
-    const activeElement = document.activeElement;
     const selectionRange = selection.getRangeAt(0);
-
-    /**
-     * Single pass over contenteditable attached inputs only (native inputs are ignored). Order:
-     * 1. Input that has focus and fully contains the selection range.
-     * 2. Otherwise the first input that fully contains the range (nested CE: activeElement may be
-     *    the outer blocks surface while the range lies inside the block input).
-     */
-    let contentEditableFallback: { block: BlockToolAdapter; key: DataKey; input: HTMLElement } | null = null;
+    const segments: Index[] = [];
 
     for (const block of this.#blocks) {
       for (const [key, input] of block.getAttachedInputs().entries()) {
@@ -250,39 +277,36 @@ export class CaretAdapter extends EventTarget {
           continue;
         }
 
-        const rangeInsideInput =
-          input.contains(selectionRange.startContainer) &&
-          input.contains(selectionRange.endContainer);
+        const textRange = getClippedTextRangeForInput(selectionRange, input);
 
-        if (!rangeInsideInput) {
+        if (textRange === null) {
           continue;
         }
 
-        if (input === activeElement) {
-          this.#syncUserCaretIndexFromSelectionForInput(selectionRange, block, key, input);
+        const builder = new IndexBuilder();
 
-          return;
-        }
+        builder
+          .from(block.getBlockIndex())
+          .addDataKey(key)
+          .addTextRange(textRange);
 
-        if (contentEditableFallback === null) {
-          contentEditableFallback = {
-            block,
-            key,
-            input,
-          };
-        }
+        segments.push(builder.build());
       }
     }
 
-    if (contentEditableFallback !== null) {
-      const { block, key, input } = contentEditableFallback;
-
-      this.#syncUserCaretIndexFromSelectionForInput(selectionRange, block, key, input);
+    if (segments.length === 0) {
+      this.updateIndex(null);
 
       return;
     }
 
-    this.updateIndex(null);
+    if (segments.length === 1) {
+      this.updateIndex(segments[0]);
+
+      return;
+    }
+
+    this.updateIndex(Index.fromCompositeSegments(segments));
   }
 
   /**
@@ -301,15 +325,21 @@ export class CaretAdapter extends EventTarget {
     }
 
     const index = Index.parse(serializedIndex);
-    const { textRange, dataKey } = index;
-
-    if (textRange === undefined || dataKey === undefined) {
-      return;
-    }
-
     const userId = event.detail.userId;
 
     if (userId !== this.#currentUserCaret.userId) {
+      return;
+    }
+
+    if (index.compositeSegments !== undefined && index.compositeSegments.length > 0) {
+      this.#restoreDomSelectionFromCompositeIndex(index);
+
+      return;
+    }
+
+    const { textRange, dataKey } = index;
+
+    if (textRange === undefined || dataKey === undefined) {
       return;
     }
 

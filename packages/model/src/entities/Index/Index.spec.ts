@@ -297,4 +297,76 @@ describe('Index', () => {
       expect(index.isTextIndex).toBe(false);
     });
   });
+
+  describe('composite index', () => {
+    it('should serialize and parse composite', () => {
+      const a = new IndexBuilder().addBlockIndex(0)
+        .addDataKey('a' as DataKey)
+        .addTextRange([1, 2])
+        .build();
+      const b = new IndexBuilder().addBlockIndex(1)
+        .addDataKey('a' as DataKey)
+        .addTextRange([0, 5])
+        .build();
+      const composite = Index.fromCompositeSegments([a, b]);
+      const round = Index.parse(composite.serialize());
+
+      expect(round.compositeSegments).toHaveLength(2);
+      expect(round.compositeSegments![0].blockIndex).toBe(0);
+      expect(round.compositeSegments![1].blockIndex).toBe(1);
+    });
+
+    it('should return false for isTextIndex on composite', () => {
+      const a = new IndexBuilder().addBlockIndex(0)
+        .addDataKey('a' as DataKey)
+        .addTextRange([1, 2])
+        .build();
+      const b = new IndexBuilder().addBlockIndex(1)
+        .addDataKey('a' as DataKey)
+        .addTextRange([0, 5])
+        .build();
+      const composite = Index.fromCompositeSegments([a, b]);
+
+      expect(composite.isTextIndex).toBe(false);
+    });
+
+    it('should return segments from getTextSegments', () => {
+      const a = new IndexBuilder().addBlockIndex(0)
+        .addDataKey('a' as DataKey)
+        .addTextRange([1, 2])
+        .build();
+      const b = new IndexBuilder().addBlockIndex(1)
+        .addDataKey('a' as DataKey)
+        .addTextRange([0, 5])
+        .build();
+      const composite = Index.fromCompositeSegments([a, b]);
+
+      expect(composite.getTextSegments()).toHaveLength(2);
+    });
+
+    it('should throw if composite has less than two segments', () => {
+      const a = new IndexBuilder().addBlockIndex(0)
+        .addDataKey('a' as DataKey)
+        .addTextRange([1, 2])
+        .build();
+
+      expect(() => Index.fromCompositeSegments([a])).toThrow();
+    });
+
+    it('should clone composite segments', () => {
+      const a = new IndexBuilder().addBlockIndex(0)
+        .addDataKey('a' as DataKey)
+        .addTextRange([1, 2])
+        .build();
+      const b = new IndexBuilder().addBlockIndex(1)
+        .addDataKey('a' as DataKey)
+        .addTextRange([0, 5])
+        .build();
+      const composite = Index.fromCompositeSegments([a, b]);
+      const cloned = composite.clone();
+
+      expect(cloned.compositeSegments).toEqual(composite.compositeSegments);
+      expect(cloned.compositeSegments![0]).not.toBe(composite.compositeSegments![0]);
+    });
+  });
 });

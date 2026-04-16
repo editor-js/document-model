@@ -94,8 +94,14 @@ export class SelectionManager {
         const index = serializedIndex !== null ? Index.parse(serializedIndex) : null;
         let fragments: InlineFragment[] = [];
 
-        if (index !== null && index.blockIndex !== undefined && index.dataKey !== undefined && index.textRange !== undefined) {
-          fragments = this.#model.getFragments(index.blockIndex, index.dataKey, ...index.textRange);
+        if (index !== null) {
+          for (const segment of index.getTextSegments()) {
+            if (segment.blockIndex !== undefined && segment.dataKey !== undefined && segment.textRange !== undefined) {
+              fragments.push(
+                ...this.#model.getFragments(segment.blockIndex, segment.dataKey, ...segment.textRange)
+              );
+            }
+          }
         }
 
         this.#eventBus.dispatchEvent(new SelectionChangedCoreEvent({

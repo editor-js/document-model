@@ -122,19 +122,10 @@ export class FormattingAdapter {
       throw new IndexError('FormattingAdapter: caret index is outside of the input');
     }
 
-    const textRange = index.textRange;
-    const blockIndex = index.blockIndex;
-    const dataKey = index.dataKey;
+    const segments = index.getTextSegments();
 
-
-    if (textRange === undefined) {
-      throw new IndexError('TextRange of the index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
-    }
-    if (blockIndex === undefined) {
-      throw new IndexError('BlockIndex should be defined. Probably something wrong with the Editor Model. Please, report this issue');
-    }
-    if (dataKey === undefined) {
-      throw new IndexError('DataKey of the index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
+    if (segments.length === 0) {
+      throw new IndexError('FormattingAdapter: caret index is outside of the input');
     }
 
     const tool = this.#tools.get(toolName);
@@ -143,19 +134,37 @@ export class FormattingAdapter {
       throw new Error(`FormattingAdapter: tool ${toolName} is not attached`);
     }
 
-    const fragments = this.#model.getFragments(blockIndex, dataKey, ...textRange, toolName);
+    for (const segment of segments) {
+      const textRange = segment.textRange;
+      const blockIndex = segment.blockIndex;
+      const dataKey = segment.dataKey;
 
-    const { action, range } = tool.getFormattingOptions(textRange, fragments);
+      if (textRange === undefined) {
+        throw new IndexError('TextRange of the index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
+      }
 
-    switch (action) {
-      case FormattingAction.Format:
-        this.#model.format(this.#config.userId, blockIndex, dataKey, toolName, ...range, data);
+      if (blockIndex === undefined) {
+        throw new IndexError('BlockIndex should be defined. Probably something wrong with the Editor Model. Please, report this issue');
+      }
 
-        break;
-      case FormattingAction.Unformat:
-        this.#model.unformat(this.#config.userId, blockIndex, dataKey, toolName, ...range);
+      if (dataKey === undefined) {
+        throw new IndexError('DataKey of the index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
+      }
 
-        break;
+      const fragments = this.#model.getFragments(blockIndex, dataKey, ...textRange, toolName);
+
+      const { action, range } = tool.getFormattingOptions(textRange, fragments);
+
+      switch (action) {
+        case FormattingAction.Format:
+          this.#model.format(this.#config.userId, blockIndex, dataKey, toolName, ...range, data);
+
+          break;
+        case FormattingAction.Unformat:
+          this.#model.unformat(this.#config.userId, blockIndex, dataKey, toolName, ...range);
+
+          break;
+      }
     }
   }
 
