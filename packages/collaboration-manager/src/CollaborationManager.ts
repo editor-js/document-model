@@ -58,7 +58,6 @@ export class CollaborationManager {
 
   /**
    * Creates an instance of CollaborationManager
-   *
    * @param config - Editor's config
    * @param model - EditorJSModel instance to listen to and apply operations
    */
@@ -139,7 +138,6 @@ export class CollaborationManager {
 
   /**
    * Applies operation to the model
-   *
    * @param operation - operation to apply
    */
   public applyOperation(operation: Operation | BatchedOperation): void {
@@ -176,7 +174,6 @@ export class CollaborationManager {
 
   /**
    * Handles EditorJSModel events
-   *
    * @param e - event to handle
    */
   #handleEvent(e: ModelEvents): void {
@@ -210,12 +207,12 @@ export class CollaborationManager {
         break;
       case (e instanceof BlockAddedEvent):
         operation = new Operation(OperationType.Insert, e.detail.index, {
-          payload: [ e.detail.data ],
+          payload: [e.detail.data],
         }, e.detail.userId);
         break;
       case (e instanceof BlockRemovedEvent):
         operation = new Operation(OperationType.Delete, e.detail.index, {
-          payload: [ e.detail.data ],
+          payload: [e.detail.data],
         }, e.detail.userId);
         break;
       // Stryker disable next-line ConditionalExpression

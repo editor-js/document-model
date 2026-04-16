@@ -9,7 +9,6 @@ const userId = 'user';
 
 /**
  * Helper function to create test operations
- *
  * @param index - block index of the operation
  * @param text - text of the operation
  * @param type - type of the operation
@@ -21,10 +20,10 @@ function createOperation(index: number, text: string, type: OperationType = Oper
       .addBlockIndex(index)
       .build(),
     {
-      payload: [ {
+      payload: [{
         name: 'paragraph',
         data: { text },
-      } ],
+      }],
     },
     userId
   );
@@ -40,10 +39,10 @@ describe('UndoRedoManager', () => {
         .addBlockIndex(0)
         .build(),
       {
-        payload: [ {
+        payload: [{
           name: 'paragraph',
           data: { text: 'editor.js' },
-        } ],
+        }],
       },
       userId
     );
@@ -76,10 +75,10 @@ describe('UndoRedoManager', () => {
         .addBlockIndex(0)
         .build(),
       {
-        payload: [ {
+        payload: [{
           name: 'paragraph',
           data: { text: 'editor.js' },
-        } ],
+        }],
       },
       userId
     );
@@ -102,14 +101,13 @@ describe('UndoRedoManager', () => {
         .addBlockIndex(0)
         .build(),
       {
-        payload: [ {
+        payload: [{
           name: 'paragraph',
           data: { text: 'editor.js' },
-        } ],
+        }],
       },
       userId
     );
-
 
     const newOp = new Operation(
       OperationType.Insert,
@@ -117,10 +115,10 @@ describe('UndoRedoManager', () => {
         .addBlockIndex(0)
         .build(),
       {
-        payload: [ {
+        payload: [{
           name: 'paragraph',
           data: { text: 'hello' },
-        } ],
+        }],
       },
       userId
     );

@@ -35,7 +35,6 @@ describe('OTClient', () => {
       const originalConnectDocument = OTClient.prototype.connectDocument;
 
       connectDocumentSpy = jest.spyOn(OTClient.prototype, 'connectDocument').mockImplementation(async function (this: OTClient, doc: EditorDocumentSerialized) {
-        // eslint-disable-next-line @typescript-eslint/no-this-alias -- capture the OTClient instance for send()
         otClientFromConnect = this;
 
         return originalConnectDocument.call(this, doc);
@@ -56,7 +55,7 @@ describe('OTClient', () => {
       const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           data: {
             text: {
@@ -73,7 +72,7 @@ describe('OTClient', () => {
             },
             valueA: 0,
           },
-        } ],
+        }],
         properties: {},
       });
 

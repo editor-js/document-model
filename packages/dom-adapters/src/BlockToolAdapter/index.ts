@@ -221,7 +221,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     const key = createDataKey(keyRaw);
 
     /**
-     * Cast callback to allow saving 
+     * Cast callback to allow saving
      */
     this.#attachedValues.set(key, callback as (value: unknown) => void);
 

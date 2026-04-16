@@ -52,14 +52,11 @@ export class OTClient {
    */
   #onHandshake: (data?: EditorDocumentSerialized) => void;
 
-
   /**
    * Constructor function
    * - initialises socket connection
-   *
    * @todo think of offline situation & retries
    * @todo handle close and error events
-   *
    * @param serverAddr - address of the websocket server
    * @param userId - current user identifier
    * @param onHandshake - handshake callback
@@ -69,9 +66,8 @@ export class OTClient {
     this.#userId = userId;
     this.#onRemoteOperation = onRemoteOperation;
     this.#onHandshake = onHandshake;
-    this.#ws = new Promise(resolve => {
+    this.#ws = new Promise((resolve) => {
       const ws = new WebSocket(serverAddr);
-
 
       ws.addEventListener('open', () => {
         resolve(ws);
@@ -89,16 +85,14 @@ export class OTClient {
 
   /**
    * Sends handshake event to the server to connect the client to passed document
-   *
    * @param document - serialized document data
    */
   public async connectDocument(document: EditorDocumentSerialized): Promise<void> {
     const ws = await this.#ws;
 
-    this.#handshake = new Promise(resolve => {
+    this.#handshake = new Promise((resolve) => {
       /**
        * Handles handshake response
-       *
        * @param message - server message
        */
       const onMessage = (message: MessageEvent): void => {
@@ -135,7 +129,6 @@ export class OTClient {
 
   /**
    * Adds operation to the pending operations array and schedule the send
-   *
    * @param operation - operation to send
    */
   public async send(operation: Operation): Promise<void> {
@@ -168,7 +161,6 @@ export class OTClient {
 
     /**
      * Handles acknowledgment response and sends the next operation
-     *
      * @param message - server message
      */
     const onMessage = async (message: MessageEvent): Promise<void> => {
@@ -184,7 +176,6 @@ export class OTClient {
         }
 
         this.#resolvedOperations.push(nextOperation);
-
 
         ws.removeEventListener('message', onMessage);
 
@@ -205,10 +196,8 @@ export class OTClient {
     }));
   }
 
-
   /**
    * Handles remote operations from the server
-   *
    * @param message - server message with the operation payload
    */
   #onMessage(message: OperationMessage): void {

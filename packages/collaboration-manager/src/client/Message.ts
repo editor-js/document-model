@@ -9,7 +9,7 @@ export interface HandshakePayload {
   /**
    * Document id to edit
    */
-  document: DocumentId
+  document: DocumentId;
 
   /**
    * User identifier

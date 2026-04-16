@@ -9,7 +9,7 @@ export enum OperationType {
   Insert = 'insert',
   Delete = 'delete',
   Modify = 'modify',
-  Neutral = 'neutral',
+  Neutral = 'neutral'
 }
 
 /**
@@ -98,7 +98,6 @@ export type InvertedOperationType<T extends OperationType> = T extends Operation
       ? OperationType.Neutral
       : OperationType.Modify;
 
-
 /**
  * Class representing operation on the document model tree
  */
@@ -135,7 +134,6 @@ export class Operation<T extends OperationType = OperationType> {
 
   /**
    * Creates an instance of Operation
-   *
    * @param type - operation type
    * @param index - index in the document model tree
    * @param data - operation data
@@ -152,19 +150,16 @@ export class Operation<T extends OperationType = OperationType> {
 
   /**
    * Creates an operation from another operation or serialized operation
-   *
    * @param op - operation to copy
    */
   public static from<T extends OperationType>(op: Operation<T> | Operation<OperationType.Neutral>): Operation<T>;
   /**
    * Creates an operation from another operation or serialized operation
-   *
    * @param json - serialized operation to copy
    */
   public static from<T extends OperationType>(json: SerializedOperation<T>): Operation<T>;
   /**
    * Creates an operation from another operation or serialized operation
-   *
    * @param opOrJSON - operation or serialized operation to copy
    */
   public static from<T extends OperationType>(opOrJSON: Operation<T> | SerializedOperation<T>): Operation<T> {
@@ -187,8 +182,7 @@ export class Operation<T extends OperationType = OperationType> {
   /**
    * Returns effective text range of the operation
    * This method is used to get actual text range for multi-symbol text insertions
-   *
-   * @returns {TextRange} effective text range of the operation
+   * @returns effective text range of the operation
    */
   public getEffectiveRange(): TextRange {
     if (this.type === OperationType.Insert) {
@@ -235,7 +229,6 @@ export class Operation<T extends OperationType = OperationType> {
   /**
    * Transforms the operation against another operation
    * If operation is not transformable returns null
-   *
    * @param againstOp - operation to transform against
    */
   public transform<K extends OperationType>(againstOp: Operation<K> | Operation<OperationType.Neutral>): Operation<T | OperationType.Neutral> {

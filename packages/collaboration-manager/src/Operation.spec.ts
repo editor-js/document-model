@@ -27,7 +27,7 @@ const createOperation = (
   };
 
   if (type === OperationType.Modify && prevValue !== undefined) {
-    (data as ModifyOperationData).prevPayload = prevValue;
+    (data).prevPayload = prevValue;
   }
 
   return new Operation(
@@ -37,7 +37,6 @@ const createOperation = (
     'user'
   );
 };
-
 
 describe('Operation', () => {
   describe('.transform()', () => {
@@ -119,24 +118,24 @@ describe('Operation', () => {
 
       it('should not change the text index if local op is a Block operation', () => {
         const receivedOp = createOperation(OperationType.Modify, 0, 'abc');
-        const localOp = createOperation(OperationType.Insert, 0, [ {
+        const localOp = createOperation(OperationType.Insert, 0, [{
           name: 'paragraph',
           data: { text: 'hello' },
-        } ]);
+        }]);
         const transformedOp = receivedOp.transform(localOp);
 
         expect(transformedOp.index.textRange).toEqual([0, 0]);
       });
 
       it('should not change the operation if local op is a Block operation after a received one', () => {
-        const receivedOp = createOperation(OperationType.Insert, 0, [ {
+        const receivedOp = createOperation(OperationType.Insert, 0, [{
           name: 'paragraph',
           data: { text: 'abc' },
-        } ]);
-        const localOp = createOperation(OperationType.Insert, 1, [ {
+        }]);
+        const localOp = createOperation(OperationType.Insert, 1, [{
           name: 'paragraph',
           data: { text: 'hello' },
-        } ]);
+        }]);
 
         const transformedOp = receivedOp.transform(localOp);
 
@@ -144,14 +143,14 @@ describe('Operation', () => {
       });
 
       it('should adjust the block index if local op is a Block operation before a received one', () => {
-        const receivedOp = createOperation(OperationType.Insert, 1, [ {
+        const receivedOp = createOperation(OperationType.Insert, 1, [{
           name: 'paragraph',
           data: { text: 'abc' },
-        } ]);
-        const localOp = createOperation(OperationType.Insert, 0, [ {
+        }]);
+        const localOp = createOperation(OperationType.Insert, 0, [{
           name: 'paragraph',
           data: { text: 'hello' },
-        } ]);
+        }]);
 
         const transformedOp = receivedOp.transform(localOp);
 
@@ -159,14 +158,14 @@ describe('Operation', () => {
       });
 
       it('should adjust the block index if local op is a Block operation at the same index as a received one', () => {
-        const receivedOp = createOperation(OperationType.Insert, 0, [ {
+        const receivedOp = createOperation(OperationType.Insert, 0, [{
           name: 'paragraph',
           data: { text: 'abc' },
-        } ]);
-        const localOp = createOperation(OperationType.Insert, 0, [ {
+        }]);
+        const localOp = createOperation(OperationType.Insert, 0, [{
           name: 'paragraph',
           data: { text: 'hello' },
-        } ]);
+        }]);
 
         const transformedOp = receivedOp.transform(localOp);
 
@@ -201,10 +200,10 @@ describe('Operation', () => {
 
       it('should not change the text index if local op is a Block operation', () => {
         const receivedOp = createOperation(OperationType.Modify, 1, 'abc');
-        const localOp = createOperation(OperationType.Delete, 0, [ {
+        const localOp = createOperation(OperationType.Delete, 0, [{
           name: 'paragraph',
           data: { text: 'hello' },
-        } ]);
+        }]);
         const transformedOp = receivedOp.transform(localOp);
 
         expect(transformedOp.index.textRange).toEqual([1, 1]);
@@ -212,24 +211,24 @@ describe('Operation', () => {
 
       it('should not change the text index if local op is a Block operation', () => {
         const receivedOp = createOperation(OperationType.Modify, 0, 'abc');
-        const localOp = createOperation(OperationType.Insert, 0, [ {
+        const localOp = createOperation(OperationType.Insert, 0, [{
           name: 'paragraph',
           data: { text: 'hello' },
-        } ]);
+        }]);
         const transformedOp = receivedOp.transform(localOp);
 
         expect(transformedOp.index.textRange).toEqual([0, 0]);
       });
 
       it('should not change the operation if local op is a Block operation after a received one', () => {
-        const receivedOp = createOperation(OperationType.Insert, 0, [ {
+        const receivedOp = createOperation(OperationType.Insert, 0, [{
           name: 'paragraph',
           data: { text: 'abc' },
-        } ]);
-        const localOp = createOperation(OperationType.Delete, 1, [ {
+        }]);
+        const localOp = createOperation(OperationType.Delete, 1, [{
           name: 'paragraph',
           data: { text: 'hello' },
-        } ]);
+        }]);
 
         const transformedOp = receivedOp.transform(localOp);
 
@@ -237,14 +236,14 @@ describe('Operation', () => {
       });
 
       it('should adjust the block index if local op is a Block operation before a received one', () => {
-        const receivedOp = createOperation(OperationType.Insert, 1, [ {
+        const receivedOp = createOperation(OperationType.Insert, 1, [{
           name: 'paragraph',
           data: { text: 'abc' },
-        } ]);
-        const localOp = createOperation(OperationType.Delete, 0, [ {
+        }]);
+        const localOp = createOperation(OperationType.Delete, 0, [{
           name: 'paragraph',
           data: { text: 'hello' },
-        } ]);
+        }]);
 
         const transformedOp = receivedOp.transform(localOp);
 
@@ -252,14 +251,14 @@ describe('Operation', () => {
       });
 
       it('should return Neutral operation if local op is a Block operation at the same index as a received one', () => {
-        const receivedOp = createOperation(OperationType.Insert, 1, [ {
+        const receivedOp = createOperation(OperationType.Insert, 1, [{
           name: 'paragraph',
           data: { text: 'abc' },
-        } ]);
-        const localOp = createOperation(OperationType.Delete, 1, [ {
+        }]);
+        const localOp = createOperation(OperationType.Delete, 1, [{
           name: 'paragraph',
           data: { text: 'hello' },
-        } ]);
+        }]);
 
         const transformedOp = receivedOp.transform(localOp);
 
