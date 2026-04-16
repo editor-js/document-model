@@ -82,6 +82,8 @@ const collapsedSections = ref<{ [key: string]: boolean }>({
 
 /**
  * Toggles the collapsed state of a section
+ *
+ * @param section - section to toggle
  */
 function toggleSection(section: string) {
   collapsedSections.value[section] = !collapsedSections.value[section];
@@ -102,7 +104,10 @@ function toggleSection(section: string) {
 
     <div :class="$style.body">
       <div :class="[$style.section, { [$style.collapsed]: collapsedSections.editor }]">
-        <h2 :class="$style.sectionHeading" @click="toggleSection('editor')">
+        <h2
+          :class="$style.sectionHeading"
+          @click="toggleSection('editor')"
+        >
           Editor
         </h2>
         <div
@@ -111,13 +116,19 @@ function toggleSection(section: string) {
         />
       </div>
       <div :class="[$style.section, { [$style.collapsed]: collapsedSections.playground }]">
-        <h2 :class="$style.sectionHeading" @click="toggleSection('playground')">
+        <h2
+          :class="$style.sectionHeading"
+          @click="toggleSection('playground')"
+        >
           Model Serialized
         </h2>
         <pre v-if="serialized">{{ serialized }}</pre>
       </div>
       <div :class="[$style.section, { [$style.collapsed]: collapsedSections.output }]">
-        <h2 :class="$style.sectionHeading" @click="toggleSection('output')">
+        <h2
+          :class="$style.sectionHeading"
+          @click="toggleSection('output')"
+        >
           Model
         </h2>
         <Node

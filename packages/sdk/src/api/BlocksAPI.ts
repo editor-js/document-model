@@ -1,4 +1,4 @@
-import type { BlockToolData, ToolConfig } from '@editorjs/editorjs';
+import type { BlockToolData } from '@editorjs/editorjs';
 import type { BlockNodeSerialized, EditorDocumentSerialized } from '@editorjs/model';
 
 /**

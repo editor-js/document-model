@@ -14,7 +14,7 @@ import Style from './main.module.pcss';
 
 import type { ToolbarRenderedUIEvent } from './Toolbar/ToolbarRenderedUIEvent.js';
 import { make } from '@editorjs/dom';
-import type { BlocksHolderRenderedUIEvent } from './Blocks/events/BlocksHolderRenderedUIEvent';
+import type { BlocksHolderRenderedUIEvent } from './Blocks/events/index.js';
 
 /**
  * EditorJS UI plugin
