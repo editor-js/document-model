@@ -8,15 +8,14 @@ export enum RangeIntersectionType {
   Right = 'right',
   Includes = 'includes',
   IncludedBy = 'included',
-  None = 'none',
+  None = 'none'
 }
 
 /**
  * Returns the type of intersection between two text ranges
- *
  * @param range - Range to check
  * @param rangeToCompare - Range to compare with
- * @returns {RangeIntersectionType} Type of intersection
+ * @returns Type of intersection
  */
 export function getRangesIntersectionType(range: TextRange, rangeToCompare: TextRange): RangeIntersectionType {
   const [start, end] = range;

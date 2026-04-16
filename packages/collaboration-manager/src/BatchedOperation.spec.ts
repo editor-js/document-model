@@ -50,7 +50,6 @@ describe('BatchedOperation', () => {
 
       originalBatch.add(op2);
 
-
       const newBatch = BatchedOperation.from(originalBatch);
 
       expect(newBatch.operations).toStrictEqual(originalBatch.operations);
@@ -97,11 +96,11 @@ describe('BatchedOperation', () => {
       const transformedBatch = batch.transform(againstOp);
 
       expect(transformedBatch).not.toBeNull();
-      expect(transformedBatch!.operations.length).toBe(2);
+      expect(transformedBatch.operations.length).toBe(2);
       // Check if text ranges were shifted by 1 due to insertion
       /* eslint-disable @typescript-eslint/no-magic-numbers */
-      expect(transformedBatch!.operations[0].index.textRange![0]).toBe(2);
-      expect(transformedBatch!.operations[1].index.textRange![0]).toBe(3);
+      expect(transformedBatch.operations[0].index.textRange![0]).toBe(2);
+      expect(transformedBatch.operations[1].index.textRange![0]).toBe(3);
       /* eslint-enable @typescript-eslint/no-magic-numbers */
     });
 

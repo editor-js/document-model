@@ -41,7 +41,7 @@ describe('CollaborationManager', () => {
       const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           data: {
             text: {
@@ -49,7 +49,7 @@ describe('CollaborationManager', () => {
               $t: 't',
             },
           },
-        } ],
+        }],
       });
       const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
       const index = new IndexBuilder().addBlockIndex(0)
@@ -63,7 +63,7 @@ describe('CollaborationManager', () => {
       collaborationManager.applyOperation(operation);
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           tunes: {},
           data: {
@@ -73,7 +73,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        } ],
+        }],
         properties: {},
       });
     });
@@ -82,7 +82,7 @@ describe('CollaborationManager', () => {
       const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           data: {
             text: {
@@ -90,13 +90,12 @@ describe('CollaborationManager', () => {
               $t: 't',
             },
           },
-        } ],
+        }],
       });
       const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
       const index = new IndexBuilder().addBlockIndex(0)
         .addDataKey(createDataKey('text'))
-        .addTextRange([
-          3, 5])
+        .addTextRange([3, 5])
         .build();
       const operation = new Operation(OperationType.Delete, index, {
         payload: '11',
@@ -105,7 +104,7 @@ describe('CollaborationManager', () => {
       collaborationManager.applyOperation(operation);
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           tunes: {},
           data: {
@@ -115,7 +114,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        } ],
+        }],
         properties: {},
       });
     });
@@ -130,7 +129,7 @@ describe('CollaborationManager', () => {
       const index = new IndexBuilder().addBlockIndex(0)
         .build();
       const operation = new Operation(OperationType.Insert, index, {
-        payload: [ {
+        payload: [{
           name: 'paragraph',
           data: {
             text: {
@@ -138,13 +137,13 @@ describe('CollaborationManager', () => {
               $t: 't',
             },
           },
-        } ],
+        }],
       }, userId);
 
       collaborationManager.applyOperation(operation);
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           tunes: {},
           data: {
@@ -154,7 +153,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        } ],
+        }],
         properties: {},
       });
     });
@@ -172,13 +171,13 @@ describe('CollaborationManager', () => {
       };
 
       model.initializeDocument({
-        blocks: [ block ],
+        blocks: [block],
       });
       const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
       const index = new IndexBuilder().addBlockIndex(0)
         .build();
       const operation = new Operation(OperationType.Delete, index, {
-        payload: [ block ],
+        payload: [block],
       }, userId);
 
       collaborationManager.applyOperation(operation);
@@ -193,7 +192,7 @@ describe('CollaborationManager', () => {
       const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           data: {
             text: {
@@ -201,7 +200,7 @@ describe('CollaborationManager', () => {
               $t: 't',
             },
           },
-        } ],
+        }],
       });
       const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
       const index = new IndexBuilder().addBlockIndex(0)
@@ -218,20 +217,20 @@ describe('CollaborationManager', () => {
       collaborationManager.applyOperation(operation);
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           tunes: {},
           data: {
             text: {
               $t: 't',
               value: 'Hello world',
-              fragments: [ {
+              fragments: [{
                 tool: 'bold',
                 range: [0, 5],
-              } ],
+              }],
             },
           },
-        } ],
+        }],
         properties: {},
       });
     });
@@ -240,7 +239,7 @@ describe('CollaborationManager', () => {
       const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           data: {
             text: {
@@ -248,7 +247,7 @@ describe('CollaborationManager', () => {
               $t: 't',
             },
           },
-        } ],
+        }],
       });
       const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
       const index = new IndexBuilder().addBlockIndex(0)
@@ -270,7 +269,7 @@ describe('CollaborationManager', () => {
       const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           data: {
             text: {
@@ -278,7 +277,7 @@ describe('CollaborationManager', () => {
               $t: 't',
             },
           },
-        } ],
+        }],
       });
       const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
       const op1 = new Operation(OperationType.Insert, new IndexBuilder().addBlockIndex(0)
@@ -297,7 +296,7 @@ describe('CollaborationManager', () => {
 
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           tunes: {},
           data: {
@@ -307,7 +306,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        } ],
+        }],
         properties: {},
       });
     });
@@ -316,19 +315,19 @@ describe('CollaborationManager', () => {
       const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           data: {
             text: {
               value: 'Hello world',
               $t: 't',
-              fragments: [ {
+              fragments: [{
                 tool: 'bold',
                 range: [0, 5],
-              } ],
+              }],
             },
           },
-        } ],
+        }],
       });
       const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
       const index = new IndexBuilder().addBlockIndex(0)
@@ -345,20 +344,20 @@ describe('CollaborationManager', () => {
       collaborationManager.applyOperation(operation);
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           tunes: {},
           data: {
             text: {
               $t: 't',
               value: 'Hello world',
-              fragments: [ {
+              fragments: [{
                 tool: 'bold',
                 range: [3, 5],
-              } ],
+              }],
             },
           },
-        } ],
+        }],
         properties: {},
       });
     });
@@ -373,7 +372,7 @@ describe('CollaborationManager', () => {
       const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           data: {
             text: {
@@ -381,7 +380,7 @@ describe('CollaborationManager', () => {
               $t: 't',
             },
           },
-        } ],
+        }],
       });
       const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
       const index = new IndexBuilder().addBlockIndex(0)
@@ -396,7 +395,7 @@ describe('CollaborationManager', () => {
       collaborationManager.undo();
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           tunes: {},
           data: {
@@ -406,7 +405,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        } ],
+        }],
         properties: {},
       });
     });
@@ -415,7 +414,7 @@ describe('CollaborationManager', () => {
       const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           data: {
             text: {
@@ -423,7 +422,7 @@ describe('CollaborationManager', () => {
               $t: 't',
             },
           },
-        } ],
+        }],
       });
       const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
       const index = new IndexBuilder().addBlockIndex(0)
@@ -439,7 +438,7 @@ describe('CollaborationManager', () => {
       collaborationManager.undo();
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           tunes: {},
           data: {
@@ -449,7 +448,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        } ],
+        }],
         properties: {},
       });
     });
@@ -458,7 +457,7 @@ describe('CollaborationManager', () => {
       const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           data: {
             text: {
@@ -466,7 +465,7 @@ describe('CollaborationManager', () => {
               $t: 't',
             },
           },
-        } ],
+        }],
       });
       const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
       const index = new IndexBuilder().addBlockIndex(0)
@@ -482,7 +481,7 @@ describe('CollaborationManager', () => {
       collaborationManager.undo();
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           tunes: {},
           data: {
@@ -492,7 +491,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        } ],
+        }],
         properties: {},
       });
     });
@@ -501,7 +500,7 @@ describe('CollaborationManager', () => {
       const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           data: {
             text: {
@@ -509,7 +508,7 @@ describe('CollaborationManager', () => {
               $t: 't',
             },
           },
-        } ],
+        }],
       });
       const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
       const index = new IndexBuilder().addBlockIndex(0)
@@ -526,7 +525,7 @@ describe('CollaborationManager', () => {
 
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           tunes: {},
           data: {
@@ -536,7 +535,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        } ],
+        }],
         properties: {},
       });
     });
@@ -551,7 +550,7 @@ describe('CollaborationManager', () => {
       const index = new IndexBuilder().addBlockIndex(0)
         .build();
       const operation = new Operation(OperationType.Insert, index, {
-        payload: [ {
+        payload: [{
           name: 'paragraph',
           data: {
             text: {
@@ -559,7 +558,7 @@ describe('CollaborationManager', () => {
               $t: 't',
             },
           },
-        } ],
+        }],
       }, userId);
 
       collaborationManager.applyOperation(operation);
@@ -577,7 +576,7 @@ describe('CollaborationManager', () => {
       const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           data: {
             text: {
@@ -585,7 +584,7 @@ describe('CollaborationManager', () => {
               $t: 't',
             },
           },
-        } ],
+        }],
       });
       const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
       const index = new IndexBuilder().addBlockIndex(0)
@@ -604,7 +603,7 @@ describe('CollaborationManager', () => {
 
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           tunes: {},
           data: {
@@ -614,7 +613,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        } ],
+        }],
         properties: {},
       });
     });
@@ -623,19 +622,19 @@ describe('CollaborationManager', () => {
       const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           data: {
             text: {
               value: 'Hello world',
               $t: 't',
-              fragments: [ {
+              fragments: [{
                 tool: 'bold',
                 range: [0, 5],
-              } ],
+              }],
             },
           },
-        } ],
+        }],
       });
       const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
       const index = new IndexBuilder().addBlockIndex(0)
@@ -654,20 +653,20 @@ describe('CollaborationManager', () => {
 
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           tunes: {},
           data: {
             text: {
               $t: 't',
               value: 'Hello world',
-              fragments: [ {
+              fragments: [{
                 tool: 'bold',
                 range: [0, 5],
-              } ],
+              }],
             },
           },
-        } ],
+        }],
         properties: {},
       });
     });
@@ -676,19 +675,19 @@ describe('CollaborationManager', () => {
       const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           data: {
             text: {
               value: 'Hello world',
               $t: 't',
-              fragments: [ {
+              fragments: [{
                 tool: 'bold',
                 range: [0, 5],
-              } ],
+              }],
             },
           },
-        } ],
+        }],
       });
       const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
       const index = new IndexBuilder().addBlockIndex(0)
@@ -708,20 +707,20 @@ describe('CollaborationManager', () => {
 
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           tunes: {},
           data: {
             text: {
               $t: 't',
               value: 'Hello world',
-              fragments: [ {
+              fragments: [{
                 tool: 'bold',
                 range: [3, 5],
-              } ],
+              }],
             },
           },
-        } ],
+        }],
         properties: {},
       });
     });
@@ -741,13 +740,13 @@ describe('CollaborationManager', () => {
       };
 
       model.initializeDocument({
-        blocks: [ block ],
+        blocks: [block],
       });
       const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
       const index = new IndexBuilder().addBlockIndex(0)
         .build();
       const operation = new Operation(OperationType.Delete, index, {
-        payload: [ block ],
+        payload: [block],
       }, userId);
 
       collaborationManager.applyOperation(operation);
@@ -756,7 +755,7 @@ describe('CollaborationManager', () => {
 
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [ block ],
+        blocks: [block],
         properties: {},
       });
     });
@@ -777,13 +776,13 @@ describe('CollaborationManager', () => {
     };
 
     model.initializeDocument({
-      blocks: [ block ],
+      blocks: [block],
     });
     const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
     const index = new IndexBuilder().addBlockIndex(0)
       .build();
     const operation = new Operation(OperationType.Delete, index, {
-      payload: [ block ],
+      payload: [block],
     }, userId);
 
     collaborationManager.applyOperation(operation);
@@ -796,7 +795,7 @@ describe('CollaborationManager', () => {
 
     expect(model.serialized).toStrictEqual({
       identifier: documentId,
-      blocks: [ block ],
+      blocks: [block],
       properties: {},
     });
   });
@@ -816,13 +815,13 @@ describe('CollaborationManager', () => {
     };
 
     model.initializeDocument({
-      blocks: [ block ],
+      blocks: [block],
     });
     const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
     const index = new IndexBuilder().addBlockIndex(0)
       .build();
     const operation = new Operation(OperationType.Delete, index, {
-      payload: [ block ],
+      payload: [block],
     }, userId);
 
     collaborationManager.applyOperation(operation);
@@ -838,11 +837,10 @@ describe('CollaborationManager', () => {
 
     expect(model.serialized).toStrictEqual({
       identifier: documentId,
-      blocks: [ block ],
+      blocks: [block],
       properties: {},
     });
   });
-
 
   it('should undo the next operation after redo', () => {
     const model = new EditorJSModel(userId, { identifier: documentId });
@@ -859,13 +857,13 @@ describe('CollaborationManager', () => {
     };
 
     model.initializeDocument({
-      blocks: [ block ],
+      blocks: [block],
     });
     const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
     const index = new IndexBuilder().addBlockIndex(0)
       .build();
     const operation = new Operation(OperationType.Delete, index, {
-      payload: [ block ],
+      payload: [block],
     }, userId);
 
     collaborationManager.applyOperation(operation);
@@ -875,7 +873,7 @@ describe('CollaborationManager', () => {
 
     collaborationManager.applyOperation(
       new Operation(OperationType.Insert, index, {
-        payload: [ block ],
+        payload: [block],
       }, userId)
     );
 
@@ -892,7 +890,7 @@ describe('CollaborationManager', () => {
     const model = new EditorJSModel(userId, { identifier: documentId });
 
     model.initializeDocument({
-      blocks: [ {
+      blocks: [{
         name: 'paragraph',
         data: {
           text: {
@@ -900,7 +898,7 @@ describe('CollaborationManager', () => {
             $t: 't',
           },
         },
-      } ],
+      }],
     });
     const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
     const index1 = new IndexBuilder().addBlockIndex(0)
@@ -925,7 +923,7 @@ describe('CollaborationManager', () => {
 
     expect(model.serialized).toStrictEqual({
       identifier: documentId,
-      blocks: [ {
+      blocks: [{
         name: 'paragraph',
         tunes: {},
         data: {
@@ -935,7 +933,7 @@ describe('CollaborationManager', () => {
             fragments: [],
           },
         },
-      } ],
+      }],
       properties: {},
     });
   });
@@ -944,7 +942,7 @@ describe('CollaborationManager', () => {
     const model = new EditorJSModel(userId, { identifier: documentId });
 
     model.initializeDocument({
-      blocks: [ {
+      blocks: [{
         name: 'paragraph',
         data: {
           text: {
@@ -952,7 +950,7 @@ describe('CollaborationManager', () => {
             $t: 't',
           },
         },
-      } ],
+      }],
     });
     const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
     const index1 = new IndexBuilder().addBlockIndex(0)
@@ -978,7 +976,7 @@ describe('CollaborationManager', () => {
 
     expect(model.serialized).toStrictEqual({
       identifier: documentId,
-      blocks: [ {
+      blocks: [{
         name: 'paragraph',
         tunes: {},
         data: {
@@ -988,7 +986,7 @@ describe('CollaborationManager', () => {
             fragments: [],
           },
         },
-      } ],
+      }],
       properties: {},
     });
   });
@@ -997,7 +995,7 @@ describe('CollaborationManager', () => {
     const model = new EditorJSModel(userId, { identifier: documentId });
 
     model.initializeDocument({
-      blocks: [ {
+      blocks: [{
         name: 'paragraph',
         data: {
           text: {
@@ -1005,7 +1003,7 @@ describe('CollaborationManager', () => {
             $t: 't',
           },
         },
-      } ],
+      }],
     });
     const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
 
@@ -1015,7 +1013,7 @@ describe('CollaborationManager', () => {
 
     expect(model.serialized).toStrictEqual({
       identifier: documentId,
-      blocks: [ {
+      blocks: [{
         name: 'paragraph',
         tunes: {},
         data: {
@@ -1025,7 +1023,7 @@ describe('CollaborationManager', () => {
             fragments: [],
           },
         },
-      } ],
+      }],
       properties: {},
     });
   });
@@ -1037,7 +1035,7 @@ describe('CollaborationManager', () => {
       const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           data: {
             text: {
@@ -1045,7 +1043,7 @@ describe('CollaborationManager', () => {
               $t: 't',
             },
           },
-        } ],
+        }],
       });
       void new CollaborationManager(config as Required<CoreConfig>, model);
 
@@ -1067,7 +1065,7 @@ describe('CollaborationManager', () => {
       const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           data: {
             text: {
@@ -1075,7 +1073,7 @@ describe('CollaborationManager', () => {
               $t: 't',
             },
           },
-        } ],
+        }],
       });
 
       const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
@@ -1107,7 +1105,7 @@ describe('CollaborationManager', () => {
       // Verify the operations were transformed correctly
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           tunes: {},
           data: {
@@ -1117,7 +1115,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        } ],
+        }],
         properties: {},
       });
     });
@@ -1126,7 +1124,7 @@ describe('CollaborationManager', () => {
       const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           data: {
             text: {
@@ -1134,7 +1132,7 @@ describe('CollaborationManager', () => {
               $t: 't',
             },
           },
-        } ],
+        }],
       });
 
       const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
@@ -1148,7 +1146,7 @@ describe('CollaborationManager', () => {
 
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           tunes: {},
           data: {
@@ -1158,7 +1156,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        } ],
+        }],
         properties: {},
       });
     });
@@ -1167,7 +1165,7 @@ describe('CollaborationManager', () => {
       const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           data: {
             text: {
@@ -1175,7 +1173,7 @@ describe('CollaborationManager', () => {
               $t: 't',
             },
           },
-        } ],
+        }],
       });
 
       const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
@@ -1216,7 +1214,7 @@ describe('CollaborationManager', () => {
 
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           tunes: {},
           data: {
@@ -1226,7 +1224,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        } ],
+        }],
         properties: {},
       });
     });
@@ -1235,7 +1233,7 @@ describe('CollaborationManager', () => {
       const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           data: {
             text: {
@@ -1243,7 +1241,7 @@ describe('CollaborationManager', () => {
               $t: 't',
             },
           },
-        } ],
+        }],
       });
 
       const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
@@ -1277,7 +1275,7 @@ describe('CollaborationManager', () => {
 
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           tunes: {},
           data: {
@@ -1287,7 +1285,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        } ],
+        }],
         properties: {},
       });
     });
@@ -1296,7 +1294,7 @@ describe('CollaborationManager', () => {
       const model = new EditorJSModel(userId, { identifier: documentId });
 
       model.initializeDocument({
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           data: {
             text: {
@@ -1304,7 +1302,7 @@ describe('CollaborationManager', () => {
               $t: 't',
             },
           },
-        } ],
+        }],
       });
 
       const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
@@ -1329,7 +1327,7 @@ describe('CollaborationManager', () => {
 
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [ {
+        blocks: [{
           name: 'paragraph',
           tunes: {},
           data: {
@@ -1339,7 +1337,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        } ],
+        }],
         properties: {},
       });
     });
