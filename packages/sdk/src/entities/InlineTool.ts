@@ -115,4 +115,4 @@ export interface InlineToolConstructor extends BaseToolConstructor {
    * Tool title
    */
   [InternalInlineToolSettings.Title]: string;
-};
+}

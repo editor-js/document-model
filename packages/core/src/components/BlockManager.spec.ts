@@ -6,6 +6,17 @@ import type { Index } from '@editorjs/model';
 const BLOCKS_COUNT = 7;
 const USER_ID = 'user';
 
+/**
+ * Mock console.error to suppress expected error logs
+ */
+console.error = jest.fn();
+
+jest.unstable_mockModule('@editorjs/sdk', () => ({
+  BlockAddedCoreEvent: jest.fn(),
+  BlockRemovedCoreEvent: jest.fn(),
+  EventBus: jest.fn(),
+}));
+
 // Register ESM mocks before importing the module under test
 jest.unstable_mockModule('@editorjs/model', () => {
   const EditorJSModel = jest.fn(() => ({

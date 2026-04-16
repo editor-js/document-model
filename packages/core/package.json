@@ -38,11 +38,12 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
+    "@codexteam/icons": "^0.3.3",
     "@editorjs/collaboration-manager": "workspace:^",
-    "@editorjs/dom": "^1.0.0",
+    "@editorjs/dom": "^1.1.0",
     "@editorjs/dom-adapters": "workspace:^",
     "@editorjs/editorjs": "^2.30.5",
-    "@editorjs/helpers": "^1.1.0",
+    "@editorjs/helpers": "^1.2.1",
     "@editorjs/model": "workspace:^",
     "@editorjs/sdk": "workspace:^",
     "reflect-metadata": "^0.2.2",
