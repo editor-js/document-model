@@ -38,7 +38,7 @@ export default defineConfig({
   },
   css: {
     modules: {
-      generateScopedName: (name) => `editorjs-${name}`,
+      generateScopedName: (name) => `ejs-${name}`,
       localsConvention: 'dashes'
     },
     postcss: {

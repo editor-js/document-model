@@ -1,6 +1,6 @@
 import { bem } from '@editorjs/helpers';
 
-const className = bem('ejs-toolbar');
+const className = bem('toolbar');
 
 export const css = {
   toolbar: className(),

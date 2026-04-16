@@ -104,7 +104,7 @@ export class ToolboxUI implements EditorjsPlugin {
       this.open();
     });
 
-    this.#eventBus.addEventListener('ui:blocks:selected', (e: BlockSelectedUIEvent) => {
+    this.#eventBus.addEventListener('ui:blocks:block-selected', (e: BlockSelectedUIEvent) => {
       if (this.#isPopoverOpen) {
         return;
       }

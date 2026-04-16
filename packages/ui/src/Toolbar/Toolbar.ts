@@ -35,10 +35,19 @@ interface ToolbarNodes {
 export class ToolbarUI implements EditorjsPlugin {
   public static readonly type = UiComponentType.Toolbar;
 
+  /**
+   * Editor.js API
+   */
   #api: EditorAPI;
 
+  /**
+   * Editor.js EventBus
+   */
   #eventBus: EventBus;
 
+  /**
+   * Toolbar HTML nodes
+   */
   #nodes: ToolbarNodes = {
     holder: make('div', Style[css.toolbar]) as HTMLDivElement,
     actions: make('div', Style[css.actions]) as HTMLDivElement,
@@ -69,7 +78,7 @@ export class ToolbarUI implements EditorjsPlugin {
 
     this.#subscribeToToolboxEvents();
 
-    this.#eventBus.addEventListener(`ui:blocks:selected`, (event: BlockSelectedUIEvent) => {
+    this.#eventBus.addEventListener(`ui:blocks:block-selected`, (event: BlockSelectedUIEvent) => {
       if (this.#isToolboxOpen) {
         return;
       }
@@ -80,6 +89,7 @@ export class ToolbarUI implements EditorjsPlugin {
 
   /**
    * Moves Toolbar to the provided HTML element
+   * @todo - implement a case when several blocks are selected
    * @param block - HTML element to move the Toolbar to
    */
   public moveTo(block: HTMLElement): void {
@@ -118,7 +128,7 @@ export class ToolbarUI implements EditorjsPlugin {
   }
 
   /**
-   * Subscribes to Toolbox events
+   * Subscribes to Toolbox event
    */
   #subscribeToToolboxEvents(): void {
     this.#eventBus.addEventListener(`ui:toolbox:rendered`, (event: ToolboxRenderedUIEvent) => {

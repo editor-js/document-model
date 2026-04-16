@@ -38,7 +38,7 @@ export class EditorjsUI implements EditorjsPlugin {
   /**
    * Additional wrapper so we don't mess with user provided one
    */
-  #editorWrapper = make('div', Style.ejs);
+  #editorWrapper = make('div', Style.editor);
 
   /**
    * Plugin type
@@ -64,7 +64,7 @@ export class EditorjsUI implements EditorjsPlugin {
     });
 
     this.#eventBus.addEventListener(`ui:blocks:rendered`, (event: BlocksHolderRenderedUIEvent) => {
-      this.#addBlocks(event.detail.blocks);
+      this.#addBlocks(event.detail.blocksHolder);
     });
   }
 

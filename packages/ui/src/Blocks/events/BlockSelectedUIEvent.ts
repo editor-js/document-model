@@ -25,6 +25,6 @@ export class BlockSelectedUIEvent extends BlocksBaseEvent<BlockSelectedUIEventPa
    * @param payload - BlockSelectedUIEvent events payload
    */
   constructor(payload: BlockSelectedUIEventPayload) {
-    super('selected', payload);
+    super('block-selected', payload);
   }
 }

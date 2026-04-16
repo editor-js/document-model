@@ -61,7 +61,7 @@ export class BlocksUI implements EditorjsPlugin {
     });
 
     this.#eventBus.dispatchEvent(new BlocksHolderRenderedUIEvent({
-      blocks: this.#blocksHolder,
+      blocksHolder: this.#blocksHolder,
     }));
   }
 
@@ -141,7 +141,7 @@ export class BlocksUI implements EditorjsPlugin {
     const zeroWidthSpaceWrapper = document.createElement('span');
     const zeroWidthSpace = document.createTextNode('\u200B');
 
-    zeroWidthSpaceWrapper.classList.add(Style['ejs__host-holder']);
+    zeroWidthSpaceWrapper.classList.add(Style['host-holder']);
     zeroWidthSpaceWrapper.appendChild(zeroWidthSpace);
 
     blocksHolder.appendChild(zeroWidthSpaceWrapper);

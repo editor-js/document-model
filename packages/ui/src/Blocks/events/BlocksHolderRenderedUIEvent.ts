@@ -8,11 +8,11 @@ export interface BlocksHolderRenderedUIEventPayload {
   /**
    * Blocks holder HTML element
    */
-  readonly blocks: HTMLElement;
+  readonly blocksHolder: HTMLElement;
 }
 
 /**
- * Class for events that is being fired after the inline toolbar is rendered
+ * Class for events that is being fired after the blocks holder is rendered
  */
 export class BlocksHolderRenderedUIEvent extends BlocksBaseEvent<BlocksHolderRenderedUIEventPayload> {
   /**
