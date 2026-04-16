@@ -185,20 +185,14 @@ export class CaretAdapter extends EventTarget {
   }
 
   /**
-   * Pushes the current user's caret into the model via {@link updateIndex}: serialised block
-   * index, data field key, and {@link TextRange} — the selected span **inside this `input` only**
-   * (not the whole document selection when it spans several blocks).
+   * Writes the caret into the model for one contenteditable field: converts `selectionRange` to
+   * offsets inside `input`, then calls `updateIndex` with block index, `key`, and that {@link TextRange}.
+   * Only covers a range fully inside this `input` (caller picks the right block/field).
    *
-   * Maps `selectionRange` boundary points to absolute offsets under this contenteditable root with
-   * {@link getAbsoluteRangeOffset}.
-   *
-   * The caller must already know that this `input` and `key` are the right scope (focused
-   * field, or nested-CE fallback where the range still lies inside this element).
-   *
-   * @param selectionRange - `Selection.getRangeAt(0)` from the document
-   * @param block - block adapter that owns the input
-   * @param key - data key of the field in that block
-   * @param input - contenteditable host previously passed to `attachInput` for that key
+   * @param selectionRange - document selection range (e.g. `getRangeAt(0)`)
+   * @param block - block that owns this input
+   * @param key - field data key
+   * @param input - same contenteditable node as for `attachInput`
    */
   #syncUserCaretIndexFromSelectionForInput(
     selectionRange: Range,
@@ -271,7 +265,11 @@ export class CaretAdapter extends EventTarget {
         }
 
         if (contentEditableFallback === null) {
-          contentEditableFallback = { block, key, input };
+          contentEditableFallback = {
+            block,
+            key,
+            input,
+          };
         }
       }
     }

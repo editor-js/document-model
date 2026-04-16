@@ -1,7 +1,35 @@
 /**
- * Matches a native keydown event against an Editor.js style shortcut string
- * (see https://editorjs.io/inline-tools-api-1/#shortcut and codex.shortcuts format, e.g. CMD+B).
- *
+ * Compares the non-modifier segment of a shortcut to the keydown event.
+ * @param event - keydown event
+ * @param token - uppercased key token from shortcut (last segment)
+ */
+function matchesKeyToken(event: KeyboardEvent, token: string): boolean {
+  if (token.length === 1 && token >= 'A' && token <= 'Z') {
+    return event.code === `Key${token}`;
+  }
+
+  if (token.length === 1 && token >= '0' && token <= '9') {
+    return event.code === `Digit${token}`;
+  }
+
+  switch (token) {
+    case 'ENTER':
+      return event.code === 'Enter';
+    case 'SPACE':
+      return event.code === 'Space';
+    case 'TAB':
+      return event.code === 'Tab';
+    case 'ESC':
+    case 'ESCAPE':
+      return event.code === 'Escape';
+    default:
+      return event.key.toUpperCase() === token;
+  }
+}
+
+/**
+ * Matches a native keydown event against an Editor.js style shortcut string (see
+ * https://editorjs.io/inline-tools-api-1/#shortcut and codex.shortcuts format, e.g. CMD+B).
  * @param event - keydown event
  * @param shortcut - shortcut string like CMD+B or CTRL+SHIFT+Z
  */
@@ -74,32 +102,4 @@ export function matchKeyboardShortcut(event: KeyboardEvent, shortcut: string): b
   }
 
   return matchesKeyToken(event, keyToken);
-}
-
-/**
- * @param event - keydown event
- * @param token - uppercased key token from shortcut (last segment)
- */
-function matchesKeyToken(event: KeyboardEvent, token: string): boolean {
-  if (token.length === 1 && token >= 'A' && token <= 'Z') {
-    return event.code === `Key${token}`;
-  }
-
-  if (token.length === 1 && token >= '0' && token <= '9') {
-    return event.code === `Digit${token}`;
-  }
-
-  switch (token) {
-    case 'ENTER':
-      return event.code === 'Enter';
-    case 'SPACE':
-      return event.code === 'Space';
-    case 'TAB':
-      return event.code === 'Tab';
-    case 'ESC':
-    case 'ESCAPE':
-      return event.code === 'Escape';
-    default:
-      return event.key.toUpperCase() === token;
-  }
 }

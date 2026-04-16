@@ -310,9 +310,7 @@ export class BlocksManager {
     }));
 
     /**
-     * @todo Detach block tool adapter from caret adapter,
-     *      make sure Formtatting Adapter and others are destroyed
-     *      along with their dependencies
+     * @todo Detach block tool adapter from caret adapter to clear memory
      */
   }
 }

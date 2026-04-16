@@ -20,7 +20,7 @@ export interface KeydownUIEventPayload {
  */
 export class KeydownUIEvent extends UIEventBase<KeydownUIEventPayload> {
   /**
-   * @param payload - keydown payload
+   * @param payload - carries the original DOM `KeyboardEvent` as `nativeEvent` for shortcut matching
    */
   constructor(payload: KeydownUIEventPayload) {
     super(KeydownUIEventName, payload);

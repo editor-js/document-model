@@ -5,7 +5,6 @@ import type {
   EditorAPI,
   EditorjsPlugin,
   EditorjsPluginParams,
-  InlineToolFacade,
   KeydownUIEvent,
   ToolLoadedCoreEvent
 } from '@editorjs/sdk';
@@ -57,8 +56,7 @@ export class ShortcutsPlugin implements EditorjsPlugin {
 
       /**
        * @todo support for "shortcuts" map for block tools / render overrides
-       *
-       * @exapmple
+       * @example
        * core.use(ListTool, {
        *   shortcuts: {
        *     'CMD+U': { style: 'ul'},

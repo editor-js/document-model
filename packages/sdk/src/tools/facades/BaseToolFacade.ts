@@ -203,8 +203,10 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
   /**
    * Static {@link ToolConstructable.options} merged with `use(Tool, options)` (later keys win).
    * Shortcut handling is delegated to the Shortcuts plugin; `shortcut` / `shortcuts` may appear here.
+   * @returns Merged static tool options and second-argument `use` options
    */
   public get options(): MergedToolOptions {
+    /* eslint-disable jsdoc/require-jsdoc -- inline cast only; shape is not a public API surface */
     const staticDefaults = (this.constructable as { options?: StaticToolOptions }).options ?? {};
 
     return {
@@ -215,12 +217,13 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
 
   /**
    * Plugin-specific `config` only: static `options().config` merged with `options.config` from `use(Tool, options)`.
+   * @returns Merged tool plugin configuration object
    */
   public get config(): Record<string, unknown> {
+    /* eslint-disable jsdoc/require-jsdoc -- inline cast only; shape is not a public API surface */
     const staticOpts = (this.constructable as { options?: { config?: Record<string, unknown> } }).options;
     const fromTool = staticOpts?.config ?? {};
     const fromUse = (this.useToolOptions[UserToolOptions.Config] ?? {}) as Record<string, unknown>;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const merged: Record<string, unknown> = {
       ...fromTool,
       ...fromUse,

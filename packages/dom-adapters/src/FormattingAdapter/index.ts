@@ -6,7 +6,6 @@ import type {
   ModelEvents
 } from '@editorjs/model';
 import {
-  createInlineToolData,
   EventType,
   TextFormattedEvent,
   TextUnformattedEvent
