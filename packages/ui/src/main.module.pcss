@@ -16,6 +16,10 @@
   svg {
     max-height: 100%;
   }
+
+  [contenteditable]:empty:after {
+    content: "\feff";
+  }
 }
 
 .paragraph {

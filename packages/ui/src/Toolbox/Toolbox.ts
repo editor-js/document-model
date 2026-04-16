@@ -156,7 +156,7 @@ export class ToolboxUI implements EditorjsPlugin {
   }
 
   /**
-   * Renders Toolbox UI and dispatches an events
+   * Renders Toolbox UI and dispatches an event
    */
   #render(): void {
     this.#nodes.holder = make('div');
