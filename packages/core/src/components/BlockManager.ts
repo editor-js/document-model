@@ -308,5 +308,9 @@ export class BlocksManager {
       tool: data.name,
       index: index.blockIndex,
     }));
+
+    /**
+     * @todo Detach block tool adapter from caret adapter to clear memory
+     */
   }
 }

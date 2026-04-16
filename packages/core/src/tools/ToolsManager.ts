@@ -117,21 +117,21 @@ export default class ToolsManager {
 
     this.#factory.setTools(tools);
 
-    tools.forEach(([toolConstructor, config]) => {
+    tools.forEach(([toolConstructor]) => {
       const toolName = toolConstructor.name;
 
       if (isFunction(toolConstructor.prepare)) {
         void promiseQueue.add(async () => {
           try {
+            const tool = this.#factory.get(toolName);
+
             /**
-             * TypeScript doesn't get type guard here, so non-null assertion is used
+             * Merged plugin `config` only (static `options().config` + `use(Tool, options).config`), aligned with `BaseToolFacade.prepare`.
              */
             await toolConstructor.prepare!({
               toolName,
-              config: config,
+              config: tool.config,
             });
-
-            const tool = this.#factory.get(toolName);
 
             if (tool.isInline()) {
               /**

@@ -16,11 +16,7 @@ export type ToolConstructable = BlockToolConstructor | InlineToolConstructor | B
 /**
  * Enum of Tool options provided by user
  */
-export enum UserSettings {
-  /**
-   * Shortcut for Tool
-   */
-  Shortcut = 'shortcut',
+export enum UserToolOptions {
   /**
    * Toolbox config for Tool
    */
@@ -44,14 +40,9 @@ export enum UserSettings {
  */
 export enum CommonInternalSettings {
   /**
-   * Shortcut for Tool
-   */
-  Shortcut = 'shortcut',
-  /**
    * Sanitize configuration for Tool
    */
   SanitizeConfig = 'sanitize'
-
 }
 
 /**
@@ -103,6 +94,19 @@ export enum InternalTuneSettings {
 export type ToolOptions = Omit<ToolSettings, 'class'>;
 
 /**
+ * Static `options` on the tool class (plugin-side defaults)
+ * provided by the tool developer
+ */
+export type StaticToolOptions = Record<string, unknown>;
+
+/**
+ * Result of merging static {@link ToolConstructable.options} with the second argument of `use(Tool, options)`.
+ */
+export interface MergedToolOptions {
+  [key: string]: unknown;
+}
+
+/**
  * BlockToolFacade constructor options inteface
  */
 interface ConstructorOptions {
@@ -117,9 +121,9 @@ interface ConstructorOptions {
   constructable: ToolConstructable;
 
   /**
-   * Tool options
+   * Second argument of `use(Tool, options)` (Editor.js-style tool settings, excluding `class`)
    */
-  config: ToolOptions;
+  useToolOptions: ToolOptions;
 
   /**
    * Api methods for the Tool
@@ -157,9 +161,9 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
   protected api: ApiMethods;
 
   /**
-   * Current tool user configuration
+   * Second argument of `use(Tool, options)` (feature flags, `shortcut`, nested `config` for the tool plugin, etc.)
    */
-  protected config: ToolOptions;
+  protected useToolOptions: ToolOptions;
 
   /**
    * Tool's constructable blueprint
@@ -183,7 +187,7 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
   constructor({
     name,
     constructable,
-    config,
+    useToolOptions,
     api,
     isDefault,
     defaultPlaceholder,
@@ -191,25 +195,45 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
     this.api = api;
     this.name = name;
     this.constructable = constructable;
-    this.config = config;
+    this.useToolOptions = useToolOptions;
     this.isDefault = isDefault;
     this.defaultPlaceholder = defaultPlaceholder;
   }
 
   /**
-   * Returns Tool user configuration
+   * Static {@link ToolConstructable.options} merged with `use(Tool, options)` (later keys win).
+   * Shortcut handling is delegated to the Shortcuts plugin; `shortcut` / `shortcuts` may appear here.
+   * @returns Merged static tool options and second-argument `use` options
    */
-  public get settings(): ToolOptions {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const config = this.config[UserSettings.Config] ?? {};
+  public get options(): MergedToolOptions {
+    /* eslint-disable jsdoc/require-jsdoc -- inline cast only; shape is not a public API surface */
+    const staticDefaults = (this.constructable as { options?: StaticToolOptions }).options ?? {};
 
-    if (this.isDefault && !('placeholder' in config) && typeof this.defaultPlaceholder === 'string') {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      config.placeholder = this.defaultPlaceholder;
+    return {
+      ...staticDefaults,
+      ...this.useToolOptions,
+    };
+  }
+
+  /**
+   * Plugin-specific `config` only: static `options().config` merged with `options.config` from `use(Tool, options)`.
+   * @returns Merged tool plugin configuration object
+   */
+  public get config(): Record<string, unknown> {
+    /* eslint-disable jsdoc/require-jsdoc -- inline cast only; shape is not a public API surface */
+    const staticOpts = (this.constructable as { options?: { config?: Record<string, unknown> } }).options;
+    const fromTool = staticOpts?.config ?? {};
+    const fromUse = (this.useToolOptions[UserToolOptions.Config] ?? {}) as Record<string, unknown>;
+    const merged: Record<string, unknown> = {
+      ...fromTool,
+      ...fromUse,
+    };
+
+    if (this.isDefault && !('placeholder' in merged) && typeof this.defaultPlaceholder === 'string') {
+      merged.placeholder = this.defaultPlaceholder;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return config;
+    return merged;
   }
 
   /**
@@ -230,22 +254,9 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
     if (isFunction(this.constructable.prepare)) {
       return this.constructable.prepare({
         toolName: this.name,
-        config: this.settings,
+        config: this.config,
       });
     }
-  }
-
-  /**
-   * Returns shortcut for Tool (internal or specified by user)
-   */
-  public get shortcut(): string | undefined {
-    /**
-     * @todo check if we support user shortcuts as static property as it is not specified in types
-     */
-    // const toolShortcut = this.constructable[CommonInternalSettings.Shortcut];
-    const userShortcut = this.config[UserSettings.Shortcut];
-
-    return userShortcut; // || toolShortcut;
   }
 
   // /**

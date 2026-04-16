@@ -90,7 +90,7 @@ export class ToolsFactory {
       throw new Error(`Tool ${name} is not registered`);
     }
 
-    const { class: constructable, ...config } = toolSettings;
+    const { class: constructable, ...useToolOptions } = toolSettings;
 
     const Constructor = this.#getConstructor(constructable);
     // const isTune = constructable[InternalTuneSettings.IsTune];
@@ -98,7 +98,7 @@ export class ToolsFactory {
     return new Constructor({
       name,
       constructable,
-      config,
+      useToolOptions,
       api: {},
       // api: this.api.getMethodsForTool(name, isTune),
       isDefault: name === this.#editorConfig.defaultBlock,

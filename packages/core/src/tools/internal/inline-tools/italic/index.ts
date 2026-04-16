@@ -22,6 +22,16 @@ export class ItalicInlineTool implements InlineTool {
   public static title = 'Italic';
 
   /**
+   * Default options (merged with second argument of `use(ItalicInlineTool, options)`).
+   */
+  public static readonly options = {
+    /**
+     * Shortcuts plugin options
+     */
+    shortcut: 'CMD+I',
+  } as const;
+
+  /**
    * Type of behaviour of the tool if new selection range intersect with existing fragment
    * If two fragment intersect, they should be merged
    */

@@ -490,6 +490,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
   #handleBeforeInputEvent(payload: BeforeInputUIEventPayload, input: HTMLElement, key: DataKey): void {
     const { data, inputType, targetRanges } = payload;
     const range = targetRanges[0];
+    const isFormattingInputType = inputType.startsWith('format');
 
     const isInputNative = isNativeInput(input);
     let start: number;
@@ -499,9 +500,9 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
      */
 
     /**
-     * In all cases we need to handle delete selected text if range is not collapsed
+     * In all cases (except formatting commands) we need to handle delete selected text if range is not collapsed.
      */
-    if (range.collapsed === false) {
+    if (range.collapsed === false && !isFormattingInputType) {
       if (isInputNative) {
         this.#handleDeleteInNativeInput(payload, input as HTMLInputElement | HTMLTextAreaElement, key, range);
       } else {

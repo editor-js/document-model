@@ -1,6 +1,8 @@
 import { isNativeInput } from '@editorjs/dom';
 import type {
-  ModelEvents } from '@editorjs/model';
+  DataKey,
+  ModelEvents
+} from '@editorjs/model';
 import {
   BlockRemovedEvent,
   type Caret,
@@ -183,12 +185,46 @@ export class CaretAdapter extends EventTarget {
   }
 
   /**
+   * Writes the caret into the model for one contenteditable field: converts `selectionRange` to
+   * offsets inside `input`, then calls `updateIndex` with block index, `key`, and that {@link TextRange}.
+   * Only covers a range fully inside this `input` (caller picks the right block/field).
+   *
+   * @param selectionRange - document selection range (e.g. `getRangeAt(0)`)
+   * @param block - block that owns this input
+   * @param key - field data key
+   * @param input - same contenteditable node as for `attachInput`
+   */
+  #syncUserCaretIndexFromSelectionForInput(
+    selectionRange: Range,
+    block: BlockToolAdapter,
+    key: DataKey,
+    input: HTMLElement
+  ): void {
+    /**
+     * @todo think of cross-block selection
+     */
+    const textRange = [
+      getAbsoluteRangeOffset(input, selectionRange.startContainer, selectionRange.startOffset),
+      getAbsoluteRangeOffset(input, selectionRange.endContainer, selectionRange.endOffset),
+    ] as TextRange;
+
+    const builder = new IndexBuilder();
+
+    builder
+      .from(block.getBlockIndex())
+      .addDataKey(key)
+      .addTextRange(textRange);
+
+    this.updateIndex(builder.build());
+  }
+
+  /**
    * Selection change handler
    *
    * @param selection - new document selection
    */
   #onSelectionChange(selection: Selection | null): void {
-    if (!selection) {
+    if (!selection || selection.rangeCount === 0) {
       this.updateIndex(null);
 
       return;
@@ -198,61 +234,55 @@ export class CaretAdapter extends EventTarget {
      * @todo Think of cross-block selection
      */
     const activeElement = document.activeElement;
+    const selectionRange = selection.getRangeAt(0);
+
+    /**
+     * Single pass over contenteditable attached inputs only (native inputs are ignored). Order:
+     * 1. Input that has focus and fully contains the selection range.
+     * 2. Otherwise the first input that fully contains the range (nested CE: activeElement may be
+     *    the outer blocks surface while the range lies inside the block input).
+     */
+    let contentEditableFallback: { block: BlockToolAdapter; key: DataKey; input: HTMLElement } | null = null;
 
     for (const block of this.#blocks) {
-      const inputs = block.getAttachedInputs();
-
-      for (const [key, input] of inputs.entries()) {
-        if (input !== activeElement) {
+      for (const [key, input] of block.getAttachedInputs().entries()) {
+        if (isNativeInput(input) === true) {
           continue;
         }
 
-        if (isNativeInput(input) === true) {
-          const textRange = [
-            (input as HTMLInputElement | HTMLTextAreaElement).selectionStart,
-            (input as HTMLInputElement | HTMLTextAreaElement).selectionEnd,
-          ] as TextRange;
+        const rangeInsideInput =
+          input.contains(selectionRange.startContainer) &&
+          input.contains(selectionRange.endContainer);
 
-          const builder = new IndexBuilder();
-
-          builder
-            .from(block.getBlockIndex())
-            .addDataKey(key)
-            .addTextRange(textRange);
-
-          this.updateIndex(builder.build());
-
-          /**
-           * For now we handle only first found input
-           */
-          break;
+        if (!rangeInsideInput) {
+          continue;
         }
 
-        const range = selection.getRangeAt(0);
+        if (input === activeElement) {
+          this.#syncUserCaretIndexFromSelectionForInput(selectionRange, block, key, input);
 
-        /**
-         * @todo think of cross-block selection
-         */
-        const textRange = [
-          getAbsoluteRangeOffset(input, range.startContainer, range.startOffset),
-          getAbsoluteRangeOffset(input, range.endContainer, range.endOffset),
-        ] as TextRange;
+          return;
+        }
 
-        const builder = new IndexBuilder();
-
-        builder
-          .from(block.getBlockIndex())
-          .addDataKey(key)
-          .addTextRange(textRange);
-
-        this.updateIndex(builder.build());
-
-        /**
-         * For now we handle only first found input
-         */
-        break;
+        if (contentEditableFallback === null) {
+          contentEditableFallback = {
+            block,
+            key,
+            input,
+          };
+        }
       }
     }
+
+    if (contentEditableFallback !== null) {
+      const { block, key, input } = contentEditableFallback;
+
+      this.#syncUserCaretIndexFromSelectionForInput(selectionRange, block, key, input);
+
+      return;
+    }
+
+    this.updateIndex(null);
   }
 
   /**

@@ -7,8 +7,8 @@ import {
   CoreEventType,
   EventBus,
   type InlineToolConstructor,
-  ToolType,
-  UiComponentType
+  PluginType,
+  ToolType
 } from '@editorjs/sdk';
 import type { ToolSettings } from './tools/ToolsFactory';
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
@@ -20,6 +20,7 @@ import { SelectionManager } from './components/SelectionManager.js';
 import { EditorAPI } from './api/index.js';
 import { generateId } from './utils/uid.js';
 import { Paragraph, BoldInlineTool, LinkInlineTool, ItalicInlineTool } from './tools/internal';
+import { ShortcutsPlugin } from './plugins/ShortcutsPlugin.js';
 
 /**
  * If no holder is provided via config, the editor will be appended to the element with this id
@@ -133,14 +134,15 @@ export default class Core {
     this.use(BoldInlineTool);
     this.use(ItalicInlineTool);
     this.use(LinkInlineTool);
+    this.use(ShortcutsPlugin);
   }
 
   /**
-   * Injects Tool constructor and it's config into the container
-   * @param tool - Tool constructor class
-   * @param config - Tool's config
+   * Injects Tool constructor and options into the container
+   * @param tool - Tool constructor class (static `options` defines defaults merged with the second argument)
+   * @param options - feature flags, `config` for the tool plugin, etc.
    */
-  public use(tool: ToolConstructable, config?: Omit<ToolSettings, 'class'>): Core;
+  public use(tool: ToolConstructable, options?: Omit<ToolSettings, 'class'>): Core;
   /**
    * Injects Plugin into the container to initialize on Editor's init
    * @param plugin - allows to pass any implementation of editor plugins
@@ -149,11 +151,11 @@ export default class Core {
   /**
    * Overloaded method to register Editor.js Plugins/Tools/etc
    * @param pluginOrTool - entity to register
-   * @param toolConfig - entity configuration
+   * @param options - second argument of `use(Tool, options)` when registering a tool
    */
   public use(
     pluginOrTool: ToolConstructable | EditorjsPluginConstructor,
-    toolConfig?: Omit<ToolSettings, 'class'>
+    options?: Omit<ToolSettings, 'class'>
   ): Core {
     const pluginType = pluginOrTool.type;
 
@@ -164,11 +166,18 @@ export default class Core {
         this.#iocContainer.set({
           id: pluginType,
           multiple: true,
-          value: [pluginOrTool, toolConfig],
+          value: [pluginOrTool, options],
         });
         break;
       default:
-        this.#iocContainer.set(pluginType, pluginOrTool);
+        this.#iocContainer.set({
+          id: PluginType.Plugin,
+          multiple: true,
+          value: pluginOrTool,
+          /**
+           * @todo support plugin "options"
+           */
+        });
     }
 
     return this;
@@ -204,20 +213,13 @@ export default class Core {
   }
 
   /**
-   * Initialize all registered UI plugins
+   * Initialize all registered UI plugins (see {@link PluginType.Plugin}).
    */
   #initializePlugins(): void {
-    /**
-     * Get all registered plugin types from the container
-     */
-    const pluginTypes = Object.values(UiComponentType);
+    const plugins = this.#iocContainer.getMany<EditorjsPluginConstructor>(PluginType.Plugin);
 
-    for (const pluginType of pluginTypes) {
-      const plugin = this.#iocContainer.get<EditorjsPluginConstructor>(pluginType);
-
-      if (plugin !== undefined && typeof plugin === 'function') {
-        this.#initializePlugin(plugin);
-      }
+    for (const PluginCtor of plugins) {
+      this.#initializePlugin(PluginCtor);
     }
   }
 

@@ -11,13 +11,19 @@
     "lint": "eslint",
     "lint:ci": "yarn lint --max-warnings 0",
     "lint:fix": "yarn lint --fix",
+    "test": "node --experimental-vm-modules $(yarn bin jest)",
     "clear": "rm -rf dist && rm -f tsconfig.build.tsbuildinfo && rm -f tsconfig.tsbuildinfo"
   },
   "devDependencies": {
+    "@jest/globals": "^29.7.0",
     "@types/eslint": "^9.6.1",
+    "@types/jest": "^29.5.1",
+    "@types/node": "^22.10.2",
     "eslint": "^9.24.0",
     "eslint-config-codex": "^2.0.3",
     "eslint-plugin-import": "^2.31.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.4"
   },

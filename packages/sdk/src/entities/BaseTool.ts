@@ -5,6 +5,21 @@ import type { ToolConfig } from '@editorjs/editorjs';
  */
 export interface BaseToolConstructor<Config extends ToolConfig = ToolConfig> {
   /**
+   * Default tool options (`static get options()`) provided by the tool developer.
+   */
+  options?: {
+    /**
+     * Internal tool configuration
+     */
+    config?: Record<string, unknown>;
+
+    /**
+     * Other tool options
+     */
+    [key: string]: unknown;
+  };
+
+  /**
    * Tool's prepare method. Can be async
    * @param data - Object with toolName and config properties
    * @param data.toolName - Tool's own name

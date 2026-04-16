@@ -22,6 +22,16 @@ export class BoldInlineTool implements InlineTool {
   public static title = 'Bold';
 
   /**
+   * Predefined options (can be overriden on connection)
+   */
+  public static readonly options = {
+    /**
+     * Shortcuts plugin options
+     */
+    shortcut: 'CMD+B',
+  } as const;
+
+  /**
    * Type of behaviour of the tool if new selection range intersect with existing fragment
    * If two fragment intersect, they should be merged
    */
