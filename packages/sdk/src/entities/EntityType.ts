@@ -53,4 +53,4 @@ export enum PluginType {
   Plugin = 'Plugin'
 }
 
-export type EntityType = ToolType | PluginType;
+export type EntityType = ToolType | UiComponentType | PluginType;
