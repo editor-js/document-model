@@ -11,18 +11,16 @@ export interface BlocksAPI {
    * @todo return block api?
    * @param type - Block tool name to insert
    * @param data - Block's initial data
-   * @param _config - not used but left for compatibility
    * @param index - index to insert block at
-   * @param needToFocus - flag indicates if new block should be focused @todo implement
+   * @param focus - flag indicates if new block should be focused @todo implement
    * @param replace - flag indicates if block at index should be replaced @todo implement
    * @param id - id of the inserted block @todo implement
    */
   insert(
     type?: string,
     data?: BlockToolData,
-    _config?: ToolConfig,
     index?: number,
-    needToFocus?: boolean,
+    focus?: boolean,
     replace?: boolean,
     id?: string
   ): void;

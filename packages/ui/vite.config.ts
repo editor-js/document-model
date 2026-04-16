@@ -2,6 +2,10 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 import dts from 'vite-plugin-dts';
 import cssInjectedByJsPlugin from 'vite-plugin-css-injected-by-js';
+import postcssPreset from 'postcss-preset-env';
+// @ts-ignore -- seems to work fine
+import postcssNested from 'postcss-nested';
+import postcssApply from 'postcss-apply';
 
 export default defineConfig({
   plugins: [
@@ -36,9 +40,16 @@ export default defineConfig({
     modules: {
       generateScopedName: (name) => `editorjs-${name}`,
       localsConvention: 'dashes'
-    }
+    },
+    postcss: {
+      plugins: [
+        postcssNested(),
+        postcssPreset(),
+        postcssApply(),
+      ],
+    },
   },
   esbuild: {
     target: 'esnext'
   }
-}); 
+});

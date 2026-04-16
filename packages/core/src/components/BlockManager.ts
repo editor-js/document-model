@@ -34,6 +34,11 @@ interface InsertBlockParameters {
    * Flag indicates if block at index should be replaced
    */
   replace?: boolean;
+
+  /**
+   * If true, moves caret to the new block
+   */
+  focus?: boolean;
   // tunes?: {[name: string]: BlockTuneData};
 }
 
@@ -125,7 +130,7 @@ export class BlocksManager {
     type = this.#config.defaultBlock,
     data = {},
     index,
-    // needToFocus = true,
+    focus = false,
     replace = false,
     // tunes = {},
   }: InsertBlockParameters = {}): void {
@@ -143,6 +148,12 @@ export class BlocksManager {
       ...data,
       name: type,
     }, newIndex);
+
+    if (focus) {
+      /**
+       * @todo think of how to set the focus without knowing the data key
+       */
+    }
   }
 
   /**

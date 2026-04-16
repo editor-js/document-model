@@ -8,6 +8,7 @@ import type {
   BlockToolData
 } from '@editorjs/sdk';
 import { ToolType } from '@editorjs/sdk';
+import { IconText } from '@codexteam/icons';
 
 /**
  * Data structure describing the tool's input/output data
@@ -36,6 +37,13 @@ export class Paragraph implements BlockTool<ParagraphData, ParagraphConfig> {
   public static type = ToolType.Block as const;
 
   public static name = 'paragraph';
+
+  public static readonly options = {
+    toolbox: {
+      title: 'Text',
+      icon: IconText,
+    },
+  };
 
   /**
    * Adapter for linking block data with the DOM

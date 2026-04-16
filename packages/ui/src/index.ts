@@ -1,3 +1,7 @@
+import '@codexteam/ui/styles/themes/pure';
+import '@codexteam/ui/styles/themes/sky';
+import '@codexteam/ui/styles';
+
 import type { EventBus,
   CoreConfigValidated,
   EditorjsPlugin,
@@ -5,9 +9,12 @@ import type { EventBus,
 import {
   UiComponentType
 } from '@editorjs/sdk';
-import type { ToolboxRenderedUIEvent } from './Toolbox/ToolboxRenderedUIEvent.js';
 import type { InlineToolbarRenderedUIEvent } from './InlineToolbar/InlineToolbarRenderedUIEvent.js';
 import Style from './main.module.pcss';
+
+import type { ToolbarRenderedUIEvent } from './Toolbar/ToolbarRenderedUIEvent.js';
+import { make } from '@editorjs/dom';
+import type { BlocksHolderRenderedUIEvent } from './Blocks/events/BlocksHolderRenderedUIEvent';
 
 /**
  * EditorJS UI plugin
@@ -24,9 +31,14 @@ export class EditorjsUI implements EditorjsPlugin {
   #eventBus: EventBus;
 
   /**
-   * Element where the editor is initited
+   * Element where the editor is initiated
    */
   #holder: HTMLElement;
+
+  /**
+   * Additional wrapper so we don't mess with user provided one
+   */
+  #editorWrapper = make('div', Style.ejs);
 
   /**
    * Plugin type
@@ -41,14 +53,18 @@ export class EditorjsUI implements EditorjsPlugin {
     this.#eventBus = params.eventBus;
     this.#holder = params.config.holder;
 
-    this.#holder.classList.add(Style['editor']);
+    this.#holder.append(this.#editorWrapper);
 
-    this.#eventBus.addEventListener(`ui:toolbox:rendered`, (event: ToolboxRenderedUIEvent) => {
-      this.#addToolbox(event.detail.toolbox);
+    this.#eventBus.addEventListener(`ui:toolbar:rendered`, (event: ToolbarRenderedUIEvent) => {
+      this.#addToolbar(event.detail.toolbar);
     });
 
     this.#eventBus.addEventListener(`ui:inline-toolbar:rendered`, (event: InlineToolbarRenderedUIEvent) => {
       this.#addInlineToolbar(event.detail.toolbar);
+    });
+
+    this.#eventBus.addEventListener(`ui:blocks:rendered`, (event: BlocksHolderRenderedUIEvent) => {
+      this.#addBlocks(event.detail.blocks);
     });
   }
 
@@ -60,11 +76,11 @@ export class EditorjsUI implements EditorjsPlugin {
   }
 
   /**
-   * Adds toolbox to the editor UI
-   * @param toolboxElement - toolbox HTML element to add to the page
+   * Adds toolbar to the editor UI
+   * @param toolbarElement - toolbox HTML element to add to the page
    */
-  #addToolbox(toolboxElement: HTMLElement): void {
-    this.#holder.appendChild(toolboxElement);
+  #addToolbar(toolbarElement: HTMLElement): void {
+    this.#editorWrapper.appendChild(toolbarElement);
   }
 
   /**
@@ -72,10 +88,19 @@ export class EditorjsUI implements EditorjsPlugin {
    * @param toolbarElement - inline toolbar HTML element to add to the page
    */
   #addInlineToolbar(toolbarElement: HTMLElement): void {
-    this.#holder.appendChild(toolbarElement);
+    this.#editorWrapper.appendChild(toolbarElement);
+  }
+
+  /**
+   * Add blocks holder element to the UI
+   * @param blocksElement -blocks  holder element
+   */
+  #addBlocks(blocksElement: HTMLElement): void {
+    this.#editorWrapper.appendChild(blocksElement);
   }
 }
 
 export * from './InlineToolbar/InlineToolbar.js';
 export * from './Blocks/Blocks.js';
 export * from './Toolbox/Toolbox.js';
+export * from './Toolbar/Toolbar.js';

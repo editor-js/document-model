@@ -5,12 +5,13 @@ import type { BlockAddedCoreEvent,
 import {
   CoreEventType,
   UiComponentType,
-  BeforeInputUIEvent,
-  KeydownUIEvent
+  BeforeInputUIEvent
 } from '@editorjs/sdk';
 import type { EventBus } from '@editorjs/sdk';
 import Style from './Blocks.module.pcss';
-import { isNativeInput } from '@editorjs/dom';
+import { isNativeInput, make } from '@editorjs/dom';
+import { BlocksHolderRenderedUIEvent, BlockSelectedUIEvent } from './events/index.js';
+import { blockCss, blocksCss } from './Blocks.const.js';
 
 /**
  * Editor's main UI renderer for HTML environment
@@ -45,7 +46,7 @@ export class BlocksUI implements EditorjsPlugin {
    */
   constructor(params: EditorjsPluginParams) {
     this.#eventBus = params.eventBus;
-    this.#blocksHolder = this.#prepareBlocksHolder(params.config.holder);
+    this.#blocksHolder = this.#prepareBlocksHolder();
 
     this.#eventBus.addEventListener(`core:${CoreEventType.BlockAdded}`, (event: BlockAddedCoreEvent<HTMLElement>) => {
       const { ui, index } = event.detail;
@@ -59,41 +60,18 @@ export class BlocksUI implements EditorjsPlugin {
       this.#removeBlock(index);
     });
 
-    this.#blocksHolder.addEventListener('keydown', (e) => {
-      this.#eventBus.dispatchEvent(new KeydownUIEvent({ nativeEvent: e }));
-
-      if (e.code !== 'KeyZ') {
-        return;
-      }
-
-      if (!(e.metaKey || e.ctrlKey)) {
-        return;
-      }
-
-      if (e.shiftKey) {
-        this.#eventBus.dispatchEvent(new Event('core:redo'));
-
-        e.preventDefault();
-
-        return;
-      }
-
-      this.#eventBus.dispatchEvent(new Event('core:undo'));
-
-      e.preventDefault();
-    });
+    this.#eventBus.dispatchEvent(new BlocksHolderRenderedUIEvent({
+      blocks: this.#blocksHolder,
+    }));
   }
 
   /**
    * Prepares blocks holder element
-   * @param editorHolder - user provided holder element for editor
    */
-  #prepareBlocksHolder(editorHolder: HTMLElement): HTMLElement {
-    const blocksHolder = document.createElement('div');
-
-    blocksHolder.classList.add(Style['blocks']);
-
-    blocksHolder.contentEditable = 'true';
+  #prepareBlocksHolder(): HTMLElement {
+    const blocksHolder = make('div', Style[blocksCss.blocks], {
+      contentEditable: true,
+    });
 
     /**
      * Workaround Safari behavior when it deletes blocks if there is no content in them
@@ -130,7 +108,27 @@ export class BlocksUI implements EditorjsPlugin {
       }));
     });
 
-    editorHolder.appendChild(blocksHolder);
+    blocksHolder.addEventListener('keydown', (e) => {
+      if (e.code !== 'KeyZ') {
+        return;
+      }
+
+      if (!(e.metaKey || e.ctrlKey)) {
+        return;
+      }
+
+      if (e.shiftKey) {
+        this.#eventBus.dispatchEvent(new Event('core:redo'));
+
+        e.preventDefault();
+
+        return;
+      }
+
+      this.#eventBus.dispatchEvent(new Event('core:undo'));
+
+      e.preventDefault();
+    });
 
     return blocksHolder;
   }
@@ -143,7 +141,7 @@ export class BlocksUI implements EditorjsPlugin {
     const zeroWidthSpaceWrapper = document.createElement('span');
     const zeroWidthSpace = document.createTextNode('\u200B');
 
-    zeroWidthSpaceWrapper.classList.add(Style['host-holder']);
+    zeroWidthSpaceWrapper.classList.add(Style['ejs__host-holder']);
     zeroWidthSpaceWrapper.appendChild(zeroWidthSpace);
 
     blocksHolder.appendChild(zeroWidthSpaceWrapper);
@@ -157,12 +155,22 @@ export class BlocksUI implements EditorjsPlugin {
   #addBlock(blockElement: HTMLElement, index: number): void {
     this.#validateIndex(index);
 
+    const wrapper = make('div', Style[blockCss.block]);
+    const contents = make('div', Style[blockCss.contents]);
+
+    wrapper.addEventListener('mouseenter', (e) => {
+      this.#updateSelectedBlock(e);
+    });
+
+    wrapper.append(contents);
+    contents.append(blockElement);
+
     if (index < this.#blocks.length) {
-      this.#blocks[index].insertAdjacentElement('beforebegin', blockElement);
-      this.#blocks.splice(index, 0, blockElement);
+      this.#blocks[index].insertAdjacentElement('beforebegin', wrapper);
+      this.#blocks.splice(index, 0, wrapper);
     } else {
-      this.#blocksHolder.appendChild(blockElement);
-      this.#blocks.push(blockElement);
+      this.#blocksHolder.appendChild(wrapper);
+      this.#blocks.push(wrapper);
     }
   }
 
@@ -185,6 +193,20 @@ export class BlocksUI implements EditorjsPlugin {
     if (index < 0 || index > this.#blocks.length) {
       throw new Error('Index out of bounds');
     }
+  }
+
+  /**
+   * Dispatches block selected event on mouseenter events on a block element
+   * @param event - MouseEvent
+   */
+  #updateSelectedBlock(event: MouseEvent): void {
+    const block = event.target as HTMLElement;
+    const index = this.#blocks.indexOf(block);
+
+    this.#eventBus.dispatchEvent(new BlockSelectedUIEvent({
+      block,
+      index,
+    }));
   }
 
   /**
