@@ -50,7 +50,6 @@ export class UndoRedoManager {
 
   /**
    * Put operation to undo stack and clear redo stack
-   *
    * @param operation - operation to put
    */
   public put(operation: Operation): void {
@@ -60,7 +59,6 @@ export class UndoRedoManager {
 
   /**
    * Transforms undo and redo stacks
-   *
    * @param operation - operation to transform against
    */
   public transformStacks(operation: Operation): void {
@@ -71,10 +69,9 @@ export class UndoRedoManager {
   /**
    * Transforms passed operations stack against the operation
    * Filters out neutral operations
-   *
    * @param operation - operation to transform against
    * @param stack - stack to transform
-   * @returns {Operation[]} - new transformed list of operations
+   * @returns - new transformed list of operations
    */
   private transformStack(operation: Operation, stack: Operation[]): Operation[] {
     const transformed = stack.map((op: Operation) => op.transform(operation));

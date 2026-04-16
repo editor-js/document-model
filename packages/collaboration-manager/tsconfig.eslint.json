@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "types": ["node", "jest"],
+  },
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/**/*",
+    ".eslintrc.cjs",
+    "**/*.spec.ts",
+    "test/**/*",
+    "jest.config.ts",
+    "stryker.conf.mjs"
+  ],
+  "exclude": [
+    "dist/**/*",
+    "node_modules/**/*",
+  ]
+}
