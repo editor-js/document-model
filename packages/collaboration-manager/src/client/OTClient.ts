@@ -226,6 +226,10 @@ export class OTClient {
 
     this.#rev = operation.rev!;
 
+    /**
+     * We don't send neutral operations to the collaboration manager because thrier apply does not change the model
+     * No need to process neutral operations on the client side
+     */
     if (transformedOperation.type === OperationType.Neutral) {
       return;
     }

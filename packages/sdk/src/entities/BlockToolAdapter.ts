@@ -20,14 +20,13 @@ export interface BlockToolAdapter {
    * Attaches value to the model using raw data key
    * @param keyRaw - string data key used for value identification
    * @param initialValue - initial value of the value node
-   * @param callback - callback function that should be used for DOM rerendering
+   * @param callback - callback function that receives the updated value and should be used for DOM rerendering
    * @returns — function that should be used to update model
    */
-  attachValue<T>(keyRaw: string, initialValue: T, callback: () => void): (newValue: T) => void;
+  attachValue<T>(keyRaw: string, initialValue: T, callback: (value: T) => void): (newValue: T) => void;
 
   /**
-   * Removes the value from the DOM by key
-   * Detaches model value from the DOM
+   * Removes the value node from the model by key
    * @param keyRaw - string data key used for value identification
    */
   detachValue(keyRaw: string): void;

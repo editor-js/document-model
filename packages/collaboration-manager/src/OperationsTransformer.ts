@@ -150,7 +150,7 @@ export class OperationsTransformer {
    *
    * Cases:
    * 1. Current operation is a block operation or data operation
-   *    - Text opearation cant affect block operation or data operation so return copy of the current one
+   *    - Text opearation can't affect block operation or data operation so return copy of the current one
    *
    * 2. Current operation is a text operation
    *    - Against operation is Insert
@@ -211,10 +211,10 @@ export class OperationsTransformer {
    *    - Return copy of the current operation
    * 3. Operation that change the same data key and block index
    *    - Check revision — only latest operation should be applied
-   *        - If current againstOp has undefined revision — treat as future operation (did not send to OT server yet)
-   *          Return Neutral operation — this operation should not be applied because future operation would update OT server model after
-   *        - If current againstOp has defined revision
-   *          Return copy of the current operation
+   *        - If againstOp has higher revision then current operation revision — treat againstOp as future operation (did not send to OT server yet)
+   *          Return Neutral operation — operation should not be applied because againstOp would update OT server model after
+   *        - If againstOp has revision lower then current operation revision
+   *          Return copy of the current operation, it should be applied after againstOp
    *
    * @param operation - Operation to be transformed
    * @param againstOp - Operation against which the current operation should be transformed
@@ -224,21 +224,29 @@ export class OperationsTransformer {
     const index = operation.index;
     const againstIndex = againstOp.index;
 
+    const revision = operation.rev!;
+    /**
+     * If againstOp has no revision (undefined) — it is still not send to the OTServer, and we don't know, when it would be sent
+     * Treat it as future operation
+     */
+    const againstRevision = againstOp.rev === undefined ? Infinity : againstOp.rev!;
+
+    // Cover case 1
     if (!index.isDataIndex) {
       return Operation.from(operation);
     }
 
-    // Cover case 1
+    // Cover case 2
     if (index.blockIndex !== againstIndex.blockIndex || index.dataKey !== againstIndex.dataKey) {
       return Operation.from(operation);
     }
 
-    // Cover case 2.1
-    if (againstOp.rev === undefined) {
+    // Cover case 3.1
+    if (againstRevision > revision) {
       return new Operation(OperationType.Neutral, index, { payload: [] }, operation.userId, operation.rev);
     }
-
-    // Cover case 2.2
+    
+    // Cover case 3.2
     return Operation.from(operation);
   }
 

@@ -221,11 +221,9 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     const key = createDataKey(keyRaw);
 
     /**
-     * Wrap callback to cast value to undefined and support generic type of the attachValue method
+     * Cast callback to allow saving 
      */
-    this.#attachedValues.set(key, (value) => {
-      callback(value as T);
-    });
+    this.#attachedValues.set(key, callback as (value: unknown) => void);
 
     /**
      * Create data node in the model with initial value
@@ -253,6 +251,12 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
   public detachValue(keyRaw: string): void {
     const key = createDataKey(keyRaw);
 
+    const value = this.#attachedValues.get(key);
+
+    if (!value) {
+      return;
+    }
+
     /**
      * Remove value update callback
      */
@@ -262,6 +266,17 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
      * Remove data node from the model
      */
     this.#model.removeDataNode(this.#config.userId, this.#blockIndex, key);
+  }
+
+  /**
+   * Calls detach input and detach value methods
+   * If no value or no input for this dataKey — pass silently
+   *
+   * @param key - data key to detach
+   */
+  #detachDataNode(key: DataKey): void {
+    this.detachInput(key.toString());
+    this.detachValue(key.toString());
   }
 
   /**
@@ -873,7 +888,11 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     }
 
     if (event instanceof DataNodeRemovedEvent) {
-      this.detachInput(dataKey as string);
+      if (dataKey === undefined) {
+        return;
+      }
+
+      this.#detachDataNode(dataKey);
 
       return;
     }
