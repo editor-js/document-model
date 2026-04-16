@@ -13,8 +13,7 @@ import {
 } from '@editorjs/model';
 import type { CaretAdapter } from '../CaretAdapter/index.js';
 import { FormattingAction } from '@editorjs/model';
-import type { CoreConfig, EventBus, InlineTool } from '@editorjs/sdk';
-import { KeydownUIEvent, KeydownUIEventName, matchKeyboardShortcut } from '@editorjs/sdk';
+import type { CoreConfig, InlineTool } from '@editorjs/sdk';
 import { surround } from '../utils/surround.js';
 import { getBoundaryPointByAbsoluteOffset } from '../utils/getRelativeIndex.js';
 import { expandRangeNodeBoundary } from '../utils/expandRangeNodeBoundary.js';
@@ -45,36 +44,20 @@ export class FormattingAdapter {
   #config: Required<CoreConfig>;
 
   /**
-   * Event bus (UI layer dispatches delegated keyboard events here)
-   */
-  #eventBus: EventBus;
-
-  /**
-   * Maps shortcut string to inline tool name (set via attachTool)
-   */
-  #shortcutToToolName = new Map<string, InlineToolName>();
-
-  /**
    * @class
    * @param config - Editor's config
    * @param model - editor model instance
    * @param caretAdapter - caret adapter instance
-   * @param eventBus - editor event bus (for UI keydown shortcuts)
    */
-  constructor(config: Required<CoreConfig>, model: EditorJSModel, caretAdapter: CaretAdapter, eventBus: EventBus) {
+  constructor(config: Required<CoreConfig>, model: EditorJSModel, caretAdapter: CaretAdapter) {
     this.#config = config;
     this.#model = model;
     this.#caretAdapter = caretAdapter;
-    this.#eventBus = eventBus;
 
     /**
      * Add event listener for model changes
      */
     this.#model.addEventListener(EventType.Changed, (event: ModelEvents) => this.#handleModelUpdates(event));
-
-    this.#eventBus.addEventListener(`ui:${KeydownUIEventName}`, (event: KeydownUIEvent) => {
-      this.#handleKeydownUi(event);
-    });
   }
 
   /**
@@ -107,18 +90,14 @@ export class FormattingAdapter {
   }
 
   /**
-   * Attaches InlineTool to the adapter
+   * Attaches an inline tool instance for formatting / DOM wrapping.
+   * Keyboard shortcuts are handled by the Shortcuts core plugin via Selection API.
    *
-   * @param toolName - name of the tool to be attached
-   * @param tool - tool to attach
-   * @param shortcut - optional keyboard shortcut (Editor.js style, e.g. CMD+B)
+   * @param toolName - model inline tool name (from `createInlineToolName` in `@editorjs/model`)
+   * @param tool - inline tool instance
    */
-  public attachTool(toolName: InlineToolName, tool: InlineTool, shortcut?: string): void {
+  public attachTool(toolName: InlineToolName, tool: InlineTool): void {
     this.#tools.set(toolName, tool);
-
-    if (shortcut !== undefined) {
-      this.#shortcutToToolName.set(shortcut, toolName);
-    }
   }
 
   /**
@@ -177,35 +156,6 @@ export class FormattingAdapter {
         this.#model.unformat(this.#config.userId, blockIndex, dataKey, toolName, ...range);
 
         break;
-    }
-  }
-
-  /**
-   * Applies inline formatting when a registered keyboard shortcut matches (e.g. CMD+B)
-   *
-   * @param event - delegated keydown from the blocks UI layer
-   */
-  #handleKeydownUi(event: KeydownUIEvent): void {
-    const { nativeEvent } = event.detail;
-
-    if (nativeEvent.isComposing) {
-      return;
-    }
-
-    for (const [shortcut, toolName] of this.#shortcutToToolName) {
-      if (matchKeyboardShortcut(nativeEvent, shortcut)) {
-        nativeEvent.preventDefault();
-
-        try {
-          this.applyFormat(toolName, createInlineToolData({}));
-        } catch {
-          /**
-           * No caret in text input (e.g. focus outside) — ignore
-           */
-        }
-
-        return;
-      }
     }
   }
 

@@ -43,4 +43,14 @@ export enum ToolType {
   Tune = 'tune'
 }
 
-export type EntityType = ToolType | UiComponentType;
+/**
+ * IoC keys and related ids for editor plugins (`core.use(MyPlugin)`).
+ */
+export enum PluginType {
+  /**
+   * Default plugin type
+   */
+  Plugin = 'Plugin'
+}
+
+export type EntityType = ToolType | UiComponentType | PluginType;

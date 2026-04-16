@@ -1,4 +1,4 @@
-import { BaseToolFacade, InternalBlockToolSettings, UserSettings } from './BaseToolFacade.js';
+import { BaseToolFacade, InternalBlockToolSettings, UserToolOptions } from './BaseToolFacade.js';
 import type {
   // ConversionConfig,
   // PasteConfig,
@@ -56,7 +56,7 @@ export class BlockToolFacade extends BaseToolFacade<ToolType.Block, IBlockTool> 
       block,
       readOnly,
       api: this.api,
-      config: this.settings,
+      config: this.config,
     });
   }
 
@@ -90,7 +90,7 @@ export class BlockToolFacade extends BaseToolFacade<ToolType.Block, IBlockTool> 
    */
   public get toolbox(): ToolboxConfigEntry[] | undefined {
     const toolToolboxSettings = this.constructable[InternalBlockToolSettings.Toolbox] as ToolboxConfig;
-    const userToolboxSettings = this.config[UserSettings.Toolbox];
+    const userToolboxSettings = this.useToolOptions[UserToolOptions.Toolbox];
 
     if (isEmpty(toolToolboxSettings)) {
       return;
@@ -150,14 +150,14 @@ export class BlockToolFacade extends BaseToolFacade<ToolType.Block, IBlockTool> 
    * Returns enabled inline tools for Tool
    */
   public get enabledInlineTools(): boolean | string[] {
-    return this.config[UserSettings.EnabledInlineTools] ?? false;
+    return this.useToolOptions[UserToolOptions.EnabledInlineTools] ?? false;
   }
 
   /**
    * Returns enabled tunes for Tool
    */
   public get enabledBlockTunes(): boolean | string[] {
-    return this.config[UserSettings.EnabledBlockTunes] ?? false;
+    return this.useToolOptions[UserToolOptions.EnabledBlockTunes] ?? false;
   }
 
   // /**

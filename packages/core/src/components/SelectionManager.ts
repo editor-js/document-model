@@ -73,7 +73,7 @@ export class SelectionManager {
 
       this.#inlineTools.set(name, toolInstance);
 
-      this.#formattingAdapter.attachTool(name, toolInstance, tool.shortcut);
+      this.#formattingAdapter.attachTool(name, toolInstance);
     });
 
     this.#model.addEventListener(EventType.CaretManagerUpdated, (event: CaretManagerEvents) => this.#handleCaretManagerUpdate(event));

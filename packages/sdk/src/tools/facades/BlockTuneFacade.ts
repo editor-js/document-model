@@ -27,7 +27,7 @@ export class BlockTuneFacade extends BaseToolFacade<ToolType.Tune, IBlockTune> {
   public create(data: BlockTuneData, _block: BlockAPI): IBlockTune {
     return new this.constructable({
       // api: this.api,
-      config: this.settings,
+      config: this.config,
       // block,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       data,

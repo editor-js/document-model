@@ -33,7 +33,7 @@ export class InlineToolFacade extends BaseToolFacade<ToolType.Inline, IInlineToo
     return new this.constructable(
       // {
       //   api: this.api,
-      //   config: this.settings,
+      //   config: this.config,
       // }
     );
   }
