@@ -12,6 +12,7 @@ import {
 } from '@editorjs/model';
 import type { CaretAdapter } from '../CaretAdapter/index.js';
 import { FormattingAction } from '@editorjs/model';
+import { IndexError } from '@editorjs/sdk';
 import type { CoreConfig, InlineTool } from '@editorjs/sdk';
 import { surround } from '../utils/surround.js';
 import { getBoundaryPointByAbsoluteOffset } from '../utils/getRelativeIndex.js';
@@ -118,7 +119,7 @@ export class FormattingAdapter {
     const index = this.#caretAdapter.userCaretIndex;
 
     if (index === null) {
-      throw new Error('FormattingAdapter: caret index is outside of the input');
+      throw new IndexError('FormattingAdapter: caret index is outside of the input');
     }
 
     const textRange = index.textRange;
@@ -127,13 +128,13 @@ export class FormattingAdapter {
 
 
     if (textRange === undefined) {
-      throw new Error ('TextRange of the index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
+      throw new IndexError('TextRange of the index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
     }
     if (blockIndex === undefined) {
-      throw new Error ('BlockIndex should be defined. Probably something wrong with the Editor Model. Please, report this issue');
+      throw new IndexError('BlockIndex should be defined. Probably something wrong with the Editor Model. Please, report this issue');
     }
     if (dataKey === undefined) {
-      throw new Error ('DataKey of the index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
+      throw new IndexError('DataKey of the index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
     }
 
     const tool = this.#tools.get(toolName);

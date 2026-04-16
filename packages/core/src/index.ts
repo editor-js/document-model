@@ -174,6 +174,9 @@ export default class Core {
           id: PluginType.Plugin,
           multiple: true,
           value: pluginOrTool,
+          /**
+           * @todo support plugin "options"
+           */
         });
     }
 

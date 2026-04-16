@@ -10,6 +10,7 @@ import type {
 } from '@editorjs/sdk';
 import {
   CoreEventType,
+  IndexError,
   KeydownUIEventName,
   matchKeyboardShortcut,
   PluginType
@@ -70,21 +71,15 @@ export class ShortcutsPlugin implements EditorjsPlugin {
       const { detail } = event as KeydownUIEvent;
       const { nativeEvent } = detail;
 
-      if (nativeEvent.isComposing) {
+      if (nativeEvent.isComposing === true) {
         return;
       }
 
       for (const [shortcut, toolName] of this.#shortcutToToolName) {
-        if (matchKeyboardShortcut(nativeEvent, shortcut)) {
+        if (matchKeyboardShortcut(nativeEvent, shortcut) === true) {
           nativeEvent.preventDefault();
 
-          try {
-            this.#processInlineTool(toolName);
-          } catch {
-            /**
-             * No caret in text input (e.g. focus outside) — ignore
-             */
-          }
+          this.#processInlineTool(toolName);
 
           return;
         }
@@ -106,10 +101,15 @@ export class ShortcutsPlugin implements EditorjsPlugin {
   #processInlineTool(toolName: string): void {
     try {
       this.#api.selection.applyInlineToolForCurrentSelection(toolName as InlineToolName);
-    } catch {
-      /**
-       * No caret in text input (e.g. focus outside) — ignore
-       */
+    } catch (error) {
+      if (error instanceof IndexError) {
+        /**
+         * No caret in text input (e.g. focus outside) — ignore
+         */
+        return;
+      }
+
+      throw error;
     }
   }
 

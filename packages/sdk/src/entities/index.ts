@@ -6,3 +6,4 @@ export type * from './BlockToolAdapter.js';
 export * from './EventBus/index.js';
 export type * from './EditorjsPlugin.js';
 export * from './EntityType.js';
+export * from './IndexError.js';
