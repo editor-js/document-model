@@ -69,14 +69,20 @@ export class InlineToolbarUI implements EditorjsPlugin {
     const { availableInlineTools, index, fragments } = event.detail;
     const selection = window.getSelection();
     const segments = index?.getTextSegments() ?? [];
-    const hasNonCollapsedRange = segments.some(
-      segment => segment.textRange !== undefined && segment.textRange[0] !== segment.textRange[1]
+    /**
+     * For composite selection the first segment can be collapsed (e.g. range starts at end of block 1);
+     * `isActive` should use a non-collapsed local range, not `segments[0]` unconditionally.
+     */
+    const firstNonCollapsedSegment = segments.find(
+      segment =>
+        segment.textRange !== undefined
+        && segment.textRange[0] !== segment.textRange[1]
     );
 
     if (
       !index
       || segments.length === 0
-      || !hasNonCollapsedRange
+      || firstNonCollapsedSegment === undefined
       /**
        * Index could contain textRange for native inputs,
        * so we need to check if there are ranges in the document selection
@@ -89,7 +95,13 @@ export class InlineToolbarUI implements EditorjsPlugin {
       return;
     }
 
-    const textRange = segments[0].textRange!;
+    const textRange = firstNonCollapsedSegment.textRange;
+
+    if (textRange === undefined) {
+      this.#hide();
+
+      return;
+    }
 
     this.#updateToolsList(availableInlineTools, textRange, fragments);
     this.#move();

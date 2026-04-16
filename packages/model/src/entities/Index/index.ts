@@ -58,7 +58,11 @@ export class Index {
       return Index.parseCompositeIndexFromObject(outer);
     }
 
-    const arrayIndex = String(outer).split(':') as string[];
+    if (typeof outer !== 'string') {
+      throw new Error('Invalid serialized index: root must be a JSON string or a composite object');
+    }
+
+    const arrayIndex = outer.split(':') as string[];
 
     const index = new Index();
 
@@ -102,6 +106,33 @@ export class Index {
     const index = new Index();
 
     index.compositeSegments = segments.map((segment) => segment.clone());
+    index.validate();
+
+    return index;
+  }
+
+  /**
+   * Parses a composite index from the JSON root object (see {@link Index.serialize}).
+   *
+   * @param outer - value returned by `JSON.parse` for a composite serialized index
+   */
+  private static parseCompositeIndexFromObject(outer: object): Index {
+    const composite = (outer as { composite: unknown }).composite;
+
+    if (!Array.isArray(composite)) {
+      throw new Error('Invalid composite index');
+    }
+
+    const index = new Index();
+
+    index.compositeSegments = composite.map((segment) => {
+      if (typeof segment !== 'string') {
+        throw new Error('Invalid composite index: each segment must be a serialized index string');
+      }
+
+      return Index.parse(segment);
+    });
+
     index.validate();
 
     return index;
@@ -245,24 +276,5 @@ export class Index {
    */
   public get isDataIndex(): boolean {
     return this.blockIndex !== undefined && this.tuneName === undefined && this.dataKey !== undefined && this.textRange === undefined;
-  }
-
-  /**
-   * Parses a composite index from the JSON root object (see {@link Index.serialize}).
-   *
-   * @param outer - value returned by `JSON.parse` for a composite serialized index
-   */
-  private static parseCompositeIndexFromObject(outer: object): Index {
-    const composite = (outer as { composite: string[] }).composite;
-
-    if (!Array.isArray(composite)) {
-      throw new Error('Invalid composite index');
-    }
-
-    const index = new Index();
-
-    index.compositeSegments = composite.map((segment) => Index.parse(segment));
-
-    return index;
   }
 }

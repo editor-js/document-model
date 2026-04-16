@@ -294,6 +294,13 @@ export class CaretAdapter extends EventTarget {
       }
     }
 
+    /**
+     * {@link #blocks} order may not match document order after block moves; composite index and
+     * {@link #restoreDomSelectionFromCompositeIndex} require segments ordered from selection start
+     * to end (by {@link Index.blockIndex}, then {@link Index.dataKey} within a block).
+     */
+    this.#sortCompositeSegmentsInDocumentOrder(segments);
+
     if (segments.length === 0) {
       this.updateIndex(null);
 
@@ -307,6 +314,29 @@ export class CaretAdapter extends EventTarget {
     }
 
     this.updateIndex(Index.fromCompositeSegments(segments));
+  }
+
+  /**
+   * Orders text index segments by model position: {@link #blocks} order can lag after moves, but
+   * composite indices and DOM restore assume {@link Index.compositeSegments}[0] is the start anchor
+   * block and the last segment is the end anchor block.
+   *
+   * @param segments - mutable list of per-input segments (sorted in place)
+   */
+  #sortCompositeSegmentsInDocumentOrder(segments: Index[]): void {
+    segments.sort((a, b) => {
+      const blockA = a.blockIndex;
+      const blockB = b.blockIndex;
+
+      if (blockA !== blockB) {
+        return (blockA ?? 0) - (blockB ?? 0);
+      }
+
+      const keyA = a.dataKey !== undefined ? String(a.dataKey) : '';
+      const keyB = b.dataKey !== undefined ? String(b.dataKey) : '';
+
+      return keyA.localeCompare(keyB);
+    });
   }
 
   /**

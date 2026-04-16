@@ -48,6 +48,14 @@ describe('Index', () => {
     expect(index.textRange).toEqual([1, 2]);
   });
 
+  it('should throw when parsed JSON root is not a legacy string and not a composite object', () => {
+    expect(() => Index.parse('null')).toThrow('Invalid serialized index');
+    expect(() => Index.parse('0')).toThrow('Invalid serialized index');
+    expect(() => Index.parse('true')).toThrow('Invalid serialized index');
+    expect(() => Index.parse('false')).toThrow('Invalid serialized index');
+    expect(() => Index.parse('{}')).toThrow('Invalid serialized index');
+  });
+
   it('should clone index', () => {
     const index = new Index();
 
@@ -299,6 +307,8 @@ describe('Index', () => {
   });
 
   describe('composite index', () => {
+    const compositeSecondSegmentEnd = 5;
+
     it('should serialize and parse composite', () => {
       const a = new IndexBuilder().addBlockIndex(0)
         .addDataKey('a' as DataKey)
@@ -306,7 +316,7 @@ describe('Index', () => {
         .build();
       const b = new IndexBuilder().addBlockIndex(1)
         .addDataKey('a' as DataKey)
-        .addTextRange([0, 5])
+        .addTextRange([0, compositeSecondSegmentEnd])
         .build();
       const composite = Index.fromCompositeSegments([a, b]);
       const round = Index.parse(composite.serialize());
@@ -323,7 +333,7 @@ describe('Index', () => {
         .build();
       const b = new IndexBuilder().addBlockIndex(1)
         .addDataKey('a' as DataKey)
-        .addTextRange([0, 5])
+        .addTextRange([0, compositeSecondSegmentEnd])
         .build();
       const composite = Index.fromCompositeSegments([a, b]);
 
@@ -337,7 +347,7 @@ describe('Index', () => {
         .build();
       const b = new IndexBuilder().addBlockIndex(1)
         .addDataKey('a' as DataKey)
-        .addTextRange([0, 5])
+        .addTextRange([0, compositeSecondSegmentEnd])
         .build();
       const composite = Index.fromCompositeSegments([a, b]);
 
@@ -350,7 +360,23 @@ describe('Index', () => {
         .addTextRange([1, 2])
         .build();
 
-      expect(() => Index.fromCompositeSegments([a])).toThrow();
+      expect(() => Index.fromCompositeSegments([ a ])).toThrow();
+    });
+
+    it('should throw when parsing composite JSON with fewer than two string segments', () => {
+      const a = new IndexBuilder().addBlockIndex(0)
+        .addDataKey('a' as DataKey)
+        .addTextRange([1, 2])
+        .build();
+      const payload = JSON.stringify({ composite: [ a.serialize() ] });
+
+      expect(() => Index.parse(payload)).toThrow();
+    });
+
+    it('should throw when composite array contains a non-string segment', () => {
+      const payload = JSON.stringify({ composite: [0, 1] });
+
+      expect(() => Index.parse(payload)).toThrow('Invalid composite index');
     });
 
     it('should clone composite segments', () => {
@@ -360,7 +386,7 @@ describe('Index', () => {
         .build();
       const b = new IndexBuilder().addBlockIndex(1)
         .addDataKey('a' as DataKey)
-        .addTextRange([0, 5])
+        .addTextRange([0, compositeSecondSegmentEnd])
         .build();
       const composite = Index.fromCompositeSegments([a, b]);
       const cloned = composite.clone();

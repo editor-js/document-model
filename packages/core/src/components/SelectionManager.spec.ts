@@ -233,7 +233,13 @@ describe('SelectionManager', () => {
         dataKey: 'text',
         textRange: [1, 3],
         getTextSegments() {
-          return [{ blockIndex: 1, dataKey: 'text', textRange: [1, 3] }];
+          return [
+            {
+              blockIndex: 1,
+              dataKey: 'text',
+              textRange: [1, 3],
+            },
+          ];
         },
       } as unknown as Index);
 
