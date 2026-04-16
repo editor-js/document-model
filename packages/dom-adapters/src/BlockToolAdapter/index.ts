@@ -11,7 +11,8 @@ import {
   type ModelEvents,
   TextAddedEvent,
   TextRemovedEvent,
-  type Index
+  type Index,
+  ValueModifiedEvent
 } from '@editorjs/model';
 import type {
   EventBus,
@@ -79,6 +80,11 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    * Inputs that bound to the model
    */
   #attachedInputs = new Map<DataKey, HTMLElement>();
+
+  /**
+   * Values that bound to the model
+   */
+  #attachedValues = new Map<DataKey, (value: unknown) => void>();
 
   /**
    * BlockToolAdapter constructor
@@ -175,6 +181,107 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     this.#attachedInputs.delete(key);
 
     this.#model.removeDataNode(this.#config.userId, this.#blockIndex, key);
+  }
+
+  /**
+   * @todo - move to sdk BlockToolAdapter interface if it would be used
+   * Public getter for block index.
+   * Can be used to find a particular block, for example, in caret adapter
+   */
+  public getBlockIndex(): Index {
+    return new IndexBuilder()
+      .addBlockIndex(this.#blockIndex)
+      .build();
+  }
+
+  /**
+   * @todo - move to sdk BlockToolAdapter interface if it would be used
+   * Public getter for all attached inputs.
+   * Can be used to loop through all inputs to find a particular input(s)
+   */
+  public getAttachedInputs(): Map<DataKey, HTMLElement> {
+    return this.#attachedInputs;
+  }
+
+  /**
+   * @todo - move to sdk BlockToolAdapter interface if it would be used
+   * Allows access to a particular input by key
+   *
+   * @param key - data key of the input
+   */
+  public getInput(key: DataKey): HTMLElement | undefined {
+    return this.#attachedInputs.get(key);
+  }
+
+  /**
+   * Attaches value to the model using raw data key
+   *
+   * @template T - type of the value node
+   * @param keyRaw - string data key used for data node identification
+   * @param initialValue - initial value of the value node
+   * @param callback - callback function that should be used for DOM rerendering
+   * @returns {(newValue: T) => void} function that should be used to update the model
+   */
+  public attachValue<T>(keyRaw: string, initialValue: T, callback: (value: T) => void): (newValue: T) => void {
+    const key = createDataKey(keyRaw);
+
+    /**
+     * Cast callback to allow saving
+     */
+    this.#attachedValues.set(key, callback as (value: unknown) => void);
+
+    /**
+     * Create data node in the model with initial value
+     */
+    this.#model.createDataNode(
+      this.#config.userId,
+      this.#blockIndex,
+      key,
+      {
+        $t: 'v',
+        value: initialValue,
+      }
+    );
+
+    return (newValue: T) => {
+      this.#model.updateValue(this.#config.userId, this.#blockIndex, key, newValue);
+    };
+  };
+
+  /**
+   * Removes the data node from the model by key
+   *
+   * @param keyRaw - string data key used for value node identification
+   */
+  public detachValue(keyRaw: string): void {
+    const key = createDataKey(keyRaw);
+
+    const value = this.#attachedValues.get(key);
+
+    if (!value) {
+      return;
+    }
+
+    /**
+     * Remove value update callback
+     */
+    this.#attachedValues.delete(key);
+
+    /**
+     * Remove data node from the model
+     */
+    this.#model.removeDataNode(this.#config.userId, this.#blockIndex, key);
+  }
+
+  /**
+   * Calls detach input and detach value methods
+   * If no value or no input for this dataKey — pass silently
+   *
+   * @param key - data key to detach
+   */
+  #detachDataNode(key: DataKey): void {
+    this.detachInput(key.toString());
+    this.detachValue(key.toString());
   }
 
   /**
@@ -694,6 +801,34 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
   };
 
   /**
+   * Handles model update events for value nodes and updates DOM via callback
+   *
+   * @param event - value modified event got from the model
+   * @param key - data key of the value node
+   */
+  #handleModelUpdateForValue(event: ValueModifiedEvent, key: DataKey): void {
+    const { index, data } = event.detail;
+    const { dataKey, blockIndex } = index;
+
+    const { value } = data;
+
+    if (blockIndex !== this.#blockIndex || dataKey !== key) {
+      return;
+    }
+
+    /**
+     * Get value update callback
+     */
+    const valueUpdateCallback = this.#attachedValues.get(key);
+
+    if (!valueUpdateCallback) {
+      return;
+    }
+
+    valueUpdateCallback(value);
+  }
+
+  /**
    * Handles model update events and updates DOM
    *
    * @param event - model update event
@@ -713,11 +848,18 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
       return;
     }
 
-
     if (event instanceof DataNodeRemovedEvent) {
-      this.detachInput(dataKey as string);
+      if (dataKey === undefined) {
+        return;
+      }
+
+      this.#detachDataNode(dataKey);
 
       return;
+    }
+
+    if (event instanceof ValueModifiedEvent) {
+      this.#handleModelUpdateForValue(event, dataKey!);
     }
 
     if (event instanceof DataNodeAddedEvent) {
@@ -744,31 +886,4 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
       this.#handleModelUpdateForContentEditableElement(event, input, dataKey!);
     }
   };
-
-  /**
-   * Public getter for block index.
-   * Can be used to find a particular block, for example, in caret adapter
-   */
-  public getBlockIndex(): Index {
-    return new IndexBuilder()
-      .addBlockIndex(this.#blockIndex)
-      .build();
-  }
-
-  /**
-   * Public getter for all attached inputs.
-   * Can be used to loop through all inputs to find a particular input(s)
-   */
-  public getAttachedInputs(): Map<DataKey, HTMLElement> {
-    return this.#attachedInputs;
-  }
-
-  /**
-   * Allows access to a particular input by key
-   *
-   * @param key - data key of the input
-   */
-  public getInput(key: DataKey): HTMLElement | undefined {
-    return this.#attachedInputs.get(key);
-  }
 }
