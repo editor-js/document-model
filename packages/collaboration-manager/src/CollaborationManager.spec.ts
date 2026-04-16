@@ -95,8 +95,7 @@ describe('CollaborationManager', () => {
       const collaborationManager = new CollaborationManager(config as Required<CoreConfig>, model);
       const index = new IndexBuilder().addBlockIndex(0)
         .addDataKey(createDataKey('text'))
-        .addTextRange([
-          3, 5])
+        .addTextRange([3, 5])
         .build();
       const operation = new Operation(OperationType.Delete, index, {
         payload: '11',

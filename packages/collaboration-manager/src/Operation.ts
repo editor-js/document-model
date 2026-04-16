@@ -31,7 +31,7 @@ export interface InsertOrDeleteOperationData<T extends OperationPayload = any> {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface ModifyOperationData<T extends Record<any, any> = Record<any, any>> {
   /**
-   * Previous payload for undo/redo purposes
+   * Operation payload
    */
   payload?: T | null;
 

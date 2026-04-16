@@ -1,5 +1,5 @@
 import type { EditorDocumentSerialized } from '@editorjs/model';
-import { Operation, type SerializedOperation } from '../Operation.js';
+import { Operation, OperationType, type SerializedOperation } from '../Operation.js';
 import type { HandshakeMessage, HandshakePayload, Message, OperationMessage } from './Message.js';
 import { MessageType } from './MessageType.js';
 
@@ -225,6 +225,10 @@ export class OTClient {
     const transformedOperation = this.#pendingOperations.reduce((result, op) => result.transform(op), operation);
 
     this.#rev = operation.rev!;
+
+    if (transformedOperation.type === OperationType.Neutral) {
+      return;
+    }
 
     this.#onRemoteOperation(transformedOperation);
   }

@@ -1,4 +1,4 @@
-import type { DocumentId } from '@editorjs/model';
+import type { DocumentId, Index } from '@editorjs/model';
 import { createDataKey, IndexBuilder } from '@editorjs/model';
 import { Operation, OperationType } from './Operation.js';
 import { OperationsTransformer } from './OperationsTransformer.js';
@@ -12,6 +12,13 @@ describe('OperationsTransformer', () => {
   });
 
   describe('transform', () => {
+    const dataIndex = (blockIndex: number, dataKey: ReturnType<typeof createDataKey>): Index =>
+      new IndexBuilder()
+        .addDocumentId('doc1' as DocumentId)
+        .addBlockIndex(blockIndex)
+        .addDataKey(dataKey)
+        .build();
+
     it('should not transform operations on different documents', () => {
       const operation = new Operation(
         OperationType.Insert,
@@ -176,9 +183,67 @@ describe('OperationsTransformer', () => {
           expect(result).toEqual(operation);
         });
       });
+
+      describe('Against data operations', () => {
+        it('should not change block operation when against operation is data operation', () => {
+          const operation = new Operation(
+            OperationType.Insert,
+            new IndexBuilder().addDocumentId('doc1' as DocumentId)
+              .addBlockIndex(1)
+              .build(),
+            { payload: 'test' },
+            'user1',
+            1
+          );
+
+          const againstOp = new Operation(
+            OperationType.Modify,
+            dataIndex(1, createDataKey('valueA')),
+            { payload: { x: true },
+              prevPayload: null },
+            'user2',
+            undefined
+          );
+
+          const result = transformer.transform(operation, againstOp);
+
+          expect(result).toEqual(operation);
+        });
+      });
     });
 
     describe('Text operations transformation', () => {
+      describe('against data operations', () => {
+        it('should not change text operation when against data op is on the same block', () => {
+          const textKey = createDataKey('text');
+          const operation = new Operation(
+            OperationType.Insert,
+            new IndexBuilder()
+              .addDocumentId('doc1' as DocumentId)
+              .addBlockIndex(1)
+              .addDataKey(textKey)
+              .addTextRange([2, 5])
+              .build(),
+            { payload: 'abc' },
+            'user1',
+            4
+          );
+
+          const againstOp = new Operation(
+            OperationType.Modify,
+            dataIndex(1, createDataKey('valueA')),
+            { payload: { x: true },
+              prevPayload: null },
+            'user2',
+            undefined
+          );
+
+          const result = transformer.transform(operation, againstOp);
+
+          expect(result).toEqual(operation);
+        });
+      });
+
       describe('Against text Insert operations', () => {
         it('should shift right text range when Insert is before current operation', () => {
           const operation = new Operation(
@@ -442,6 +507,111 @@ describe('OperationsTransformer', () => {
           expect(result.type).toBe(operation.type);
           expect(result.index.textRange).toEqual(operation.index.textRange);
           expect(result.data).toEqual(operation.data);
+        });
+      });
+    });
+
+    describe('Data operations transformation', () => {
+      const dataKeyA = createDataKey('valueA');
+      const dataKeyB = createDataKey('valueB');
+
+      describe('Against data (value) operations', () => {
+        it('should leave operation unchanged when against data op targets a different block', () => {
+          const operation = new Operation(
+            OperationType.Modify,
+            dataIndex(2, dataKeyA),
+            { payload: { n: 1 },
+              prevPayload: null },
+            'user1',
+            3
+          );
+
+          const againstOp = new Operation(
+            OperationType.Modify,
+            dataIndex(1, dataKeyA),
+            { payload: { n: 2 },
+              prevPayload: null },
+            'user2',
+            undefined
+          );
+
+          const result = transformer.transform(operation, againstOp);
+
+          expect(result).toEqual(operation);
+        });
+
+        it('should leave operation unchanged when against data op targets a different data key', () => {
+          const operation = new Operation(
+            OperationType.Modify,
+            dataIndex(1, dataKeyA),
+            { payload: { n: 1 },
+              prevPayload: null },
+            'user1',
+            3
+          );
+
+          const againstOp = new Operation(
+            OperationType.Modify,
+            dataIndex(1, dataKeyB),
+            { payload: { n: 2 },
+              prevPayload: null },
+            'user2',
+            undefined
+          );
+
+          const result = transformer.transform(operation, againstOp);
+
+          expect(result).toEqual(operation);
+        });
+
+        it('should return Neutral when same block and data key and against op has no revision', () => {
+          const index = dataIndex(1, dataKeyA);
+          const operation = new Operation(
+            OperationType.Modify,
+            index,
+            { payload: { n: 1 },
+              prevPayload: null },
+            'user1',
+            3
+          );
+
+          const againstOp = new Operation(
+            OperationType.Modify,
+            index,
+            { payload: { n: 2 },
+              prevPayload: null },
+            'user2',
+            undefined
+          );
+
+          const result = transformer.transform(operation, againstOp);
+
+          expect(result.type).toBe(OperationType.Neutral);
+        });
+
+        it('should leave operation unchanged when same block and data key and against op has revision', () => {
+          const index = dataIndex(1, dataKeyA);
+          const operation = new Operation(
+            OperationType.Modify,
+            index,
+            { payload: { n: 1 },
+              prevPayload: null },
+            'user1',
+            3
+          );
+
+          const againstOp = new Operation(
+            OperationType.Modify,
+            index,
+            { payload: { n: 2 },
+              prevPayload: null },
+            'user2',
+            3
+          );
+
+          const result = transformer.transform(operation, againstOp);
+
+          expect(result).toEqual(operation);
         });
       });
     });

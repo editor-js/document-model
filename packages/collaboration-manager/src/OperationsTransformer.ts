@@ -60,9 +60,9 @@ export class OperationsTransformer {
       case (againstIndex.isTextIndex):
         return this.#transformAgainstTextOperation(operation, againstOp);
 
-      /**
-       * @todo Cover all index types
-       */
+      case (againstIndex.isDataIndex):
+        return this.#transformAgainstDataOperation(operation, againstOp);
+
       default:
         throw new Error('Unsupported index type');
     }
@@ -149,8 +149,8 @@ export class OperationsTransformer {
    * Method that transforms operation against text operation
    *
    * Cases:
-   * 1. Current operation is a block operation
-   *    - Text opearation cant affect block operation so return copy of the current one
+   * 1. Current operation is a block operation or data operation
+   *    - Text opearation cant affect block operation or data operation so return copy of the current one
    *
    * 2. Current operation is a text operation
    *    - Against operation is Insert
@@ -171,7 +171,7 @@ export class OperationsTransformer {
     /**
      * Cover case 1
      */
-    if (index.isBlockIndex) {
+    if (index.isBlockIndex || index.isDataIndex) {
       return Operation.from(operation);
     }
 
@@ -186,6 +186,9 @@ export class OperationsTransformer {
       return Operation.from(operation);
     }
 
+    /**
+     * @todo cover modify against modify operation
+     */
     switch (againstOp.type) {
       case OperationType.Insert:
         return this.#transformAgainstTextInsert(operation, againstOp);
@@ -196,6 +199,47 @@ export class OperationsTransformer {
       default:
         return Operation.from(operation);
     }
+  }
+
+  /**
+   * Method that transforms operation against data (value) operation
+   *
+   * Cases:
+   * 1. Operation is not a data operation
+   *    - Return copy of the current operation, text and block operations are not affected by data operations
+   * 2. Operation that change different data keys or different block index
+   *    - Return copy of the current operation
+   * 3. Operation that change the same data key and block index
+   *    - Check revision — only latest operation should be applied
+   *        - If current againstOp has undefined revision — treat as future operation (did not send to OT server yet)
+   *          Return Neutral operation — this operation should not be applied because future operation would update OT server model after
+   *        - If current againstOp has defined revision
+   *          Return copy of the current operation
+   *
+   * @param operation - Operation to be transformed
+   * @param againstOp - Operation against which the current operation should be transformed
+   * @returns {Operation<OperationType>} new transformedoperation
+   */
+  #transformAgainstDataOperation<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
+    const index = operation.index;
+    const againstIndex = againstOp.index;
+
+    if (!index.isDataIndex) {
+      return Operation.from(operation);
+    }
+
+    // Cover case 1
+    if (index.blockIndex !== againstIndex.blockIndex || index.dataKey !== againstIndex.dataKey) {
+      return Operation.from(operation);
+    }
+
+    // Cover case 2.1
+    if (againstOp.rev === undefined) {
+      return new Operation(OperationType.Neutral, index, { payload: [] }, operation.userId, operation.rev);
+    }
+
+    // Cover case 2.2
+    return Operation.from(operation);
   }
 
   /**
