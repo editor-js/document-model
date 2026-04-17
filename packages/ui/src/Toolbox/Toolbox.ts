@@ -5,13 +5,16 @@ import type {
   EditorjsPluginParams,
   EventBus,
   EditorAPI,
-  ToolLoadedCoreEvent
+  ToolLoadedCoreEvent, CoreConfigValidated
 } from '@editorjs/sdk';
 import {
   CoreEventType,
   UiComponentType
 } from '@editorjs/sdk';
-import { ToolboxRenderedUIEvent } from './ToolboxRenderedUIEvent.js';
+import { PopoverDesktop, PopoverEvent } from '@editorjs/ui-kit';
+import type { BlockSelectedUIEvent } from '../Blocks/events/index.js';
+import { ToolboxRenderedUIEvent, ToolboxClosedUIEvent, ToolboxOpenedUIEvent } from './events/index.js';
+import type { ToolboxOptionsEntry } from './ToolboxConfigEntry.js';
 
 /**
  * UI module responsible for rendering the toolbox
@@ -40,15 +43,52 @@ export class ToolboxUI implements EditorjsPlugin {
   #nodes: Record<string, HTMLElement> = {};
 
   /**
+   * Editor configuration
+   */
+  #editorConfig: CoreConfigValidated;
+
+  /**
+   * Toolbox popover with the list of Tools
+   */
+  #popover: PopoverDesktop;
+
+  /**
+   * Index of a currently selected block (meaning user's mouse is over the block)
+   */
+  #selectedBlockIndex = -1;
+
+  /**
+   * Indicates if popover is open. We shouldn't change selected block while popover is open
+   */
+  #isPopoverOpen = false;
+
+  /**
    * ToolboxUI class constructor
    * @param params - Plugin parameters
    */
   constructor({
     api,
     eventBus,
+    config,
   }: EditorjsPluginParams) {
     this.#api = api;
     this.#eventBus = eventBus;
+    this.#editorConfig = config;
+
+    /**
+     * @todo Support mobile layout
+     */
+    this.#popover = new PopoverDesktop({
+      scopeElement: this.#editorConfig.holder,
+      searchable: true,
+      items: [],
+    });
+
+    this.#popover.on(PopoverEvent.Closed, () => {
+      this.#isPopoverOpen = false;
+
+      this.#eventBus.dispatchEvent(new ToolboxClosedUIEvent({}));
+    });
 
     this.#render();
 
@@ -59,6 +99,29 @@ export class ToolboxUI implements EditorjsPlugin {
         this.addTool(tool);
       }
     });
+
+    this.#eventBus.addEventListener('ui:toolbox:open', () => {
+      this.open();
+    });
+
+    this.#eventBus.addEventListener('ui:blocks:block-selected', (e: BlockSelectedUIEvent) => {
+      if (this.#isPopoverOpen) {
+        return;
+      }
+
+      this.#selectedBlockIndex = e.detail.index;
+    });
+  }
+
+  /**
+   * Open's Toolbox popover
+   */
+  public open(): void {
+    this.#popover.show();
+
+    this.#isPopoverOpen = true;
+
+    this.#eventBus.dispatchEvent(new ToolboxOpenedUIEvent({}));
   }
 
   /**
@@ -69,34 +132,41 @@ export class ToolboxUI implements EditorjsPlugin {
   }
 
   /**
+   * Adds tool button in the toolbox
+   * @param tool - Block tool to add to the toolbox
+   */
+  public addTool(tool: BlockToolFacade): void {
+    const toolbox = (tool.options.toolbox ?? {}) as ToolboxOptionsEntry;
+
+    this.#popover.addItem(
+      {
+        title: tool.name,
+        ...toolbox,
+        closeOnActivate: true,
+        onActivate: () => {
+          void this.#api.blocks.insert(
+            tool.name,
+            toolbox.data ?? {},
+            this.#selectedBlockIndex === -1 ? undefined : this.#selectedBlockIndex + 1,
+            true
+          );
+        },
+      }
+    );
+  }
+
+  /**
    * Renders Toolbox UI and dispatches an event
    */
   #render(): void {
     this.#nodes.holder = make('div');
 
-    this.#nodes.holder.style.display = 'flex';
-    this.#nodes.holder.style.marginBottom = '10px';
+    this.#nodes.holder.appendChild(this.#popover.getElement());
 
     this.#eventBus.dispatchEvent(new ToolboxRenderedUIEvent({
       toolbox: this.#nodes.holder,
     }));
   }
-
-  /**
-   * Renders tool button in the toolbox
-   * @param tool - Block tool to add to the toolbox
-   */
-  public addTool(tool: BlockToolFacade): void {
-    const toolButton = make('button');
-
-    toolButton.textContent = tool.name;
-
-    toolButton.addEventListener('click', () => {
-      void this.#api.blocks.insert(tool.name);
-    });
-
-    this.#nodes.holder.appendChild(toolButton);
-  }
 }
 
-export * from './ToolboxRenderedUIEvent.js';
+export * from './events/index.js';

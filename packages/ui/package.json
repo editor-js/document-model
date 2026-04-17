@@ -18,9 +18,10 @@
     "dist"
   ],
   "scripts": {
-    "build": "yarn clear && vite build",
+    "build": "vite build",
     "build:declaration": "",
-    "dev": "vite",
+    "dev": "vite build --watch",
+    "prebuild": "yarn clear",
     "lint": "eslint ./src",
     "lint:ci": "yarn lint --max-warnings 0",
     "lint:fix": "yarn lint --fix",
@@ -29,20 +30,26 @@
   "devDependencies": {
     "eslint": "^9.9.1",
     "eslint-config-codex": "^2.0.2",
+    "postcss": "^8.5.10",
     "postcss-apply": "^0.12.0",
+    "postcss-nested": "^7.0.2",
     "postcss-preset-env": "^10.1.5",
+    "rollup-plugin-postcss": "^4.0.2",
     "typescript": "^5.5.4",
     "vite": "^5.1.3",
     "vite-plugin-css-injected-by-js": "^3.5.2",
     "vite-plugin-dts": "^3.7.3"
   },
   "dependencies": {
+    "@codexteam/icons": "^0.3.3",
+    "@codexteam/ui": "^0.2.2",
     "@editorjs/core": "workspace:^",
-    "@editorjs/dom": "^1.0.0",
+    "@editorjs/dom": "^1.1.0",
     "@editorjs/dom-adapters": "workspace:^",
     "@editorjs/editorjs": "^2.30.5",
-    "@editorjs/helpers": "^1.1.0",
+    "@editorjs/helpers": "^1.2.1",
     "@editorjs/model": "workspace:^",
-    "@editorjs/sdk": "workspace:^"
+    "@editorjs/sdk": "workspace:^",
+    "@editorjs/ui-kit": "^1.1.3"
   }
 }

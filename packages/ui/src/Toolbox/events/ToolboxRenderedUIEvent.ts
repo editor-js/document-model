@@ -1,4 +1,4 @@
-import { UIEventBase } from '@editorjs/sdk';
+import { ToolboxBaseEvent } from './ToolboxBaseEvent.js';
 
 /**
  * Payload of the ToolboxRenderedUIEvent
@@ -14,12 +14,12 @@ export interface ToolboxRenderedUIEventPayload {
 /**
  * Class for event that is being fired after the toolbox is rendered
  */
-export class ToolboxRenderedUIEvent extends UIEventBase<ToolboxRenderedUIEventPayload> {
+export class ToolboxRenderedUIEvent extends ToolboxBaseEvent<ToolboxRenderedUIEventPayload> {
   /**
    * ToolboxRenderedUIEvent constructor function
    * @param payload - ToolboxRendered event payload
    */
   constructor(payload: ToolboxRenderedUIEventPayload) {
-    super('toolbox:rendered', payload);
+    super('rendered', payload);
   }
 }

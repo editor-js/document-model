@@ -1,0 +1,52 @@
+:root {
+
+  --toolbar-button {
+    background: none;
+    border: none;
+    padding: 0;
+
+    color: var(--base--text);
+    cursor: pointer;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--radius-m);
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+
+    @media (hover: hover) {
+      &:hover {
+        background-color: var(--accent--bg-primary);
+      }
+    }
+
+    &--active {
+      background-color: var(--accent--bg-primary);
+      animation: bounceIn 0.75s 1;
+      animation-fill-mode: forwards;
+    }
+  }
+}
+
+.toolbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  transition: opacity 100ms ease;
+
+  max-width: var(--content-width);
+  margin: 0 auto;
+
+  &__actions {
+    position: absolute;
+    right: 100%;
+  }
+
+  &__plus-button {
+    @apply --toolbar-button;
+
+    flex-shrink: 0;
+  }
+}

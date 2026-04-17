@@ -130,7 +130,6 @@ describe('BlocksAPI', () => {
       api.insert(
         'header',
         { text: 'Title' },
-        { custom: true },
         2,
         true,
         true,
@@ -142,6 +141,7 @@ describe('BlocksAPI', () => {
         data: { text: 'Title' },
         index: 2,
         replace: true,
+        focus: true,
       });
     });
   });

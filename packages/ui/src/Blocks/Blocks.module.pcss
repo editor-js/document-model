@@ -4,6 +4,17 @@
   grid-template-columns: 1fr;
 }
 
+.block {
+  position: relative;
+  width: 100%;
+
+  &__contents {
+    width: 100%;
+    max-width: var(--content-width);
+    margin: 0 auto;
+  }
+}
+
 /**
  * Zero-width space wrapper that will prevent Safari from deleting blocks if there is no content in host
  */

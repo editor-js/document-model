@@ -20,7 +20,12 @@ export enum UiComponentType {
   /**
    * Toolbox wrapper
    */
-  Toolbox = 'toolbox'
+  Toolbox = 'toolbox',
+
+  /**
+   * Toolbar area wrapper. Includes Toolbox and Block Settings
+   */
+  Toolbar = 'toolbar'
 }
 
 /**

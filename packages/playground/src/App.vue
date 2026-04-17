@@ -4,7 +4,7 @@ import { EditorDocument, EditorJSModel } from '@editorjs/model';
 import Core from '@editorjs/core';
 import { ref, onMounted } from 'vue';
 import { Node } from './components';
-import { EditorjsUI, BlocksUI, InlineToolbarUI, ToolboxUI } from '@editorjs/ui';
+import { EditorjsUI, BlocksUI, InlineToolbarUI, ToolboxUI, ToolbarUI } from '@editorjs/ui';
 /**
  * Editor document for visualizing
  */
@@ -66,10 +66,28 @@ onMounted(() => {
     .use(EditorjsUI)
     .use(BlocksUI)
     .use(InlineToolbarUI)
+    .use(ToolbarUI)
     .use(ToolboxUI)
     .initialize();
 });
 
+/**
+ * Reactive state to track collapsed sections
+ */
+const collapsedSections = ref<{ [key: string]: boolean }>({
+  editor: false,
+  playground: true,
+  output: true,
+});
+
+/**
+ * Toggles the collapsed state of a section
+ *
+ * @param section - section to toggle
+ */
+function toggleSection(section: string) {
+  collapsedSections.value[section] = !collapsedSections.value[section];
+}
 </script>
 
 <template>
@@ -85,12 +103,11 @@ onMounted(() => {
     </div>
 
     <div :class="$style.body">
-      <!--      <CaretIndex-->
-      <!--        :user-id="userId"-->
-      <!--        :model="model"-->
-      <!--      />-->
-      <div>
-        <h2 :class="$style.sectionHeading">
+      <div :class="[$style.section, { [$style.collapsed]: collapsedSections.editor }]">
+        <h2
+          :class="$style.sectionHeading"
+          @click="toggleSection('editor')"
+        >
           Editor
         </h2>
         <div
@@ -98,14 +115,20 @@ onMounted(() => {
           :class="$style.editor"
         />
       </div>
-      <div :class="$style.playground">
-        <h2 :class="$style.sectionHeading">
+      <div :class="[$style.section, { [$style.collapsed]: collapsedSections.playground }]">
+        <h2
+          :class="$style.sectionHeading"
+          @click="toggleSection('playground')"
+        >
           Model Serialized
         </h2>
         <pre v-if="serialized">{{ serialized }}</pre>
       </div>
-      <div :class="$style.output">
-        <h2 :class="$style.sectionHeading">
+      <div :class="[$style.section, { [$style.collapsed]: collapsedSections.output }]">
+        <h2
+          :class="$style.sectionHeading"
+          @click="toggleSection('output')"
+        >
           Model
         </h2>
         <Node
@@ -124,9 +147,36 @@ onMounted(() => {
 
 .body {
   padding: 16px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-gap: 20px;
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  background-color: var(--base--bg-primary);
+}
+
+.section {
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 0;
+  min-width: 0;
+  overflow: hidden;
+  transition: flex-grow 0.3s ease, flex-basis 0.3s ease;
+  border-right: 1px solid var(--base--bg-secondary);
+  padding: 0 20px;
+}
+
+.section:first-child {
+  padding-left: 0;
+}
+
+.section:last-child {
+  border-right: none;
+  padding-right: 0;
+}
+
+.collapsed {
+  flex-grow: 0;
+  flex-shrink: 0;
+  flex-basis: 50px;
 }
 
 .playground {
@@ -148,6 +198,9 @@ onMounted(() => {
   align-items: center;
   position: sticky;
   top: 0;
+  background-color: var(--base--bg-primary);
+  border-bottom: 1px solid var(--base--border);
+  color: var(--base--text);
   -webkit-backdrop-filter: blur(30px);
   backdrop-filter: blur(30px);
   z-index: 2;
@@ -165,10 +218,10 @@ onMounted(() => {
 }
 
 .editor {
-  background-color: #111;
-  border-radius: 8px;
+  background-color: var(--base--bg-secondary);
+  border: 1px solid var(--base--border);
+  border-radius: var(--radius-m, 8px);
   padding: 10px;
-
   font-size: 2em;
 }
 
@@ -178,7 +231,9 @@ onMounted(() => {
   margin-bottom: 20px;
   margin-top: 0;
   font-family: var(--rounded-family);
-  color: var(--foreground-secondary);
+  color: var(--base--text-secondary);
   text-transform: uppercase;
+  cursor: pointer;
+  user-select: none;
 }
 </style>
