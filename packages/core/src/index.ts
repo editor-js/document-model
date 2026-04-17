@@ -21,6 +21,7 @@ import { EditorAPI } from './api/index.js';
 import { generateId } from './utils/uid.js';
 import { Paragraph, BoldInlineTool, LinkInlineTool, ItalicInlineTool } from './tools/internal';
 import { ShortcutsPlugin } from './plugins/ShortcutsPlugin.js';
+import { ClipboardPlugin } from './plugins/ClipboardPlugin.js';
 
 /**
  * If no holder is provided via config, the editor will be appended to the element with this id
@@ -135,6 +136,7 @@ export default class Core {
     this.use(ItalicInlineTool);
     this.use(LinkInlineTool);
     this.use(ShortcutsPlugin);
+    this.use(ClipboardPlugin);
   }
 
   /**
