@@ -1,6 +1,5 @@
 /**
  * Finds nearest next carriage return symbol from passed position
- *
  * @param text - string to search in
  * @param position - search starting position
  */
@@ -16,7 +15,6 @@ export function findNextHardLineBoundary(text: string, position: number): number
 
 /**
  * Finds nearest previous caret symbol before passed position
- *
  * @param text - sting to search in
  * @param position - search finish position
  */

@@ -1,5 +1,5 @@
-import type { Properties } from './Properties';
-import type { ToolsRegistry } from '../../../tools/ToolsRegistry';
+import type { Properties } from './Properties.js';
+import type { ToolsRegistry } from '../../../tools/ToolsRegistry.js';
 
 export interface EditorDocumentConstructorParameters {
   /**

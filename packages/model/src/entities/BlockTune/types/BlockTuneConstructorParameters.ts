@@ -1,5 +1,5 @@
-import type { BlockTuneName } from './BlockTuneName';
-import type { BlockTuneSerialized } from './BlockTuneSerialized';
+import type { BlockTuneName } from './BlockTuneName.js';
+import type { BlockTuneSerialized } from './BlockTuneSerialized.js';
 
 export interface BlockTuneConstructorParameters {
   /**

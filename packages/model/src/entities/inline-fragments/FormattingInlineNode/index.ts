@@ -2,8 +2,8 @@ import type {
   FormattingInlineNodeConstructorParameters,
   InlineToolName,
   InlineToolData
-} from './types';
-import type { InlineFragment, InlineNode } from '../InlineNode';
+} from './types/index.js';
+import type { InlineFragment, InlineNode } from '../InlineNode/index.js';
 import { ParentNode } from '../mixins/ParentNode/index.js';
 import { ChildNode } from '../mixins/ChildNode/index.js';
 import { ParentInlineNode } from '../ParentInlineNode/index.js';
@@ -13,6 +13,7 @@ export * from './types/index.js';
 /**
  * We need to extend FormattingInlineNode interface with ChildNode and ParentNode ones to use the methods from mixins
  */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface FormattingInlineNode extends ChildNode {}
 
 /**
@@ -33,7 +34,6 @@ export class FormattingInlineNode extends ParentInlineNode implements InlineNode
 
   /**
    * Constructor for FormattingInlineNode class.
-   *
    * @param args - FormattingInlineNode constructor arguments.
    * @param args.tool - The name of the formatting tool applied to the content.
    * @param args.data - Any additional data associated with the formatting.
@@ -48,10 +48,9 @@ export class FormattingInlineNode extends ParentInlineNode implements InlineNode
 
   /**
    * Removes text from the specified range. If there is no text left in a node, removes a node from a parent.
-   *
    * @param [start] - start char index of the range, by default 0
    * @param [end] - end char index of the range, by default length of the text value
-   * @returns {string} removed text
+   * @returns removed text
    */
   public removeText(start = 0, end = this.length): string {
     const result = super.removeText(start, end);
@@ -66,7 +65,6 @@ export class FormattingInlineNode extends ParentInlineNode implements InlineNode
   /**
    * Returns inline fragments for node from the specified character range
    * Always return full fragments even if one is not fully covered by the passed range
-   *
    * @param [start] - start char index of the range, by default 0
    * @param [end] - end char index of the range, by default length of the text value
    */
@@ -92,9 +90,8 @@ export class FormattingInlineNode extends ParentInlineNode implements InlineNode
 
   /**
    * Splits current node by the specified index
-   *
    * @param index - char index where to split the node
-   * @returns {FormattingInlineNode | null} new node
+   * @returns new node
    */
   public split(index: number): FormattingInlineNode | null {
     this.validateIndex(index);
@@ -117,7 +114,6 @@ export class FormattingInlineNode extends ParentInlineNode implements InlineNode
      */
     const midNodeIndex = this.children.indexOf(child) + 1;
 
-
     newNode.append(...this.children.slice(midNodeIndex));
 
     this.parent?.insertAfter(this, newNode);
@@ -127,7 +123,6 @@ export class FormattingInlineNode extends ParentInlineNode implements InlineNode
 
   /**
    * Applies formatting to the text with specified inline tool in the specified range
-   *
    * @param tool - name of inline tool to apply
    * @param start - char start index of the range
    * @param end - char end index of the range
@@ -136,20 +131,17 @@ export class FormattingInlineNode extends ParentInlineNode implements InlineNode
   public format(tool: InlineToolName, start: number, end: number, data?: InlineToolData): InlineNode[] {
     /**
      * In case current tool is the same as new one, do nothing
-     *
      * @todo Compare data as well
      */
     if (tool === this.tool) {
       return [];
     }
 
-
     return super.format(tool, start, end, data);
   }
 
   /**
    * Removes formatting from the text for a specified inline tool in the specified range
-   *
    * @param tool - name of inline tool to remove
    * @param start - char start index of the range
    * @param end - char end index of the range
@@ -197,7 +189,6 @@ export class FormattingInlineNode extends ParentInlineNode implements InlineNode
 
   /**
    * Checks if node is equal to passed node
-   *
    * @param node - node to check
    */
   public isEqual(node: InlineNode): node is FormattingInlineNode {
@@ -218,7 +209,6 @@ export class FormattingInlineNode extends ParentInlineNode implements InlineNode
 
   /**
    * Merges current node with passed node
-   *
    * @param node - node to merge with
    */
   public mergeWith(node: InlineNode): void {

@@ -17,7 +17,6 @@ type Base<N extends Nominal<unknown, unknown>> = N[typeof baseTypeField];
 
 /**
  * Asserts type to a value
- *
  * @param value - value to assert a type
  */
 const assertType = <N extends Nominal<unknown, unknown>>(value: Base<N>): N => value as N;

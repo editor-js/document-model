@@ -1,9 +1,9 @@
-import type { InlineNode } from '../../../InlineNode';
+import type { InlineNode } from '../../../InlineNode/index.js';
 
 /**
  * Mock for ParentNode decorator
  */
-export  function ParentNode(constructor: { new(): InlineNode }): { new(): InlineNode } {
+export function ParentNode(constructor: { new(): InlineNode }): { new(): InlineNode } {
   return class extends constructor {
     /**
      * Mock method

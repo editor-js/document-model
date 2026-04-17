@@ -3,6 +3,7 @@ import { ParentNode } from '../mixins/ParentNode/index.js';
 
 jest.mock('../mixins/ParentNode');
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface Dummy extends ChildNode {
 }
 
@@ -19,6 +20,7 @@ class Dummy {
   constructor(_options?: unknown) {}
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface ParentDummy extends ParentNode {}
 
 /**
@@ -41,7 +43,6 @@ describe('ChildNode mixin', () => {
     jest.clearAllMocks();
   });
 
-
   it('should decorated class to a parent', () => {
     const spy = jest.spyOn(parentMock, 'append');
 
@@ -57,7 +58,6 @@ describe('ChildNode mixin', () => {
   it('should add appendTo method to the decorated class', () => {
     expect(dummy.appendTo).toBeInstanceOf(Function);
   });
-
 
   describe('.parent', () => {
     it('should return null by default', () => {

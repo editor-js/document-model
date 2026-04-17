@@ -6,7 +6,6 @@ import { createSingleton } from './singleton.js';
 export interface Subscriber {
   /**
    * Callback that will be called on "selection change" event.
-   *
    * @param selection - current document selection
    */
   callback: (selection: Selection | null) => void;
@@ -21,11 +20,9 @@ export interface Subscriber {
  * Node that contains a selection.
  *
  * Now supports only contenteditable elements.
- *
  * @todo add support for native inputs
  */
 export type InputWithCaret = HTMLElement;
-
 
 /**
  * Utility composable that watches for document "selection change" event and delegates the provided callbacks to subscribers.
@@ -35,7 +32,7 @@ export const useSelectionChange = createSingleton(() => {
    * Stores the last input that was related to the selection.
    * We need that to send update when selection is moved to another input.
    */
-  let lastRelatedInput: HTMLElement | null  = null;
+  let lastRelatedInput: HTMLElement | null = null;
 
   /**
    * Used to iterate over all inputs and check if selection is related to them.
@@ -49,7 +46,6 @@ export const useSelectionChange = createSingleton(() => {
 
   /**
    * Checks if selection is related to input
-   *
    * @param selection - changed document selection
    * @param input - input to check
    */
@@ -105,7 +101,6 @@ export const useSelectionChange = createSingleton(() => {
 
   /**
    * Subscribe on "selection change" event.
-   *
    * @param input - input to watch caret change
    * @param callback - callback that will be called on "selection change" event
    * @param context - context of the callback
@@ -131,7 +126,6 @@ export const useSelectionChange = createSingleton(() => {
 
   /**
    * Unsubscribe from "selection change" event.
-   *
    * @param input - input to remove subscription
    */
   function off(input: InputWithCaret): void {

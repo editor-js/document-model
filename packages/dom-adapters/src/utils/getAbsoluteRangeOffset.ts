@@ -2,11 +2,10 @@
  * Returns true if node is a line break
  *
  * <div>
- *   <div>
- *     <br>
- *   </div>
+ * <div>
+ * <br>
  * </div>
- *
+ * </div>
  * @param node - node to check
  */
 function isLineBreak(node: Node): boolean {
@@ -15,7 +14,6 @@ function isLineBreak(node: Node): boolean {
 
 /**
  * Returns absolute caret offset from caret position in container to the start of the parent node (input)
- *
  * @param parent - parent node containing the range
  * @param initialNode - exact node containing the caret
  * @param initialOffset - caret offset in the initial node
@@ -23,7 +21,6 @@ function isLineBreak(node: Node): boolean {
 export function getAbsoluteRangeOffset(parent: Node, initialNode: Node, initialOffset: number): number {
   let node = initialNode;
   let offset = initialOffset;
-
 
   if (!parent.contains(node)) {
     throw new Error('Range is not contained by the parent node');

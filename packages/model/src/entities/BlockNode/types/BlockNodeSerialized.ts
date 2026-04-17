@@ -1,6 +1,6 @@
-import type { BlockTuneSerialized } from '../../BlockTune';
-import type { ValueSerialized } from '../../ValueNode/types';
-import type { TextNodeSerialized } from '../../inline-fragments';
+import type { BlockTuneSerialized } from '../../BlockTune/index.js';
+import type { ValueSerialized } from '../../ValueNode/types/ValueSerialized.js';
+import type { TextNodeSerialized } from '../../inline-fragments/index.js';
 
 /**
  * Union type of serialized BlockNode child nodes
@@ -18,7 +18,6 @@ export type BlockNodeDataSerializedValue = BlockChildNodeSerialized | BlockChild
 export interface BlockNodeDataSerialized {
   [key: string]: BlockNodeDataSerializedValue;
 }
-
 
 /**
  * Serialized version of the BlockNode

@@ -9,7 +9,6 @@ import { EventBus } from '../../EventBus/index.js';
 export interface Caret {
   /**
    * Adds CaretEvent listener
-   *
    * @param event - type of event
    * @param listener - listener
    */
@@ -17,7 +16,6 @@ export interface Caret {
 
   /**
    * Dispatches CaretUpdatedEvent
-   *
    * @param event - event to dispatch
    */
   dispatchEvent(event: CaretUpdatedEvent): boolean;
@@ -53,7 +51,6 @@ export class Caret extends EventBus {
 
   /**
    * Caret constructor
-   *
    * @param userId - user identifier
    * @param index - initial caret index
    */
@@ -66,7 +63,6 @@ export class Caret extends EventBus {
 
   /**
    * Updates caret index and dispatches updated event
-   *
    * @param index - new caret index
    */
   public update(index: Index | null): void {

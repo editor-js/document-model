@@ -1,12 +1,11 @@
 /**
  * Get value from object by keypath
- *
  * @param data - object to get value from
  * @param keys - keypath to a value
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- unknown can't be used as data parameter is used for recursion
 export function get<T = unknown>(data: Record<string | number | symbol, any>, keys: string | string[]): T | undefined {
-  const parsedKeys  = Array.isArray(keys) ? keys : keys.split('.');
+  const parsedKeys = Array.isArray(keys) ? keys : keys.split('.');
   const key = parsedKeys.shift();
 
   if (key === undefined) {
@@ -22,13 +21,12 @@ export function get<T = unknown>(data: Record<string | number | symbol, any>, ke
 
 /**
  * Set value to object by keypath
- *
  * @param data - object to set value to
  * @param keys - keypath to a value
  * @param value - value to set
  */
 export function set<T = unknown>(data: Record<string, unknown>, keys: string | string[], value: T): void {
-  const parsedKeys  = Array.isArray(keys) ? keys : keys.split('.');
+  const parsedKeys = Array.isArray(keys) ? keys : keys.split('.');
   const key = parsedKeys.shift();
 
   if (key === undefined) {
@@ -50,7 +48,6 @@ export function set<T = unknown>(data: Record<string, unknown>, keys: string | s
 
 /**
  * Check if object has value by keypath
- *
  * @param data - object to check
  * @param keys - keypath to a value
  */

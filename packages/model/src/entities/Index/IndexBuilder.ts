@@ -11,7 +11,6 @@ export class IndexBuilder {
 
   /**
    *  Add text range to the index
-   *
    * @param range - text range
    */
   public addTextRange(range?: TextRange): this {
@@ -22,7 +21,6 @@ export class IndexBuilder {
 
   /**
    * Add data key to the index
-   *
    * @param key - data key
    */
   public addDataKey(key?: DataKey): this {
@@ -33,7 +31,6 @@ export class IndexBuilder {
 
   /**
    * Add tune key to the index
-   *
    * @param key - tune key
    */
   public addTuneKey(key?: string): this {
@@ -44,7 +41,6 @@ export class IndexBuilder {
 
   /**
    * Add tune name to the index
-   *
    * @param name - tune name
    */
   public addTuneName(name?: BlockTuneName): this {
@@ -55,7 +51,6 @@ export class IndexBuilder {
 
   /**
    * Add block index to the index
-   *
    * @param index - block index
    */
   public addBlockIndex(index?: number): this {
@@ -66,7 +61,6 @@ export class IndexBuilder {
 
   /**
    * Add property name to the index
-   *
    * @param name - property name
    */
   public addPropertyName(name?: string): this {
@@ -77,7 +71,6 @@ export class IndexBuilder {
 
   /**
    * Add document id to the index
-   *
    * @param id - document id
    */
   public addDocumentId(id?: DocumentIndex): this {
@@ -97,19 +90,16 @@ export class IndexBuilder {
 
   /**
    * Set index from serialized index
-   *
    * @param json - serialized index
    */
   public from(json: string): this;
   /**
    * Set index from index object
-   *
    * @param index - index object
    */
   public from(index: Index): this;
   /**
    * Set index from index object or serialized index
-   *
    * @param indexOrJSON - index object or serialized index
    */
   public from(indexOrJSON: Index | string): this {

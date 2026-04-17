@@ -5,24 +5,24 @@ const config = {
   thresholds: {
     break: 0,
   },
-  thresholds_comment: "Minimum required coverage. Increase once we're closer to 100%.",
+  // eslint-disable-next-line camelcase
+  thresholds_comment: 'Minimum required coverage. Increase once we\'re closer to 100%.',
   clearTextReporter: {
     allowEmojis: true,
   },
   reporters: [
-    "html",
-    "clear-text",
-    "progress",
-    "dashboard",
+    'html',
+    'clear-text',
+    'progress',
+    'dashboard',
   ],
   testRunner: 'jest',
   coverageAnalysis: 'perTest',
   tsconfigFile: 'tsconfig.json',
   checkers: ['typescript'],
   timeoutMS: 10000,
-  mutate: ["./src/**/*.ts", "!./src/**/__mocks__/*.ts", "!./src/**/*.spec.ts"],
+  mutate: ['./src/**/*.ts', '!./src/**/__mocks__/*.ts', '!./src/**/*.spec.ts'],
   allowEmpty: true,
 };
 
 export default config;
-

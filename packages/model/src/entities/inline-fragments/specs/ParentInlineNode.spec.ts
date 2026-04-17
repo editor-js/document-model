@@ -1,7 +1,7 @@
-import type { InlineToolName, ChildNode } from '../index';
+import type { InlineToolName, ChildNode } from '../index.js';
 import { TextInlineNode, FormattingInlineNode } from '../index.js';
 import { ParentInlineNode } from '../ParentInlineNode/index.js';
-import type { InlineNode } from '../InlineNode';
+import type { InlineNode } from '../InlineNode/index.js';
 import { EventType } from '../../../EventBus/types/EventType.js';
 import {
   TextAddedEvent,
@@ -29,11 +29,11 @@ describe('ParentInlineNode', () => {
     anotherChildMock = new TextInlineNode({ value: 'Another text here.' });
     formattingNodeMock = new FormattingInlineNode({
       tool: 'bold' as InlineToolName,
-      children: [ anotherChildMock ],
+      children: [anotherChildMock],
     });
     anotherFormattingNodeMock = new FormattingInlineNode({
       tool: 'italic' as InlineToolName,
-      children: [ new TextInlineNode({ value: 'Some italic text.' }) ],
+      children: [new TextInlineNode({ value: 'Some italic text.' })],
     });
 
     children = [childMock, formattingNodeMock, anotherFormattingNodeMock];
@@ -110,7 +110,6 @@ describe('ParentInlineNode', () => {
       expect(spy).toBeCalledWith(start, end);
     });
 
-
     it('should not call getText() for previous child if start equals its length', () => {
       const spy = jest.spyOn(childMock, 'getText');
 
@@ -173,7 +172,7 @@ describe('ParentInlineNode', () => {
 
       node.insertText(newText);
 
-      expect(node.children).toEqual([ expect.any(TextInlineNode) ]);
+      expect(node.children).toEqual([expect.any(TextInlineNode)]);
     });
 
     it('should not append empty node if there is already a child node', () => {
@@ -375,10 +374,10 @@ describe('ParentInlineNode', () => {
 
       const result = node.getFragments();
 
-      expect(result).toEqual([ {
+      expect(result).toEqual([{
         tool: 'bold',
         range: [childMock.length, node.length],
-      } ]);
+      }]);
     });
 
     it('should not normalize fragments for different tools', () => {

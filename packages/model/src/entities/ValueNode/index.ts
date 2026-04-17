@@ -1,6 +1,6 @@
 import { getContext } from '../../utils/Context.js';
 import { IndexBuilder } from '../Index/IndexBuilder.js';
-import type { ValueNodeConstructorParameters, ValueSerialized } from './types';
+import type { ValueNodeConstructorParameters, ValueSerialized } from './types/index.js';
 import { BlockChildType } from '../BlockNode/types/index.js';
 import { NODE_TYPE_HIDDEN_PROP } from '../BlockNode/consts.js';
 import { EventBus } from '../../EventBus/EventBus.js';
@@ -19,7 +19,6 @@ export class ValueNode<ValueType = unknown> extends EventBus {
 
   /**
    * Constructor for ValueNode class.
-   *
    * @param args - ValueNode constructor arguments.
    * @param args.value - The value of this value node.
    */
@@ -31,7 +30,6 @@ export class ValueNode<ValueType = unknown> extends EventBus {
 
   /**
    * Updates the data associated with this value node.
-   *
    * @param value - The new value of this value node.
    */
   public update(value: ValueType): void {

@@ -1,5 +1,5 @@
-import type { BlockChildType } from '../../BlockNode/types';
-import type { NODE_TYPE_HIDDEN_PROP } from '../../BlockNode/consts';
+import type { BlockChildType } from '../../BlockNode/types/index.js';
+import type { NODE_TYPE_HIDDEN_PROP } from '../../BlockNode/consts.js';
 
 /**
  * Type representing serialized ValueNode
