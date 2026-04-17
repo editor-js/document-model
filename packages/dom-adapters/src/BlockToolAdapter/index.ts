@@ -19,7 +19,8 @@ import type {
   BlockToolAdapter as BlockToolAdapterInterface,
   CoreConfig,
   BeforeInputUIEvent,
-  BeforeInputUIEventPayload
+  BeforeInputUIEventPayload,
+  BlockTool
 } from '@editorjs/sdk';
 import { BeforeInputUIEventName } from '@editorjs/sdk';
 import type { CaretAdapter } from '../CaretAdapter/index.js';
@@ -34,6 +35,8 @@ import {
   isNonTextInput
 } from '../utils/index.js';
 import { InputType } from './types/InputType.js';
+
+type ToolOnUpdateCallback = (key: string, type: 'text' | 'value') => HTMLElement;
 
 /**
  * BlockToolAdapter is using inside Block tools to connect browser DOM elements to the model
@@ -62,14 +65,19 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
   #formattingAdapter: FormattingAdapter;
 
   /**
-   * Name of the tool that this adapter is connected to
+   * Tool instance
    */
-  #toolName: string;
+  #tool!: BlockTool;
 
   /**
    * Editor's config
    */
   #config: Required<CoreConfig>;
+
+  /**
+   * Callback registered by the tool to create DOM elements when data nodes are added
+   */
+  #toolOnUpdateCallback: ToolOnUpdateCallback | null = null;
 
   /**
    * Inputs that bound to the model
@@ -90,7 +98,6 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    * @param caretAdapter - CaretAdapter instance
    * @param blockIndex - index of the block that this adapter is connected to
    * @param formattingAdapter - needed to render formatted text
-   * @param toolName - tool name of the block
    */
   constructor(
     config: Required<CoreConfig>,
@@ -98,21 +105,98 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     eventBus: EventBus,
     caretAdapter: CaretAdapter,
     blockIndex: number,
-    formattingAdapter: FormattingAdapter,
-    toolName: string
+    formattingAdapter: FormattingAdapter
   ) {
     this.#config = config;
     this.#model = model;
     this.#blockIndex = blockIndex;
     this.#caretAdapter = caretAdapter;
     this.#formattingAdapter = formattingAdapter;
-    this.#toolName = toolName;
 
     this.#model.addEventListener(EventType.Changed, (event: ModelEvents) => this.#handleModelUpdate(event));
 
     eventBus.addEventListener(`ui:${BeforeInputUIEventName}`, (event: BeforeInputUIEvent) => {
       this.#processDelegatedBeforeInput(event);
     });
+  }
+
+  /**
+   * Registers a callback that will be called when a text or value node is added to the model.
+   *
+   * @param callback - receives the data key and node type, should create, mount and return the DOM element
+   */
+  public onUpdate(callback: ToolOnUpdateCallback): void {
+    this.#toolOnUpdateCallback = callback;
+  }
+
+  /**
+   * Initializes the adapter with the tool instance and the update callback.
+   * Scans existing model data and renders inputs for all existing text nodes.
+   *
+   * @param tool - the block tool instance
+   * @param onUpdateCallback - callback to create DOM elements for data nodes
+   */
+  public init(tool: BlockTool, onUpdateCallback: ToolOnUpdateCallback): void {
+    this.#tool = tool;
+    this.#toolOnUpdateCallback = onUpdateCallback;
+
+    const blockData = this.#model.serialized.blocks[this.#blockIndex];
+
+    Object.entries(blockData.data).forEach(([key, value]) => {
+      if (this.#attachedInputs.has(createDataKey(key))) {
+        return;
+      }
+
+      if (typeof value === 'object' && value !== null && '$t' in value && (value as { $t: unknown }).$t === 't') {
+        this.onTextNodeAdded(key);
+      }
+    });
+  }
+
+  /**
+   * Called when a text DataNode is added to the model for this block.
+   * Creates and attaches the DOM input via the registered onUpdate callback.
+   *
+   * @param dataKey - key of the added text node
+   */
+  public onTextNodeAdded(dataKey: string): void {
+    if (this.#attachedInputs.has(createDataKey(dataKey))) {
+      return;
+    }
+
+    if (this.#toolOnUpdateCallback === null) {
+      return;
+    }
+
+    const input = this.#toolOnUpdateCallback(dataKey, 'text');
+
+    this.attachInput(dataKey, input);
+  }
+
+  public registerKey(keyRaw: string, type: 'text' | 'value', initialData?: unknown): void {
+    if (this.#model.getDataNode(this.#config.userId, this.#blockIndex, createDataKey(keyRaw)) !== undefined) {
+      return;
+    }
+
+    let data;
+
+    switch (type) {
+      case 'text':
+        data = {
+          $t: 't',
+          text: initialData as string ?? '',
+        };
+        break;
+      case 'value':
+        if (typeof initialData === 'object') {
+          data = { $t: 'v', ...initialData };
+        } else {
+          data = initialData;
+        }
+        break;
+    }
+
+    this.#model.createDataNode(this.#config.userId, this.#blockIndex, keyRaw, data);
   }
 
   /**
@@ -130,16 +214,6 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     const key = createDataKey(keyRaw);
 
     this.#attachedInputs.set(key, input);
-
-    this.#model.createDataNode(
-      this.#config.userId,
-      this.#blockIndex,
-      key,
-      {
-        $t: 't',
-        value: '',
-      }
-    );
 
     const builder = new IndexBuilder();
 
@@ -187,6 +261,17 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     return new IndexBuilder()
       .addBlockIndex(this.#blockIndex)
       .build();
+  }
+
+  /**
+   * Updates the internal block index.
+   * Should only be called by the CaretAdapter registry when blocks are inserted or removed,
+   * guaranteeing the update happens before any nested model events fire.
+   *
+   * @param index - new block index value
+   */
+  public setBlockIndex(index: number): void {
+    this.#blockIndex = index;
   }
 
   /**
@@ -719,7 +804,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     this.#model.addBlock(
       this.#config.userId,
       {
-        name: this.#toolName,
+        name: this.#tool.constructor.name,
         data: {
           [key]: {
             $t: 't',
@@ -874,16 +959,31 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    */
   #handleModelUpdate(event: ModelEvents): void {
     if (event instanceof BlockAddedEvent || event instanceof BlockRemovedEvent) {
-      if (event.detail.index.blockIndex! <= this.#blockIndex) {
-        this.#blockIndex += event.detail.action === EventAction.Added ? 1 : -1;
-      }
-
+      /**
+       * Block index shifting is now handled externally by CaretAdapter.shiftBlockIndices(),
+       * which is called synchronously by BlocksManager before any nested model events fire.
+       * No action needed here.
+       */
       return;
     }
 
     const { textRange, dataKey, blockIndex } = event.detail.index;
 
     if (blockIndex !== this.#blockIndex) {
+      return;
+    }
+
+    if (event instanceof DataNodeAddedEvent) {
+      if (dataKey === undefined) {
+        return;
+      }
+
+      const data = event.detail.data;
+
+      if (typeof data === 'object' && data !== null && '$t' in data && (data as { $t: unknown }).$t === 't') {
+        this.onTextNodeAdded(dataKey.toString());
+      }
+
       return;
     }
 
@@ -899,12 +999,6 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
 
     if (event instanceof ValueModifiedEvent) {
       this.#handleModelUpdateForValue(event, dataKey!);
-    }
-
-    if (event instanceof DataNodeAddedEvent) {
-      /**
-       * @todo Decide how to handle this case as only BlockTool knows how to render an input
-       */
     }
 
     if (!(event instanceof TextAddedEvent) && !(event instanceof TextRemovedEvent)) {

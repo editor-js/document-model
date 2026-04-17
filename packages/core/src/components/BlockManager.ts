@@ -79,6 +79,13 @@ export class BlocksManager {
    * Will be passed to BlockToolAdapter for rendering inputs` formatted text
    */
   #formattingAdapter: FormattingAdapter;
+  /**
+   * Local registry of block adapters maintained by BlocksManager.
+   * This allows us to update adapter indices synchronously when blocks are
+   * added/removed to ensure adapters reflect the current model state before
+   * any nested model events are processed.
+   */
+  #adapters: BlockToolAdapter[] = [];
 
   /**
    * Returns Blocks count
@@ -257,7 +264,17 @@ export class BlocksManager {
       throw new Error('[BlockManager] Block index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
     }
 
-    const toolName = event.detail.data.name;
+    // Shift existing adapters indices to make room for the new block.
+    // This must happen synchronously before we create and render the new
+    // block adapter so that any nested model events produced during tool
+    // rendering will see correct adapter indices.
+    for (const adapter of this.#adapters) {
+      const current = adapter.getBlockIndex().blockIndex;
+
+      if (current !== undefined && current >= index.blockIndex) {
+        adapter.setBlockIndex(current + 1);
+      }
+    }
 
     const blockToolAdapter = new BlockToolAdapter(
       this.#config,
@@ -265,8 +282,7 @@ export class BlocksManager {
       this.#eventBus,
       this.#caretAdapter,
       index.blockIndex,
-      this.#formattingAdapter,
-      toolName
+      this.#formattingAdapter
     );
 
     /**
@@ -274,6 +290,8 @@ export class BlocksManager {
      * without additional storing inputs in the caret adapter
      * Thus, it won't care about block index change (block removed, block added, block moved)
      */
+    // Register new adapter locally and attach it to caret adapter.
+    this.#adapters.splice(index.blockIndex, 0, blockToolAdapter);
     this.#caretAdapter.attachBlock(blockToolAdapter);
 
     const tool = this.#toolsManager.blockTools.get(data.name);
@@ -313,6 +331,25 @@ export class BlocksManager {
 
     if (index.blockIndex === undefined) {
       throw new Error('Block index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
+    }
+
+    // Remove and detach adapter related to the removed block, then shift
+    // indices of adapters that were after the removed one.
+    const removedIndex = index.blockIndex;
+
+    const adapterIndex = this.#adapters.findIndex(a => a.getBlockIndex().blockIndex === removedIndex);
+
+    if (adapterIndex !== -1) {
+      const [removedAdapter] = this.#adapters.splice(adapterIndex, 1);
+      this.#caretAdapter.detachBlock(removedAdapter.getBlockIndex());
+    }
+
+    for (const adapter of this.#adapters) {
+      const current = adapter.getBlockIndex().blockIndex;
+
+      if (current !== undefined && current > removedIndex) {
+        adapter.setBlockIndex(current - 1);
+      }
     }
 
     this.#eventBus.dispatchEvent(new BlockRemovedCoreEvent({

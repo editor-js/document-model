@@ -55,30 +55,47 @@ export class Paragraph implements BlockTool<ParagraphData, ParagraphConfig> {
    */
   #data: ParagraphData;
 
+  #wrapper!: HTMLDivElement;
+
   /**
    * @param options - Block tool constructor options
    */
   constructor({ adapter, data }: BlockToolConstructorOptions<ParagraphData, ParagraphConfig>) {
     this.#adapter = adapter;
     this.#data = data;
+
+    this.#buildUI();
+
+    this.#adapter.init(this, this.onUpdate);
+    this.#adapter.registerKey('text', 'text');
+  }
+
+  #buildUI(): void {
+    const wrapper = document.createElement('div');
+
+    wrapper.classList.add('editorjs-paragraph');
+
+    this.#wrapper = wrapper;
   }
 
   /**
    * Creates tool element
    */
   public render(): HTMLElement {
-    const wrapper = document.createElement('div');
-
-    wrapper.classList.add('editorjs-paragraph');
-
-    wrapper.contentEditable = 'true';
-    wrapper.style.outline = 'none';
-    wrapper.style.whiteSpace = 'pre-wrap';
-
-    this.#adapter.attachInput('text', wrapper);
-
-    return wrapper;
+    return this.#wrapper;
   }
+
+  onUpdate = (key: string, type: 'text' | 'value'): HTMLElement => {
+    const paragraph = document.createElement('div');
+
+    paragraph.contentEditable = 'true';
+    paragraph.style.outline = 'none';
+    paragraph.style.whiteSpace = 'pre-wrap';
+
+    this.#wrapper.append(paragraph);
+
+    return paragraph;
+  };
 }
 
 Paragraph satisfies BlockToolConstructor<ParagraphData>;

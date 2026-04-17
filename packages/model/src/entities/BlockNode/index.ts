@@ -18,6 +18,7 @@ import type {
   DataKey
 } from './types';
 import { BlockChildType, createBlockToolName, createDataKey } from './types/index.js';
+import type { ValueSerialized } from '../ValueNode/index.js';
 import { ValueNode } from '../ValueNode/index.js';
 import type { InlineFragment, InlineToolData, InlineToolName, TextNodeSerialized } from '../inline-fragments';
 import { TextNode } from '../inline-fragments/index.js';
@@ -144,6 +145,24 @@ export class BlockNode extends EventBus {
       data: serializedData,
       tunes: serializedTunes,
     };
+  }
+
+  /**
+   *
+   * @param dataKey
+   */
+  public getDataNode(dataKey: DataKey): ValueSerialized | TextNodeSerialized | undefined {
+    const node = get(this.data, dataKey as string);
+
+    if (node === undefined) {
+      return;
+    }
+
+    if (!(node instanceof TextNode) && !(node instanceof ValueNode)) {
+      throw new InvalidNodeTypeError(dataKey, 'text or a value');
+    }
+
+    return node.serialized;
   }
 
   /**

@@ -5,7 +5,14 @@ import { BlockNode } from '../BlockNode/index.js';
 import { IndexBuilder } from '../Index/IndexBuilder.js';
 import type { EditorDocumentSerialized, EditorDocumentConstructorParameters, Properties } from './types';
 import type { BlockTuneName } from '../BlockTune';
-import { type InlineFragment, type InlineToolData, type InlineToolName } from '../inline-fragments/index.js';
+import type {
+  TextNodeSerialized
+} from '../inline-fragments/index.js';
+import {
+  type InlineFragment,
+  type InlineToolData,
+  type InlineToolName
+} from '../inline-fragments/index.js';
 import { IoCContainer, TOOLS_REGISTRY } from '../../IoC/index.js';
 import { ToolsRegistry } from '../../tools/index.js';
 import type { BlockNodeDataSerializedValue, BlockNodeSerialized } from '../BlockNode/types';
@@ -25,6 +32,7 @@ import {
 import type { Constructor } from '../../utils/types.js';
 import { BaseDocumentEvent, type ModifiedEventData } from '../../EventBus/events/BaseEvent.js';
 import type { Index } from '../Index/index.js';
+import type { ValueSerialized } from '../ValueNode';
 
 export * from './types/index.js';
 
@@ -201,6 +209,17 @@ export class EditorDocument extends EventBus {
     this.#checkIndexOutOfBounds(index, this.length - 1);
 
     this.#children[index].removeDataNode(createDataKey(key));
+  }
+
+  /**
+   *
+   * @param index
+   * @param key
+   */
+  public getDataNode(index: number, key: DataKey | string): ValueSerialized | TextNodeSerialized {
+    this.#checkIndexOutOfBounds(index, this.length - 1);
+
+    return this.#children[index].getDataNode(createDataKey(key));
   }
 
 

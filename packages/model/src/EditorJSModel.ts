@@ -277,6 +277,11 @@ export class EditorJSModel extends EventBus {
     return this.#document.removeDataNode(...parameters);
   }
 
+  @WithContext
+  public getDataNode(_userId: string | number, ...parameters: Parameters<EditorDocument['getDataNode']>): ReturnType<EditorDocument['getDataNode']> {
+    return this.#document.getDataNode(...parameters);
+  }
+
   /**
    * Updates the ValueNode data associated with the BlockNode at the specified index.
    *
