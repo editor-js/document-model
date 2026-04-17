@@ -152,7 +152,12 @@ describe('SelectionManager', () => {
         index: 'serialized',
       });
 
-      jest.spyOn(Index, 'parse').mockReturnValue({ blockIndex: 1 } as Index);
+      jest.spyOn(Index, 'parse').mockReturnValue({
+        blockIndex: 1,
+        getTextSegments() {
+          return [];
+        },
+      } as unknown as Index);
 
       caretEventsListener(event);
 
@@ -172,11 +177,18 @@ describe('SelectionManager', () => {
         index: 'serialized',
       });
 
-      jest.spyOn(Index, 'parse').mockReturnValue({
+      const segment = {
         blockIndex: 1,
         dataKey: 'text',
-        textRange: [1, 3]
-      } as Index);
+        textRange: [1, 3],
+      };
+
+      jest.spyOn(Index, 'parse').mockReturnValue({
+        ...segment,
+        getTextSegments() {
+          return [segment];
+        },
+      } as unknown as Index);
 
       caretEventsListener(event);
 
@@ -214,11 +226,22 @@ describe('SelectionManager', () => {
         index: 'serialized',
       });
 
+      jest.spyOn(model, 'getFragments').mockReturnValue([]);
+
       jest.spyOn(Index, 'parse').mockReturnValue({
         blockIndex: 1,
         dataKey: 'text',
-        textRange: [1, 3]
-      } as Index);
+        textRange: [1, 3],
+        getTextSegments() {
+          return [
+            {
+              blockIndex: 1,
+              dataKey: 'text',
+              textRange: [1, 3],
+            },
+          ];
+        },
+      } as unknown as Index);
 
       caretEventsListener(event);
 
