@@ -1,11 +1,12 @@
-import type { InlineToolName, InlineToolData } from '../index';
+import type { InlineToolName, InlineToolData } from '../index.js';
 import { FormattingInlineNode } from '../index.js';
-import type { TextInlineNodeConstructorParameters } from './types';
-import type { InlineNode, InlineTreeNodeSerialized } from '../InlineNode';
+import type { TextInlineNodeConstructorParameters } from './types/index.js';
+import type { InlineNode, InlineTreeNodeSerialized } from '../InlineNode/index.js';
 import { ChildNode } from '../mixins/ChildNode/index.js';
 
-export * from './types/index.js';
+export type * from './types/index.js';
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TextInlineNode extends ChildNode {}
 
 /**
@@ -20,7 +21,6 @@ export class TextInlineNode implements InlineNode {
 
   /**
    * Constructor for TextInlineNode class
-   *
    * @param args - TextInlineNode constructor arguments.
    * @param args.value - Text content of the node.
    */
@@ -48,7 +48,6 @@ export class TextInlineNode implements InlineNode {
 
   /**
    * Inserts text to specified position. By default, appends new text to the current value
-   *
    * @param text - text to insert
    * @param [index] - char start index
    */
@@ -60,10 +59,9 @@ export class TextInlineNode implements InlineNode {
 
   /**
    * Remove text from specified range
-   *
    * @param [start] - start char index of the range, 0 by default
    * @param [end] - end char index of the range, text length by default
-   * @returns {string} removed text
+   * @returns removed text
    */
   public removeText(start = 0, end = this.length): string {
     this.#validateIndex(start);
@@ -82,7 +80,6 @@ export class TextInlineNode implements InlineNode {
 
   /**
    * Returns text value from the specified range
-   *
    * @param [start] - start char index of the range, 0 by default
    * @param [end] - end char index of the range, text length by default
    */
@@ -100,12 +97,11 @@ export class TextInlineNode implements InlineNode {
 
   /**
    * Applies inline tool for specified range
-   *
    * @param tool - name of the tool to apply
    * @param start - start char index of the range
    * @param end - end char index of the range
    * @param [data] - inline tool data if applicable
-   * @returns {InlineNode[]} - array of nodes after applied formatting
+   * @returns - array of nodes after applied formatting
    */
   public format(tool: InlineToolName, start: number, end: number, data?: InlineToolData): InlineNode[] {
     this.#validateIndex(start);
@@ -150,9 +146,8 @@ export class TextInlineNode implements InlineNode {
 
   /**
    * Splits current node into two nodes by the specified index
-   *
    * @param index - char index where to split
-   * @returns {TextInlineNode|null} - new node or null if split is not applicable
+   * @returns - new node or null if split is not applicable
    */
   public split(index: number): TextInlineNode | null {
     if (index === 0 || index === this.length) {
@@ -171,7 +166,6 @@ export class TextInlineNode implements InlineNode {
 
   /**
    * Checks if node is equal to passed node
-   *
    * @param node - node to check
    */
   public isEqual(node: InlineNode): node is TextInlineNode {
@@ -180,7 +174,6 @@ export class TextInlineNode implements InlineNode {
 
   /**
    * Merges current node with passed node
-   *
    * @param node - node to merge with
    */
   public mergeWith(node: InlineNode): void {
@@ -204,7 +197,6 @@ export class TextInlineNode implements InlineNode {
 
   /**
    * Validates index
-   *
    * @param index - char index to validate
    * @throws Error if index is out of the text length
    */
@@ -217,7 +209,6 @@ export class TextInlineNode implements InlineNode {
 
   /**
    * Clones specified range to a new TextInlineNode
-   *
    * @param start - start char index of the range
    * @param end - end char index of the range
    */

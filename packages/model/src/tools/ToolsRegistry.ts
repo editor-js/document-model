@@ -1,6 +1,6 @@
 /* eslint-disable jsdoc/require-jsdoc */
-import type { BlockToolName, InlineToolName } from '../entities';
-import type { BlockToolConstructable, InlineToolConstructable } from './types';
+import type { BlockToolName, InlineToolName } from '../entities/index.js';
+import type { BlockToolConstructable, InlineToolConstructable } from './types/index.js';
 
 /**
  * ToolsRegistry map stores Editor.js Tools by their names
@@ -8,7 +8,6 @@ import type { BlockToolConstructable, InlineToolConstructable } from './types';
 export class ToolsRegistry extends Map {
   /**
    * Returns tool by its name
-   *
    * @param name - Block or Inline tool name
    */
   public get(inlineToolName: InlineToolName): InlineToolConstructable;

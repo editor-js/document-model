@@ -1,10 +1,11 @@
 import { ParentNode } from '../mixins/ParentNode/index.js';
 import { ChildNode } from '../mixins/ChildNode/index.js';
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface DummyParent extends ParentNode {}
 
 /**
- *
+ * DummyParent class
  */
 @ParentNode
 class DummyParent {
@@ -16,15 +17,15 @@ class DummyParent {
   constructor(_options?: unknown) {}
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface DummyChild extends ChildNode {}
 
 /**
- *
+ * DummyChild class
  */
 @ChildNode
 class DummyChild {
   /**
-   *
    * @param _options - dummy options
    */
   // eslint-disable-next-line @typescript-eslint/no-empty-function,@typescript-eslint/no-unused-vars,no-unused-vars
@@ -74,7 +75,6 @@ describe('ParentNode and ChildNode integration', () => {
 
       expect(child.parent).toEqual(parent);
     });
-
 
     it('should set child\'s parent on parent.insertAfter() call', () => {
       const anotherChild = new DummyChild();

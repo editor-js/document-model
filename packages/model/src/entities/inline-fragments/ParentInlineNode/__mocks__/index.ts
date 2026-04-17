@@ -1,4 +1,4 @@
-import type { InlineFragment, InlineNode } from '../../InlineNode';
+import type { InlineFragment, InlineNode } from '../../InlineNode/index.js';
 
 /**
  * We still need actual class for private and protected methods we can't mock

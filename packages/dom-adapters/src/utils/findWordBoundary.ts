@@ -1,4 +1,4 @@
-const APOSTROPHE_AND_CURLY_QUOTES = "['\u2018\u2019]";
+const APOSTROPHE_AND_CURLY_QUOTES = '[\'\u2018\u2019]';
 const PUNCTUATION = '.,!?:;"\\(\\){}\\[\\]<>@*~\\/\\-#$&|^%+=';
 const WHITESPACE = '\\s';
 
@@ -6,7 +6,6 @@ const WHITESPACE_AND_PUNCTUATION = `[${WHITESPACE}${PUNCTUATION}]`;
 
 /**
  * Finds the nearest next word boundary from the passed position
- *
  * @param text - string to search in
  * @param position - search starting position
  */
@@ -32,7 +31,6 @@ export function findNextWordBoundary(text: string, position: number): number {
 
 /**
  * Finds the nearest previous word boundary before the passed position
- *
  * @param text - string to search in
  * @param position - search finish position
  */

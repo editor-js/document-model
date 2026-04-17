@@ -9,7 +9,7 @@ describe('mapObject()', () => {
       d: 4,
     };
 
-    const result = mapObject(object, (value) => value * 2);
+    const result = mapObject(object, value => value * 2);
 
     expect(result).toEqual({
       a: 2,
@@ -25,7 +25,6 @@ describe('mapObject()', () => {
 
     /**
      * Map function
-     *
      * @param value - entry value
      * @param k - entry key
      */

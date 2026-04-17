@@ -1,9 +1,9 @@
 import { IndexBuilder } from '../Index/IndexBuilder.js';
 import { EditorDocument } from './index.js';
-import type { BlockToolName, DataKey } from '../BlockNode';
+import type { BlockToolName, DataKey } from '../BlockNode/index.js';
 import { BlockNode } from '../BlockNode/index.js';
-import type { BlockTuneName } from '../BlockTune';
-import type { InlineToolData, InlineToolName } from '../inline-fragments';
+import type { BlockTuneName } from '../BlockTune/index.js';
+import type { InlineToolData, InlineToolName } from '../inline-fragments/index.js';
 import { EventType } from '../../EventBus/types/EventType.js';
 import {
   BlockAddedEvent,
@@ -59,7 +59,7 @@ describe('EditorDocument', () => {
         },
       });
 
-      const blocks = [ {
+      const blocks = [{
         name: 'header' as BlockToolName,
         data: {
           text: {
@@ -69,7 +69,7 @@ describe('EditorDocument', () => {
           },
         },
         tunes: {},
-      } ];
+      }];
 
       doc.initialize({ blocks });
 
@@ -118,7 +118,7 @@ describe('EditorDocument', () => {
         },
       });
 
-      const blocks = [ {
+      const blocks = [{
         name: 'header' as BlockToolName,
         data: {
           text: {
@@ -128,7 +128,7 @@ describe('EditorDocument', () => {
           },
         },
         tunes: {},
-      } ];
+      }];
 
       doc.initialize({ blocks });
 
@@ -329,7 +329,6 @@ describe('EditorDocument', () => {
         },
       };
 
-
       let event: BlockAddedEvent | null = null;
 
       /**
@@ -497,7 +496,7 @@ describe('EditorDocument', () => {
   describe('.properties', () => {
     it('should return the properties of the document', () => {
       const properties = {
-        'readOnly': true,
+        readOnly: true,
       };
 
       const document = new EditorDocument({
@@ -966,7 +965,7 @@ describe('EditorDocument', () => {
       const blockIndexToUpdate = 1;
       const tuneName = 'blockFormatting' as BlockTuneName;
       const updateData = {
-        'align': 'right',
+        align: 'right',
       };
 
       document.updateTuneData(blockIndexToUpdate, tuneName, updateData);
@@ -1011,7 +1010,7 @@ describe('EditorDocument', () => {
       const blockIndexToUpdate = 1;
       const tuneName = 'blockFormatting' as BlockTuneName;
       const updateData = {
-        'align': 'right',
+        align: 'right',
       };
 
       document.updateTuneData(blockIndexToUpdate, tuneName, updateData);
@@ -1034,7 +1033,7 @@ describe('EditorDocument', () => {
       const blockIndexOutOfBound = document.length + 1;
       const tuneName = 'blockFormatting' as BlockTuneName;
       const updateData = {
-        'align': 'right',
+        align: 'right',
       };
 
       const action = (): void => document.updateTuneData(blockIndexOutOfBound, tuneName, updateData);
@@ -1065,7 +1064,7 @@ describe('EditorDocument', () => {
         identifier: 'document',
       });
 
-      document.initialize({ blocks: [ blockData ] });
+      document.initialize({ blocks: [blockData] });
 
       block = document.getBlock(0);
     });
@@ -1107,7 +1106,7 @@ describe('EditorDocument', () => {
         identifier: 'document',
       });
 
-      document.initialize({ blocks: [ blockData ] });
+      document.initialize({ blocks: [blockData] });
 
       block = document.getBlock(0);
     });
@@ -1154,7 +1153,7 @@ describe('EditorDocument', () => {
         identifier: 'document',
       });
 
-      document.initialize({ blocks: [ blockData ] });
+      document.initialize({ blocks: [blockData] });
 
       block = document.getBlock(0);
     });
@@ -1181,7 +1180,6 @@ describe('EditorDocument', () => {
       const value = { value: text,
         $t: 't' };
 
-
       document.insertData(index, value);
 
       expect(spy)
@@ -1194,8 +1192,7 @@ describe('EditorDocument', () => {
         .addBlockIndex(blockIndex)
         .build();
 
-
-      document.insertData(index, [ block.serialized ]);
+      document.insertData(index, [block.serialized]);
 
       expect(spy)
         .toHaveBeenCalledWith(block.serialized, blockIndex);
@@ -1231,7 +1228,7 @@ describe('EditorDocument', () => {
         identifier: 'document',
       });
 
-      document.initialize({ blocks: [ blockData ] });
+      document.initialize({ blocks: [blockData] });
     });
 
     it('should call .removeText() method if text index provided', () => {
@@ -1311,7 +1308,7 @@ describe('EditorDocument', () => {
         identifier: 'document',
       });
 
-      document.initialize({ blocks: [ blockData ] });
+      document.initialize({ blocks: [blockData] });
     });
 
     it('should call .format() method if text index and modified value provided', () => {
@@ -1376,7 +1373,7 @@ describe('EditorDocument', () => {
         identifier: 'document',
       });
 
-      document.initialize({ blocks: [ blockData ] });
+      document.initialize({ blocks: [blockData] });
 
       block = document.getBlock(0);
     });
@@ -1441,7 +1438,7 @@ describe('EditorDocument', () => {
         identifier: 'document',
       });
 
-      document.initialize({ blocks: [ blockData ] });
+      document.initialize({ blocks: [blockData] });
 
       block = document.getBlock(0);
     });
@@ -1495,7 +1492,7 @@ describe('EditorDocument', () => {
         identifier: 'document',
       });
 
-      document.initialize({ blocks: [ blockData ] });
+      document.initialize({ blocks: [blockData] });
 
       block = document.getBlock(0);
     });
@@ -1529,7 +1526,6 @@ describe('EditorDocument', () => {
       expect(spy)
         .toBeCalledTimes(document.length);
     });
-
 
     it('should return document properties', () => {
       const properties = {

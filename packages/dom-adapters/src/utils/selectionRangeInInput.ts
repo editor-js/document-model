@@ -3,7 +3,6 @@ import { getAbsoluteRangeOffset } from './getAbsoluteRangeOffset.js';
 
 /**
  * True if the input contains the whole selection (not cross-input for this field).
- *
  * @param input - input element
  * @param range - selection range (`Range` or `StaticRange`)
  */
@@ -13,7 +12,6 @@ export function isInputContainsWholeSelection(input: HTMLElement, range: Abstrac
 
 /**
  * True if the input contains only the start of the cross-input selection.
- *
  * @param input - input element
  * @param range - selection range
  */
@@ -23,7 +21,6 @@ export function isInputContainsOnlyStartOfSelection(input: HTMLElement, range: A
 
 /**
  * True if the input contains only the end of the cross-input selection.
- *
  * @param input - input element
  * @param range - selection range
  */
@@ -33,14 +30,13 @@ export function isInputContainsOnlyEndOfSelection(input: HTMLElement, range: Abs
 
 /**
  * True if the input is in between the cross-input selection (neither anchor inside, range still spans it).
- *
  * @param input - input element
  * @param range - selection range
  */
 export function isInputInBetweenSelection(input: HTMLElement, range: AbstractRange): boolean {
-  return !isInputContainsWholeSelection(input, range) &&
-    !isInputContainsOnlyStartOfSelection(input, range) &&
-    !isInputContainsOnlyEndOfSelection(input, range);
+  return !isInputContainsWholeSelection(input, range)
+    && !isInputContainsOnlyStartOfSelection(input, range)
+    && !isInputContainsOnlyEndOfSelection(input, range);
 }
 
 /**
@@ -49,7 +45,6 @@ export function isInputInBetweenSelection(input: HTMLElement, range: AbstractRan
  *
  * Handles cross-input selection: only the start of the selection, only the end,
  * the full selection inside one input, or a block fully covered in between.
- *
  * @param selectionRange - current document selection range
  * @param input - contenteditable (or similar) root for model text offsets
  */

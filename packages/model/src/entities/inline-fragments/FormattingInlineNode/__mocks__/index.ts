@@ -1,6 +1,6 @@
 import { ParentNode } from '../../mixins/ParentNode/index.js';
 import { ChildNode } from '../../mixins/ChildNode/index.js';
-import type { InlineFragment } from '../../InlineNode';
+import type { InlineFragment } from '../../InlineNode/index.js';
 
 export * from '../types/InlineToolData.js';
 

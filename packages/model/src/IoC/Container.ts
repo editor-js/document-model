@@ -9,7 +9,6 @@ type Container = Map<symbol, unknown>;
  * Singletone IoC container to store EditorDocuments dependencies, for example ToolsRegistry and EventBus
  *
  * We need it to provide shared instances of dependencies for all model entities without passing them through the constructor
- *
  * @example
  * ```ts
  * import { IoCContainer } from './IoCContainer.js';
@@ -24,15 +23,11 @@ type Container = Map<symbol, unknown>;
 export class IoCContainer {
   /**
    * Map of containers for each document
-   *
-   * @private
    */
   static #containers = new WeakMap<EditorDocument, Container>();
 
   /**
    * Private constructor to prevent creating instances of the class
-   *
-   * @private
    */
   // Stryker disable next-line BlockStatement -- no way to kill this mutant
   private constructor() {
@@ -42,7 +37,6 @@ export class IoCContainer {
 
   /**
    * Returns container for the specified document
-   *
    * @param document - document to get container for
    */
   public static of(document: EditorDocument): Container {

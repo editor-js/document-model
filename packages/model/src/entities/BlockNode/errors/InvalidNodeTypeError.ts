@@ -6,7 +6,6 @@ import type { DataKey } from '../types/index.js';
 export class InvalidNodeTypeError extends Error {
   /**
    * InvalidNodeTypeError constructor
-   *
    * @param key - data key of the invalid node
    * @param nodeName - expected node name
    */

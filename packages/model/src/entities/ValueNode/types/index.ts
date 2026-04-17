@@ -1,2 +1,2 @@
-export type { ValueNodeConstructorParameters } from './ValueNodeConstructorParameters';
-export type { ValueSerialized } from './ValueSerialized';
+export type { ValueNodeConstructorParameters } from './ValueNodeConstructorParameters.js';
+export type { ValueSerialized } from './ValueSerialized.js';

@@ -1,7 +1,11 @@
 {
   "eslint.workingDirectories": [
+    "./packages/collaboration-manager",
+    "./packages/core",
     "./packages/dom-adapters",
     "./packages/model",
+    "./packages/sdk",
+    "./packages/ui",
     "./packages/playground",
   ],
 }

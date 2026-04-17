@@ -1,7 +1,7 @@
-import type { InlineToolName } from './InlineToolName';
-import type { InlineToolData } from './InlineToolData';
-import type { ChildNodeConstructorOptions } from '../../mixins/ChildNode';
-import type { ParentNodeConstructorOptions } from '../../mixins/ParentNode';
+import type { InlineToolName } from './InlineToolName.js';
+import type { InlineToolData } from './InlineToolData.js';
+import type { ChildNodeConstructorOptions } from '../../mixins/ChildNode/index.js';
+import type { ParentNodeConstructorOptions } from '../../mixins/ParentNode/index.js';
 
 export interface FormattingInlineNodeConstructorParameters extends ChildNodeConstructorOptions, ParentNodeConstructorOptions {
   /**
