@@ -92,8 +92,6 @@ export class SelectionManager {
       case event instanceof CaretManagerCaretUpdatedEvent: {
         const { index: serializedIndex } = event.detail;
 
-        console.log('serializedIndex', serializedIndex);
-
         const index = serializedIndex !== null ? Index.parse(serializedIndex) : null;
         let fragments: InlineFragment[] = [];
 

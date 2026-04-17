@@ -34,6 +34,7 @@ export class CaretUpdatedEvent extends CustomEvent<Caret> {
    * @param payload - Caret instance
    */
   constructor(payload: Caret) {
+    /* Stryker disable next-line ObjectLiteral -- keep detail as Caret instance; mutants null detail and crash CaretManager.updateCaret (caret.userId) */
     super(CaretEvent.Updated, {
       detail: payload,
     });

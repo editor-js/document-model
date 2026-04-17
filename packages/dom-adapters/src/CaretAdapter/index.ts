@@ -297,7 +297,7 @@ export class CaretAdapter extends EventTarget {
     /**
      * {@link #blocks} order may not match document order after block moves; composite index and
      * {@link #restoreDomSelectionFromCompositeIndex} require segments ordered from selection start
-     * to end (by {@link Index.blockIndex}, then {@link Index.dataKey} within a block).
+     * to end (by {@link Index.blockIndex}, then DOM order of inputs within a block).
      */
     this.#sortCompositeSegmentsInDocumentOrder(segments);
 
@@ -319,7 +319,9 @@ export class CaretAdapter extends EventTarget {
   /**
    * Orders text index segments by model position: {@link #blocks} order can lag after moves, but
    * composite indices and DOM restore assume {@link Index.compositeSegments}[0] is the start anchor
-   * block and the last segment is the end anchor block.
+   * block and the last segment is the end anchor block. Within one block, inputs are ordered by
+   * document order via {@link Node.compareDocumentPosition} (not by data key — registration order can
+   * differ from layout).
    *
    * @param segments - mutable list of per-input segments (sorted in place)
    */
@@ -332,10 +334,41 @@ export class CaretAdapter extends EventTarget {
         return (blockA ?? 0) - (blockB ?? 0);
       }
 
-      const keyA = a.dataKey !== undefined ? String(a.dataKey) : '';
-      const keyB = b.dataKey !== undefined ? String(b.dataKey) : '';
+      const blockIndex = blockA ?? 0;
+      const inputA =
+        a.dataKey !== undefined ? this.findInput(blockIndex, String(a.dataKey)) : undefined;
+      const inputB =
+        b.dataKey !== undefined ? this.findInput(blockIndex, String(b.dataKey)) : undefined;
 
-      return keyA.localeCompare(keyB);
+      if (inputA !== undefined && inputB !== undefined && inputA !== inputB) {
+        const position = inputA.compareDocumentPosition(inputB);
+
+        if ((position & Node.DOCUMENT_POSITION_CONTAINS) !== 0) {
+          return -1;
+        }
+
+        if ((position & Node.DOCUMENT_POSITION_CONTAINED_BY) !== 0) {
+          return 1;
+        }
+
+        if ((position & Node.DOCUMENT_POSITION_FOLLOWING) !== 0) {
+          return -1;
+        }
+
+        if ((position & Node.DOCUMENT_POSITION_PRECEDING) !== 0) {
+          return 1;
+        }
+      }
+
+      if (inputA !== undefined && inputB === undefined) {
+        return -1;
+      }
+
+      if (inputA === undefined && inputB !== undefined) {
+        return 1;
+      }
+
+      return 0;
     });
   }
 

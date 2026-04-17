@@ -122,6 +122,10 @@ export class FormattingAdapter {
       throw new IndexError('FormattingAdapter: caret index is outside of the input');
     }
 
+    /**
+     * @todo do not store middle segments in the index, use only the first and last segments
+     * Also, we need to sort inpus inside first/last block by document order to restore selection
+     */
     const segments = index.getTextSegments();
 
     if (segments.length === 0) {

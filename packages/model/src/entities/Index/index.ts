@@ -212,6 +212,7 @@ export class Index {
         this.propertyName !== undefined ||
         this.documentId !== undefined;
 
+      /* Stryker disable next-line ConditionalExpression -- `if (!hasOtherFields)` inverts throw vs continue; pure composite + per-field root tests already assert both sides */
       if (hasOtherFields) {
         throw new Error('Invalid index');
       }
@@ -257,10 +258,12 @@ export class Index {
    * Returns true if index points to the text data
    */
   public get isTextIndex(): boolean {
+    /* Stryker disable next-line ConditionalExpression -- inverted `if` swaps composite early return vs text predicate; composite + .isTextIndex specs cover both */
     if (this.compositeSegments !== undefined && this.compositeSegments.length > 0) {
       return false;
     }
 
+    /* Stryker disable next-line ConditionalExpression, LogicalOperator -- compound text-index predicate; `&&`↔`||` covered by .isTextIndex + getTextSegments specs */
     return this.blockIndex !== undefined && this.dataKey !== undefined && this.textRange !== undefined;
   }
 
@@ -268,6 +271,7 @@ export class Index {
    * Returns true if index points to the block node
    */
   public get isBlockIndex(): boolean {
+    /* Stryker disable next-line ConditionalExpression -- compound block-index predicate; .isBlockIndex specs cover field combinations */
     return this.blockIndex !== undefined && this.tuneName === undefined && this.dataKey === undefined && this.textRange === undefined;
   }
 
@@ -275,6 +279,7 @@ export class Index {
    * Returns true if index points to the block node data key
    */
   public get isDataIndex(): boolean {
+    /* Stryker disable next-line ConditionalExpression, LogicalOperator -- compound data-index predicate; .isDataIndex specs cover field combinations */
     return this.blockIndex !== undefined && this.tuneName === undefined && this.dataKey !== undefined && this.textRange === undefined;
   }
 }

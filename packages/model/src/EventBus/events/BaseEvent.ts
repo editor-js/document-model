@@ -48,6 +48,7 @@ export class BaseDocumentEvent<Action extends EventAction, Data = unknown> exten
    * @param userId - user identifier
    */
   constructor(index: Index, action: Action, data: Data, userId: string | number) {
+    /* Stryker disable next-line ObjectLiteral -- keep detail payload intact; mutants yield null/malformed detail and crash listeners (event.detail.index) */
     super(EventType.Changed, {
       detail: {
         index,

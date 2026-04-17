@@ -84,7 +84,7 @@ describe('Index', () => {
       index.tuneKey = 'tuneKey';
       index.dataKey = 'dataKey' as DataKey;
 
-      expect(() => index.validate()).toThrow();
+      expect(() => index.validate()).toThrow('Invalid index');
     });
 
     it('should throw an error if index includes text range AND tune name', () => {
@@ -94,7 +94,7 @@ describe('Index', () => {
       index.tuneKey = 'tuneKey';
       index.textRange = [0, 0];
 
-      expect(() => index.validate()).toThrow();
+      expect(() => index.validate()).toThrow('Invalid index');
     });
 
     it('should throw an error if index includes tune name but NOT tune key', () => {
@@ -102,7 +102,7 @@ describe('Index', () => {
 
       index.tuneName = 'tuneName' as BlockTuneName;
 
-      expect(() => index.validate()).toThrow();
+      expect(() => index.validate()).toThrow('Invalid index');
     });
 
     it('should throw an error if index includes property name AND block index', () => {
@@ -111,7 +111,7 @@ describe('Index', () => {
       index.propertyName = 'propertyName';
       index.blockIndex = 1;
 
-      expect(() => index.validate()).toThrow();
+      expect(() => index.validate()).toThrow('Invalid index');
     });
 
     it('should throw an error if index includes property name AND data key', () => {
@@ -120,7 +120,7 @@ describe('Index', () => {
       index.propertyName = 'propertyName';
       index.dataKey = 'dataKey' as DataKey;
 
-      expect(() => index.validate()).toThrow();
+      expect(() => index.validate()).toThrow('Invalid index');
     });
 
     it('should throw an error if index includes property name AND tune name', () => {
@@ -129,7 +129,7 @@ describe('Index', () => {
       index.propertyName = 'propertyName';
       index.tuneName = 'tuneName' as BlockTuneName;
 
-      expect(() => index.validate()).toThrow();
+      expect(() => index.validate()).toThrow('Invalid index');
     });
 
     it('should throw an error if index includes property name AND tune key', () => {
@@ -138,7 +138,7 @@ describe('Index', () => {
       index.propertyName = 'propertyName';
       index.tuneKey = 'tuneKey';
 
-      expect(() => index.validate()).toThrow();
+      expect(() => index.validate()).toThrow('Invalid index');
     });
 
     it('should throw an error if index includes property name AND text range', () => {
@@ -147,7 +147,7 @@ describe('Index', () => {
       index.propertyName = 'propertyName';
       index.textRange = [0, 0];
 
-      expect(() => index.validate()).toThrow();
+      expect(() => index.validate()).toThrow('Invalid index');
     });
 
     it('should throw an error if index includes block index AND text range but NOT data key', () => {
@@ -156,7 +156,7 @@ describe('Index', () => {
       index.blockIndex = 1;
       index.textRange = [0, 0];
 
-      expect(() => index.validate()).toThrow();
+      expect(() => index.validate()).toThrow('Invalid index');
     });
 
     it('should throw an error if index includes document id AND data key but NOT block index', () => {
@@ -165,7 +165,7 @@ describe('Index', () => {
       index.documentId = 'documentId' as DocumentIndex;
       index.dataKey = 'dataKey' as DataKey;
 
-      expect(() => index.validate()).toThrow();
+      expect(() => index.validate()).toThrow('Invalid index');
     });
 
     it('should throw an error if index includes document id AND tune name but NOT block index', () => {
@@ -175,7 +175,7 @@ describe('Index', () => {
       index.tuneName = 'tuneName' as BlockTuneName;
       index.tuneKey = 'tuneKey';
 
-      expect(() => index.validate()).toThrow();
+      expect(() => index.validate()).toThrow('Invalid index');
     });
 
     it('should throw an error if index includes document id AND tune key but NOT block index', () => {
@@ -184,7 +184,7 @@ describe('Index', () => {
       index.documentId = 'documentId' as DocumentIndex;
       index.tuneKey = 'tuneKey';
 
-      expect(() => index.validate()).toThrow();
+      expect(() => index.validate()).toThrow('Invalid index');
     });
 
     it('should throw an error if index includes document id AND text range but NOT block index', () => {
@@ -193,7 +193,7 @@ describe('Index', () => {
       index.documentId = 'documentId' as DocumentIndex;
       index.textRange = [0, 0];
 
-      expect(() => index.validate()).toThrow();
+      expect(() => index.validate()).toThrow('Invalid index');
     });
 
     it('should return true if index is valid', () => {
@@ -306,6 +306,25 @@ describe('Index', () => {
     });
   });
 
+  describe('.getTextSegments', () => {
+    it('should return [self] for a text index when compositeSegments is undefined', () => {
+      const index = new IndexBuilder().addBlockIndex(0)
+        .addDataKey('dataKey' as DataKey)
+        .addTextRange([0, 1])
+        .build();
+
+      expect(index.getTextSegments()).toEqual([ index ]);
+    });
+
+    it('should return empty array when index is neither composite nor text', () => {
+      const index = new IndexBuilder()
+        .addBlockIndex(0)
+        .build();
+
+      expect(index.getTextSegments()).toEqual([]);
+    });
+  });
+
   describe('composite index', () => {
     const compositeSecondSegmentEnd = 5;
 
@@ -319,11 +338,129 @@ describe('Index', () => {
         .addTextRange([0, compositeSecondSegmentEnd])
         .build();
       const composite = Index.fromCompositeSegments([a, b]);
+
+      expect(composite.validate()).toBe(true);
+
       const round = Index.parse(composite.serialize());
 
       expect(round.compositeSegments).toHaveLength(2);
       expect(round.compositeSegments![0].blockIndex).toBe(0);
       expect(round.compositeSegments![1].blockIndex).toBe(1);
+    });
+
+    it('should validate legacy rules when compositeSegments is empty (not a composite index)', () => {
+      const index = new Index();
+
+      index.compositeSegments = [];
+
+      expect(index.validate()).toBe(true);
+    });
+
+    it('should throw on validate when composite has only one segment', () => {
+      const a = new IndexBuilder().addBlockIndex(0)
+        .addDataKey('a' as DataKey)
+        .addTextRange([1, 2])
+        .build();
+      const index = new Index();
+
+      index.compositeSegments = [ a ];
+
+      expect(() => index.validate()).toThrow('Invalid index');
+    });
+
+    it('should throw on validate when composite segments are not text indices', () => {
+      const blockOnlyA = new IndexBuilder()
+        .addBlockIndex(0)
+        .build();
+      const blockOnlyB = new IndexBuilder()
+        .addBlockIndex(1)
+        .build();
+      const index = new Index();
+
+      index.compositeSegments = [blockOnlyA, blockOnlyB];
+
+      expect(() => index.validate()).toThrow('Invalid index');
+    });
+
+    /**
+     * Each case sets exactly one root field so `hasOtherFields` is true; LogicalOperator mutants
+     * that turn a specific `||` into `&&` would clear the whole chain and miss the throw.
+     */
+    describe('validate rejects any root-level field alongside composite segments', () => {
+      const validTextA = (): Index =>
+        new IndexBuilder().addBlockIndex(0)
+          .addDataKey('a' as DataKey)
+          .addTextRange([1, 2])
+          .build();
+      const validTextB = (): Index =>
+        new IndexBuilder().addBlockIndex(1)
+          .addDataKey('a' as DataKey)
+          .addTextRange([0, compositeSecondSegmentEnd])
+          .build();
+
+      const baseComposite = (): Index => {
+        const index = new Index();
+
+        index.compositeSegments = [validTextA(), validTextB()];
+
+        return index;
+      };
+
+      it('throws when root has only textRange set', () => {
+        const index = baseComposite();
+
+        index.textRange = [0, 1];
+
+        expect(() => index.validate()).toThrow('Invalid index');
+      });
+
+      it('throws when root has only dataKey set', () => {
+        const index = baseComposite();
+
+        index.dataKey = 'root' as DataKey;
+
+        expect(() => index.validate()).toThrow('Invalid index');
+      });
+
+      it('throws when root has only blockIndex set', () => {
+        const index = baseComposite();
+
+        index.blockIndex = 99;
+
+        expect(() => index.validate()).toThrow('Invalid index');
+      });
+
+      it('throws when root has only tuneName set', () => {
+        const index = baseComposite();
+
+        index.tuneName = 't' as BlockTuneName;
+
+        expect(() => index.validate()).toThrow('Invalid index');
+      });
+
+      it('throws when root has only tuneKey set', () => {
+        const index = baseComposite();
+
+        index.tuneKey = 'k';
+
+        expect(() => index.validate()).toThrow('Invalid index');
+      });
+
+      it('throws when root has only propertyName set', () => {
+        const index = baseComposite();
+
+        index.propertyName = 'p';
+
+        expect(() => index.validate()).toThrow('Invalid index');
+      });
+
+      it('throws when root has only documentId set', () => {
+        const index = baseComposite();
+
+        index.documentId = 'doc' as DocumentIndex;
+
+        expect(() => index.validate()).toThrow('Invalid index');
+      });
     });
 
     it('should return false for isTextIndex on composite', () => {
@@ -340,6 +477,25 @@ describe('Index', () => {
       expect(composite.isTextIndex).toBe(false);
     });
 
+    it('should return false for isTextIndex on composite even when root has block, data key, and text range', () => {
+      const a = new IndexBuilder().addBlockIndex(0)
+        .addDataKey('a' as DataKey)
+        .addTextRange([1, 2])
+        .build();
+      const b = new IndexBuilder().addBlockIndex(1)
+        .addDataKey('a' as DataKey)
+        .addTextRange([0, compositeSecondSegmentEnd])
+        .build();
+      const index = new Index();
+
+      index.compositeSegments = [a, b];
+      index.blockIndex = 0;
+      index.dataKey = 'a' as DataKey;
+      index.textRange = [0, 1];
+
+      expect(index.isTextIndex).toBe(false);
+    });
+
     it('should return segments from getTextSegments', () => {
       const a = new IndexBuilder().addBlockIndex(0)
         .addDataKey('a' as DataKey)
@@ -354,13 +510,37 @@ describe('Index', () => {
       expect(composite.getTextSegments()).toHaveLength(2);
     });
 
+    it('should use text index path when compositeSegments is empty array (getTextSegments returns [self])', () => {
+      const index = new IndexBuilder().addBlockIndex(0)
+        .addDataKey('a' as DataKey)
+        .addTextRange([1, 2])
+        .build();
+
+      index.compositeSegments = [];
+
+      expect(index.validate()).toBe(true);
+      expect(index.getTextSegments()).toHaveLength(1);
+      expect(index.getTextSegments()[0]).toBe(index);
+    });
+
+    it('should serialize as legacy when compositeSegments is empty array', () => {
+      const index = new IndexBuilder().addBlockIndex(0)
+        .addDataKey('a' as DataKey)
+        .addTextRange([1, 2])
+        .build();
+
+      index.compositeSegments = [];
+
+      expect(typeof JSON.parse(index.serialize())).toBe('string');
+    });
+
     it('should throw if composite has less than two segments', () => {
       const a = new IndexBuilder().addBlockIndex(0)
         .addDataKey('a' as DataKey)
         .addTextRange([1, 2])
         .build();
 
-      expect(() => Index.fromCompositeSegments([ a ])).toThrow();
+      expect(() => Index.fromCompositeSegments([ a ])).toThrow('Invalid index');
     });
 
     it('should throw when parsing composite JSON with fewer than two string segments', () => {
@@ -370,13 +550,18 @@ describe('Index', () => {
         .build();
       const payload = JSON.stringify({ composite: [ a.serialize() ] });
 
-      expect(() => Index.parse(payload)).toThrow();
+      expect(() => Index.parse(payload)).toThrow('Invalid index');
+    });
+
+    it('should throw when composite property is not an array', () => {
+      expect(() => Index.parse(JSON.stringify({ composite: null }))).toThrow('Invalid composite index');
+      expect(() => Index.parse(JSON.stringify({ composite: {} }))).toThrow('Invalid composite index');
     });
 
     it('should throw when composite array contains a non-string segment', () => {
       const payload = JSON.stringify({ composite: [0, 1] });
 
-      expect(() => Index.parse(payload)).toThrow('Invalid composite index');
+      expect(() => Index.parse(payload)).toThrow('Invalid composite index: each segment must be a serialized index string');
     });
 
     it('should clone composite segments', () => {
