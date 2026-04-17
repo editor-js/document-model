@@ -31,13 +31,13 @@ export default [
       'jsdoc/require-jsdoc': 'off',
       'jsdoc/informative-docs': 'off',
       'n/no-unsupported-features/node-builtins': 'off',
-      'n/no-unsupported-featugres/es-syntax': ['error', { version: '>=20.0.0' }],
-      'n/no-missing-import': {
-        allowModules: [
-          '@editorjs/model',
-          '@editorjs/sdk',
-        ],
-      },
+      'n/no-unsupported-features/es-syntax': ['error', { version: '>=20.0.0' }],
+      "n/no-missing-import": ["error", {
+        "allowModules": [
+          "@editorjs/model",
+          "@editorjs/sdk"
+        ]
+      }]
     },
   },
   {
