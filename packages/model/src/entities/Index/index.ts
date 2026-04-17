@@ -61,7 +61,7 @@ export class Index {
       throw new Error('Invalid serialized index: root must be a JSON string or a composite object');
     }
 
-    const arrayIndex = outer.split(':') as string[];
+    const arrayIndex = outer.split(':');
 
     const index = new Index();
 
@@ -98,13 +98,12 @@ export class Index {
 
   /**
    * Builds a composite index from at least two text indices (cross-input selection).
-   *
    * @param segments - text indices for each covered input, in document order
    */
   public static fromCompositeSegments(segments: Index[]): Index {
     const index = new Index();
 
-    index.compositeSegments = segments.map((segment) => segment.clone());
+    index.compositeSegments = segments.map(segment => segment.clone());
     index.validate();
 
     return index;
@@ -112,7 +111,6 @@ export class Index {
 
   /**
    * Parses a composite index from the JSON root object (see {@link Index.serialize}).
-   *
    * @param outer - value returned by `JSON.parse` for a composite serialized index
    */
   private static parseCompositeIndexFromObject(outer: object): Index {
@@ -146,7 +144,7 @@ export class Index {
     }
 
     if (this.isTextIndex) {
-      return [ this ];
+      return [this];
     }
 
     return [];
@@ -165,7 +163,7 @@ export class Index {
     index.blockIndex = this.blockIndex;
     index.propertyName = this.propertyName;
     index.documentId = this.documentId;
-    index.compositeSegments = this.compositeSegments?.map((segment) => segment.clone());
+    index.compositeSegments = this.compositeSegments?.map(segment => segment.clone());
 
     return index;
   }
@@ -176,7 +174,7 @@ export class Index {
   public serialize(): string {
     if (this.compositeSegments !== undefined && this.compositeSegments.length > 0) {
       return JSON.stringify({
-        composite: this.compositeSegments.map((segment) => segment.serialize()),
+        composite: this.compositeSegments.map(segment => segment.serialize()),
       });
     }
 
@@ -202,14 +200,14 @@ export class Index {
         throw new Error('Invalid index');
       }
 
-      const hasOtherFields =
-        this.textRange !== undefined ||
-        this.dataKey !== undefined ||
-        this.blockIndex !== undefined ||
-        this.tuneName !== undefined ||
-        this.tuneKey !== undefined ||
-        this.propertyName !== undefined ||
-        this.documentId !== undefined;
+      const hasOtherFields
+        = this.textRange !== undefined
+          || this.dataKey !== undefined
+          || this.blockIndex !== undefined
+          || this.tuneName !== undefined
+          || this.tuneKey !== undefined
+          || this.propertyName !== undefined
+          || this.documentId !== undefined;
 
       /* Stryker disable next-line ConditionalExpression -- `if (!hasOtherFields)` inverts throw vs continue; pure composite + per-field root tests already assert both sides */
       if (hasOtherFields) {

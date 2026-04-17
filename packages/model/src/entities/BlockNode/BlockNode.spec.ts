@@ -12,7 +12,7 @@ import type { EditorDocument } from '../EditorDocument/index.js';
 import type { ValueNodeConstructorParameters } from '../ValueNode/index.js';
 import type { InlineFragment, InlineToolData, InlineToolName } from '../inline-fragments/index.js';
 import { TextNode } from '../inline-fragments/index.js';
-import type { BlockNodeData, BlockNodeDataSerialized } from './types';
+import type { BlockNodeData, BlockNodeDataSerialized } from './types/index.js';
 import { BlockChildType } from './types/index.js';
 import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
 import { TextAddedEvent, TuneModifiedEvent, ValueModifiedEvent } from '../../EventBus/events/index.js';

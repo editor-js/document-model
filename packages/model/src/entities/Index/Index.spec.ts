@@ -313,7 +313,7 @@ describe('Index', () => {
         .addTextRange([0, 1])
         .build();
 
-      expect(index.getTextSegments()).toEqual([ index ]);
+      expect(index.getTextSegments()).toEqual([index]);
     });
 
     it('should return empty array when index is neither composite nor text', () => {
@@ -363,7 +363,7 @@ describe('Index', () => {
         .build();
       const index = new Index();
 
-      index.compositeSegments = [ a ];
+      index.compositeSegments = [a];
 
       expect(() => index.validate()).toThrow('Invalid index');
     });
@@ -540,7 +540,7 @@ describe('Index', () => {
         .addTextRange([1, 2])
         .build();
 
-      expect(() => Index.fromCompositeSegments([ a ])).toThrow('Invalid index');
+      expect(() => Index.fromCompositeSegments([a])).toThrow('Invalid index');
     });
 
     it('should throw when parsing composite JSON with fewer than two string segments', () => {
@@ -548,7 +548,7 @@ describe('Index', () => {
         .addDataKey('a' as DataKey)
         .addTextRange([1, 2])
         .build();
-      const payload = JSON.stringify({ composite: [ a.serialize() ] });
+      const payload = JSON.stringify({ composite: [a.serialize()] });
 
       expect(() => Index.parse(payload)).toThrow('Invalid index');
     });
