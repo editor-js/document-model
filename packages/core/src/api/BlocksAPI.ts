@@ -94,8 +94,8 @@ export class BlocksAPI implements BlocksApiInterface {
    * @param id - id of the inserted block @todo implement
    */
   public insert(
-    type: string = this.#config.defaultBlock,
-    data: BlockToolData = {},
+    type?: string,
+    data?: BlockToolData,
     /**
      * Not used but left for compatibility
      */
@@ -106,9 +106,12 @@ export class BlocksAPI implements BlocksApiInterface {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     id?: string
   ): void {
+    const blockType = type ?? this.#config.defaultBlock;
+    const blockData = data ?? {};
+
     this.#blocksManager.insert({
-      type,
-      data,
+      type: blockType,
+      data: blockData,
       index,
       replace,
       // needToFocus,
