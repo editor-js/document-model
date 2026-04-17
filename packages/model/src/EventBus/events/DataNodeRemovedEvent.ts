@@ -3,14 +3,12 @@ import type { Index } from '../../entities/Index/index.js';
 import { EventAction } from '../types/EventAction.js';
 import { BaseDocumentEvent } from './BaseEvent.js';
 
-
 /**
  * DataNodeRemoved Custom Event
  */
-export class DataNodeRemovedEvent extends BaseDocumentEvent<EventAction.Removed,  BlockNodeDataSerializedValue> {
+export class DataNodeRemovedEvent extends BaseDocumentEvent<EventAction.Removed, BlockNodeDataSerializedValue> {
   /**
    * DataNodeRemoved class constructor
-   *
    * @param index - index of the added BlockNode in the document
    * @param data - data serialized value
    * @param userId - user identifier

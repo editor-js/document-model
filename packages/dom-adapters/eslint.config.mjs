@@ -26,9 +26,22 @@ export default [
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
-      'n/no-unsupported-features/node-builtins': ['error', {
-        version: '>=24.0.0',
-        ignores: [],
+      '@typescript-eslint/no-misused-promises': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      'jsdoc/require-jsdoc': 'off',
+      'jsdoc/informative-docs': 'off',
+      'n/no-unsupported-features/node-builtins': 'off',
+      'n/no-unsupported-features/es-syntax': ['error', { version: '>=20.0.0' }],
+    },
+  },
+  {
+    files: ['**/*.spec.ts'],
+    rules: {
+      /**
+       * For test files allow dev dependencies imports
+       */
+      'n/no-unpublished-import': ['error', {
+        allowModules: ['@jest/globals'],
       }],
     },
   },

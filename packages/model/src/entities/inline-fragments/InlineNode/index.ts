@@ -1,6 +1,6 @@
-import type { InlineToolData, InlineToolName } from '../FormattingInlineNode';
-import type { BlockChildType } from '../../BlockNode/types';
-import type { NODE_TYPE_HIDDEN_PROP } from '../../BlockNode/consts';
+import type { InlineToolData, InlineToolName } from '../FormattingInlineNode/index.js';
+import type { BlockChildType } from '../../BlockNode/types/index.js';
+import type { NODE_TYPE_HIDDEN_PROP } from '../../BlockNode/consts.js';
 
 /**
  * Interface describing abstract InlineNode — common properties and methods for all inline nodes
@@ -18,7 +18,6 @@ export interface InlineNode {
 
   /**
    * Returns text value in passed range
-   *
    * @param start - start char index of the range
    * @param end - end char index of the range
    */
@@ -26,12 +25,11 @@ export interface InlineNode {
 
   /**
    * Applies inline formatting on the passed range
-   *
    * @param name - name of Inline Tool to apply
    * @param [start] - start char index of the range
    * @param [end] - end char index of the range
    * @param [data] - Inline Tool data if applicable
-   * @returns {InlineNode[]} - array of nodes after applied formatting
+   * @returns - array of nodes after applied formatting
    */
   format(name: InlineToolName, start?: number, end?: number, data?: InlineToolData): InlineNode[];
 
@@ -39,7 +37,6 @@ export interface InlineNode {
    * Removes inline formatting from the passed range
    *
    * Optional as some nodes don't contain any formatting (e.g. TextInlineNode)
-   *
    * @param name - name of Inline Tool to remove
    * @param start - start char index of the range
    * @param end - end char index of the range
@@ -50,7 +47,6 @@ export interface InlineNode {
    * Returns inline fragments for subtree including current node from the specified range
    *
    * Optional as some nodes don't contain any formatting (e.g. TextInlineNode)
-   *
    * @param [start] - start char index of the range, by default 0
    * @param [end] - end char index of the range, by default length of the text value
    */
@@ -58,7 +54,6 @@ export interface InlineNode {
 
   /**
    * Inserts text at passed char index
-   *
    * @param text - text to insert
    * @param [index] - char index where to insert text
    */
@@ -66,31 +61,27 @@ export interface InlineNode {
 
   /**
    * Removes text from the passed range
-   *
    * @param [start] - start char index of the range
    * @param [end] - end char index of the range
-   * @returns {string} removed text
+   * @returns removed text
    */
   removeText(start?: number, end?: number): string;
 
   /**
    * Splits current node at the passed index
-   *
    * @param index - char index where to split the node
-   * @returns {InlineNode | null} new node if split successful, null if nothing to split
+   * @returns new node if split successful, null if nothing to split
    */
   split(index?: number): InlineNode | null;
 
   /**
    * Merges current node with passed
-   *
    * @param node - node to merge
    */
   mergeWith(node: InlineNode): void;
 
   /**
    * Check if current node is equal to passed
-   *
    * @param node - node to check
    */
   isEqual(node: InlineNode): boolean;

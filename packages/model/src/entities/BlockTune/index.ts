@@ -1,6 +1,6 @@
 import { getContext } from '../../utils/Context.js';
 import { IndexBuilder } from '../Index/IndexBuilder.js';
-import type { BlockTuneConstructorParameters, BlockTuneSerialized, BlockTuneName } from './types';
+import type { BlockTuneConstructorParameters, BlockTuneSerialized, BlockTuneName } from './types/index.js';
 import { createBlockTuneName } from './types/index.js';
 import { EventBus } from '../../EventBus/EventBus.js';
 import { TuneModifiedEvent } from '../../EventBus/events/index.js';
@@ -22,7 +22,6 @@ export class BlockTune extends EventBus {
 
   /**
    * Constructor for BlockTune class.
-   *
    * @param args - BlockTune constructor arguments.
    * @param args.name - The name of the tune.
    * @param args.data - Any additional data associated with the tune.
@@ -36,7 +35,6 @@ export class BlockTune extends EventBus {
 
   /**
    * Updates data associated with the tune.
-   *
    * @param key - The key of the data to update
    * @param value - The value to update the data with
    */

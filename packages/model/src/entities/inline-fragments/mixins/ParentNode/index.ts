@@ -1,5 +1,5 @@
-import type { ChildNode } from '../ChildNode';
-import type { InlineNode } from '../../InlineNode';
+import type { ChildNode } from '../ChildNode/index.js';
+import type { InlineNode } from '../../InlineNode/index.js';
 
 /**
  * Abstract parent node interface
@@ -12,25 +12,22 @@ export interface ParentNode extends InlineNode {
 
   /**
    * Appends passed children to this node
-   *
    * @param children - array of children to append
    */
   append(...children: ChildNode[]): void;
 
   /**
    * Removes a child from the parent
-   *
    * @param child - child to remove
    */
   removeChild(child: ChildNode): void;
 
   /**
    * Inserts new children after specified target
-   *
    * @param target - target after which to insert new children
    * @param children - children nodes to insert
    */
-  insertAfter(target: ChildNode, ...children: ChildNode[]): void
+  insertAfter(target: ChildNode, ...children: ChildNode[]): void;
 
   /**
    * Normalizes node's children
@@ -44,7 +41,6 @@ export interface ParentNodeConstructorOptions {
 
 /**
  * ParentNode decorator to mixin ParentNode's methods
- *
  * @param constructor - class to decorate
  * @example
  *
@@ -63,7 +59,7 @@ export function ParentNode<C extends { new(...args: any[]): InlineNode }>(constr
 
     /**
      * @param args — constructor arguments
-     * @param {ChildNode[]} [args.children] - optional node's children
+     * @param [args.children] - optional node's children
      */
     // Stryker disable next-line BlockStatement -- Styker's bug, see https://github.com/stryker-mutator/stryker-js/issues/2474
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- any type here is a TS requirement for mixin classes
@@ -91,14 +87,13 @@ export function ParentNode<C extends { new(...args: any[]): InlineNode }>(constr
 
     /**
      * Appends passed children to this node
-     *
      * @param children - array of children to append
      */
     public append(...children: ChildNode[]): void {
       /**
        * If node is already a child of current node, remove it to append at the end
        */
-      children.forEach(child => {
+      children.forEach((child) => {
         const index = this.children.indexOf(child);
 
         if (index === -1) {
@@ -115,7 +110,6 @@ export function ParentNode<C extends { new(...args: any[]): InlineNode }>(constr
 
     /**
      * Removes a child from the parent
-     *
      * @param child - child to remove
      */
     public removeChild(child: ChildNode): void {
@@ -132,7 +126,6 @@ export function ParentNode<C extends { new(...args: any[]): InlineNode }>(constr
 
     /**
      * Inserts new children after specified target
-     *
      * @param target - target after which to insert new children
      * @param children - children nodes to insert
      */
@@ -150,7 +143,7 @@ export function ParentNode<C extends { new(...args: any[]): InlineNode }>(constr
       /**
        * Remove all appended children from the children array to insert if on the next step
        */
-      children.forEach(child => {
+      children.forEach((child) => {
         const index = this.children.indexOf(child);
 
         this.children.splice(index, 1);
@@ -161,7 +154,6 @@ export function ParentNode<C extends { new(...args: any[]): InlineNode }>(constr
        */
       this.children.splice(targetIndex + 1, 0, ...children);
     }
-
 
     /**
      * Normalizes node's subtree
@@ -183,7 +175,7 @@ export function ParentNode<C extends { new(...args: any[]): InlineNode }>(constr
         return child;
       });
 
-      children.forEach(child => {
+      children.forEach((child) => {
         if (child.length === 0) {
           child.remove();
         }

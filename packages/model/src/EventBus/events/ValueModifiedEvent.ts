@@ -9,7 +9,6 @@ import { BaseDocumentEvent } from './BaseEvent.js';
 export class ValueModifiedEvent<V = unknown> extends BaseDocumentEvent<EventAction.Modified, ModifiedEventData<V>> {
   /**
    * ValueModifiedEvent class constructor
-   *
    * @param index - index of the modified value in the document
    * @param data - event data with new and previous values
    * @param userId - user identifier

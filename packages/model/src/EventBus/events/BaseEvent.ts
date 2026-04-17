@@ -41,7 +41,6 @@ export interface ModifiedEventData<T = unknown> {
 export class BaseDocumentEvent<Action extends EventAction, Data = unknown> extends CustomEvent<EventPayloadBase<Action, Data>> {
   /**
    * BaseDocumentEvent class constructor
-   *
    * @param index - index of the modified value in the document
    * @param action - event action
    * @param data - event data

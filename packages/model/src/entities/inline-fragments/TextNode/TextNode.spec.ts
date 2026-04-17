@@ -1,5 +1,5 @@
-import type { InlineToolName } from '../FormattingInlineNode';
-import type { InlineFragment } from '../InlineNode';
+import type { InlineToolName } from '../FormattingInlineNode/index.js';
+import type { InlineFragment } from '../InlineNode/index.js';
 import { TextNode } from './index.js';
 import { ParentInlineNode } from '../ParentInlineNode/index.js';
 
@@ -68,7 +68,7 @@ describe('TextNode', () => {
 
       const result = node.getFragments(testRangeStart, testRangeEnd, 'bold' as InlineToolName);
 
-      expect(result).toEqual([ fragments[0] ]);
+      expect(result).toEqual([fragments[0]]);
     });
   });
 });

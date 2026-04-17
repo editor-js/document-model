@@ -3,7 +3,6 @@ const ContextStack: any[] = [];
 
 /**
  * Puts context value to the context stack so function is able to retrieve it
- *
  * @param context - context value
  * @param fn - function to call
  */
@@ -24,10 +23,8 @@ export function getContext<C = unknown>(): C | undefined {
   return ContextStack[ContextStack.length - 1];
 }
 
-
 /**
  * Decorator to run a class method inside a context
- *
  * @param _target - target class
  * @param _propertyKey - method name
  * @param descriptor - method descriptor

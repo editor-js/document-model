@@ -1,4 +1,4 @@
-import type { Nominal } from '../../../utils/Nominal';
+import type { Nominal } from '../../../utils/Nominal.js';
 import { create } from '../../../utils/Nominal.js';
 
 /**

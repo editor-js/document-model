@@ -1,7 +1,8 @@
 import { ChildNode } from '../../mixins/ChildNode/index.js';
-import type { InlineNode } from '../../InlineNode';
-import type { TextInlineNodeConstructorParameters } from '../types';
+import type { InlineNode } from '../../InlineNode/index.js';
+import type { TextInlineNodeConstructorParameters } from '../types/index.js';
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TextInlineNode extends ChildNode {}
 
 /**
@@ -14,7 +15,6 @@ export class TextInlineNode implements InlineNode {
 
   /**
    * Mock constructor
-   *
    * @param args - constructor params
    * @param [args.value] - TextNode value
    */
@@ -38,7 +38,6 @@ export class TextInlineNode implements InlineNode {
 
   /**
    * Mock method
-   *
    * @param text - text to insert
    */
   public insertText(text: string): void {
@@ -68,7 +67,6 @@ export class TextInlineNode implements InlineNode {
 
   /**
    * Mock method
-   *
    * @param index - index where to split the node
    */
   public split(index: number): InlineNode | null {

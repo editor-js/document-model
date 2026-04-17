@@ -1,10 +1,10 @@
-import type { InlineNode } from '../../../InlineNode';
-import type { ParentNode } from '../../ParentNode';
+import type { InlineNode } from '../../../InlineNode/index.js';
+import type { ParentNode } from '../../ParentNode/index.js';
 
 /**
  * Mock for ChildNode decorator
  */
-export function ChildNode(constructor: { new(): InlineNode }): { new(): InlineNode }  {
+export function ChildNode(constructor: { new(): InlineNode }): { new(): InlineNode } {
   return class extends constructor {
     /**
      * Parent mock
@@ -18,7 +18,6 @@ export function ChildNode(constructor: { new(): InlineNode }): { new(): InlineNo
 
     /**
      * Mock method
-     *
      * @param parent - parent to append the node to
      */
     public appendTo(parent: ParentNode): void {

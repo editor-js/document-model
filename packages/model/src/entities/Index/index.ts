@@ -48,7 +48,6 @@ export class Index {
 
   /**
    * Parse serialized index
-   *
    * @param serialized - serialized index
    */
   public static parse(serialized: string): Index {
@@ -191,7 +190,7 @@ export class Index {
       this.textRange ? JSON.stringify(this.textRange) : undefined,
     ] as const;
 
-    return JSON.stringify(arrayIndex.filter((value) => value !== undefined).join(':'));
+    return JSON.stringify(arrayIndex.filter(value => value !== undefined).join(':'));
   }
 
   /**

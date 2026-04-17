@@ -11,5 +11,5 @@ export enum FormattingAction {
   /**
    * Delete formatting for selection
    */
-  Unformat = 'unformat',
+  Unformat = 'unformat'
 }

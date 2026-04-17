@@ -19,7 +19,6 @@ export class CaretManager extends EventBus {
 
   /**
    * Returns Caret instance by userId
-   *
    * @param userId - identifier of a user who created the caret
    */
   public getCaret(userId: string | number): Caret | undefined {
@@ -28,17 +27,16 @@ export class CaretManager extends EventBus {
 
   /**
    * Creates a new Caret instance
-   *
    * @param userId - user identifier
    * @param [index] - initial caret index
-   * @returns {Caret} created Caret instance
+   * @returns created Caret instance
    */
   public createCaret(userId: string | number, index?: Index): Caret {
     const caret = new Caret(userId, index);
 
     this.#registry.set(caret.userId, caret);
 
-    caret.addEventListener(CaretEvent.Updated, (event) => this.updateCaret(event.detail));
+    caret.addEventListener(CaretEvent.Updated, event => this.updateCaret(event.detail));
 
     this.dispatchEvent(new CaretManagerCaretAddedEvent(caret.toJSON()));
 
@@ -47,7 +45,6 @@ export class CaretManager extends EventBus {
 
   /**
    * Updates caret instance in the registry
-   *
    * @param caret - Caret instance to update
    */
   public updateCaret(caret: Caret): void {
@@ -58,7 +55,6 @@ export class CaretManager extends EventBus {
 
   /**
    * Removes caret from the registry
-   *
    * @param caret - Caret instance to remove
    */
   public removeCaret(caret: Caret): void {

@@ -1,6 +1,5 @@
 /**
  * Finds the child node and offset by the given absolute offset
- *
  * @param root - root node
  * @param initialOffset - absolute offset
  */

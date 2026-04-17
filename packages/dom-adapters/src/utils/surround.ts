@@ -3,7 +3,6 @@ import { getBoundaryPointByAbsoluteOffset } from './getRelativeIndex.js';
 
 /**
  * Function, that surrounds passed range with passed html element
- *
  * @param wrapper - element to surround the range
  * @param inputElement - element, where the range is located
  * @param textRange - range to be surrounded

@@ -3,6 +3,7 @@ import { ChildNode } from '../mixins/ChildNode/index.js';
 
 jest.mock('../mixins/ChildNode');
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface Dummy extends ParentNode {
 }
 
@@ -19,6 +20,7 @@ class Dummy {
   constructor(_options?: unknown) {}
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface ChildDummy extends ChildNode {}
 
 /**
@@ -50,14 +52,13 @@ describe('ParentNode mixin', () => {
     expect(dummy.insertAfter).toBeInstanceOf(Function);
   });
 
-
   describe('constructor', () => {
     it('should append passed children to new parent', () => {
       const childMock = new ChildDummy();
       const spy = jest.spyOn(childMock, 'appendTo');
 
       dummy = new Dummy({
-        children: [ childMock ],
+        children: [childMock],
       });
 
       expect(spy).toBeCalledWith(dummy);
@@ -85,7 +86,7 @@ describe('ParentNode mixin', () => {
       const spy = jest.spyOn(childMock, 'appendTo');
 
       dummy = new Dummy({
-        children: [ childMock ],
+        children: [childMock],
       });
 
       expect(spy).toBeCalledWith(dummy);
@@ -166,7 +167,7 @@ describe('ParentNode mixin', () => {
 
       dummy.insertAfter(childMock, childMockToInsert, anotherChildMockToInsert);
 
-      spies.forEach(spy => {
+      spies.forEach((spy) => {
         expect(spy).toBeCalledWith(dummy);
       });
     });
@@ -202,7 +203,7 @@ describe('ParentNode mixin', () => {
       const childMock = new ChildDummy();
 
       dummy = new Dummy({
-        children: [ childMock ],
+        children: [childMock],
       });
 
       dummy.removeChild(childMock);
@@ -215,7 +216,7 @@ describe('ParentNode mixin', () => {
       const spy = jest.spyOn(childMock, 'remove');
 
       dummy = new Dummy({
-        children: [ childMock ],
+        children: [childMock],
       });
 
       dummy.removeChild(childMock);

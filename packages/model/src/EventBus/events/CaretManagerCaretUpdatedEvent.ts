@@ -7,7 +7,6 @@ import type { CaretSerialized } from '../../CaretManagement/index.js';
 export class CaretManagerCaretUpdatedEvent extends CustomEvent<CaretSerialized> {
   /**
    * CaretManagerCaretUpdatedEvent class constructor
-   *
    * @param payload - event payload
    */
   constructor(payload: CaretSerialized) {

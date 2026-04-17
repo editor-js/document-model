@@ -1,10 +1,10 @@
 import { getContext } from '../../../utils/Context.js';
 import { IndexBuilder } from '../../Index/IndexBuilder.js';
-import type { InlineFragment, InlineNode, InlineTreeNodeSerialized } from '../InlineNode';
-import type { ParentNodeConstructorOptions } from '../mixins/ParentNode';
+import type { InlineFragment, InlineNode, InlineTreeNodeSerialized } from '../InlineNode/index.js';
+import type { ParentNodeConstructorOptions } from '../mixins/ParentNode/index.js';
 import { ParentNode } from '../mixins/ParentNode/index.js';
-import type { ChildNode } from '../mixins/ChildNode';
-import type { InlineToolData, InlineToolName } from '../FormattingInlineNode';
+import type { ChildNode } from '../mixins/ChildNode/index.js';
+import type { InlineToolData, InlineToolName } from '../FormattingInlineNode/index.js';
 import { TextInlineNode } from '../index.js';
 import { EventBus } from '../../../EventBus/EventBus.js';
 import {
@@ -17,9 +17,11 @@ import {
 /**
  * We need to extend ParentInlineNode interface with ParentNode ones to use the methods from mixins
  */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ParentInlineNode extends ParentNode {
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ParentInlineNodeConstructorOptions extends ParentNodeConstructorOptions {
 }
 
@@ -30,7 +32,6 @@ export interface ParentInlineNodeConstructorOptions extends ParentNodeConstructo
 export class ParentInlineNode extends EventBus implements InlineNode {
   /**
    * Empty constructor to support types
-   *
    * @param options - constructor options to support types
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars,@typescript-eslint/no-empty-function,no-unused-vars
@@ -50,7 +51,6 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
   /**
    * Inserts text to the specified index, by default appends text to the end of the current value
-   *
    * @param text - text to insert
    * @param [index] - char index where to insert text
    */
@@ -78,10 +78,9 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
   /**
    * Removes text form the specified range
-   *
    * @param [start] - start char index of the range, by default 0
    * @param [end] - end char index of the range, by default length of the text value
-   * @returns {string} removed text
+   * @returns removed text
    */
   public removeText(start = 0, end = this.length): string {
     this.validateRange(start, end);
@@ -108,7 +107,6 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
   /**
    * Returns text from the specified range
-   *
    * @param [start] - start char index of the range, by default 0
    * @param [end] - end char index of the range, by default length of the text value
    */
@@ -127,7 +125,6 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
   /**
    * Returns inline fragments for subtree including current node from the specified range
-   *
    * @param [start] - start char index of the range, by default 0
    * @param [end] - end char index of the range, by default length of the text value
    */
@@ -177,7 +174,6 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
   /**
    * Applies formatting to the text with specified inline tool in the specified range
-   *
    * @param tool - name of inline tool to apply
    * @param start - char start index of the range
    * @param end - char end index of the range
@@ -220,7 +216,6 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
   /**
    * Removes formatting from the text for a specified inline tool in the specified range
-   *
    * @param tool - name of inline tool to remove
    * @param start - char start index of the range
    * @param end - char end index of the range
@@ -260,7 +255,6 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
   /**
    * Checks if node is equal to passed node
-   *
    * @param node - node to check
    */
   public isEqual(node: InlineNode): boolean {
@@ -269,9 +263,7 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
   /**
    * Returns child by passed text index
-   *
    * @param index - char index
-   * @private
    */
   protected findChildByIndex(index: number): [ child: InlineNode & ChildNode, offset: number ] {
     let totalLength = 0;
@@ -284,7 +276,6 @@ export class ParentInlineNode extends EventBus implements InlineNode {
       totalLength += child.length;
     }
 
-
     /**
      * This is unreachable code in normal operation, but we need it to have consistent types
      */
@@ -295,12 +286,10 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
   /**
    * Iterates through children in range and calls callback for each
-   *
    * @param start - range start char index
    * @param end - range end char index
    * @param callback - callback to apply on children
    * @param initialValue - initial accumulator value
-   * @private
    */
   #reduceChildrenInRange<Acc>(
     start: number,
@@ -337,7 +326,6 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
   /**
    * Validates if range has valid start and end points
-   *
    * @param start - range start
    * @param end - range end
    * @throws Error if range is invalid
@@ -351,10 +339,8 @@ export class ParentInlineNode extends EventBus implements InlineNode {
     }
   }
 
-
   /**
    * Validates index
-   *
    * @param index - char index to validate
    * @throws Error if index is out of the text length
    */

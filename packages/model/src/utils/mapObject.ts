@@ -1,6 +1,5 @@
 /**
  * Helper to map through object properties
- *
  * @param obj - object to map through
  * @param fn - map function
  */

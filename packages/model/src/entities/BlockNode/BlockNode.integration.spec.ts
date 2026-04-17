@@ -210,7 +210,7 @@ describe('BlockNode integration tests', () => {
       );
 
       expect(result)
-        .toEqual([ fragments[1] ]);
+        .toEqual([fragments[1]]);
     });
   });
 
@@ -231,7 +231,7 @@ describe('BlockNode integration tests', () => {
       // Assert
       expect(data).toHaveProperty('key');
 
-      const valueNode = (data as {key: ValueNode}).key;
+      const valueNode = (data as { key: ValueNode }).key;
 
       expect(valueNode).toBeInstanceOf(ValueNode);
       expect(valueNode.serialized)

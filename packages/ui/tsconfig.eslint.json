@@ -7,16 +7,10 @@
     "src/**/*",
     "eslint.config.mjs",
     "**/*.spec.ts",
-    "vite.config.ts",
-    "src/**/*.vue"
+    "jest.config.ts",
   ],
   "exclude": [
     "dist/**/*",
     "node_modules/**/*",
-  ],
-  "references": [
-    {
-      "path": "../ui/tsconfig.json"
-    }
   ]
 }

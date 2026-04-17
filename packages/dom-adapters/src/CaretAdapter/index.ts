@@ -58,7 +58,6 @@ export class CaretAdapter extends EventTarget {
   #config: Required<CoreConfig>;
 
   /**
-   * @class
    * @param config - Editor's config
    * @param container - Editor.js DOM container
    * @param model - Editor.js model
@@ -77,9 +76,9 @@ export class CaretAdapter extends EventTarget {
     /**
      * @todo Unsubscribe on adapter destruction
      */
-    on(container, (selection) => this.#onSelectionChange(selection), this);
+    on(container, selection => this.#onSelectionChange(selection), this);
 
-    this.#model.addEventListener(EventType.CaretManagerUpdated, (event) => this.#onModelCaretUpdate(event));
+    this.#model.addEventListener(EventType.CaretManagerUpdated, event => this.#onModelCaretUpdate(event));
     this.#model.addEventListener(EventType.Changed, (event: ModelEvents) => this.#handleModelUpdate(event));
   }
 
@@ -92,7 +91,6 @@ export class CaretAdapter extends EventTarget {
 
   /**
    * Adds block to the caret adapter
-   *
    * @param block - block tool adapter
    */
   public attachBlock(block: BlockToolAdapter): void {
@@ -101,7 +99,6 @@ export class CaretAdapter extends EventTarget {
 
   /**
    * Removes block from the caret adapter
-   *
    * @param index - index of the block to remove
    */
   public detachBlock(index: Index): void {
@@ -120,7 +117,6 @@ export class CaretAdapter extends EventTarget {
 
   /**
    * Updates current user's caret index
-   *
    * @param index - new caret index
    * @param [userId] - user identifier
    */
@@ -130,7 +126,6 @@ export class CaretAdapter extends EventTarget {
 
       return;
     }
-
 
     const caretToUpdate = this.#userCarets.get(userId);
 
@@ -143,7 +138,6 @@ export class CaretAdapter extends EventTarget {
 
   /**
    * Finds block by index
-   *
    * @param index - index of the block in the model tree
    */
   public getBlock(index?: Index): BlockToolAdapter | undefined {
@@ -165,7 +159,6 @@ export class CaretAdapter extends EventTarget {
 
   /**
    * Finds input by block index and data key
-   *
    * @param blockIndex - index of the block
    * @param dataKeyRaw - data key of the input
    * @returns input element or undefined if not found
@@ -187,7 +180,6 @@ export class CaretAdapter extends EventTarget {
 
   /**
    * Restores a multi-block selection from a composite caret index (cross-input selection).
-   *
    * @param index - composite index with {@link Index.compositeSegments}
    */
   #restoreDomSelectionFromCompositeIndex(index: Index): void {
@@ -201,12 +193,12 @@ export class CaretAdapter extends EventTarget {
     const last = segments[segments.length - 1];
 
     if (
-      first.textRange === undefined ||
-      first.dataKey === undefined ||
-      first.blockIndex === undefined ||
-      last.textRange === undefined ||
-      last.dataKey === undefined ||
-      last.blockIndex === undefined
+      first.textRange === undefined
+      || first.dataKey === undefined
+      || first.blockIndex === undefined
+      || last.textRange === undefined
+      || last.dataKey === undefined
+      || last.blockIndex === undefined
     ) {
       return;
     }
@@ -238,10 +230,10 @@ export class CaretAdapter extends EventTarget {
       const current = selection.getRangeAt(0);
 
       if (
-        current.startContainer === startBoundary[0] &&
-        current.startOffset === startBoundary[1] &&
-        current.endContainer === endBoundary[0] &&
-        current.endOffset === endBoundary[1]
+        current.startContainer === startBoundary[0]
+        && current.startOffset === startBoundary[1]
+        && current.endContainer === endBoundary[0]
+        && current.endOffset === endBoundary[1]
       ) {
         return;
       }
@@ -258,7 +250,6 @@ export class CaretAdapter extends EventTarget {
 
   /**
    * Selection change handler
-   *
    * @param selection - new document selection
    */
   #onSelectionChange(selection: Selection | null): void {
@@ -269,6 +260,16 @@ export class CaretAdapter extends EventTarget {
     }
 
     const selectionRange = selection.getRangeAt(0);
+
+    /**
+     * Single pass over contenteditable attached inputs only (native inputs are ignored). Order:
+     * 1. Input that has focus and fully contains the selection range.
+     * 2. Otherwise the first input that fully contains the range (nested CE: activeElement may be
+     *    the outer blocks surface while the range lies inside the block input).
+     */
+    let contentEditableFallback: { block: BlockToolAdapter;
+      key: DataKey;
+      input: HTMLElement; } | null = null;
     const segments: Index[] = [];
 
     for (const block of this.#blocks) {
@@ -277,6 +278,9 @@ export class CaretAdapter extends EventTarget {
           continue;
         }
 
+        const rangeInsideInput
+          = input.contains(selectionRange.startContainer)
+            && input.contains(selectionRange.endContainer);
         const textRange = getClippedTextRangeForInput(selectionRange, input);
 
         if (textRange === null) {
@@ -322,7 +326,6 @@ export class CaretAdapter extends EventTarget {
    * block and the last segment is the end anchor block. Within one block, inputs are ordered by
    * document order via {@link Node.compareDocumentPosition} (not by data key — registration order can
    * differ from layout).
-   *
    * @param segments - mutable list of per-input segments (sorted in place)
    */
   #sortCompositeSegmentsInDocumentOrder(segments: Index[]): void {
@@ -335,10 +338,10 @@ export class CaretAdapter extends EventTarget {
       }
 
       const blockIndex = blockA ?? 0;
-      const inputA =
-        a.dataKey !== undefined ? this.findInput(blockIndex, String(a.dataKey)) : undefined;
-      const inputB =
-        b.dataKey !== undefined ? this.findInput(blockIndex, String(b.dataKey)) : undefined;
+      const inputA
+        = a.dataKey !== undefined ? this.findInput(blockIndex, String(a.dataKey)) : undefined;
+      const inputB
+        = b.dataKey !== undefined ? this.findInput(blockIndex, String(b.dataKey)) : undefined;
 
       if (inputA !== undefined && inputB !== undefined && inputA !== inputB) {
         const position = inputA.compareDocumentPosition(inputB);
@@ -377,7 +380,6 @@ export class CaretAdapter extends EventTarget {
    *
    * - Finds input to set selection to by serialized index
    * - If current user's selection is different, set the one from the update
-   *
    * @param event - model update event
    */
   #onModelCaretUpdate(event: CaretManagerEvents): void {
@@ -419,8 +421,8 @@ export class CaretAdapter extends EventTarget {
     }
 
     if (isNativeInput(input) === true) {
-      const currentStart = (input as HTMLInputElement | HTMLTextAreaElement).selectionStart;
-      const currentEnd = (input as HTMLInputElement | HTMLTextAreaElement).selectionEnd;
+      const currentStart = (input).selectionStart;
+      const currentEnd = (input).selectionEnd;
 
       /**
        * If selection is already the same, we don't need to update it to not interrupt browser's behaviour
@@ -429,8 +431,8 @@ export class CaretAdapter extends EventTarget {
         return;
       }
 
-      (input as HTMLInputElement | HTMLTextAreaElement).selectionStart = textRange[0];
-      (input as HTMLInputElement | HTMLTextAreaElement).selectionEnd = textRange[1];
+      (input).selectionStart = textRange[0];
+      (input).selectionEnd = textRange[1];
 
       return;
     }
@@ -446,7 +448,7 @@ export class CaretAdapter extends EventTarget {
     /**
      * If selection is outside of the input, it is different from the model range
      */
-    if (input.contains(selection.anchorNode!) && input.contains(selection.focusNode!)) {
+    if (input.contains(selection.anchorNode) && input.contains(selection.focusNode)) {
       let absoluteStartOffset = getAbsoluteRangeOffset(input, selection.anchorNode!, selection.anchorOffset);
       let absoluteEndOffset = getAbsoluteRangeOffset(input, selection.focusNode!, selection.focusOffset);
 
@@ -479,7 +481,6 @@ export class CaretAdapter extends EventTarget {
 
   /**
    * Handles model update events
-   *
    * @param event - model update event
    */
   #handleModelUpdate(event: ModelEvents): void {
