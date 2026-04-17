@@ -261,15 +261,6 @@ export class CaretAdapter extends EventTarget {
 
     const selectionRange = selection.getRangeAt(0);
 
-    /**
-     * Single pass over contenteditable attached inputs only (native inputs are ignored). Order:
-     * 1. Input that has focus and fully contains the selection range.
-     * 2. Otherwise the first input that fully contains the range (nested CE: activeElement may be
-     *    the outer blocks surface while the range lies inside the block input).
-     */
-    let contentEditableFallback: { block: BlockToolAdapter;
-      key: DataKey;
-      input: HTMLElement; } | null = null;
     const segments: Index[] = [];
 
     for (const block of this.#blocks) {
@@ -278,9 +269,6 @@ export class CaretAdapter extends EventTarget {
           continue;
         }
 
-        const rangeInsideInput
-          = input.contains(selectionRange.startContainer)
-            && input.contains(selectionRange.endContainer);
         const textRange = getClippedTextRangeForInput(selectionRange, input);
 
         if (textRange === null) {
