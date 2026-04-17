@@ -2,6 +2,7 @@ import { EventAction } from '../../EventBus/index.js';
 import { Index } from '../Index/index.js';
 import { IndexBuilder } from '../Index/IndexBuilder.js';
 import { BlockNode, createBlockToolName, createDataKey } from './index.js';
+import { NonExistingKeyError } from './errors/NonExistingKeyError.js';
 
 import type { BlockTuneName, BlockTuneSerialized } from '../BlockTune';
 import { BlockTune } from '../BlockTune/index.js';
@@ -11,7 +12,7 @@ import type { EditorDocument } from '../EditorDocument';
 import type { ValueNodeConstructorParameters } from '../ValueNode';
 import type { InlineFragment, InlineToolData, InlineToolName } from '../inline-fragments';
 import { TextNode } from '../inline-fragments/index.js';
-import type { BlockNodeData, BlockNodeDataSerialized, DataKey } from './types';
+import type { BlockNodeData, BlockNodeDataSerialized } from './types';
 import { BlockChildType } from './types/index.js';
 import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
 import { TextAddedEvent, TuneModifiedEvent, ValueModifiedEvent } from '../../EventBus/events/index.js';
@@ -33,6 +34,14 @@ const createBlockNodeWithData = (data: BlockNodeDataSerialized, tunes: Record<st
 };
 
 describe('BlockNode', () => {
+  describe('NonExistingKeyError', () => {
+    it('should format message with key', () => {
+      const key = createDataKey('k');
+
+      expect(new NonExistingKeyError(key).message).toBe(`BlockNode: data with key "${key}" does not exist`);
+    });
+  });
+
   describe('constructor', () => {
     let node: BlockNode;
 
@@ -732,9 +741,10 @@ describe('BlockNode', () => {
 
     it('should throw an error if data key is invalid', () => {
       const node = createBlockNodeWithData({});
+      const key = createDataKey('invalid-key');
 
-      expect(() => node.getText('invalid-key' as DataKey))
-        .toThrow();
+      expect(() => node.getText(key))
+        .toThrow(`BlockNode: data with key "${key}" does not exist`);
     });
   });
 
@@ -974,7 +984,7 @@ describe('BlockNode', () => {
       });
 
       expect(() => node.removeText(key))
-        .toThrow();
+        .toThrow(`BlockNode: data with key "${key}" does not exist`);
     });
 
     it('should throw an error if node is not a TextNode', () => {
@@ -1096,7 +1106,7 @@ describe('BlockNode', () => {
       });
 
       expect(() => node.format(key, tool, start, end))
-        .toThrow();
+        .toThrow(`BlockNode: data with key "${key}" does not exist`);
     });
 
     it('should throw an error if node is not a TextNode', () => {
@@ -1201,7 +1211,7 @@ describe('BlockNode', () => {
       });
 
       expect(() => node.unformat(key, tool, start, end))
-        .toThrow();
+        .toThrow(`BlockNode: data with key "${key}" does not exist`);
     });
 
     it('should throw an error if node is not a TextNode', () => {

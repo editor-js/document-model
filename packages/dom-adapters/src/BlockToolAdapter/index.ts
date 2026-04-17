@@ -31,6 +31,11 @@ import {
   findPreviousWordBoundary,
   getAbsoluteRangeOffset,
   getBoundaryPointByAbsoluteOffset,
+  getClippedTextRangeForInput,
+  isInputContainsOnlyEndOfSelection,
+  isInputContainsOnlyStartOfSelection,
+  isInputContainsWholeSelection,
+  isInputInBetweenSelection,
   isNonTextInput
 } from '../utils/index.js';
 import { InputType } from './types/InputType.js';
@@ -380,6 +385,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    * @param key - data key input is attached to
    * @param range - target range for this input
    * @private
+   * @deprecated
    */
   #handleDeleteInNativeInput(
     payload: BeforeInputUIEventPayload,
@@ -472,48 +478,6 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
   }
 
   /**
-   * True if input contains only the start of the cross-input selection
-   *
-   * @param input - input element
-   * @param range - selection range
-   */
-  #isInputContainsOnlyStartOfSelection(input: HTMLElement, range: StaticRange): boolean {
-    return input.contains(range.startContainer) && !input.contains(range.endContainer);
-  }
-
-  /**
-   * True if input contains only the end of the cross-input selection
-   *
-   * @param input - input element
-   * @param range - selection range
-   */
-  #isInputContainsOnlyEndOfSelection(input: HTMLElement, range: StaticRange): boolean {
-    return input.contains(range.endContainer) && !input.contains(range.startContainer);
-  }
-
-  /**
-   * True if input contains the whole selection (not cross-input)
-   *
-   * @param input - input element
-   * @param range - selection range
-   */
-  #isInputContainsWholeSelection(input: HTMLElement, range: StaticRange): boolean {
-    return input.contains(range.startContainer) && input.contains(range.endContainer);
-  }
-
-  /**
-   * True if input is in between cross-input selection
-   *
-   * @param input - input element
-   * @param range - selection range
-   */
-  #isInputInBetweenSelection(input: HTMLElement, range: StaticRange): boolean {
-    return !this.#isInputContainsWholeSelection(input, range) &&
-           !this.#isInputContainsOnlyStartOfSelection(input, range) &&
-           !this.#isInputContainsOnlyEndOfSelection(input, range);
-  }
-
-  /**
    * Handles delete events in contenteditable element
    *
    * @param input - input element
@@ -529,49 +493,46 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     range: StaticRange,
     isRestoreCaretToTheEnd: boolean = false
   ): void {
-    let start: number;
-    let end: number;
-    let newCaretIndex: number | null = null;
+    /**
+     * Middle block in a cross-input selection: remove the whole block, not the same as removeText(0, length).
+     */
+    if (isInputInBetweenSelection(input, range)) {
+      this.#model.removeBlock(this.#config.userId, this.#blockIndex);
+
+      return;
+    }
 
     /**
-     * If range is fully contained within this input
+     * `beforeinput` exposes `StaticRange`; {@link getClippedTextRangeForInput} expects a `Range`
+     * so we can call `intersectsNode` and reuse the same clipping logic as the selection pipeline.
      */
-    if (this.#isInputContainsWholeSelection(input, range)) {
-      start = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
-      end = getAbsoluteRangeOffset(input, range.endContainer, range.endOffset);
+    const docRange = document.createRange();
 
-      this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, end);
-    } else if (this.#isInputContainsOnlyStartOfSelection(input, range)) {
-      /**
-       * If only start is in this input, delete from start to end of input
-       */
-      start = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
-      end = input.textContent?.length ?? 0;
+    docRange.setStart(range.startContainer, range.startOffset);
+    docRange.setEnd(range.endContainer, range.endOffset);
 
-      this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, end);
+    const clipped = getClippedTextRangeForInput(docRange, input);
 
-      if (!isRestoreCaretToTheEnd) {
-        newCaretIndex = start;
-      }
-    } else if (this.#isInputContainsOnlyEndOfSelection(input, range)) {
-      /**
-       * If only end is in this input, delete from start of input to end
-       */
-      start = 0;
-      end = getAbsoluteRangeOffset(input, range.endContainer, range.endOffset);
+    /**
+     * No overlap between the selection range and this `input`,
+     * so there is no text span to delete here. Unusual in this
+     * path: delete is usually for the field that owns the selection. Possible if `beforeinput` is
+     * tied to one block while the range only touches another (focus / event target mismatch), or a rare
+     * browser edge case.
+     */
+    if (clipped === null) {
+      return;
+    }
 
-      const removedText = this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, end);
+    const [start, end] = clipped;
+    const removedText = this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, end);
 
-      if (isRestoreCaretToTheEnd) {
-        newCaretIndex = end - removedText.length;
-      }
-    } else if (this.#isInputInBetweenSelection(input, range)) {
-      /**
-       * If range spans across this input, delete everything
-       */
-      start = 0;
-      end = getAbsoluteRangeOffset(input, input, input.childNodes.length);
-      this.#model.removeBlock(this.#config.userId, this.#blockIndex);
+    let newCaretIndex: number | null = null;
+
+    if (isInputContainsOnlyStartOfSelection(input, range) && !isRestoreCaretToTheEnd) {
+      newCaretIndex = start;
+    } else if (isInputContainsOnlyEndOfSelection(input, range) && isRestoreCaretToTheEnd) {
+      newCaretIndex = end - removedText.length;
     }
 
     if (newCaretIndex !== null) {
@@ -669,7 +630,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
          * In case of cross-input selection we don't need to split the block, just remove range
          */
         if (
-          (this.#isInputContainsOnlyStartOfSelection(input, range) || this.#isInputContainsWholeSelection(input, range)) &&
+          (isInputContainsOnlyStartOfSelection(input, range) || isInputContainsWholeSelection(input, range)) &&
           payload.isCrossInputSelection === false
         ) {
           start = isInputNative ?
