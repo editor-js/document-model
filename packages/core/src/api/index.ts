@@ -3,7 +3,7 @@ import { Inject, Service } from 'typedi';
 import { EditorAPI as EditorApiInterface } from '@editorjs/sdk';
 import { BlocksAPI } from './BlocksAPI.js';
 import { SelectionAPI } from './SelectionAPI.js';
-import { DocumentAPI } from './DocumentAPI';
+import { DocumentAPI } from './DocumentAPI/index.js';
 
 /**
  * Class gathers all Editor's APIs

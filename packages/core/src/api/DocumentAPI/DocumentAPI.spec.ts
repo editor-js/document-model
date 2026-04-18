@@ -12,10 +12,10 @@ jest.unstable_mockModule('@editorjs/model', () => {
 });
 
 const { EditorJSModel } = await import('@editorjs/model');
-const { DocumentAPI } = await import('./DocumentAPI');
+const { DocumentAPI } = await import('./DocumentAPI.js');
 
 describe('DocumentAPI', () => {
-  // @ts-expect-error - mock object, dont need to pass any arguments
+  // @ts-expect-error - mock object, don't need to pass any arguments
   const model = new EditorJSModel();
 
   const documentAPI = new DocumentAPI(model);
