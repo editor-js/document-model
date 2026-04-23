@@ -1,5 +1,6 @@
 import type { BlocksAPI } from './BlocksAPI.js';
 import type { SelectionAPI } from './SelectionAPI.js';
+import type { DocumentAPI } from './DocumentAPI.js';
 
 /**
  * Editor API interface
@@ -15,4 +16,9 @@ export interface EditorAPI {
    * Selection API instance to work with selection and inline formatting
    */
   selection: SelectionAPI;
+
+  /**
+   * Document API instance to work with Editor's document
+   */
+  document: DocumentAPI;
 }
