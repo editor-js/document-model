@@ -10,6 +10,9 @@ import { DocumentAPI as DocumentApiInterface } from '@editorjs/sdk';
  */
 @Service()
 export class DocumentAPI implements DocumentApiInterface {
+  /**
+   * Editor document model instance
+   */
   #model: EditorJSModel;
 
   /**
