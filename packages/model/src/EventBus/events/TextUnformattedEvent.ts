@@ -4,8 +4,8 @@ import type { InlineToolData, InlineToolName } from '../../entities/index.js';
 import { BaseDocumentEvent } from './BaseEvent.js';
 
 export interface TextUnformattedEventData {
-  tool: InlineToolName,
-  data?: InlineToolData,
+  tool: InlineToolName;
+  data?: InlineToolData;
 }
 
 /**
@@ -14,7 +14,6 @@ export interface TextUnformattedEventData {
 export class TextUnformattedEvent extends BaseDocumentEvent<EventAction.Modified, TextUnformattedEventData> {
   /**
    * TextFormattedEvent class constructor
-   *
    * @param index - index of formatted fragment in the document
    * @param data - data of the InlineTool that was used to format the fragment. Optional
    * @param userId - user identifier

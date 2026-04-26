@@ -1,4 +1,4 @@
 export enum BlockChildType {
   Value = 'v',
-  Text = 't',
+  Text = 't'
 }

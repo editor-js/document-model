@@ -1,6 +1,5 @@
 /**
  * Creates a singleton factory.
- *
  * @example
  *   const useFoo = createSingleton(() => {
  *      const foo = 'bar';
@@ -9,7 +8,6 @@
  *       foo,
  *     };
  *   });
- *
  * @param factory - factory function that will be called only once
  */
 export function createSingleton<T>(factory: () => T): () => T {

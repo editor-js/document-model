@@ -9,8 +9,8 @@ export default [
      */
     languageOptions: {
       parserOptions: {
-        project: './tsconfig.json',
-        tsconfigRootDir: './',
+        project: './tsconfig.eslint.json',
+        tsconfigRootDir: import.meta.dirname,
         sourceType: 'module',
       },
     },
@@ -20,6 +20,21 @@ export default [
           'eslint-config-codex',
         ],
         ignoreTypeImport: true,
+      }],
+      'n/no-unsupported-features/node-builtins': ['error', {
+        version: '>=24.0.0',
+        ignores: [],
+      }],
+    },
+  },
+  {
+    files: ['**/*.spec.ts', 'jest.config.ts'],
+    rules: {
+      /**
+       * For test files allow dev dependencies imports
+       */
+      'n/no-unpublished-import': ['error', {
+        allowModules: ['@jest/globals'],
       }],
     },
   },

@@ -44,5 +44,5 @@ export enum InputType {
   FormatSetInlineTextDirection = 'formatSetInlineTextDirection',
   FormatBackColor = 'formatBackColor',
   FormatFontColor = 'formatFontColor',
-  FormatFontName = 'formatFontName',
+  FormatFontName = 'formatFontName'
 }

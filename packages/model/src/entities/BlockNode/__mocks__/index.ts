@@ -1,6 +1,6 @@
 import { EventBus } from '../../../EventBus/EventBus.js';
 import { create } from '../../../utils/index.js';
-import type { DataKey } from '../types/index';
+import type { DataKey } from '../types/index.js';
 
 export const createDataKey = create<DataKey>();
 
@@ -14,6 +14,7 @@ export class BlockNode extends EventBus {
   public createDataNode(): void {
     return;
   }
+
   /**
    * Mock method
    */

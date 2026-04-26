@@ -9,7 +9,6 @@ import { BaseDocumentEvent } from './BaseEvent.js';
 export class PropertyModifiedEvent<P = unknown> extends BaseDocumentEvent<EventAction.Modified, ModifiedEventData<P>> {
   /**
    * PropertyModifiedEvent class constructor
-   *
    * @param index - index of the modified property in the document
    * @param data - event data with new and previous values
    * @param userId - user identifier

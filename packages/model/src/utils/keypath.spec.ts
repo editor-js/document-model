@@ -152,7 +152,7 @@ describe('keypath util', () => {
 
     it('should return value from an array', () => {
       const object = {
-        a: [ value ],
+        a: [value],
       };
 
       const result = get(object, 'a.0');
@@ -162,7 +162,7 @@ describe('keypath util', () => {
 
     it('should return value from an object inside an array', () => {
       const object = {
-        a: [ { b: value } ],
+        a: [{ b: value }],
       };
 
       const result = get(object, 'a.0.b');

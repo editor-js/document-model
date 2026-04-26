@@ -9,7 +9,6 @@ import { BaseDocumentEvent } from './BaseEvent.js';
 export class TuneModifiedEvent<T = unknown> extends BaseDocumentEvent<EventAction.Modified, ModifiedEventData<T>> {
   /**
    * TuneModifiedEvent class constructor
-   *
    * @param index - index of the modified tune in the document
    * @param data - event data with new and previous values
    * @param userId - user identifier

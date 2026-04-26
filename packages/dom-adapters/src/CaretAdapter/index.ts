@@ -53,15 +53,14 @@ export class CaretAdapter {
   #config: Required<CoreConfig>;
 
   /**
-   * @class
    * @param config - Editor's config
    * @param model - Editor.js model
    * @param registry - shared inputs registry
    */
   constructor(
     @inject(TOKENS.EditorConfig) config: Required<CoreConfig>,
-      model: EditorJSModel,
-      registry: InputsRegistry
+    model: EditorJSModel,
+    registry: InputsRegistry
   ) {
     this.#config = config;
     this.#model = model;
@@ -74,9 +73,9 @@ export class CaretAdapter {
     /**
      * @todo Unsubscribe on adapter destruction
      */
-    on(this.#container, (selection) => this.#onSelectionChange(selection), this);
+    on(this.#container, selection => this.#onSelectionChange(selection), this);
 
-    this.#model.addEventListener(EventType.CaretManagerUpdated, (event) => this.#onModelCaretUpdate(event));
+    this.#model.addEventListener(EventType.CaretManagerUpdated, event => this.#onModelCaretUpdate(event));
   }
 
   /**
@@ -86,10 +85,8 @@ export class CaretAdapter {
     return this.#currentUserCaret.index;
   }
 
-
   /**
    * Updates current user's caret index
-   *
    * @param index - new caret index
    * @param [userId] - user identifier
    */
@@ -99,7 +96,6 @@ export class CaretAdapter {
 
       return;
     }
-
 
     const caretToUpdate = this.#model.getCaret(userId);
 
@@ -112,7 +108,6 @@ export class CaretAdapter {
 
   /**
    * Finds input by block index and data key
-   *
    * @param blockIndex - index of the block
    * @param dataKeyRaw - data key of the input
    * @returns input element or undefined if not found
@@ -123,7 +118,6 @@ export class CaretAdapter {
 
   /**
    * Restores a multi-block selection from a composite caret index (cross-input selection).
-   *
    * @param index - composite index with {@link Index.compositeSegments}
    */
   #restoreDomSelectionFromCompositeIndex(index: Index): void {
@@ -137,12 +131,12 @@ export class CaretAdapter {
     const last = segments[segments.length - 1];
 
     if (
-      first.textRange === undefined ||
-      first.dataKey === undefined ||
-      first.blockIndex === undefined ||
-      last.textRange === undefined ||
-      last.dataKey === undefined ||
-      last.blockIndex === undefined
+      first.textRange === undefined
+      || first.dataKey === undefined
+      || first.blockIndex === undefined
+      || last.textRange === undefined
+      || last.dataKey === undefined
+      || last.blockIndex === undefined
     ) {
       return;
     }
@@ -167,10 +161,10 @@ export class CaretAdapter {
       const current = selection.getRangeAt(0);
 
       if (
-        current.startContainer === startBoundary[0] &&
-        current.startOffset === startBoundary[1] &&
-        current.endContainer === endBoundary[0] &&
-        current.endOffset === endBoundary[1]
+        current.startContainer === startBoundary[0]
+        && current.startOffset === startBoundary[1]
+        && current.endContainer === endBoundary[0]
+        && current.endOffset === endBoundary[1]
       ) {
         return;
       }
@@ -187,7 +181,6 @@ export class CaretAdapter {
 
   /**
    * Selection change handler
-   *
    * @param selection - new document selection
    */
   #onSelectionChange(selection: Selection | null): void {
@@ -198,6 +191,7 @@ export class CaretAdapter {
     }
 
     const selectionRange = selection.getRangeAt(0);
+
     const segments: Index[] = [];
 
     for (const [blockIndex, dataKeyStr, input] of this.#inputsRegistry.entries()) {
@@ -249,7 +243,6 @@ export class CaretAdapter {
    * block and the last segment is the end anchor block. Within one block, inputs are ordered by
    * document order via {@link Node.compareDocumentPosition} (not by data key — registration order can
    * differ from layout).
-   *
    * @param segments - mutable list of per-input segments (sorted in place)
    */
   #sortCompositeSegmentsInDocumentOrder(segments: Index[]): void {
@@ -262,10 +255,10 @@ export class CaretAdapter {
       }
 
       const blockIndex = blockA ?? 0;
-      const inputA =
-        a.dataKey !== undefined ? this.findInput(blockIndex, String(a.dataKey)) : undefined;
-      const inputB =
-        b.dataKey !== undefined ? this.findInput(blockIndex, String(b.dataKey)) : undefined;
+      const inputA
+        = a.dataKey !== undefined ? this.findInput(blockIndex, String(a.dataKey)) : undefined;
+      const inputB
+        = b.dataKey !== undefined ? this.findInput(blockIndex, String(b.dataKey)) : undefined;
 
       if (inputA !== undefined && inputB !== undefined && inputA !== inputB) {
         const position = inputA.compareDocumentPosition(inputB);
@@ -304,7 +297,6 @@ export class CaretAdapter {
    *
    * - Finds input to set selection to by serialized index
    * - If current user's selection is different, set the one from the update
-   *
    * @param event - model update event
    */
   #onModelCaretUpdate(event: CaretManagerEvents): void {
@@ -340,8 +332,8 @@ export class CaretAdapter {
     }
 
     if (isNativeInput(input) === true) {
-      const currentStart = (input as HTMLInputElement | HTMLTextAreaElement).selectionStart;
-      const currentEnd = (input as HTMLInputElement | HTMLTextAreaElement).selectionEnd;
+      const currentStart = (input).selectionStart;
+      const currentEnd = (input).selectionEnd;
 
       /**
        * If selection is already the same, we don't need to update it to not interrupt browser's behaviour
@@ -350,8 +342,8 @@ export class CaretAdapter {
         return;
       }
 
-      (input as HTMLInputElement | HTMLTextAreaElement).selectionStart = textRange[0];
-      (input as HTMLInputElement | HTMLTextAreaElement).selectionEnd = textRange[1];
+      (input).selectionStart = textRange[0];
+      (input).selectionEnd = textRange[1];
 
       return;
     }
@@ -367,7 +359,7 @@ export class CaretAdapter {
     /**
      * If selection is outside of the input, it is different from the model range
      */
-    if (input.contains(selection.anchorNode!) && input.contains(selection.focusNode!)) {
+    if (input.contains(selection.anchorNode) && input.contains(selection.focusNode)) {
       let absoluteStartOffset = getAbsoluteRangeOffset(input, selection.anchorNode!, selection.anchorOffset);
       let absoluteEndOffset = getAbsoluteRangeOffset(input, selection.focusNode!, selection.focusOffset);
 

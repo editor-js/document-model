@@ -9,8 +9,8 @@ export default [
      */
     languageOptions: {
       parserOptions: {
-        project: './tsconfig.json',
-        tsconfigRootDir: './',
+        project: './tsconfig.eslint.json',
+        tsconfigRootDir: import.meta.dirname,
         sourceType: 'module',
       },
     },
@@ -26,6 +26,10 @@ export default [
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
+      'n/no-unsupported-features/node-builtins': ['error', {
+        version: '>=24.0.0',
+        ignores: [],
+      }],
     },
   },
 ];

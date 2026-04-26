@@ -1,10 +1,10 @@
-import type { DocumentId } from '../../EventBus/index';
+import type { DocumentId } from '../../EventBus/index.js';
 import { getContext } from '../../utils/Context.js';
 import { createDataKey, type DataKey } from '../BlockNode/index.js';
 import { BlockNode } from '../BlockNode/index.js';
 import { IndexBuilder } from '../Index/IndexBuilder.js';
-import type { EditorDocumentSerialized, EditorDocumentConstructorParameters, Properties } from './types';
-import type { BlockTuneName } from '../BlockTune';
+import type { EditorDocumentSerialized, EditorDocumentConstructorParameters, Properties } from './types/index.js';
+import type { BlockTuneName } from '../BlockTune/index.js';
 import type {
   TextNodeSerialized
 } from '../inline-fragments/index.js';
@@ -15,15 +15,15 @@ import {
 } from '../inline-fragments/index.js';
 import { IoCContainer, TOOLS_REGISTRY } from '../../IoC/index.js';
 import { ToolsRegistry } from '../../tools/index.js';
-import type { BlockNodeDataSerializedValue, BlockNodeSerialized } from '../BlockNode/types';
-import type { DeepReadonly } from '../../utils/DeepReadonly';
+import type { BlockNodeDataSerializedValue, BlockNodeSerialized } from '../BlockNode/types/index.js';
+import type { DeepReadonly } from '../../utils/DeepReadonly.js';
 import { EventBus } from '../../EventBus/EventBus.js';
 import { EventType } from '../../EventBus/types/EventType.js';
 import type {
   BlockTuneEvents,
   TextNodeEvents,
   ValueNodeEvents
-} from '../../EventBus/types/EventMap';
+} from '../../EventBus/types/EventMap.js';
 import {
   BlockAddedEvent,
   BlockRemovedEvent,
@@ -32,9 +32,9 @@ import {
 import type { Constructor } from '../../utils/types.js';
 import { BaseDocumentEvent, type ModifiedEventData } from '../../EventBus/events/BaseEvent.js';
 import type { Index } from '../Index/index.js';
-import type { ValueSerialized } from '../ValueNode';
+import type { ValueSerialized } from '../ValueNode/index.js';
 
-export * from './types/index.js';
+export type * from './types/index.js';
 
 /**
  * EditorDocument class represents the top-level container for a tree-like structure of BlockNodes in an editor document.
@@ -60,9 +60,7 @@ export class EditorDocument extends EventBus {
    * Constructor for EditorDocument class.
    *
    * To fill the document with blocks, use the `initialize` method.
-   *
    * @todo remove tools registry?
-   *
    * @param [args] - EditorDocument constructor arguments.
    * @param args.identifier - Document identifier
    * @param [args.properties] - The properties of the document.
@@ -86,7 +84,6 @@ export class EditorDocument extends EventBus {
 
   /**
    * Initializes EditorDocument with passed blocks
-   *
    * @param document - document serialized data
    */
   public initialize(document: Partial<EditorDocumentSerialized> & Pick<EditorDocumentSerialized, 'blocks'>): void {
@@ -123,7 +120,6 @@ export class EditorDocument extends EventBus {
   /**
    * Adds a BlockNode to the EditorDocument at the specified index.
    * If no index is provided, the BlockNode will be added to the end of the array.
-   *
    * @param blockNodeData - The data to create the BlockNode with
    * @param index - The index at which to add the BlockNode
    * @throws Error if the index is out of bounds
@@ -133,7 +129,6 @@ export class EditorDocument extends EventBus {
       ...blockNodeData,
       parent: this,
     });
-
 
     if (index === undefined) {
       this.#children.push(blockNode);
@@ -161,14 +156,13 @@ export class EditorDocument extends EventBus {
 
   /**
    * Removes a BlockNode from the EditorDocument at the specified index.
-   *
    * @param index - The index of the BlockNode to remove
    * @throws Error if the index is out of bounds
    */
   public removeBlock(index: number): void {
     this.#checkIndexOutOfBounds(index, this.length - 1);
 
-    const [ blockNode ] = this.#children.splice(index, 1);
+    const [blockNode] = this.#children.splice(index, 1);
 
     const builder = new IndexBuilder();
 
@@ -182,7 +176,6 @@ export class EditorDocument extends EventBus {
   /**
    * Returns the BlockNode at the specified index.
    * Throws an error if the index is out of bounds.
-   *
    * @param index - The index of the BlockNode to return
    * @throws Error if the index is out of bounds
    */
@@ -195,7 +188,6 @@ export class EditorDocument extends EventBus {
   /**
    * Creates a data node with passed key with initial data for the BlockNode at specified index
    * Throws an error if the index is out of bounds.
-   *
    * @param index - block index
    * @param key - key for the node
    * @param data - initial data of the node
@@ -208,7 +200,6 @@ export class EditorDocument extends EventBus {
 
   /**
    * Removes a data node with the passed key in the BlockNode at the specified index
-   *
    * @param index - block index
    * @param key - key of the node to remove
    */
@@ -220,7 +211,6 @@ export class EditorDocument extends EventBus {
 
   /**
    * Returns data node by the block index and data key
-   *
    * @param index - block index where data node is stored
    * @param key - data key of the data node
    */
@@ -229,7 +219,6 @@ export class EditorDocument extends EventBus {
 
     return this.#children[index].getDataNode(createDataKey(key));
   }
-
 
   /**
    * Returns the serialised properties of the EditorDocument.
@@ -241,7 +230,6 @@ export class EditorDocument extends EventBus {
   /**
    * Returns property by name.
    * Returns undefined if property does not exist.
-   *
    * @param name - The name of the property to return
    */
   public getProperty<T = unknown>(name: keyof Properties): T | undefined {
@@ -251,7 +239,6 @@ export class EditorDocument extends EventBus {
   /**
    * Updates a property of the EditorDocument.
    * Adds the property if it does not exist.
-   *
    * @param name - The name of the property to update
    * @param value - The value to update the property with
    */
@@ -278,7 +265,6 @@ export class EditorDocument extends EventBus {
 
   /**
    * Updates the ValueNode data associated with the BlockNode at the specified index.
-   *
    * @param blockIndex - The index of the BlockNode to update
    * @param dataKey - The key of the ValueNode to update
    * @param value - The new value of the ValueNode
@@ -292,7 +278,6 @@ export class EditorDocument extends EventBus {
 
   /**
    * Updates BlockTune data associated with the BlockNode at the specified index.
-   *
    * @param blockIndex - The index of the BlockNode to update
    * @param tuneName - The name of the BlockTune to update
    * @param data - The data to update the BlockTune with
@@ -306,7 +291,6 @@ export class EditorDocument extends EventBus {
 
   /**
    * Returns text for the specified block and data key
-   *
    * @param blockIndex - index of the block
    * @param dataKey - key of the data containing the text
    */
@@ -318,7 +302,6 @@ export class EditorDocument extends EventBus {
 
   /**
    * Inserts text to the specified block
-   *
    * @param blockIndex - index of the block
    * @param dataKey - key of the data
    * @param text - text to insert
@@ -332,7 +315,6 @@ export class EditorDocument extends EventBus {
 
   /**
    * Removes text from specified block
-   *
    * @param blockIndex - index of the block
    * @param dataKey - key of the data
    * @param [start] - start char index of the range
@@ -346,7 +328,6 @@ export class EditorDocument extends EventBus {
 
   /**
    * Formats text in the specified block
-   *
    * @param blockIndex - index of the block
    * @param dataKey - key of the data
    * @param tool - name of the Inline Tool to apply
@@ -362,7 +343,6 @@ export class EditorDocument extends EventBus {
 
   /**
    * Removes formatting from the specified block
-   *
    * @param blockIndex - index of the block
    * @param key - key of the data
    * @param tool - name of the Inline Tool to remove
@@ -385,14 +365,13 @@ export class EditorDocument extends EventBus {
   public get serialized(): EditorDocumentSerialized {
     return {
       identifier: this.identifier,
-      blocks: this.#children.map((block) => block.serialized),
+      blocks: this.#children.map(block => block.serialized),
       properties: this.#properties,
     };
   }
 
   /**
    * Returns array of InlineFragment objects for the specified range
-   *
    * @param blockIndex - index of the block
    * @param dataKey - key of the data
    * @param [start] - start char index of the range
@@ -405,7 +384,6 @@ export class EditorDocument extends EventBus {
 
   /**
    * Inserts data to the specified index
-   *
    * @param index - index to insert data
    * @param data - data to insert (text or blocks)
    */
@@ -416,7 +394,7 @@ export class EditorDocument extends EventBus {
         break;
 
       case index.isDataIndex:
-        this.createDataNode(index.blockIndex!, index.dataKey!, data as BlockNodeDataSerializedValue);
+        this.createDataNode(index.blockIndex!, index.dataKey!, data);
         break;
 
       case index.isBlockIndex:
@@ -430,7 +408,6 @@ export class EditorDocument extends EventBus {
 
   /**
    * Removes data from the specified index
-   *
    * @param index - index to remove data from
    * @param data - text or blocks to remove
    */
@@ -454,7 +431,6 @@ export class EditorDocument extends EventBus {
 
   /**
    * Modifies data for the specific index
-   *
    * @param index - index of data to modify
    * @param data - data to modify (includes current and previous values)
    */
@@ -483,7 +459,6 @@ export class EditorDocument extends EventBus {
 
   /**
    * Listens to BlockNode events and bubbles them to the EditorDocument
-   *
    * @param block - BlockNode to listen to
    */
   #listenAndBubbleBlockEvent(block: BlockNode): void {
@@ -513,7 +488,6 @@ export class EditorDocument extends EventBus {
 
   /**
    * Checks if the index is out of bounds.
-   *
    * @param index - The index to check
    * @param max - The maximum index value. Defaults to the length of the blocks array.
    * @throws Error if the index is out of bounds

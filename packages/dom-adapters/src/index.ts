@@ -44,7 +44,6 @@ export class DOMAdapters implements EditorJSAdapterPlugin {
     this.#iocContainer.bind(EditorJSModel).toConstantValue(model);
     this.#iocContainer.bind(EventBus).toConstantValue(eventBus);
 
-
     const registry = this.#iocContainer.get(InputsRegistry);
 
     model.addEventListener(EventType.Changed, (event) => {
@@ -59,7 +58,7 @@ export class DOMAdapters implements EditorJSAdapterPlugin {
 
         this.#adapters.splice(removedBlockIndex, 1);
 
-        this.#adapters.forEach(adapter => {
+        this.#adapters.forEach((adapter) => {
           if (adapter.getBlockIndex() > removedBlockIndex) {
             adapter.setBlockIndex(adapter.getBlockIndex() - 1);
           }
@@ -72,7 +71,6 @@ export class DOMAdapters implements EditorJSAdapterPlugin {
    * Creates a BlockToolAdapter for a block inserted at the given index.
    * Shifts registry entries and existing adapter indices before the new
    * adapter is created, keeping everything consistent.
-   *
    * @param blockIndex - position at which the new block is being inserted
    * @param toolName - name of the tool for this block
    */
@@ -81,7 +79,7 @@ export class DOMAdapters implements EditorJSAdapterPlugin {
 
     registry.insertBlock(blockIndex);
 
-    this.#adapters.forEach(adapter => {
+    this.#adapters.forEach((adapter) => {
       if (adapter.getBlockIndex() >= blockIndex) {
         adapter.setBlockIndex(adapter.getBlockIndex() + 1);
       }

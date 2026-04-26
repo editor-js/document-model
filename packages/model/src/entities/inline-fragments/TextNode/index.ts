@@ -1,4 +1,4 @@
-import type { InlineFragment, InlineToolName, ParentInlineNodeConstructorOptions, TextNodeSerialized } from '../index';
+import type { InlineFragment, InlineToolName, ParentInlineNodeConstructorOptions, TextNodeSerialized } from '../index.js';
 import { ParentInlineNode } from '../index.js';
 import { BlockChildType } from '../../BlockNode/types/index.js';
 import { NODE_TYPE_HIDDEN_PROP } from '../../BlockNode/consts.js';
@@ -14,7 +14,6 @@ interface TextNodeConstructorOptions extends ParentInlineNodeConstructorOptions 
 export class TextNode extends ParentInlineNode {
   /**
    * TextNode constructor
-   *
    * @param options - TextNode constructor options
    */
   // Stryker disable next-line BlockStatement -- Styker's bug, see https://github.com/stryker-mutator/stryker-js/issues/2474
@@ -36,7 +35,6 @@ export class TextNode extends ParentInlineNode {
   /**
    * Overridden method to get fragments of the TextNode
    * Returns all fragments if no tool is specified
-   *
    * @param [start] - start char index of the range
    * @param [end] - end char index of the range
    * @param [tool] - name of the Inline Tool
@@ -45,7 +43,7 @@ export class TextNode extends ParentInlineNode {
     let fragments = super.getFragments(start, end);
 
     if (tool) {
-      fragments = fragments.filter((fragment) => fragment.tool === tool);
+      fragments = fragments.filter(fragment => fragment.tool === tool);
     }
 
     return fragments;
@@ -53,10 +51,8 @@ export class TextNode extends ParentInlineNode {
 
   /**
    * Private method to initialize the TextNode with passed initial data
-   *
    * @param value - initial text value to insert
    * @param fragments - initial inline fragments to apply
-   * @private
    */
   #initialize(value: string, fragments: InlineFragment[]): void {
     if (!value) {

@@ -2,7 +2,7 @@
 import { beforeEach, describe } from '@jest/globals';
 import { EditorJSModel } from './EditorJSModel.js';
 import { createDataKey, IndexBuilder } from './entities/index.js';
-import type { DocumentId } from './EventBus/index';
+import type { DocumentId } from './EventBus/index.js';
 
 describe('EditorJSModel', () => {
   it('should expose only the public API', () => {
@@ -127,7 +127,7 @@ describe('EditorJSModel', () => {
           .addDataKey(undefined)
           .addTextRange(undefined)
           .build(),
-        [ {
+        [{
           name: 'paragraph',
           data: {
             text: {
@@ -135,7 +135,7 @@ describe('EditorJSModel', () => {
               value: '',
             },
           },
-        } ]
+        }]
       );
 
       expect(caret.index!.blockIndex).toEqual(2);
@@ -152,7 +152,7 @@ describe('EditorJSModel', () => {
           .addDataKey(undefined)
           .addTextRange(undefined)
           .build(),
-        [ {
+        [{
           name: 'paragraph',
           data: {
             text: {
@@ -160,7 +160,7 @@ describe('EditorJSModel', () => {
               value: '',
             },
           },
-        } ]
+        }]
       );
 
       expect(caret.index!.blockIndex).toEqual(0);
@@ -177,7 +177,7 @@ describe('EditorJSModel', () => {
           .addDataKey(undefined)
           .addTextRange(undefined)
           .build(),
-        [ {
+        [{
           name: 'paragraph',
           data: {
             text: {
@@ -185,7 +185,7 @@ describe('EditorJSModel', () => {
               value: '',
             },
           },
-        } ]
+        }]
       );
 
       expect(caret.index!.blockIndex).toEqual(1);

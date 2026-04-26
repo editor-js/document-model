@@ -1,5 +1,5 @@
-import type { ParentNode } from '../ParentNode';
-import type { InlineNode } from '../../InlineNode';
+import type { ParentNode } from '../ParentNode/index.js';
+import type { InlineNode } from '../../InlineNode/index.js';
 
 /**
  * Abstract child node interface
@@ -7,7 +7,6 @@ import type { InlineNode } from '../../InlineNode';
 export interface ChildNode extends InlineNode {
   /**
    * Appends this node to passed parent node
-   *
    * @param parent - new parent
    */
   appendTo(parent: ParentNode): void;
@@ -29,7 +28,6 @@ export interface ChildNodeConstructorOptions {
 
 /**
  * ChildNode decorator to mixin ChildNode's methods
- *
  * @param constructor - class to decorate
  * @example
  *
@@ -47,14 +45,12 @@ export function ChildNode<C extends { new(...args: any[]): InlineNode }>(constru
   return class ChildNode extends constructor {
     /**
      * Node's parent
-     *
-     * @private
      */
     #parent: ParentNode | null;
 
     /**
      * @param args — constructor arguments
-     * @param {ParentNode} [args.parent] - optional node's parent
+     * @param [args.parent] - optional node's parent
      */
     // Stryker disable next-line BlockStatement -- Styker's bug, see https://github.com/stryker-mutator/stryker-js/issues/2474
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- any type here is a TS requirement for mixin classes
@@ -68,7 +64,6 @@ export function ChildNode<C extends { new(...args: any[]): InlineNode }>(constru
       this.parent?.append(this);
     }
 
-
     /**
      * Returns node's parent
      */
@@ -78,7 +73,6 @@ export function ChildNode<C extends { new(...args: any[]): InlineNode }>(constru
 
     /**
      * Appends this node to passed parent node
-     *
      * @param parent - new parent
      */
     public appendTo(parent: ParentNode): void {

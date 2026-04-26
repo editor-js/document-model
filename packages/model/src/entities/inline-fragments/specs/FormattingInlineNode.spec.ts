@@ -1,7 +1,7 @@
-import type { ChildNode } from '../index';
+import type { ChildNode } from '../index.js';
 import { TextInlineNode, createInlineToolData, createInlineToolName, FormattingInlineNode } from '../index.js';
-import type { ParentNode } from '../mixins/ParentNode';
-import type { InlineNode } from '../InlineNode';
+import type { ParentNode } from '../mixins/ParentNode/index.js';
+import type { InlineNode } from '../InlineNode/index.js';
 import { ParentInlineNode } from '../ParentInlineNode/index.js';
 
 jest.mock('../ParentInlineNode');
@@ -195,7 +195,7 @@ describe('FormattingInlineNode', () => {
         tool,
         data,
         parent: parent as FormattingInlineNode,
-        children: [ childNode ],
+        children: [childNode],
       });
     });
 
@@ -287,7 +287,7 @@ describe('FormattingInlineNode', () => {
       const child = new TextInlineNode({ value: 'Text node' });
       const nodeToMerge = new FormattingInlineNode({
         tool,
-        children: [ child ],
+        children: [child],
       });
 
       const spy = jest.spyOn(node, 'append');

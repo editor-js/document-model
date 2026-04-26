@@ -1,2 +1,2 @@
-export * from './BlockToolConstructable.js';
-export * from './InlineToolConstructable.js';
+export type * from './BlockToolConstructable.js';
+export type * from './InlineToolConstructable.js';

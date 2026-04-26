@@ -77,7 +77,6 @@ export class EditorJSModel extends EventBus {
 
   /**
    * Constructor for EditorJSModel class.
-   *
    * @param currentUserId - current user identifier
    * @param [parameters] - EditorDocument constructor arguments.
    * @param [parameters.children] - The child BlockNodes of the EditorDocument.
@@ -107,7 +106,6 @@ export class EditorJSModel extends EventBus {
 
   /**
    * Fills the EditorDocument with the provided blocks.
-   *
    * @param document - document data to initialize
    */
   public initializeDocument(document: Partial<EditorDocumentSerialized> & Pick<EditorDocumentSerialized, 'blocks'>): void {
@@ -123,7 +121,6 @@ export class EditorJSModel extends EventBus {
 
   /**
    *  Creates a new Caret instance in the model
-   *
    *  @param parameters - createCaret method parameters
    *  @param [parameters.index] - initial caret index
    */
@@ -134,7 +131,6 @@ export class EditorJSModel extends EventBus {
 
   /**
    * Returns a caret by user id
-   *
    * @param parameters - getCaret method parameters
    */
   public getCaret(...parameters: Parameters<CaretManager['getCaret']>): ReturnType<CaretManager['getCaret']> {
@@ -143,7 +139,6 @@ export class EditorJSModel extends EventBus {
 
   /**
    * Updates caret instance in the model
-   *
    * @param _userId - user identifier which is being set to the context
    * @param parameters - updateCaret method parameters
    * @param parameters.caret - Caret instance to update
@@ -155,10 +150,8 @@ export class EditorJSModel extends EventBus {
     return this.#caretManager.updateCaret(...parameters);
   }
 
-
   /**
    * Removes caret instance from the model
-   *
    * @param _userId - user identifier which is being set to the context
    * @param parameters - removeCaret method parameters
    * @param parameters.caret - Caret instance to remove
@@ -171,7 +164,6 @@ export class EditorJSModel extends EventBus {
   /**
    * Returns property by name.
    * Returns undefined if property does not exist.
-   *
    * @param parameters - getProperty method parameters
    * @param parameters.name - The name of the property to return
    */
@@ -182,7 +174,6 @@ export class EditorJSModel extends EventBus {
   /**
    * Updates a property of the EditorDocument.
    * Adds the property if it does not exist.
-   *
    * @param _userId - user identifier which is being set to the context
    * @param parameters - setProperty method parameters
    * @param parameters.name - The name of the property to update
@@ -196,7 +187,6 @@ export class EditorJSModel extends EventBus {
   /**
    * Adds a BlockNode to the EditorDocument at the specified index.
    * If no index is provided, the BlockNode will be added to the end of the array.
-   *
    * @param _userId - user identifier which is being set to the context
    * @param parameters - addBlock method parameters
    * @param parameters.blockNodeData - The data to create the BlockNode with
@@ -210,7 +200,6 @@ export class EditorJSModel extends EventBus {
 
   /**
    * Removes a BlockNode from the EditorDocument at the specified index.
-   *
    * @param _userId - user identifier which is being set to the context
    * @param parameters - removeBlock method parameters
    * @param parameters.index - The index of the BlockNode to remove
@@ -223,7 +212,6 @@ export class EditorJSModel extends EventBus {
 
   /**
    * Inserts data to the specified index
-   *
    * @param _userId - user identifier which is being set to the context
    * @param index - index to insert data
    * @param data - data to insert (text or blocks)
@@ -235,7 +223,6 @@ export class EditorJSModel extends EventBus {
 
   /**
    * Removes data from the specified index
-   *
    * @param _userId - user identifier which is being set to the context
    * @param index - index to remove data from
    * @param data - text or blocks to remove
@@ -247,7 +234,6 @@ export class EditorJSModel extends EventBus {
 
   /**
    * Modifies data for the specific index
-   *
    * @param _userId - user identifier which is being set to the context
    * @param index - index of data to modify
    * @param data - data to modify (includes current and previous values)
@@ -259,7 +245,6 @@ export class EditorJSModel extends EventBus {
 
   /**
    * Creates a data node (ValueNode or TextNode) with the specified key in the BlockNode at the specified index.
-   *
    * @param _userId - user identifier which is being set to the context
    * @param parameters - updateValue method parameters
    * @param parameters.blockIndex - The index of the BlockNode to update
@@ -274,7 +259,6 @@ export class EditorJSModel extends EventBus {
 
   /**
    * Removes a data node (ValueNode or TextNode) with the specified key in the BlockNode at the specified index.
-   *
    * @param _userId - user identifier which is being set to the context
    * @param parameters - updateValue method parameters
    * @param parameters.blockIndex - The index of the BlockNode to update
@@ -288,7 +272,6 @@ export class EditorJSModel extends EventBus {
 
   /**
    * Returns a data node by the block index and key
-   *
    * @param _userId - user identifier which is being set to the context
    * @param parameters - getDataNode method parameters
    * @param parameters.blockIndex - index of the BlockNode where data node is stored
@@ -301,7 +284,6 @@ export class EditorJSModel extends EventBus {
 
   /**
    * Updates the ValueNode data associated with the BlockNode at the specified index.
-   *
    * @param _userId - user identifier which is being set to the context
    * @param parameters - updateValue method parameters
    * @param parameters.blockIndex - The index of the BlockNode to update
@@ -316,7 +298,6 @@ export class EditorJSModel extends EventBus {
 
   /**
    * Updates BlockTune data associated with the BlockNode at the specified index.
-   *
    * @param _userId - user identifier which is being set to the context
    * @param parameters - updateTuneData method parameters
    * @param parameters.blockIndex - The index of the BlockNode to update
@@ -331,7 +312,6 @@ export class EditorJSModel extends EventBus {
 
   /**
    * Returns a text from the specified block and data key
-   *
    * @param parameters - getText method parameters
    * @param parameters.blockIndex - index of the block
    * @param parameters.dataKey - key of the data
@@ -342,7 +322,6 @@ export class EditorJSModel extends EventBus {
 
   /**
    * Inserts text to the specified block
-   *
    * @param _userId - user identifier which is being set to the context
    * @param parameters - insertText method parameters
    * @param parameters.blockIndex - index of the block
@@ -357,7 +336,6 @@ export class EditorJSModel extends EventBus {
 
   /**
    * Removes text from specified block
-   *
    * @param _userId - user identifier which is being set to the context
    * @param parameters - removeText method parameters
    * @param parameters.blockIndex - index of the block
@@ -372,7 +350,6 @@ export class EditorJSModel extends EventBus {
 
   /**
    * Formats text in the specified block
-   *
    * @param _userId - user identifier which is being set to the context
    * @param parameters - format method parameters
    * @param parameters.blockIndex - index of the block
@@ -389,7 +366,6 @@ export class EditorJSModel extends EventBus {
 
   /**
    * Removes formatting from the specified block
-   *
    * @param _userId - user identifier which is being set to the context
    * @param parameters - unformat method parameters
    * @param parameters.blockIndex - index of the block
@@ -405,7 +381,6 @@ export class EditorJSModel extends EventBus {
 
   /**
    * Returns fragments for the specified block, range, and inline tool
-   *
    * @param parameters - getFragments method parameters
    * @param parameters.blockIndex - index of the block
    * @param parameters.dataKey - key of the data
@@ -428,7 +403,6 @@ export class EditorJSModel extends EventBus {
 
   /**
    * Listens to BlockNode events and bubbles re-emits them from the EditorJSModel instance
-   *
    * @param document - EditorDocument instance to listen to
    */
   #listenAndBubbleDocumentEvents(document: EditorDocument): void {
@@ -473,7 +447,6 @@ export class EditorJSModel extends EventBus {
   /**
    * Update current user's caret by the model event not from the current user
    * E.g. if another user inserts a character before the current user's caret, we need to update the caret
-   *
    * @param event - model event to update caret by
    */
   #updateUserCaretByRemoteChange(event: ModelEvents): void {

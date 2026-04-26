@@ -14,8 +14,7 @@ import type {
   CoreConfig
 } from '@editorjs/sdk';
 import { BeforeInputUIEventName, BlockToolAdapter,
-  EventBus
-} from '@editorjs/sdk';
+  EventBus } from '@editorjs/sdk';
 import { CaretAdapter } from '../CaretAdapter/index.js';
 import { FormattingAdapter } from '../FormattingAdapter/index.js';
 import {
@@ -50,7 +49,6 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
 
   /**
    * BlockToolAdapter constructor
-   *
    * @param config - Editor's config
    * @param model - EditorJSModel instance
    * @param eventBus - Editor EventBus instance
@@ -60,18 +58,17 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
    */
   constructor(
     @inject(TOKENS.EditorConfig) config: Required<CoreConfig>,
-      model: EditorJSModel,
-      eventBus: EventBus,
-      caretAdapter: CaretAdapter,
-      formattingAdapter: FormattingAdapter,
-      registry: InputsRegistry
+    model: EditorJSModel,
+    eventBus: EventBus,
+    caretAdapter: CaretAdapter,
+    formattingAdapter: FormattingAdapter,
+    registry: InputsRegistry
   ) {
     super(config, model, eventBus);
 
     this.#caretAdapter = caretAdapter;
     this.#formattingAdapter = formattingAdapter;
     this.#inputsRegistry = registry;
-
 
     /**
      * @todo Needs to be documented. If UI module is replaced and doesn't dispatch the event nothing would work
@@ -83,7 +80,6 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
 
   /**
    * Sets tool name for the adapter
-   *
    * @todo think how to remove the name dependency
    * @param name - tool name
    */
@@ -94,7 +90,6 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
   /**
    * Attaches or re-attaches input to the model using key
    * It handles beforeinput events and updates model data
-   *
    * @param keyRaw - tools data key to attach input to
    * @param input - input element
    */
@@ -128,7 +123,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
 
     input.textContent = value;
 
-    fragments.forEach(fragment => {
+    fragments.forEach((fragment) => {
       this.#formattingAdapter.formatElementContent(input, fragment);
     });
   }
@@ -152,7 +147,6 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
   /**
    * @todo - move to sdk BlockToolAdapter interface if it would be used
    * Allows access to a particular input by key
-   *
    * @param key - data key of the input
    */
   public getInput(key: DataKey): HTMLElement | undefined {
@@ -161,13 +155,12 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
 
   /**
    * Check current selection and find all inputs that contain target ranges
-   *
    * @param targetRanges - ranges to find inputs for
    * @returns array of tuples containing data key and input element
    */
   #findInputsByRanges(targetRanges: StaticRange[]): [DataKey, HTMLElement][] {
     return Array.from(this.#attachedInputs.entries()).filter(([_, input]) => {
-      return targetRanges.some(range => {
+      return targetRanges.some((range) => {
         const startContainer = range.startContainer;
         const endContainer = range.endContainer;
         const isCollapsed = range.collapsed;
@@ -190,8 +183,8 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
           const endPosition = endContainer.compareDocumentPosition(input);
 
           const isBetween = (
-            Boolean(startPosition & Node.DOCUMENT_POSITION_FOLLOWING) &&
-            Boolean(endPosition & Node.DOCUMENT_POSITION_PRECEDING)
+            Boolean(startPosition & Node.DOCUMENT_POSITION_FOLLOWING)
+            && Boolean(endPosition & Node.DOCUMENT_POSITION_PRECEDING)
           );
 
           return isBetween;
@@ -222,8 +215,8 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
           const endPosition = endContainer.compareDocumentPosition(input);
 
           const isBetween = (
-            Boolean(startPosition & Node.DOCUMENT_POSITION_FOLLOWING) &&
-            Boolean(endPosition & Node.DOCUMENT_POSITION_PRECEDING)
+            Boolean(startPosition & Node.DOCUMENT_POSITION_FOLLOWING)
+            && Boolean(endPosition & Node.DOCUMENT_POSITION_PRECEDING)
           );
 
           return isBetween;
@@ -236,7 +229,6 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
 
   /**
    * Handles 'beforeinput' event delegated from the blocks host element
-   *
    * @param event - event containig necessary data
    */
   #processDelegatedBeforeInput(event: BeforeInputUIEvent): void {
@@ -254,7 +246,6 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
 
   /**
    * Handles delete events in contenteditable element
-   *
    * @param input - input element
    * @param key - data key input is attached to
    * @param range - target range for this input
@@ -337,7 +328,6 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
    * Handles beforeinput event from user input and updates model data
    *
    * We prevent beforeinput event of any type to handle it manually via model update
-   *
    * @param payload - payload of input event
    * @param input - input element
    * @param key - data key input is attached to
@@ -360,7 +350,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
       this.#handleDeleteInContentEditable(input, key, range);
     }
 
-    switch (inputType) {
+    switch (inputType as InputType) {
       case InputType.InsertReplacementText:
       case InputType.InsertFromDrop:
       case InputType.InsertFromPaste: {
@@ -408,8 +398,8 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
          * In case of cross-input selection we don't need to split the block, just remove range
          */
         if (
-          (isInputContainsOnlyStartOfSelection(input, range) || isInputContainsWholeSelection(input, range)) &&
-          payload.isCrossInputSelection === false
+          (isInputContainsOnlyStartOfSelection(input, range) || isInputContainsWholeSelection(input, range))
+          && payload.isCrossInputSelection === false
         ) {
           start = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
 
@@ -429,7 +419,6 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
    * Splits the current block's data field at the specified index
    * Removes selected range if it's not collapsed
    * Sets caret to the beginning of the next block
-   *
    * @param key - data key to split
    * @param start - start index of the split
    * @param end - end index of the selected range
@@ -443,7 +432,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
     /**
      * Fragment ranges bounds should be decreased by end index, because end is the index of the first character of the new block
      */
-    relatedFragments.forEach(fragment => {
+    relatedFragments.forEach((fragment) => {
       fragment.range[0] = Math.max(0, fragment.range[0] - end);
       fragment.range[1] -= end;
     });
@@ -483,7 +472,6 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
 
   /**
    * Handles model update events for contenteditable elements and updates DOM
-   *
    * @param event - model update event
    * @param input - input element
    * @param key - data key input is attached to
@@ -535,7 +523,6 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
 
   /**
    * Handles model update events and updates DOM
-   *
    * @param event - model update event
    */
   protected handleModelUpdate(event: ModelEvents): void {

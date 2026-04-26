@@ -1,6 +1,6 @@
 import { getContext } from '../../utils/Context.js';
-import type { EditorDocument } from '../EditorDocument';
-import type { BlockTuneName, BlockTuneSerialized } from '../BlockTune';
+import type { EditorDocument } from '../EditorDocument/index.js';
+import type { BlockTuneName, BlockTuneSerialized } from '../BlockTune/index.js';
 import { BlockTune, createBlockTuneName } from '../BlockTune/index.js';
 import { IndexBuilder } from '../Index/IndexBuilder.js';
 import { InvalidNodeTypeError } from './errors/InvalidNodeTypeError.js';
@@ -15,16 +15,16 @@ import type {
   BlockToolName,
   ChildNode,
   DataKey
-} from './types';
+} from './types/index.js';
 import { BlockChildType, createBlockToolName, createDataKey } from './types/index.js';
 import type { ValueSerialized } from '../ValueNode/index.js';
 import { ValueNode } from '../ValueNode/index.js';
-import type { InlineFragment, InlineToolData, InlineToolName, TextNodeSerialized } from '../inline-fragments';
+import type { InlineFragment, InlineToolData, InlineToolName, TextNodeSerialized } from '../inline-fragments/index.js';
 import { TextNode } from '../inline-fragments/index.js';
 import { get, has } from '../../utils/keypath.js';
 import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
 import { mapObject } from '../../utils/mapObject.js';
-import type { DeepReadonly } from '../../utils/DeepReadonly';
+import type { DeepReadonly } from '../../utils/DeepReadonly.js';
 import { EventBus } from '../../EventBus/EventBus.js';
 import { EventType } from '../../EventBus/types/EventType.js';
 import {
@@ -34,7 +34,7 @@ import {
   ValueModifiedEvent
 } from '../../EventBus/events/index.js';
 import type { Constructor } from '../../utils/types.js';
-import type { TextNodeEvents } from '../../EventBus/types/EventMap';
+import type { TextNodeEvents } from '../../EventBus/types/EventMap.js';
 import { BaseDocumentEvent } from '../../EventBus/events/BaseEvent.js';
 
 /**
@@ -65,7 +65,6 @@ export class BlockNode extends EventBus {
 
   /**
    * Constructor for BlockNode class.
-   *
    * @param args - BlockNode constructor arguments.
    * @param args.name - The name of the BlockNode.
    * @param [args.data] - The content of the BlockNode.
@@ -133,12 +132,12 @@ export class BlockNode extends EventBus {
   public get serialized(): BlockNodeSerialized {
     const serializedData = mapObject(
       this.#data,
-      (entry) => this.#serializeData(entry)
+      entry => this.#serializeData(entry)
     );
 
     const serializedTunes = mapObject(
       this.#tunes,
-      (tune) => tune.serialized
+      tune => tune.serialized
     );
 
     return {
@@ -150,7 +149,6 @@ export class BlockNode extends EventBus {
 
   /**
    * Returns data node by the key
-   *
    * @param dataKey - key of the node to get
    */
   public getDataNode(dataKey: DataKey): ValueSerialized | TextNodeSerialized | undefined {
@@ -169,7 +167,6 @@ export class BlockNode extends EventBus {
 
   /**
    * Creates a node at passed key with initial data
-   *
    * @param dataKey - key for the node
    * @param data - initial data of the node
    */
@@ -191,7 +188,6 @@ export class BlockNode extends EventBus {
 
   /**
    * Removes a node with the passed key
-   *
    * @param dataKey - key of the node to remove
    */
   public removeDataNode(dataKey: DataKey): void {
@@ -214,7 +210,6 @@ export class BlockNode extends EventBus {
 
   /**
    * Updates data in the BlockTune by the BlockTuneName
-   *
    * @param tuneName - The name of the BlockTune
    * @param data - The data to update the BlockTune with
    */
@@ -227,7 +222,6 @@ export class BlockNode extends EventBus {
 
   /**
    * Updates the ValueNode data associated with this BlockNode
-   *
    * @param dataKey - The key of the ValueNode to update
    * @param value - The new value of the ValueNode
    */
@@ -252,7 +246,6 @@ export class BlockNode extends EventBus {
 
   /**
    * Returns a text value for the specified data key
-   *
    * @param dataKey - key of the data
    */
   public getText(dataKey: DataKey): string {
@@ -265,7 +258,6 @@ export class BlockNode extends EventBus {
 
   /**
    * Inserts text to the specified text node by index, by default appends text to the end of the current value
-   *
    * @param dataKey - key of the data
    * @param text - text to insert
    * @param [start] - char index where to insert text
@@ -291,7 +283,6 @@ export class BlockNode extends EventBus {
 
   /**
    * Removes text from specified text node
-   *
    * @param dataKey - key of the data
    * @param [start] - start char index of the range
    * @param [end] - end char index of the range
@@ -306,7 +297,6 @@ export class BlockNode extends EventBus {
 
   /**
    * Formats text in the specified text node
-   *
    * @param dataKey - key of the data
    * @param tool - name of the Inline Tool to apply
    * @param start - start char index of the range
@@ -323,7 +313,6 @@ export class BlockNode extends EventBus {
 
   /**
    * Removes formatting from the specified text node
-   *
    * @param key - key of the data
    * @param tool - name of the Inline Tool to remove
    * @param start - start char index of the range
@@ -340,7 +329,6 @@ export class BlockNode extends EventBus {
   /**
    * Returns all fragments of the text node by range
    * If the name of the Inline Tool is passed, then only fragments of this Inline Tool will be returned
-   *
    * @param dataKey - key of the data
    * @param [start] - start char index of the range
    * @param [end] - end char index of the range
@@ -357,7 +345,6 @@ export class BlockNode extends EventBus {
 
   /**
    * Initializes BlockNode with passed block data
-   *
    * @param data - block data
    */
   #initialize(data: BlockNodeDataSerialized): void {
@@ -369,32 +356,29 @@ export class BlockNode extends EventBus {
 
   /**
    * Recursively serializes data value
-   *
    * @param data - data to serialize
    */
   #serializeData(data: BlockNodeDataValue): BlockNodeDataSerializedValue {
     if (Array.isArray(data)) {
-      return data.map((entry) => this.#serializeData(entry)) as BlockNodeDataSerialized[];
+      return data.map(entry => this.#serializeData(entry)) as BlockNodeDataSerialized[];
     }
 
     if (data instanceof ValueNode || data instanceof TextNode) {
       return data.serialized;
     }
 
-    return mapObject(data, (entry) => this.#serializeData(entry));
+    return mapObject(data, entry => this.#serializeData(entry));
   };
-
 
   /**
    * Recursively maps serialized data to BlockNodeData
    *
    * 1. If value is an object with NODE_TYPE_HIDDEN_PROP, then it's a serialized node.
-   *  a. If NODE_TYPE_HIDDEN_PROP is BlockChildType.Value, then it's a serialized ValueNode
-   *  b. If NODE_TYPE_HIDDEN_PROP is BlockChildType.Text, then it's a serialized TextNode
+   * a. If NODE_TYPE_HIDDEN_PROP is BlockChildType.Value, then it's a serialized ValueNode
+   * b. If NODE_TYPE_HIDDEN_PROP is BlockChildType.Text, then it's a serialized TextNode
    * 2. If value is an array, then it's an array of serialized nodes, so map it recursively
    * 3. If value is an object without NODE_TYPE_HIDDEN_PROP, then it's a JSON object, so map it recursively
    * 4. Otherwise, it's a primitive value, so create a ValueNode with it
-   *
    * @param value - serialized value
    * @param key - keypath of the current value
    */
@@ -427,10 +411,8 @@ export class BlockNode extends EventBus {
 
   /**
    * Creates new text node with passed key and initial value
-   *
    * @param key - DataKey for the new text node
    * @param value - initial value for the new text node
-   * @private
    */
   #createTextNode(key: DataKey, value?: TextNodeSerialized): TextNode {
     const node = new TextNode(value);
@@ -442,10 +424,8 @@ export class BlockNode extends EventBus {
 
   /**
    * Creates new value node with passed key and initial value
-   *
    * @param key - DataKey for the new value node
    * @param value - initial value for the new value node
-   * @private
    */
   #createValueNode(key: DataKey, value?: BlockNodeDataSerializedValue): ValueNode {
     const node = new ValueNode({ value });
@@ -457,10 +437,8 @@ export class BlockNode extends EventBus {
 
   /**
    * Validates data key and node type
-   *
    * @param key - key to validate
    * @param [Node] - node type to check
-   * @private
    */
   #validateKey(key: DataKey, Node?: typeof ValueNode | typeof TextNode): void {
     if (!has(this.#data, key as string)) {
@@ -474,7 +452,6 @@ export class BlockNode extends EventBus {
 
   /**
    * Listens to TextNode events and bubbles them to the BlockNode
-   *
    * @param node - TextNode to listen to
    * @param key - TextNode key in the BlockNode data
    */
@@ -505,7 +482,6 @@ export class BlockNode extends EventBus {
 
   /**
    * Listens to ValueNode events and bubbles them to the BlockNode
-   *
    * @param node - ValueNode to listen to
    * @param key - ValueNode key in the BlockNode data
    */
@@ -537,7 +513,6 @@ export class BlockNode extends EventBus {
 
   /**
    * Listens to BlockTune events and bubbles them to the BlockNode
-   *
    * @param tune - BlockTune to listen to
    * @param name - BlockTune name in the BlockNode data
    */

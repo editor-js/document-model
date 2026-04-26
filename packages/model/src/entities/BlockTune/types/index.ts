@@ -1,4 +1,4 @@
-export type { BlockTuneConstructorParameters } from './BlockTuneConstructorParameters';
-export type { BlockTuneName } from './BlockTuneName';
+export type { BlockTuneConstructorParameters } from './BlockTuneConstructorParameters.js';
+export type { BlockTuneName } from './BlockTuneName.js';
 export { createBlockTuneName } from './BlockTuneName.js';
-export type { BlockTuneSerialized } from './BlockTuneSerialized';
+export type { BlockTuneSerialized } from './BlockTuneSerialized.js';

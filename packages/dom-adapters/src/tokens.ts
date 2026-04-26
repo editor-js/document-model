@@ -6,6 +6,6 @@ export const TOKENS = {
   /**
    * Configuration token
    */
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   EditorConfig: Symbol.for('EditorConfig'),
 } as const;
-

@@ -48,7 +48,6 @@ export class FormattingAdapter {
   #config: Required<CoreConfig>;
 
   /**
-   * @class
    * @param config - Editor's config
    * @param model - editor model instance
    * @param caretAdapter - caret adapter instance
@@ -56,9 +55,9 @@ export class FormattingAdapter {
    */
   constructor(
     @inject(TOKENS.EditorConfig) config: Required<CoreConfig>,
-      model: EditorJSModel,
-      caretAdapter: CaretAdapter,
-      eventBus: EventBus
+    model: EditorJSModel,
+    caretAdapter: CaretAdapter,
+    eventBus: EventBus
   ) {
     this.#config = config;
     this.#model = model;
@@ -88,7 +87,6 @@ export class FormattingAdapter {
 
   /**
    * Allows to render formatting inside a passed input
-   *
    * @param input - input element to apply format to
    * @param inlineFragment - instance that contains index, toolName and toolData
    * @param inlineFragment.index - text range inside the input element
@@ -118,7 +116,6 @@ export class FormattingAdapter {
   /**
    * Attaches an inline tool instance for formatting / DOM wrapping.
    * Keyboard shortcuts are handled by the Shortcuts core plugin via Selection API.
-   *
    * @param toolName - model inline tool name (from `createInlineToolName` in `@editorjs/model`)
    * @param tool - inline tool instance
    */
@@ -128,7 +125,6 @@ export class FormattingAdapter {
 
   /**
    * Detaches InlineTool from the adapter
-   *
    * @param toolName - name of the tool to be detached
    */
   public detachTool(toolName: InlineToolName): void {
@@ -137,7 +133,6 @@ export class FormattingAdapter {
 
   /**
    * Handles text format and unformat model events
-   *
    * @param event - model change event
    */
   #handleModelUpdates(event: ModelEvents): void {
@@ -179,7 +174,6 @@ export class FormattingAdapter {
 
   /**
    * Apply formatting of all affected fragments to the range with boundaries
-   *
    * @param input - input element to apply formatting to
    * @param leftBoundary - lower boundary of the range
    * @param rightBoundary - upper boundary of the range

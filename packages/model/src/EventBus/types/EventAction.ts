@@ -15,5 +15,5 @@ export enum EventAction {
   /**
    * Event indicating that some existing information was modified in the document model
    */
-  Modified = 'modified',
+  Modified = 'modified'
 }

@@ -4,15 +4,15 @@ import { IndexBuilder } from '../Index/IndexBuilder.js';
 import { BlockNode, createBlockToolName, createDataKey } from './index.js';
 import { NonExistingKeyError } from './errors/NonExistingKeyError.js';
 
-import type { BlockTuneName, BlockTuneSerialized } from '../BlockTune';
+import type { BlockTuneName, BlockTuneSerialized } from '../BlockTune/index.js';
 import { BlockTune } from '../BlockTune/index.js';
 import { ValueNode } from '../ValueNode/index.js';
 
-import type { EditorDocument } from '../EditorDocument';
-import type { ValueNodeConstructorParameters } from '../ValueNode';
-import type { InlineFragment, InlineToolData, InlineToolName } from '../inline-fragments';
+import type { EditorDocument } from '../EditorDocument/index.js';
+import type { ValueNodeConstructorParameters } from '../ValueNode/index.js';
+import type { InlineFragment, InlineToolData, InlineToolName } from '../inline-fragments/index.js';
 import { TextNode } from '../inline-fragments/index.js';
-import type { BlockNodeData, BlockNodeDataSerialized } from './types';
+import type { BlockNodeData, BlockNodeDataSerialized } from './types/index.js';
 import { BlockChildType } from './types/index.js';
 import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
 import { TextAddedEvent, TuneModifiedEvent, ValueModifiedEvent } from '../../EventBus/events/index.js';
@@ -110,8 +110,8 @@ describe('BlockNode', () => {
     it('should call .serialized getter of all child ValueNodes associated with the BlockNode', () => {
       const numberOfValueNodes = 2;
 
-      const valueNodes = [ ...Array(numberOfValueNodes)
-        .keys() ]
+      const valueNodes = [...Array(numberOfValueNodes)
+        .keys()]
         .reduce((acc, index) => ({
           ...acc,
           [createDataKey(`data-key-${index}c${index}d`)]: index,
@@ -136,8 +136,8 @@ describe('BlockNode', () => {
     it('should call .serialized getter of all child TextNodes associated with the BlockNode', () => {
       const numberOfTextNodes = 3;
 
-      const textNodes = [ ...Array(numberOfTextNodes)
-        .keys() ]
+      const textNodes = [...Array(numberOfTextNodes)
+        .keys()]
         .reduce((acc, index) => ({
           ...acc,
           [createDataKey(`data-key-${index}c${index}d`)]: {
@@ -163,13 +163,12 @@ describe('BlockNode', () => {
         .toHaveBeenCalledTimes(numberOfTextNodes);
     });
 
-
     it('should call .serialized getter of ValueNodes in an array', () => {
       const spy = jest.spyOn(ValueNode.prototype, 'serialized', 'get');
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
         data: {
-          items: [ 'value' ],
+          items: ['value'],
         },
         parent: {} as EditorDocument,
       });
@@ -250,7 +249,7 @@ describe('BlockNode', () => {
         name: createBlockToolName('paragraph'),
         data: {
           object: {
-            array: [ 'value' ],
+            array: ['value'],
           },
         },
         parent: {} as EditorDocument,
@@ -268,13 +267,13 @@ describe('BlockNode', () => {
         name: createBlockToolName('paragraph'),
         data: {
           object: {
-            array: [ {
+            array: [{
               text: {
                 [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
                 value: '',
                 fragments: [],
               },
-            } ],
+            }],
           },
         },
         parent: {} as EditorDocument,
@@ -291,7 +290,7 @@ describe('BlockNode', () => {
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
         data: {
-          array: [ { value: 'value' } ],
+          array: [{ value: 'value' }],
         },
         parent: {} as EditorDocument,
       });
@@ -307,7 +306,7 @@ describe('BlockNode', () => {
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
         data: {
-          array: [ {
+          array: [{
             object: {
               text: {
                 [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
@@ -315,7 +314,7 @@ describe('BlockNode', () => {
                 fragments: [],
               },
             },
-          } ],
+          }],
         },
         parent: {} as EditorDocument,
       });
@@ -331,7 +330,7 @@ describe('BlockNode', () => {
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
         data: {
-          array: [ [ 'value' ] ],
+          array: [['value']],
         },
         parent: {} as EditorDocument,
       });
@@ -347,13 +346,13 @@ describe('BlockNode', () => {
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
         data: {
-          array: [ [
+          array: [[
             {
               [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
               value: '',
               fragments: [],
             },
-          ] ],
+          ]],
         },
         parent: {} as EditorDocument,
       });
@@ -442,7 +441,6 @@ describe('BlockNode', () => {
 
       const key = createDataKey('url');
       const value = 'https://editorjs.io';
-
 
       blockNode.createDataNode(key, value);
 
@@ -654,7 +652,7 @@ describe('BlockNode', () => {
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
         data: {
-          array: [ 'value' ],
+          array: ['value'],
         },
         parent: {} as EditorDocument,
       });
@@ -674,7 +672,7 @@ describe('BlockNode', () => {
         name: createBlockToolName('paragraph'),
         data: {
           object: {
-            array: [ 'value' ],
+            array: ['value'],
           },
         },
         parent: {} as EditorDocument,
@@ -1409,7 +1407,7 @@ describe('BlockNode', () => {
         }
       );
 
-      tune = node.tunes[tuneName] as BlockTune;
+      tune = node.tunes[tuneName];
     });
 
     it('should re-emit event from the BlockTune adding index in Block', () => {

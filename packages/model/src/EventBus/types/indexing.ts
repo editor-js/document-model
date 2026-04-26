@@ -24,4 +24,3 @@ export type BlockIndex = [BlockIndexAlias];
  * Index for a text range
  */
 export type TextRange = [number, number];
-

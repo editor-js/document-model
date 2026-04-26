@@ -15,6 +15,7 @@ declare global {
      * @param options - an options object that specifies characteristics about the event listener
      */
     addEventListener(type: Event, callback: ((event: CustomEvent) => void) | null, options?: AddEventListenerOptions | boolean): void;
+
     /**
      * Removes an event listener for the specified event type
      * @param type - a string representing the event type to stop listening for

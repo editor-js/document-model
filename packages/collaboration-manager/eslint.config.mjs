@@ -10,7 +10,7 @@ export default [
     languageOptions: {
       parserOptions: {
         project: './tsconfig.eslint.json',
-        tsconfigRootDir: './',
+        tsconfigRootDir: import.meta.dirname,
         sourceType: 'module',
       },
     },
@@ -34,21 +34,20 @@ export default [
       'n/no-unsupported-features/es-syntax': ['error', { version: '>=20.0.0' }],
     },
   },
-
   {
-    files: ["**/*.spec.ts"],
+    files: ['**/*.spec.ts'],
     rules: {
       /**
        * For test files allow dev dependencies imports
        */
-      "n/no-unpublished-import": ["error", {
-        allowModules: ["@jest/globals"]
+      'n/no-unpublished-import': ['error', {
+        allowModules: ['@jest/globals'],
       }],
       /**
        * Used for ws mock in test files
        */
       '@typescript-eslint/unbound-method': 'off',
-      '@typescript-eslint/no-this-alias': 'off'
-    }
-  }
+      '@typescript-eslint/no-this-alias': 'off',
+    },
+  },
 ];

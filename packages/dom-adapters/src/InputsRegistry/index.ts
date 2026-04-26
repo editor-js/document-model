@@ -16,7 +16,6 @@ export class InputsRegistry {
 
   /**
    * Registers (or replaces) an input element for a given block + data key.
-   *
    * @param blockIndex - position of the block in the document
    * @param dataKey - data key of the input within the block
    * @param element - the DOM element to register
@@ -32,7 +31,6 @@ export class InputsRegistry {
   /**
    * Removes the registration for a specific input.
    * If no dataKey is given, removes all inputs for the block.
-   *
    * @param blockIndex - position of the block
    * @param dataKey - optional specific data key to unregister
    */
@@ -48,7 +46,6 @@ export class InputsRegistry {
 
   /**
    * Looks up a single input by block index and data key.
-   *
    * @param blockIndex - position of the block
    * @param dataKey - data key of the input
    */
@@ -58,7 +55,6 @@ export class InputsRegistry {
 
   /**
    * Returns all inputs for a block as a (dataKey → element) map.
-   *
    * @param blockIndex - position of the block
    */
   public getBlockInputs(blockIndex: number): Map<DataKey, HTMLElement> | undefined {
@@ -68,7 +64,6 @@ export class InputsRegistry {
   /**
    * Returns all registered entries as an iterable of [blockIndex, dataKey, element] tuples.
    * Useful for CaretAdapter to iterate all inputs during selection mapping.
-   *
    * @yields
    */
   public *entries(): Iterable<[number, DataKey, HTMLElement]> {
@@ -88,7 +83,6 @@ export class InputsRegistry {
   /**
    * Inserts an empty slot at blockIndex, shifting all subsequent blocks up by one.
    * Call this before registering inputs for a newly inserted block.
-   *
    * @param blockIndex - position of the new block
    */
   public insertBlock(blockIndex: number): void {
@@ -98,7 +92,6 @@ export class InputsRegistry {
   /**
    * Removes the slot at blockIndex, shifting all subsequent blocks down by one.
    * Call this when a block is removed from the document.
-   *
    * @param blockIndex - position of the removed block
    */
   public removeBlock(blockIndex: number): void {
