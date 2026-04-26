@@ -1,17 +1,18 @@
 import {
-  BlockAddedEvent, type BlockNodeSerialized,
-  BlockRemovedEvent,
+  type BlockNodeSerialized,
   type EditorDocumentSerialized,
-  EditorJSModel,
-  EventType,
-  ModelEvents
+  EditorJSModel
 } from '@editorjs/model';
 import 'reflect-metadata';
-import { Inject, Service } from 'typedi';
-import { BlockToolAdapter, CaretAdapter, FormattingAdapter } from '@editorjs/dom-adapters';
+import { inject, injectable } from 'inversify';
+import { TOKENS } from '../tokens.js';
 import ToolsManager from '../tools/ToolsManager.js';
-import { BlockAPI, BlockToolData } from '@editorjs/editorjs';
-import { CoreConfigValidated, EventBus, BlockAddedCoreEvent, BlockRemovedCoreEvent } from '@editorjs/sdk';
+import { BlockToolData } from '@editorjs/editorjs';
+import {
+  CoreConfigValidated,
+  EventBus
+} from '@editorjs/sdk';
+
 /**
  * Parameters for the BlocksManager.insert() method
  */
@@ -43,11 +44,15 @@ interface InsertBlockParameters {
 }
 
 /**
- * BlocksManager is responsible for
- *  - handling block adding and removing events
- *  - updating the Model blocks data on user actions
+ * BlocksManager is responsible for block lifecycle operations:
+ *  - insert, delete, move, render, clear
+ *
+ * Model event handling (BlockAddedEvent / BlockRemovedEvent) and rendering
+ * are intentionally delegated to BlockRenderer, keeping this class free of
+ * any Adapter dependency and avoiding the circular dependency:
+ *   BlocksManager → Adapter → EditorAPI → BlocksAPI → BlocksManager
  */
-@Service()
+@injectable()
 export class BlocksManager {
   /**
    * Editor's Document Model instance to get and update blocks data
@@ -60,12 +65,6 @@ export class BlocksManager {
   #eventBus: EventBus;
 
   /**
-   * Caret Adapter instance
-   * Required here to create BlockToolAdapter
-   */
-  #caretAdapter: CaretAdapter;
-
-  /**
    * Tools manager instance to get block tools
    */
   #toolsManager: ToolsManager;
@@ -76,18 +75,6 @@ export class BlocksManager {
   #config: CoreConfigValidated;
 
   /**
-   * Will be passed to BlockToolAdapter for rendering inputs` formatted text
-   */
-  #formattingAdapter: FormattingAdapter;
-  /**
-   * Local registry of block adapters maintained by BlocksManager.
-   * This allows us to update adapter indices synchronously when blocks are
-   * added/removed to ensure adapters reflect the current model state before
-   * any nested model events are processed.
-   */
-  #adapters: BlockToolAdapter[] = [];
-
-  /**
    * Returns Blocks count
    */
   public get blocksCount(): number {
@@ -96,36 +83,27 @@ export class BlocksManager {
 
   /**
    * BlocksManager constructor
-   * All parameters are injected thorugh the IoC container
+   * All parameters are injected through the IoC container
    * @param model - Editor's Document Model instance
    * @param eventBus - Editor's EventBus instance
-   * @param caretAdapter - Caret Adapter instance
    * @param toolsManager - Tools manager instance
-   * @param formattingAdapter - will be passed to BlockToolAdapter for rendering inputs` formatted text
    * @param config - Editor validated configuration
    */
   constructor(
     model: EditorJSModel,
     eventBus: EventBus,
-    caretAdapter: CaretAdapter,
     toolsManager: ToolsManager,
-    formattingAdapter: FormattingAdapter,
-    @Inject('EditorConfig') config: CoreConfigValidated
+    @inject(TOKENS.EditorConfig) config: CoreConfigValidated
   ) {
     this.#model = model;
     this.#eventBus = eventBus;
-    this.#caretAdapter = caretAdapter;
     this.#toolsManager = toolsManager;
-    this.#formattingAdapter = formattingAdapter;
     this.#config = config;
-
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises -- Need to bubble the promise up in case of errors
-    this.#model.addEventListener(EventType.Changed, event => this.#handleModelUpdate(event));
   }
 
   /**
    * Inserts a new block to the editor at the specified index
-   * @param parameters - method paramaters object
+   * @param parameters - method parameters object
    * @param parameters.type - block tool name to insert
    * @param parameters.data - block's initial data
    * @param parameters.index - index to insert block at
@@ -229,136 +207,9 @@ export class BlocksManager {
    * Returns block index where user caret is placed
    */
   #getCurrentBlockIndex(): number | undefined {
-    const caretIndex = this.#caretAdapter.userCaretIndex;
+    const userCaret = this.#model.getCaret(this.#config.userId);
+    const caretIndex = userCaret?.index;
 
     return caretIndex?.blockIndex;
-  }
-
-  /**
-   * Handles model update events
-   * Filters only BlockAddedEvent and BlockRemovedEvent
-   * @param event - Model update event
-   */
-  #handleModelUpdate(event: ModelEvents): Promise<void> | void {
-    switch (true) {
-      case event instanceof BlockAddedEvent:
-        return this.#handleBlockAddedEvent(event);
-      case event instanceof BlockRemovedEvent:
-        this.#handleBlockRemovedEvent(event);
-        break;
-      default:
-    }
-  }
-
-  /**
-   * Handles BlockAddedEvent
-   * - creates BlockTool instance
-   * - renders its content
-   * - calls UI module to render the block
-   * @param event - BlockAddedEvent
-   */
-  async #handleBlockAddedEvent(event: BlockAddedEvent): Promise<void> {
-    const { index, data } = event.detail;
-
-    if (index.blockIndex === undefined) {
-      throw new Error('[BlockManager] Block index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
-    }
-
-    // Shift existing adapters indices to make room for the new block.
-    // This must happen synchronously before we create and render the new
-    // block adapter so that any nested model events produced during tool
-    // rendering will see correct adapter indices.
-    for (const adapter of this.#adapters) {
-      const current = adapter.getBlockIndex().blockIndex;
-
-      if (current !== undefined && current >= index.blockIndex) {
-        adapter.setBlockIndex(current + 1);
-      }
-    }
-
-    const blockToolAdapter = new BlockToolAdapter(
-      this.#config,
-      this.#model,
-      this.#eventBus,
-      this.#caretAdapter,
-      index.blockIndex,
-      this.#formattingAdapter
-    );
-
-    /**
-     * We store blocks managers in caret adapter to give it access to blocks` inputs
-     * without additional storing inputs in the caret adapter
-     * Thus, it won't care about block index change (block removed, block added, block moved)
-     */
-    // Register new adapter locally and attach it to caret adapter.
-    this.#adapters.splice(index.blockIndex, 0, blockToolAdapter);
-    this.#caretAdapter.attachBlock(blockToolAdapter);
-
-    const tool = this.#toolsManager.blockTools.get(data.name);
-
-    if (tool === undefined) {
-      throw new Error(`[BlockManager] Block Tool ${event.detail.data.name} not found`);
-    }
-
-    const block = tool.create({
-      adapter: blockToolAdapter,
-      data: data.data,
-      block: {} as BlockAPI,
-      readOnly: false,
-    });
-
-    try {
-      const blockElement = await block.render();
-
-      this.#eventBus.dispatchEvent(new BlockAddedCoreEvent({
-        tool: tool.name,
-        data: data.data,
-        ui: blockElement,
-        index: index.blockIndex,
-      }));
-    } catch (error) {
-      console.error(`[BlockManager] Block Tool ${data.name} failed to render`, error);
-    }
-  }
-
-  /**
-   * Handles BlockRemovedEvent
-   *   - callse UI module to remove the block
-   * @param event - BlockRemovedEvent
-   */
-  #handleBlockRemovedEvent(event: BlockRemovedEvent): void {
-    const { data, index } = event.detail;
-
-    if (index.blockIndex === undefined) {
-      throw new Error('Block index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
-    }
-
-    // Remove and detach adapter related to the removed block, then shift
-    // indices of adapters that were after the removed one.
-    const removedIndex = index.blockIndex;
-
-    const adapterIndex = this.#adapters.findIndex(a => a.getBlockIndex().blockIndex === removedIndex);
-
-    if (adapterIndex !== -1) {
-      const [removedAdapter] = this.#adapters.splice(adapterIndex, 1);
-      this.#caretAdapter.detachBlock(removedAdapter.getBlockIndex());
-    }
-
-    for (const adapter of this.#adapters) {
-      const current = adapter.getBlockIndex().blockIndex;
-
-      if (current !== undefined && current > removedIndex) {
-        adapter.setBlockIndex(current - 1);
-      }
-    }
-
-    this.#eventBus.dispatchEvent(new BlockRemovedCoreEvent({
-      tool: data.name,
-      index: index.blockIndex,
-    }));
-
-    /**
-     * @todo Detach block tool adapter from caret adapter to clear memory
-     */
   }
 }

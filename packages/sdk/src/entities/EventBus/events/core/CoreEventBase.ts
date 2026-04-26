@@ -2,7 +2,6 @@
  * Represents a base class for core events.
  * @template Payload - The type of the event payload.
  */
-// eslint-disable-next-line n/no-unsupported-features/node-builtins
 export class CoreEventBase<Payload = unknown> extends CustomEvent<Payload> {
   /**
    * CoreEventBase constructor function

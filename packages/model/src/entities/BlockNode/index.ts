@@ -1,4 +1,3 @@
-import { DataNodeAddedEvent } from '../../EventBus/events/DataNodeAddedEvent.js';
 import { getContext } from '../../utils/Context.js';
 import type { EditorDocument } from '../EditorDocument';
 import type { BlockTuneName, BlockTuneSerialized } from '../BlockTune';
@@ -29,6 +28,8 @@ import type { DeepReadonly } from '../../utils/DeepReadonly';
 import { EventBus } from '../../EventBus/EventBus.js';
 import { EventType } from '../../EventBus/types/EventType.js';
 import {
+  DataNodeRemovedEvent,
+  DataNodeAddedEvent,
   TuneModifiedEvent,
   ValueModifiedEvent
 } from '../../EventBus/events/index.js';
@@ -148,8 +149,9 @@ export class BlockNode extends EventBus {
   }
 
   /**
+   * Returns data node by the key
    *
-   * @param dataKey
+   * @param dataKey - key of the node to get
    */
   public getDataNode(dataKey: DataKey): ValueSerialized | TextNodeSerialized | undefined {
     const node = get(this.data, dataKey as string);
@@ -182,7 +184,9 @@ export class BlockNode extends EventBus {
       .addDataKey(dataKey)
       .build();
 
-    this.dispatchEvent(new DataNodeAddedEvent(index, data, getContext<string | number>()!));
+    queueMicrotask(() => {
+      this.dispatchEvent(new DataNodeAddedEvent(index, data, getContext<string | number>()!));
+    });
   };
 
   /**
@@ -203,7 +207,9 @@ export class BlockNode extends EventBus {
       .addDataKey(dataKey)
       .build();
 
-    this.dispatchEvent(new DataNodeAddedEvent(index, nodeData, getContext<string | number>()!));
+    queueMicrotask(() => {
+      this.dispatchEvent(new DataNodeRemovedEvent(index, nodeData, getContext<string | number>()!));
+    });
   }
 
   /**
@@ -355,9 +361,9 @@ export class BlockNode extends EventBus {
    * @param data - block data
    */
   #initialize(data: BlockNodeDataSerialized): void {
-    this.#data = mapObject(
+    mapObject(
       data,
-      (value, key) => this.#mapSerializedDataToNodes(value, key)
+      (value, key) => this.createDataNode(createDataKey(key), value)
     );
   }
 
@@ -572,3 +578,6 @@ export {
   createBlockToolName,
   createDataKey
 };
+
+export { NODE_TYPE_HIDDEN_PROP } from './consts.js';
+export { BlockChildType };

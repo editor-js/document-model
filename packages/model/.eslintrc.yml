@@ -8,6 +8,7 @@ ignorePatterns:
 # Eslint seems to not recognize WeakMap as a global
 globals:
   WeakMap: readonly
+  queueMicrotask: readonly
 
 plugins:
   - import

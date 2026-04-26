@@ -1,7 +1,6 @@
 import { CollaborationManager } from '@editorjs/collaboration-manager';
 import { type DocumentId, EditorJSModel, EventType } from '@editorjs/model';
-import type { ContainerInstance } from 'typedi';
-import { Container } from 'typedi';
+import { Container } from 'inversify';
 import {
   type BlockToolConstructor,
   CoreEventType,
@@ -13,15 +12,16 @@ import {
 import type { ToolSettings } from './tools/ToolsFactory';
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
 import ToolsManager from './tools/ToolsManager.js';
-import { CaretAdapter, FormattingAdapter } from '@editorjs/dom-adapters';
-import type { CoreConfigValidated, CoreConfig, EditorjsPluginConstructor, BlockTuneConstructor, ToolConstructable } from '@editorjs/sdk';
-import { BlocksManager } from './components/BlockManager.js';
-import { SelectionManager } from './components/SelectionManager.js';
+import type { CoreConfigValidated, CoreConfig, EditorjsPluginConstructor, BlockTuneConstructor, ToolConstructable, EditorjsAdapterPluginConstructor } from '@editorjs/sdk';
 import { EditorAPI } from './api/index.js';
 import { generateId } from './utils/uid.js';
 import { Paragraph, BoldInlineTool, LinkInlineTool, ItalicInlineTool } from './tools/internal';
 import { ShortcutsPlugin } from './plugins/ShortcutsPlugin.js';
-
+import { DOMAdapters } from '@editorjs/dom-adapters';
+import { BlocksManager } from './components/BlockManager.js';
+import { BlockRenderer } from './components/BlockRenderer.js';
+import { SelectionManager } from './components/SelectionManager.js';
+import { TOKENS } from './tokens.js';
 /**
  * If no holder is provided via config, the editor will be appended to the element with this id
  */
@@ -51,21 +51,11 @@ export default class Core {
   #config: CoreConfigValidated;
 
   /**
-   * Caret adapter is responsible for handling caret position and selection
-   */
-  #caretAdapter: CaretAdapter;
-
-  /**
    * Inversion of Control container for dependency injections
    */
-  #iocContainer: ContainerInstance;
+  #iocContainer: Container;
 
-  /**
-   * Inline tool adapter is responsible for handling model formatting updates
-   * Applies format, got from inline toolbar to the model
-   * When model changed with formatting event, it renders related fragment
-   */
-  #formattingAdapter: FormattingAdapter;
+  #plugins: Container;
 
   /**
    * Collaboration manager
@@ -76,8 +66,9 @@ export default class Core {
    * @param config - Editor configuration
    */
   constructor(config: CoreConfig) {
-    // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-    this.#iocContainer = Container.of(Math.floor(Math.random() * 1e10).toString());
+    this.#iocContainer = new Container({ autobind: true,
+      defaultScope: 'Singleton' });
+    this.#plugins = new Container();
 
     this.#validateConfig(config);
 
@@ -91,30 +82,21 @@ export default class Core {
       this.#config.documentId = generateId();
     }
 
-    this.#iocContainer.set('EditorConfig', this.#config);
+    this.#iocContainer.bind(TOKENS.EditorConfig).toConstantValue(this.#config);
 
     const eventBus = new EventBus();
 
-    this.#iocContainer.set(EventBus, eventBus);
+    this.#iocContainer.bind(EventBus).toConstantValue(eventBus);
 
     this.#model = new EditorJSModel(this.#config.userId, { identifier: this.#config.documentId as DocumentId });
 
-    this.#iocContainer.set(EditorJSModel, this.#model);
+    this.#iocContainer.bind(EditorJSModel).toConstantValue(this.#model);
 
     this.#toolsManager = this.#iocContainer.get(ToolsManager);
 
-    this.#caretAdapter = new CaretAdapter(this.#config, this.#config.holder, this.#model);
-    this.#iocContainer.set(CaretAdapter, this.#caretAdapter);
-
     this.#collaborationManager = new CollaborationManager(this.#config, this.#model);
 
-    this.#iocContainer.set(CollaborationManager, this.#collaborationManager);
-
-    this.#formattingAdapter = new FormattingAdapter(this.#config, this.#model, this.#caretAdapter);
-
-    this.#iocContainer.set(FormattingAdapter, this.#formattingAdapter);
-    this.#iocContainer.get(SelectionManager);
-    this.#iocContainer.get(BlocksManager);
+    this.#iocContainer.bind(CollaborationManager).toConstantValue(this.#collaborationManager);
 
     if (config.onModelUpdate !== undefined) {
       this.#model.addEventListener(EventType.Changed, () => {
@@ -135,6 +117,7 @@ export default class Core {
     this.use(ItalicInlineTool);
     this.use(LinkInlineTool);
     this.use(ShortcutsPlugin);
+    this.use(DOMAdapters);
   }
 
   /**
@@ -147,14 +130,14 @@ export default class Core {
    * Injects Plugin into the container to initialize on Editor's init
    * @param plugin - allows to pass any implementation of editor plugins
    */
-  public use(plugin: EditorjsPluginConstructor): Core;
+  public use(plugin: EditorjsPluginConstructor | EditorjsAdapterPluginConstructor): Core;
   /**
    * Overloaded method to register Editor.js Plugins/Tools/etc
    * @param pluginOrTool - entity to register
    * @param options - second argument of `use(Tool, options)` when registering a tool
    */
   public use(
-    pluginOrTool: ToolConstructable | EditorjsPluginConstructor,
+    pluginOrTool: ToolConstructable | EditorjsPluginConstructor | EditorjsAdapterPluginConstructor,
     options?: Omit<ToolSettings, 'class'>
   ): Core {
     const pluginType = pluginOrTool.type;
@@ -163,21 +146,13 @@ export default class Core {
       case ToolType.Block:
       case ToolType.Inline:
       case ToolType.Tune:
-        this.#iocContainer.set({
-          id: pluginType,
-          multiple: true,
-          value: [pluginOrTool, options],
-        });
+        this.#plugins.bind<[ToolConstructable, ToolSettings | undefined]>(pluginType).toConstantValue([pluginOrTool as ToolConstructable, options as ToolSettings | undefined]);
+        break;
+      case PluginType.Adapter:
+        this.#plugins.bind(PluginType.Adapter).toConstantValue(pluginOrTool);
         break;
       default:
-        this.#iocContainer.set({
-          id: PluginType.Plugin,
-          multiple: true,
-          value: pluginOrTool,
-          /**
-           * @todo support plugin "options"
-           */
-        });
+        this.#plugins.bind(PluginType.Plugin).toConstantValue(pluginOrTool);
     }
 
     return this;
@@ -190,9 +165,15 @@ export default class Core {
     try {
       const { blocks } = composeDataFromVersion2(this.#config.data ?? { blocks: [] });
 
+      this.#initializeAdapter();
+
       this.#initializePlugins();
 
       await this.#initializeTools();
+
+      this.#iocContainer.get(SelectionManager);
+      this.#iocContainer.get(BlocksManager);
+      this.#iocContainer.get(BlockRenderer);
 
       this.#model.initializeDocument({ blocks });
       this.#collaborationManager.connect();
@@ -205,9 +186,9 @@ export default class Core {
    * Initalizes loaded tools
    */
   async #initializeTools(): Promise<void> {
-    const blockTools = this.#iocContainer.getMany<[ BlockToolConstructor, ToolSettings]>(ToolType.Block);
-    const inlineTools = this.#iocContainer.getMany<[ InlineToolConstructor, ToolSettings]>(ToolType.Inline);
-    const blockTunes = this.#iocContainer.getMany<[ BlockTuneConstructor, ToolSettings]>(ToolType.Tune);
+    const blockTools = this.#plugins.getAll<[BlockToolConstructor, ToolSettings]>(ToolType.Block);
+    const inlineTools = this.#plugins.getAll<[InlineToolConstructor, ToolSettings]>(ToolType.Inline);
+    const blockTunes = this.#plugins.getAll<[BlockTuneConstructor, ToolSettings]>(ToolType.Tune);
 
     return this.#toolsManager.prepareTools([...blockTools, ...inlineTools, ...blockTunes]);
   }
@@ -216,7 +197,9 @@ export default class Core {
    * Initialize all registered UI plugins (see {@link PluginType.Plugin}).
    */
   #initializePlugins(): void {
-    const plugins = this.#iocContainer.getMany<EditorjsPluginConstructor>(PluginType.Plugin);
+    const plugins = this.#plugins.isBound(PluginType.Plugin)
+      ? this.#plugins.getAll<EditorjsPluginConstructor>(PluginType.Plugin)
+      : [];
 
     for (const PluginCtor of plugins) {
       this.#initializePlugin(PluginCtor);
@@ -236,6 +219,27 @@ export default class Core {
       api,
       eventBus,
     });
+  }
+
+  /**
+   * Adds adapter factory to the IoC
+   */
+  #initializeAdapter(): void {
+    const Adapter = this.#plugins.get<EditorjsAdapterPluginConstructor>(PluginType.Adapter);
+
+    this.#iocContainer.bind(TOKENS.Adapter)
+      .toDynamicValue((ctx) => {
+        const eventBus = ctx.get(EventBus);
+        const api = ctx.get(EditorAPI);
+
+        return new Adapter({
+          model: this.#model,
+          config: this.#config,
+          api,
+          eventBus,
+        });
+      })
+      .inSingletonScope();
   }
 
   /**

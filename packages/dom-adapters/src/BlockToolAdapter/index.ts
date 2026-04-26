@@ -1,98 +1,52 @@
-import { isNativeInput } from '@editorjs/dom';
 import {
-  BlockAddedEvent,
-  BlockRemovedEvent,
   createDataKey,
-  type DataKey, DataNodeAddedEvent, DataNodeRemovedEvent,
-  type EditorJSModel,
+  type DataKey,
+  EditorJSModel,
   EventAction,
-  EventType,
   IndexBuilder,
   type ModelEvents,
   TextAddedEvent,
-  TextRemovedEvent,
-  type Index,
-  ValueModifiedEvent
+  TextRemovedEvent
 } from '@editorjs/model';
 import type {
-  EventBus,
-  BlockToolAdapter as BlockToolAdapterInterface,
-  CoreConfig,
   BeforeInputUIEvent,
   BeforeInputUIEventPayload,
-  BlockTool
+  CoreConfig
 } from '@editorjs/sdk';
-import { BeforeInputUIEventName } from '@editorjs/sdk';
-import type { CaretAdapter } from '../CaretAdapter/index.js';
-import type { FormattingAdapter } from '../FormattingAdapter/index.js';
+import { BeforeInputUIEventName, BlockToolAdapter,
+  EventBus
+} from '@editorjs/sdk';
+import { CaretAdapter } from '../CaretAdapter/index.js';
+import { FormattingAdapter } from '../FormattingAdapter/index.js';
 import {
-  findNextHardLineBoundary,
-  findNextWordBoundary,
-  findPreviousHardLineBoundary,
-  findPreviousWordBoundary,
   getAbsoluteRangeOffset,
   getBoundaryPointByAbsoluteOffset,
   getClippedTextRangeForInput,
   isInputContainsOnlyEndOfSelection,
   isInputContainsOnlyStartOfSelection,
   isInputContainsWholeSelection,
-  isInputInBetweenSelection,
-  isNonTextInput
+  isInputInBetweenSelection
 } from '../utils/index.js';
 import { InputType } from './types/InputType.js';
-
-type ToolOnUpdateCallback = (key: string, type: 'text' | 'value') => HTMLElement;
+import { inject, injectable } from 'inversify';
+import { TOKENS } from '../tokens.js';
+import { InputsRegistry } from '../InputsRegistry/index.js';
 
 /**
  * BlockToolAdapter is using inside Block tools to connect browser DOM elements to the model
  * It can handle beforeinput events and update model data
  * It can handle model's change events and update DOM
  */
-export class BlockToolAdapter implements BlockToolAdapterInterface {
+@injectable('Transient')
+export class DOMBlockToolAdapter extends BlockToolAdapter {
   /**
-   * Model instance
+   * Name of the tool that this adapter is connected to
    */
-  #model: EditorJSModel;
+  #toolName: string = '';
 
-  /**
-   * Index of the block that this adapter is connected to
-   */
-  #blockIndex: number;
-
-  /**
-   * Caret adapter instance
-   */
   #caretAdapter: CaretAdapter;
-
-  /**
-   * Formatting adapter instance
-   */
   #formattingAdapter: FormattingAdapter;
-
-  /**
-   * Tool instance
-   */
-  #tool!: BlockTool;
-
-  /**
-   * Editor's config
-   */
-  #config: Required<CoreConfig>;
-
-  /**
-   * Callback registered by the tool to create DOM elements when data nodes are added
-   */
-  #toolOnUpdateCallback: ToolOnUpdateCallback | null = null;
-
-  /**
-   * Inputs that bound to the model
-   */
-  #attachedInputs = new Map<DataKey, HTMLElement>();
-
-  /**
-   * Values that bound to the model
-   */
-  #attachedValues = new Map<DataKey, (value: unknown) => void>();
+  #inputsRegistry: InputsRegistry;
 
   /**
    * BlockToolAdapter constructor
@@ -101,131 +55,76 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    * @param model - EditorJSModel instance
    * @param eventBus - Editor EventBus instance
    * @param caretAdapter - CaretAdapter instance
-   * @param blockIndex - index of the block that this adapter is connected to
    * @param formattingAdapter - needed to render formatted text
+   * @param registry - shared inputs registry
    */
   constructor(
-    config: Required<CoreConfig>,
-    model: EditorJSModel,
-    eventBus: EventBus,
-    caretAdapter: CaretAdapter,
-    blockIndex: number,
-    formattingAdapter: FormattingAdapter
+    @inject(TOKENS.EditorConfig) config: Required<CoreConfig>,
+      model: EditorJSModel,
+      eventBus: EventBus,
+      caretAdapter: CaretAdapter,
+      formattingAdapter: FormattingAdapter,
+      registry: InputsRegistry
   ) {
-    this.#config = config;
-    this.#model = model;
-    this.#blockIndex = blockIndex;
+    super(config, model, eventBus);
+
     this.#caretAdapter = caretAdapter;
     this.#formattingAdapter = formattingAdapter;
+    this.#inputsRegistry = registry;
 
-    this.#model.addEventListener(EventType.Changed, (event: ModelEvents) => this.#handleModelUpdate(event));
 
+    /**
+     * @todo Needs to be documented. If UI module is replaced and doesn't dispatch the event nothing would work
+     */
     eventBus.addEventListener(`ui:${BeforeInputUIEventName}`, (event: BeforeInputUIEvent) => {
       this.#processDelegatedBeforeInput(event);
     });
   }
 
   /**
-   * Registers a callback that will be called when a text or value node is added to the model.
+   * Sets tool name for the adapter
    *
-   * @param callback - receives the data key and node type, should create, mount and return the DOM element
+   * @todo think how to remove the name dependency
+   * @param name - tool name
    */
-  public onUpdate(callback: ToolOnUpdateCallback): void {
-    this.#toolOnUpdateCallback = callback;
+  public setToolName(name: string): void {
+    this.#toolName = name;
   }
 
   /**
-   * Initializes the adapter with the tool instance and the update callback.
-   * Scans existing model data and renders inputs for all existing text nodes.
-   *
-   * @param tool - the block tool instance
-   * @param onUpdateCallback - callback to create DOM elements for data nodes
-   */
-  public init(tool: BlockTool, onUpdateCallback: ToolOnUpdateCallback): void {
-    this.#tool = tool;
-    this.#toolOnUpdateCallback = onUpdateCallback;
-
-    const blockData = this.#model.serialized.blocks[this.#blockIndex];
-
-    Object.entries(blockData.data).forEach(([key, value]) => {
-      if (this.#attachedInputs.has(createDataKey(key))) {
-        return;
-      }
-
-      if (typeof value === 'object' && value !== null && '$t' in value && (value as { $t: unknown }).$t === 't') {
-        this.onTextNodeAdded(key);
-      }
-    });
-  }
-
-  /**
-   * Called when a text DataNode is added to the model for this block.
-   * Creates and attaches the DOM input via the registered onUpdate callback.
-   *
-   * @param dataKey - key of the added text node
-   */
-  public onTextNodeAdded(dataKey: string): void {
-    if (this.#attachedInputs.has(createDataKey(dataKey))) {
-      return;
-    }
-
-    if (this.#toolOnUpdateCallback === null) {
-      return;
-    }
-
-    const input = this.#toolOnUpdateCallback(dataKey, 'text');
-
-    this.attachInput(dataKey, input);
-  }
-
-  public registerKey(keyRaw: string, type: 'text' | 'value', initialData?: unknown): void {
-    if (this.#model.getDataNode(this.#config.userId, this.#blockIndex, createDataKey(keyRaw)) !== undefined) {
-      return;
-    }
-
-    let data;
-
-    switch (type) {
-      case 'text':
-        data = {
-          $t: 't',
-          text: initialData as string ?? '',
-        };
-        break;
-      case 'value':
-        if (typeof initialData === 'object') {
-          data = { $t: 'v', ...initialData };
-        } else {
-          data = initialData;
-        }
-        break;
-    }
-
-    this.#model.createDataNode(this.#config.userId, this.#blockIndex, keyRaw, data);
-  }
-
-  /**
-   * Attaches input to the model using key
+   * Attaches or re-attaches input to the model using key
    * It handles beforeinput events and updates model data
    *
    * @param keyRaw - tools data key to attach input to
    * @param input - input element
    */
-  public attachInput(keyRaw: string, input: HTMLElement): void {
-    if (input instanceof HTMLInputElement && isNonTextInput(input)) {
-      throw new Error('Cannot attach non-text input');
-    }
-
+  public setInput(keyRaw: string, input: HTMLElement | undefined): void {
     const key = createDataKey(keyRaw);
 
-    this.#attachedInputs.set(key, input);
+    if (input === undefined) {
+      this.#inputsRegistry.unregister(this.blockIndex, key);
 
-    const builder = new IndexBuilder();
+      return;
+    }
 
-    builder.addBlockIndex(this.#blockIndex).addDataKey(key);
+    if (!(input instanceof HTMLElement)) {
+      throw new Error('Input should be an HTML element');
+    }
 
-    const value = this.#model.getText(this.#blockIndex, key);
-    const fragments = this.#model.getFragments(this.#blockIndex, key);
+    if (input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement) {
+      throw new Error('Native inputs such as HTMLInput or HTMLTextArea are not supported. Please provide an HTMLElement with contendEditable property set to \'true\'');
+    }
+
+    const existingInput = this.#attachedInputs.get(key);
+
+    if (existingInput === input) {
+      return;
+    }
+
+    const value = this.model.getText(this.blockIndex, key);
+    const fragments = this.model.getFragments(this.blockIndex, key);
+
+    this.#inputsRegistry.register(this.blockIndex, key, input);
 
     input.textContent = value;
 
@@ -235,48 +134,10 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
   }
 
   /**
-   * Removes the input from the DOM by key
-   *
-   * @param keyRaw - key of the input to remove
+   * Returns the (dataKey → element) map for this block from the shared registry.
    */
-  public detachInput(keyRaw: string): void {
-    const key = createDataKey(keyRaw);
-    const input = this.#attachedInputs.get(key);
-
-    if (!input) {
-      return;
-    }
-
-    /**
-     * @todo Let BlockTool handle DOM update
-     */
-    input.remove();
-
-    this.#attachedInputs.delete(key);
-
-    this.#model.removeDataNode(this.#config.userId, this.#blockIndex, key);
-  }
-
-  /**
-   * @todo - move to sdk BlockToolAdapter interface if it would be used
-   * Public getter for block index.
-   * Can be used to find a particular block, for example, in caret adapter
-   */
-  public getBlockIndex(): Index {
-    return new IndexBuilder()
-      .addBlockIndex(this.#blockIndex)
-      .build();
-  }
-
-  /**
-   * Updates the internal block index.
-   * Should only be called by the CaretAdapter registry when blocks are inserted or removed,
-   * guaranteeing the update happens before any nested model events fire.
-   *
-   * @param index - new block index value
-   */
-  public setBlockIndex(index: number): void {
-    this.#blockIndex = index;
+  get #attachedInputs(): Map<DataKey, HTMLElement> {
+    return this.#inputsRegistry.getBlockInputs(this.blockIndex) ?? new Map<DataKey, HTMLElement>();
   }
 
   /**
@@ -296,77 +157,6 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    */
   public getInput(key: DataKey): HTMLElement | undefined {
     return this.#attachedInputs.get(key);
-  }
-
-  /**
-   * Attaches value to the model using raw data key
-   *
-   * @template T - type of the value node
-   * @param keyRaw - string data key used for data node identification
-   * @param initialValue - initial value of the value node
-   * @param callback - callback function that should be used for DOM rerendering
-   * @returns {(newValue: T) => void} function that should be used to update the model
-   */
-  public attachValue<T>(keyRaw: string, initialValue: T, callback: (value: T) => void): (newValue: T) => void {
-    const key = createDataKey(keyRaw);
-
-    /**
-     * Cast callback to allow saving
-     */
-    this.#attachedValues.set(key, callback as (value: unknown) => void);
-
-    /**
-     * Create data node in the model with initial value
-     */
-    this.#model.createDataNode(
-      this.#config.userId,
-      this.#blockIndex,
-      key,
-      {
-        $t: 'v',
-        value: initialValue,
-      }
-    );
-
-    return (newValue: T) => {
-      this.#model.updateValue(this.#config.userId, this.#blockIndex, key, newValue);
-    };
-  };
-
-  /**
-   * Removes the data node from the model by key
-   *
-   * @param keyRaw - string data key used for value node identification
-   */
-  public detachValue(keyRaw: string): void {
-    const key = createDataKey(keyRaw);
-
-    const value = this.#attachedValues.get(key);
-
-    if (!value) {
-      return;
-    }
-
-    /**
-     * Remove value update callback
-     */
-    this.#attachedValues.delete(key);
-
-    /**
-     * Remove data node from the model
-     */
-    this.#model.removeDataNode(this.#config.userId, this.#blockIndex, key);
-  }
-
-  /**
-   * Calls detach input and detach value methods
-   * If no value or no input for this dataKey — pass silently
-   *
-   * @param key - data key to detach
-   */
-  #detachDataNode(key: DataKey): void {
-    this.detachInput(key.toString());
-    this.detachValue(key.toString());
   }
 
   /**
@@ -463,106 +253,6 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
   }
 
   /**
-   * Handles delete events in native input
-   *
-   * @param payload - beforeinput event payload
-   * @param input - input element
-   * @param key - data key input is attached to
-   * @param range - target range for this input
-   * @private
-   * @deprecated
-   */
-  #handleDeleteInNativeInput(
-    payload: BeforeInputUIEventPayload,
-    input: HTMLInputElement | HTMLTextAreaElement,
-    key: DataKey,
-    range: StaticRange
-  ): void {
-    const inputType = payload.inputType;
-    const inputValue = input.value;
-    const inputLength = inputValue.length;
-
-    let start = 0;
-    let end = inputLength;
-
-    /**
-     * If range is fully contained within this input
-     */
-    if (input.contains(range.startContainer) && input.contains(range.endContainer)) {
-      start = range.startOffset;
-      end = range.endOffset;
-    } else if (input.contains(range.startContainer)) {
-      /**
-       * If only start is in this input, delete from start to end of input
-       */
-      start = range.startOffset;
-    } else if (input.contains(range.endContainer)) {
-      /**
-       * If only end is in this input, delete from start of input to end
-       */
-      end = range.endOffset;
-    }
-
-    /**
-     * If selection is not collapsed, just remove selected text
-     */
-    if (start !== end) {
-      this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, end);
-
-      return;
-    }
-
-    switch (inputType) {
-      case InputType.DeleteContentForward: {
-        /**
-         * If selection end is already after the last element, then there is nothing to delete
-         */
-        end = end !== inputValue.length ? end + 1 : end;
-        break;
-      }
-      case InputType.DeleteContentBackward: {
-        /**
-         * If start is already 0, then there is nothing to delete
-         */
-        start = start !== 0 ? start - 1 : start;
-        break;
-      }
-      case InputType.DeleteWordBackward: {
-        start = findPreviousWordBoundary(inputValue, start);
-        break;
-      }
-      case InputType.DeleteWordForward: {
-        end = findNextWordBoundary(inputValue, start);
-        break;
-      }
-      case InputType.DeleteHardLineBackward: {
-        start = findPreviousHardLineBoundary(inputValue, start);
-        break;
-      }
-      case InputType.DeleteHardLineForward: {
-        end = findNextHardLineBoundary(inputValue, start);
-        break;
-      }
-      case InputType.DeleteSoftLineBackward:
-      case InputType.DeleteSoftLineForward:
-      case InputType.DeleteEntireSoftLine:
-        /**
-         * @todo Think of how to find soft line boundaries
-         */
-        break;
-      case InputType.DeleteByDrag:
-      case InputType.DeleteByCut:
-      case InputType.DeleteContent:
-      default:
-        /**
-         * do nothing, use start and end from range
-         */
-    }
-
-    this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, end);
-  }
-
-  /**
    * Handles delete events in contenteditable element
    *
    * @param input - input element
@@ -582,7 +272,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
      * Middle block in a cross-input selection: remove the whole block, not the same as removeText(0, length).
      */
     if (isInputInBetweenSelection(input, range)) {
-      this.#model.removeBlock(this.#config.userId, this.#blockIndex);
+      this.model.removeBlock(this.config.userId, this.blockIndex);
 
       return;
     }
@@ -610,20 +300,32 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     }
 
     const [start, end] = clipped;
-    const removedText = this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, end);
+    const removedText = this.model.removeText(this.config.userId, this.blockIndex, key, start, end);
 
     let newCaretIndex: number | null = null;
 
-    if (isInputContainsOnlyStartOfSelection(input, range) && !isRestoreCaretToTheEnd) {
+    if (!isRestoreCaretToTheEnd) {
+      /**
+       * Default mode: place the caret where the deletion started.
+       * Applies when the input owns the start of the selection, or when
+       * the entire selection falls inside this input (whole-selection delete).
+       * Also covers the case where the input owns only the end of a cross-input
+       * selection — the remaining text has shifted to `start` (= 0 for a
+       * leading-edge clip), so that is the correct landing position.
+       */
       newCaretIndex = start;
-    } else if (isInputContainsOnlyEndOfSelection(input, range) && isRestoreCaretToTheEnd) {
+    } else if (isInputContainsOnlyEndOfSelection(input, range)) {
+      /**
+       * InsertParagraph / split mode: the caller wants the caret at the end
+       * of the surviving text in the input that held the selection end.
+       */
       newCaretIndex = end - removedText.length;
     }
 
     if (newCaretIndex !== null) {
       this.#caretAdapter.updateIndex(
         new IndexBuilder()
-          .addBlockIndex(this.#blockIndex)
+          .addBlockIndex(this.blockIndex)
           .addDataKey(key)
           .addTextRange([newCaretIndex, newCaretIndex])
           .build()
@@ -645,7 +347,6 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     const range = targetRanges[0];
     const isFormattingInputType = inputType.startsWith('format');
 
-    const isInputNative = isNativeInput(input);
     let start: number;
 
     /**
@@ -656,11 +357,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
      * In all cases (except formatting commands) we need to handle delete selected text if range is not collapsed.
      */
     if (range.collapsed === false && !isFormattingInputType) {
-      if (isInputNative) {
-        this.#handleDeleteInNativeInput(payload, input as HTMLInputElement | HTMLTextAreaElement, key, range);
-      } else {
-        this.#handleDeleteInContentEditable(input, key, range);
-      }
+      this.#handleDeleteInContentEditable(input, key, range);
     }
 
     switch (inputType) {
@@ -668,11 +365,9 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
       case InputType.InsertFromDrop:
       case InputType.InsertFromPaste: {
         if (data !== undefined && input.contains(range.startContainer)) {
-          start = isInputNative ?
-            (input as HTMLInputElement | HTMLTextAreaElement).selectionStart as number :
-            getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
+          start = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
 
-          this.#model.insertText(this.#config.userId, this.#blockIndex, key, data, start);
+          this.model.insertText(this.config.userId, this.blockIndex, key, data, start);
         }
         break;
       }
@@ -682,11 +377,9 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
        */
       case InputType.InsertCompositionText: {
         if (data !== undefined && input.contains(range.startContainer)) {
-          start = isInputNative ?
-            (input as HTMLInputElement | HTMLTextAreaElement).selectionStart as number :
-            getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
+          start = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
 
-          this.#model.insertText(this.#config.userId, this.#blockIndex, key, data, start);
+          this.model.insertText(this.config.userId, this.blockIndex, key, data, start);
         }
         break;
       }
@@ -718,21 +411,15 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
           (isInputContainsOnlyStartOfSelection(input, range) || isInputContainsWholeSelection(input, range)) &&
           payload.isCrossInputSelection === false
         ) {
-          start = isInputNative ?
-            (input as HTMLInputElement | HTMLTextAreaElement).selectionStart as number :
-            getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
+          start = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
 
           this.#handleSplit(key, start, start);
         }
         break;
       case InputType.InsertLineBreak:
         /**
-         * @todo Think if we need to keep that or not
+         * @todo hanlde insert linebreak for content editable elements
          */
-        if (isInputNative && input.contains(range.startContainer)) {
-          start = (input as HTMLInputElement | HTMLTextAreaElement).selectionStart as number;
-          this.#model.insertText(this.#config.userId, this.#blockIndex, key, '\n', start);
-        }
         break;
       default:
     }
@@ -748,10 +435,10 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
    * @param end - end index of the selected range
    */
   #handleSplit(key: DataKey, start: number, end: number): void {
-    const currentValue = this.#model.getText(this.#blockIndex, key);
+    const currentValue = this.model.getText(this.blockIndex, key);
     const newValueAfter = currentValue.slice(end);
 
-    const relatedFragments = this.#model.getFragments(this.#blockIndex, key, end, currentValue.length);
+    const relatedFragments = this.model.getFragments(this.blockIndex, key, end, currentValue.length);
 
     /**
      * Fragment ranges bounds should be decreased by end index, because end is the index of the first character of the new block
@@ -761,11 +448,14 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
       fragment.range[1] -= end;
     });
 
-    this.#model.removeText(this.#config.userId, this.#blockIndex, key, start, currentValue.length);
-    this.#model.addBlock(
-      this.#config.userId,
+    this.model.removeText(this.config.userId, this.blockIndex, key, start, currentValue.length);
+    this.model.addBlock(
+      this.config.userId,
       {
-        name: this.#tool.constructor.name,
+        /**
+         * @todo when implementing split/merge, think of how to not use toolname here
+         */
+        name: this.#toolName,
         data: {
           [key]: {
             $t: 't',
@@ -774,7 +464,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
           },
         },
       },
-      this.#blockIndex + 1
+      this.blockIndex + 1
     );
 
     /**
@@ -783,55 +473,13 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
     requestAnimationFrame(() => {
       this.#caretAdapter.updateIndex(
         new IndexBuilder()
-          .addBlockIndex(this.#blockIndex + 1)
+          .addBlockIndex(this.blockIndex + 1)
           .addDataKey(key)
           .addTextRange([0, 0])
           .build()
       );
     });
   }
-
-  /**
-   * Handles model update events for native inputs and updates DOM
-   *
-   * @param event - model update event
-   * @param input - input element
-   */
-  #handleModelUpdateForNativeInput(event: ModelEvents, input: HTMLInputElement | HTMLTextAreaElement): void {
-    const { textRange } = event.detail.index;
-
-    const currentElement = input;
-    const [start, end] = textRange!;
-
-    const action = event.detail.action;
-
-    const caretIndexBuilder = new IndexBuilder();
-
-    caretIndexBuilder.from(event.detail.index);
-
-    switch (action) {
-      case EventAction.Added: {
-        const text = event.detail.data as string;
-        const prevValue = currentElement.value;
-
-        currentElement.value = prevValue.slice(0, start) + text + prevValue.slice(start);
-
-        caretIndexBuilder.addTextRange([start + text.length, start + text.length]);
-
-        break;
-      }
-      case EventAction.Removed: {
-        currentElement.value = currentElement.value.slice(0, start) +
-          currentElement.value.slice(end);
-
-        caretIndexBuilder.addTextRange([start, start]);
-
-        break;
-      }
-    }
-
-    this.#caretAdapter.updateIndex(caretIndexBuilder.build(), event.detail.userId);
-  };
 
   /**
    * Handles model update events for contenteditable elements and updates DOM
@@ -854,7 +502,7 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
 
     const builder = new IndexBuilder();
 
-    builder.addDataKey(key).addBlockIndex(this.#blockIndex);
+    builder.addDataKey(key).addBlockIndex(this.blockIndex);
 
     let newCaretIndex: number | null = null;
 
@@ -886,85 +534,16 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
   };
 
   /**
-   * Handles model update events for value nodes and updates DOM via callback
-   *
-   * @param event - value modified event got from the model
-   * @param key - data key of the value node
-   */
-  #handleModelUpdateForValue(event: ValueModifiedEvent, key: DataKey): void {
-    const { index, data } = event.detail;
-    const { dataKey, blockIndex } = index;
-
-    const { value } = data;
-
-    if (blockIndex !== this.#blockIndex || dataKey !== key) {
-      return;
-    }
-
-    /**
-     * Get value update callback
-     */
-    const valueUpdateCallback = this.#attachedValues.get(key);
-
-    if (!valueUpdateCallback) {
-      return;
-    }
-
-    valueUpdateCallback(value);
-  }
-
-  /**
    * Handles model update events and updates DOM
    *
    * @param event - model update event
    */
-  #handleModelUpdate(event: ModelEvents): void {
-    if (event instanceof BlockAddedEvent || event instanceof BlockRemovedEvent) {
-      /**
-       * Block index shifting is now handled externally by CaretAdapter.shiftBlockIndices(),
-       * which is called synchronously by BlocksManager before any nested model events fire.
-       * No action needed here.
-       */
-      return;
-    }
-
-    const { textRange, dataKey, blockIndex } = event.detail.index;
-
-    if (blockIndex !== this.#blockIndex) {
-      return;
-    }
-
-    if (event instanceof DataNodeAddedEvent) {
-      if (dataKey === undefined) {
-        return;
-      }
-
-      const data = event.detail.data;
-
-      if (typeof data === 'object' && data !== null && '$t' in data && (data as { $t: unknown }).$t === 't') {
-        this.onTextNodeAdded(dataKey.toString());
-      }
-
-      return;
-    }
-
-    if (event instanceof DataNodeRemovedEvent) {
-      if (dataKey === undefined) {
-        return;
-      }
-
-      this.#detachDataNode(dataKey);
-
-      return;
-    }
-
-    if (event instanceof ValueModifiedEvent) {
-      this.#handleModelUpdateForValue(event, dataKey!);
-    }
-
+  protected handleModelUpdate(event: ModelEvents): void {
     if (!(event instanceof TextAddedEvent) && !(event instanceof TextRemovedEvent)) {
       return;
     }
+
+    const { textRange, dataKey } = event.detail.index;
 
     const input = this.#attachedInputs.get(dataKey!);
 
@@ -972,12 +551,6 @@ export class BlockToolAdapter implements BlockToolAdapterInterface {
       return;
     }
 
-    const isInputNative = isNativeInput(input);
-
-    if (isInputNative === true) {
-      this.#handleModelUpdateForNativeInput(event, input as HTMLInputElement | HTMLTextAreaElement);
-    } else {
-      this.#handleModelUpdateForContentEditableElement(event, input, dataKey!);
-    }
+    this.#handleModelUpdateForContentEditableElement(event, input, dataKey!);
   };
 }

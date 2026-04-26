@@ -18,6 +18,9 @@ export default [
       },
     },
     rules: {
+      'n/no-unsupported-features/node-builtins': ['error', {
+        ignores: ['CustomEvent'],
+      }],
       'n/no-unpublished-import': ['error', {
         allowModules: [
           '@jest/globals',

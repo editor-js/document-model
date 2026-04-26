@@ -2245,12 +2245,12 @@ __metadata:
     eslint: "npm:^9.24.0"
     eslint-config-codex: "npm:^2.0.3"
     eslint-plugin-import: "npm:^2.29.0"
+    inversify: "npm:^8.1.0"
     jest: "npm:^29.7.0"
     reflect-metadata: "npm:^0.2.2"
     stryker-cli: "npm:^1.0.2"
     ts-jest: "npm:^29.2.5"
     ts-node: "npm:^10.9.2"
-    typedi: "npm:^0.10.0"
     typescript: "npm:^5.5.4"
   languageName: unknown
   linkType: soft
@@ -2299,7 +2299,9 @@ __metadata:
     eslint: "npm:^8.38.0"
     eslint-config-codex: "npm:^1.7.2"
     eslint-plugin-import: "npm:^2.29.0"
+    inversify: "npm:^8.1.0"
     jest: "npm:^29.7.0"
+    reflect-metadata: "npm:^0.2.2"
     stryker-cli: "npm:^1.0.2"
     ts-jest: "npm:^29.2.5"
     ts-node: "npm:^10.9.2"
@@ -2998,6 +3000,63 @@ __metadata:
   version: 1.0.11
   resolution: "@inquirer/figures@npm:1.0.11"
   checksum: 357ddd2e83718bc3c9189d518b93fd69099af9c860354df9a5ac0ec024cb5df1228ae4608d2de7625624d2adcd047db813f29426a610eaae7b9e449f8c753c6b
+  languageName: node
+  linkType: hard
+
+"@inversifyjs/common@npm:2.0.1":
+  version: 2.0.1
+  resolution: "@inversifyjs/common@npm:2.0.1"
+  checksum: 8086d1deed970ba123d838dbbc421d285c3aa4cc1891dfc66a247b27bcb70b1f2a457ab6cf984b74de7243e3dd42b71cd3385d8f3f411cb2171b46008473680e
+  languageName: node
+  linkType: hard
+
+"@inversifyjs/container@npm:2.0.1":
+  version: 2.0.1
+  resolution: "@inversifyjs/container@npm:2.0.1"
+  dependencies:
+    "@inversifyjs/common": "npm:2.0.1"
+    "@inversifyjs/core": "npm:10.0.1"
+    "@inversifyjs/plugin": "npm:0.3.1"
+    "@inversifyjs/reflect-metadata-utils": "npm:1.5.0"
+  peerDependencies:
+    reflect-metadata: ~0.2.2
+  checksum: aee72306c22a32347111fdf993d3acd7dc6605261b886f4d066fed815d8c5df3c47a5d45f1182c78b09ccd9d5061af117e697e3d4fc7ded792af453aced37a68
+  languageName: node
+  linkType: hard
+
+"@inversifyjs/core@npm:10.0.1":
+  version: 10.0.1
+  resolution: "@inversifyjs/core@npm:10.0.1"
+  dependencies:
+    "@inversifyjs/common": "npm:2.0.1"
+    "@inversifyjs/prototype-utils": "npm:0.2.1"
+    "@inversifyjs/reflect-metadata-utils": "npm:1.5.0"
+  checksum: a9d3eeec58c6ced533973d33741d31310b1a1fbe324d437993e10a8b4bb2bfc4c35f5195814f30bb26adbfee4ca267ea437d3d36636a3a7b7cb7a12e79414924
+  languageName: node
+  linkType: hard
+
+"@inversifyjs/plugin@npm:0.3.1":
+  version: 0.3.1
+  resolution: "@inversifyjs/plugin@npm:0.3.1"
+  checksum: 7ecf1b8d576eb5b82b6b8c350db5cdd1039c74cbab9ca9779b32313288cc4f65e971f97ef3b782d3f6b22acd252408ce2fea54c681de66098d9aa92501301f0b
+  languageName: node
+  linkType: hard
+
+"@inversifyjs/prototype-utils@npm:0.2.1":
+  version: 0.2.1
+  resolution: "@inversifyjs/prototype-utils@npm:0.2.1"
+  dependencies:
+    "@inversifyjs/common": "npm:2.0.1"
+  checksum: cd4a14c92fc5233d7332847e931259e0523c2409fadb44f027d4748f46f9bdd385c0b4c116a5d94d24e3a075cf2879644cc3b9e466c98b257d97cb227409922f
+  languageName: node
+  linkType: hard
+
+"@inversifyjs/reflect-metadata-utils@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@inversifyjs/reflect-metadata-utils@npm:1.5.0"
+  peerDependencies:
+    reflect-metadata: ~0.2.2
+  checksum: 842e100d4513fb66ce98861b5d213f51352951685733a61a3c685cdeb21d80d9b7f2854ee019acb542032cd390b0471985ff70c6fa81b8e2ed121d36fa01c585
   languageName: node
   linkType: hard
 
@@ -8002,6 +8061,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"inversify@npm:^8.1.0":
+  version: 8.1.0
+  resolution: "inversify@npm:8.1.0"
+  dependencies:
+    "@inversifyjs/common": "npm:2.0.1"
+    "@inversifyjs/container": "npm:2.0.1"
+    "@inversifyjs/core": "npm:10.0.1"
+  checksum: 786cf12aab6ebf3e3549156195ed9125c70ca46d3320305f391726b9de32f3563be1163b69be81e2778d9ea142f16f83f2499eb2e187a310706c4d391ed5a335
+  languageName: node
+  linkType: hard
+
 "ip-address@npm:^9.0.5":
   version: 9.0.5
   resolution: "ip-address@npm:9.0.5"
@@ -12432,13 +12502,6 @@ __metadata:
     tunnel: "npm:0.0.6"
     underscore: "npm:^1.12.1"
   checksum: 9c160780f476aa03ad1ce6e7961894d06c17d9b67d94da9fbbcd0c5a5ff741e4a6d85c3b938964b13826d3f20ea36febcd6186b43e361cc62a9960241e0f5a4f
-  languageName: node
-  linkType: hard
-
-"typedi@npm:^0.10.0":
-  version: 0.10.0
-  resolution: "typedi@npm:0.10.0"
-  checksum: 3d519795b4d1a9edea2e5fdb9fa61bc2eca00546aeaf2dbbc1597cfed021659ca117454913022828c77f4971dd03f38a3f9a646eda374ccfb565d3ddcb661224
   languageName: node
   linkType: hard
 

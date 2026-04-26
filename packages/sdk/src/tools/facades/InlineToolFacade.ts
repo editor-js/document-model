@@ -17,6 +17,12 @@ export class InlineToolFacade extends BaseToolFacade<ToolType.Inline, IInlineToo
   protected declare constructable: InlineToolConstructor;
 
   /**
+   * Cached instance of the inline tool
+   * Inline tools are singletons — the same instance is reused across all calls to create()
+   */
+  #instance: IInlineTool | undefined;
+
+  /**
    * Returns title for Inline Tool if specified by user
    */
   public get title(): string | undefined {
@@ -24,17 +30,21 @@ export class InlineToolFacade extends BaseToolFacade<ToolType.Inline, IInlineToo
   }
 
   /**
-   * Constructs new InlineTool instance from constructable
+   * Returns the singleton InlineTool instance, creating it on the first call
    */
   public create(): IInlineTool {
-    /**
-     * @todo fix types
-     */
-    return new this.constructable(
-      // {
-      //   api: this.api,
-      //   config: this.config,
-      // }
-    );
+    if (this.#instance === undefined) {
+      /**
+       * @todo fix types
+       */
+      this.#instance = new this.constructable(
+        // {
+        //   api: this.api,
+        //   config: this.config,
+        // }
+      );
+    }
+
+    return this.#instance;
   }
 }

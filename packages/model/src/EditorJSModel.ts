@@ -133,6 +133,15 @@ export class EditorJSModel extends EventBus {
   }
 
   /**
+   * Returns a caret by user id
+   *
+   * @param parameters - getCaret method parameters
+   */
+  public getCaret(...parameters: Parameters<CaretManager['getCaret']>): ReturnType<CaretManager['getCaret']> {
+    return this.#caretManager.getCaret(...parameters);
+  }
+
+  /**
    * Updates caret instance in the model
    *
    * @param _userId - user identifier which is being set to the context
@@ -277,6 +286,14 @@ export class EditorJSModel extends EventBus {
     return this.#document.removeDataNode(...parameters);
   }
 
+  /**
+   * Returns a data node by the block index and key
+   *
+   * @param _userId - user identifier which is being set to the context
+   * @param parameters - getDataNode method parameters
+   * @param parameters.blockIndex - index of the BlockNode where data node is stored
+   * @param parameters.dataKey - key of the node to get
+   */
   @WithContext
   public getDataNode(_userId: string | number, ...parameters: Parameters<EditorDocument['getDataNode']>): ReturnType<EditorDocument['getDataNode']> {
     return this.#document.getDataNode(...parameters);

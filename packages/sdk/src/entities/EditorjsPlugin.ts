@@ -36,11 +36,14 @@ export interface EditorjsPlugin {
 /**
  * Constructor type for EditorjsPlugin
  */
-export interface EditorjsPluginConstructor {
+export interface EditorjsPluginConstructor<
+  Params extends EditorjsPluginParams = EditorjsPluginParams,
+  Instance extends EditorjsPlugin = EditorjsPlugin
+> {
   /**
    * Create new EditorjsPlugin instance
    */
-  new (params: EditorjsPluginParams): EditorjsPlugin;
+  new (params: Params): Instance;
 
   /**
    * Plugin's entity type: UI plugin, Tool, etc.
