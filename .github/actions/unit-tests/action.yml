@@ -15,15 +15,48 @@ runs:
         node-version-file: .nvmrc
     - uses: ./.github/actions/setup
 
+    # ---- Base branch coverage (for comparison) ----
+    - name: Checkout base branch
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.base_ref }}
+
+    - uses: ./.github/actions/build
+      with:
+        package-name: ${{ inputs.package-name }}
+
+    - name: Run base tests with coverage
+      shell: bash
+      run: yarn workspace ${{ inputs.package-name }} test:coverage --coverageReporters=json-summary
+      continue-on-error: true
+
+    - name: Save base coverage
+      shell: bash
+      run: |
+        [ -f "${{ inputs.working-directory }}/coverage/coverage-summary.json" ] && \
+        cp "${{ inputs.working-directory }}/coverage/coverage-summary.json" /tmp/base-coverage-summary.json || true
+
+    # ---- PR HEAD coverage ----
+    - name: Checkout PR HEAD
+      uses: actions/checkout@v4
+
+    - uses: ./.github/actions/build
+      with:
+        package-name: ${{ inputs.package-name }}
+
+    - name: Run unit tests with coverage
+      shell: bash
+      run: yarn workspace ${{ inputs.package-name }} test:coverage --coverageReporters=json-summary --coverageReporters=text
+
     # Find current PR's number
     - uses: jwalton/gh-find-current-pr@v1
       id: findPr
 
-    - name: Run unit tests
-      uses: ArtiomTr/jest-coverage-report-action@v2
+    - name: Post coverage report
+      uses: MishaKav/jest-coverage-comment@main
       with:
-        custom-title: Coverage report for `${{ inputs.working-directory }}`
-        working-directory: ${{ inputs.working-directory }}
-        test-script: yarn workspace ${{ inputs.package-name }} run build && yarn workspace ${{ inputs.package-name }} test
-        package-manager: yarn
-        prnumber: ${{ steps.findPr.outputs.number }}
+        title: Coverage report for `${{ inputs.working-directory }}`
+        coverage-summary-path: ${{ inputs.working-directory }}/coverage/coverage-summary.json
+        base-coverage-summary-path: /tmp/base-coverage-summary.json
+        pr-number: ${{ steps.findPr.outputs.number }}
+        github-token: ${{ github.token }}
