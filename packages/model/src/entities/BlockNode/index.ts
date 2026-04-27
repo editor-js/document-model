@@ -346,10 +346,9 @@ export class BlockNode extends EventBus {
    * @param data - block data
    */
   #initialize(data: BlockNodeDataSerialized): void {
-    mapObject(
-      data,
-      (value, key) => this.createDataNode(createDataKey(key), value)
-    );
+    for (const [key, value] of Object.entries(data)) {
+      this.createDataNode(createDataKey(key), value);
+    }
   }
 
   /**

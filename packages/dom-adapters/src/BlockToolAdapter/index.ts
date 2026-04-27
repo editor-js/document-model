@@ -36,7 +36,7 @@ import { InputsRegistry } from '../InputsRegistry/index.js';
  * It can handle beforeinput events and update model data
  * It can handle model's change events and update DOM
  */
-@injectable('Transient')
+@injectable()
 export class DOMBlockToolAdapter extends BlockToolAdapter {
   /**
    * Name of the tool that this adapter is connected to
@@ -107,7 +107,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
     }
 
     if (input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement) {
-      throw new Error('Native inputs such as HTMLInput or HTMLTextArea are not supported. Please provide an HTMLElement with contendEditable property set to \'true\'');
+      throw new Error('Native inputs such as HTMLInput or HTMLTextArea are not supported. Please provide a non-native HTMLElement (e.g. a div with contentEditable set to \'true\')');
     }
 
     const existingInput = this.#attachedInputs.get(key);
@@ -408,7 +408,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
         break;
       case InputType.InsertLineBreak:
         /**
-         * @todo hanlde insert linebreak for content editable elements
+         * @todo handle insert linebreak for content editable elements
          */
         break;
       default:

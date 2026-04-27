@@ -105,6 +105,12 @@ export abstract class BlockToolAdapter extends EventTarget {
    * Creates data node in the model
    * @param key - key of the node
    * @param initialData - optional initial data for the node
+   * @example
+   * // Register a text input key with initial content
+   * this.#createDataNode(createDataKey('content'), { $t: 't', value: 'Hello', fragments: [] });
+   *
+   * // Register a value key in an array (e.g. for items[0].content)
+   * this.#createDataNode(createDataKey('items[0].content'), { $t: 'v', value: 'Item text' });
    */
   #createDataNode<V = unknown>(key: DataKey, initialData?: TextNodeSerialized | ValueSerialized<V>): void {
     if (this.model.getDataNode(this.config.userId, this.blockIndex, key) !== undefined) {

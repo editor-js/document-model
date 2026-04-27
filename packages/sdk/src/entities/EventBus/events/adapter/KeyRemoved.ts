@@ -15,7 +15,7 @@ interface KeyRemovedPayload {
  */
 export class KeyRemovedEvent extends CustomEvent<KeyRemovedPayload> {
   /**
-   * Cosntructor function
+   * Constructor function
    * @param key - key of the removed data node
    */
   constructor(key: string) {

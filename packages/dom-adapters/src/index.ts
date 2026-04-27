@@ -43,6 +43,10 @@ export class DOMAdapters implements EditorJSAdapterPlugin {
     this.#iocContainer.bind<Required<CoreConfig>>(TOKENS.EditorConfig).toConstantValue(config as Required<CoreConfig>);
     this.#iocContainer.bind(EditorJSModel).toConstantValue(model);
     this.#iocContainer.bind(EventBus).toConstantValue(eventBus);
+    this.#iocContainer
+      .bind(DOMBlockToolAdapter)
+      .toSelf()
+      .inTransientScope();
 
     const registry = this.#iocContainer.get(InputsRegistry);
 

@@ -17,7 +17,7 @@ interface ValueNodeChangedPayload<V = unknown> {
 }
 
 /**
- * ValueNodeChangedEvent adapterr event
+ * ValueNodeChangedEvent adapter event
  */
 export class ValueNodeChangedEvent<V = unknown> extends CustomEvent<ValueNodeChangedPayload<V>> {
   /**

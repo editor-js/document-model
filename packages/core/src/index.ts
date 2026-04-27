@@ -149,7 +149,11 @@ export default class Core {
         this.#plugins.bind<[ToolConstructable, ToolSettings | undefined]>(pluginType).toConstantValue([pluginOrTool as ToolConstructable, options as ToolSettings | undefined]);
         break;
       case PluginType.Adapter:
-        this.#plugins.bind(PluginType.Adapter).toConstantValue(pluginOrTool);
+        if (this.#plugins.isBound(PluginType.Adapter)) {
+          this.#plugins.rebind(PluginType.Adapter).toConstantValue(pluginOrTool);
+        } else {
+          this.#plugins.bind(PluginType.Adapter).toConstantValue(pluginOrTool);
+        }
         break;
       default:
         this.#plugins.bind(PluginType.Plugin).toConstantValue(pluginOrTool);
