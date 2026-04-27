@@ -203,9 +203,7 @@ export class BlockNode extends EventBus {
       .addDataKey(dataKey)
       .build();
 
-    queueMicrotask(() => {
-      this.dispatchEvent(new DataNodeRemovedEvent(index, nodeData, getContext<string | number>()!));
-    });
+    this.dispatchEvent(new DataNodeRemovedEvent(index, nodeData, getContext<string | number>()!));
   }
 
   /**

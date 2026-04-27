@@ -168,9 +168,7 @@ export class EditorDocument extends EventBus {
 
     builder.addBlockIndex(index);
 
-    queueMicrotask(() => {
-      this.dispatchEvent(new BlockRemovedEvent(builder.build(), blockNode.serialized, getContext<string | number>()!));
-    });
+    this.dispatchEvent(new BlockRemovedEvent(builder.build(), blockNode.serialized, getContext<string | number>()!));
   }
 
   /**
@@ -214,7 +212,7 @@ export class EditorDocument extends EventBus {
    * @param index - block index where data node is stored
    * @param key - data key of the data node
    */
-  public getDataNode(index: number, key: DataKey | string): ValueSerialized | TextNodeSerialized {
+  public getDataNode(index: number, key: DataKey | string): ValueSerialized | TextNodeSerialized | undefined {
     this.#checkIndexOutOfBounds(index, this.length - 1);
 
     return this.#children[index].getDataNode(createDataKey(key));
