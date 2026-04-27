@@ -15,10 +15,6 @@ runs:
         node-version-file: .nvmrc
     - uses: ./.github/actions/setup
 
-    - uses: ./.github/actions/build
-      with:
-        package-name: ${{ inputs.package-name }}
-
     # Find current PR's number
     - uses: jwalton/gh-find-current-pr@v1
       id: findPr
@@ -28,6 +24,6 @@ runs:
       with:
         custom-title: Coverage report for `${{ inputs.working-directory }}`
         working-directory: ${{ inputs.working-directory }}
-        test-script: yarn workspace ${{ inputs.package-name }} test
+        test-script: yarn workspace ${{ inputs.package-name }} run build && yarn workspace ${{ inputs.package-name }} test
         package-manager: yarn
         prnumber: ${{ steps.findPr.outputs.number }}
