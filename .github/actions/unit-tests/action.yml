@@ -27,14 +27,14 @@ runs:
 
     - name: Run base tests with coverage
       shell: bash
-      run: yarn workspace ${{ inputs.package-name }} test:coverage --coverageReporters=json-summary
+      run: yarn workspace ${{ inputs.package-name }} test:coverage
       continue-on-error: true
 
     - name: Save base coverage
       shell: bash
       run: |
-        [ -f "${{ inputs.working-directory }}/coverage/coverage-summary.json" ] && \
-        cp "${{ inputs.working-directory }}/coverage/coverage-summary.json" /tmp/base-coverage-summary.json || true
+        [ -f "${{ inputs.working-directory }}/coverage/coverage-final.json" ] && \
+        cp "${{ inputs.working-directory }}/coverage/coverage-final.json" /tmp/base-coverage.json || true
 
     # ---- PR HEAD coverage ----
     - name: Checkout PR HEAD
@@ -46,17 +46,19 @@ runs:
 
     - name: Run unit tests with coverage
       shell: bash
-      run: yarn workspace ${{ inputs.package-name }} test:coverage --coverageReporters=json-summary --coverageReporters=text
+      run: yarn workspace ${{ inputs.package-name }} test:coverage
 
     # Find current PR's number
     - uses: jwalton/gh-find-current-pr@v1
       id: findPr
 
     - name: Post coverage report
-      uses: MishaKav/jest-coverage-comment@main
+      uses: ArtiomTr/jest-coverage-report-action@v2
+      continue-on-error: true
       with:
-        title: Coverage report for `${{ inputs.working-directory }}`
-        coverage-summary-path: ${{ inputs.working-directory }}/coverage/coverage-summary.json
-        base-coverage-summary-path: /tmp/base-coverage-summary.json
-        pr-number: ${{ steps.findPr.outputs.number }}
-        github-token: ${{ github.token }}
+        custom-title: Coverage report for `${{ inputs.working-directory }}`
+        working-directory: ${{ inputs.working-directory }}
+        coverage-file: ${{ inputs.working-directory }}/coverage/coverage-final.json
+        base-coverage-file: /tmp/base-coverage.json
+        skip-step: all
+        prnumber: ${{ steps.findPr.outputs.number }}
