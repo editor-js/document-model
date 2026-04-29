@@ -36,6 +36,8 @@
   "dependencies": {
     "@editorjs/dom": "^1.1.0",
     "@editorjs/model": "workspace:^",
-    "@editorjs/sdk": "workspace:^"
+    "@editorjs/sdk": "workspace:^",
+    "inversify": "^8.1.0",
+    "reflect-metadata": "^0.2.2"
   }
 }

@@ -1,33 +1,169 @@
+import type { DataKey, EditorJSModel, EventBus, ModelEvents, TextNodeSerialized, ValueSerialized } from '@editorjs/model';
+import {
+  createDataKey,
+  DataNodeAddedEvent,
+  DataNodeRemovedEvent,
+  EventType,
+  NODE_TYPE_HIDDEN_PROP,
+  ValueModifiedEvent,
+  BlockChildType
+} from '@editorjs/model';
+import type { CoreConfig } from '@/entities/Config';
+import { KeyAddedEvent, KeyRemovedEvent, ValueNodeChangedEvent } from './EventBus/events/adapter/index.js';
+
 /**
- * Links Document Model to DOM
+ * Abstract BlockToolAdapter class implementing core functionality of the block adapter
  */
-export interface BlockToolAdapter {
+export abstract class BlockToolAdapter extends EventTarget {
   /**
-   * Attaches input to the model using key
-   * It handles beforeinput events and updates model data
-   * @param keyRaw - tools data key to attach input to
-   * @param input - input element
+   * Model instance
    */
-  attachInput(keyRaw: string, input: HTMLElement): void;
+  protected model: EditorJSModel;
 
   /**
-   * Removes the input from the DOM by key
-   * @param keyRaw - key of the input to remove
+   * Index of the block that this adapter is connected to
    */
-  detachInput(keyRaw: string): void;
+  protected blockIndex: number = 0;
 
   /**
-   * Attaches value to the model using raw data key
-   * @param keyRaw - string data key used for value identification
-   * @param initialValue - initial value of the value node
-   * @param callback - callback function that receives the updated value and should be used for DOM rerendering
-   * @returns — function that should be used to update model
+   * Editor's config
    */
-  attachValue<T>(keyRaw: string, initialValue: T, callback: (value: T) => void): (newValue: T) => void;
+  protected config: Required<CoreConfig>;
 
   /**
-   * Removes the value node from the model by key
-   * @param keyRaw - string data key used for value identification
+   * Editor's global EventBus
    */
-  detachValue(keyRaw: string): void;
+  protected eventBus: EventBus;
+
+  /**
+   * @param config - editor's configuration
+   * @param model - model instance
+   * @param eventBus - global event bus instance
+   */
+  constructor(config: Required<CoreConfig>, model: EditorJSModel, eventBus: EventBus) {
+    super();
+
+    this.model = model;
+    this.config = config;
+    this.eventBus = eventBus;
+
+    this.model.addEventListener(EventType.Changed, (event: ModelEvents) => this.#handleModelUpdate(event));
+  }
+
+  /**
+   * Updates the internal block index.
+   * @param index - new block index value
+   */
+  public setBlockIndex(index: number): void {
+    this.blockIndex = index;
+  }
+
+  /**
+   * Returns block index of the adapter
+   */
+  public getBlockIndex(): number {
+    return this.blockIndex;
+  }
+
+  /**
+   * Creates data node for the text input key
+   * @param keyRaw - input key within the block
+   * @param initialData - optional initial data for the block
+   */
+  public registerTextInputKey<Data extends TextNodeSerialized = TextNodeSerialized>(keyRaw: string, initialData?: Pick<Data, 'value'> & Partial<Data>): void {
+    const data: TextNodeSerialized = {
+      value: initialData?.value ?? '',
+      fragments: initialData?.fragments ?? [],
+      [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+    };
+
+    this.#createDataNode(createDataKey(keyRaw), data);
+  }
+
+  /**
+   * Creates data node for the value key
+   * @param keyRaw - value key within the block
+   * @param initialData - optional initial data for the value
+   */
+  public registerValueKey<V = unknown>(keyRaw: string, initialData?: ValueSerialized<V>): void {
+    this.#createDataNode(createDataKey(keyRaw), initialData);
+  }
+
+  /**
+   * Remove data node by the key
+   * @param keyRaw - key of the node to remove
+   */
+  public removeKey(keyRaw: string): void {
+    if (this.model.getDataNode(this.config.userId, this.blockIndex, keyRaw) === undefined) {
+      return;
+    }
+
+    this.model.removeDataNode(this.config.userId, this.blockIndex, createDataKey(keyRaw));
+  }
+
+  /**
+   * Creates data node in the model
+   * @param key - key of the node
+   * @param initialData - optional initial data for the node
+   * @example
+   * // Register a text input key with initial content
+   * this.#createDataNode(createDataKey('content'), { $t: 't', value: 'Hello', fragments: [] });
+   *
+   * // Register a value key in an array (e.g. for items[0].content)
+   * this.#createDataNode(createDataKey('items[0].content'), { $t: 'v', value: 'Item text' });
+   */
+  #createDataNode<V = unknown>(key: DataKey, initialData?: TextNodeSerialized | ValueSerialized<V>): void {
+    if (this.model.getDataNode(this.config.userId, this.blockIndex, key) !== undefined) {
+      return;
+    }
+
+    this.model.createDataNode(this.config.userId, this.blockIndex, key, initialData);
+  }
+
+  /**
+   * Handles model updates. Dispatches adapter events and calls the abstract method for the child classes
+   * @param event - Model event
+   */
+  #handleModelUpdate(event: ModelEvents): void {
+    const { blockIndex } = event.detail.index;
+
+    if (blockIndex !== this.blockIndex) {
+      return;
+    }
+
+    switch (true) {
+      case event instanceof DataNodeAddedEvent: {
+        const { dataKey } = event.detail.index;
+
+        this.dispatchEvent(new KeyAddedEvent(dataKey as string));
+
+        break;
+      }
+
+      case event instanceof DataNodeRemovedEvent: {
+        const { dataKey } = event.detail.index;
+
+        this.dispatchEvent(new KeyRemovedEvent(dataKey as string));
+
+        break;
+      }
+
+      case event instanceof ValueModifiedEvent: {
+        const { dataKey } = event.detail.index;
+        const value = event.detail.data;
+
+        this.dispatchEvent(new ValueNodeChangedEvent(dataKey as string, value));
+
+        break;
+      }
+    }
+
+    this.handleModelUpdate(event);
+  }
+
+  /**
+   * Abstract method for the child classes to handle model updates
+   * @param event - event object
+   */
+  protected abstract handleModelUpdate(event: ModelEvents): void;
 }

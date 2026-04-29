@@ -10,7 +10,7 @@ import { ValueNode } from '../ValueNode/index.js';
 
 import type { EditorDocument } from '../EditorDocument/index.js';
 import type { ValueNodeConstructorParameters } from '../ValueNode/index.js';
-import type { InlineFragment, InlineToolData, InlineToolName } from '../inline-fragments/index.js';
+import type { InlineFragment, InlineToolData, InlineToolName, TextNodeSerialized } from '../inline-fragments/index.js';
 import { TextNode } from '../inline-fragments/index.js';
 import type { BlockNodeData, BlockNodeDataSerialized } from './types/index.js';
 import { BlockChildType } from './types/index.js';
@@ -18,6 +18,13 @@ import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
 import { TextAddedEvent, TuneModifiedEvent, ValueModifiedEvent } from '../../EventBus/events/index.js';
 import { EventType } from '../../EventBus/types/EventType.js';
 import { createBlockTuneName } from '../BlockTune/index.js';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- needed to spy on conditional-typed getter with @jest/globals strict types
+const ValueNodeProto = ValueNode.prototype as unknown as {
+  serialized: unknown;
+  value: unknown;
+  update: () => void;
+};
 
 jest.mock('../BlockTune');
 
@@ -117,7 +124,7 @@ describe('BlockNode', () => {
           [createDataKey(`data-key-${index}c${index}d`)]: index,
         }), {});
 
-      const spy = jest.spyOn(ValueNode.prototype, 'serialized', 'get');
+      const spy = jest.spyOn(ValueNodeProto, 'serialized', 'get');
 
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
@@ -164,7 +171,7 @@ describe('BlockNode', () => {
     });
 
     it('should call .serialized getter of ValueNodes in an array', () => {
-      const spy = jest.spyOn(ValueNode.prototype, 'serialized', 'get');
+      const spy = jest.spyOn(ValueNodeProto, 'serialized', 'get');
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
         data: {
@@ -202,7 +209,7 @@ describe('BlockNode', () => {
     });
 
     it('should call .serialized getter of ValueNodes in a nested object', () => {
-      const spy = jest.spyOn(ValueNode.prototype, 'serialized', 'get');
+      const spy = jest.spyOn(ValueNodeProto, 'serialized', 'get');
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
         data: {
@@ -244,7 +251,7 @@ describe('BlockNode', () => {
     });
 
     it('should call .serialized getter of ValueNodes in an array inside an object', () => {
-      const spy = jest.spyOn(ValueNode.prototype, 'serialized', 'get');
+      const spy = jest.spyOn(ValueNodeProto, 'serialized', 'get');
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
         data: {
@@ -286,7 +293,7 @@ describe('BlockNode', () => {
     });
 
     it('should call .serialized getter of ValueNodes in an object inside an array', () => {
-      const spy = jest.spyOn(ValueNode.prototype, 'serialized', 'get');
+      const spy = jest.spyOn(ValueNodeProto, 'serialized', 'get');
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
         data: {
@@ -326,7 +333,7 @@ describe('BlockNode', () => {
     });
 
     it('should call .serialized getter of ValueNodes in a nested array', () => {
-      const spy = jest.spyOn(ValueNode.prototype, 'serialized', 'get');
+      const spy = jest.spyOn(ValueNodeProto, 'serialized', 'get');
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
         data: {
@@ -364,7 +371,7 @@ describe('BlockNode', () => {
     });
 
     it('should call .serialized getter of object marked as value node', () => {
-      const spy = jest.spyOn(ValueNode.prototype, 'serialized', 'get');
+      const spy = jest.spyOn(ValueNodeProto, 'serialized', 'get');
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
         data: {
@@ -467,7 +474,7 @@ describe('BlockNode', () => {
       expect(blockNode.data[key]).toBeInstanceOf(TextNode);
     });
 
-    it('should emit DataNodeAddedEvent', () => {
+    it('should emit DataNodeAddedEvent', async () => {
       const blockNodeName = createBlockToolName('paragraph');
 
       const blockNode = new BlockNode({
@@ -487,6 +494,10 @@ describe('BlockNode', () => {
       };
 
       blockNode.createDataNode(key, value);
+
+      // createDataNode dispatches the event inside a queueMicrotask, flush
+      // microtasks before asserting that the listener was called.
+      await Promise.resolve();
 
       expect(listener).toBeCalledWith(expect.objectContaining({
         detail: {
@@ -523,6 +534,60 @@ describe('BlockNode', () => {
     });
   });
 
+  describe('.getDataNode()', () => {
+    it('should return undefined if the key does not exist', () => {
+      const blockNode = createBlockNodeWithData({});
+      const key = createDataKey('nonexistent');
+
+      const result = blockNode.getDataNode(key);
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should return serialized ValueNode for a value key', () => {
+      const key = createDataKey('url');
+      const value = 'https://editorjs.io';
+      const blockNode = createBlockNodeWithData({ [key]: value });
+
+      jest.spyOn(ValueNodeProto, 'serialized', 'get').mockReturnValueOnce(value);
+
+      const result = blockNode.getDataNode(key);
+
+      expect(result).toBe(value);
+    });
+
+    it('should return serialized TextNode for a text key', () => {
+      const key = createDataKey('text');
+      const value = {
+        $t: 't',
+        value: 'some text',
+      };
+      const blockNode = createBlockNodeWithData({ [key]: value });
+
+      const serialized = { $t: 't' as const,
+        value: 'some text',
+        fragments: [] } as unknown as TextNodeSerialized;
+
+      jest.spyOn(TextNode.prototype, 'serialized', 'get').mockReturnValueOnce(serialized);
+
+      const result = blockNode.getDataNode(key);
+
+      expect(result).toBe(serialized);
+    });
+
+    it('should throw InvalidNodeTypeError if the key holds a nested object (not a leaf node)', () => {
+      const blockNode = createBlockNodeWithData({
+        nested: {
+          value: 'some-value',
+        },
+      });
+      const key = createDataKey('nested');
+
+      expect(() => blockNode.getDataNode(key))
+        .toThrow(`BlockNode: data with key "${key}" is not a text or a value`);
+    });
+  });
+
   describe('.removeDataNode()', () => {
     it('should remove data from the block', () => {
       const key = createDataKey('url');
@@ -539,7 +604,7 @@ describe('BlockNode', () => {
       const blockNode = createBlockNodeWithData({ [key]: value });
       const listener = jest.fn();
 
-      jest.spyOn(ValueNode.prototype, 'serialized', 'get').mockReturnValueOnce(value);
+      jest.spyOn(ValueNodeProto, 'serialized', 'get').mockReturnValueOnce(value);
 
       blockNode.addEventListener(EventType.Changed, listener);
 
@@ -547,7 +612,7 @@ describe('BlockNode', () => {
 
       expect(listener).toBeCalledWith(expect.objectContaining({
         detail: {
-          action: EventAction.Added,
+          action: EventAction.Removed,
           index: expect.objectContaining({ dataKey: key }),
           data: value,
         },

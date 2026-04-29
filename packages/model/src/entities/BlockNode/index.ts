@@ -1,4 +1,3 @@
-import { DataNodeAddedEvent } from '../../EventBus/events/DataNodeAddedEvent.js';
 import { getContext } from '../../utils/Context.js';
 import type { EditorDocument } from '../EditorDocument/index.js';
 import type { BlockTuneName, BlockTuneSerialized } from '../BlockTune/index.js';
@@ -18,6 +17,7 @@ import type {
   DataKey
 } from './types/index.js';
 import { BlockChildType, createBlockToolName, createDataKey } from './types/index.js';
+import type { ValueSerialized } from '../ValueNode/index.js';
 import { ValueNode } from '../ValueNode/index.js';
 import type { InlineFragment, InlineToolData, InlineToolName, TextNodeSerialized } from '../inline-fragments/index.js';
 import { TextNode } from '../inline-fragments/index.js';
@@ -28,6 +28,8 @@ import type { DeepReadonly } from '../../utils/DeepReadonly.js';
 import { EventBus } from '../../EventBus/EventBus.js';
 import { EventType } from '../../EventBus/types/EventType.js';
 import {
+  DataNodeRemovedEvent,
+  DataNodeAddedEvent,
   TuneModifiedEvent,
   ValueModifiedEvent
 } from '../../EventBus/events/index.js';
@@ -146,6 +148,24 @@ export class BlockNode extends EventBus {
   }
 
   /**
+   * Returns data node by the key
+   * @param dataKey - key of the node to get
+   */
+  public getDataNode(dataKey: DataKey): ValueSerialized | TextNodeSerialized | undefined {
+    const node = get(this.data, dataKey as string);
+
+    if (node === undefined) {
+      return;
+    }
+
+    if (!(node instanceof TextNode) && !(node instanceof ValueNode)) {
+      throw new InvalidNodeTypeError(dataKey, 'text or a value');
+    }
+
+    return node.serialized;
+  }
+
+  /**
    * Creates a node at passed key with initial data
    * @param dataKey - key for the node
    * @param data - initial data of the node
@@ -161,7 +181,9 @@ export class BlockNode extends EventBus {
       .addDataKey(dataKey)
       .build();
 
-    this.dispatchEvent(new DataNodeAddedEvent(index, data, getContext<string | number>()!));
+    queueMicrotask(() => {
+      this.dispatchEvent(new DataNodeAddedEvent(index, data, getContext<string | number>()!));
+    });
   };
 
   /**
@@ -181,7 +203,7 @@ export class BlockNode extends EventBus {
       .addDataKey(dataKey)
       .build();
 
-    this.dispatchEvent(new DataNodeAddedEvent(index, nodeData, getContext<string | number>()!));
+    this.dispatchEvent(new DataNodeRemovedEvent(index, nodeData, getContext<string | number>()!));
   }
 
   /**
@@ -324,10 +346,9 @@ export class BlockNode extends EventBus {
    * @param data - block data
    */
   #initialize(data: BlockNodeDataSerialized): void {
-    this.#data = mapObject(
-      data,
-      (value, key) => this.#mapSerializedDataToNodes(value, key)
-    );
+    for (const [key, value] of Object.entries(data)) {
+      this.createDataNode(createDataKey(key), value);
+    }
   }
 
   /**
@@ -529,3 +550,6 @@ export {
   createBlockToolName,
   createDataKey
 };
+
+export { NODE_TYPE_HIDDEN_PROP } from './consts.js';
+export { BlockChildType };

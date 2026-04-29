@@ -28,6 +28,8 @@ describe('EditorJSModel', () => {
       'insertText',
       'removeText',
       'format',
+      'getCaret',
+      'getDataNode',
       'unformat',
       'getFragments',
       'createCaret',

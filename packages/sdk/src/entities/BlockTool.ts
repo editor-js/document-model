@@ -20,12 +20,18 @@ export interface BlockToolConstructorOptions<
   /**
    * User-end configuration for the tool
    */
-  Config extends ToolConfig = ToolConfig
+  Config extends ToolConfig = ToolConfig,
+  /**
+   * Adapter type — defaults to the base BlockToolAdapter.
+   * Override with a more specific adapter type (e.g. DOMBlockToolAdapter)
+   * if your tool needs access to DOM-specific methods such as setInput.
+   */
+  Adapter extends BlockToolAdapter = BlockToolAdapter
 > extends BlockToolConstructorOptionsVersion2 {
   /**
    * Block tool adapter will be passed to the tool to connect data with the DOM
    */
-  adapter: BlockToolAdapter;
+  adapter: Adapter;
 
   /**
    * Tool's input/output data
@@ -71,9 +77,15 @@ export interface BlockToolConstructor<
   /**
    * User-end configuration for the tool
    */
-  Config extends ToolConfig = ToolConfig
+  Config extends ToolConfig = ToolConfig,
+  /**
+   * Adapter type — defaults to the base BlockToolAdapter.
+   * Override with a more specific adapter type if your tool needs
+   * access to adapter methods beyond the base interface.
+   */
+  Adapter extends BlockToolAdapter = BlockToolAdapter
 > extends BaseToolConstructor {
-  new(options: BlockToolConstructorOptions<Data, Config>): BlockTool;
+  new(options: BlockToolConstructorOptions<Data, Config, Adapter>): BlockTool;
 
   /**
    * Property specifies that the class is a Block Tool
