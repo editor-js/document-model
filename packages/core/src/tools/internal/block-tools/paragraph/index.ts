@@ -52,12 +52,18 @@ export class Paragraph implements BlockTool<ParagraphData, ParagraphConfig> {
    */
   #adapter: DOMBlockToolAdapter;
 
+  /**
+   * Tool's wrapper
+   */
   #wrapper: HTMLDivElement | undefined;
 
+  /**
+   * Paragraph input — contenteditable DIV element
+   */
   #paragraph: HTMLDivElement | undefined;
 
   /**
-   *
+   * Returns tool's wrapper, creates one if it doesn't exist yet
    */
   private get wrapper(): HTMLDivElement {
     if (this.#wrapper !== undefined) {

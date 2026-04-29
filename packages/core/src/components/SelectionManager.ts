@@ -38,6 +38,9 @@ export class SelectionManager {
    */
   #config: CoreConfigValidated;
 
+  /**
+   * Editor's Tools manager instance
+   */
   #toolsManager: ToolsManager;
 
   /**

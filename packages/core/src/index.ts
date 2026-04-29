@@ -55,6 +55,9 @@ export default class Core {
    */
   #iocContainer: Container;
 
+  /**
+   * Inversion of Control container for loaded plugins
+   */
   #plugins: Container;
 
   /**

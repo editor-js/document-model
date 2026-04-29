@@ -37,7 +37,13 @@ export interface EditorjsPlugin {
  * Constructor type for EditorjsPlugin
  */
 export interface EditorjsPluginConstructor<
+  /**
+   * Plugin's params. Has to be a generic param as constructor can not be overloaded
+   */
   Params extends EditorjsPluginParams = EditorjsPluginParams,
+  /**
+   * Plugin's instance interface. Has to be a generic param as constructor can not be overloaded
+   */
   Instance extends EditorjsPlugin = EditorjsPlugin
 > {
   /**

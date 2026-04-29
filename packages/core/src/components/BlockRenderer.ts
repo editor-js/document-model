@@ -85,8 +85,7 @@ export class BlockRenderer {
       case event instanceof BlockAddedEvent:
         return this.#handleBlockAddedEvent(event);
       case event instanceof BlockRemovedEvent:
-        this.#handleBlockRemovedEvent(event);
-        break;
+        return this.#handleBlockRemovedEvent(event);
       default:
     }
   }

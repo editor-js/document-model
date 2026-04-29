@@ -1,11 +1,11 @@
 import { BaseToolFacade, InternalInlineToolSettings } from './BaseToolFacade.js';
-import type { InlineTool as IInlineTool, InlineToolConstructor } from '../../entities';
+import type { InlineTool, InlineToolConstructor } from '../../entities';
 import { ToolType } from '../../entities';
 
 /**
  * InlineTool object to work with Inline Tools constructables
  */
-export class InlineToolFacade extends BaseToolFacade<ToolType.Inline, IInlineTool> {
+export class InlineToolFacade extends BaseToolFacade<ToolType.Inline, InlineTool> {
   /**
    * Tool type for InlineToolFacade tools — Inline
    */
@@ -20,7 +20,7 @@ export class InlineToolFacade extends BaseToolFacade<ToolType.Inline, IInlineToo
    * Cached instance of the inline tool
    * Inline tools are singletons — the same instance is reused across all calls to create()
    */
-  #instance: IInlineTool | undefined;
+  #instance: InlineTool | undefined;
 
   /**
    * Returns title for Inline Tool if specified by user
@@ -32,7 +32,7 @@ export class InlineToolFacade extends BaseToolFacade<ToolType.Inline, IInlineToo
   /**
    * Returns the singleton InlineTool instance, creating it on the first call
    */
-  public create(): IInlineTool {
+  public create(): InlineTool {
     if (this.#instance === undefined) {
       /**
        * @todo fix types
