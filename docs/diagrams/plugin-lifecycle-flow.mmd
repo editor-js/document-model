@@ -1,0 +1,66 @@
+---
+title: Plugin Lifecycle Flow
+config:
+  theme: neutral
+---
+%% See: ../plugins.md
+sequenceDiagram
+  actor Dev as Developer
+  participant Core
+  participant Plugins as plugins sub-container
+  participant IoC as IoC Container
+  participant ToolsManager
+  participant EventBus
+  participant EditorJSModel
+  participant BlockRenderer
+  participant Plugin as EditorjsPlugin
+  participant Adapter as EditorJSAdapterPlugin
+  participant Tool as BlockTool / InlineTool
+
+  %% ── Constructor ──────────────────────────────────
+  Dev->>Core: new Core(config)
+  Core->>IoC: bind EditorConfig, EventBus, EditorJSModel, ToolsManager
+  Core->>Plugins: bind DOMAdapters, Paragraph, Bold, Italic, Link, ShortcutsPlugin
+
+  %% ── Registration ─────────────────────────────────
+
+  Dev->>Core: use(CustomAdapter)
+  Core->>Plugins: rebind PluginType.Adapter = CustomAdapter
+
+  Dev->>Core: use(SomePlugin)
+  Core->>Plugins: bind PluginType.Plugin = SomePlugin
+
+  Dev->>Core: use(SomeTool, settings)
+  Core->>Plugins: bind ToolType.Block / Inline / Tune = [SomeTool, settings]
+
+  %% ── await initialize() ───────────────────────────
+  Dev->>Core: await initialize()
+
+  Core->>IoC: bind TOKENS.Adapter as toDynamicValue(ctx => new Adapter(model, config, api, eventBus))
+
+  Core->>Plugins: getAll(PluginType.Plugin)
+  Plugins-->>Core: [SomePlugin, ...]
+  Core->>Plugin: new SomePlugin(config, api, eventBus)
+  Plugin->>EventBus: wire event listeners
+
+  Core->>Plugins: getAll(ToolType.Block / Inline / Tune)
+  Plugins-->>Core: [[SomeTool, settings], ...]
+  Core->>ToolsManager: prepareTools(blockTools, inlineTools, blockTunes)
+  loop for each tool
+    ToolsManager->>Tool: Tool.prepare(toolName, config)
+    ToolsManager->>ToolsManager: wrap in BlockToolFacade or InlineToolFacade
+    ToolsManager->>EventBus: dispatch ToolLoadedCoreEvent(facade)
+  end
+
+  Core->>IoC: get SelectionManager, BlocksManager, BlockRenderer
+
+  Core->>EditorJSModel: initializeDocument(blocks)
+  EditorJSModel-->>BlockRenderer: BlockAddedEvent (per block)
+  BlockRenderer->>Adapter: createBlockToolAdapter(blockIndex, toolName)
+  BlockRenderer->>Tool: facade.create(adapter, data)
+
+  Core->>Core: collaborationManager.connect()
+
+  %% ── Destroy ──────────────────────────────────────
+  Dev->>Plugin: plugin.destroy()
+  Plugin->>EventBus: removeEventListener (cleanup)
