@@ -605,6 +605,82 @@ describe('BlockNode', () => {
         }),
       }));
     });
+
+    it('should splice a new node into an existing array at the given index', () => {
+      const blockNode = createBlockNodeWithData({
+        items: [
+          { [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+            value: 'first',
+            fragments: [] },
+          { [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+            value: 'third',
+            fragments: [] },
+        ],
+      });
+
+      blockNode.createDataNode(createDataKey('items.1'), {
+        [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+        value: 'second',
+        fragments: [],
+      });
+
+      const items = (blockNode.data as Record<string, unknown[]>)['items'];
+      const expectedLength = 3;
+
+      expect(items).toHaveLength(expectedLength);
+      expect(items[1]).toBeInstanceOf(TextNode);
+    });
+
+    it('should shift existing nodes right when splicing into an array', () => {
+      const blockNode = createBlockNodeWithData({
+        items: [
+          { [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+            value: 'second',
+            fragments: [] },
+        ],
+      });
+
+      const originalNode = (blockNode.data as Record<string, unknown[]>)['items'][0];
+
+      blockNode.createDataNode(createDataKey('items.0'), {
+        [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+        value: 'first',
+        fragments: [],
+      });
+
+      const items = (blockNode.data as Record<string, unknown[]>)['items'];
+
+      expect(items).toHaveLength(2);
+      expect(items[1]).toStrictEqual(originalNode);
+    });
+
+    it('should always insert into an array even when an element already exists at that index', async () => {
+      const blockNode = createBlockNodeWithData({
+        items: [
+          { [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+            value: 'existing',
+            fragments: [] },
+        ],
+      });
+
+      const listener = jest.fn();
+
+      blockNode.addEventListener(EventType.Changed, listener);
+
+      blockNode.createDataNode(createDataKey('items.0'), {
+        [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+        value: 'new',
+        fragments: [],
+      });
+
+      await Promise.resolve();
+
+      const items = (blockNode.data as Record<string, unknown[]>)['items'];
+
+      // new node was spliced in, old node shifted to index 1
+      expect(items).toHaveLength(2);
+      expect(listener).toHaveBeenCalled();
+    });
   });
 
   describe('.getDataNode()', () => {

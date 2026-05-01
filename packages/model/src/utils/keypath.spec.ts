@@ -1,10 +1,75 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { get, has, remove, set } from './keypath.js';
+import { get, has, insert, remove, set } from './keypath.js';
 
 describe('keypath util', () => {
   const value = 'value';
 
-  describe('set()', () => {
+  describe('insert()', () => {
+    it('should do nothing if no key passed', () => {
+      const object: Record<string, any> = { a: ['x'] };
+
+      insert(object, [], 'y');
+
+      expect(object.a).toEqual(['x']);
+    });
+
+    it('should do nothing if the parent at the path is not an array', () => {
+      const object: Record<string, any> = { a: { b: 'x' } };
+
+      insert(object, 'a.0', 'y');
+
+      expect(object.a).toEqual({ b: 'x' });
+    });
+
+    it('should do nothing if the parent path does not exist', () => {
+      const object: Record<string, any> = {};
+
+      expect(() => insert(object, 'a.0', 'y')).not.toThrow();
+      expect(object).toEqual({});
+    });
+
+    it('should prepend a value into an array at index 0', () => {
+      const object: Record<string, any> = { a: ['second', 'third'] };
+
+      insert(object, 'a.0', 'first');
+
+      expect(object.a).toEqual(['first', 'second', 'third']);
+    });
+
+    it('should insert a value at a middle index and shift existing elements right', () => {
+      const object: Record<string, any> = { a: ['first', 'third'] };
+
+      insert(object, 'a.1', 'second');
+
+      expect(object.a).toEqual(['first', 'second', 'third']);
+    });
+
+    it('should append a value when index equals array length', () => {
+      const object: Record<string, any> = { a: ['first', 'second'] };
+
+      insert(object, 'a.2', 'third');
+
+      expect(object.a).toEqual(['first', 'second', 'third']);
+    });
+
+    it('should insert into a nested array', () => {
+      const object: Record<string, any> = { a: { b: ['x', 'z'] } };
+
+      insert(object, 'a.b.1', 'y');
+
+      expect(object.a.b).toEqual(['x', 'y', 'z']);
+    });
+
+    it('should accept keys as an array', () => {
+      const object: Record<string, any> = { a: ['x', 'z'] };
+
+      insert(object, ['a', '1'], 'y');
+
+      expect(object.a).toEqual(['x', 'y', 'z']);
+    });
+  });
+
+  describe('remove()', () => {
     it('should do nothing if no key passed', () => {
       const object = {};
 

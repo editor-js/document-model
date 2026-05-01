@@ -21,7 +21,7 @@ import type { ValueSerialized } from '../ValueNode/index.js';
 import { ValueNode } from '../ValueNode/index.js';
 import type { InlineFragment, InlineToolData, InlineToolName, TextNodeSerialized } from '../inline-fragments/index.js';
 import { TextNode } from '../inline-fragments/index.js';
-import { get, has, set, remove } from '../../utils/keypath.js';
+import { get, has, set, remove, insert } from '../../utils/keypath.js';
 import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
 import { mapObject } from '../../utils/mapObject.js';
 import type { DeepReadonly } from '../../utils/DeepReadonly.js';
@@ -171,11 +171,19 @@ export class BlockNode extends EventBus {
    * @param data - initial data of the node
    */
   public createDataNode(dataKey: DataKey, data: BlockNodeDataSerializedValue): void {
-    if (has(this.#data, dataKey as string)) {
-      return;
-    }
+    const keys = (dataKey as string).split('.');
+    const parent = get(this.#data, keys.slice(0, -1));
+    const mappedData = this.#mapSerializedDataToNodes(data, dataKey as string);
 
-    set(this.#data, dataKey as string, this.#mapSerializedDataToNodes(data, dataKey as string));
+    if (Array.isArray(parent)) {
+      insert(this.#data, dataKey as string, mappedData);
+    } else {
+      if (has(this.#data, dataKey as string)) {
+        return;
+      }
+
+      set(this.#data, dataKey as string, mappedData);
+    }
 
     const index = new IndexBuilder()
       .addDataKey(dataKey)
