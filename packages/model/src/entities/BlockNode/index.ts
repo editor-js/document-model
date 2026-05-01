@@ -21,7 +21,7 @@ import type { ValueSerialized } from '../ValueNode/index.js';
 import { ValueNode } from '../ValueNode/index.js';
 import type { InlineFragment, InlineToolData, InlineToolName, TextNodeSerialized } from '../inline-fragments/index.js';
 import { TextNode } from '../inline-fragments/index.js';
-import { get, has } from '../../utils/keypath.js';
+import { get, has, set, remove } from '../../utils/keypath.js';
 import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
 import { mapObject } from '../../utils/mapObject.js';
 import type { DeepReadonly } from '../../utils/DeepReadonly.js';
@@ -171,11 +171,11 @@ export class BlockNode extends EventBus {
    * @param data - initial data of the node
    */
   public createDataNode(dataKey: DataKey, data: BlockNodeDataSerializedValue): void {
-    if (this.#data[dataKey] !== undefined) {
+    if (has(this.#data, dataKey as string)) {
       return;
     }
 
-    this.#data[dataKey] = this.#mapSerializedDataToNodes(data, dataKey as string);
+    set(this.#data, dataKey as string, this.#mapSerializedDataToNodes(data, dataKey as string));
 
     const index = new IndexBuilder()
       .addDataKey(dataKey)
@@ -191,13 +191,13 @@ export class BlockNode extends EventBus {
    * @param dataKey - key of the node to remove
    */
   public removeDataNode(dataKey: DataKey): void {
-    if (this.#data[dataKey] === undefined) {
+    if (!has(this.#data, dataKey as string)) {
       return;
     }
 
-    const nodeData = this.#serializeData(this.#data[dataKey]);
+    const nodeData = this.#serializeData(get<BlockNodeDataValue>(this.#data, dataKey as string)!);
 
-    delete this.#data[dataKey];
+    remove(this.#data, dataKey as string);
 
     const index = new IndexBuilder()
       .addDataKey(dataKey)
@@ -234,7 +234,7 @@ export class BlockNode extends EventBus {
       /**
        * In case there is no data key for the value, we need to create a new ValueNode
        */
-      this.#data[dataKey] = this.#createValueNode(dataKey);
+      set(this.#data, dataKey as string, this.#createValueNode(dataKey));
     }
 
     const node = get(this.#data, dataKey as string) as ValueNode<T>;
@@ -271,7 +271,7 @@ export class BlockNode extends EventBus {
       /**
        * In case there is no data key for the text, we need to create a new TextNode
        */
-      this.#data[dataKey] = this.#createTextNode(dataKey);
+      set(this.#data, dataKey as string, this.#createTextNode(dataKey));
     }
 
     const node = get(this.#data, dataKey as string) as TextNode;

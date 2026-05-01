@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { get, has, set } from './keypath.js';
+import { get, has, remove, set } from './keypath.js';
 
 describe('keypath util', () => {
   const value = 'value';
@@ -240,6 +240,92 @@ describe('keypath util', () => {
       const result = has(object, 'a');
 
       expect(result).toEqual(true);
+    });
+  });
+
+  describe('remove()', () => {
+    it('should do nothing if no key passed', () => {
+      const object: Record<string, any> = { a: value };
+
+      remove(object, []);
+
+      expect(object).toEqual({ a: value });
+    });
+
+    it('should not delete the "undefined" property when empty keys array is passed', () => {
+      const object: Record<string, any> = { undefined: value };
+
+      remove(object, []);
+
+      expect(object).toHaveProperty('undefined', value);
+    });
+
+    it('should remove a root-level property from an object', () => {
+      const object: Record<string, any> = { a: value };
+
+      remove(object, 'a');
+
+      expect(object).not.toHaveProperty('a');
+    });
+
+    it('should remove a nested property from an object', () => {
+      const object: Record<string, any> = { a: { b: { c: value } } };
+
+      remove(object, 'a.b.c');
+
+      expect(object.a.b).not.toHaveProperty('c');
+    });
+
+    it('should not affect sibling properties when removing a nested property', () => {
+      const object: Record<string, any> = {
+        a: {
+          b: value,
+          c: 'sibling',
+        },
+      };
+
+      remove(object, 'a.b');
+
+      expect(object.a).toEqual({ c: 'sibling' });
+    });
+
+    it('should splice an element out of an array', () => {
+      const object: Record<string, any> = { a: ['first', 'second', 'third'] };
+
+      remove(object, 'a.1');
+
+      expect(object.a).toEqual(['first', 'third']);
+    });
+
+    it('should remove the first element of an array and shift remaining elements', () => {
+      const object: Record<string, any> = { a: ['first', 'second'] };
+
+      remove(object, 'a.0');
+
+      expect(object.a).toEqual(['second']);
+    });
+
+    it('should do nothing if the path does not exist', () => {
+      const object: Record<string, any> = { a: value };
+
+      remove(object, 'a.b.c');
+
+      expect(object).toEqual({ a: value });
+    });
+
+    it('should do nothing if an intermediate value in the path is null', () => {
+      const object: Record<string, any> = { a: null };
+
+      expect(() => remove(object, 'a.b')).not.toThrow();
+      expect(object.a).toBeNull();
+    });
+
+    it('should remove keys passed as an array', () => {
+      const object: Record<string, any> = { a: { b: value } };
+
+      remove(object, ['a', 'b']);
+
+      expect(object.a).not.toHaveProperty('b');
     });
   });
 });
