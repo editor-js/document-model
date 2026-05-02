@@ -81,12 +81,16 @@ export abstract class BlockToolAdapter extends EventTarget {
   }
 
   /**
-   * Creates data node for the value key
+   * Creates data node for the value key. Returns an update function which could be called to update value in the model
    * @param keyRaw - value key within the block
    * @param initialData - optional initial data for the value
    */
-  public registerValueKey<V = unknown>(keyRaw: string, initialData?: ValueSerialized<V>): void {
+  public registerValueKey<V = unknown>(keyRaw: string, initialData?: ValueSerialized<V>): (newValue: V) => void {
     this.#createDataNode(createDataKey(keyRaw), initialData);
+
+    return (newValue: V) => {
+      this.model.updateValue(this.config.userId, this.blockIndex, createDataKey(keyRaw), newValue);
+    };
   }
 
   /**
