@@ -45,6 +45,7 @@ jest.unstable_mockModule('@editorjs/model', () => {
     BlockAddedEvent,
     BlockRemovedEvent,
     EventType,
+    createBlockId: (str: string) => str,
   };
 });
 

@@ -1,6 +1,7 @@
 import {
   BlockAddedEvent,
   BlockRemovedEvent,
+  createBlockId,
   EditorJSModel,
   EventType,
   ModelEvents
@@ -110,7 +111,7 @@ export class BlockRenderer {
       throw new Error(`[BlockRenderer] Block Tool ${data.name} not found`);
     }
 
-    const blockToolAdapter = this.#adapter.createBlockToolAdapter(data.id, tool.name);
+    const blockToolAdapter = this.#adapter.createBlockToolAdapter(createBlockId(data.id), tool.name);
 
     const block = tool.create({
       adapter: blockToolAdapter,
@@ -146,7 +147,7 @@ export class BlockRenderer {
       throw new Error('[BlockRenderer] Block index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
     }
 
-    this.#adapter.destroyBlockToolAdapter(data.id);
+    this.#adapter.destroyBlockToolAdapter(createBlockId(data.id));
 
     this.#eventBus.dispatchEvent(new BlockRemovedCoreEvent({
       tool: data.name,
