@@ -24,6 +24,12 @@ export interface EditorJSAdapterPlugin extends EditorjsPlugin {
    * @param name - tool name
    */
   createBlockToolAdapter(blockIndex: number, name: string): BlockToolAdapter;
+  /**
+   * Destroys the BlockToolAdapter for the block at the given index.
+   * Called by BlockRenderer when a block is removed from the model.
+   * @param blockIndex - index of the removed block
+   */
+  destroyBlockToolAdapter(blockIndex: number): void;
 }
 
 /**
