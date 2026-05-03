@@ -201,7 +201,7 @@ export class BlocksManager {
       return;
     }
 
-    const block = this.#model.getBlockSerialized(this.#config.userId, fromIndex);
+    const block = this.#model.getBlockSerialized(fromIndex);
 
     this.#model.removeBlock(this.#config.userId, fromIndex);
     this.#model.addBlock(this.#config.userId, block, toIndex);
