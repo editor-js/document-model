@@ -223,6 +223,7 @@ describe('BlocksManager (unit, mocked deps)', () => {
         identifier: 'doc',
         blocks: [
           {
+            id: 'mock',
             name: 'x',
             data: {}
           }

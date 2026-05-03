@@ -79,7 +79,7 @@ describe('DocumentManager', () => {
     expect(manager.currentModelState()).toEqual({
       identifier: 'document',
       blocks: [
-        {
+        expect.objectContaining({
           name: 'paragraph',
           tunes: {},
           data: {
@@ -89,7 +89,7 @@ describe('DocumentManager', () => {
               fragments: [],
             },
           },
-        },
+        }),
       ],
       properties: {},
     });
@@ -140,7 +140,7 @@ describe('DocumentManager', () => {
     expect(manager.currentModelState()).toEqual({
       identifier: 'document',
       blocks: [
-        {
+        expect.objectContaining({
           name: 'paragraph',
           tunes: {},
           data: {
@@ -150,7 +150,7 @@ describe('DocumentManager', () => {
               fragments: [],
             },
           },
-        },
+        }),
       ],
       properties: {},
     });
@@ -210,7 +210,7 @@ describe('DocumentManager', () => {
     expect(manager.currentModelState()).toEqual({
       identifier: 'document',
       blocks: [
-        {
+        expect.objectContaining({
           name: 'paragraph',
           tunes: {},
           data: {
@@ -220,7 +220,7 @@ describe('DocumentManager', () => {
               fragments: [],
             },
           },
-        },
+        }),
       ],
       properties: {},
     });
@@ -283,7 +283,7 @@ describe('DocumentManager', () => {
     expect(manager.currentModelState()).toEqual({
       identifier: 'document',
       blocks: [
-        {
+        expect.objectContaining({
           name: 'paragraph',
           tunes: {},
           data: {
@@ -293,7 +293,7 @@ describe('DocumentManager', () => {
               fragments: [],
             },
           },
-        },
+        }),
       ],
       properties: {},
     });

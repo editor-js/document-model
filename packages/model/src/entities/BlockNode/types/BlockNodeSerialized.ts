@@ -27,7 +27,7 @@ export interface BlockNodeSerialized {
   /**
    * Unique identifier of the Block
    */
-  id: BlockId;
+  id: string;
 
   /**
    * The name of the tool created a Block
