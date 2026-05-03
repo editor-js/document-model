@@ -55,8 +55,10 @@ describe('EditorJSModel', () => {
       model = new EditorJSModel(userId, { identifier: documentId as DocumentId });
       model.initializeDocument({
         blocks: [
-          { name: 'paragraph', data: {} },
-          { name: 'header', data: {} },
+          { name: 'paragraph',
+            data: {} },
+          { name: 'header',
+            data: {} },
         ],
       });
     });
@@ -97,8 +99,10 @@ describe('EditorJSModel', () => {
       model = new EditorJSModel(userId, { identifier: documentId as DocumentId });
       model.initializeDocument({
         blocks: [
-          { name: 'paragraph', data: {} },
-          { name: 'header', data: {} },
+          { name: 'paragraph',
+            data: {} },
+          { name: 'header',
+            data: {} },
         ],
       });
     });
@@ -129,8 +133,10 @@ describe('EditorJSModel', () => {
       model = new EditorJSModel(userId, { identifier: documentId as DocumentId });
       model.initializeDocument({
         blocks: [
-          { name: 'paragraph', data: {} },
-          { name: 'header', data: {} },
+          { name: 'paragraph',
+            data: {} },
+          { name: 'header',
+            data: {} },
         ],
       });
     });
@@ -173,7 +179,8 @@ describe('EditorJSModel', () => {
         blocks: [
           {
             name: 'paragraph',
-            data: { text: { $t: 't', value: '' } },
+            data: { text: { $t: 't',
+              value: '' } },
           },
         ],
       });
@@ -218,7 +225,8 @@ describe('EditorJSModel', () => {
           {
             name: 'paragraph',
             data: {
-              text: { $t: 't', value: 'hello' },
+              text: { $t: 't',
+                value: 'hello' },
             },
           },
         ],

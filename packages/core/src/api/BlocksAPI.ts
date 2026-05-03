@@ -47,7 +47,7 @@ export class BlocksAPI implements BlocksApiInterface {
    * Render passed data
    * @param document - serialized document data to render
    */
-  public render(document: Partial<Omit<EditorDocumentSerialized, 'blocks'>> & { blocks: BlockNodeInit[] }): void {
+  public render(document: EditorDocumentSerialized): void {
     return this.#blocksManager.render(document);
   }
 

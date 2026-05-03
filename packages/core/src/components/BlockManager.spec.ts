@@ -298,7 +298,6 @@ describe('BlocksManager (unit, mocked deps)', () => {
     });
 
     it('should do nothing when toIndex equals fromIndex', () => {
-
       blocksManager.move(1, 1);
 
       expect(model.removeBlock).not.toHaveBeenCalled();

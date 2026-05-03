@@ -491,7 +491,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
 
     const builder = new IndexBuilder();
 
-    builder.addDataKey(key).addBlockIndex(eventBlockIndex!);
+    builder.addDataKey(key).addBlockIndex(eventBlockIndex);
 
     let newCaretIndex: number | null = null;
 

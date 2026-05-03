@@ -34,7 +34,7 @@ export interface BlocksAPI {
    * Render passed data
    * @param document - serialized document data to render
    */
-  render(document: Partial<Omit<EditorDocumentSerialized, 'blocks'>> & { blocks: BlockNodeInit[] }): void;
+  render(document: EditorDocumentSerialized): void;
 
   /**
    * Render passed HTML string

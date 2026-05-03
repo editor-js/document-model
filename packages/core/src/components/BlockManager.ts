@@ -17,7 +17,10 @@ import {
  * Parameters for the BlocksManager.insert() method
  */
 interface InsertBlockParameters {
-  // id?: string;
+  /**
+   * Block ID
+   */
+  id?: string;
   /**
    * Block tool name to insert
    */
@@ -111,7 +114,7 @@ export class BlocksManager {
    * @param parameters.replace - flag indicates if block at index should be replaced
    */
   public insert({
-    // id = undefined,
+    id = undefined,
     type = this.#config.defaultBlock,
     data = {},
     index,
@@ -131,6 +134,7 @@ export class BlocksManager {
 
     this.#model.addBlock(this.#config.userId, {
       ...data,
+      id,
       name: type,
     }, newIndex);
 
@@ -154,7 +158,7 @@ export class BlocksManager {
    * Re-initialize document
    * @param document - serialized document data
    */
-  public render(document: Partial<Omit<EditorDocumentSerialized, 'blocks'>> & { blocks: BlockNodeInit[] }): void {
+  public render(document: EditorDocumentSerialized): void {
     this.#model.initializeDocument(document);
   }
 
