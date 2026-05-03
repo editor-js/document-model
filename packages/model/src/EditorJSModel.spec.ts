@@ -142,26 +142,26 @@ describe('EditorJSModel', () => {
     });
 
     it('should return serialized block at the specified index', () => {
-      const serialized = model.getBlockSerialized(userId, 0);
+      const serialized = model.getBlockSerialized(0);
 
       expect(serialized).toMatchObject({ name: 'paragraph' });
     });
 
     it('should return the correct block when second index is specified', () => {
-      const serialized = model.getBlockSerialized(userId, 1);
+      const serialized = model.getBlockSerialized(1);
 
       expect(serialized).toMatchObject({ name: 'header' });
     });
 
     it('should include id in the serialized block', () => {
-      const serialized = model.getBlockSerialized(userId, 0);
+      const serialized = model.getBlockSerialized(0);
 
       expect(serialized.id).toBeDefined();
     });
 
     it('should return serialized block when addressed by BlockId', () => {
       const id = model.getBlockId(1) as BlockId;
-      const serialized = model.getBlockSerialized(userId, id);
+      const serialized = model.getBlockSerialized(id);
 
       expect(serialized).toMatchObject({ name: 'header' });
       expect(serialized.id).toBe(id);

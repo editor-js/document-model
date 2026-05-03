@@ -195,10 +195,9 @@ export class EditorJSModel extends EventBus {
 
   /**
    * Returns the serialized form of a single block without serializing the whole document.
-   * @param _userId - user identifier for context
    * @param blockIndexOrId - index or block id to look up
    */
-  public getBlockSerialized(_userId: string | number, blockIndexOrId: BlockIndexOrId): BlockNodeSerialized {
+  public getBlockSerialized(blockIndexOrId: BlockIndexOrId): BlockNodeSerialized {
     return this.#document.getBlock(blockIndexOrId).serialized;
   }
 
