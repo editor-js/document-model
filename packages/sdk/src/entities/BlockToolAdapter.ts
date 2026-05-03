@@ -1,4 +1,4 @@
-import type { DataKey, EditorJSModel, EventBus, ModelEvents, TextNodeSerialized, ValueSerialized } from '@editorjs/model';
+import type { BlockId, DataKey, EditorJSModel, EventBus, ModelEvents, TextNodeSerialized, ValueSerialized } from '@editorjs/model';
 import {
   createDataKey,
   DataNodeAddedEvent,
@@ -21,9 +21,9 @@ export abstract class BlockToolAdapter extends EventTarget {
   protected model: EditorJSModel;
 
   /**
-   * Index of the block that this adapter is connected to
+   * Unique identifier of the block that this adapter is connected to
    */
-  protected blockIndex: number = 0;
+  protected blockId!: BlockId;
 
   /**
    * Editor's config
@@ -51,18 +51,36 @@ export abstract class BlockToolAdapter extends EventTarget {
   }
 
   /**
-   * Updates the internal block index.
-   * @param index - new block index value
+   * Updates the block id the adapter is connected to.
+   * @param id - new block id
    */
-  public setBlockIndex(index: number): void {
-    this.blockIndex = index;
+  public setBlockId(id: BlockId): void {
+    this.blockId = id;
   }
 
   /**
-   * Returns block index of the adapter
+   * Returns the block id of the adapter
+   */
+  public getBlockId(): BlockId {
+    return this.blockId;
+  }
+
+  /**
+   * @deprecated Use {@link setBlockId} + {@link getBlockId} instead.
+   * Kept temporarily for backward compatibility while callers are migrated.
+   * Updates the internal block index (derived on demand from the model).
+   * @param index - new block index value
+   */
+  public setBlockIndex(index: number): void {
+    void index; // no-op – adapters are now addressed by blockId
+  }
+
+  /**
+   * @deprecated Use {@link getBlockId} instead.
+   * Returns the current block index by asking the model.
    */
   public getBlockIndex(): number {
-    return this.blockIndex;
+    return this.model.getBlockIndexById(this.blockId);
   }
 
   /**
@@ -89,7 +107,7 @@ export abstract class BlockToolAdapter extends EventTarget {
     this.#createDataNode(createDataKey(keyRaw), initialData);
 
     return (newValue: V) => {
-      this.model.updateValue(this.config.userId, this.blockIndex, createDataKey(keyRaw), newValue);
+      this.model.updateValue(this.config.userId, this.blockId, createDataKey(keyRaw), newValue);
     };
   }
 
@@ -98,11 +116,11 @@ export abstract class BlockToolAdapter extends EventTarget {
    * @param keyRaw - key of the node to remove
    */
   public removeKey(keyRaw: string): void {
-    if (this.model.getDataNode(this.config.userId, this.blockIndex, keyRaw) === undefined) {
+    if (this.model.getDataNode(this.config.userId, this.blockId, keyRaw) === undefined) {
       return;
     }
 
-    this.model.removeDataNode(this.config.userId, this.blockIndex, createDataKey(keyRaw));
+    this.model.removeDataNode(this.config.userId, this.blockId, createDataKey(keyRaw));
   }
 
   /**
@@ -117,11 +135,11 @@ export abstract class BlockToolAdapter extends EventTarget {
    * this.#createDataNode(createDataKey('items[0].content'), { $t: 'v', value: 'Item text' });
    */
   #createDataNode<V = unknown>(key: DataKey, initialData?: TextNodeSerialized | ValueSerialized<V>): void {
-    if (this.model.getDataNode(this.config.userId, this.blockIndex, key) !== undefined) {
+    if (this.model.getDataNode(this.config.userId, this.blockId, key) !== undefined) {
       return;
     }
 
-    this.model.createDataNode(this.config.userId, this.blockIndex, key, initialData);
+    this.model.createDataNode(this.config.userId, this.blockId, key, initialData);
   }
 
   /**
@@ -131,7 +149,13 @@ export abstract class BlockToolAdapter extends EventTarget {
   #handleModelUpdate(event: ModelEvents): void {
     const { blockIndex } = event.detail.index;
 
-    if (blockIndex !== this.blockIndex) {
+    if (blockIndex === undefined) {
+      return;
+    }
+
+    const eventBlockId = this.model.getBlockId(blockIndex);
+
+    if (eventBlockId !== this.blockId) {
       return;
     }
 

@@ -1,8 +1,15 @@
 import type { EditorDocument } from '../../EditorDocument/index.js';
 import type { BlockTuneSerialized } from '../../BlockTune/index.js';
 import type { BlockNodeDataSerialized } from './BlockNodeSerialized.js';
+import type { BlockId } from './BlockId.js';
 
 export interface BlockNodeConstructorParameters {
+  /**
+   * Unique identifier of the Block.
+   * If not provided, a new UUID will be generated.
+   */
+  id?: BlockId | string;
+
   /**
    * The name of the tool created a Block
    */

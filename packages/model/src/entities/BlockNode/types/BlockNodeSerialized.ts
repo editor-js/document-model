@@ -1,6 +1,7 @@
 import type { BlockTuneSerialized } from '../../BlockTune/index.js';
 import type { ValueSerialized } from '../../ValueNode/types/ValueSerialized.js';
 import type { TextNodeSerialized } from '../../inline-fragments/index.js';
+import type { BlockId } from './BlockId.js';
 
 /**
  * Union type of serialized BlockNode child nodes
@@ -24,6 +25,11 @@ export interface BlockNodeDataSerialized {
  */
 export interface BlockNodeSerialized {
   /**
+   * Unique identifier of the Block
+   */
+  id: BlockId;
+
+  /**
    * The name of the tool created a Block
    */
   name: string;
@@ -38,3 +44,10 @@ export interface BlockNodeSerialized {
    */
   tunes?: Record<string, BlockTuneSerialized>;
 }
+
+/**
+ * Input type for creating a BlockNode.
+ * Only `name` is required — all other fields (including `id`) are optional.
+ * A unique id will be auto-generated when omitted.
+ */
+export type BlockNodeInit = { name: string } & Partial<Omit<BlockNodeSerialized, 'name'>>;

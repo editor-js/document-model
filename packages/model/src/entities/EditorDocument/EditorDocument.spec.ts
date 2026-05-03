@@ -2,6 +2,7 @@ import { IndexBuilder } from '../Index/IndexBuilder.js';
 import { EditorDocument } from './index.js';
 import type { BlockToolName, DataKey } from '../BlockNode/index.js';
 import { BlockNode } from '../BlockNode/index.js';
+import { createBlockId } from '../BlockNode/types/BlockId.js';
 import type { BlockTuneName } from '../BlockTune/index.js';
 import type { InlineToolData, InlineToolName } from '../inline-fragments/index.js';
 import { EventType } from '../../EventBus/types/EventType.js';
@@ -323,6 +324,7 @@ describe('EditorDocument', () => {
       const document = createEditorDocumentWithSomeBlocks();
       const index = 1;
       const blockData = {
+        id: createBlockId('test-block'),
         name: 'header-1a2b' as BlockToolName,
         data: {
           level: 1,
@@ -420,6 +422,7 @@ describe('EditorDocument', () => {
       const index = 1;
 
       const blockData = {
+        id: createBlockId('test-block'),
         name: 'header' as BlockToolName,
         data: {
           level: 1,

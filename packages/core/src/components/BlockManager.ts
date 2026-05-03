@@ -1,5 +1,5 @@
 import {
-  type BlockNodeSerialized,
+  type BlockNodeInit,
   type EditorDocumentSerialized,
   EditorJSModel
 } from '@editorjs/model';
@@ -146,7 +146,7 @@ export class BlocksManager {
    * @param blocks - array of blocks to insert
    * @param [index] - index to insert blocks at. If undefined, inserts at the end
    */
-  public insertMany(blocks: BlockNodeSerialized[], index: number = this.#model.length): void {
+  public insertMany(blocks: BlockNodeInit[], index: number = this.#model.length): void {
     blocks.forEach((block, i) => this.#model.addBlock(this.#config.userId, block, index + i));
   }
 
@@ -154,7 +154,7 @@ export class BlocksManager {
    * Re-initialize document
    * @param document - serialized document data
    */
-  public render(document: EditorDocumentSerialized): void {
+  public render(document: Partial<Omit<EditorDocumentSerialized, 'blocks'>> & { blocks: BlockNodeInit[] }): void {
     this.#model.initializeDocument(document);
   }
 
@@ -197,7 +197,7 @@ export class BlocksManager {
       return;
     }
 
-    const block = this.#model.serialized.blocks[fromIndex];
+    const block = this.#model.getBlockSerialized(this.#config.userId, fromIndex);
 
     this.#model.removeBlock(this.#config.userId, fromIndex);
     this.#model.addBlock(this.#config.userId, block, toIndex);
