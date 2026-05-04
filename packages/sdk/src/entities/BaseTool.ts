@@ -2,6 +2,7 @@ import type { ToolConfig } from '@editorjs/editorjs';
 import type { BlockToolOptions } from './BlockTool.js';
 import type { InlineToolOptions } from './InlineTool.js';
 import type { BlockTuneOptions } from './BlockTune.js';
+import type { ToolType } from './EntityType.js';
 
 /**
  * Canonical keys shared by every tool options interface.
@@ -34,6 +35,26 @@ export type { BlockToolOptions, InlineToolOptions, BlockTuneOptions };
  * Used as the type of the second argument of `core.use(Tool, options)`.
  */
 export type ToolStaticOptions = BlockToolOptions | InlineToolOptions | BlockTuneOptions;
+
+/**
+ * Maps a {@link ToolType} value to its corresponding tool options interface.
+ * @example
+ * function getTitle<T extends ToolType>(type: T, options: ToolTypeToOptions[T]) { ... }
+ */
+export type ToolTypeToOptions = {
+  /**
+   * BlockTool Options
+   */
+  [ToolType.Block]: BlockToolOptions;
+  /**
+   * InlineTool Options
+   */
+  [ToolType.Inline]: InlineToolOptions;
+  /**
+   * BlockTune Options
+   */
+  [ToolType.Tune]: BlockTuneOptions;
+};
 
 /**
  * Common interface for Tool constructor (static) side.

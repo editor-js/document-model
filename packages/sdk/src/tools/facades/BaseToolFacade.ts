@@ -8,7 +8,10 @@ import { type BlockToolFacade } from './BlockToolFacade.js';
 import { type InlineToolFacade } from './InlineToolFacade.js';
 import { ToolType } from '../../entities/EntityType.js';
 import { type BlockTuneFacade } from './BlockTuneFacade.js';
-import type { BlockTool, BlockToolConstructor, InlineTool, InlineToolConstructor, BlockTuneConstructor } from '../../entities';
+import type {
+  BlockTool, BlockToolConstructor, InlineTool, InlineToolConstructor, BlockTuneConstructor,
+  ToolTypeToOptions
+} from '../../entities';
 import type { ToolStaticOptions, BlockToolOptions, InlineToolOptions, BlockTuneOptions } from '../../entities/BaseTool.js';
 import { BaseToolOptionKey } from '../../entities/BaseTool.js';
 
@@ -39,20 +42,6 @@ export type ToolOptions = ToolStaticOptions;
 
 // Re-export per-tool option types so consumers can import them from here
 export type { BlockToolOptions, InlineToolOptions, BlockTuneOptions };
-
-/**
- * Static `options` on the tool class (plugin-side defaults)
- * provided by the tool developer.
- * @deprecated Use {@link ToolStaticOptions} directly
- */
-export type StaticToolOptions = ToolStaticOptions;
-
-/**
- * Result of merging static {@link ToolConstructable.options} with the second argument of `use(Tool, options)`.
- */
-export interface MergedToolOptions {
-  [key: string]: unknown;
-}
 
 /**
  * BlockToolFacade constructor options inteface
@@ -111,7 +100,7 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
   /**
    * Second argument of `use(Tool, options)` (feature flags, `shortcut`, nested `config` for the tool plugin, etc.)
    */
-  protected useToolOptions: ToolOptions;
+  protected useToolOptions: ToolTypeToOptions[Type];
 
   /**
    * Tool's constructable blueprint
@@ -153,7 +142,7 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
    * Shortcut handling is delegated to the Shortcuts plugin; `shortcut` / `shortcuts` may appear here.
    * @returns Merged static tool options and second-argument `use` options
    */
-  public get options(): MergedToolOptions {
+  public get options(): ToolTypeToOptions[Type] {
     const staticDefaults = this.constructable.options ?? {};
 
     return {

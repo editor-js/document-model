@@ -14,8 +14,8 @@ import {
   ToolFacadeClass,
   ToolsCollection,
   EventBus,
-  ToolConstructable,
-  ToolStaticOptions
+  type ToolConstructable,
+  type ToolStaticOptions
 } from '@editorjs/sdk';
 
 /**

@@ -30,10 +30,11 @@ export class InlineToolFacade extends BaseToolFacade<ToolType.Inline, InlineTool
   #instance: InlineTool | undefined;
 
   /**
-   * Returns title for Inline Tool if specified via `options.title`
+   * Returns title for Inline Tool if specified via `options.title`.
+   * Reads from merged options (static `constructable.options` merged with `use(Tool, options)` overrides).
    */
   public get title(): string | undefined {
-    return this.constructable.options?.[InlineToolOptionKey.Title];
+    return this.options[InlineToolOptionKey.Title];
   }
 
   /**

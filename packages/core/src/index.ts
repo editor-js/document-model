@@ -193,9 +193,9 @@ export default class Core {
    * Initalizes loaded tools
    */
   async #initializeTools(): Promise<void> {
-    const blockTools = this.#plugins.getAll<[BlockToolConstructor, ToolStaticOptions]>(ToolType.Block);
-    const inlineTools = this.#plugins.getAll<[InlineToolConstructor, ToolStaticOptions]>(ToolType.Inline);
-    const blockTunes = this.#plugins.getAll<[BlockTuneConstructor, ToolStaticOptions]>(ToolType.Tune);
+    const blockTools = this.#plugins.getAll<[BlockToolConstructor, ToolStaticOptions | undefined]>(ToolType.Block);
+    const inlineTools = this.#plugins.getAll<[InlineToolConstructor, ToolStaticOptions | undefined]>(ToolType.Inline);
+    const blockTunes = this.#plugins.getAll<[BlockTuneConstructor, ToolStaticOptions | undefined]>(ToolType.Tune);
 
     return this.#toolsManager.prepareTools([...blockTools, ...inlineTools, ...blockTunes]);
   }
