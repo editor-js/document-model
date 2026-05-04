@@ -1,4 +1,6 @@
-import { BaseToolFacade, InternalInlineToolSettings } from './BaseToolFacade.js';
+import { BaseToolFacade } from './BaseToolFacade.js';
+import type { InlineToolOptions } from './BaseToolFacade.js';
+import { InlineToolOptionKey } from '../../entities/InlineTool.js';
 import type { InlineTool, InlineToolConstructor } from '../../entities';
 import { ToolType } from '../../entities';
 
@@ -12,9 +14,14 @@ export class InlineToolFacade extends BaseToolFacade<ToolType.Inline, InlineTool
   public type: ToolType.Inline = ToolType.Inline;
 
   /**
-   * Tool's constructable blueprint
+   * Tool's constructable blueprint — narrowed to InlineToolConstructor
    */
   protected declare constructable: InlineToolConstructor;
+
+  /**
+   * Narrowed to InlineToolOptions so inline-specific properties are fully typed
+   */
+  protected declare useToolOptions: InlineToolOptions;
 
   /**
    * Cached instance of the inline tool
@@ -23,10 +30,10 @@ export class InlineToolFacade extends BaseToolFacade<ToolType.Inline, InlineTool
   #instance: InlineTool | undefined;
 
   /**
-   * Returns title for Inline Tool if specified by user
+   * Returns title for Inline Tool if specified via `options.title`
    */
   public get title(): string | undefined {
-    return this.constructable[InternalInlineToolSettings.Title];
+    return this.constructable.options?.[InlineToolOptionKey.Title];
   }
 
   /**

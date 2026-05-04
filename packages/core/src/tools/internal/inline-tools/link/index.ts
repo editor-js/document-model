@@ -26,7 +26,20 @@ export class LinkInlineTool implements InlineTool {
    */
   public static type = ToolType.Inline as const;
 
-  public static title = 'Link';
+  /**
+   * Tool name used to identify the tool across the editor.
+   */
+  public static name = 'link';
+
+  /**
+   * Default options (merged with second argument of `use(LinkInlineTool, options)`).
+   */
+  public static readonly options = {
+    /**
+     * Tool title shown in the inline toolbar
+     */
+    title: 'Link',
+  };
 
   /**
    * Type of behaviour of the tool if new selection range intersect with existing fragment

@@ -1,25 +1,24 @@
 /* eslint-disable jsdoc/informative-docs */
 import type { EditorAPI } from '@editorjs/sdk';
 import { ToolType } from '@editorjs/sdk';
-import type { ToolConstructable } from '@editorjs/sdk';
+import type { ToolConstructable, ToolStaticOptions } from '@editorjs/sdk';
 import {
   InlineToolFacade,
   BlockTuneFacade,
   BlockToolFacade
 } from '@editorjs/sdk';
 import type {
-  EditorConfig,
-  ToolSettings as ToolSettingsV2
+  EditorConfig
 } from '@editorjs/editorjs';
 
 type ToolConstructor = typeof InlineToolFacade | typeof BlockToolFacade | typeof BlockTuneFacade;
 
 /**
- * Need this utility type to override some V2 options
+ * Full tool registration entry: the constructor class plus its options.
  */
-export type ToolSettings = Omit<ToolSettingsV2, 'constructable' | 'class'> & {
+export type ToolSettings = ToolStaticOptions & {
   /**
-   * Redefine constructable to match V3
+   * Tool's constructor
    */
   class: ToolConstructable;
 };
@@ -70,10 +69,10 @@ export class ToolsFactory {
    * Register tools in the factory
    * @param tools - tools to register in the factory
    */
-  public setTools(tools: [ToolConstructable, ToolSettings][]): void {
+  public setTools(tools: [ToolConstructable, ToolStaticOptions | undefined][]): void {
     tools.forEach(([tool, settings]) => {
       this.#toolsSettings.set(tool.name, {
-        ...settings,
+        ...(settings ?? {}),
         class: tool,
       });
     });

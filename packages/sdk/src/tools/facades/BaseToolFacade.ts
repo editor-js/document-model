@@ -1,8 +1,7 @@
 import type {
   // SanitizerConfig,
   API as ApiMethods,
-  Tool,
-  ToolSettings
+  Tool
 } from '@editorjs/editorjs';
 import { isFunction } from '@editorjs/helpers';
 import { type BlockToolFacade } from './BlockToolFacade.js';
@@ -10,95 +9,43 @@ import { type InlineToolFacade } from './InlineToolFacade.js';
 import { ToolType } from '../../entities/EntityType.js';
 import { type BlockTuneFacade } from './BlockTuneFacade.js';
 import type { BlockTool, BlockToolConstructor, InlineTool, InlineToolConstructor, BlockTuneConstructor } from '../../entities';
+import type { ToolStaticOptions, BlockToolOptions, InlineToolOptions, BlockTuneOptions } from '../../entities/BaseTool.js';
+import { BaseToolOptionKey } from '../../entities/BaseTool.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- need to allow any type here so extended interfaces pass
 export type ToolConstructable = BlockToolConstructor<any, any, any> | InlineToolConstructor | BlockTuneConstructor;
 
+// Re-export canonical option-key enums so facades/consumers can import from one place
+export { BaseToolOptionKey } from '../../entities/BaseTool.js';
+export { BlockToolOptionKey } from '../../entities/BlockTool.js';
+export { InlineToolOptionKey } from '../../entities/InlineTool.js';
+
 /**
- * Enum of Tool options provided by user
+ * Keys for the options the **user** supplies as the second argument of `core.use(Tool, options)`.
+ * Mirrors the keys of {@link BlockToolOptions} with user-facing names.
  */
 export enum UserToolOptions {
-  /**
-   * Toolbox config for Tool
-   */
+  /** Toolbox entry override for the tool. */
   Toolbox = 'toolbox',
-  /**
-   * Enabled Inline Tools for Block Tool
-   */
+  /** Inline tools enabled for blocks of this type. */
   EnabledInlineTools = 'inlineToolbar',
-  /**
-   * Enabled Block Tunes for Block Tool
-   */
+  /** Block tunes enabled for blocks of this type. */
   EnabledBlockTunes = 'tunes',
-  /**
-   * Tool configuration
-   */
+  /** Plugin-specific configuration. */
   Config = 'config'
 }
 
-/**
- * Enum of Tool options provided by Tool
- */
-export enum CommonInternalSettings {
-  /**
-   * Sanitize configuration for Tool
-   */
-  SanitizeConfig = 'sanitize'
-}
+export type ToolOptions = ToolStaticOptions;
 
-/**
- * Enum of Tool options provided by Block Tool
- */
-export enum InternalBlockToolSettings {
-  /**
-   * Is line breaks enabled for Tool
-   */
-  IsEnabledLineBreaks = 'enableLineBreaks',
-  /**
-   * Tool Toolbox config
-   */
-  Toolbox = 'toolbox',
-  /**
-   * Tool conversion config
-   */
-  ConversionConfig = 'conversionConfig',
-  /**
-   * Is readonly mode supported for Tool
-   */
-  IsReadOnlySupported = 'isReadOnlySupported',
-  /**
-   * Tool paste config
-   */
-  PasteConfig = 'pasteConfig'
-}
-
-/**
- * Enum of Tool options provided by Inline Tool
- */
-export enum InternalInlineToolSettings {
-  /**
-   * Inline Tool title for toolbar
-   */
-  Title = 'title' // for Inline Tools. Block Tools can pass title along with icon through the 'toolbox' static prop.
-}
-
-/**
- * Enum of Tool options provided by Block Tune
- */
-export enum InternalTuneSettings {
-  /**
-   * Flag specifies Tool is Block Tune
-   */
-  IsTune = 'isTune'
-}
-
-export type ToolOptions = Omit<ToolSettings, 'class'>;
+// Re-export per-tool option types so consumers can import them from here
+export type { BlockToolOptions, InlineToolOptions, BlockTuneOptions };
 
 /**
  * Static `options` on the tool class (plugin-side defaults)
- * provided by the tool developer
+ * provided by the tool developer.
+ * @deprecated Use {@link ToolStaticOptions} directly
  */
-export type StaticToolOptions = Record<string, unknown>;
+export type StaticToolOptions = ToolStaticOptions;
 
 /**
  * Result of merging static {@link ToolConstructable.options} with the second argument of `use(Tool, options)`.
@@ -207,8 +154,7 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
    * @returns Merged static tool options and second-argument `use` options
    */
   public get options(): MergedToolOptions {
-    /* eslint-disable jsdoc/require-jsdoc -- inline cast only; shape is not a public API surface */
-    const staticDefaults = (this.constructable as { options?: StaticToolOptions }).options ?? {};
+    const staticDefaults = this.constructable.options ?? {};
 
     return {
       ...staticDefaults,
@@ -221,9 +167,8 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
    * @returns Merged tool plugin configuration object
    */
   public get config(): Record<string, unknown> {
-    /* eslint-disable jsdoc/require-jsdoc -- inline cast only; shape is not a public API surface */
-    const staticOpts = (this.constructable as { options?: { config?: Record<string, unknown> } }).options;
-    const fromTool = staticOpts?.config ?? {};
+    const staticOpts = this.constructable.options;
+    const fromTool = (staticOpts?.[BaseToolOptionKey.Config] ?? {}) as Record<string, unknown>;
     const fromUse = (this.useToolOptions[UserToolOptions.Config] ?? {}) as Record<string, unknown>;
     const merged: Record<string, unknown> = {
       ...fromTool,
