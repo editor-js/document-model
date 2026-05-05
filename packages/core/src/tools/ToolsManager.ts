@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { isFunction, isObject, PromiseQueue } from '@editorjs/helpers';
-import { Inject, Service } from 'typedi';
+import { inject, injectable } from 'inversify';
+import { TOKENS } from '../tokens.js';
 import { type ToolSettings, ToolsFactory } from './ToolsFactory.js';
 import type {
   EditorConfig
@@ -20,7 +21,7 @@ import {
  * Works with tools
  * @todo - validate tools configurations
  */
-@Service()
+@injectable()
 export default class ToolsManager {
   /**
    * ToolsFactory instance
@@ -89,7 +90,7 @@ export default class ToolsManager {
    * @param eventBus - EventBus instance to exchange events between components
    */
   constructor(
-    @Inject('EditorConfig') editorConfig: EditorConfig,
+    @inject(TOKENS.EditorConfig) editorConfig: EditorConfig,
     eventBus: EventBus
   ) {
     this.#config = this.#prepareConfig(editorConfig.tools ?? {});

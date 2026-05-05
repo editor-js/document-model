@@ -55,7 +55,13 @@ export enum PluginType {
   /**
    * Default plugin type
    */
-  Plugin = 'Plugin'
+  Plugin = 'Plugin',
+
+  /**
+   * Adapter plugin type
+   * Guaranteed to be initialized before any block is created.
+   */
+  Adapter = 'Adapter'
 }
 
 export type EntityType = ToolType | UiComponentType | PluginType;

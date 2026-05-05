@@ -1,21 +1,26 @@
 import 'reflect-metadata';
-import { FormattingAdapter } from '@editorjs/dom-adapters';
-import type { CaretManagerEvents, InlineFragment, InlineToolName } from '@editorjs/model';
-import { CaretManagerCaretUpdatedEvent, Index, EditorJSModel, createInlineToolData, createInlineToolName } from '@editorjs/model';
+import {
+  CaretManagerEvents,
+  createInlineToolData,
+  FormattingAction,
+  InlineFragment,
+  InlineToolName
+} from '@editorjs/model';
+import { CaretManagerCaretUpdatedEvent, Index, EditorJSModel, createInlineToolName } from '@editorjs/model';
 import { EventType } from '@editorjs/model';
 import {
-  CoreEventType,
-  ToolLoadedCoreEvent,
   EventBus,
-  SelectionChangedCoreEvent
+  SelectionChangedCoreEvent, IndexError, CoreConfigValidated
 } from '@editorjs/sdk';
-import { Inject, Service } from 'typedi';
-import { type CoreConfig, InlineTool, InlineToolFormatData } from '@editorjs/sdk';
+import { inject, injectable } from 'inversify';
+import { TOKENS } from '../tokens.js';
+import { InlineToolFormatData } from '@editorjs/sdk';
+import ToolsManager from '../tools/ToolsManager';
 
 /**
  * SelectionManager responsible for handling selection changes and applying inline tools formatting
  */
-@Service()
+@injectable()
 export class SelectionManager {
   /**
    * Editor model instance
@@ -24,57 +29,36 @@ export class SelectionManager {
   #model: EditorJSModel;
 
   /**
-   * FormattingAdapter instance
-   * Used for inline tools attaching and format apply
-   */
-  #formattingAdapter: FormattingAdapter;
-
-  /**
    * EventBus instance to exchange events between components
    */
   #eventBus: EventBus;
 
   /**
-   * Inline Tools instances available for use
-   */
-  #inlineTools: Map<InlineToolName, InlineTool> = new Map();
-
-  /**
    * Editor's config
    */
-  #config: CoreConfig;
+  #config: CoreConfigValidated;
+
+  /**
+   * Editor's Tools manager instance
+   */
+  #toolsManager: ToolsManager;
 
   /**
    * @param config - Editor's config
    * @param model - editor model instance
-   * @param formattingAdapter - needed for applying format to the model
    * @param eventBus - EventBus instance to exchange events between components
+   * @param toolsManager - Editor's tools manager
    */
   constructor(
-    @Inject('EditorConfig') config: CoreConfig,
+    @inject(TOKENS.EditorConfig) config: CoreConfigValidated,
     model: EditorJSModel,
-    formattingAdapter: FormattingAdapter,
-    eventBus: EventBus
+    eventBus: EventBus,
+    toolsManager: ToolsManager
   ) {
     this.#config = config;
     this.#model = model;
-    this.#formattingAdapter = formattingAdapter;
     this.#eventBus = eventBus;
-
-    this.#eventBus.addEventListener(`core:${CoreEventType.ToolLoaded}`, (event: ToolLoadedCoreEvent) => {
-      const { tool } = event.detail;
-
-      if ('isInline' in tool && tool.isInline() === false) {
-        return;
-      }
-
-      const toolInstance = tool.create();
-      const name = createInlineToolName(tool.name);
-
-      this.#inlineTools.set(name, toolInstance);
-
-      this.#formattingAdapter.attachTool(name, toolInstance);
-    });
+    this.#toolsManager = toolsManager;
 
     this.#model.addEventListener(EventType.CaretManagerUpdated, (event: CaretManagerEvents) => this.#handleCaretManagerUpdate(event));
   }
@@ -110,7 +94,12 @@ export class SelectionManager {
           /**
            * @todo implement filter by current BlockTool configuration
            */
-          availableInlineTools: this.#inlineTools,
+          availableInlineTools: new Map(
+            this.#toolsManager
+              .inlineTools
+              .entries()
+              .map(([name, facade]) => [createInlineToolName(name), facade.create()])
+          ),
           fragments,
         }));
 
@@ -126,8 +115,66 @@ export class SelectionManager {
    */
   public applyInlineToolForCurrentSelection(toolName: InlineToolName, data: InlineToolFormatData = {}): void {
     /**
-     * @todo pass to applyFormat inline tool data formed in toolbar
+     * @todo use inline tool data formed in toolbar
      */
-    this.#formattingAdapter.applyFormat(toolName, createInlineToolData(data));
+    const userCaret = this.#model.getCaret(this.#config.userId);
+
+    const index = userCaret?.index ?? null;
+
+    if (index === null) {
+      throw new IndexError('SelectionManager[applyInlineToolForCurrentSelection]: caret index is outside of the input');
+    }
+
+    /**
+     * @todo do not store middle segments in the index, use only the first and last segments
+     * Also, we need to sort inputs inside first/last block by document order to restore selection
+     */
+    const segments = index.getTextSegments();
+
+    if (segments.length === 0) {
+      throw new IndexError('SelectionManager[applyInlineToolForCurrentSelection]: caret index is outside of the input');
+    }
+
+    const tool = this.#toolsManager.inlineTools.get(toolName)?.create();
+
+    /**
+     * @todo think of config synchronisation. If remote user has some tools current user doesn't there's going to be mismatch in the data
+     */
+    if (tool === undefined) {
+      throw new Error(`SelectionManager[applyInlineToolForCurrentSelection]: tool ${toolName} is not attached`);
+    }
+
+    for (const segment of segments) {
+      const textRange = segment.textRange;
+      const blockIndex = segment.blockIndex;
+      const dataKey = segment.dataKey;
+
+      if (textRange === undefined) {
+        throw new IndexError('TextRange of the index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
+      }
+
+      if (blockIndex === undefined) {
+        throw new IndexError('BlockIndex should be defined. Probably something wrong with the Editor Model. Please, report this issue');
+      }
+
+      if (dataKey === undefined) {
+        throw new IndexError('DataKey of the index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
+      }
+
+      const fragments = this.#model.getFragments(blockIndex, dataKey, ...textRange, toolName);
+
+      const { action, range } = tool.getFormattingOptions(textRange, fragments);
+
+      switch (action) {
+        case FormattingAction.Format:
+          this.#model.format(this.#config.userId, blockIndex, dataKey, toolName, ...range, createInlineToolData(data));
+
+          break;
+        case FormattingAction.Unformat:
+          this.#model.unformat(this.#config.userId, blockIndex, dataKey, toolName, ...range);
+
+          break;
+      }
+    }
   };
 }

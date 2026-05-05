@@ -46,7 +46,7 @@
     "@editorjs/helpers": "^1.2.1",
     "@editorjs/model": "workspace:^",
     "@editorjs/sdk": "workspace:^",
-    "reflect-metadata": "^0.2.2",
-    "typedi": "^0.10.0"
+    "inversify": "^8.1.0",
+    "reflect-metadata": "^0.2.2"
   }
 }

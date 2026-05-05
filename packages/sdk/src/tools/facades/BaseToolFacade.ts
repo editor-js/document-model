@@ -11,7 +11,8 @@ import { ToolType } from '../../entities/EntityType.js';
 import { type BlockTuneFacade } from './BlockTuneFacade.js';
 import type { BlockTool, BlockToolConstructor, InlineTool, InlineToolConstructor, BlockTuneConstructor } from '../../entities';
 
-export type ToolConstructable = BlockToolConstructor | InlineToolConstructor | BlockTuneConstructor;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- need to allow any type here so extended interfaces pass
+export type ToolConstructable = BlockToolConstructor<any, any, any> | InlineToolConstructor | BlockTuneConstructor;
 
 /**
  * Enum of Tool options provided by user

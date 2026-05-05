@@ -1,27 +1,31 @@
 import type {
-  EditorJSModel,
   InlineFragment,
-  InlineToolData,
   InlineToolName,
   ModelEvents
+} from '@editorjs/model';
+import {
+  createInlineToolName,
+  EditorJSModel
 } from '@editorjs/model';
 import {
   EventType,
   TextFormattedEvent,
   TextUnformattedEvent
 } from '@editorjs/model';
-import type { CaretAdapter } from '../CaretAdapter/index.js';
-import { FormattingAction } from '@editorjs/model';
-import { IndexError } from '@editorjs/sdk';
-import type { CoreConfig, InlineTool } from '@editorjs/sdk';
+import { CaretAdapter } from '../CaretAdapter/index.js';
+import type { CoreConfig, InlineTool, ToolLoadedCoreEvent } from '@editorjs/sdk';
+import { CoreEventType, EventBus } from '@editorjs/sdk';
 import { surround } from '../utils/surround.js';
 import { getBoundaryPointByAbsoluteOffset } from '../utils/getRelativeIndex.js';
 import { expandRangeNodeBoundary } from '../utils/expandRangeNodeBoundary.js';
+import { inject, injectable } from 'inversify';
+import { TOKENS } from '../tokens.js';
 
 /**
  * Class handles on format model events and renders inline tools
  * Applies format to the model
  */
+@injectable()
 export class FormattingAdapter {
   /**
    * Editor model instance
@@ -47,11 +51,33 @@ export class FormattingAdapter {
    * @param config - Editor's config
    * @param model - editor model instance
    * @param caretAdapter - caret adapter instance
+   * @param eventBus - Editor's EventBus instance
    */
-  constructor(config: Required<CoreConfig>, model: EditorJSModel, caretAdapter: CaretAdapter) {
+  constructor(
+    @inject(TOKENS.EditorConfig) config: Required<CoreConfig>,
+    model: EditorJSModel,
+    caretAdapter: CaretAdapter,
+    eventBus: EventBus
+  ) {
     this.#config = config;
     this.#model = model;
     this.#caretAdapter = caretAdapter;
+
+    /**
+     * @todo maybe expose some limited information about tools via API so we don't need to store tools in the formatting adapter
+     */
+    eventBus.addEventListener(`core:${CoreEventType.ToolLoaded}`, (event: ToolLoadedCoreEvent) => {
+      const { tool } = event.detail;
+
+      if ('isInline' in tool && tool.isInline() === false) {
+        return;
+      }
+
+      const toolInstance = tool.create();
+      const name = createInlineToolName(tool.name);
+
+      this.attachTool(name, toolInstance);
+    });
 
     /**
      * Add event listener for model changes
@@ -76,7 +102,7 @@ export class FormattingAdapter {
 
     if (tool === undefined) {
       throw new Error(`FormattingAdapter: tool ${toolName} is not attached`);
-    };
+    }
 
     try {
       const inlineElement = tool.createWrapper(toolData);
@@ -103,68 +129,6 @@ export class FormattingAdapter {
    */
   public detachTool(toolName: InlineToolName): void {
     this.#tools.delete(toolName);
-  }
-
-  /**
-   * Format model according to action formed by inline tool instance
-   * @param toolName - name of the tool whose format will be applied
-   * @param data - data of the tool got from toolbar
-   */
-  public applyFormat(toolName: InlineToolName, data: InlineToolData): void {
-    const index = this.#caretAdapter.userCaretIndex;
-
-    if (index === null) {
-      throw new IndexError('FormattingAdapter: caret index is outside of the input');
-    }
-
-    /**
-     * @todo do not store middle segments in the index, use only the first and last segments
-     * Also, we need to sort inpus inside first/last block by document order to restore selection
-     */
-    const segments = index.getTextSegments();
-
-    if (segments.length === 0) {
-      throw new IndexError('FormattingAdapter: caret index is outside of the input');
-    }
-
-    const tool = this.#tools.get(toolName);
-
-    if (tool === undefined) {
-      throw new Error(`FormattingAdapter: tool ${toolName} is not attached`);
-    }
-
-    for (const segment of segments) {
-      const textRange = segment.textRange;
-      const blockIndex = segment.blockIndex;
-      const dataKey = segment.dataKey;
-
-      if (textRange === undefined) {
-        throw new IndexError('TextRange of the index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
-      }
-
-      if (blockIndex === undefined) {
-        throw new IndexError('BlockIndex should be defined. Probably something wrong with the Editor Model. Please, report this issue');
-      }
-
-      if (dataKey === undefined) {
-        throw new IndexError('DataKey of the index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
-      }
-
-      const fragments = this.#model.getFragments(blockIndex, dataKey, ...textRange, toolName);
-
-      const { action, range } = tool.getFormattingOptions(textRange, fragments);
-
-      switch (action) {
-        case FormattingAction.Format:
-          this.#model.format(this.#config.userId, blockIndex, dataKey, toolName, ...range, data);
-
-          break;
-        case FormattingAction.Unformat:
-          this.#model.unformat(this.#config.userId, blockIndex, dataKey, toolName, ...range);
-
-          break;
-      }
-    }
   }
 
   /**

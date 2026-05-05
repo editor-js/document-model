@@ -51,7 +51,6 @@ jest.unstable_mockModule('../tools/ToolsManager', () => ({
 // Import real model (no mock) and mocked adapters
 const { EditorJSModel, EventType, BlockAddedEvent, BlockRemovedEvent } = await import('@editorjs/model');
 const { EventBus } = await import('@editorjs/sdk');
-const { CaretAdapter, FormattingAdapter } = await import('@editorjs/dom-adapters');
 const ToolsManager = (await import('../tools/ToolsManager')).default;
 const { BlocksManager } = await import('../components/BlockManager.js');
 const { BlocksAPI } = await import('./BlocksAPI.js');
@@ -73,19 +72,13 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
     model = new EditorJSModel(USER_ID, { identifier: DOCUMENT_ID });
     eventBus = new EventBus();
 
-    // @ts-expect-error — mock constructor, no real DOM needed
-    const caretAdapter = new CaretAdapter();
     // @ts-expect-error — mock constructor
     const toolsManager = new ToolsManager();
-    // @ts-expect-error — mock constructor
-    const formattingAdapter = new FormattingAdapter();
 
     blocksManager = new BlocksManager(
       model,
       eventBus,
-      caretAdapter,
       toolsManager,
-      formattingAdapter,
       config
     );
 
@@ -333,7 +326,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
       expect(handler).toHaveBeenCalledWith(expect.any(BlockAddedEvent));
     });
 
-    it('should emit BlockRemovedEvent on model when delete is called', () => {
+    it('should emit BlockRemovedEvent on model when delete is called', async () => {
       blocksAPI.insert('paragraph');
 
       const handler = jest.fn();
@@ -341,6 +334,8 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
       model.addEventListener(EventType.Changed, handler);
 
       blocksAPI.delete(0);
+
+      await Promise.resolve(); // flush queueMicrotask used by removeBlock
 
       expect(handler).toHaveBeenCalledWith(expect.any(BlockRemovedEvent));
     });

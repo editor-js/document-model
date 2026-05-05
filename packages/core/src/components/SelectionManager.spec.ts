@@ -1,18 +1,11 @@
-/* eslint-disable @typescript-eslint/no-magic-numbers, jsdoc/require-jsdoc, @stylistic/comma-dangle,@typescript-eslint/naming-convention */
+/* eslint-disable @typescript-eslint/no-magic-numbers, jsdoc/require-jsdoc,@typescript-eslint/naming-convention */
 
 import { jest } from '@jest/globals';
-import type { CoreConfig, ToolLoadedCoreEvent } from '@editorjs/sdk';
+import type { CoreConfigValidated } from '@editorjs/sdk';
 // @ts-expect-error - TS don't import types via import() so have to import them here as well
 import type { CaretManagerEvents, InlineFragment, InlineToolName, EventType, Index } from '@editorjs/model';
 
 // Register ESM mocks before importing the module under test
-jest.unstable_mockModule('@editorjs/dom-adapters', () => ({
-  FormattingAdapter: jest.fn(() => ({
-    attachTool: jest.fn(),
-    applyFormat: jest.fn(),
-  })),
-}));
-
 jest.unstable_mockModule('@editorjs/model', () => {
   const caretManagerCaretUpdatedEvent = function (
     this: { detail: Record<string, unknown> },
@@ -28,6 +21,9 @@ jest.unstable_mockModule('@editorjs/model', () => {
   const EditorJSModel = jest.fn(() => ({
     addEventListener: jest.fn(),
     getFragments: jest.fn(() => []),
+    getCaret: jest.fn(() => undefined),
+    format: jest.fn(),
+    unformat: jest.fn(),
     serialized: { blocks: [] },
   }));
 
@@ -38,6 +34,8 @@ jest.unstable_mockModule('@editorjs/model', () => {
     EventType: eventType,
     createInlineToolData: (data: Record<string, unknown>) => data,
     createInlineToolName: (name: string) => name,
+    FormattingAction: { Format: 'format',
+      Unformat: 'unformat' },
   };
 });
 
@@ -47,11 +45,18 @@ jest.unstable_mockModule('@editorjs/sdk', () => ({
     this.detail = detail;
   }),
   EventBus: jest.fn(() => ({ dispatchEvent: jest.fn() })),
+  IndexError: class IndexError extends Error {},
+}));
+
+jest.unstable_mockModule('../tools/ToolsManager', () => ({
+  default: jest.fn(() => ({
+    inlineTools: new Map(),
+  })),
 }));
 
 const { EditorJSModel, EventType, CaretManagerCaretUpdatedEvent, Index } = await import('@editorjs/model');
-const { SelectionChangedCoreEvent, CoreEventType, EventBus } = await import('@editorjs/sdk');
-const { FormattingAdapter } = await import('@editorjs/dom-adapters');
+const { SelectionChangedCoreEvent, EventBus } = await import('@editorjs/sdk');
+const ToolsManager = (await import('../tools/ToolsManager')).default;
 const { SelectionManager } = await import('./SelectionManager.js');
 
 describe('SelectionManager', () => {
@@ -66,54 +71,20 @@ describe('SelectionManager', () => {
     }
   };
 
-  // @ts-expect-error - Mocked instance
-  const formattingAdapter = new FormattingAdapter();
   const eventBus = new EventBus();
 
-  let toolLoadedListener: (e: CustomEvent) => void;
+  // @ts-expect-error - Mocked instance
+  const toolsManager = new ToolsManager();
 
-  eventBus.addEventListener = (type: string, callback: (e: Event) => void) => {
-    if (type === `core:${CoreEventType.ToolLoaded}`) {
-      toolLoadedListener = callback;
-    }
-  };
-
-  const selectionManager = new SelectionManager({ userId: 'user' } as CoreConfig, model, formattingAdapter, eventBus);
+  const selectionManager = new SelectionManager(
+    { userId: 'user' } as unknown as CoreConfigValidated,
+    model,
+    eventBus,
+    toolsManager
+  );
 
   beforeEach(() => {
     jest.resetAllMocks();
-  });
-
-  describe('tool registration (ToolLoaded event)', () => {
-    it('should ignore non-inline loaded tool', () => {
-      const tool = {
-        name: 'paragraph',
-        isInline: jest.fn(() => false),
-        create: jest.fn(),
-      };
-
-      toolLoadedListener({
-        detail: { tool },
-      } as unknown as ToolLoadedCoreEvent);
-
-      expect(formattingAdapter.attachTool).not.toHaveBeenCalled();
-    });
-
-    it('should register inline tool and attach it to formatting adapter', () => {
-      const inlineToolInstance = { render: jest.fn() };
-      const tool = {
-        name: 'bold',
-        isInline: jest.fn(() => true),
-        create: jest.fn(() => inlineToolInstance),
-      };
-
-      toolLoadedListener({
-        detail: { tool },
-      } as unknown as ToolLoadedCoreEvent);
-
-      expect(tool.create).toHaveBeenCalled();
-      expect(formattingAdapter.attachTool).toHaveBeenCalledWith('bold', inlineToolInstance);
-    });
   });
 
   describe('Caret Events handling', () => {
@@ -132,8 +103,7 @@ describe('SelectionManager', () => {
       const event = new CaretManagerCaretUpdatedEvent({
         userId: 'user',
         index: null,
-      }
-      );
+      });
 
       caretEventsListener(event);
 
@@ -210,16 +180,11 @@ describe('SelectionManager', () => {
       expect(eventBus.dispatchEvent).not.toHaveBeenCalled();
     });
 
-    it('should keep loaded inline tools map in selection changed payload', () => {
-      const tool = {
-        name: 'italic',
-        isInline: jest.fn(() => true),
-        create: jest.fn(() => ({ render: jest.fn() })),
-      };
+    it('should include inline tools from toolsManager in availableInlineTools', () => {
+      const toolInstance = { render: jest.fn() };
+      const facadeMock = { create: jest.fn(() => toolInstance) };
 
-      toolLoadedListener({
-        detail: { tool },
-      } as unknown as ToolLoadedCoreEvent);
+      (toolsManager as unknown as { inlineTools: Map<unknown, unknown> }).inlineTools = new Map([['italic', facadeMock]]);
 
       const event = new CaretManagerCaretUpdatedEvent({
         userId: 'user',
@@ -227,41 +192,167 @@ describe('SelectionManager', () => {
       });
 
       jest.spyOn(model, 'getFragments').mockReturnValue([]);
-
       jest.spyOn(Index, 'parse').mockReturnValue({
         blockIndex: 1,
         dataKey: 'text',
         textRange: [1, 3],
         getTextSegments() {
-          return [
-            {
-              blockIndex: 1,
-              dataKey: 'text',
-              textRange: [1, 3],
-            },
-          ];
+          return [{ blockIndex: 1,
+            dataKey: 'text',
+            textRange: [1, 3] }];
         },
       } as unknown as Index);
 
       caretEventsListener(event);
 
-      expect(SelectionChangedCoreEvent).toHaveBeenCalledWith(expect.objectContaining({
-        availableInlineTools: new Map([['italic', jest.fn()]])
-      }));
+      const callArg = (SelectionChangedCoreEvent as jest.MockedClass<typeof SelectionChangedCoreEvent>).mock.calls[0][0] as { availableInlineTools: Map<string, unknown> };
+
+      expect(callArg.availableInlineTools.has('italic')).toBe(true);
     });
   });
 
   describe('.applyInlineToolForCurrentSelection()', () => {
-    it('should apply inline tool format with default data', () => {
-      selectionManager.applyInlineToolForCurrentSelection('bold' as InlineToolName);
+    it('should throw when caret is not set', () => {
+      jest.spyOn(model, 'getCaret').mockReturnValue(undefined);
 
-      expect(formattingAdapter.applyFormat).toHaveBeenCalledWith('bold', {});
+      expect(() => {
+        selectionManager.applyInlineToolForCurrentSelection('bold' as InlineToolName);
+      }).toThrow();
     });
 
-    it('should apply inline tool format with provided data', () => {
-      selectionManager.applyInlineToolForCurrentSelection('link' as InlineToolName, { href: 'https://example.com' });
+    it('should throw when caret index is null', () => {
+      jest.spyOn(model, 'getCaret').mockReturnValue({ index: null } as unknown as ReturnType<typeof model.getCaret>);
 
-      expect(formattingAdapter.applyFormat).toHaveBeenCalledWith('link', { href: 'https://example.com' },);
+      expect(() => {
+        selectionManager.applyInlineToolForCurrentSelection('bold' as InlineToolName);
+      }).toThrow();
+    });
+
+    it('should throw when caret has no text segments', () => {
+      const indexMock = { getTextSegments: jest.fn(() => []) };
+
+      jest.spyOn(model, 'getCaret').mockReturnValue({ index: indexMock } as unknown as ReturnType<typeof model.getCaret>);
+
+      expect(() => {
+        selectionManager.applyInlineToolForCurrentSelection('bold' as InlineToolName);
+      }).toThrow();
+    });
+
+    it('should throw when tool is not found', () => {
+      const indexMock = {
+        getTextSegments: jest.fn(() => [{ blockIndex: 0,
+          dataKey: 'text',
+          textRange: [0, 3] }]),
+      };
+
+      jest.spyOn(model, 'getCaret').mockReturnValue({ index: indexMock } as unknown as ReturnType<typeof model.getCaret>);
+      (toolsManager as unknown as { inlineTools: Map<unknown, unknown> }).inlineTools = new Map();
+
+      expect(() => {
+        selectionManager.applyInlineToolForCurrentSelection('bold' as InlineToolName);
+      }).toThrow('SelectionManager[applyInlineToolForCurrentSelection]: tool bold is not attached');
+    });
+
+    it('should call model.format when tool getFormattingOptions returns Format action', () => {
+      const mockFormat = jest.spyOn(model, 'format').mockImplementation(() => undefined);
+      const toolMock = {
+        getFormattingOptions: jest.fn(() => ({ action: 'format',
+          range: [0, 3] })),
+      };
+      const facadeMock = { create: jest.fn(() => toolMock) };
+
+      (toolsManager as unknown as { inlineTools: Map<unknown, unknown> }).inlineTools = new Map([['bold', facadeMock]]);
+
+      const indexMock = {
+        getTextSegments: jest.fn(() => [{ blockIndex: 0,
+          dataKey: 'text',
+          textRange: [0, 3] }]),
+      };
+
+      jest.spyOn(model, 'getCaret').mockReturnValue({ index: indexMock } as unknown as ReturnType<typeof model.getCaret>);
+      jest.spyOn(model, 'getFragments').mockReturnValue([]);
+
+      selectionManager.applyInlineToolForCurrentSelection('bold' as InlineToolName);
+
+      expect(mockFormat).toHaveBeenCalled();
+    });
+
+    it('should call model.unformat when tool getFormattingOptions returns Unformat action', () => {
+      const mockUnformat = jest.spyOn(model, 'unformat').mockImplementation(() => undefined);
+      const toolMock = {
+        getFormattingOptions: jest.fn(() => ({ action: 'unformat',
+          range: [0, 3] })),
+      };
+      const facadeMock = { create: jest.fn(() => toolMock) };
+
+      (toolsManager as unknown as { inlineTools: Map<unknown, unknown> }).inlineTools = new Map([['bold', facadeMock]]);
+
+      const indexMock = {
+        getTextSegments: jest.fn(() => [{ blockIndex: 0,
+          dataKey: 'text',
+          textRange: [0, 3] }]),
+      };
+
+      jest.spyOn(model, 'getCaret').mockReturnValue({ index: indexMock } as unknown as ReturnType<typeof model.getCaret>);
+      jest.spyOn(model, 'getFragments').mockReturnValue([]);
+
+      selectionManager.applyInlineToolForCurrentSelection('bold' as InlineToolName);
+
+      expect(mockUnformat).toHaveBeenCalled();
+    });
+
+    it('should throw when segment has no textRange', () => {
+      const toolMock = { getFormattingOptions: jest.fn() };
+      const facadeMock = { create: jest.fn(() => toolMock) };
+
+      (toolsManager as unknown as { inlineTools: Map<unknown, unknown> }).inlineTools = new Map([['bold', facadeMock]]);
+
+      const indexMock = {
+        getTextSegments: jest.fn(() => [{ blockIndex: 0,
+          dataKey: 'text' }]),
+      };
+
+      jest.spyOn(model, 'getCaret').mockReturnValue({ index: indexMock } as unknown as ReturnType<typeof model.getCaret>);
+
+      expect(() => {
+        selectionManager.applyInlineToolForCurrentSelection('bold' as InlineToolName);
+      }).toThrow('TextRange of the index should be defined');
+    });
+
+    it('should throw when segment has no blockIndex', () => {
+      const toolMock = { getFormattingOptions: jest.fn() };
+      const facadeMock = { create: jest.fn(() => toolMock) };
+
+      (toolsManager as unknown as { inlineTools: Map<unknown, unknown> }).inlineTools = new Map([['bold', facadeMock]]);
+
+      const indexMock = {
+        getTextSegments: jest.fn(() => [{ dataKey: 'text',
+          textRange: [0, 3] }]),
+      };
+
+      jest.spyOn(model, 'getCaret').mockReturnValue({ index: indexMock } as unknown as ReturnType<typeof model.getCaret>);
+
+      expect(() => {
+        selectionManager.applyInlineToolForCurrentSelection('bold' as InlineToolName);
+      }).toThrow('BlockIndex should be defined');
+    });
+
+    it('should throw when segment has no dataKey', () => {
+      const toolMock = { getFormattingOptions: jest.fn() };
+      const facadeMock = { create: jest.fn(() => toolMock) };
+
+      (toolsManager as unknown as { inlineTools: Map<unknown, unknown> }).inlineTools = new Map([['bold', facadeMock]]);
+
+      const indexMock = {
+        getTextSegments: jest.fn(() => [{ blockIndex: 0,
+          textRange: [0, 3] }]),
+      };
+
+      jest.spyOn(model, 'getCaret').mockReturnValue({ index: indexMock } as unknown as ReturnType<typeof model.getCaret>);
+
+      expect(() => {
+        selectionManager.applyInlineToolForCurrentSelection('bold' as InlineToolName);
+      }).toThrow('DataKey of the index should be defined');
     });
   });
 });

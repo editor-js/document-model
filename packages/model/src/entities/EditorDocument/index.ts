@@ -5,7 +5,14 @@ import { BlockNode } from '../BlockNode/index.js';
 import { IndexBuilder } from '../Index/IndexBuilder.js';
 import type { EditorDocumentSerialized, EditorDocumentConstructorParameters, Properties } from './types/index.js';
 import type { BlockTuneName } from '../BlockTune/index.js';
-import { type InlineFragment, type InlineToolData, type InlineToolName } from '../inline-fragments/index.js';
+import type {
+  TextNodeSerialized
+} from '../inline-fragments/index.js';
+import {
+  type InlineFragment,
+  type InlineToolData,
+  type InlineToolName
+} from '../inline-fragments/index.js';
 import { IoCContainer, TOOLS_REGISTRY } from '../../IoC/index.js';
 import { ToolsRegistry } from '../../tools/index.js';
 import type { BlockNodeDataSerializedValue, BlockNodeSerialized } from '../BlockNode/types/index.js';
@@ -25,6 +32,7 @@ import {
 import type { Constructor } from '../../utils/types.js';
 import { BaseDocumentEvent, type ModifiedEventData } from '../../EventBus/events/BaseEvent.js';
 import type { Index } from '../Index/index.js';
+import type { ValueSerialized } from '../ValueNode/index.js';
 
 export type * from './types/index.js';
 
@@ -138,6 +146,11 @@ export class EditorDocument extends EventBus {
 
     builder.addBlockIndex(index);
 
+    /**
+     * Dispatch BlockAddedEvent synchronously so it fires before any child DataNodeAddedEvents
+     * (which are queued as microtasks during BlockNode construction), preserving root → leaves order
+     * for add events.
+     */
     this.dispatchEvent(new BlockAddedEvent(builder.build(), blockNode.serialized, getContext<string | number>()!));
   }
 
@@ -192,6 +205,17 @@ export class EditorDocument extends EventBus {
     this.#checkIndexOutOfBounds(index, this.length - 1);
 
     this.#children[index].removeDataNode(createDataKey(key));
+  }
+
+  /**
+   * Returns data node by the block index and data key
+   * @param index - block index where data node is stored
+   * @param key - data key of the data node
+   */
+  public getDataNode(index: number, key: DataKey | string): ValueSerialized | TextNodeSerialized | undefined {
+    this.#checkIndexOutOfBounds(index, this.length - 1);
+
+    return this.#children[index].getDataNode(createDataKey(key));
   }
 
   /**

@@ -707,6 +707,112 @@ describe('EditorDocument', () => {
     });
   });
 
+  describe('.getDataNode()', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should call .getDataNode() method of the BlockNode at the specific index', () => {
+      const blocksData = [
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+      ];
+      const document = new EditorDocument({
+        identifier: 'document',
+      });
+
+      document.initialize({ blocks: blocksData });
+
+      blocksData.forEach((_, i) => {
+        const blockNode = document.getBlock(i);
+
+        jest
+          .spyOn(blockNode, 'getDataNode')
+          .mockImplementation(() => undefined);
+      });
+
+      const blockIndexToQuery = 1;
+      const dataKey = 'data-key-1a2b';
+
+      document.getDataNode(blockIndexToQuery, dataKey);
+
+      expect(document.getBlock(blockIndexToQuery).getDataNode)
+        .toHaveBeenCalledWith(dataKey);
+    });
+
+    it('should not call .getDataNode() method of other BlockNodes', () => {
+      const blocksData = [
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+      ];
+      const document = new EditorDocument({
+        identifier: 'document',
+      });
+
+      document.initialize({ blocks: blocksData });
+
+      const blockNodes = blocksData.map((_, i) => {
+        const blockNode = document.getBlock(i);
+
+        jest
+          .spyOn(blockNode, 'getDataNode')
+          .mockImplementation(() => undefined);
+
+        return blockNode;
+      });
+
+      const blockIndexToQuery = 1;
+      const dataKey = 'data-key-1a2b';
+
+      document.getDataNode(blockIndexToQuery, dataKey);
+
+      blockNodes.forEach((blockNode, index) => {
+        if (index === blockIndexToQuery) {
+          return;
+        }
+
+        expect(blockNode.getDataNode)
+          .not
+          .toHaveBeenCalled();
+      });
+    });
+
+    it('should throw an error if the index is out of bounds', () => {
+      const document = new EditorDocument({
+        identifier: 'document',
+      });
+      const blockIndexOutOfBound = document.length + 1;
+      const dataKey = 'data-key-1a2b';
+
+      const action = (): void => {
+        document.getDataNode(blockIndexOutOfBound, dataKey);
+      };
+
+      expect(action)
+        .toThrowError('Index out of bounds');
+    });
+  });
+
   describe('.removeDataNode()', () => {
     beforeEach(() => {
       jest.clearAllMocks();
