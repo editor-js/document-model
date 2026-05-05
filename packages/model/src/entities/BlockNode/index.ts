@@ -36,6 +36,7 @@ import {
 import type { Constructor } from '../../utils/types.js';
 import type { TextNodeEvents } from '../../EventBus/types/EventMap.js';
 import { BaseDocumentEvent } from '../../EventBus/events/BaseEvent.js';
+import {AlreadyExistingKeyError} from "./errors/AlreadyExistingKeyError";
 
 /**
  * BlockNode class represents a node in a tree-like structure used to store and manipulate Blocks in an editor document.
@@ -179,7 +180,7 @@ export class BlockNode extends EventBus {
       insert(this.#data, dataKey as string, mappedData);
     } else {
       if (has(this.#data, dataKey as string)) {
-        return;
+        throw new AlreadyExistingKeyError(dataKey);
       }
 
       set(this.#data, dataKey as string, mappedData);
