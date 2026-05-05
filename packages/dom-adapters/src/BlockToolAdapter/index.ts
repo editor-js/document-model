@@ -48,6 +48,11 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
   #inputsRegistry: InputsRegistry;
 
   /**
+   * Stored reference to the beforeinput event listener so it can be removed on destroy.
+   */
+  #beforeInputListener: EventListener;
+
+  /**
    * BlockToolAdapter constructor
    * @param config - Editor's config
    * @param model - EditorJSModel instance
@@ -71,11 +76,25 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
     this.#inputsRegistry = registry;
 
     /**
+     * @param event - BeforeInputEvent
+     */
+    this.#beforeInputListener = ((event: BeforeInputUIEvent) => {
+      this.#processDelegatedBeforeInput(event);
+    }) as EventListener;
+
+    /**
      * @todo Needs to be documented. If UI module is replaced and doesn't dispatch the event nothing would work
      */
-    eventBus.addEventListener(`ui:${BeforeInputUIEventName}`, (event: BeforeInputUIEvent) => {
-      this.#processDelegatedBeforeInput(event);
-    });
+    eventBus.addEventListener(`ui:${BeforeInputUIEventName}`, this.#beforeInputListener);
+  }
+
+  /**
+   * Releases all resources held by this adapter.
+   * Removes both the model change listener (via super) and the eventBus beforeinput listener.
+   */
+  public override destroy(): void {
+    super.destroy();
+    this.eventBus.removeEventListener(`ui:${BeforeInputUIEventName}`, this.#beforeInputListener);
   }
 
   /**

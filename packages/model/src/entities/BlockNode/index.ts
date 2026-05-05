@@ -200,6 +200,13 @@ export class BlockNode extends EventBus {
       .build();
 
     /**
+     * Capture the context synchronously before entering the microtask,
+     * because the WithContext wrapper will have already popped the stack
+     * by the time the queued callback runs.
+     */
+    const userId = getContext<string | number>();
+
+    /**
      * Need to delay the event so the order is
      * 1. BlockNodeAdded
      * 2. DataNodeAdded
@@ -207,7 +214,7 @@ export class BlockNode extends EventBus {
      * If done in sync, DataNodeAdded would be fired first
      */
     queueMicrotask(() => {
-      this.dispatchEvent(new DataNodeAddedEvent(index, data, getContext<string | number>()!));
+      this.dispatchEvent(new DataNodeAddedEvent(index, data, userId!));
     });
   };
 
