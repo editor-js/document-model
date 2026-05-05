@@ -36,7 +36,7 @@ import {
 import type { Constructor } from '../../utils/types.js';
 import type { TextNodeEvents } from '../../EventBus/types/EventMap.js';
 import { BaseDocumentEvent } from '../../EventBus/events/BaseEvent.js';
-import {AlreadyExistingKeyError} from "./errors/AlreadyExistingKeyError";
+import { AlreadyExistingKeyError } from './errors/AlreadyExistingKeyError.js';
 
 /**
  * BlockNode class represents a node in a tree-like structure used to store and manipulate Blocks in an editor document.

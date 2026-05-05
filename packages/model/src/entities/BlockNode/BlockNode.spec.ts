@@ -19,7 +19,7 @@ import { TextAddedEvent, TuneModifiedEvent, ValueModifiedEvent } from '../../Eve
 import { EventType } from '../../EventBus/types/EventType.js';
 import { createBlockTuneName } from '../BlockTune/index.js';
 import { get } from '../../utils/keypath.js';
-import {AlreadyExistingKeyError} from "./errors/AlreadyExistingKeyError";
+import { AlreadyExistingKeyError } from './errors/AlreadyExistingKeyError.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- needed to spy on conditional-typed getter with @jest/globals strict types
 const ValueNodeProto = ValueNode.prototype as unknown as {
