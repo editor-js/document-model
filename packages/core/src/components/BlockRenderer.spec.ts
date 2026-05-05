@@ -82,6 +82,7 @@ describe('BlockRenderer (unit, mocked deps)', () => {
 
   const adapter: EditorJSAdapterPlugin = {
     createBlockToolAdapter: jest.fn(() => ({})),
+    destroyBlockToolAdapter: jest.fn(),
   } as unknown as EditorJSAdapterPlugin;
 
   new BlockRenderer(
@@ -201,6 +202,19 @@ describe('BlockRenderer (unit, mocked deps)', () => {
         void changedListener(event);
 
         expect(eventBus.dispatchEvent).toHaveBeenCalled();
+      });
+
+      it('should call destroyBlockToolAdapter with the block index', () => {
+        const event = new BlockRemovedEvent(
+          { blockIndex: 2 } as Index,
+          { name: 'tool',
+            data: {} },
+          USER_ID,
+        );
+
+        void changedListener(event);
+
+        expect(adapter.destroyBlockToolAdapter).toHaveBeenCalledWith(2);
       });
 
       it('should throw when blockIndex is undefined', () => {

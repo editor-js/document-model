@@ -88,8 +88,8 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
   }
 
   /**
-   * Attaches or re-attaches input to the model using key
-   * It handles beforeinput events and updates model data
+   * Attaches or re-attaches input to the model using key.
+   * Each input registered in the InputRegistry — the shared registry of all inputs in the editor
    * @param keyRaw - tools data key to attach input to
    * @param input - input element
    */

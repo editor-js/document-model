@@ -7,7 +7,7 @@ import { EventBus } from '@editorjs/sdk';
 import { PluginType } from '@editorjs/sdk';
 import { DOMBlockToolAdapter } from './BlockToolAdapter/index.js';
 import { InputsRegistry } from './InputsRegistry/index.js';
-import { BlockRemovedEvent, EditorJSModel, EventType } from '@editorjs/model';
+import { EditorJSModel } from '@editorjs/model';
 import { Container } from 'inversify';
 import { TOKENS } from './tokens.js';
 import type { CoreConfig } from '@editorjs/sdk';
@@ -47,28 +47,6 @@ export class DOMAdapters implements EditorJSAdapterPlugin {
       .bind(DOMBlockToolAdapter)
       .toSelf()
       .inTransientScope();
-
-    const registry = this.#iocContainer.get(InputsRegistry);
-
-    model.addEventListener(EventType.Changed, (event) => {
-      if (event instanceof BlockRemovedEvent) {
-        const removedBlockIndex = event.detail.index.blockIndex;
-
-        if (removedBlockIndex === undefined) {
-          return;
-        }
-
-        registry.removeBlock(removedBlockIndex);
-
-        this.#adapters.splice(removedBlockIndex, 1);
-
-        this.#adapters.forEach((adapter) => {
-          if (adapter.getBlockIndex() > removedBlockIndex) {
-            adapter.setBlockIndex(adapter.getBlockIndex() - 1);
-          }
-        });
-      }
-    });
   }
 
   /**
@@ -97,6 +75,26 @@ export class DOMAdapters implements EditorJSAdapterPlugin {
     this.#adapters.splice(blockIndex, 0, adapter);
 
     return adapter;
+  }
+
+  /**
+   * Destroys the BlockToolAdapter for the block at the given index.
+   * Cleans up all inputs registered for the block and removes the adapter instance.
+   * Called by BlockRenderer when a block is removed from the model.
+   * @param blockIndex - index of the removed block
+   */
+  public destroyBlockToolAdapter(blockIndex: number): void {
+    const registry = this.#iocContainer.get(InputsRegistry);
+
+    registry.removeBlock(blockIndex);
+
+    this.#adapters.splice(blockIndex, 1);
+
+    this.#adapters.forEach((adapter) => {
+      if (adapter.getBlockIndex() > blockIndex) {
+        adapter.setBlockIndex(adapter.getBlockIndex() - 1);
+      }
+    });
   }
 }
 

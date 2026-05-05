@@ -189,6 +189,13 @@ export class BlockNode extends EventBus {
       .addDataKey(dataKey)
       .build();
 
+    /**
+     * Need to delay the event so the order is
+     * 1. BlockNodeAdded
+     * 2. DataNodeAdded
+     *
+     * If done in sync, DataNodeAdded would be fired first
+     */
     queueMicrotask(() => {
       this.dispatchEvent(new DataNodeAddedEvent(index, data, getContext<string | number>()!));
     });

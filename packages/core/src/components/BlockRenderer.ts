@@ -135,6 +135,7 @@ export class BlockRenderer {
 
   /**
    * Handles BlockRemovedEvent:
+   *  - cleans up the block's adapter and its registered inputs
    *  - dispatches BlockRemovedCoreEvent so the UI layer removes the block
    * @param event - BlockRemovedEvent
    */
@@ -144,6 +145,8 @@ export class BlockRenderer {
     if (index.blockIndex === undefined) {
       throw new Error('[BlockRenderer] Block index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
     }
+
+    this.#adapter.destroyBlockToolAdapter(index.blockIndex);
 
     this.#eventBus.dispatchEvent(new BlockRemovedCoreEvent({
       tool: data.name,
