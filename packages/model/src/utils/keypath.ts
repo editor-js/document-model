@@ -80,7 +80,13 @@ export function insert<T = unknown>(data: Record<string | number | symbol, any>,
     return;
   }
 
-  parent.splice(Number(lastKey), 0, value);
+  const index = Number(lastKey);
+
+  if (!Number.isInteger(index) || index < 0) {
+    return;
+  }
+
+  parent.splice(index, 0, value);
 }
 
 /**
@@ -108,7 +114,13 @@ export function remove(data: Record<string | number | symbol, any>, keys: string
   }
 
   if (Array.isArray(parent)) {
-    parent.splice(Number(lastKey), 1);
+    const index = Number(lastKey);
+
+    if (!Number.isInteger(index) || index < 0) {
+      return;
+    }
+
+    parent.splice(index, 1);
   } else {
     delete parent[lastKey];
   }

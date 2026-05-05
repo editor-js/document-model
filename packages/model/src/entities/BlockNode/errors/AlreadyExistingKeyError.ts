@@ -9,6 +9,6 @@ export class AlreadyExistingKeyError extends Error {
    * @param key - data key existing node
    */
   constructor(key: DataKey) {
-    super(`BlockNode: data with key "${key}" already not exists`);
+    super(`BlockNode: data with key "${key}" already exists`);
   }
 }
