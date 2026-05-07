@@ -152,5 +152,9 @@ export class BlockRenderer {
       tool: data.name,
       index: index.blockIndex,
     }));
+
+    /**
+     * @todo clear block tool adapter memory
+     */
   }
 }
