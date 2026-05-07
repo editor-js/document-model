@@ -25,7 +25,8 @@ export function get<T = unknown>(data: Record<string | number | symbol, any>, ke
  * @param keys - keypath to a value
  * @param value - value to set
  */
-export function set<T = unknown>(data: Record<string, unknown>, keys: string | string[], value: T): void {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- unknown can't be used as data parameter is used for recursion
+export function set<T = unknown>(data: Record<string | number | symbol, any>, keys: string | string[], value: T): void {
   const parsedKeys = Array.isArray(keys) ? keys : keys.split('.');
   const key = parsedKeys.shift();
 
@@ -54,4 +55,73 @@ export function set<T = unknown>(data: Record<string, unknown>, keys: string | s
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- unknown can't be used as data parameter is used for recursion
 export function has(data: Record<string | number | symbol, any>, keys: string | string[]): boolean {
   return get(data, keys) !== undefined;
+}
+
+/**
+ * Insert a value into an array at the index specified by the last key segment.
+ * Does nothing if the path does not exist or the parent is not an array.
+ * @param data - root object
+ * @param keys - keypath where the last segment is the target index
+ * @param value - value to splice in
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- unknown can't be used as data parameter is used for recursion
+export function insert<T = unknown>(data: Record<string | number | symbol, any>, keys: string | string[], value: T): void {
+  const parsedKeys = Array.isArray(keys) ? [...keys] : keys.split('.');
+
+  if (parsedKeys.length === 0) {
+    return;
+  }
+
+  const lastKey = parsedKeys.pop()!;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- unknown can't be used as data parameter is used for recursion
+  const parent = get<any[]>(data, parsedKeys);
+
+  if (!Array.isArray(parent)) {
+    return;
+  }
+
+  const index = Number(lastKey);
+
+  if (!Number.isInteger(index) || index < 0) {
+    return;
+  }
+
+  parent.splice(index, 0, value);
+}
+
+/**
+ * Remove value from object by keypath.
+ * For array parents the element is spliced out (removes the slot entirely).
+ * For object parents the property is deleted.
+ * Does nothing if the path does not exist.
+ * @param data - object to remove value from
+ * @param keys - keypath to the value to remove
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- unknown can't be used as data parameter is used for recursion
+export function remove(data: Record<string | number | symbol, any>, keys: string | string[]): void {
+  const parsedKeys = Array.isArray(keys) ? [...keys] : keys.split('.');
+
+  if (parsedKeys.length === 0) {
+    return;
+  }
+
+  const lastKey = parsedKeys.pop()!;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- unknown can't be used as data parameter is used for recursion
+  const parent = get<Record<string | number, any>>(data, parsedKeys);
+
+  if (parent === undefined || parent === null) {
+    return;
+  }
+
+  if (Array.isArray(parent)) {
+    const index = Number(lastKey);
+
+    if (!Number.isInteger(index) || index < 0) {
+      return;
+    }
+
+    parent.splice(index, 1);
+  } else {
+    delete parent[lastKey];
+  }
 }
