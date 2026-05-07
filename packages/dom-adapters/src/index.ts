@@ -13,6 +13,8 @@ import type { BlockId } from '@editorjs/model';
 import { Container } from 'inversify';
 import { TOKENS } from './tokens.js';
 import type { CoreConfig } from '@editorjs/sdk';
+import { FormattingAdapter } from './FormattingAdapter/index.js';
+import { CaretAdapter } from './CaretAdapter/index.js';
 
 export * from './CaretAdapter/index.js';
 export * from './FormattingAdapter/index.js';
@@ -49,6 +51,12 @@ export class DOMAdapters implements EditorJSAdapterPlugin {
       .bind(DOMBlockToolAdapter)
       .toSelf()
       .inTransientScope();
+
+    /**
+     * Initialize singleton adapters
+     */
+    this.#iocContainer.get(FormattingAdapter);
+    this.#iocContainer.get(CaretAdapter);
   }
 
   /**
