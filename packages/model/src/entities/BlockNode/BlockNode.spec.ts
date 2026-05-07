@@ -28,13 +28,6 @@ const ValueNodeProto = ValueNode.prototype as unknown as {
   update: () => void;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- needed to spy on conditional-typed getter with @jest/globals strict types
-const ValueNodeProto = ValueNode.prototype as unknown as {
-  serialized: unknown;
-  value: unknown;
-  update: () => void;
-};
-
 jest.mock('../BlockTune');
 
 jest.mock('../inline-fragments/TextNode');
@@ -711,60 +704,6 @@ describe('BlockNode', () => {
     it('should return undefined if the array index does not exist', () => {
       const blockNode = createBlockNodeWithData({});
       const result = blockNode.getDataNode(createDataKey('meta.0'));
-
-      expect(result).toBeUndefined();
-    });
-
-    it('should return serialized ValueNode for a value key', () => {
-      const key = createDataKey('url');
-      const value = 'https://editorjs.io';
-      const blockNode = createBlockNodeWithData({ [key]: value });
-
-      jest.spyOn(ValueNodeProto, 'serialized', 'get').mockReturnValueOnce(value);
-
-      const result = blockNode.getDataNode(key);
-
-      expect(result).toBe(value);
-    });
-
-    it('should return serialized TextNode for a text key', () => {
-      const key = createDataKey('text');
-      const value = {
-        $t: 't',
-        value: 'some text',
-      };
-      const blockNode = createBlockNodeWithData({ [key]: value });
-
-      const serialized = { $t: 't' as const,
-        value: 'some text',
-        fragments: [] } as unknown as TextNodeSerialized;
-
-      jest.spyOn(TextNode.prototype, 'serialized', 'get').mockReturnValueOnce(serialized);
-
-      const result = blockNode.getDataNode(key);
-
-      expect(result).toBe(serialized);
-    });
-
-    it('should throw InvalidNodeTypeError if the key holds a nested object (not a leaf node)', () => {
-      const blockNode = createBlockNodeWithData({
-        nested: {
-          value: 'some-value',
-        },
-      });
-      const key = createDataKey('nested');
-
-      expect(() => blockNode.getDataNode(key))
-        .toThrow(`BlockNode: data with key "${key}" is not a text or a value`);
-    });
-  });
-
-  describe('.getDataNode()', () => {
-    it('should return undefined if the key does not exist', () => {
-      const blockNode = createBlockNodeWithData({});
-      const key = createDataKey('nonexistent');
-
-      const result = blockNode.getDataNode(key);
 
       expect(result).toBeUndefined();
     });
