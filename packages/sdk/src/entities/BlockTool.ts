@@ -1,13 +1,68 @@
 import type {
-  BlockTool as BlockToolVersion2, ToolboxConfigEntry,
-  ToolConfig
+  BlockTool as BlockToolVersion2,
+  ToolConfig,
+  ToolboxConfigEntry
 } from '@editorjs/editorjs';
 import type { BlockToolConstructorOptions as BlockToolConstructorOptionsVersion2 } from '@editorjs/editorjs';
 import type { ValueSerialized } from '@editorjs/model';
 import type { BlockToolAdapter } from './BlockToolAdapter.js';
 import type { ToolType } from '@/entities/EntityType.js';
-import type { InternalBlockToolSettings } from '@/tools';
-import type { BaseToolConstructor } from '@/entities/BaseTool';
+import type { BaseToolConstructor, BaseToolOptions } from '@/entities/BaseTool';
+
+/**
+ * Canonical keys for Block Tool options.
+ * Use these instead of raw string literals when reading or writing block-tool options.
+ */
+export enum BlockToolOptionKey {
+  /** Toolbox entry / entries for this tool. */
+  Toolbox = 'toolbox',
+  /** Whether read-only mode is supported. */
+  IsReadOnlySupported = 'isReadOnlySupported',
+  /** Keyboard shortcut string (e.g. `CMD+SHIFT+H`). */
+  Shortcut = 'shortcut',
+  /** Inline tools enabled for blocks of this type. */
+  InlineToolbar = 'inlineToolbar',
+  /** Block tunes enabled for blocks of this type. */
+  Tunes = 'tunes'
+}
+
+/**
+ * Options available on **Block Tools** (`static options` or `use()` overrides).
+ * @template Config - Shape of the plugin-specific {@link BaseToolOptions.config} object.
+ */
+export interface BlockToolOptions<Config extends ToolConfig = ToolConfig>
+  extends BaseToolOptions<Config> {
+  /**
+   * Toolbox entry (or entries) that represent this tool in the toolbox.
+   * Set to `false` to hide the tool from the toolbox entirely.
+   */
+  [BlockToolOptionKey.Toolbox]?: ToolboxConfigEntry | ToolboxConfigEntry[] | false;
+
+  /**
+   * Whether read-only mode is supported by this tool.
+   */
+  [BlockToolOptionKey.IsReadOnlySupported]?: boolean;
+
+  /**
+   * Keyboard shortcut string (e.g. `CMD+SHIFT+H`).
+   */
+  [BlockToolOptionKey.Shortcut]?: string;
+
+  /**
+   * Inline tools to enable for this block tool.
+   * Pass `true` to enable all registered inline tools, or an array of names.
+   */
+  [BlockToolOptionKey.InlineToolbar]?: boolean | string[];
+
+  /**
+   * Block tunes to enable for this block tool.
+   * Pass `true` to enable all registered tunes, or an array of names.
+   */
+  [BlockToolOptionKey.Tunes]?: boolean | string[];
+
+  /** Any additional custom options exposed by the tool developer. */
+  [key: string]: unknown;
+}
 
 /**
  * Extended BlockToolConstructorOptions interface for version 3.
@@ -70,37 +125,19 @@ export type BlockTool<
  * Block Tool constructor class
  */
 export interface BlockToolConstructor<
-  /**
-   * Data structure describing the tool's input/output data
-   */
   Data extends BlockToolData = BlockToolData,
   /**
-   * User-end configuration for the tool
+   * Plugin-specific configuration type — also types `options.config`
    */
   Config extends ToolConfig = ToolConfig,
-  /**
-   * Adapter type — defaults to the base BlockToolAdapter.
-   * Override with a more specific adapter type if your tool needs
-   * access to adapter methods beyond the base interface.
-   */
   Adapter extends BlockToolAdapter = BlockToolAdapter
-> extends BaseToolConstructor {
+> extends BaseToolConstructor<Config, BlockToolOptions<Config>> {
   new(options: BlockToolConstructorOptions<Data, Config, Adapter>): BlockTool;
 
   /**
    * Property specifies that the class is a Block Tool
    */
   type: ToolType.Block;
-
-  /**
-   * If Tool supports read-only mode, this property should return true
-   */
-  [InternalBlockToolSettings.IsReadOnlySupported]?: boolean;
-
-  /**
-   * Returns Tool toolbox configuration (internal or user-specified)
-   */
-  [InternalBlockToolSettings.Toolbox]?: ToolboxConfigEntry[];
 }
 
 /**

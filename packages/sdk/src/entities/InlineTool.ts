@@ -1,9 +1,39 @@
 import type { TextRange, InlineFragment, FormattingAction, IntersectType } from '@editorjs/model';
 import type { InlineTool as InlineToolVersion2 } from '@editorjs/editorjs';
-import type { InlineToolConstructorOptions as InlineToolConstructorOptionsVersion2 } from '@editorjs/editorjs';
+import type { InlineToolConstructorOptions as InlineToolConstructorOptionsVersion2, ToolConfig } from '@editorjs/editorjs';
 import type { ToolType } from '@/entities/EntityType.js';
-import type { InternalInlineToolSettings } from '@/tools';
-import type { BaseToolConstructor } from '@/entities/BaseTool';
+import type { BaseToolConstructor, BaseToolOptions } from '@/entities/BaseTool';
+
+/**
+ * Canonical keys for Inline Tool options.
+ * Use these instead of raw string literals when reading or writing inline-tool options.
+ */
+export enum InlineToolOptionKey {
+  /** Human-readable title shown in the inline toolbar. */
+  Title = 'title',
+  /** Keyboard shortcut string (e.g. `CMD+B`). */
+  Shortcut = 'shortcut'
+}
+
+/**
+ * Options available on **Inline Tools** (`static options` or `use()` overrides).
+ * @template Config - Shape of the plugin-specific {@link BaseToolOptions.config} object.
+ */
+export interface InlineToolOptions<Config extends ToolConfig = ToolConfig>
+  extends BaseToolOptions<Config> {
+  /**
+   * Human-readable title shown in the inline toolbar.
+   */
+  [InlineToolOptionKey.Title]?: string;
+
+  /**
+   * Keyboard shortcut string (e.g. `CMD+B`).
+   */
+  [InlineToolOptionKey.Shortcut]?: string;
+
+  /** Any additional custom options exposed by the tool developer. */
+  [key: string]: unknown;
+}
 
 /**
  * Extended InlineToolConstructorOptions interface for version 3.
@@ -100,19 +130,13 @@ export interface InlineTool extends Omit<InlineToolVersion2, 'save' | 'checkStat
 export interface InlineToolsConfig extends Record<string, InlineToolConstructor> {};
 
 /**
- * @todo support options: InlineToolConstructableOptions
  * Inline Tool constructor class
  */
-export interface InlineToolConstructor extends BaseToolConstructor {
+export interface InlineToolConstructor extends BaseToolConstructor<ToolConfig, InlineToolOptions> {
   new(): InlineTool;
 
   /**
    * Property specifies the entity is an Inline Tool
    */
   type: ToolType.Inline;
-
-  /**
-   * Tool title
-   */
-  [InternalInlineToolSettings.Title]: string;
 }

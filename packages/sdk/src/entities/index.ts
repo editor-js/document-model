@@ -1,3 +1,4 @@
+export type * from './BaseTool.js';
 export type * from './InlineTool.js';
 export type * from './BlockTool.js';
 export type * from './BlockTune.js';

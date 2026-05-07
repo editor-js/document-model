@@ -1,4 +1,6 @@
-import { BaseToolFacade, InternalBlockToolSettings, UserToolOptions } from './BaseToolFacade.js';
+import { BaseToolFacade, UserToolOptions } from './BaseToolFacade.js';
+import type { BlockToolOptions } from './BaseToolFacade.js';
+import { BlockToolOptionKey } from '../../entities/BlockTool.js';
 import type {
   // ConversionConfig,
   // PasteConfig,
@@ -37,9 +39,14 @@ export class BlockToolFacade extends BaseToolFacade<ToolType.Block, IBlockTool> 
   public tunes: ToolsCollection<BlockTuneFacade> = new ToolsCollection<BlockTuneFacade>();
 
   /**
-   * Tool's constructable blueprint
+   * Tool's constructable blueprint — narrowed to BlockToolConstructor
    */
   protected declare constructable: BlockToolConstructor;
+
+  /**
+   * Narrowed to BlockToolOptions so block-specific properties are fully typed
+   */
+  protected declare useToolOptions: BlockToolOptions;
 
   /**
    * Creates new Tool instance
@@ -64,7 +71,7 @@ export class BlockToolFacade extends BaseToolFacade<ToolType.Block, IBlockTool> 
    * Returns true if read-only mode is supported by Tool
    */
   public get isReadOnlySupported(): boolean {
-    return this.constructable[InternalBlockToolSettings.IsReadOnlySupported] === true;
+    return this.constructable.options?.[BlockToolOptionKey.IsReadOnlySupported] === true;
   }
 
   /**
@@ -89,7 +96,7 @@ export class BlockToolFacade extends BaseToolFacade<ToolType.Block, IBlockTool> 
    * config. This is made to allow user to override default tool's toolbox representation (single/multiple entries)
    */
   public get toolbox(): ToolboxConfigEntry[] | undefined {
-    const toolToolboxSettings = this.constructable[InternalBlockToolSettings.Toolbox] as ToolboxConfig;
+    const toolToolboxSettings = this.constructable.options?.[BlockToolOptionKey.Toolbox] as ToolboxConfig;
     const userToolboxSettings = this.useToolOptions[UserToolOptions.Toolbox];
 
     if (isEmpty(toolToolboxSettings)) {

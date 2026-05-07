@@ -14,7 +14,8 @@ import {
   ToolFacadeClass,
   ToolsCollection,
   EventBus,
-  ToolConstructable
+  type ToolConstructable,
+  type ToolStaticOptions
 } from '@editorjs/sdk';
 
 /**
@@ -105,7 +106,7 @@ export default class ToolsManager {
    * Calls tools prepare method if it exists and adds tools to relevant collection (available or unavailable tools)
    * @param tools - tools to prepare and their settings
    */
-  public async prepareTools(tools: [ToolConstructable, ToolSettings][]): Promise<void> {
+  public async prepareTools(tools: [ToolConstructable, ToolStaticOptions | undefined][]): Promise<void> {
     const promiseQueue = new PromiseQueue();
 
     const setToAvailableToolsCollection = (toolName: string, tool: ToolFacadeClass): void => {
