@@ -1,7 +1,7 @@
 import { EventAction } from '../../EventBus/index.js';
 import { Index } from '../Index/index.js';
 import { IndexBuilder } from '../Index/IndexBuilder.js';
-import { BlockNode, createBlockToolName, createDataKey } from './index.js';
+import { BlockNode, createBlockToolName, createDataKey, createBlockId } from './index.js';
 import { NonExistingKeyError } from './errors/NonExistingKeyError.js';
 
 import type { BlockTuneName, BlockTuneSerialized } from '../BlockTune/index.js';
@@ -64,6 +64,32 @@ describe('BlockNode', () => {
     it('should set null as parent by default', () => {
       expect(node.parent)
         .toBeNull();
+    });
+  });
+
+  describe('.id', () => {
+    it('should use the provided id', () => {
+      const expectedId = createBlockId('my-custom-id');
+      const node = new BlockNode({
+        name: createBlockToolName('paragraph'),
+        id: expectedId,
+      });
+
+      expect(node.id).toBe(expectedId);
+    });
+
+    it('should auto-generate an id when none is provided', () => {
+      const node = new BlockNode({ name: createBlockToolName('paragraph') });
+
+      expect(node.id).toBeDefined();
+      expect(typeof node.id).toBe('string');
+    });
+
+    it('should generate different ids for different instances', () => {
+      const node1 = new BlockNode({ name: createBlockToolName('paragraph') });
+      const node2 = new BlockNode({ name: createBlockToolName('paragraph') });
+
+      expect(node1.id).not.toBe(node2.id);
     });
   });
 

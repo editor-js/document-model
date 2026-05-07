@@ -1,13 +1,37 @@
 import { EventBus } from '../../../EventBus/EventBus.js';
 import { create } from '../../../utils/index.js';
 import type { DataKey } from '../types/index.js';
+import type { BlockId } from '../types/BlockId.js';
+import { createBlockId } from '../types/BlockId.js';
 
 export const createDataKey = create<DataKey>();
+
+let _instanceCounter = 0;
 
 /**
  * Mock for BlockNode class
  */
 export class BlockNode extends EventBus {
+  /**
+   * Unique id per mock instance
+   */
+  readonly #id: BlockId;
+
+  /**
+   * Mock constructor — assigns a unique id to each instance
+   */
+  constructor() {
+    super();
+    this.#id = createBlockId(`mock-block-${++_instanceCounter}`);
+  }
+
+  /**
+   * Mock getter
+   */
+  public get id(): BlockId {
+    return this.#id;
+  }
+
   /**
    * Mock method
    */

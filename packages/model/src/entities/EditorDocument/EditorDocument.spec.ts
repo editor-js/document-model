@@ -14,6 +14,7 @@ import {
 } from '../../EventBus/events/index.js';
 import { EventAction } from '../../EventBus/types/EventAction.js';
 import { describe, jest } from '@jest/globals';
+import { BlockAlreadyExistsError } from './errors/BlockAlreadyExistsError.js';
 
 jest.mock('../BlockNode');
 
@@ -49,6 +50,7 @@ function createEditorDocumentWithSomeBlocks(): EditorDocument {
 describe('EditorDocument', () => {
   afterEach(() => {
     jest.clearAllMocks();
+    jest.restoreAllMocks();
   });
 
   describe('.initialize()', () => {
@@ -320,6 +322,18 @@ describe('EditorDocument', () => {
         .toThrowError('Index out of bounds');
     });
 
+    it('should throw BlockAlreadyExistsError when a block with the same id is added twice', () => {
+      const document = new EditorDocument({ identifier: 'document' });
+      const duplicateId = createBlockId('duplicate');
+
+      jest.spyOn(BlockNode.prototype, 'id', 'get').mockReturnValue(duplicateId);
+
+      document.addBlock({ name: 'header' as BlockToolName });
+
+      expect(() => document.addBlock({ name: 'paragraph' as BlockToolName }))
+        .toThrow(BlockAlreadyExistsError);
+    });
+
     it('should emit BlockAddedEvent with block node data in details and block index', () => {
       const document = createEditorDocumentWithSomeBlocks();
       const index = 1;
@@ -493,6 +507,57 @@ describe('EditorDocument', () => {
       // Assert
       expect(action)
         .toThrowError('Index out of bounds');
+    });
+  });
+
+  describe('.getBlockById()', () => {
+    it('should return the BlockNode with the given id', () => {
+      const document = new EditorDocument({ identifier: 'document' });
+      const expectedId = createBlockId('find-me');
+
+      jest.spyOn(BlockNode.prototype, 'id', 'get').mockReturnValue(expectedId);
+
+      document.addBlock({ name: 'header' as BlockToolName });
+
+      const found = document.getBlockById(expectedId);
+
+      expect(found).toBeInstanceOf(BlockNode);
+      expect(found!.id).toBe(expectedId);
+    });
+
+    it('should return undefined when id does not exist', () => {
+      const document = createEditorDocumentWithSomeBlocks();
+
+      const result = document.getBlockById(createBlockId('non-existent'));
+
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('.getBlockIndexById()', () => {
+    it('should return the correct index for an existing block id', () => {
+      const document = new EditorDocument({ identifier: 'document' });
+      const expectedId = createBlockId('my-block');
+
+      jest.spyOn(BlockNode.prototype, 'id', 'get').mockReturnValue(expectedId);
+
+      document.addBlock({ name: 'header' as BlockToolName });
+
+      expect(document.getBlockIndexById(expectedId)).toBe(0);
+    });
+
+    it('should return -1 for a non-existent block id', () => {
+      const document = createEditorDocumentWithSomeBlocks();
+
+      expect(document.getBlockIndexById(createBlockId('does-not-exist'))).toBe(-1);
+    });
+
+    it('should throw an error when a string id is passed to a mutating method and the id does not exist', () => {
+      const document = createEditorDocumentWithSomeBlocks();
+      const nonExistentId = createBlockId('ghost');
+
+      expect(() => document.removeBlock(nonExistentId))
+        .toThrowError(`Block with id "${nonExistentId}" not found`);
     });
   });
 
