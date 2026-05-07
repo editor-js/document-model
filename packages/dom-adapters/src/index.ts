@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import type {
   BlockToolAdapter,
   EditorJSAdapterPlugin, EditorjsAdapterPluginConstructor,
@@ -27,6 +28,12 @@ export class DOMAdapters implements EditorJSAdapterPlugin {
     autobind: true,
     defaultScope: 'Singleton',
   });
+
+  /**
+   * Map of active BlockToolAdapter instances keyed by block id.
+   * Used to properly destroy adapters (remove their event listeners) when blocks are removed.
+   */
+  #adapters: Map<BlockId, DOMBlockToolAdapter> = new Map();
 
   /**
    * @param params - Plugin parameters
@@ -59,6 +66,8 @@ export class DOMAdapters implements EditorJSAdapterPlugin {
     adapter.setBlockId(blockId);
     adapter.setToolName(toolName);
 
+    this.#adapters.set(blockId, adapter);
+
     return adapter;
   }
 
@@ -69,6 +78,13 @@ export class DOMAdapters implements EditorJSAdapterPlugin {
    * @param blockId - unique id of the removed block
    */
   public destroyBlockToolAdapter(blockId: BlockId): void {
+    const adapter = this.#adapters.get(blockId);
+
+    if (adapter !== undefined) {
+      adapter.destroy();
+      this.#adapters.delete(blockId);
+    }
+
     const registry = this.#iocContainer.get(InputsRegistry);
 
     registry.removeBlock(blockId);

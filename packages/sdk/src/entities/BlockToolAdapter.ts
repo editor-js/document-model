@@ -36,6 +36,11 @@ export abstract class BlockToolAdapter extends EventTarget {
   protected eventBus: EventBus;
 
   /**
+   * Stored reference to the model change listener so it can be removed on destroy.
+   */
+  #modelChangeListener: EventListener;
+
+  /**
    * @param config - editor's configuration
    * @param model - model instance
    * @param eventBus - global event bus instance
@@ -47,7 +52,18 @@ export abstract class BlockToolAdapter extends EventTarget {
     this.config = config;
     this.eventBus = eventBus;
 
-    this.model.addEventListener(EventType.Changed, (event: ModelEvents) => this.#handleModelUpdate(event));
+    this.#modelChangeListener = ((event: ModelEvents) => this.#handleModelUpdate(event)) as EventListener;
+    this.model.addEventListener(EventType.Changed, this.#modelChangeListener);
+  }
+
+  /**
+   * Releases all resources held by this adapter.
+   * Removes the model change listener registered in the constructor.
+   * Subclasses that register additional listeners should override this method,
+   * call `super.destroy()`, and then remove their own listeners.
+   */
+  public destroy(): void {
+    this.model.removeEventListener(EventType.Changed, this.#modelChangeListener);
   }
 
   /**

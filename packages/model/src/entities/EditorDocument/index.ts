@@ -35,6 +35,7 @@ import type { Constructor } from '../../utils/types.js';
 import { BaseDocumentEvent, type ModifiedEventData } from '../../EventBus/events/BaseEvent.js';
 import type { Index } from '../Index/index.js';
 import type { ValueSerialized } from '../ValueNode/index.js';
+import { BlockAlreadyExistsError } from './errors/BlockAlreadyExistsError.js';
 
 export type * from './types/index.js';
 
@@ -54,7 +55,7 @@ export class EditorDocument extends EventBus {
   #children: BlockNode[] = [];
 
   /**
-   * O(1) lookup index: maps each block's id to its BlockNode instance.
+   * lookup index: maps each block's id to its BlockNode instance.
    * Kept in sync with #children by addBlock, removeBlock, and clear.
    */
   #blockById: Map<BlockId, BlockNode> = new Map();
@@ -137,6 +138,10 @@ export class EditorDocument extends EventBus {
       ...blockNodeData,
       parent: this,
     });
+
+    if (blockNode.id !== undefined && this.#blockById.has(blockNode.id)) {
+      throw new BlockAlreadyExistsError(blockNode.id);
+    }
 
     if (index === undefined) {
       this.#children.push(blockNode);
