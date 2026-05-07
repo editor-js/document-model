@@ -15,7 +15,7 @@ import {
 import { inject, injectable } from 'inversify';
 import { TOKENS } from '../tokens.js';
 import { InlineToolFormatData } from '@editorjs/sdk';
-import ToolsManager from '../tools/ToolsManager';
+import ToolsManager from '../tools/ToolsManager.js';
 
 /**
  * SelectionManager responsible for handling selection changes and applying inline tools formatting

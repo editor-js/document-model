@@ -1,5 +1,5 @@
 import type { EditorjsPlugin, EditorjsPluginConstructor, EditorjsPluginParams } from '@/entities/EditorjsPlugin';
-import type { EditorJSModel } from '@editorjs/model';
+import type { BlockId, EditorJSModel } from '@editorjs/model';
 import type { PluginType } from '@/entities/EntityType';
 import type { BlockToolAdapter } from '@/entities/BlockToolAdapter';
 
@@ -20,16 +20,18 @@ export interface EditorjsAdapterPluginParams extends EditorjsPluginParams {
 export interface EditorJSAdapterPlugin extends EditorjsPlugin {
   /**
    * Factory for the BlockToolAdapter. Called when a new block should be rendered
-   * @param blockIndex - index of the added block
+   * @param blockId - unique identifier of the added block
    * @param name - tool name
    */
-  createBlockToolAdapter(blockIndex: number, name: string): BlockToolAdapter;
+  createBlockToolAdapter(blockId: BlockId, name: string): BlockToolAdapter;
+
   /**
-   * Destroys the BlockToolAdapter for the block at the given index.
-   * Called by BlockRenderer when a block is removed from the model.
-   * @param blockIndex - index of the removed block
+   * Destroys the BlockToolAdapter for the given block.
+   * Cleans up all inputs registered for this block and removes the adapter instance.
+   * Called when a block is removed from the model.
+   * @param blockId - unique identifier of the removed block
    */
-  destroyBlockToolAdapter(blockIndex: number): void;
+  destroyBlockToolAdapter(blockId: BlockId): void;
 }
 
 /**

@@ -19,6 +19,7 @@ jest.unstable_mockModule('@editorjs/model', () => {
     initializeDocument: jest.fn(),
     clearBlocks: jest.fn(),
     getCaret: jest.fn(),
+    getBlockSerialized: jest.fn(),
     get length() {
       return BLOCKS_COUNT;
     },
@@ -222,6 +223,7 @@ describe('BlocksManager (unit, mocked deps)', () => {
         identifier: 'doc',
         blocks: [
           {
+            id: 'mock',
             name: 'x',
             data: {}
           }
@@ -255,20 +257,24 @@ describe('BlocksManager (unit, mocked deps)', () => {
 
       expect(model.removeBlock).toHaveBeenCalledWith(USER_ID, 0);
     });
+
+    it('should call model.getCaret with the configured userId to resolve current block', () => {
+      // @ts-expect-error - mock return value does not need full Caret shape
+      model.getCaret = jest.fn(() => ({ index: { blockIndex: 2 } }));
+
+      blocksManager.deleteBlock();
+
+      expect(model.getCaret).toHaveBeenCalledWith(USER_ID);
+      expect(model.removeBlock).toHaveBeenCalledWith(USER_ID, 2);
+    });
   });
 
   describe('.move()', () => {
     it('should call removeBlock and addBlock when moving current block forward', () => {
-      // @ts-expect-error - need to assign read only property to mock it
-      model.serialized = {
-        blocks: [
-          { name: 'a' },
-          { name: 'b' },
-          { name: 'c' }
-        ]
-      };
       // @ts-expect-error - mock return value does not need full Caret shape
       model.getCaret = jest.fn(() => ({ index: { blockIndex: 0 } }));
+      // @ts-expect-error - mock return value does not need full BlockNodeSerialized shape
+      model.getBlockSerialized = jest.fn(() => ({ name: 'a' }));
 
       blocksManager.move(2);
 
@@ -283,14 +289,8 @@ describe('BlocksManager (unit, mocked deps)', () => {
     });
 
     it('should pass toIndex directly when toIndex is less than fromIndex', () => {
-      // @ts-expect-error - need to assign read only property to mock it
-      model.serialized = {
-        blocks: [
-          { name: 'a' },
-          { name: 'b' },
-          { name: 'c' }
-        ]
-      };
+      // @ts-expect-error - mock return value does not need full BlockNodeSerialized shape
+      model.getBlockSerialized = jest.fn(() => ({ name: 'c' }));
 
       blocksManager.move(0, 2);
 
@@ -299,15 +299,6 @@ describe('BlocksManager (unit, mocked deps)', () => {
     });
 
     it('should do nothing when toIndex equals fromIndex', () => {
-      // @ts-expect-error - need to assign read only property to mock it
-      model.serialized = {
-        blocks: [
-          { name: 'a' },
-          { name: 'b' },
-          { name: 'c' }
-        ]
-      };
-
       blocksManager.move(1, 1);
 
       expect(model.removeBlock).not.toHaveBeenCalled();

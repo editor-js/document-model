@@ -1,6 +1,6 @@
 import type { OutputData } from '@editorjs/editorjs';
 import type { InlineFragment } from '@editorjs/model';
-import { createInlineToolData, createInlineToolName, TextNode, ValueNode, type BlockNodeSerialized } from '@editorjs/model';
+import { createInlineToolData, createInlineToolName, TextNode, ValueNode, type BlockNodeInit } from '@editorjs/model';
 
 /**
  * Removes HTML tags from the input string
@@ -92,7 +92,7 @@ export function composeDataFromVersion2(data: OutputData): {
   /**
    * The child BlockNodes of the EditorDocument
    */
-  blocks: BlockNodeSerialized[];
+  blocks: BlockNodeInit[];
 } {
   return {
     blocks: data.blocks.map((block) => {

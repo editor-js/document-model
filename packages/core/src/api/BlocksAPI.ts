@@ -5,7 +5,7 @@ import { BlocksManager } from '../components/BlockManager.js';
 import { BlockToolData } from '@editorjs/editorjs';
 import { CoreConfigValidated } from '@editorjs/sdk';
 import { BlocksAPI as BlocksApiInterface } from '@editorjs/sdk';
-import { type BlockNodeSerialized, EditorDocumentSerialized } from '@editorjs/model';
+import { type BlockNodeInit, type EditorDocumentSerialized } from '@editorjs/model';
 
 /**
  * Blocks API
@@ -80,7 +80,7 @@ export class BlocksAPI implements BlocksApiInterface {
    * @param blocks - array of blocks to insert
    * @param [index] - index to insert blocks at. If undefined, inserts at the end
    */
-  public insertMany(blocks: BlockNodeSerialized[], index?: number): void {
+  public insertMany(blocks: BlockNodeInit[], index?: number): void {
     return this.#blocksManager.insertMany(blocks, index);
   }
 

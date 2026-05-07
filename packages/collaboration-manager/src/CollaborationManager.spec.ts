@@ -63,7 +63,7 @@ describe('CollaborationManager', () => {
       collaborationManager.applyOperation(operation);
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [{
+        blocks: [expect.objectContaining({
           name: 'paragraph',
           tunes: {},
           data: {
@@ -73,7 +73,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        }],
+        })],
         properties: {},
       });
     });
@@ -104,7 +104,7 @@ describe('CollaborationManager', () => {
       collaborationManager.applyOperation(operation);
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [{
+        blocks: [expect.objectContaining({
           name: 'paragraph',
           tunes: {},
           data: {
@@ -114,7 +114,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        }],
+        })],
         properties: {},
       });
     });
@@ -143,7 +143,7 @@ describe('CollaborationManager', () => {
       collaborationManager.applyOperation(operation);
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [{
+        blocks: [expect.objectContaining({
           name: 'paragraph',
           tunes: {},
           data: {
@@ -153,7 +153,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        }],
+        })],
         properties: {},
       });
     });
@@ -217,7 +217,7 @@ describe('CollaborationManager', () => {
       collaborationManager.applyOperation(operation);
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [{
+        blocks: [expect.objectContaining({
           name: 'paragraph',
           tunes: {},
           data: {
@@ -230,7 +230,7 @@ describe('CollaborationManager', () => {
               }],
             },
           },
-        }],
+        })],
         properties: {},
       });
     });
@@ -296,7 +296,7 @@ describe('CollaborationManager', () => {
 
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [{
+        blocks: [expect.objectContaining({
           name: 'paragraph',
           tunes: {},
           data: {
@@ -306,7 +306,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        }],
+        })],
         properties: {},
       });
     });
@@ -344,7 +344,7 @@ describe('CollaborationManager', () => {
       collaborationManager.applyOperation(operation);
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [{
+        blocks: [expect.objectContaining({
           name: 'paragraph',
           tunes: {},
           data: {
@@ -357,7 +357,7 @@ describe('CollaborationManager', () => {
               }],
             },
           },
-        }],
+        })],
         properties: {},
       });
     });
@@ -395,7 +395,7 @@ describe('CollaborationManager', () => {
       collaborationManager.undo();
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [{
+        blocks: [expect.objectContaining({
           name: 'paragraph',
           tunes: {},
           data: {
@@ -405,7 +405,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        }],
+        })],
         properties: {},
       });
     });
@@ -438,7 +438,7 @@ describe('CollaborationManager', () => {
       collaborationManager.undo();
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [{
+        blocks: [expect.objectContaining({
           name: 'paragraph',
           tunes: {},
           data: {
@@ -448,7 +448,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        }],
+        })],
         properties: {},
       });
     });
@@ -481,7 +481,7 @@ describe('CollaborationManager', () => {
       collaborationManager.undo();
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [{
+        blocks: [expect.objectContaining({
           name: 'paragraph',
           tunes: {},
           data: {
@@ -491,7 +491,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        }],
+        })],
         properties: {},
       });
     });
@@ -525,7 +525,7 @@ describe('CollaborationManager', () => {
 
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [{
+        blocks: [expect.objectContaining({
           name: 'paragraph',
           tunes: {},
           data: {
@@ -535,7 +535,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        }],
+        })],
         properties: {},
       });
     });
@@ -603,7 +603,7 @@ describe('CollaborationManager', () => {
 
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [{
+        blocks: [expect.objectContaining({
           name: 'paragraph',
           tunes: {},
           data: {
@@ -613,7 +613,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        }],
+        })],
         properties: {},
       });
     });
@@ -653,7 +653,7 @@ describe('CollaborationManager', () => {
 
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [{
+        blocks: [expect.objectContaining({
           name: 'paragraph',
           tunes: {},
           data: {
@@ -666,7 +666,7 @@ describe('CollaborationManager', () => {
               }],
             },
           },
-        }],
+        })],
         properties: {},
       });
     });
@@ -707,7 +707,7 @@ describe('CollaborationManager', () => {
 
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [{
+        blocks: [expect.objectContaining({
           name: 'paragraph',
           tunes: {},
           data: {
@@ -720,7 +720,7 @@ describe('CollaborationManager', () => {
               }],
             },
           },
-        }],
+        })],
         properties: {},
       });
     });
@@ -755,7 +755,7 @@ describe('CollaborationManager', () => {
 
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [block],
+        blocks: [expect.objectContaining(block)],
         properties: {},
       });
     });
@@ -795,7 +795,7 @@ describe('CollaborationManager', () => {
 
     expect(model.serialized).toStrictEqual({
       identifier: documentId,
-      blocks: [block],
+      blocks: [expect.objectContaining(block)],
       properties: {},
     });
   });
@@ -837,7 +837,7 @@ describe('CollaborationManager', () => {
 
     expect(model.serialized).toStrictEqual({
       identifier: documentId,
-      blocks: [block],
+      blocks: [expect.objectContaining(block)],
       properties: {},
     });
   });
@@ -923,7 +923,7 @@ describe('CollaborationManager', () => {
 
     expect(model.serialized).toStrictEqual({
       identifier: documentId,
-      blocks: [{
+      blocks: [expect.objectContaining({
         name: 'paragraph',
         tunes: {},
         data: {
@@ -933,7 +933,7 @@ describe('CollaborationManager', () => {
             fragments: [],
           },
         },
-      }],
+      })],
       properties: {},
     });
   });
@@ -976,7 +976,7 @@ describe('CollaborationManager', () => {
 
     expect(model.serialized).toStrictEqual({
       identifier: documentId,
-      blocks: [{
+      blocks: [expect.objectContaining({
         name: 'paragraph',
         tunes: {},
         data: {
@@ -986,7 +986,7 @@ describe('CollaborationManager', () => {
             fragments: [],
           },
         },
-      }],
+      })],
       properties: {},
     });
   });
@@ -1013,7 +1013,7 @@ describe('CollaborationManager', () => {
 
     expect(model.serialized).toStrictEqual({
       identifier: documentId,
-      blocks: [{
+      blocks: [expect.objectContaining({
         name: 'paragraph',
         tunes: {},
         data: {
@@ -1023,7 +1023,7 @@ describe('CollaborationManager', () => {
             fragments: [],
           },
         },
-      }],
+      })],
       properties: {},
     });
   });
@@ -1105,7 +1105,7 @@ describe('CollaborationManager', () => {
       // Verify the operations were transformed correctly
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [{
+        blocks: [expect.objectContaining({
           name: 'paragraph',
           tunes: {},
           data: {
@@ -1115,7 +1115,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        }],
+        })],
         properties: {},
       });
     });
@@ -1146,7 +1146,7 @@ describe('CollaborationManager', () => {
 
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [{
+        blocks: [expect.objectContaining({
           name: 'paragraph',
           tunes: {},
           data: {
@@ -1156,7 +1156,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        }],
+        })],
         properties: {},
       });
     });
@@ -1214,7 +1214,7 @@ describe('CollaborationManager', () => {
 
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [{
+        blocks: [expect.objectContaining({
           name: 'paragraph',
           tunes: {},
           data: {
@@ -1224,7 +1224,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        }],
+        })],
         properties: {},
       });
     });
@@ -1275,7 +1275,7 @@ describe('CollaborationManager', () => {
 
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [{
+        blocks: [expect.objectContaining({
           name: 'paragraph',
           tunes: {},
           data: {
@@ -1285,7 +1285,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        }],
+        })],
         properties: {},
       });
     });
@@ -1327,7 +1327,7 @@ describe('CollaborationManager', () => {
 
       expect(model.serialized).toStrictEqual({
         identifier: documentId,
-        blocks: [{
+        blocks: [expect.objectContaining({
           name: 'paragraph',
           tunes: {},
           data: {
@@ -1337,7 +1337,7 @@ describe('CollaborationManager', () => {
               fragments: [],
             },
           },
-        }],
+        })],
         properties: {},
       });
     });

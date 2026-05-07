@@ -1,5 +1,5 @@
 import {
-  type BlockNodeSerialized,
+  type BlockNodeInit,
   type EditorDocumentSerialized,
   EditorJSModel
 } from '@editorjs/model';
@@ -17,7 +17,10 @@ import {
  * Parameters for the BlocksManager.insert() method
  */
 interface InsertBlockParameters {
-  // id?: string;
+  /**
+   * Block ID
+   */
+  id?: string;
   /**
    * Block tool name to insert
    */
@@ -111,7 +114,7 @@ export class BlocksManager {
    * @param parameters.replace - flag indicates if block at index should be replaced
    */
   public insert({
-    // id = undefined,
+    id = undefined,
     type = this.#config.defaultBlock,
     data = {},
     index,
@@ -131,6 +134,7 @@ export class BlocksManager {
 
     this.#model.addBlock(this.#config.userId, {
       ...data,
+      id,
       name: type,
     }, newIndex);
 
@@ -146,7 +150,7 @@ export class BlocksManager {
    * @param blocks - array of blocks to insert
    * @param [index] - index to insert blocks at. If undefined, inserts at the end
    */
-  public insertMany(blocks: BlockNodeSerialized[], index: number = this.#model.length): void {
+  public insertMany(blocks: BlockNodeInit[], index: number = this.#model.length): void {
     blocks.forEach((block, i) => this.#model.addBlock(this.#config.userId, block, index + i));
   }
 
@@ -197,7 +201,7 @@ export class BlocksManager {
       return;
     }
 
-    const block = this.#model.serialized.blocks[fromIndex];
+    const block = this.#model.getBlockSerialized(fromIndex);
 
     this.#model.removeBlock(this.#config.userId, fromIndex);
     this.#model.addBlock(this.#config.userId, block, toIndex);

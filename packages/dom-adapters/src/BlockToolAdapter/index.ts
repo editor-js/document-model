@@ -48,6 +48,11 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
   #inputsRegistry: InputsRegistry;
 
   /**
+   * Stored reference to the beforeinput event listener so it can be removed on destroy.
+   */
+  #beforeInputListener: EventListener;
+
+  /**
    * BlockToolAdapter constructor
    * @param config - Editor's config
    * @param model - EditorJSModel instance
@@ -71,11 +76,25 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
     this.#inputsRegistry = registry;
 
     /**
+     * @param event - BeforeInputEvent
+     */
+    this.#beforeInputListener = ((event: BeforeInputUIEvent) => {
+      this.#processDelegatedBeforeInput(event);
+    }) as EventListener;
+
+    /**
      * @todo Needs to be documented. If UI module is replaced and doesn't dispatch the event nothing would work
      */
-    eventBus.addEventListener(`ui:${BeforeInputUIEventName}`, (event: BeforeInputUIEvent) => {
-      this.#processDelegatedBeforeInput(event);
-    });
+    eventBus.addEventListener(`ui:${BeforeInputUIEventName}`, this.#beforeInputListener);
+  }
+
+  /**
+   * Releases all resources held by this adapter.
+   * Removes both the model change listener (via super) and the eventBus beforeinput listener.
+   */
+  public override destroy(): void {
+    super.destroy();
+    this.eventBus.removeEventListener(`ui:${BeforeInputUIEventName}`, this.#beforeInputListener);
   }
 
   /**
@@ -97,7 +116,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
     const key = createDataKey(keyRaw);
 
     if (input === undefined) {
-      this.#inputsRegistry.unregister(this.blockIndex, key);
+      this.#inputsRegistry.unregister(this.blockId, key);
 
       return;
     }
@@ -116,10 +135,10 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
       return;
     }
 
-    const value = this.model.getText(this.blockIndex, key);
-    const fragments = this.model.getFragments(this.blockIndex, key);
+    const value = this.model.getText(this.blockId, key);
+    const fragments = this.model.getFragments(this.blockId, key);
 
-    this.#inputsRegistry.register(this.blockIndex, key, input);
+    this.#inputsRegistry.register(this.blockId, key, input);
 
     input.textContent = value;
 
@@ -132,7 +151,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
    * Returns the (dataKey → element) map for this block from the shared registry.
    */
   get #attachedInputs(): Map<DataKey, HTMLElement> {
-    return this.#inputsRegistry.getBlockInputs(this.blockIndex) ?? new Map<DataKey, HTMLElement>();
+    return this.#inputsRegistry.getBlockInputs(this.blockId) ?? new Map<DataKey, HTMLElement>();
   }
 
   /**
@@ -263,7 +282,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
      * Middle block in a cross-input selection: remove the whole block, not the same as removeText(0, length).
      */
     if (isInputInBetweenSelection(input, range)) {
-      this.model.removeBlock(this.config.userId, this.blockIndex);
+      this.model.removeBlock(this.config.userId, this.blockId);
 
       return;
     }
@@ -291,7 +310,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
     }
 
     const [start, end] = clipped;
-    const removedText = this.model.removeText(this.config.userId, this.blockIndex, key, start, end);
+    const removedText = this.model.removeText(this.config.userId, this.blockId, key, start, end);
 
     let newCaretIndex: number | null = null;
 
@@ -316,7 +335,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
     if (newCaretIndex !== null) {
       this.#caretAdapter.updateIndex(
         new IndexBuilder()
-          .addBlockIndex(this.blockIndex)
+          .addBlockIndex(this.model.getBlockIndexById(this.blockId))
           .addDataKey(key)
           .addTextRange([newCaretIndex, newCaretIndex])
           .build()
@@ -357,7 +376,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
         if (data !== undefined && input.contains(range.startContainer)) {
           start = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
 
-          this.model.insertText(this.config.userId, this.blockIndex, key, data, start);
+          this.model.insertText(this.config.userId, this.blockId, key, data, start);
         }
         break;
       }
@@ -369,7 +388,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
         if (data !== undefined && input.contains(range.startContainer)) {
           start = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
 
-          this.model.insertText(this.config.userId, this.blockIndex, key, data, start);
+          this.model.insertText(this.config.userId, this.blockId, key, data, start);
         }
         break;
       }
@@ -424,10 +443,11 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
    * @param end - end index of the selected range
    */
   #handleSplit(key: DataKey, start: number, end: number): void {
-    const currentValue = this.model.getText(this.blockIndex, key);
+    const currentBlockIndex = this.model.getBlockIndexById(this.blockId);
+    const currentValue = this.model.getText(this.blockId, key);
     const newValueAfter = currentValue.slice(end);
 
-    const relatedFragments = this.model.getFragments(this.blockIndex, key, end, currentValue.length);
+    const relatedFragments = this.model.getFragments(this.blockId, key, end, currentValue.length);
 
     /**
      * Fragment ranges bounds should be decreased by end index, because end is the index of the first character of the new block
@@ -437,7 +457,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
       fragment.range[1] -= end;
     });
 
-    this.model.removeText(this.config.userId, this.blockIndex, key, start, currentValue.length);
+    this.model.removeText(this.config.userId, this.blockId, key, start, currentValue.length);
     this.model.addBlock(
       this.config.userId,
       {
@@ -453,7 +473,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
           },
         },
       },
-      this.blockIndex + 1
+      currentBlockIndex + 1
     );
 
     /**
@@ -462,7 +482,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
     requestAnimationFrame(() => {
       this.#caretAdapter.updateIndex(
         new IndexBuilder()
-          .addBlockIndex(this.blockIndex + 1)
+          .addBlockIndex(currentBlockIndex + 1)
           .addDataKey(key)
           .addTextRange([0, 0])
           .build()
@@ -478,7 +498,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
    */
   #handleModelUpdateForContentEditableElement(event: ModelEvents, input: HTMLElement, key: DataKey): void {
     const { userId, index, action } = event.detail;
-    const { textRange } = index;
+    const { textRange, blockIndex: eventBlockIndex } = index;
 
     const [start, end] = textRange!;
 
@@ -490,7 +510,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
 
     const builder = new IndexBuilder();
 
-    builder.addDataKey(key).addBlockIndex(this.blockIndex);
+    builder.addDataKey(key).addBlockIndex(eventBlockIndex);
 
     let newCaretIndex: number | null = null;
 

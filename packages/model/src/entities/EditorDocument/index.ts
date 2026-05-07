@@ -2,6 +2,8 @@ import type { DocumentId } from '../../EventBus/index.js';
 import { getContext } from '../../utils/Context.js';
 import { createDataKey, type DataKey } from '../BlockNode/index.js';
 import { BlockNode } from '../BlockNode/index.js';
+import type { BlockId } from '../BlockNode/index.js';
+import type { BlockIndexOrId } from '../BlockNode/index.js';
 import { IndexBuilder } from '../Index/IndexBuilder.js';
 import type { EditorDocumentSerialized, EditorDocumentConstructorParameters, Properties } from './types/index.js';
 import type { BlockTuneName } from '../BlockTune/index.js';
@@ -15,7 +17,7 @@ import {
 } from '../inline-fragments/index.js';
 import { IoCContainer, TOOLS_REGISTRY } from '../../IoC/index.js';
 import { ToolsRegistry } from '../../tools/index.js';
-import type { BlockNodeDataSerializedValue, BlockNodeSerialized } from '../BlockNode/types/index.js';
+import type { BlockNodeDataSerializedValue, BlockNodeSerialized, BlockNodeInit } from '../BlockNode/types/index.js';
 import type { DeepReadonly } from '../../utils/DeepReadonly.js';
 import { EventBus } from '../../EventBus/EventBus.js';
 import { EventType } from '../../EventBus/types/EventType.js';
@@ -33,6 +35,7 @@ import type { Constructor } from '../../utils/types.js';
 import { BaseDocumentEvent, type ModifiedEventData } from '../../EventBus/events/BaseEvent.js';
 import type { Index } from '../Index/index.js';
 import type { ValueSerialized } from '../ValueNode/index.js';
+import { BlockAlreadyExistsError } from './errors/BlockAlreadyExistsError.js';
 
 export type * from './types/index.js';
 
@@ -50,6 +53,12 @@ export class EditorDocument extends EventBus {
    * Private field representing the child BlockNodes of the EditorDocument
    */
   #children: BlockNode[] = [];
+
+  /**
+   * lookup index: maps each block's id to its BlockNode instance.
+   * Kept in sync with #children by addBlock, removeBlock, and clear.
+   */
+  #blockById: Map<BlockId, BlockNode> = new Map();
 
   /**
    * Private field representing the properties of the document
@@ -86,7 +95,7 @@ export class EditorDocument extends EventBus {
    * Initializes EditorDocument with passed blocks
    * @param document - document serialized data
    */
-  public initialize(document: Partial<EditorDocumentSerialized> & Pick<EditorDocumentSerialized, 'blocks'>): void {
+  public initialize(document: Partial<Omit<EditorDocumentSerialized, 'blocks'>> & { blocks: BlockNodeInit[] }): void {
     this.clear();
 
     if (document.identifier !== undefined) {
@@ -120,15 +129,19 @@ export class EditorDocument extends EventBus {
   /**
    * Adds a BlockNode to the EditorDocument at the specified index.
    * If no index is provided, the BlockNode will be added to the end of the array.
-   * @param blockNodeData - The data to create the BlockNode with
+   * @param blockNodeData - The data to create the BlockNode with. The `id` field is optional — auto-generated when omitted.
    * @param index - The index at which to add the BlockNode
    * @throws Error if the index is out of bounds
    */
-  public addBlock(blockNodeData: Pick<BlockNodeSerialized, 'name'> & Partial<Omit<BlockNodeSerialized, 'name'>>, index?: number): void {
+  public addBlock(blockNodeData: BlockNodeInit, index?: number): void {
     const blockNode = new BlockNode({
       ...blockNodeData,
       parent: this,
     });
+
+    if (blockNode.id !== undefined && this.#blockById.has(blockNode.id)) {
+      throw new BlockAlreadyExistsError(blockNode.id);
+    }
 
     if (index === undefined) {
       this.#children.push(blockNode);
@@ -140,6 +153,7 @@ export class EditorDocument extends EventBus {
       this.#children.splice(index, 0, blockNode);
     }
 
+    this.#blockById.set(blockNode.id, blockNode);
     this.#listenAndBubbleBlockEvent(blockNode);
 
     const builder = new IndexBuilder();
@@ -155,67 +169,103 @@ export class EditorDocument extends EventBus {
   }
 
   /**
-   * Removes a BlockNode from the EditorDocument at the specified index.
-   * @param index - The index of the BlockNode to remove
+   * Removes a BlockNode from the EditorDocument at the specified index or by id.
+   * @param indexOrId - The index or block id of the BlockNode to remove
    * @throws Error if the index is out of bounds
    */
-  public removeBlock(index: number): void {
-    this.#checkIndexOutOfBounds(index, this.length - 1);
+  public removeBlock(indexOrId: BlockIndexOrId): void {
+    const resolvedIndex = this.#resolveBlockIndex(indexOrId);
 
-    const [blockNode] = this.#children.splice(index, 1);
+    this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
+
+    const [blockNode] = this.#children.splice(resolvedIndex, 1);
+
+    this.#blockById.delete(blockNode.id);
 
     const builder = new IndexBuilder();
 
-    builder.addBlockIndex(index);
+    builder.addBlockIndex(resolvedIndex);
 
     this.dispatchEvent(new BlockRemovedEvent(builder.build(), blockNode.serialized, getContext<string | number>()!));
   }
 
   /**
-   * Returns the BlockNode at the specified index.
-   * Throws an error if the index is out of bounds.
-   * @param index - The index of the BlockNode to return
+   * Returns the BlockNode at the specified index or by id.
+   * Throws an error if the index is out of bounds or id is not found.
+   * @param indexOrId - The index or block id of the BlockNode to return
    * @throws Error if the index is out of bounds
    */
-  public getBlock(index: number): BlockNode {
-    this.#checkIndexOutOfBounds(index, this.length - 1);
+  public getBlock(indexOrId: BlockIndexOrId): BlockNode {
+    const resolvedIndex = this.#resolveBlockIndex(indexOrId);
 
-    return this.#children[index];
+    this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
+
+    return this.#children[resolvedIndex];
   }
 
   /**
-   * Creates a data node with passed key with initial data for the BlockNode at specified index
+   * Returns the BlockNode with the specified unique identifier in O(1).
+   * Returns undefined if no block with that id exists.
+   * @param id - The unique block identifier
+   */
+  public getBlockById(id: BlockId | string): BlockNode | undefined {
+    return this.#blockById.get(id as BlockId);
+  }
+
+  /**
+   * Returns the index of the BlockNode with the specified unique identifier.
+   * Returns -1 if no block with that id exists.
+   * @param id - The unique block identifier
+   */
+  public getBlockIndexById(id: BlockId | string): number {
+    const block = this.#blockById.get(id as BlockId);
+
+    if (block === undefined) {
+      return -1;
+    }
+
+    return this.#children.indexOf(block);
+  }
+
+  /**
+   * Creates a data node with passed key with initial data for the BlockNode at specified index or id
    * Throws an error if the index is out of bounds.
-   * @param index - block index
+   * @param blockIndexOrId - block index or block id
    * @param key - key for the node
    * @param data - initial data of the node
    */
-  public createDataNode(index: number, key: DataKey | string, data: BlockNodeDataSerializedValue): void {
-    this.#checkIndexOutOfBounds(index, this.length - 1);
+  public createDataNode(blockIndexOrId: BlockIndexOrId, key: DataKey | string, data: BlockNodeDataSerializedValue): void {
+    const resolvedIndex = this.#resolveBlockIndex(blockIndexOrId);
 
-    this.#children[index].createDataNode(createDataKey(key), data);
+    this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
+
+    this.#children[resolvedIndex].createDataNode(createDataKey(key), data);
   }
 
   /**
-   * Removes a data node with the passed key in the BlockNode at the specified index
-   * @param index - block index
+   * Removes a data node with the passed key in the BlockNode at the specified index or id
+   * @param indexOrId - block index or block id
    * @param key - key of the node to remove
    */
-  public removeDataNode(index: number, key: DataKey | string): void {
-    this.#checkIndexOutOfBounds(index, this.length - 1);
+  public removeDataNode(indexOrId: BlockIndexOrId, key: DataKey | string): void {
+    const resolvedIndex = this.#resolveBlockIndex(indexOrId);
 
-    this.#children[index].removeDataNode(createDataKey(key));
+    this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
+
+    this.#children[resolvedIndex].removeDataNode(createDataKey(key));
   }
 
   /**
-   * Returns data node by the block index and data key
-   * @param index - block index where data node is stored
+   * Returns data node by the block index or id and data key
+   * @param indexOrId - block index or block id where data node is stored
    * @param key - data key of the data node
    */
-  public getDataNode(index: number, key: DataKey | string): ValueSerialized | TextNodeSerialized | undefined {
-    this.#checkIndexOutOfBounds(index, this.length - 1);
+  public getDataNode(indexOrId: BlockIndexOrId, key: DataKey | string): ValueSerialized | TextNodeSerialized | undefined {
+    const resolvedIndex = this.#resolveBlockIndex(indexOrId);
 
-    return this.#children[index].getDataNode(createDataKey(key));
+    this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
+
+    return this.#children[resolvedIndex].getDataNode(createDataKey(key));
   }
 
   /**
@@ -262,95 +312,109 @@ export class EditorDocument extends EventBus {
   }
 
   /**
-   * Updates the ValueNode data associated with the BlockNode at the specified index.
-   * @param blockIndex - The index of the BlockNode to update
+   * Updates the ValueNode data associated with the BlockNode at the specified index or id.
+   * @param blockIndexOrId - The index or block id of the BlockNode to update
    * @param dataKey - The key of the ValueNode to update
    * @param value - The new value of the ValueNode
    * @throws Error if the index is out of bounds
    */
-  public updateValue<T = unknown>(blockIndex: number, dataKey: DataKey, value: T): void {
-    this.#checkIndexOutOfBounds(blockIndex, this.length - 1);
+  public updateValue<T = unknown>(blockIndexOrId: BlockIndexOrId, dataKey: DataKey, value: T): void {
+    const resolvedIndex = this.#resolveBlockIndex(blockIndexOrId);
 
-    this.#children[blockIndex].updateValue(dataKey, value);
+    this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
+
+    this.#children[resolvedIndex].updateValue(dataKey, value);
   }
 
   /**
-   * Updates BlockTune data associated with the BlockNode at the specified index.
-   * @param blockIndex - The index of the BlockNode to update
+   * Updates BlockTune data associated with the BlockNode at the specified index or id.
+   * @param blockIndexOrId - The index or block id of the BlockNode to update
    * @param tuneName - The name of the BlockTune to update
    * @param data - The data to update the BlockTune with
    * @throws Error if the index is out of bounds
    */
-  public updateTuneData(blockIndex: number, tuneName: BlockTuneName, data: Record<string, unknown>): void {
-    this.#checkIndexOutOfBounds(blockIndex, this.length - 1);
+  public updateTuneData(blockIndexOrId: BlockIndexOrId, tuneName: BlockTuneName, data: Record<string, unknown>): void {
+    const resolvedIndex = this.#resolveBlockIndex(blockIndexOrId);
 
-    this.#children[blockIndex].updateTuneData(tuneName, data);
+    this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
+
+    this.#children[resolvedIndex].updateTuneData(tuneName, data);
   }
 
   /**
    * Returns text for the specified block and data key
-   * @param blockIndex - index of the block
+   * @param blockIndexOrId - index or block id of the block
    * @param dataKey - key of the data containing the text
    */
-  public getText(blockIndex: number, dataKey: DataKey): string {
-    this.#checkIndexOutOfBounds(blockIndex, this.length - 1);
+  public getText(blockIndexOrId: BlockIndexOrId, dataKey: DataKey): string {
+    const resolvedIndex = this.#resolveBlockIndex(blockIndexOrId);
 
-    return this.#children[blockIndex].getText(dataKey);
+    this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
+
+    return this.#children[resolvedIndex].getText(dataKey);
   }
 
   /**
    * Inserts text to the specified block
-   * @param blockIndex - index of the block
+   * @param blockIndexOrId - index or block id of the block
    * @param dataKey - key of the data
    * @param text - text to insert
    * @param [start] - char index where to insert text
    */
-  public insertText(blockIndex: number, dataKey: DataKey, text: string, start?: number): void {
-    this.#checkIndexOutOfBounds(blockIndex, this.length - 1);
+  public insertText(blockIndexOrId: BlockIndexOrId, dataKey: DataKey, text: string, start?: number): void {
+    const resolvedIndex = this.#resolveBlockIndex(blockIndexOrId);
 
-    this.#children[blockIndex].insertText(dataKey, text, start);
+    this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
+
+    this.#children[resolvedIndex].insertText(dataKey, text, start);
   }
 
   /**
    * Removes text from specified block
-   * @param blockIndex - index of the block
+   * @param blockIndexOrId - index or block id of the block
    * @param dataKey - key of the data
    * @param [start] - start char index of the range
    * @param [end] - end char index of the range
    */
-  public removeText(blockIndex: number, dataKey: DataKey, start?: number, end?: number): string {
-    this.#checkIndexOutOfBounds(blockIndex, this.length - 1);
+  public removeText(blockIndexOrId: BlockIndexOrId, dataKey: DataKey, start?: number, end?: number): string {
+    const resolvedIndex = this.#resolveBlockIndex(blockIndexOrId);
 
-    return this.#children[blockIndex].removeText(dataKey, start, end);
+    this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
+
+    return this.#children[resolvedIndex].removeText(dataKey, start, end);
   }
 
   /**
    * Formats text in the specified block
-   * @param blockIndex - index of the block
+   * @param blockIndexOrId - index or block id of the block
    * @param dataKey - key of the data
    * @param tool - name of the Inline Tool to apply
    * @param start - start char index of the range
    * @param end - end char index of the range
    * @param [data] - Inline Tool data if applicable
    */
-  public format(blockIndex: number, dataKey: DataKey, tool: InlineToolName, start: number, end: number, data?: InlineToolData): void {
-    this.#checkIndexOutOfBounds(blockIndex, this.length - 1);
+  public format(blockIndexOrId: BlockIndexOrId, dataKey: DataKey, tool: InlineToolName, start: number, end: number, data?: InlineToolData): void {
+    const resolvedIndex = this.#resolveBlockIndex(blockIndexOrId);
 
-    this.#children[blockIndex].format(dataKey, tool, start, end, data);
+    this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
+
+    this.#children[resolvedIndex].format(dataKey, tool, start, end, data);
   }
 
   /**
    * Removes formatting from the specified block
-   * @param blockIndex - index of the block
+   * @param blockIndexOrId - index or block id of the block
    * @param key - key of the data
    * @param tool - name of the Inline Tool to remove
    * @param start - start char index of the range
    * @param end - end char index of the range
    */
-  public unformat(blockIndex: number, key: DataKey, tool: InlineToolName, start: number, end: number): void {
-    this.#checkIndexOutOfBounds(blockIndex, this.length - 1);
+  public unformat(blockIndexOrId: BlockIndexOrId, key: DataKey, tool: InlineToolName, start: number, end: number): void {
+    const resolvedIndex = this.#resolveBlockIndex(blockIndexOrId);
 
-    this.#children[blockIndex].unformat(key, tool, start, end);
+    this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
+
+    this.#children[resolvedIndex].unformat(key, tool, start, end);
   }
 
   /**
@@ -370,14 +434,14 @@ export class EditorDocument extends EventBus {
 
   /**
    * Returns array of InlineFragment objects for the specified range
-   * @param blockIndex - index of the block
+   * @param blockIndexOrId - index or block id of the block
    * @param dataKey - key of the data
    * @param [start] - start char index of the range
    * @param [end] - end char index of the range
    * @param [tool] - name of the Inline Tool to filter by
    */
-  public getFragments(blockIndex: number, dataKey: DataKey, start?: number, end?: number, tool?: InlineToolName): InlineFragment[] {
-    return this.#children[blockIndex].getFragments(dataKey, start, end, tool);
+  public getFragments(blockIndexOrId: BlockIndexOrId, dataKey: DataKey, start?: number, end?: number, tool?: InlineToolName): InlineFragment[] {
+    return this.#children[this.#resolveBlockIndex(blockIndexOrId)].getFragments(dataKey, start, end, tool);
   }
 
   /**
@@ -385,7 +449,7 @@ export class EditorDocument extends EventBus {
    * @param index - index to insert data
    * @param data - data to insert (text or blocks)
    */
-  public insertData(index: Index, data: string | BlockNodeSerialized[] | BlockNodeDataSerializedValue): void {
+  public insertData(index: Index, data: string | BlockNodeInit[] | BlockNodeDataSerializedValue): void {
     switch (true) {
       case index.isTextIndex:
         this.insertText(index.blockIndex!, index.dataKey!, data as string, index.textRange![0]);
@@ -409,7 +473,7 @@ export class EditorDocument extends EventBus {
    * @param index - index to remove data from
    * @param data - text or blocks to remove
    */
-  public removeData(index: Index, data: string | BlockNodeSerialized[] | BlockNodeDataSerializedValue): void {
+  public removeData(index: Index, data: string | BlockNodeInit[] | BlockNodeDataSerializedValue): void {
     switch (true) {
       case index.isTextIndex:
         this.removeText(index.blockIndex!, index.dataKey!, index.textRange![0], index.textRange![0] + (data as string).length);
@@ -494,5 +558,26 @@ export class EditorDocument extends EventBus {
     if (index < 0 || index > max) {
       throw new Error('Index out of bounds');
     }
+  }
+
+  /**
+   * Resolves a BlockIndexOrId to a numeric block index.
+   * If a number is passed it is returned as-is.
+   * If a BlockId is passed the index is looked up via the O(1) id map.
+   * @param indexOrId - numeric index or block id
+   * @throws Error if the id does not exist in the document
+   */
+  #resolveBlockIndex(indexOrId: BlockIndexOrId): number {
+    if (typeof indexOrId === 'number') {
+      return indexOrId;
+    }
+
+    const index = this.getBlockIndexById(indexOrId);
+
+    if (index === -1) {
+      throw new Error(`Block with id "${indexOrId}" not found`);
+    }
+
+    return index;
   }
 }

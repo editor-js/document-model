@@ -6,7 +6,8 @@ import {
   EventType,
   Index,
   IndexBuilder,
-  createDataKey
+  createDataKey,
+  createBlockId
 } from '@editorjs/model';
 import type { CoreConfig } from '@editorjs/sdk';
 import {
@@ -107,13 +108,20 @@ export class CaretAdapter {
   }
 
   /**
-   * Finds input by block index and data key
+   * Finds input by block index and data key.
+   * Translates the numeric block index to a BlockId before querying the registry.
    * @param blockIndex - index of the block
    * @param dataKeyRaw - data key of the input
    * @returns input element or undefined if not found
    */
   public findInput(blockIndex: number, dataKeyRaw: string): HTMLElement | undefined {
-    return this.#inputsRegistry.getInput(blockIndex, createDataKey(dataKeyRaw));
+    const blockId = this.#model.getBlockId(blockIndex);
+
+    if (blockId === undefined) {
+      return undefined;
+    }
+
+    return this.#inputsRegistry.getInput(blockId, createDataKey(dataKeyRaw));
   }
 
   /**
@@ -194,7 +202,7 @@ export class CaretAdapter {
 
     const segments: Index[] = [];
 
-    for (const [blockIndex, dataKeyStr, input] of this.#inputsRegistry.entries()) {
+    for (const [blockId, dataKeyStr, input] of this.#inputsRegistry.entries()) {
       if (isNativeInput(input) === true) {
         continue;
       }
@@ -202,6 +210,12 @@ export class CaretAdapter {
       const textRange = getClippedTextRangeForInput(selectionRange, input);
 
       if (textRange === null) {
+        continue;
+      }
+
+      const blockIndex = this.#model.getBlockIndexById(createBlockId(blockId));
+
+      if (blockIndex === -1) {
         continue;
       }
 

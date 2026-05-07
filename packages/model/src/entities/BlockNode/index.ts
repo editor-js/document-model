@@ -17,6 +17,8 @@ import type {
   DataKey
 } from './types/index.js';
 import { BlockChildType, createBlockToolName, createDataKey } from './types/index.js';
+import type { BlockId } from './types/index.js';
+import { createBlockId, generateBlockId } from './types/index.js';
 import type { ValueSerialized } from '../ValueNode/index.js';
 import { ValueNode } from '../ValueNode/index.js';
 import type { InlineFragment, InlineToolData, InlineToolName, TextNodeSerialized } from '../inline-fragments/index.js';
@@ -45,6 +47,11 @@ import { AlreadyExistingKeyError } from './errors/AlreadyExistingKeyError.js';
  */
 export class BlockNode extends EventBus {
   /**
+   * Unique identifier of the Block
+   */
+  #id: BlockId;
+
+  /**
    * Field representing a name of the Tool created this Block
    */
   #name: BlockToolName;
@@ -67,12 +74,14 @@ export class BlockNode extends EventBus {
   /**
    * Constructor for BlockNode class.
    * @param args - BlockNode constructor arguments.
+   * @param [args.id] - The unique identifier of the BlockNode. Auto-generated if not provided.
    * @param args.name - The name of the BlockNode.
    * @param [args.data] - The content of the BlockNode.
    * @param [args.parent] - The parent EditorDocument of the BlockNode.
    * @param [args.tunes] - The BlockTunes associated with the BlockNode.
    */
   constructor({
+    id,
     name,
     data = {},
     parent,
@@ -80,6 +89,7 @@ export class BlockNode extends EventBus {
   }: BlockNodeConstructorParameters) {
     super();
 
+    this.#id = id !== undefined ? createBlockId(id) : generateBlockId();
     this.#name = createBlockToolName(name);
     this.#parent = parent ?? null;
     this.#tunes = mapObject(
@@ -114,6 +124,13 @@ export class BlockNode extends EventBus {
   }
 
   /**
+   * Allows accessing Block unique identifier
+   */
+  public get id(): BlockId {
+    return this.#id;
+  }
+
+  /**
    * Getter to access BlockNode parent
    */
   public get parent(): EditorDocument | null {
@@ -121,7 +138,7 @@ export class BlockNode extends EventBus {
   }
 
   /**
-   * Getter to access BlockNode data
+   * Getter to access BlockNode tunes
    */
   public get tunes(): Readonly<Record<string, BlockTune>> {
     return this.#tunes;
@@ -142,6 +159,7 @@ export class BlockNode extends EventBus {
     );
 
     return {
+      id: this.#id,
       name: this.#name,
       data: serializedData,
       tunes: serializedTunes,
@@ -191,6 +209,13 @@ export class BlockNode extends EventBus {
       .build();
 
     /**
+     * Capture the context synchronously before entering the microtask,
+     * because the WithContext wrapper will have already popped the stack
+     * by the time the queued callback runs.
+     */
+    const userId = getContext<string | number>();
+
+    /**
      * Need to delay the event so the order is
      * 1. BlockNodeAdded
      * 2. DataNodeAdded
@@ -198,7 +223,7 @@ export class BlockNode extends EventBus {
      * If done in sync, DataNodeAdded would be fired first
      */
     queueMicrotask(() => {
-      this.dispatchEvent(new DataNodeAddedEvent(index, data, getContext<string | number>()!));
+      this.dispatchEvent(new DataNodeAddedEvent(index, data, userId!));
     });
   };
 
@@ -559,12 +584,17 @@ export class BlockNode extends EventBus {
 export type {
   BlockToolName,
   DataKey,
-  BlockNodeSerialized
+  BlockNodeSerialized,
+  BlockId
 };
+
+export type { BlockNodeInit, BlockIndexOrId } from './types/index.js';
 
 export {
   createBlockToolName,
-  createDataKey
+  createDataKey,
+  createBlockId,
+  generateBlockId
 };
 
 export { NODE_TYPE_HIDDEN_PROP } from './consts.js';
