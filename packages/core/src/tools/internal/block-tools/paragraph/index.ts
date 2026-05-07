@@ -64,6 +64,8 @@ export class Paragraph implements BlockTool<ParagraphData, ParagraphConfig> {
 
   /**
    * Returns tool's wrapper, creates one if it doesn't exist yet
+   * As we maintain the data-first approach, actual inputs should be rendered only when the model is updated.
+   * Therefore, each tool needs a wrapper created before that — to have a place to insert inputs to
    */
   private get wrapper(): HTMLDivElement {
     if (this.#wrapper !== undefined) {
@@ -95,9 +97,17 @@ export class Paragraph implements BlockTool<ParagraphData, ParagraphConfig> {
     return this.wrapper;
   }
 
+  /**
+   * Callback for Adapter updates
+   * @param event - adapter event (KeyAdded, KeyRemoved or ValueChanged)
+   */
   #onUpdate = (event: KeyAddedEvent | KeyRemovedEvent): void => {
     const { key } = event.detail;
 
+    /**
+     * Paragraph has only one key — 'text'.
+     * If for some reason it's removed, we need to remove the element to avoid duplication
+     */
     if (event instanceof KeyRemovedEvent) {
       this.#paragraph?.remove();
       this.#paragraph = undefined;

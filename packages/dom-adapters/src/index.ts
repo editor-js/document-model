@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import type {
   BlockToolAdapter,
   EditorJSAdapterPlugin, EditorjsAdapterPluginConstructor,
@@ -7,7 +8,8 @@ import { EventBus } from '@editorjs/sdk';
 import { PluginType } from '@editorjs/sdk';
 import { DOMBlockToolAdapter } from './BlockToolAdapter/index.js';
 import { InputsRegistry } from './InputsRegistry/index.js';
-import { BlockRemovedEvent, EditorJSModel, EventType } from '@editorjs/model';
+import { EditorJSModel } from '@editorjs/model';
+import type { BlockId } from '@editorjs/model';
 import { Container } from 'inversify';
 import { TOKENS } from './tokens.js';
 import type { CoreConfig } from '@editorjs/sdk';
@@ -28,10 +30,10 @@ export class DOMAdapters implements EditorJSAdapterPlugin {
   });
 
   /**
-   * All created block tool adapters, kept so their blockIndex can be updated
-   * when blocks are inserted or removed.
+   * Map of active BlockToolAdapter instances keyed by block id.
+   * Used to properly destroy adapters (remove their event listeners) when blocks are removed.
    */
-  #adapters: DOMBlockToolAdapter[] = [];
+  #adapters: Map<BlockId, DOMBlockToolAdapter> = new Map();
 
   /**
    * @param params - Plugin parameters
@@ -47,56 +49,45 @@ export class DOMAdapters implements EditorJSAdapterPlugin {
       .bind(DOMBlockToolAdapter)
       .toSelf()
       .inTransientScope();
-
-    const registry = this.#iocContainer.get(InputsRegistry);
-
-    model.addEventListener(EventType.Changed, (event) => {
-      if (event instanceof BlockRemovedEvent) {
-        const removedBlockIndex = event.detail.index.blockIndex;
-
-        if (removedBlockIndex === undefined) {
-          return;
-        }
-
-        registry.removeBlock(removedBlockIndex);
-
-        this.#adapters.splice(removedBlockIndex, 1);
-
-        this.#adapters.forEach((adapter) => {
-          if (adapter.getBlockIndex() > removedBlockIndex) {
-            adapter.setBlockIndex(adapter.getBlockIndex() - 1);
-          }
-        });
-      }
-    });
   }
 
   /**
-   * Creates a BlockToolAdapter for a block inserted at the given index.
-   * Shifts registry entries and existing adapter indices before the new
-   * adapter is created, keeping everything consistent.
-   * @param blockIndex - position at which the new block is being inserted
+   * Creates a BlockToolAdapter for the block with the given id.
+   * @param blockId - unique id of the block being inserted
    * @param toolName - name of the tool for this block
    */
-  public createBlockToolAdapter(blockIndex: number, toolName: string): BlockToolAdapter {
+  public createBlockToolAdapter(blockId: BlockId, toolName: string): BlockToolAdapter {
     const registry = this.#iocContainer.get(InputsRegistry);
 
-    registry.insertBlock(blockIndex);
-
-    this.#adapters.forEach((adapter) => {
-      if (adapter.getBlockIndex() >= blockIndex) {
-        adapter.setBlockIndex(adapter.getBlockIndex() + 1);
-      }
-    });
+    registry.insertBlock(blockId);
 
     const adapter = this.#iocContainer.get(DOMBlockToolAdapter);
 
-    adapter.setBlockIndex(blockIndex);
+    adapter.setBlockId(blockId);
     adapter.setToolName(toolName);
 
-    this.#adapters.splice(blockIndex, 0, adapter);
+    this.#adapters.set(blockId, adapter);
 
     return adapter;
+  }
+
+  /**
+   * Destroys the BlockToolAdapter for the given block.
+   * Cleans up all inputs registered for the block and removes the adapter instance.
+   * Called by BlockRenderer when a block is removed from the model.
+   * @param blockId - unique id of the removed block
+   */
+  public destroyBlockToolAdapter(blockId: BlockId): void {
+    const adapter = this.#adapters.get(blockId);
+
+    if (adapter !== undefined) {
+      adapter.destroy();
+      this.#adapters.delete(blockId);
+    }
+
+    const registry = this.#iocContainer.get(InputsRegistry);
+
+    registry.removeBlock(blockId);
   }
 }
 

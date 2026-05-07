@@ -1,7 +1,7 @@
 /* eslint-disable jsdoc/require-jsdoc, @stylistic/comma-dangle,@typescript-eslint/naming-convention */
 import { beforeEach, jest } from '@jest/globals';
 import type { BlockToolFacade, EditorJSAdapterPlugin } from '@editorjs/sdk';
-import type { Index } from '@editorjs/model';
+import type { BlockId, Index } from '@editorjs/model';
 
 const USER_ID = 'user';
 
@@ -45,6 +45,7 @@ jest.unstable_mockModule('@editorjs/model', () => {
     BlockAddedEvent,
     BlockRemovedEvent,
     EventType,
+    createBlockId: (str: string) => str,
   };
 });
 
@@ -82,6 +83,7 @@ describe('BlockRenderer (unit, mocked deps)', () => {
 
   const adapter: EditorJSAdapterPlugin = {
     createBlockToolAdapter: jest.fn(() => ({})),
+    destroyBlockToolAdapter: jest.fn(),
   } as unknown as EditorJSAdapterPlugin;
 
   new BlockRenderer(
@@ -113,8 +115,11 @@ describe('BlockRenderer (unit, mocked deps)', () => {
 
         const event = new BlockAddedEvent(
           { blockIndex: 0 } as Index,
-          { name: 'tool',
-            data: {} },
+          {
+            name: 'tool',
+            id: 'test-block-id' as BlockId,
+            data: {}
+          },
           USER_ID,
         );
 
@@ -131,8 +136,11 @@ describe('BlockRenderer (unit, mocked deps)', () => {
       it('should throw when blockIndex is undefined', async () => {
         const event = new BlockAddedEvent(
           {} as Index,
-          { name: 'tool',
-            data: {} },
+          {
+            name: 'tool',
+            id: 'test-block-id' as BlockId,
+            data: {}
+          },
           USER_ID,
         );
 
@@ -148,8 +156,11 @@ describe('BlockRenderer (unit, mocked deps)', () => {
 
         const event = new BlockAddedEvent(
           { blockIndex: 0 } as Index,
-          { name: 'missing-tool',
-            data: {} },
+          {
+            name: 'missing-tool',
+            id: 'test-block-id' as BlockId,
+            data: {}
+          },
           USER_ID,
         );
 
@@ -173,8 +184,11 @@ describe('BlockRenderer (unit, mocked deps)', () => {
 
         const event = new BlockAddedEvent(
           { blockIndex: 0 } as Index,
-          { name: 'tool',
-            data: {} },
+          {
+            name: 'tool',
+            id: 'test-block-id' as BlockId,
+            data: {}
+          },
           USER_ID,
         );
 
@@ -193,8 +207,11 @@ describe('BlockRenderer (unit, mocked deps)', () => {
       it('should dispatch BlockRemovedCoreEvent via EventBus', () => {
         const event = new BlockRemovedEvent(
           { blockIndex: 1 } as Index,
-          { name: 'tool',
-            data: {} },
+          {
+            name: 'tool',
+            id: 'test-block-id' as BlockId,
+            data: {}
+          },
           USER_ID,
         );
 
@@ -203,11 +220,31 @@ describe('BlockRenderer (unit, mocked deps)', () => {
         expect(eventBus.dispatchEvent).toHaveBeenCalled();
       });
 
+      it('should call destroyBlockToolAdapter with the block id', () => {
+        const blockId = 'test-block-id' as unknown as BlockId;
+        const event = new BlockRemovedEvent(
+          { blockIndex: 1 } as Index,
+          {
+            name: 'tool',
+            id: blockId,
+            data: {}
+          },
+          USER_ID,
+        );
+
+        void changedListener(event);
+
+        expect(adapter.destroyBlockToolAdapter).toHaveBeenCalledWith(blockId);
+      });
+
       it('should throw when blockIndex is undefined', () => {
         const event = new BlockRemovedEvent(
           {} as Index,
-          { name: 'tool',
-            data: {} },
+          {
+            name: 'tool',
+            id: 'test-block-id' as BlockId,
+            data: {}
+          },
           USER_ID,
         );
 

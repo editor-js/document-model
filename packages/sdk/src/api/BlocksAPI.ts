@@ -1,5 +1,5 @@
 import type { BlockToolData } from '@editorjs/editorjs';
-import type { BlockNodeSerialized, EditorDocumentSerialized } from '@editorjs/model';
+import type { BlockNodeInit, EditorDocumentSerialized } from '@editorjs/model';
 
 /**
  * Blocks API interface
@@ -96,7 +96,7 @@ export interface BlocksAPI {
    * @param [index] - index to insert blocks at. If undefined, inserts at the end
    */
   insertMany(
-    blocks: BlockNodeSerialized[],
+    blocks: BlockNodeInit[],
     index?: number,
   ): void; // BlockAPI[];
 

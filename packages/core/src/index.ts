@@ -7,9 +7,9 @@ import {
   EventBus,
   type InlineToolConstructor,
   PluginType,
-  ToolType
+  ToolType,
+  type ToolStaticOptions
 } from '@editorjs/sdk';
-import type { ToolSettings } from './tools/ToolsFactory';
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
 import ToolsManager from './tools/ToolsManager.js';
 import type { CoreConfigValidated, CoreConfig, EditorjsPluginConstructor, BlockTuneConstructor, ToolConstructable, EditorjsAdapterPluginConstructor } from '@editorjs/sdk';
@@ -126,9 +126,9 @@ export default class Core {
   /**
    * Injects Tool constructor and options into the container
    * @param tool - Tool constructor class (static `options` defines defaults merged with the second argument)
-   * @param options - feature flags, `config` for the tool plugin, etc.
+   * @param options - Overrides for the tool's static `options` (toolbox, title, config, shortcuts, etc.)
    */
-  public use(tool: ToolConstructable, options?: Omit<ToolSettings, 'class'>): Core;
+  public use(tool: ToolConstructable, options?: ToolStaticOptions): Core;
   /**
    * Injects Plugin into the container to initialize on Editor's init
    * @param plugin - allows to pass any implementation of editor plugins
@@ -141,7 +141,7 @@ export default class Core {
    */
   public use(
     pluginOrTool: ToolConstructable | EditorjsPluginConstructor | EditorjsAdapterPluginConstructor,
-    options?: Omit<ToolSettings, 'class'>
+    options?: ToolStaticOptions
   ): Core {
     const pluginType = pluginOrTool.type;
 
@@ -149,7 +149,7 @@ export default class Core {
       case ToolType.Block:
       case ToolType.Inline:
       case ToolType.Tune:
-        this.#plugins.bind<[ToolConstructable, ToolSettings | undefined]>(pluginType).toConstantValue([pluginOrTool as ToolConstructable, options as ToolSettings | undefined]);
+        this.#plugins.bind<[ToolConstructable, ToolStaticOptions | undefined]>(pluginType).toConstantValue([pluginOrTool as ToolConstructable, options]);
         break;
       case PluginType.Adapter:
         if (this.#plugins.isBound(PluginType.Adapter)) {
@@ -193,9 +193,9 @@ export default class Core {
    * Initalizes loaded tools
    */
   async #initializeTools(): Promise<void> {
-    const blockTools = this.#plugins.getAll<[BlockToolConstructor, ToolSettings]>(ToolType.Block);
-    const inlineTools = this.#plugins.getAll<[InlineToolConstructor, ToolSettings]>(ToolType.Inline);
-    const blockTunes = this.#plugins.getAll<[BlockTuneConstructor, ToolSettings]>(ToolType.Tune);
+    const blockTools = this.#plugins.getAll<[BlockToolConstructor, ToolStaticOptions | undefined]>(ToolType.Block);
+    const inlineTools = this.#plugins.getAll<[InlineToolConstructor, ToolStaticOptions | undefined]>(ToolType.Inline);
+    const blockTunes = this.#plugins.getAll<[BlockTuneConstructor, ToolStaticOptions | undefined]>(ToolType.Tune);
 
     return this.#toolsManager.prepareTools([...blockTools, ...inlineTools, ...blockTunes]);
   }

@@ -1,7 +1,7 @@
 // Stryker disable all -- we don't count mutation test coverage fot this file as it just proxy calls to EditorDocument
 /* istanbul ignore file -- we don't count test coverage fot this file as it just proxy calls to EditorDocument */
 import { type EditorDocumentSerialized, type Index, IndexBuilder } from './entities/index.js';
-import { type BlockNodeSerialized, EditorDocument } from './entities/index.js';
+import { type BlockNodeSerialized, type BlockNodeInit, type BlockId, type BlockIndexOrId, EditorDocument } from './entities/index.js';
 import {
   BlockAddedEvent,
   BlockRemovedEvent, EventAction,
@@ -108,7 +108,7 @@ export class EditorJSModel extends EventBus {
    * Fills the EditorDocument with the provided blocks.
    * @param document - document data to initialize
    */
-  public initializeDocument(document: Partial<EditorDocumentSerialized> & Pick<EditorDocumentSerialized, 'blocks'>): void {
+  public initializeDocument(document: Partial<Omit<EditorDocumentSerialized, 'blocks'>> & { blocks: BlockNodeInit[] }): void {
     this.#document.initialize(document);
   }
 
@@ -172,6 +172,36 @@ export class EditorJSModel extends EventBus {
   }
 
   /**
+   * Returns the BlockId for a block at the given index.
+   * Returns undefined if no block exists at that index.
+   * @param blockIndex - index of the block
+   */
+  public getBlockId(blockIndex: number): BlockId | undefined {
+    if (blockIndex < 0 || blockIndex >= this.length) {
+      return undefined;
+    }
+
+    return this.#document.getBlock(blockIndex).id;
+  }
+
+  /**
+   * Returns the index of the block with the given id.
+   * Returns -1 if no block with that id exists.
+   * @param id - block id
+   */
+  public getBlockIndexById(id: BlockId | string): number {
+    return this.#document.getBlockIndexById(id);
+  }
+
+  /**
+   * Returns the serialized form of a single block without serializing the whole document.
+   * @param blockIndexOrId - index or block id to look up
+   */
+  public getBlockSerialized(blockIndexOrId: BlockIndexOrId): BlockNodeSerialized {
+    return this.#document.getBlock(blockIndexOrId).serialized;
+  }
+
+  /**
    * Updates a property of the EditorDocument.
    * Adds the property if it does not exist.
    * @param _userId - user identifier which is being set to the context
@@ -217,7 +247,7 @@ export class EditorJSModel extends EventBus {
    * @param data - data to insert (text or blocks)
    */
   @WithContext
-  public insertData(_userId: string | number | undefined, index: Index, data: string | BlockNodeSerialized[]): void {
+  public insertData(_userId: string | number | undefined, index: Index, data: string | BlockNodeInit[]): void {
     this.#document.insertData(index, data);
   }
 
@@ -228,7 +258,7 @@ export class EditorJSModel extends EventBus {
    * @param data - text or blocks to remove
    */
   @WithContext
-  public removeData(_userId: string | number | undefined, index: Index, data: string | BlockNodeSerialized[]): void {
+  public removeData(_userId: string | number | undefined, index: Index, data: string | BlockNodeInit[]): void {
     this.#document.removeData(index, data);
   }
 

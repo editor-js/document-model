@@ -271,8 +271,11 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
       blocksAPI.render({
         identifier: 'new-doc',
         blocks: [
-          { name: 'header',
-            data: {} },
+          {
+            id: 'mock',
+            name: 'header',
+            data: {},
+          },
         ],
         properties: {},
       });
@@ -375,10 +378,16 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
       blocksAPI.render({
         identifier: 'doc-2',
         blocks: [
-          { name: 'header',
-            data: {} },
-          { name: 'list',
-            data: {} },
+          {
+            id: 'mock-header',
+            name: 'header',
+            data: {},
+          },
+          {
+            id: 'mock-list',
+            name: 'list',
+            data: {},
+          },
         ],
         properties: {},
       });

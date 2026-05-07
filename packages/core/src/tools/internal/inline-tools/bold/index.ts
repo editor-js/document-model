@@ -19,12 +19,19 @@ export class BoldInlineTool implements InlineTool {
    */
   public static type = ToolType.Inline as const;
 
-  public static title = 'Bold';
+  /**
+   * Tool name used to identify the tool across the editor.
+   */
+  public static name = 'bold';
 
   /**
    * Predefined options (can be overriden on connection)
    */
   public static readonly options = {
+    /**
+     * Tool title shown in the inline toolbar
+     */
+    title: 'Bold',
     /**
      * Shortcuts plugin options
      */
