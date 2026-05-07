@@ -69,7 +69,7 @@ describe('keypath util', () => {
     });
   });
 
-  describe('remove()', () => {
+  describe('set()', () => {
     it('should do nothing if no key passed', () => {
       const object = {};
 

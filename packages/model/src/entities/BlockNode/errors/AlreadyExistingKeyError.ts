@@ -1,7 +1,7 @@
 import type { DataKey } from '../types/index.js';
 
 /**
- *
+ * Error is thrown on attempt to create data with already existing key
  */
 export class AlreadyExistingKeyError extends Error {
   /**
