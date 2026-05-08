@@ -1,6 +1,5 @@
 import { CollaborationManager } from '@editorjs/collaboration-manager';
 import { type DocumentId, EditorJSModel, EventType } from '@editorjs/model';
-import type { ServiceIdentifier } from 'inversify';
 import { Container } from 'inversify';
 import {
   type BlockToolConstructor,
@@ -181,9 +180,9 @@ export default class Core {
        * @todo add e2e initialization tests
        * Currently only BlockRenderer would be enough, but that would be hard to debug. Easier just add every module here
        */
-      [BlockRenderer, BlocksManager, SelectionManager].forEach((module) => {
-        this.#iocContainer.get(module as ServiceIdentifier);
-      });
+      this.#iocContainer.get(BlockRenderer);
+      this.#iocContainer.get(BlocksManager);
+      this.#iocContainer.get(SelectionManager);
 
       this.#initializePlugins();
       await this.#initializeTools();
