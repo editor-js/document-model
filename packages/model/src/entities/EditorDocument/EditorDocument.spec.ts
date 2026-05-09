@@ -1809,4 +1809,44 @@ describe('EditorDocument', () => {
       expect(spy).toHaveBeenCalledWith(dataKey, start, end, tool);
     });
   });
+
+  describe('.resolveBlockIndex()', () => {
+    it('should return the number unchanged when a numeric index is passed', () => {
+      const document = createEditorDocumentWithSomeBlocks();
+
+      expect(document.resolveBlockIndex(1)).toBe(1);
+    });
+
+    it('should throw when the BlockId does not exist in the document', () => {
+      const document = new EditorDocument({ identifier: 'doc' });
+
+      expect(() => document.resolveBlockIndex(createBlockId('non-existent-id'))).toThrow(
+        'Block with id "non-existent-id" not found'
+      );
+    });
+  });
+
+  describe('.getBlockTextContent()', () => {
+    it('should call getTextContent on the correct block', () => {
+      const document = createEditorDocumentWithSomeBlocks();
+      const blockIndex = 1;
+      const block = document.getBlock(blockIndex);
+
+      // Manually attach a mock since BlockNode is auto-mocked and getTextContent may not be pre-mocked
+      (block as unknown as Record<string, unknown>).getTextContent = jest.fn(() => ({}));
+
+      const spy = jest.spyOn(block as unknown as { getTextContent: () => unknown }, 'getTextContent');
+
+      document.getBlockTextContent(blockIndex);
+
+      expect(spy).toHaveBeenCalled();
+    });
+
+    it('should throw when the index is out of bounds', () => {
+      const document = createEditorDocumentWithSomeBlocks();
+      const outOfBoundsIndex = 100;
+
+      expect(() => document.getBlockTextContent(outOfBoundsIndex)).toThrow();
+    });
+  });
 });

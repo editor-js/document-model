@@ -1779,4 +1779,83 @@ describe('BlockNode', () => {
         .toHaveBeenCalled();
     });
   });
+
+  describe('.getTextContent()', () => {
+    it('should return an empty object when block has no text inputs', () => {
+      const node = new BlockNode({ name: createBlockToolName('paragraph') });
+
+      expect(node.getTextContent()).toEqual({});
+    });
+
+    it('should call .serialized getter of each TextNode and include results keyed by data key', () => {
+      const mockSerializedValue: TextNodeSerialized = {
+        [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+        value: 'hello',
+        fragments: [],
+      };
+      const spy = jest.spyOn(TextNode.prototype, 'serialized', 'get').mockReturnValue(mockSerializedValue);
+
+      const node = new BlockNode({
+        name: createBlockToolName('paragraph'),
+        data: {
+          text: {
+            [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+            value: 'hello',
+            fragments: [],
+          },
+        },
+        parent: {} as EditorDocument,
+      });
+
+      const result = node.getTextContent();
+
+      expect(spy).toHaveBeenCalled();
+      expect(result).toHaveProperty('text');
+    });
+
+    it('should collect text inputs from nested array data', () => {
+      const mockSerializedValue: TextNodeSerialized = {
+        [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+        value: 'item',
+        fragments: [],
+      };
+
+      jest.spyOn(TextNode.prototype, 'serialized', 'get').mockReturnValue(mockSerializedValue);
+
+      const node = new BlockNode({
+        name: createBlockToolName('paragraph'),
+        data: {
+          items: [
+            {
+              [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+              value: 'item',
+              fragments: [],
+            },
+          ],
+        },
+        parent: {} as EditorDocument,
+      });
+
+      const result = node.getTextContent();
+
+      // The key should contain an array index like 'items.0'
+      const keys = Object.keys(result);
+
+      expect(keys.some(k => k.startsWith('items'))).toBe(true);
+    });
+
+    it('should not include ValueNode entries', () => {
+      const node = new BlockNode({
+        name: createBlockToolName('paragraph'),
+        data: {
+          level: 2,
+        },
+        parent: {} as EditorDocument,
+      });
+
+      const result = node.getTextContent();
+
+      expect(Object.keys(result)).toHaveLength(0);
+    });
+  });
 });

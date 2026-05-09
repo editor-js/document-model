@@ -1,17 +1,22 @@
 import {
+  BlockChildType,
+  type BlockId,
   type BlockNodeInit,
+  type DataKey,
   type EditorDocumentSerialized,
-  EditorJSModel
+  EditorJSModel,
+  type InlineTreeNodeSerialized,
+  keypath,
+  mergeTextNodes,
+  NODE_TYPE_HIDDEN_PROP,
+  sliceFragments
 } from '@editorjs/model';
 import 'reflect-metadata';
 import { inject, injectable } from 'inversify';
 import { TOKENS } from '../tokens.js';
 import ToolsManager from '../tools/ToolsManager.js';
 import { BlockToolData } from '@editorjs/editorjs';
-import {
-  CoreConfigValidated,
-  EventBus
-} from '@editorjs/sdk';
+import { CoreConfigValidated, EventBus } from '@editorjs/sdk';
 
 /**
  * Parameters for the BlocksManager.insert() method
@@ -205,6 +210,150 @@ export class BlocksManager {
 
     this.#model.removeBlock(this.#config.userId, fromIndex);
     this.#model.addBlock(this.#config.userId, block, toIndex);
+  }
+
+  /**
+   * Splits a block at the given data key and offset.
+   * If the tool has canSplit = true, a new block of the same type is inserted after,
+   * with data taken from the inputs after the caret; array-indexed keys are renumbered from 0.
+   * Otherwise, the default block is inserted with the extracted text content merged together.
+   * @param blockIndexOrId - numeric position or named identifier that locates the block
+   * @param dataKey - the data key at which the split is performed
+   * @param offset - character offset within the data key's text value to split at
+   */
+  public splitBlock(blockIndexOrId: number | BlockId, dataKey: DataKey, offset: number): void {
+    const blockIndex = this.#model.resolveBlockIndex(blockIndexOrId);
+
+    const block = this.#model.getBlockSerialized(blockIndex);
+    const toolName = block.name;
+
+    const tool = this.#toolsManager.blockTools.get(toolName);
+    const canSplit = tool?.options.canSplit === true;
+
+    const blockTextContent = Object.entries(
+      this.#model.getBlockTextContent(blockIndex)
+    );
+
+    const splitIndex = blockTextContent.findIndex(([key]) => key === dataKey);
+
+    if (splitIndex === -1) {
+      throw new Error(`Data key "${dataKey}" not found in block content`);
+    }
+
+    const [, splitInput] = blockTextContent[splitIndex];
+
+    /**
+     * Text and fragments from the input that was split
+     */
+    const textAfter = splitInput.value.slice(offset);
+    const fragmentsAfter = sliceFragments(splitInput.fragments, offset);
+    const entriesAfter = blockTextContent.slice(splitIndex + 1);
+
+    /**
+     * If split happens at the beginning of the first input - just insert an empty block before
+     */
+    if (offset === 0 && splitIndex === 0) {
+      this.#model.addBlock(
+        this.#config.userId,
+        {
+          name: canSplit ? block.name : this.#config.defaultBlock,
+          data: {},
+        },
+        blockIndex
+      );
+
+      return;
+    }
+
+    /**
+     * Remove text in the split input (fragments will be adjusted by the model)
+     */
+    if (offset < splitInput.value.length) {
+      this.#model.removeText(this.#config.userId, blockIndex, dataKey, offset);
+    }
+
+    /**
+     * Remove all the inputs in the current block after the split
+     */
+    entriesAfter.forEach(([key]) => {
+      this.#model.removeDataNode(this.#config.userId, blockIndex, key);
+    });
+
+    /**
+     * In case the split is at the end of the last input, just add a new block
+     */
+    if (offset === splitInput.value.length && splitIndex === blockTextContent.length - 1) {
+      this.#model.addBlock(
+        this.#config.userId,
+        {
+          name: canSplit ? block.name : this.#config.defaultBlock,
+          data: {},
+        },
+        blockIndex + 1
+      );
+
+      return;
+    }
+
+    /**
+     * If block doesn't support splitting into two, insert a new default block utilizing its conversionConfig.import to get the data
+     * @todo on initialization validate defaultTool must have conversionConfig.import
+     */
+    if (!canSplit) {
+      const contentAfterAccInit: InlineTreeNodeSerialized = {
+        /**
+         * @todo check if \n is a proper option here
+         */
+        value: textAfter + '\n',
+        fragments: fragmentsAfter,
+      };
+
+      const contentAfter = mergeTextNodes(entriesAfter, contentAfterAccInit);
+
+      const defaultTool = this.#toolsManager.blockTools.get(this.#config.defaultBlock)!;
+
+      const newBlockData = defaultTool.importTextContent(contentAfter.value, contentAfter.fragments);
+
+      /**
+       * Insert new block with the content after the caret, converted using the default block's import method
+       */
+      this.#model.addBlock(this.#config.userId, {
+        name: this.#config.defaultBlock,
+        data: newBlockData,
+      }, blockIndex + 1);
+
+      return;
+    }
+
+    /**
+     * In case Tool supports splitting into two blocks, extract inputs after the split and add new block with the extracted data
+     */
+    const newData: Record<string, unknown> = {};
+
+    /**
+     * Need to add split input to properly renumber array indexes
+     */
+    entriesAfter.unshift([dataKey as string, {
+      value: textAfter,
+      fragments: fragmentsAfter,
+      [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text as BlockChildType.Text,
+    }]);
+
+    if (entriesAfter.length > 0) {
+      /**
+       * In case data contains an array, we need to renumber the keys to start from 0
+       */
+      const renumbered = keypath.renumberKeys(entriesAfter.map(([key]) => key));
+
+      entriesAfter.forEach(([key, content]) => {
+        keypath.set(newData, renumbered.get(key) ?? key, content);
+      });
+    }
+
+    this.#model.addBlock(this.#config.userId, {
+      name: toolName,
+      data: newData,
+    }, blockIndex + 1);
   }
 
   /**

@@ -10,6 +10,25 @@ import type { ToolType } from '@/entities/EntityType.js';
 import type { BaseToolConstructor, BaseToolOptions } from '@/entities/BaseTool';
 
 /**
+ * Configuration for converting block content to/from other block types.
+ * @template Data - Block tool data type
+ */
+interface ConversionConfig<Data extends BlockToolData = BlockToolData> {
+  /**
+   * How to import plain text into this tool's data.
+   * Either a function that receives the text and returns tool data,
+   * or a string data key where the text should be placed.
+   */
+  import?: ((data: string) => Data) | string;
+  /**
+   * How to export this tool's data to plain text.
+   * Either a function that receives tool data and returns a string,
+   * or a string data key whose value should be used as the text.
+   */
+  export?: ((data: Data) => string) | string;
+}
+
+/**
  * Canonical keys for Block Tool options.
  * Use these instead of raw string literals when reading or writing block-tool options.
  */
@@ -23,14 +42,18 @@ export enum BlockToolOptionKey {
   /** Inline tools enabled for blocks of this type. */
   InlineToolbar = 'inlineToolbar',
   /** Block tunes enabled for blocks of this type. */
-  Tunes = 'tunes'
+  Tunes = 'tunes',
+  /** Conversion configuration for this tool. */
+  ConversionConfig = 'conversionConfig',
+  /** Whether the block can be split into multiple blocks of its type. */
+  CanSplit = 'canSplit'
 }
 
 /**
  * Options available on **Block Tools** (`static options` or `use()` overrides).
  * @template Config - Shape of the plugin-specific {@link BaseToolOptions.config} object.
  */
-export interface BlockToolOptions<Config extends ToolConfig = ToolConfig>
+export interface BlockToolOptions<Config extends ToolConfig = ToolConfig, Data extends BlockToolData = BlockToolData>
   extends BaseToolOptions<Config> {
   /**
    * Toolbox entry (or entries) that represent this tool in the toolbox.
@@ -59,6 +82,22 @@ export interface BlockToolOptions<Config extends ToolConfig = ToolConfig>
    * Pass `true` to enable all registered tunes, or an array of names.
    */
   [BlockToolOptionKey.Tunes]?: boolean | string[];
+
+  /**
+   * Configuration for converting to/from other tools. The `import` and `export` properties can be either:
+   *   - A function that performs the conversion, or
+   *   - A string representing the property data key in tool's data
+   *
+   * If a string is provided, the editor will insert/extract data from using the string as DataKey
+   */
+  [BlockToolOptionKey.ConversionConfig]?: ConversionConfig<Data>;
+
+  /**
+   * If true, on split a new block of the same type would be rendered with the content after the caret
+   *
+   * If false or omitted, the default block would be rendered instead.
+   */
+  [BlockToolOptionKey.CanSplit]?: boolean;
 
   /** Any additional custom options exposed by the tool developer. */
   [key: string]: unknown;

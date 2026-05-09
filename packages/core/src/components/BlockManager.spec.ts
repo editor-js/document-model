@@ -1,6 +1,7 @@
-/* eslint-disable @stylistic/comma-dangle,@typescript-eslint/naming-convention */
+/* eslint-disable @stylistic/comma-dangle,@typescript-eslint/naming-convention,@typescript-eslint/no-magic-numbers */
 import { beforeEach, jest } from '@jest/globals';
 import type { CoreConfigValidated } from '@editorjs/sdk';
+import {DataKey} from "@editorjs/model";
 
 const BLOCKS_COUNT = 7;
 const USER_ID = 'user';
@@ -20,6 +21,10 @@ jest.unstable_mockModule('@editorjs/model', () => {
     clearBlocks: jest.fn(),
     getCaret: jest.fn(),
     getBlockSerialized: jest.fn(),
+    resolveBlockIndex: jest.fn((i: number) => i),
+    getBlockTextContent: jest.fn(),
+    removeText: jest.fn(),
+    removeDataNode: jest.fn(),
     get length() {
       return BLOCKS_COUNT;
     },
@@ -29,10 +34,27 @@ jest.unstable_mockModule('@editorjs/model', () => {
 
   const EventType = { Changed: 'changed' };
 
+  const keypath = {
+    set: jest.fn(),
+    get: jest.fn(),
+    has: jest.fn(),
+    renumberKeys: jest.fn(() => new Map()),
+  };
+
+  const sliceFragments = jest.fn((frags: unknown[]) => frags);
+  const mergeTextNodes = jest.fn((_entries: unknown[], initial: unknown) => initial);
+  const NODE_TYPE_HIDDEN_PROP = '$t';
+  const BlockChildType = { Text: 't' };
+
   return {
     EditorJSModel,
     EventBus,
     EventType,
+    keypath,
+    sliceFragments,
+    mergeTextNodes,
+    NODE_TYPE_HIDDEN_PROP,
+    BlockChildType,
   };
 });
 
@@ -45,7 +67,7 @@ jest.unstable_mockModule('../tools/ToolsManager', () => ({
 }));
 
 // Now import the modules (they will receive the mocks registered above)
-const { EditorJSModel, EventBus } = await import('@editorjs/model');
+const { EditorJSModel, EventBus, keypath, mergeTextNodes, sliceFragments } = await import('@editorjs/model');
 const ToolsManager = (await import('../tools/ToolsManager')).default;
 const { BlocksManager } = await import('./BlockManager.js');
 
@@ -303,6 +325,327 @@ describe('BlocksManager (unit, mocked deps)', () => {
 
       expect(model.removeBlock).not.toHaveBeenCalled();
       expect(model.addBlock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('.splitBlock()', () => {
+    /**
+     * Restore split-specific mock implementations that jest.resetAllMocks() clears.
+     */
+    beforeEach(() => {
+      // @ts-expect-error — jest mock
+      keypath.renumberKeys.mockReturnValue(new Map());
+      // @ts-expect-error — jest mock
+      keypath.set.mockImplementation(() => undefined);
+      // @ts-expect-error — jest mock
+      mergeTextNodes.mockImplementation((_entries: unknown[], init: unknown) => init);
+      // @ts-expect-error — jest mock
+      sliceFragments.mockImplementation((frags: unknown[]) => frags);
+
+      model.resolveBlockIndex = jest.fn((i: number | string) => +i);
+      model.getBlockSerialized = jest.fn(() => ({
+        name: 'paragraph',
+        id: 'b1',
+        data: {}
+      }));
+      model.getBlockTextContent = jest.fn(() => ({}));
+    });
+
+    it('should throw when the data key is not found in block text content', () => {
+      model.getBlockTextContent = jest.fn(() => ({
+        text: {
+          value: 'Hello',
+          fragments: [],
+        },
+      }));
+      // @ts-expect-error — mock
+      toolsManager.blockTools.get = jest.fn(() => ({ options: { canSplit: true } }));
+
+      expect(() => blocksManager.splitBlock(0, 'nonexistent' as DataKey, 0))
+        .toThrow('Data key "nonexistent" not found in block content');
+    });
+
+    it('canSplit = true: should call removeText with the given offset when splitting in the middle', () => {
+      model.getBlockTextContent = jest.fn(() => ({
+        text: {
+          value: 'Hello World',
+          fragments: [],
+        },
+      }));
+      // @ts-expect-error — mock
+      toolsManager.blockTools.get = jest.fn(() => ({ options: { canSplit: true } }));
+
+      blocksManager.splitBlock(0, 'text' as DataKey, 5);
+
+      expect(model.removeText).toHaveBeenCalledWith(USER_ID, 0, 'text', 5);
+    });
+
+    it('canSplit = true: should NOT call removeText when offset equals input length', () => {
+      model.getBlockTextContent = jest.fn(() => ({
+        text: {
+          value: 'Hello',
+          fragments: [],
+        },
+      }));
+      // @ts-expect-error — mock
+      toolsManager.blockTools.get = jest.fn(() => ({ options: { canSplit: true } }));
+
+      blocksManager.splitBlock(0, 'text' as DataKey, 5); // 5 === 'Hello'.length
+
+      expect(model.removeText).not.toHaveBeenCalled();
+    });
+
+    it('canSplit = true: should call addBlock with the same tool name after splitting', () => {
+      model.getBlockSerialized = jest.fn(() => ({
+        name: 'header',
+        id: 'b1',
+        data: {}
+      }));
+      model.getBlockTextContent = jest.fn(() => ({
+        text: {
+          value: 'Hello World',
+          fragments: [],
+        },
+      }));
+      // @ts-expect-error — mock
+      toolsManager.blockTools.get = jest.fn(() => ({ options: { canSplit: true } }));
+
+      blocksManager.splitBlock(0, 'text' as DataKey, 5);
+
+      expect(model.addBlock).toHaveBeenCalledWith(
+        USER_ID,
+        expect.objectContaining({ name: 'header' }),
+        1
+      );
+    });
+
+    it('canSplit = true: should insert empty same-type block when splitting at end of the only input', () => {
+      model.getBlockSerialized = jest.fn(() => ({
+        name: 'customBlock',
+        id: 'b1',
+        data: {}
+      }));
+      model.getBlockTextContent = jest.fn(() => ({
+        text: {
+          value: 'All text',
+          fragments: [],
+        },
+      }));
+      // @ts-expect-error — mock
+      toolsManager.blockTools.get = jest.fn(() => ({ options: { canSplit: true } }));
+
+      blocksManager.splitBlock(0, 'text' as DataKey, 8); // 8 === 'All text'.length
+
+      expect(model.removeText).not.toHaveBeenCalled();
+      expect(model.addBlock).toHaveBeenCalledWith(
+        USER_ID,
+        {
+          name: 'customBlock',
+          data: {}
+        },
+        1
+      );
+    });
+
+    it('canSplit = true: multiple flat inputs — should call removeDataNode for inputs after the split point', () => {
+      model.getBlockTextContent = jest.fn(() => ({
+        title: {
+          value: 'Hello',
+          fragments: [],
+        },
+        caption: {
+          value: 'World',
+          fragments: [],
+        },
+      }));
+      // @ts-expect-error — mock
+      toolsManager.blockTools.get = jest.fn(() => ({ options: { canSplit: true } }));
+
+      blocksManager.splitBlock(0, 'title' as DataKey, 3);
+
+      expect(model.removeDataNode).toHaveBeenCalledWith(USER_ID, 0, 'caption');
+    });
+
+    it('canSplit = true: multiple flat inputs — should set both the split text and subsequent inputs in the new block data', () => {
+      const captionContent = {
+        value: 'Caption',
+        fragments: [],
+      };
+
+      model.getBlockTextContent = jest.fn(() => ({
+        title: {
+          value: 'Hello',
+          fragments: [],
+        },
+        caption: captionContent,
+      }));
+      // @ts-expect-error — mock
+      toolsManager.blockTools.get = jest.fn(() => ({ options: { canSplit: true } }));
+
+      // @ts-expect-error — jest mock
+      keypath.renumberKeys.mockReturnValue(new Map([['caption', 'caption']]));
+
+      blocksManager.splitBlock(0, 'title' as DataKey, 3);
+
+      // keypath.set should be called for the split input and for each entry after
+      expect(keypath.set).toHaveBeenCalledTimes(2);
+      expect(keypath.set).toHaveBeenNthCalledWith(
+        1,
+        expect.any(Object),
+        'title',
+        expect.objectContaining({ value: 'lo' }) // 'Hello'.slice(3)
+      );
+      expect(keypath.set).toHaveBeenNthCalledWith(
+        2,
+        expect.any(Object),
+        'caption',
+        captionContent
+      );
+    });
+
+    it('canSplit = true: array-indexed inputs — should call renumberKeys with the keys of entries after the split point', () => {
+      model.getBlockTextContent = jest.fn(() => ({
+        'items.0.text': {
+          value: 'Item 0',
+          fragments: [],
+        },
+        'items.1.text': {
+          value: 'Item 1',
+          fragments: [],
+        },
+        'items.2.text': {
+          value: 'Item 2',
+          fragments: [],
+        },
+      }));
+      // @ts-expect-error — mock
+      toolsManager.blockTools.get = jest.fn(() => ({ options: { canSplit: true } }));
+
+      blocksManager.splitBlock(0, 'items.0.text' as DataKey, 3);
+
+      expect(keypath.renumberKeys).toHaveBeenCalledWith(['items.0.text', 'items.1.text', 'items.2.text']);
+    });
+
+    it('canSplit = true: array-indexed inputs — should use renumbered keys when setting subsequent inputs', () => {
+      const item1Content = {
+        value: 'Item 1',
+        fragments: [],
+      };
+      const item2Content = {
+        value: 'Item 2',
+        fragments: [],
+      };
+
+      model.getBlockTextContent = jest.fn(() => ({
+        'items.0.text': {
+          value: 'Item 0',
+          fragments: [],
+        },
+        'items.1.text': item1Content,
+        'items.2.text': item2Content,
+      }));
+      // @ts-expect-error — mock
+      toolsManager.blockTools.get = jest.fn(() => ({ options: { canSplit: true } }));
+
+      // Simulate renumberKeys: items.1 → 0, items.2 → 1
+      // @ts-expect-error — jest mock
+      keypath.renumberKeys.mockReturnValue(
+        new Map([
+          ['items.1.text', 'items.0.text'],
+          ['items.2.text', 'items.1.text'],
+        ])
+      );
+
+      blocksManager.splitBlock(0, 'items.0.text' as DataKey, 3);
+
+      expect(keypath.set).toHaveBeenCalledWith(
+        expect.any(Object),
+        'items.0.text', // renumbered from items.1.text
+        item1Content
+      );
+      expect(keypath.set).toHaveBeenCalledWith(
+        expect.any(Object),
+        'items.1.text', // renumbered from items.2.text
+        item2Content
+      );
+    });
+
+    it('canSplit = false: should call importTextContent and insert a default block', () => {
+      const importMock = jest.fn(() => ({ text: {
+        value: 'World',
+        fragments: [],
+      } }));
+      const paragraphTool = {
+        options: { canSplit: true },
+        importTextContent: importMock,
+      };
+
+      model.getBlockSerialized = jest.fn(() => ({
+        name: 'header',
+        id: 'b1',
+        data: {}
+      }));
+      model.getBlockTextContent = jest.fn(() => ({
+        text: {
+          value: 'Hello World',
+          fragments: [],
+        },
+      }));
+      // @ts-expect-error — jest mock
+      mergeTextNodes.mockReturnValue({
+        value: ' World\n',
+        fragments: []
+      });
+      // @ts-expect-error — mock
+      toolsManager.blockTools.get = jest.fn((name: string) =>
+        name === 'paragraph' ? paragraphTool : { options: { canSplit: false } }
+      );
+
+      blocksManager.splitBlock(0, 'text' as DataKey, 5);
+
+      expect(importMock).toHaveBeenCalledWith(' World\n', []);
+      expect(model.addBlock).toHaveBeenCalledWith(
+        USER_ID,
+        expect.objectContaining({ name: 'paragraph' }),
+        1
+      );
+    });
+
+    it('canSplit = false: multiple inputs — should pass all entries after split to mergeTextNodes', () => {
+      model.getBlockSerialized = jest.fn(() => ({ name: 'header',
+        id: 'b1',
+        data: {} }));
+      model.getBlockTextContent = jest.fn(() => ({
+        title: {
+          value: 'Hello',
+          fragments: [],
+        },
+        description: {
+          value: 'World',
+          fragments: [],
+        },
+      }));
+      const importMock = jest.fn(() => ({}));
+      const paragraphTool = {
+        options: { canSplit: true },
+        importTextContent: importMock
+      };
+
+      // @ts-expect-error — mock
+      toolsManager.blockTools.get = jest.fn((name: string) =>
+        name === 'paragraph' ? paragraphTool : { options: { canSplit: false } }
+      );
+
+      blocksManager.splitBlock(0, 'title' as DataKey, 3);
+
+      expect(mergeTextNodes).toHaveBeenCalledWith(
+        // entriesAfter contains ['description', { value: 'World', ... }]
+        expect.arrayContaining([
+          expect.arrayContaining(['description']),
+        ]),
+        // initial accumulator contains text after offset in 'title'
+        expect.objectContaining({ value: 'lo\n' }) // 'Hello'.slice(3) + '\n'
+      );
     });
   });
 });
