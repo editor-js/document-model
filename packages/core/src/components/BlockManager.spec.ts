@@ -1,7 +1,7 @@
 /* eslint-disable @stylistic/comma-dangle,@typescript-eslint/naming-convention,@typescript-eslint/no-magic-numbers */
 import { beforeEach, jest } from '@jest/globals';
 import type { CoreConfigValidated } from '@editorjs/sdk';
-import {DataKey} from "@editorjs/model";
+import type { DataKey } from '@editorjs/model';
 
 const BLOCKS_COUNT = 7;
 const USER_ID = 'user';
