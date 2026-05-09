@@ -242,6 +242,12 @@ export class BlocksManager {
 
     const [, splitInput] = blockTextContent[splitIndex];
 
+    if (offset < 0 || offset > splitInput.value.length) {
+      throw new RangeError(
+        `Offset ${offset} is out of range for input "${dataKey}" with length ${splitInput.value.length}`
+      );
+    }
+
     /**
      * Text and fragments from the input that was split
      */

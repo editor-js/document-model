@@ -365,6 +365,38 @@ describe('BlocksManager (unit, mocked deps)', () => {
         .toThrow('Data key "nonexistent" not found in block content');
     });
 
+    it('should throw a RangeError when offset is negative', () => {
+      model.getBlockTextContent = jest.fn(() => ({
+        text: {
+          value: 'Hello',
+          fragments: [],
+        },
+      }));
+      // @ts-expect-error — mock
+      toolsManager.blockTools.get = jest.fn(() => ({ options: { canSplit: true } }));
+
+      expect(() => blocksManager.splitBlock(0, 'text' as DataKey, -1))
+        .toThrow(RangeError);
+      expect(() => blocksManager.splitBlock(0, 'text' as DataKey, -1))
+        .toThrow('Offset -1 is out of range for input "text" with length 5');
+    });
+
+    it('should throw a RangeError when offset exceeds the input text length', () => {
+      model.getBlockTextContent = jest.fn(() => ({
+        text: {
+          value: 'Hello',
+          fragments: [],
+        },
+      }));
+      // @ts-expect-error — mock
+      toolsManager.blockTools.get = jest.fn(() => ({ options: { canSplit: true } }));
+
+      expect(() => blocksManager.splitBlock(0, 'text' as DataKey, 6))
+        .toThrow(RangeError);
+      expect(() => blocksManager.splitBlock(0, 'text' as DataKey, 6))
+        .toThrow('Offset 6 is out of range for input "text" with length 5');
+    });
+
     it('canSplit = true: should call removeText with the given offset when splitting in the middle', () => {
       model.getBlockTextContent = jest.fn(() => ({
         text: {
