@@ -18,7 +18,7 @@ import { type BlockTuneFacade } from './BlockTuneFacade.js';
 import { ToolsCollection } from '../ToolsCollection.js';
 import type { BlockToolConstructor, BlockToolConstructorOptions, BlockTool, BlockToolData } from '../../entities';
 import { ToolType } from '../../entities';
-import { BlockChildType, NODE_TYPE_HIDDEN_PROP } from '@editorjs/model';
+import { BlockChildType, NODE_TYPE_HIDDEN_PROP, keypath } from '@editorjs/model';
 import type { InlineFragment } from '@editorjs/model';
 
 /**
@@ -177,13 +177,15 @@ export class BlockToolFacade extends BaseToolFacade<ToolType.Block, BlockTool> {
       return importFnOrProp(value);
     }
 
-    return {
-      [importFnOrProp]: {
-        value,
-        fragments,
-        [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text as BlockChildType.Text,
-      },
-    };
+    const result: BlockToolData = {};
+
+    keypath.set(result, importFnOrProp, {
+      value,
+      fragments,
+      [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text as BlockChildType.Text,
+    });
+
+    return result;
   }
 
   /**
