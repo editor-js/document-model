@@ -184,5 +184,4 @@ export interface BlockToolConstructor<
  *
  * any is used as a placeholder to allow using BlockToolData without generic
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type BlockToolData<T extends Record<string, ValueSerialized> = any> = T;
+export type BlockToolData<T extends Record<string, ValueSerialized> = Record<string, ValueSerialized>> = T;

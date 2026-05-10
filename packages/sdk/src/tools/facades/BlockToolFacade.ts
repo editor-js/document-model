@@ -60,7 +60,6 @@ export class BlockToolFacade extends BaseToolFacade<ToolType.Block, BlockTool> {
   public create({ data, block, readOnly, adapter }: Pick<BlockToolConstructorOptions, 'data' | 'block' | 'readOnly' | 'adapter'>): BlockTool {
     return new this.constructable({
       adapter,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       data,
       block,
       readOnly,

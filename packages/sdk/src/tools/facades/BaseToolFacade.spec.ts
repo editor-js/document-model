@@ -1,13 +1,14 @@
-/* eslint-disable jsdoc/require-jsdoc -- test doubles and nested literals */
+/* eslint-disable jsdoc/require-jsdoc,@typescript-eslint/no-magic-numbers */
 
 import { describe, expect, it } from '@jest/globals';
 import type { API as ApiMethods } from '@editorjs/editorjs';
-import type { BlockToolConstructor } from '../../entities/BlockTool.js';
+import type { BlockToolConstructor, BlockToolData } from '../../entities/BlockTool.js';
 import { BlockToolOptionKey } from '../../entities/BlockTool.js';
 import { ToolType } from '../../entities/EntityType.js';
 import type { ToolOptions } from './BaseToolFacade.js';
 import { UserToolOptions } from './BaseToolFacade.js';
 import { BlockToolFacade } from './BlockToolFacade.js';
+import type { InlineFragment } from '@editorjs/model';
 import { BlockChildType, NODE_TYPE_HIDDEN_PROP } from '@editorjs/model';
 
 const emptyApi = {} as ApiMethods;
@@ -174,7 +175,7 @@ describe('BaseToolFacade (via BlockToolFacade)', () => {
     });
 
     it('calls the import function when conversionConfig.import is a function', () => {
-      const importFn = (text: string) => ({ text: { value: text } });
+      const importFn = (text: string): BlockToolData => ({ text: { value: text } });
       const facade = createBlockFacade(
         { [BlockToolOptionKey.ConversionConfig]: { import: importFn } },
         {} as ToolOptions
@@ -190,7 +191,10 @@ describe('BaseToolFacade (via BlockToolFacade)', () => {
         { [BlockToolOptionKey.ConversionConfig]: { import: 'text' } },
         {} as ToolOptions
       );
-      const fragments = [{ tool: 'bold', range: [0, 5] }] as never;
+      const fragments = [{
+        tool: 'bold',
+        range: [0, 5],
+      }] as InlineFragment[];
 
       const result = facade.importTextContent('hello', fragments);
 
@@ -208,7 +212,10 @@ describe('BaseToolFacade (via BlockToolFacade)', () => {
         { [BlockToolOptionKey.ConversionConfig]: { import: 'items.0.text' } },
         {} as ToolOptions
       );
-      const fragments = [{ tool: 'bold', range: [0, 5] }] as never;
+      const fragments = [{
+        tool: 'bold',
+        range: [0, 5],
+      }] as InlineFragment[];
 
       const result = facade.importTextContent('hello', fragments);
 
