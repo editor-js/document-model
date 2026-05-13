@@ -237,7 +237,7 @@ describe('EditorJSModel', () => {
       // DataNodeAdded events are queued as microtasks, flush before asserting
       await Promise.resolve();
 
-      const node = model.getDataNode(userId, 0, 'text');
+      const node = model.getDataNode(0, 'text');
 
       expect(node).toBeDefined();
     });
@@ -245,7 +245,7 @@ describe('EditorJSModel', () => {
     it('should return undefined for a non-existent key', async () => {
       await Promise.resolve();
 
-      const node = model.getDataNode(userId, 0, 'nonexistent');
+      const node = model.getDataNode(0, 'nonexistent');
 
       expect(node).toBeUndefined();
     });
