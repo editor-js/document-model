@@ -1,5 +1,11 @@
 import type { BlockToolData } from '@editorjs/editorjs';
-import type { BlockNodeInit, EditorDocumentSerialized } from '@editorjs/model';
+import type {
+  BlockId,
+  BlockNodeInit,
+  EditorDocumentSerialized,
+  TextNodeSerialized,
+  ValueSerialized
+} from '@editorjs/model';
 
 /**
  * Blocks API interface
@@ -45,9 +51,9 @@ export interface BlocksAPI {
 
   /**
    * Removes Block by index, or current block if index is not passed
-   * @param index - index of a block to delete
+   * @param indexOrId - index or id of a block to delete
    */
-  delete(index?: number): void;
+  delete(indexOrId?: number | string): void;
 
   /**
    * Moves a block to a new index
@@ -99,6 +105,48 @@ export interface BlocksAPI {
     blocks: BlockNodeInit[],
     index?: number,
   ): void; // BlockAPI[];
+
+  /**
+   * Returns block's index by its id
+   * @param id - block id to get index for
+   */
+  getIndexById(id: string): number;
+
+  /**
+   * Returns block id by its index
+   * @param index - block index to get id for
+   */
+  getIdByIndex(index: number): BlockId | undefined;
+
+  /**
+   * Returns serialized data for provided data key
+   * @param indexOrId - index or id of the block
+   * @param dataKey - data key to get
+   */
+  getData<V = unknown>(indexOrId: number | string, dataKey: string): TextNodeSerialized | ValueSerialized<V> | undefined;
+
+  /**
+   * Removes data by the data key
+   * @param indexOrId - index or id of the block
+   * @param dataKey - data key to remove
+   */
+  removeData(indexOrId: number | string, dataKey: string): void;
+
+  /**
+   * Creates data node with the given key
+   * @param indexOrId - index or id of the block
+   * @param dataKey - data key to create
+   * @param [initialData] - optional initial data
+   */
+  createData<V = unknown>(indexOrId: number | string, dataKey: string, initialData?: TextNodeSerialized | ValueSerialized<V>): void;
+
+  /**
+   * Updates value by the given key
+   * @param indexOrId - index or id of the block
+   * @param dataKey - data key to update
+   * @param value - new value
+   */
+  updateValue<V = unknown>(indexOrId: number | string, dataKey: string, value: V): void;
 
   /**
    * Creates data of an empty block with a passed type.

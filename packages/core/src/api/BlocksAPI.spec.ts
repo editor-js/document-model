@@ -14,7 +14,14 @@ jest.unstable_mockModule('../components/BlockManager', () => ({
   })),
 }));
 
+jest.unstable_mockModule('@editorjs/model', () => ({
+  EditorJSModel: jest.fn(),
+  createBlockId: jest.fn(id => id),
+  createDataKey: jest.fn(key => key),
+}));
+
 const { BlocksManager } = await import('../components/BlockManager');
+const { EditorJSModel } = await import('@editorjs/model');
 const { BlocksAPI } = await import('./BlocksAPI.js');
 
 import type { CoreConfigValidated } from '@editorjs/sdk';
@@ -26,7 +33,11 @@ describe('BlocksAPI', () => {
 
   describe('.clear()', () => {
     it('should call blocksManager.clear', () => {
-      const api = new BlocksAPI(blocksManager, { defaultBlock } as CoreConfigValidated);
+      const api = new BlocksAPI(
+        blocksManager,
+        { defaultBlock } as CoreConfigValidated,
+        new EditorJSModel('userId', { identifier: 'docId' })
+      );
 
       api.clear();
 
@@ -36,10 +47,16 @@ describe('BlocksAPI', () => {
 
   describe('.render()', () => {
     it('should call blocksManager.render with provided document', () => {
-      const api = new BlocksAPI(blocksManager, { defaultBlock } as CoreConfigValidated);
-      const doc = { identifier: 'doc',
+      const api = new BlocksAPI(
+        blocksManager,
+        { defaultBlock } as CoreConfigValidated,
+        new EditorJSModel('userId', { identifier: 'docId' })
+      );
+      const doc = {
+        identifier: 'doc',
         blocks: [],
-        properties: {} };
+        properties: {},
+      };
 
       api.render(doc);
 
@@ -49,7 +66,11 @@ describe('BlocksAPI', () => {
 
   describe('.delete()', () => {
     it('should pass explicit index to blocksManager.deleteBlock', () => {
-      const api = new BlocksAPI(blocksManager, { defaultBlock } as CoreConfigValidated);
+      const api = new BlocksAPI(
+        blocksManager,
+        { defaultBlock } as CoreConfigValidated,
+        new EditorJSModel('userId', { identifier: 'docId' })
+      );
 
       api.delete(2);
 
@@ -57,7 +78,11 @@ describe('BlocksAPI', () => {
     });
 
     it('should pass undefined when index is omitted', () => {
-      const api = new BlocksAPI(blocksManager, { defaultBlock } as CoreConfigValidated);
+      const api = new BlocksAPI(
+        blocksManager,
+        { defaultBlock } as CoreConfigValidated,
+        new EditorJSModel('userId', { identifier: 'docId' })
+      );
 
       api.delete();
 
@@ -67,7 +92,11 @@ describe('BlocksAPI', () => {
 
   describe('.move()', () => {
     it('should call blocksManager.move with toIndex and fromIndex', () => {
-      const api = new BlocksAPI(blocksManager, { defaultBlock } as CoreConfigValidated);
+      const api = new BlocksAPI(
+        blocksManager,
+        { defaultBlock } as CoreConfigValidated,
+        new EditorJSModel('userId', { identifier: 'docId' })
+      );
 
       api.move(3, 1);
 
@@ -77,7 +106,11 @@ describe('BlocksAPI', () => {
 
   describe('.getBlocksCount()', () => {
     it('should return blocksManager.blocksCount', () => {
-      const api = new BlocksAPI(blocksManager, { defaultBlock } as CoreConfigValidated);
+      const api = new BlocksAPI(
+        blocksManager,
+        { defaultBlock } as CoreConfigValidated,
+        new EditorJSModel('userId', { identifier: 'docId' })
+      );
 
       // @ts-expect-error - need to assign a value to check the method
       blocksManager.blocksCount = 5;
@@ -88,10 +121,16 @@ describe('BlocksAPI', () => {
 
   describe('.insertMany()', () => {
     it('should pass blocks and index to blocksManager.insertMany', () => {
-      const api = new BlocksAPI(blocksManager, { defaultBlock } as CoreConfigValidated);
+      const api = new BlocksAPI(
+        blocksManager,
+        { defaultBlock } as CoreConfigValidated,
+        new EditorJSModel('userId', { identifier: 'docId' })
+      );
 
-      const blocks = [{ name: 'a',
-        data: {} }];
+      const blocks = [{
+        name: 'a',
+        data: {},
+      }];
 
       api.insertMany(blocks as never, 4);
 
@@ -99,10 +138,16 @@ describe('BlocksAPI', () => {
     });
 
     it('should pass undefined index to blocksManager.insertMany when omitted', () => {
-      const api = new BlocksAPI(blocksManager, { defaultBlock } as CoreConfigValidated);
+      const api = new BlocksAPI(
+        blocksManager,
+        { defaultBlock } as CoreConfigValidated,
+        new EditorJSModel('userId', { identifier: 'docId' })
+      );
 
-      const blocks = [{ name: 'a',
-        data: {} }];
+      const blocks = [{
+        name: 'a',
+        data: {},
+      }];
 
       api.insertMany(blocks as never);
 
@@ -112,7 +157,11 @@ describe('BlocksAPI', () => {
 
   describe('.insert()', () => {
     it('should use defaults and pass payload to blocksManager.insert', () => {
-      const api = new BlocksAPI(blocksManager, { defaultBlock } as CoreConfigValidated);
+      const api = new BlocksAPI(
+        blocksManager,
+        { defaultBlock } as CoreConfigValidated,
+        new EditorJSModel('userId', { identifier: 'docId' })
+      );
 
       api.insert();
 
@@ -125,7 +174,11 @@ describe('BlocksAPI', () => {
     });
 
     it('should pass provided params to blocksManager.insert and ignore compatibility args', () => {
-      const api = new BlocksAPI(blocksManager, { defaultBlock } as CoreConfigValidated);
+      const api = new BlocksAPI(
+        blocksManager,
+        { defaultBlock } as CoreConfigValidated,
+        new EditorJSModel('userId', { identifier: 'docId' })
+      );
 
       api.insert(
         'header',

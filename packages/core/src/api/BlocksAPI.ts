@@ -5,7 +5,14 @@ import { BlocksManager } from '../components/BlockManager.js';
 import { BlockToolData } from '@editorjs/editorjs';
 import { CoreConfigValidated } from '@editorjs/sdk';
 import { BlocksAPI as BlocksApiInterface } from '@editorjs/sdk';
-import { type BlockNodeInit, type EditorDocumentSerialized } from '@editorjs/model';
+import {
+  BlockId, BlockIndexOrId,
+  type BlockNodeInit,
+  createBlockId, createDataKey,
+  type EditorDocumentSerialized,
+  EditorJSModel,
+  TextNodeSerialized, ValueSerialized
+} from '@editorjs/model';
 
 /**
  * Blocks API
@@ -24,16 +31,24 @@ export class BlocksAPI implements BlocksApiInterface {
   #config: CoreConfigValidated;
 
   /**
+   * Model instance
+   */
+  #model: EditorJSModel;
+
+  /**
    * BlocksAPI class constructor
    * @param blocksManager - BlocksManager instance to work with blocks
    * @param config - EditorJS configuration
+   * @param model - EditorJS model instance
    */
   constructor(
     blocksManager: BlocksManager,
-    @inject(TOKENS.EditorConfig) config: CoreConfigValidated
+    @inject(TOKENS.EditorConfig) config: CoreConfigValidated,
+    model: EditorJSModel
   ) {
     this.#blocksManager = blocksManager;
     this.#config = config;
+    this.#model = model;
   }
 
   /**
@@ -113,4 +128,70 @@ export class BlocksAPI implements BlocksApiInterface {
       focus,
     });
   };
+
+  /**
+   * Returns block's index by its id
+   * @param id - block id to get index for
+   */
+  public getIndexById(id: string): number {
+    return this.#model.getBlockIndexById(createBlockId(id));
+  }
+
+  /**
+   * Returns block id by its index
+   * @param index - block index to get id for
+   */
+  public getIdByIndex(index: number): BlockId | undefined {
+    return this.#model.getBlockId(index);
+  }
+
+  /**
+   * Returns serialized data for provided data key
+   * @param blockIndexOrId - index or identifier of the block
+   * @param dataKey - data key to get serialized data for
+   */
+  public getData<V = unknown>(blockIndexOrId: number | string, dataKey: string): TextNodeSerialized | ValueSerialized<V> | undefined {
+    /**
+     * Need an explicit cast here because TS doesn't pass generic for some reason
+     */
+    return this.#model.getDataNode<V>(blockIndexOrId as BlockIndexOrId, dataKey) as TextNodeSerialized | ValueSerialized<V> | undefined;
+  }
+
+  /**
+   * Creates data node with the given key
+   * @param indexOrId - index or id of the block
+   * @param dataKey - data key of the new data node
+   * @param [initialData] - optional initial data
+   */
+  public createData<V = unknown>(
+    indexOrId: number | string,
+    dataKey: string,
+    initialData?: TextNodeSerialized | ValueSerialized<V>
+  ): void {
+    this.#model.createDataNode(
+      this.#config.userId,
+      indexOrId as BlockIndexOrId,
+      dataKey,
+      initialData
+    );
+  }
+
+  /**
+   * Removes data by the data key
+   * @param blockIndexOrId - index or identifier of the block
+   * @param dataKey - data key of the node to remove
+   */
+  public removeData(blockIndexOrId: string | number, dataKey: string): void {
+    this.#model.removeDataNode(this.#config.userId, blockIndexOrId as BlockIndexOrId, dataKey);
+  }
+
+  /**
+   * Updates value by the given key
+   * @param blockIndexOrId - index or identifier of the block
+   * @param dataKey - key of the data node to update
+   * @param value - new value
+   */
+  public updateValue<V = unknown>(blockIndexOrId: string | number, dataKey: string, value: V): void {
+    this.#model.updateValue(this.#config.userId, blockIndexOrId as BlockIndexOrId, createDataKey(dataKey), value);
+  }
 }

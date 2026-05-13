@@ -82,7 +82,11 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
       config
     );
 
-    blocksAPI = new BlocksAPI(blocksManager, config);
+    blocksAPI = new BlocksAPI(
+      blocksManager,
+      config,
+      new EditorJSModel('userId', { identifier: 'documentId' })
+    );
   });
 
   afterEach(() => {

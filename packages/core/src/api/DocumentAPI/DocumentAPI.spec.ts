@@ -8,6 +8,9 @@ jest.unstable_mockModule('@editorjs/model', () => {
 
   return {
     EditorJSModel,
+    EventType: {
+      Changed: 'update',
+    },
   };
 });
 

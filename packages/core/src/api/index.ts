@@ -4,6 +4,7 @@ import { EditorAPI as EditorApiInterface } from '@editorjs/sdk';
 import { BlocksAPI } from './BlocksAPI.js';
 import { SelectionAPI } from './SelectionAPI.js';
 import { DocumentAPI } from './DocumentAPI/index.js';
+import { TextAPI } from './TextAPI.js';
 
 /**
  * Class gathers all Editor's APIs
@@ -27,4 +28,10 @@ export class EditorAPI implements EditorApiInterface {
    */
   @inject(DocumentAPI)
   public document!: DocumentAPI;
+
+  /**
+   * Text API instance to work with the text content of the document
+   */
+  @inject(TextAPI)
+  public text!: TextAPI;
 }

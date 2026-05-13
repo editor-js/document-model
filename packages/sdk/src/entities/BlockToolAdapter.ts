@@ -1,24 +1,23 @@
-import type { BlockId, DataKey, EditorJSModel, EventBus, ModelEvents, TextNodeSerialized, ValueSerialized } from '@editorjs/model';
+import type { BlockId, EventBus, ModelEvents, TextNodeSerialized, ValueSerialized } from '@editorjs/model';
 import {
-  createDataKey,
   DataNodeAddedEvent,
   DataNodeRemovedEvent,
-  EventType,
   NODE_TYPE_HIDDEN_PROP,
   ValueModifiedEvent,
   BlockChildType
 } from '@editorjs/model';
 import type { CoreConfig } from '@/entities/Config';
 import { KeyAddedEvent, KeyRemovedEvent, ValueNodeChangedEvent } from './EventBus/events/adapter/index.js';
+import type { EditorAPI } from '../api/index.js';
 
 /**
  * Abstract BlockToolAdapter class implementing core functionality of the block adapter
  */
 export abstract class BlockToolAdapter extends EventTarget {
   /**
-   * Model instance
+   * Editor's API
    */
-  protected model: EditorJSModel;
+  #api: EditorAPI;
 
   /**
    * Unique identifier of the block that this adapter is connected to
@@ -38,22 +37,23 @@ export abstract class BlockToolAdapter extends EventTarget {
   /**
    * Stored reference to the model change listener so it can be removed on destroy.
    */
-  #modelChangeListener: EventListener;
+  #modelChangeListenerCleanup: () => void;
 
   /**
    * @param config - editor's configuration
-   * @param model - model instance
+   * @param api - Editor's API
    * @param eventBus - global event bus instance
    */
-  constructor(config: Required<CoreConfig>, model: EditorJSModel, eventBus: EventBus) {
+  constructor(config: Required<CoreConfig>, api: EditorAPI, eventBus: EventBus) {
     super();
 
-    this.model = model;
+    this.#api = api;
     this.config = config;
     this.eventBus = eventBus;
 
-    this.#modelChangeListener = ((event: ModelEvents) => this.#handleModelUpdate(event)) as EventListener;
-    this.model.addEventListener(EventType.Changed, this.#modelChangeListener);
+    this.#modelChangeListenerCleanup = this.#api.document.onUpdate(
+      ((event: ModelEvents) => this.#handleModelUpdate(event)) as EventListener
+    );
   }
 
   /**
@@ -63,7 +63,7 @@ export abstract class BlockToolAdapter extends EventTarget {
    * call `super.destroy()`, and then remove their own listeners.
    */
   public destroy(): void {
-    this.model.removeEventListener(EventType.Changed, this.#modelChangeListener);
+    this.#modelChangeListenerCleanup();
   }
 
   /**
@@ -82,61 +82,51 @@ export abstract class BlockToolAdapter extends EventTarget {
   }
 
   /**
-   * @deprecated Use {@link setBlockId} + {@link getBlockId} instead.
-   * Kept temporarily for backward compatibility while callers are migrated.
-   * Updates the internal block index (derived on demand from the model).
-   * @param index - new block index value
-   */
-  public setBlockIndex(index: number): void {
-    void index; // no-op – adapters are now addressed by blockId
-  }
-
-  /**
    * @deprecated Use {@link getBlockId} instead.
    * Returns the current block index by asking the model.
    */
   public getBlockIndex(): number {
-    return this.model.getBlockIndexById(this.blockId);
+    return this.#api.blocks.getIndexById(this.blockId);
   }
 
   /**
    * Creates data node for the text input key
-   * @param keyRaw - input key within the block
+   * @param key - input key within the block
    * @param initialData - optional initial data for the block
    */
-  public registerTextInputKey<Data extends TextNodeSerialized = TextNodeSerialized>(keyRaw: string, initialData?: Pick<Data, 'value'> & Partial<Data>): void {
+  public registerTextInputKey<Data extends TextNodeSerialized = TextNodeSerialized>(key: string, initialData?: Pick<Data, 'value'> & Partial<Data>): void {
     const data: TextNodeSerialized = {
       value: initialData?.value ?? '',
       fragments: initialData?.fragments ?? [],
       [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
     };
 
-    this.#createDataNode(createDataKey(keyRaw), data);
+    this.#createDataNode(key, data);
   }
 
   /**
    * Creates data node for the value key. Returns an update function which could be called to update value in the model
-   * @param keyRaw - value key within the block
+   * @param key - value key within the block
    * @param initialData - optional initial data for the value
    */
-  public registerValueKey<V = unknown>(keyRaw: string, initialData?: ValueSerialized<V>): (newValue: V) => void {
-    this.#createDataNode(createDataKey(keyRaw), initialData);
+  public registerValueKey<V = unknown>(key: string, initialData?: ValueSerialized<V>): (newValue: V) => void {
+    this.#createDataNode(key, initialData);
 
     return (newValue: V) => {
-      this.model.updateValue(this.config.userId, this.blockId, createDataKey(keyRaw), newValue);
+      this.#api.blocks.updateValue(this.blockId, key, newValue);
     };
   }
 
   /**
    * Remove data node by the key
-   * @param keyRaw - key of the node to remove
+   * @param key - key of the node to remove
    */
-  public removeKey(keyRaw: string): void {
-    if (this.model.getDataNode(this.config.userId, this.blockId, keyRaw) === undefined) {
+  public removeKey(key: string): void {
+    if (this.#api.blocks.getData(this.blockId, key) === undefined) {
       return;
     }
 
-    this.model.removeDataNode(this.config.userId, this.blockId, createDataKey(keyRaw));
+    this.#api.blocks.removeData(this.blockId, key);
   }
 
   /**
@@ -150,12 +140,12 @@ export abstract class BlockToolAdapter extends EventTarget {
    * // Register a value key in an array (e.g. for items[0].content)
    * this.#createDataNode(createDataKey('items[0].content'), { $t: 'v', value: 'Item text' });
    */
-  #createDataNode<V = unknown>(key: DataKey, initialData?: TextNodeSerialized | ValueSerialized<V>): void {
-    if (this.model.getDataNode(this.config.userId, this.blockId, key) !== undefined) {
+  #createDataNode<V = unknown>(key: string, initialData?: TextNodeSerialized | ValueSerialized<V>): void {
+    if (this.#api.blocks.getData(this.blockId, key) !== undefined) {
       return;
     }
 
-    this.model.createDataNode(this.config.userId, this.blockId, key, initialData);
+    this.#api.blocks.createData(this.blockId, key, initialData);
   }
 
   /**
@@ -169,7 +159,7 @@ export abstract class BlockToolAdapter extends EventTarget {
       return;
     }
 
-    const eventBlockId = this.model.getBlockId(blockIndex);
+    const eventBlockId = this.#api.blocks.getIdByIndex(blockIndex);
 
     if (eventBlockId !== this.blockId) {
       return;
