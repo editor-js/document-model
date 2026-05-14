@@ -68,10 +68,10 @@ export class BlocksAPI implements BlocksApiInterface {
 
   /**
    * Removes Block by index, or current block if index is not passed
-   * @param index - index of a block to delete
+   * @param indexOrId - index or identifier of a block to delete
    */
-  public delete(index?: number): void {
-    return this.#blocksManager.deleteBlock(index);
+  public delete(indexOrId?: number): void {
+    return this.#blocksManager.deleteBlock(indexOrId);
   }
 
   /**

@@ -1,4 +1,5 @@
 import {
+  BlockIndexOrId,
   type BlockNodeInit,
   type EditorDocumentSerialized,
   EditorJSModel
@@ -171,17 +172,17 @@ export class BlocksManager {
 
   /**
    * Removes Block by index, or current block if index is not passed
-   * @param index - index of a block to delete
+   * @param indexOrId - index or identifier of a block to delete
    */
-  public deleteBlock(index: number | undefined = this.#getCurrentBlockIndex()): void {
-    if (index === undefined) {
+  public deleteBlock(indexOrId: number | string | undefined = this.#getCurrentBlockIndex()): void {
+    if (indexOrId === undefined) {
       /**
        * @todo see what happens in legacy
        */
       throw new Error('No block selected to delete');
     }
 
-    this.#model.removeBlock(this.#config.userId, index);
+    this.#model.removeBlock(this.#config.userId, indexOrId as BlockIndexOrId);
   }
 
   /**
