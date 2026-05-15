@@ -302,14 +302,12 @@ export class EditorJSModel extends EventBus {
 
   /**
    * Returns a data node by the block index and key
-   * @param _userId - user identifier which is being set to the context
    * @param parameters - getDataNode method parameters
    * @param parameters.blockIndex - index of the BlockNode where data node is stored
    * @param parameters.dataKey - key of the node to get
    */
-  @WithContext
-  public getDataNode(_userId: string | number, ...parameters: Parameters<EditorDocument['getDataNode']>): ReturnType<EditorDocument['getDataNode']> {
-    return this.#document.getDataNode(...parameters);
+  public getDataNode<V = unknown>(...parameters: Parameters<EditorDocument['getDataNode']>): ReturnType<EditorDocument['getDataNode']> {
+    return this.#document.getDataNode<V>(...parameters);
   }
 
   /**

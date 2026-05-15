@@ -170,7 +170,7 @@ export class BlockNode extends EventBus {
    * Returns data node by the key
    * @param dataKey - key of the node to get
    */
-  public getDataNode(dataKey: DataKey): ValueSerialized | TextNodeSerialized | undefined {
+  public getDataNode<V = unknown>(dataKey: DataKey): ValueSerialized<V> | TextNodeSerialized | undefined {
     const node = get(this.data, dataKey as string);
 
     if (node === undefined) {

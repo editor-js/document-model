@@ -1,7 +1,5 @@
 import {
   createDataKey,
-  type DataKey,
-  EditorJSModel,
   EventAction,
   IndexBuilder,
   type ModelEvents,
@@ -11,7 +9,7 @@ import {
 import type {
   BeforeInputUIEvent,
   BeforeInputUIEventPayload,
-  CoreConfig
+  CoreConfig, EditorAPI
 } from '@editorjs/sdk';
 import { BeforeInputUIEventName, BlockToolAdapter,
   EventBus } from '@editorjs/sdk';
@@ -53,27 +51,33 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
   #beforeInputListener: EventListener;
 
   /**
+   * Editor API instance
+   */
+  #api: EditorAPI;
+
+  /**
    * BlockToolAdapter constructor
    * @param config - Editor's config
-   * @param model - EditorJSModel instance
    * @param eventBus - Editor EventBus instance
    * @param caretAdapter - CaretAdapter instance
    * @param formattingAdapter - needed to render formatted text
    * @param registry - shared inputs registry
+   * @param api - EditorJS API
    */
   constructor(
     @inject(TOKENS.EditorConfig) config: Required<CoreConfig>,
-    model: EditorJSModel,
     eventBus: EventBus,
     caretAdapter: CaretAdapter,
     formattingAdapter: FormattingAdapter,
-    registry: InputsRegistry
+    registry: InputsRegistry,
+    @inject(TOKENS.EditorAPI) api: EditorAPI
   ) {
-    super(config, model, eventBus);
+    super(config, api, eventBus);
 
     this.#caretAdapter = caretAdapter;
     this.#formattingAdapter = formattingAdapter;
     this.#inputsRegistry = registry;
+    this.#api = api;
 
     /**
      * @param event - BeforeInputEvent
@@ -109,12 +113,10 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
   /**
    * Attaches or re-attaches input to the model using key.
    * Each input registered in the InputRegistry — the shared registry of all inputs in the editor
-   * @param keyRaw - tools data key to attach input to
+   * @param key - tools data key to attach input to
    * @param input - input element
    */
-  public setInput(keyRaw: string, input: HTMLElement | undefined): void {
-    const key = createDataKey(keyRaw);
-
+  public setInput(key: string, input: HTMLElement | undefined): void {
     if (input === undefined) {
       this.#inputsRegistry.unregister(this.blockId, key);
 
@@ -135,8 +137,14 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
       return;
     }
 
-    const value = this.model.getText(this.blockId, key);
-    const fragments = this.model.getFragments(this.blockId, key);
+    const value = this.#api.text.get({
+      block: this.blockId,
+      key,
+    });
+    const fragments = this.#api.text.getFragments({
+      block: this.blockId,
+      key,
+    });
 
     this.#inputsRegistry.register(this.blockId, key, input);
 
@@ -150,8 +158,8 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
   /**
    * Returns the (dataKey → element) map for this block from the shared registry.
    */
-  get #attachedInputs(): Map<DataKey, HTMLElement> {
-    return this.#inputsRegistry.getBlockInputs(this.blockId) ?? new Map<DataKey, HTMLElement>();
+  get #attachedInputs(): Map<string, HTMLElement> {
+    return this.#inputsRegistry.getBlockInputs(this.blockId) ?? new Map<string, HTMLElement>();
   }
 
   /**
@@ -159,7 +167,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
    * Public getter for all attached inputs.
    * Can be used to loop through all inputs to find a particular input(s)
    */
-  public getAttachedInputs(): Map<DataKey, HTMLElement> {
+  public getAttachedInputs(): Map<string, HTMLElement> {
     return this.#attachedInputs;
   }
 
@@ -168,7 +176,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
    * Allows access to a particular input by key
    * @param key - data key of the input
    */
-  public getInput(key: DataKey): HTMLElement | undefined {
+  public getInput(key: string): HTMLElement | undefined {
     return this.#attachedInputs.get(key);
   }
 
@@ -177,7 +185,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
    * @param targetRanges - ranges to find inputs for
    * @returns array of tuples containing data key and input element
    */
-  #findInputsByRanges(targetRanges: StaticRange[]): [DataKey, HTMLElement][] {
+  #findInputsByRanges(targetRanges: StaticRange[]): [string, HTMLElement][] {
     return Array.from(this.#attachedInputs.entries()).filter(([_, input]) => {
       return targetRanges.some((range) => {
         const startContainer = range.startContainer;
@@ -274,7 +282,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
    */
   #handleDeleteInContentEditable(
     input: HTMLElement,
-    key: DataKey,
+    key: string,
     range: StaticRange,
     isRestoreCaretToTheEnd: boolean = false
   ): void {
@@ -282,7 +290,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
      * Middle block in a cross-input selection: remove the whole block, not the same as removeText(0, length).
      */
     if (isInputInBetweenSelection(input, range)) {
-      this.model.removeBlock(this.config.userId, this.blockId);
+      this.#api.blocks.delete({ block: this.blockId });
 
       return;
     }
@@ -310,7 +318,12 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
     }
 
     const [start, end] = clipped;
-    const removedText = this.model.removeText(this.config.userId, this.blockId, key, start, end);
+    const removedText = this.#api.text.remove({
+      block: this.blockId,
+      key,
+      start,
+      end,
+    });
 
     let newCaretIndex: number | null = null;
 
@@ -335,8 +348,8 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
     if (newCaretIndex !== null) {
       this.#caretAdapter.updateIndex(
         new IndexBuilder()
-          .addBlockIndex(this.model.getBlockIndexById(this.blockId))
-          .addDataKey(key)
+          .addBlockIndex(this.#api.blocks.getIndexById(this.blockId))
+          .addDataKey(createDataKey(key))
           .addTextRange([newCaretIndex, newCaretIndex])
           .build()
       );
@@ -351,7 +364,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
    * @param input - input element
    * @param key - data key input is attached to
    */
-  #handleBeforeInputEvent(payload: BeforeInputUIEventPayload, input: HTMLElement, key: DataKey): void {
+  #handleBeforeInputEvent(payload: BeforeInputUIEventPayload, input: HTMLElement, key: string): void {
     const { data, inputType, targetRanges } = payload;
     const range = targetRanges[0];
     const isFormattingInputType = inputType.startsWith('format');
@@ -376,7 +389,12 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
         if (data !== undefined && input.contains(range.startContainer)) {
           start = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
 
-          this.model.insertText(this.config.userId, this.blockId, key, data, start);
+          this.#api.text.insert({
+            text: data,
+            block: this.blockId,
+            key,
+            start,
+          });
         }
         break;
       }
@@ -388,7 +406,12 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
         if (data !== undefined && input.contains(range.startContainer)) {
           start = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
 
-          this.model.insertText(this.config.userId, this.blockId, key, data, start);
+          this.#api.text.insert({
+            text: data,
+            block: this.blockId,
+            key,
+            start,
+          });
         }
         break;
       }
@@ -442,12 +465,16 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
    * @param start - start index of the split
    * @param end - end index of the selected range
    */
-  #handleSplit(key: DataKey, start: number, end: number): void {
-    const currentBlockIndex = this.model.getBlockIndexById(this.blockId);
-    const currentValue = this.model.getText(this.blockId, key);
+  #handleSplit(key: string, start: number, end: number): void {
+    const currentBlockIndex = this.#api.blocks.getIndexById(this.blockId);
+    const currentValue = this.#api.text.get({ block: this.blockId,
+      key });
     const newValueAfter = currentValue.slice(end);
 
-    const relatedFragments = this.model.getFragments(this.blockId, key, end, currentValue.length);
+    const relatedFragments = this.#api.text.getFragments({ block: this.blockId,
+      key,
+      start: end,
+      end: currentValue.length });
 
     /**
      * Fragment ranges bounds should be decreased by end index, because end is the index of the first character of the new block
@@ -457,24 +484,26 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
       fragment.range[1] -= end;
     });
 
-    this.model.removeText(this.config.userId, this.blockId, key, start, currentValue.length);
-    this.model.addBlock(
-      this.config.userId,
-      {
-        /**
-         * @todo when implementing split/merge, think of how to not use toolname here
-         */
-        name: this.#toolName,
-        data: {
-          [key]: {
-            $t: 't',
-            value: newValueAfter,
-            fragments: relatedFragments,
-          },
+    this.#api.text.remove({
+      block: this.blockId,
+      key,
+      start,
+      end: currentValue.length,
+    });
+    this.#api.blocks.insert({
+      /**
+       * @todo when implementing split/merge, think of how to not use toolname here
+       */
+      type: this.#toolName,
+      data: {
+        [key]: {
+          $t: 't',
+          value: newValueAfter,
+          fragments: relatedFragments,
         },
       },
-      currentBlockIndex + 1
-    );
+      index: currentBlockIndex + 1,
+    });
 
     /**
      * Raf is needed to ensure that the new block is added so caret can be moved to it
@@ -483,7 +512,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
       this.#caretAdapter.updateIndex(
         new IndexBuilder()
           .addBlockIndex(currentBlockIndex + 1)
-          .addDataKey(key)
+          .addDataKey(createDataKey(key))
           .addTextRange([0, 0])
           .build()
       );
@@ -496,7 +525,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
    * @param input - input element
    * @param key - data key input is attached to
    */
-  #handleModelUpdateForContentEditableElement(event: ModelEvents, input: HTMLElement, key: DataKey): void {
+  #handleModelUpdateForContentEditableElement(event: ModelEvents, input: HTMLElement, key: string): void {
     const { userId, index, action } = event.detail;
     const { textRange, blockIndex: eventBlockIndex } = index;
 
@@ -510,7 +539,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
 
     const builder = new IndexBuilder();
 
-    builder.addDataKey(key).addBlockIndex(eventBlockIndex);
+    builder.addDataKey(createDataKey(key)).addBlockIndex(eventBlockIndex);
 
     let newCaretIndex: number | null = null;
 
@@ -552,12 +581,12 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
 
     const { textRange, dataKey } = event.detail.index;
 
-    const input = this.#attachedInputs.get(dataKey!);
+    const input = this.#attachedInputs.get(dataKey as string);
 
     if (!input || textRange === undefined) {
       return;
     }
 
-    this.#handleModelUpdateForContentEditableElement(event, input, dataKey!);
+    this.#handleModelUpdateForContentEditableElement(event, input, dataKey as string);
   };
 }
