@@ -7,7 +7,7 @@ import {
 } from '@editorjs/model';
 import type { CoreConfigValidated } from '@editorjs/sdk';
 import { inject, injectable } from 'inversify';
-import { TOKENS } from '../tokens';
+import { TOKENS } from '../tokens.js';
 import { TextAPI as TextAPIInterface } from '@editorjs/sdk';
 
 /**
