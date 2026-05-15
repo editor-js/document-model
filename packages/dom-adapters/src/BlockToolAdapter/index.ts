@@ -50,6 +50,9 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
    */
   #beforeInputListener: EventListener;
 
+  /**
+   * Editor API instance
+   */
   #api: EditorAPI;
 
   /**
@@ -134,8 +137,14 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
       return;
     }
 
-    const value = this.#api.text.get(this.blockId, key);
-    const fragments = this.#api.text.getFragments(this.blockId, key);
+    const value = this.#api.text.get({
+      block: this.blockId,
+      key,
+    });
+    const fragments = this.#api.text.getFragments({
+      block: this.blockId,
+      key,
+    });
 
     this.#inputsRegistry.register(this.blockId, key, input);
 
@@ -281,7 +290,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
      * Middle block in a cross-input selection: remove the whole block, not the same as removeText(0, length).
      */
     if (isInputInBetweenSelection(input, range)) {
-      this.#api.blocks.delete(this.blockId);
+      this.#api.blocks.delete({ block: this.blockId });
 
       return;
     }
@@ -309,7 +318,12 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
     }
 
     const [start, end] = clipped;
-    const removedText = this.#api.text.remove(this.blockId, key, start, end);
+    const removedText = this.#api.text.remove({
+      block: this.blockId,
+      key,
+      start,
+      end,
+    });
 
     let newCaretIndex: number | null = null;
 
@@ -375,7 +389,12 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
         if (data !== undefined && input.contains(range.startContainer)) {
           start = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
 
-          this.#api.text.insert(data, this.blockId, key, start);
+          this.#api.text.insert({
+            text: data,
+            block: this.blockId,
+            key,
+            start,
+          });
         }
         break;
       }
@@ -387,7 +406,12 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
         if (data !== undefined && input.contains(range.startContainer)) {
           start = getAbsoluteRangeOffset(input, range.startContainer, range.startOffset);
 
-          this.#api.text.insert(data, this.blockId, key, start);
+          this.#api.text.insert({
+            text: data,
+            block: this.blockId,
+            key,
+            start,
+          });
         }
         break;
       }
@@ -443,10 +467,14 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
    */
   #handleSplit(key: string, start: number, end: number): void {
     const currentBlockIndex = this.#api.blocks.getIndexById(this.blockId);
-    const currentValue = this.#api.text.get(this.blockId, key);
+    const currentValue = this.#api.text.get({ block: this.blockId,
+      key });
     const newValueAfter = currentValue.slice(end);
 
-    const relatedFragments = this.#api.text.getFragments(this.blockId, key, end, currentValue.length);
+    const relatedFragments = this.#api.text.getFragments({ block: this.blockId,
+      key,
+      start: end,
+      end: currentValue.length });
 
     /**
      * Fragment ranges bounds should be decreased by end index, because end is the index of the first character of the new block
@@ -456,21 +484,26 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
       fragment.range[1] -= end;
     });
 
-    this.#api.text.remove(this.blockId, key, start, currentValue.length);
-    this.#api.blocks.insert(
+    this.#api.text.remove({
+      block: this.blockId,
+      key,
+      start,
+      end: currentValue.length,
+    });
+    this.#api.blocks.insert({
       /**
        * @todo when implementing split/merge, think of how to not use toolname here
        */
-      this.#toolName,
-      {
+      type: this.#toolName,
+      data: {
         [key]: {
           $t: 't',
           value: newValueAfter,
           fragments: relatedFragments,
         },
       },
-      currentBlockIndex + 1
-    );
+      index: currentBlockIndex + 1,
+    });
 
     /**
      * Raf is needed to ensure that the new block is added so caret can be moved to it

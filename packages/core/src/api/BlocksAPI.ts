@@ -2,16 +2,17 @@ import 'reflect-metadata';
 import { inject, injectable } from 'inversify';
 import { TOKENS } from '../tokens.js';
 import { BlocksManager } from '../components/BlockManager.js';
-import { BlockToolData } from '@editorjs/editorjs';
 import { CoreConfigValidated } from '@editorjs/sdk';
 import { BlocksAPI as BlocksApiInterface } from '@editorjs/sdk';
 import {
-  BlockId, BlockIndexOrId,
-  type BlockNodeInit,
-  createBlockId, createDataKey,
-  type EditorDocumentSerialized,
+  BlockId,
+  BlockIndexOrId,
+  createBlockId,
+  createDataKey,
+  EditorDocumentSerialized,
   EditorJSModel,
-  TextNodeSerialized, ValueSerialized
+  TextNodeSerialized,
+  ValueSerialized
 } from '@editorjs/model';
 
 /**
@@ -67,19 +68,21 @@ export class BlocksAPI implements BlocksApiInterface {
   }
 
   /**
-   * Removes Block by index, or current block if index is not passed
-   * @param indexOrId - index or identifier of a block to delete
+   * Removes Block by index or id, or current block if params are not passed
+   * @param params - delete parameters
+   * @param params.block - index or id of a block to delete
    */
-  public delete(indexOrId?: number): void {
-    return this.#blocksManager.deleteBlock(indexOrId);
+  public delete({ block }: NonNullable<Parameters<BlocksApiInterface['delete']>[0]> = {}): void {
+    return this.#blocksManager.deleteBlock(block);
   }
 
   /**
    * Moves a block to a new index
-   * @param toIndex - index where the block is moved to
-   * @param [fromIndex] - block to move. Current block if not passed
+   * @param params - move parameters
+   * @param params.toIndex - index where the block is moved to
+   * @param [params.fromIndex] - block to move. Current block if not passed
    */
-  public move(toIndex: number, fromIndex?: number): void {
+  public move({ toIndex, fromIndex }: Parameters<BlocksApiInterface['move']>[0]): void {
     return this.#blocksManager.move(toIndex, fromIndex);
   }
 
@@ -92,31 +95,24 @@ export class BlocksAPI implements BlocksApiInterface {
 
   /**
    * Inserts several Blocks to specified index
-   * @param blocks - array of blocks to insert
-   * @param [index] - index to insert blocks at. If undefined, inserts at the end
+   * @param params - insertMany parameters
+   * @param params.blocks - array of blocks to insert
+   * @param [params.index] - index to insert blocks at. If undefined, inserts at the end
    */
-  public insertMany(blocks: BlockNodeInit[], index?: number): void {
+  public insertMany({ blocks, index }: Parameters<BlocksApiInterface['insertMany']>[0]): void {
     return this.#blocksManager.insertMany(blocks, index);
   }
 
   /**
    * Inserts a new block to the editor
-   * @param type - Block tool name to insert
-   * @param data - Block's initial data
-   * @param index - index to insert block at
-   * @param focus - flag indicates if new block should be focused @todo implement
-   * @param replace - flag indicates if block at index should be replaced @todo implement
-   * @param id - id of the inserted block @todo implement
+   * @param [params] - insert parameters
+   * @param [params.type] - Block tool name to insert
+   * @param [params.data] - Block's initial data
+   * @param [params.index] - index to insert block at
+   * @param [params.focus] - flag indicates if new block should be focused @todo implement
+   * @param [params.replace] - flag indicates if block at index should be replaced @todo implement
    */
-  public insert(
-    type?: string,
-    data?: BlockToolData,
-    index?: number,
-    focus?: boolean,
-    replace?: boolean,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    id?: string
-  ): void {
+  public insert({ type, data, index, focus, replace }: NonNullable<Parameters<BlocksApiInterface['insert']>[0]> = {}): void {
     const blockType = type ?? this.#config.defaultBlock;
     const blockData = data ?? {};
 
@@ -147,51 +143,48 @@ export class BlocksAPI implements BlocksApiInterface {
 
   /**
    * Returns serialized data for provided data key
-   * @param blockIndexOrId - index or identifier of the block
-   * @param dataKey - data key to get serialized data for
+   * @param params - getData parameters
+   * @param params.block - index or id of the block
+   * @param params.key - data key to get serialized data for
    */
-  public getData<V = unknown>(blockIndexOrId: number | string, dataKey: string): TextNodeSerialized | ValueSerialized<V> | undefined {
-    /**
-     * Need an explicit cast here because TS doesn't pass generic for some reason
-     */
-    return this.#model.getDataNode<V>(blockIndexOrId as BlockIndexOrId, dataKey) as TextNodeSerialized | ValueSerialized<V> | undefined;
+  public getData<V = unknown>({ block, key }: Parameters<BlocksApiInterface['getData']>[0]): TextNodeSerialized | ValueSerialized<V> | undefined {
+    return this.#model.getDataNode<V>(block as BlockIndexOrId, key) as TextNodeSerialized | ValueSerialized<V> | undefined;
   }
 
   /**
    * Creates data node with the given key
-   * @param indexOrId - index or id of the block
-   * @param dataKey - data key of the new data node
-   * @param [initialData] - optional initial data
+   * @param params - createData parameters
+   * @param params.block - index or id of the block
+   * @param params.key - data key of the new data node
+   * @param [params.initialData] - optional initial data
    */
-  public createData<V = unknown>(
-    indexOrId: number | string,
-    dataKey: string,
-    initialData?: TextNodeSerialized | ValueSerialized<V>
-  ): void {
+  public createData({ block, key, initialData }: Parameters<BlocksApiInterface['createData']>[0]): void {
     this.#model.createDataNode(
       this.#config.userId,
-      indexOrId as BlockIndexOrId,
-      dataKey,
+      block as BlockIndexOrId,
+      key,
       initialData
     );
   }
 
   /**
    * Removes data by the data key
-   * @param blockIndexOrId - index or identifier of the block
-   * @param dataKey - data key of the node to remove
+   * @param params - removeData parameters
+   * @param params.block - index or identifier of the block
+   * @param params.key - data key of the node to remove
    */
-  public removeData(blockIndexOrId: string | number, dataKey: string): void {
-    this.#model.removeDataNode(this.#config.userId, blockIndexOrId as BlockIndexOrId, dataKey);
+  public removeData({ block, key }: Parameters<BlocksApiInterface['removeData']>[0]): void {
+    this.#model.removeDataNode(this.#config.userId, block as BlockIndexOrId, key);
   }
 
   /**
    * Updates value by the given key
-   * @param blockIndexOrId - index or identifier of the block
-   * @param dataKey - key of the data node to update
-   * @param value - new value
+   * @param params - updateValue parameters
+   * @param params.block - index or identifier of the block
+   * @param params.key - key of the data node to update
+   * @param params.value - new value
    */
-  public updateValue<V = unknown>(blockIndexOrId: string | number, dataKey: string, value: V): void {
-    this.#model.updateValue(this.#config.userId, blockIndexOrId as BlockIndexOrId, createDataKey(dataKey), value);
+  public updateValue({ block, key, value }: Parameters<BlocksApiInterface['updateValue']>[0]): void {
+    this.#model.updateValue(this.#config.userId, block as BlockIndexOrId, createDataKey(key), value);
   }
 }

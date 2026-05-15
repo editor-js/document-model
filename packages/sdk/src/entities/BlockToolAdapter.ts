@@ -113,7 +113,11 @@ export abstract class BlockToolAdapter extends EventTarget {
     this.#createDataNode(key, initialData);
 
     return (newValue: V) => {
-      this.#api.blocks.updateValue(this.blockId, key, newValue);
+      this.#api.blocks.updateValue({
+        block: this.blockId,
+        key,
+        value: newValue,
+      });
     };
   }
 
@@ -122,11 +126,17 @@ export abstract class BlockToolAdapter extends EventTarget {
    * @param key - key of the node to remove
    */
   public removeKey(key: string): void {
-    if (this.#api.blocks.getData(this.blockId, key) === undefined) {
+    if (this.#api.blocks.getData({
+      block: this.blockId,
+      key,
+    }) === undefined) {
       return;
     }
 
-    this.#api.blocks.removeData(this.blockId, key);
+    this.#api.blocks.removeData({
+      block: this.blockId,
+      key,
+    });
   }
 
   /**
@@ -141,11 +151,18 @@ export abstract class BlockToolAdapter extends EventTarget {
    * this.#createDataNode(createDataKey('items[0].content'), { $t: 'v', value: 'Item text' });
    */
   #createDataNode<V = unknown>(key: string, initialData?: TextNodeSerialized | ValueSerialized<V>): void {
-    if (this.#api.blocks.getData(this.blockId, key) !== undefined) {
+    if (this.#api.blocks.getData({
+      block: this.blockId,
+      key,
+    }) !== undefined) {
       return;
     }
 
-    this.#api.blocks.createData(this.blockId, key, initialData);
+    this.#api.blocks.createData({
+      block: this.blockId,
+      key,
+      initialData,
+    });
   }
 
   /**

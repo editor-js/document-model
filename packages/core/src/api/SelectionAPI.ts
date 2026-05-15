@@ -3,7 +3,7 @@ import { inject, injectable } from 'inversify';
 
 import { SelectionManager } from '../components/SelectionManager.js';
 import { Caret, CaretManagerEvents, createInlineToolName, EditorJSModel, EventType } from '@editorjs/model';
-import { CoreConfigValidated, InlineToolFormatData } from '@editorjs/sdk';
+import { CoreConfigValidated } from '@editorjs/sdk';
 import { SelectionAPI as SelectionApiInterface } from '@editorjs/sdk';
 import { TOKENS } from '../tokens';
 
@@ -35,11 +35,12 @@ export class SelectionAPI implements SelectionApiInterface {
 
   /**
    * Applies passed inline tool to the current selection
-   * @param toolName - Inline Tool name from the config to apply on the current selection
-   * @param data - Inline Tool data to apply to the current selection (eg. link data)
+   * @param params - methods parameters
+   * @param params.tool - Inline Tool name from the config to apply on the current selection
+   * @param [params.data] - Inline Tool data to apply to the current selection (e.g. link data)
    */
-  public applyInlineToolForCurrentSelection(toolName: string, data?: InlineToolFormatData): void {
-    this.#selectionManager.applyInlineToolForCurrentSelection(createInlineToolName(toolName), data);
+  public applyInlineTool({ tool, data }: Parameters<SelectionApiInterface['applyInlineTool']>[0]): void {
+    this.#selectionManager.applyInlineToolForCurrentSelection(createInlineToolName(tool), data);
   }
 
   /**

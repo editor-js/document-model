@@ -72,7 +72,7 @@ describe('BlocksAPI', () => {
         new EditorJSModel('userId', { identifier: 'docId' })
       );
 
-      api.delete(2);
+      api.delete({ block: 2 });
 
       expect(blocksManager.deleteBlock).toHaveBeenCalledWith(2);
     });
@@ -98,7 +98,8 @@ describe('BlocksAPI', () => {
         new EditorJSModel('userId', { identifier: 'docId' })
       );
 
-      api.move(3, 1);
+      api.move({ toIndex: 3,
+        fromIndex: 1 });
 
       expect(blocksManager.move).toHaveBeenCalledWith(3, 1);
     });
@@ -132,7 +133,10 @@ describe('BlocksAPI', () => {
         data: {},
       }];
 
-      api.insertMany(blocks as never, 4);
+      api.insertMany({
+        blocks: blocks,
+        index: 4,
+      });
 
       expect(blocksManager.insertMany).toHaveBeenCalledWith(blocks, 4);
     });
@@ -149,7 +153,7 @@ describe('BlocksAPI', () => {
         data: {},
       }];
 
-      api.insertMany(blocks as never);
+      api.insertMany({ blocks });
 
       expect(blocksManager.insertMany).toHaveBeenCalledWith(blocks, undefined);
     });
@@ -180,14 +184,14 @@ describe('BlocksAPI', () => {
         new EditorJSModel('userId', { identifier: 'docId' })
       );
 
-      api.insert(
-        'header',
-        { text: 'Title' },
-        2,
-        true,
-        true,
-        'id-1'
-      );
+      api.insert({
+        type: 'header',
+        data: { text: 'Title' },
+        index: 2,
+        focus: true,
+        replace: true,
+        id: 'id-1',
+      });
 
       expect(blocksManager.insert).toHaveBeenCalledWith({
         type: 'header',

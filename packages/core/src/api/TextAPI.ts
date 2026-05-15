@@ -40,21 +40,17 @@ export class TextAPI implements TextAPIInterface {
 
   /**
    * Inserts text at a given position
-   * @param text - new text to insert
-   * @param blockIndexOrId - block index or identifier
-   * @param dataKey - data key of the text node
-   * @param start - start offset
+   * @param params - insert parameters
+   * @param params.text - new text to insert
+   * @param params.block - block index or identifier
+   * @param params.key - data key of the text node
+   * @param params.start - start offset
    */
-  public insert(
-    text: string,
-    blockIndexOrId: number | string,
-    dataKey: string,
-    start?: number
-  ): void {
+  public insert({ text, block, key, start }: Parameters<TextAPIInterface['insert']>[0]): void {
     this.#model.insertText(
       this.#config.userId,
-      blockIndexOrId as BlockIndexOrId,
-      createDataKey(dataKey),
+      block as BlockIndexOrId,
+      createDataKey(key),
       text,
       start
     );
@@ -62,21 +58,17 @@ export class TextAPI implements TextAPIInterface {
 
   /**
    * Removes text from a given range. Returns removed text
-   * @param blockIndexOrId - block index or identifier
-   * @param dataKey - data key of the text node
-   * @param start - range start
-   * @param end - range end
+   * @param params - remove parameters
+   * @param params.block - block index or identifier
+   * @param params.key - data key of the text node
+   * @param params.start - range start
+   * @param params.end - range end
    */
-  public remove(
-    blockIndexOrId: number | string,
-    dataKey: string,
-    start?: number,
-    end?: number
-  ): string {
+  public remove({ block, key, start, end }: Parameters<TextAPIInterface['remove']>[0]): string {
     return this.#model.removeText(
       this.#config.userId,
-      blockIndexOrId as BlockIndexOrId,
-      createDataKey(dataKey),
+      block as BlockIndexOrId,
+      createDataKey(key),
       start,
       end
     );
@@ -84,25 +76,19 @@ export class TextAPI implements TextAPIInterface {
 
   /**
    * Formats the given range
-   * @param tool - tool to apply
-   * @param blockIndexOrId - block index or identifier
-   * @param dataKey - data key of the text node
-   * @param start - range start
-   * @param end - range end
-   * @param data - optional tool's data
+   * @param params - format parameters
+   * @param params.tool - tool to apply
+   * @param params.block - block index or identifier
+   * @param params.key - data key of the text node
+   * @param params.start - range start
+   * @param params.end - range end
+   * @param params.data - optional tool's data
    */
-  public format(
-    tool: string,
-    blockIndexOrId: number | string,
-    dataKey: string,
-    start: number,
-    end: number,
-    data?: Record<string, unknown>
-  ): void {
+  public format({ tool, block, key, start, end, data }: Parameters<TextAPIInterface['format']>[0]): void {
     this.#model.format(
       this.#config.userId,
-      blockIndexOrId as BlockIndexOrId,
-      createDataKey(dataKey),
+      block as BlockIndexOrId,
+      createDataKey(key),
       createInlineToolName(tool),
       start,
       end,
@@ -112,23 +98,18 @@ export class TextAPI implements TextAPIInterface {
 
   /**
    * Unformats the given range
-   * @param tool - tool to remove
-   * @param blockIndexOrId - block index or identifier
-   * @param dataKey - data key of the text node
-   * @param start - range start
-   * @param end - range end
+   * @param params - unformat parameters
+   * @param params.tool - tool to remove
+   * @param params.block - block index or identifier
+   * @param params.key - data key of the text node
+   * @param params.start - range start
+   * @param params.end - range end
    */
-  public unformat(
-    tool: string,
-    blockIndexOrId: number | string,
-    dataKey: string,
-    start: number,
-    end: number
-  ): void {
+  public unformat({ tool, block, key, start, end }: Parameters<TextAPIInterface['unformat']>[0]): void {
     this.#model.unformat(
       this.#config.userId,
-      blockIndexOrId as BlockIndexOrId,
-      createDataKey(dataKey),
+      block as BlockIndexOrId,
+      createDataKey(key),
       createInlineToolName(tool),
       start,
       end
@@ -137,22 +118,17 @@ export class TextAPI implements TextAPIInterface {
 
   /**
    * Returns applied inline fragments for a given range
-   * @param blockIndexOrId - block index or identifier
-   * @param dataKey - data key of the text node
-   * @param start - range start
-   * @param end - range end
-   * @param tool - optional filter tool. If provided, will return only fragments of the given tool
+   * @param params - getFragments parameters
+   * @param params.block - block index or identifier
+   * @param params.key - data key of the text node
+   * @param params.start - range start
+   * @param params.end - range end
+   * @param params.tool - optional filter tool. If provided, will return only fragments of the given tool
    */
-  public getFragments(
-    blockIndexOrId: number | string,
-    dataKey: string,
-    start?: number,
-    end?: number,
-    tool?: string
-  ): InlineFragment[] {
+  public getFragments({ block, key, start, end, tool }: Parameters<TextAPIInterface['getFragments']>[0]): InlineFragment[] {
     return this.#model.getFragments(
-      blockIndexOrId as BlockIndexOrId,
-      createDataKey(dataKey),
+      block as BlockIndexOrId,
+      createDataKey(key),
       start,
       end,
       tool !== undefined ? createInlineToolName(tool) : undefined
@@ -161,16 +137,14 @@ export class TextAPI implements TextAPIInterface {
 
   /**
    * Returns text content of the text node
-   * @param blockIndexOrId - block index or identifier
-   * @param dataKey - data key of the text node
+   * @param params - get parameters
+   * @param params.block - block index or identifier
+   * @param params.key - data key of the text node
    */
-  public get(
-    blockIndexOrId: number | string,
-    dataKey: string
-  ): string {
+  public get({ block, key }: Parameters<TextAPIInterface['get']>[0]): string {
     return this.#model.getText(
-      blockIndexOrId as BlockIndexOrId,
-      createDataKey(dataKey)
+      block as BlockIndexOrId,
+      createDataKey(key)
     );
   }
 }

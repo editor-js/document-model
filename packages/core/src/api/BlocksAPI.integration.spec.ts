@@ -95,7 +95,10 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
 
   describe('insert()', () => {
     it('should add a block to an empty document and model.length becomes 1', () => {
-      blocksAPI.insert('paragraph', {});
+      blocksAPI.insert({
+        type: 'paragraph',
+        data: {},
+      });
 
       expect(model.length).toBe(1);
       expect(model.serialized.blocks[0]).toEqual(
@@ -104,10 +107,14 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
     });
 
     it('should insert a block at the specified index', () => {
-      blocksAPI.insert('paragraph');
-      blocksAPI.insert('paragraph');
+      blocksAPI.insert({ type: 'paragraph' });
+      blocksAPI.insert({ type: 'paragraph' });
 
-      blocksAPI.insert('header', { text: 'Title' }, 1);
+      blocksAPI.insert({
+        type: 'header',
+        data: { text: 'Title' },
+        index: 1,
+      });
 
       expect(model.length).toBe(3);
       expect(model.serialized.blocks[1]).toEqual(
@@ -125,10 +132,15 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
     });
 
     it('should replace a block at the given index when replace flag is set', () => {
-      blocksAPI.insert('paragraph');
-      blocksAPI.insert('paragraph');
+      blocksAPI.insert({ type: 'paragraph' });
+      blocksAPI.insert({ type: 'paragraph' });
 
-      blocksAPI.insert('header', {}, 0, undefined, true);
+      blocksAPI.insert({
+        type: 'header',
+        data: {},
+        index: 0,
+        replace: true,
+      });
 
       expect(model.length).toBe(2);
       expect(model.serialized.blocks[0]).toEqual(
@@ -139,10 +151,10 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
 
   describe('insertMany()', () => {
     it('should insert multiple blocks at the specified index', () => {
-      blocksAPI.insert('paragraph');
+      blocksAPI.insert({ type: 'paragraph' });
 
-      blocksAPI.insertMany(
-        [
+      blocksAPI.insertMany({
+        blocks: [
           {
             name: 'header',
             data: {},
@@ -152,8 +164,8 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
             data: {},
           },
         ],
-        0
-      );
+        index: 0,
+      });
 
       expect(model.length).toBe(3);
       expect(model.serialized.blocks[0]).toEqual(expect.objectContaining({ name: 'header' }));
@@ -162,18 +174,20 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
     });
 
     it('should append blocks at the end when index is omitted', () => {
-      blocksAPI.insert('paragraph');
+      blocksAPI.insert({ type: 'paragraph' });
 
-      blocksAPI.insertMany([
-        {
-          name: 'header',
-          data: {},
-        },
-        {
-          name: 'list',
-          data: {},
-        },
-      ]);
+      blocksAPI.insertMany({
+        blocks: [
+          {
+            name: 'header',
+            data: {},
+          },
+          {
+            name: 'list',
+            data: {},
+          },
+        ],
+      });
 
       expect(model.length).toBe(3);
       expect(model.serialized.blocks[1]).toEqual(expect.objectContaining({ name: 'header' }));
@@ -183,11 +197,17 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
 
   describe('delete()', () => {
     it('should remove a block at the given index', () => {
-      blocksAPI.insert('paragraph');
-      blocksAPI.insert('header', {}, 1);
-      blocksAPI.insert('list', {}, 2);
+      blocksAPI.insert({ type: 'paragraph' });
+      blocksAPI.insert({
+        type: 'header',
+        index: 1,
+      });
+      blocksAPI.insert({
+        type: 'list',
+        index: 2,
+      });
 
-      blocksAPI.delete(1);
+      blocksAPI.delete({ block: 1 });
 
       expect(model.length).toBe(2);
       expect(model.serialized.blocks[0]).toEqual(expect.objectContaining({ name: 'paragraph' }));
@@ -195,17 +215,20 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
     });
 
     it('should remove the first block when index is 0', () => {
-      blocksAPI.insert('paragraph');
-      blocksAPI.insert('header', {}, 1);
+      blocksAPI.insert({ type: 'paragraph' });
+      blocksAPI.insert({
+        type: 'header',
+        index: 1,
+      });
 
-      blocksAPI.delete(0);
+      blocksAPI.delete({ block: 0 });
 
       expect(model.length).toBe(1);
       expect(model.serialized.blocks[0]).toEqual(expect.objectContaining({ name: 'header' }));
     });
 
     it('should throw when no index is provided and no caret is set', () => {
-      blocksAPI.insert('paragraph');
+      blocksAPI.insert({ type: 'paragraph' });
 
       expect(() => blocksAPI.delete()).toThrow('No block selected to delete');
     });
@@ -213,39 +236,63 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
 
   describe('move()', () => {
     it('should move a block from fromIndex to toIndex (forward)', () => {
-      blocksAPI.insert('a');
-      blocksAPI.insert('b', {}, 1);
-      blocksAPI.insert('c', {}, 2);
+      blocksAPI.insert({ type: 'a' });
+      blocksAPI.insert({
+        type: 'b',
+        index: 1,
+      });
+      blocksAPI.insert({
+        type: 'c',
+        index: 2,
+      });
 
       // Move block 0 ("a") to index 2
-      blocksAPI.move(2, 0);
+      blocksAPI.move({
+        toIndex: 2,
+        fromIndex: 0,
+      });
 
       expect(model.serialized.blocks.map(b => b.name)).toEqual(['b', 'c', 'a']);
     });
 
     it('should move a block from fromIndex to toIndex (backward)', () => {
-      blocksAPI.insert('a');
-      blocksAPI.insert('b', {}, 1);
-      blocksAPI.insert('c', {}, 2);
+      blocksAPI.insert({ type: 'a' });
+      blocksAPI.insert({
+        type: 'b',
+        index: 1,
+      });
+      blocksAPI.insert({
+        type: 'c',
+        index: 2,
+      });
 
-      blocksAPI.move(0, 2);
+      blocksAPI.move({
+        toIndex: 0,
+        fromIndex: 2,
+      });
 
       expect(model.serialized.blocks.map(b => b.name)).toEqual(['c', 'a', 'b']);
     });
 
     it('should not change anything when fromIndex equals toIndex', () => {
-      blocksAPI.insert('a');
-      blocksAPI.insert('b', {}, 1);
+      blocksAPI.insert({ type: 'a' });
+      blocksAPI.insert({
+        type: 'b',
+        index: 1,
+      });
 
-      blocksAPI.move(0, 0);
+      blocksAPI.move({
+        toIndex: 0,
+        fromIndex: 0,
+      });
 
       expect(model.serialized.blocks.map(b => b.name)).toEqual(['a', 'b']);
     });
 
     it('should throw when no fromIndex is provided and no caret is set', () => {
-      blocksAPI.insert('paragraph');
+      blocksAPI.insert({ type: 'paragraph' });
 
-      expect(() => blocksAPI.move(0)).toThrow('No block selected to move');
+      expect(() => blocksAPI.move({ toIndex: 0 })).toThrow('No block selected to move');
     });
   });
 
@@ -255,13 +302,13 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
     });
 
     it('should return the correct count after insertions and deletions', () => {
-      blocksAPI.insert('paragraph');
-      blocksAPI.insert('paragraph');
-      blocksAPI.insert('paragraph');
+      blocksAPI.insert({ type: 'paragraph' });
+      blocksAPI.insert({ type: 'paragraph' });
+      blocksAPI.insert({ type: 'paragraph' });
 
       expect(blocksAPI.getBlocksCount()).toBe(3);
 
-      blocksAPI.delete(0);
+      blocksAPI.delete({ block: 0 });
 
       expect(blocksAPI.getBlocksCount()).toBe(2);
     });
@@ -269,8 +316,8 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
 
   describe('render()', () => {
     it('should replace document content with the provided serialized data', () => {
-      blocksAPI.insert('paragraph');
-      blocksAPI.insert('paragraph');
+      blocksAPI.insert({ type: 'paragraph' });
+      blocksAPI.insert({ type: 'paragraph' });
 
       blocksAPI.render({
         identifier: 'new-doc',
@@ -289,7 +336,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
     });
 
     it('should result in an empty document when empty blocks array is passed', () => {
-      blocksAPI.insert('paragraph');
+      blocksAPI.insert({ type: 'paragraph' });
 
       blocksAPI.render({
         identifier: 'empty-doc',
@@ -303,9 +350,15 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
 
   describe('clear()', () => {
     it('should remove all blocks from the document', () => {
-      blocksAPI.insert('paragraph');
-      blocksAPI.insert('header', {}, 1);
-      blocksAPI.insert('list', {}, 2);
+      blocksAPI.insert({ type: 'paragraph' });
+      blocksAPI.insert({
+        type: 'header',
+        index: 1,
+      });
+      blocksAPI.insert({
+        type: 'list',
+        index: 2,
+      });
 
       blocksAPI.clear();
 
@@ -326,7 +379,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
 
       model.addEventListener(EventType.Changed, handler);
 
-      blocksAPI.insert('paragraph');
+      blocksAPI.insert({ type: 'paragraph' });
 
       expect(handler).toHaveBeenCalled();
 
@@ -334,13 +387,13 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
     });
 
     it('should emit BlockRemovedEvent on model when delete is called', async () => {
-      blocksAPI.insert('paragraph');
+      blocksAPI.insert({ type: 'paragraph' });
 
       const handler = jest.fn();
 
       model.addEventListener(EventType.Changed, handler);
 
-      blocksAPI.delete(0);
+      blocksAPI.delete({ block: 0 });
 
       await Promise.resolve(); // flush queueMicrotask used by removeBlock
 
@@ -352,22 +405,33 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
 
   describe('combined operations', () => {
     it('should handle a sequence of insert, move, delete, and clear', () => {
-      // Insert 3 blocks: a, b, c
-      blocksAPI.insert('a');
-      blocksAPI.insert('b', {}, 1);
-      blocksAPI.insert('c', {}, 2);
+      blocksAPI.insert({ type: 'a' });
+      blocksAPI.insert({
+        type: 'b',
+        index: 1,
+      });
+      blocksAPI.insert({
+        type: 'c',
+        index: 2,
+      });
       expect(model.serialized.blocks.map(b => b.name)).toEqual(['a', 'b', 'c']);
 
       // Move c to front: c, a, b
-      blocksAPI.move(0, 2);
+      blocksAPI.move({
+        toIndex: 0,
+        fromIndex: 2,
+      });
       expect(model.serialized.blocks.map(b => b.name)).toEqual(['c', 'a', 'b']);
 
       // Delete middle block (a): c, b
-      blocksAPI.delete(1);
+      blocksAPI.delete({ block: 1 });
       expect(model.serialized.blocks.map(b => b.name)).toEqual(['c', 'b']);
 
       // Insert d at index 1: c, d, b
-      blocksAPI.insert('d', {}, 1);
+      blocksAPI.insert({
+        type: 'd',
+        index: 1,
+      });
       expect(model.serialized.blocks.map(b => b.name)).toEqual(['c', 'd', 'b']);
 
       // Clear everything
@@ -376,7 +440,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
     });
 
     it('should support render after clear and then further mutations', () => {
-      blocksAPI.insert('paragraph');
+      blocksAPI.insert({ type: 'paragraph' });
       blocksAPI.clear();
 
       blocksAPI.render({
@@ -398,7 +462,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
 
       expect(model.length).toBe(2);
 
-      blocksAPI.delete(0);
+      blocksAPI.delete({ block: 0 });
 
       expect(model.length).toBe(1);
       expect(model.serialized.blocks[0]).toEqual(expect.objectContaining({ name: 'list' }));

@@ -25,7 +25,7 @@ describe('SelectionAPI', () => {
   // @ts-expect-error - mock object
   const selectionManager = new SelectionManager();
 
-  describe('.applyInlineToolForCurrentSelection()', () => {
+  describe('.applyInlineTool()', () => {
     it('should convert toolName and delegate to SelectionManager', () => {
       const api = new SelectionAPI(
         selectionManager as unknown as InstanceType<typeof SelectionManager>,
@@ -33,7 +33,10 @@ describe('SelectionAPI', () => {
         {} as unknown as CoreConfigValidated
       );
 
-      api.applyInlineToolForCurrentSelection('bold', { level: 1 });
+      api.applyInlineTool({
+        tool: 'bold',
+        data: { level: 1 },
+      });
 
       expect(createInlineToolName).toHaveBeenCalledWith('bold');
       expect(selectionManager.applyInlineToolForCurrentSelection).toHaveBeenCalledWith('inline:bold', { level: 1 });

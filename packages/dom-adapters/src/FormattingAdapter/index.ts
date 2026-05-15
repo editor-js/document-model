@@ -155,7 +155,12 @@ export class FormattingAdapter {
       const rangeStart = Math.max(0, textRange[0] - 1);
       const rangeEnd = inputContent !== null ? Math.min(inputContent.length, textRange[1] + 1) : 0;
 
-      const affectedFragments = this.#api.text.getFragments(blockIndex, dataKey as string, rangeStart, rangeEnd);
+      const affectedFragments = this.#api.text.getFragments({
+        block: blockIndex,
+        key: dataKey as string,
+        start: rangeStart,
+        end: rangeEnd,
+      });
 
       const leftBoundary = affectedFragments[0]?.range[0] ?? textRange[0];
       let rightBoundary = textRange[1];

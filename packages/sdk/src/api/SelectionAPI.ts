@@ -1,4 +1,4 @@
-import type { Caret, CaretManagerEvents, InlineToolName } from '@editorjs/model';
+import type { Caret, CaretManagerEvents } from '@editorjs/model';
 
 /**
  * Selection API interface
@@ -7,10 +7,12 @@ import type { Caret, CaretManagerEvents, InlineToolName } from '@editorjs/model'
 export interface SelectionAPI {
   /**
    * Applies inline tool for the current selection
-   * @param tool - name of the inline tool to apply
-   * @param data - optional data for the inline tool
+   * @param params - method parameters
+   * @param params.tool - name of the inline tool to apply
+   * @param [params.data] - optional data for the inline tool
    */
-  applyInlineToolForCurrentSelection(tool: InlineToolName, data?: Record<string, unknown>): void;
+  // eslint-disable-next-line jsdoc/require-jsdoc,@stylistic/object-property-newline -- type declaration
+  applyInlineTool({ tool, data }: { tool: string; data?: Record<string, unknown> }): void;
 
   /**
    * Registers a callback for CaretManager updates. Returns a cleanup function
