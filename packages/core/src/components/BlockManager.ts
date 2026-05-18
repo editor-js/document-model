@@ -45,6 +45,10 @@ interface InsertBlockParameters {
    */
   focus?: boolean;
   // tunes?: {[name: string]: BlockTuneData};
+  /**
+   * User id to attribute the change to
+   */
+  userId?: string | number;
 }
 
 /**
@@ -113,6 +117,7 @@ export class BlocksManager {
    * @param parameters.index - index to insert block at
    // * @param parameters.needToFocus - flag indicates if caret should be set to block after insert
    * @param parameters.replace - flag indicates if block at index should be replaced
+   * @param parameters.userId - user id to attribute the change to
    */
   public insert({
     id = undefined,
@@ -121,6 +126,7 @@ export class BlocksManager {
     index,
     focus = false,
     replace = false,
+    userId = this.#config.userId,
     // tunes = {},
   }: InsertBlockParameters = {}): void {
     let newIndex = index;
@@ -130,10 +136,10 @@ export class BlocksManager {
     }
 
     if (replace) {
-      this.#model.removeBlock(this.#config.userId, newIndex);
+      this.#model.removeBlock(userId, newIndex);
     }
 
-    this.#model.addBlock(this.#config.userId, {
+    this.#model.addBlock(userId, {
       ...data,
       id,
       name: type,
@@ -150,9 +156,10 @@ export class BlocksManager {
    * Inserts several Blocks to specified index
    * @param blocks - array of blocks to insert
    * @param [index] - index to insert blocks at. If undefined, inserts at the end
+   * @param [userId] - user id to attribute the change to
    */
-  public insertMany(blocks: BlockNodeInit[], index: number = this.#model.length): void {
-    blocks.forEach((block, i) => this.#model.addBlock(this.#config.userId, block, index + i));
+  public insertMany(blocks: BlockNodeInit[], index: number = this.#model.length, userId: string | number = this.#config.userId): void {
+    blocks.forEach((block, i) => this.#model.addBlock(userId, block, index + i));
   }
 
   /**
@@ -173,8 +180,9 @@ export class BlocksManager {
   /**
    * Removes Block by index, or current block if index is not passed
    * @param indexOrId - index or identifier of a block to delete
+   * @param [userId] - user id to attribute the change to
    */
-  public deleteBlock(indexOrId: number | string | undefined = this.#getCurrentBlockIndex()): void {
+  public deleteBlock(indexOrId: number | string | undefined = this.#getCurrentBlockIndex(), userId: string | number = this.#config.userId): void {
     if (indexOrId === undefined) {
       /**
        * @todo see what happens in legacy
@@ -182,15 +190,16 @@ export class BlocksManager {
       throw new Error('No block selected to delete');
     }
 
-    this.#model.removeBlock(this.#config.userId, indexOrId as BlockIndexOrId);
+    this.#model.removeBlock(userId, indexOrId as BlockIndexOrId);
   }
 
   /**
    * Moves a block to a new index
    * @param toIndex - index where the block is moved to
    * @param [fromIndex] - block to move. Current block if not passed
+   * @param [userId] - user id to attribute the change to
    */
-  public move(toIndex: number, fromIndex: number | undefined = this.#getCurrentBlockIndex()): void {
+  public move(toIndex: number, fromIndex: number | undefined = this.#getCurrentBlockIndex(), userId: string | number = this.#config.userId): void {
     if (fromIndex === undefined) {
       throw new Error('No block selected to move');
     }
@@ -204,8 +213,8 @@ export class BlocksManager {
 
     const block = this.#model.getBlockSerialized(fromIndex);
 
-    this.#model.removeBlock(this.#config.userId, fromIndex);
-    this.#model.addBlock(this.#config.userId, block, toIndex);
+    this.#model.removeBlock(userId, fromIndex);
+    this.#model.addBlock(userId, block, toIndex);
   }
 
   /**

@@ -49,6 +49,16 @@ interface InlineToolData {
 }
 
 /**
+ * Optional user id parameter for mutating operations
+ */
+interface UserIdParam {
+  /**
+   * User id. Defaults to the current user id from the config
+   */
+  userId?: string | number;
+}
+
+/**
  * Editor's TextAPI to work with text content of the document
  */
 export interface TextAPI {
@@ -58,8 +68,9 @@ export interface TextAPI {
    * @param params.block - block index or identifier
    * @param params.key - data key of the text node
    * @param [params.start] - start offset
+   * @param [params.userId] - user id. Defaults to the current user id from the config
    */
-  insert(params: TextContent & Omit<TextPosition, 'end'>): void;
+  insert(params: TextContent & Omit<TextPosition, 'end'> & UserIdParam): void;
 
   /**
    * Removes text from a given range
@@ -67,8 +78,9 @@ export interface TextAPI {
    * @param params.key - data key of the text node
    * @param [params.start] - range start
    * @param [params.end] - range end
+   * @param [params.userId] - user id. Defaults to the current user id from the config
    */
-  remove(params: TextPosition): string;
+  remove(params: TextPosition & UserIdParam): string;
 
   /**
    * Formats the given range
@@ -78,8 +90,9 @@ export interface TextAPI {
    * @param params.start - range start
    * @param params.end - range end
    * @param [params.data] - optional tool's data
+   * @param [params.userId] - user id. Defaults to the current user id from the config
    */
-  format(params: InlineToolData & Required<TextPosition>): void;
+  format(params: InlineToolData & Required<TextPosition> & UserIdParam): void;
 
   /**
    * Unformats the given range
@@ -88,8 +101,9 @@ export interface TextAPI {
    * @param params.key - data key of the text node
    * @param params.start - range start
    * @param params.end - range end
+   * @param [params.userId] - user id. Defaults to the current user id from the config
    */
-  unformat(params: Pick<InlineToolData, 'tool'> & Required<TextPosition>): void;
+  unformat(params: Pick<InlineToolData, 'tool'> & Required<TextPosition> & UserIdParam): void;
 
   /**
    * Returns applied inline fragments for a given range
