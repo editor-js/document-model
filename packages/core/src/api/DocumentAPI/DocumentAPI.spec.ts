@@ -5,6 +5,7 @@ import type { CoreConfigValidated, EventBus } from '@editorjs/sdk';
 jest.unstable_mockModule('@editorjs/sdk', () => ({
   UndoCoreEvent: jest.fn(),
   RedoCoreEvent: jest.fn(),
+  EventBus: jest.fn(),
 }));
 
 jest.unstable_mockModule('@editorjs/model', () => {

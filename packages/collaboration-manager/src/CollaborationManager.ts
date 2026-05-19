@@ -6,12 +6,15 @@ import {
   TextFormattedEvent, TextRemovedEvent,
   TextUnformattedEvent
 } from '@editorjs/model';
+import type {
+  UndoCoreEvent,
+  EditorAPI,
+  EditorjsPlugin,
+  EditorjsPluginParams
+} from '@editorjs/sdk';
 import {
   CoreEventType,
-  type EditorAPI,
-  type EditorjsPlugin,
-  type EditorjsPluginParams,
-  PluginType, UndoCoreEvent
+  PluginType
 } from '@editorjs/sdk';
 import { OTClient } from './client/index.js';
 import { BatchedOperation } from './BatchedOperation.js';

@@ -2,7 +2,7 @@ import type { EditorDocumentSerialized, ModelEvents } from '@editorjs/model';
 import { EventType } from '@editorjs/model';
 import type { EditorJSModel } from '@editorjs/model';
 import { EventBus } from '@editorjs/sdk';
-import type { CoreConfigValidated, DocumentAPI, EditorAPI, InsertRemoveDataParams, ModifyDataParams } from '@editorjs/sdk';
+import type { CoreConfigValidated, DocumentAPI, EditorAPI, InsertRemoveDataParams, ModifyDataParams, BlocksAPI } from '@editorjs/sdk';
 import { CollaborationManager } from '../../src/CollaborationManager.js';
 
 /**
@@ -28,7 +28,7 @@ function createMockDocumentAPI(model: EditorJSModel): DocumentAPI {
     modifyData({ userId, index, data }: ModifyDataParams): void {
       model.modifyData(userId, index, data);
     },
-  };
+  } as DocumentAPI;
 }
 
 /**
@@ -37,8 +37,10 @@ function createMockDocumentAPI(model: EditorJSModel): DocumentAPI {
  * @param model - the EditorJS model instance
  * @returns an object containing the manager and the eventBus used
  */
-export function createManager(config: CoreConfigValidated, model: EditorJSModel): { manager: CollaborationManager;
-  eventBus: EventBus; } {
+export function createManager(config: CoreConfigValidated, model: EditorJSModel): {
+  manager: CollaborationManager;
+  eventBus: EventBus;
+} {
   const eventBus = new EventBus();
 
   const api: EditorAPI = {
@@ -46,7 +48,7 @@ export function createManager(config: CoreConfigValidated, model: EditorJSModel)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     blocks: {
       render: () => undefined,
-    } as any,
+    } as unknown as BlocksAPI,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     selection: {} as any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
