@@ -1,14 +1,18 @@
 import {
   BlockAddedEvent, type BlockNodeSerialized,
   BlockRemovedEvent,
-  type EditorJSModel,
-  EventType,
   type ModelEvents,
   TextAddedEvent,
   TextFormattedEvent, TextRemovedEvent,
   TextUnformattedEvent
 } from '@editorjs/model';
-import type { CoreConfig } from '@editorjs/sdk';
+import {
+  CoreEventType,
+  type EditorAPI,
+  type EditorjsPlugin,
+  type EditorjsPluginParams,
+  PluginType
+} from '@editorjs/sdk';
 import { OTClient } from './client/index.js';
 import { BatchedOperation } from './BatchedOperation.js';
 import { type ModifyOperationData, Operation, OperationType } from './Operation.js';
@@ -17,13 +21,19 @@ import { UndoRedoManager } from './UndoRedoManager.js';
 const DEBOUNCE_TIMEOUT = 500;
 
 /**
- * CollaborationManager listens to EditorJSModel events and applies operations
+ * CollaborationManager is a Plugin that listens to document API events and applies operations.
+ * It also manages undo/redo history and a connection to an OT server.
  */
-export class CollaborationManager {
+export class CollaborationManager implements EditorjsPlugin {
   /**
-   * EditorJSModel instance to listen to and apply operations
+   * Plugin type
    */
-  #model: EditorJSModel;
+  public static readonly type = PluginType.Plugin;
+
+  /**
+   * Editor API instance used to interact with the document
+   */
+  #api: EditorAPI;
 
   /**
    * UndoRedoManager instance to manage undo/redo operations
@@ -42,11 +52,6 @@ export class CollaborationManager {
   #currentBatch: BatchedOperation<OperationType> | null = null;
 
   /**
-   * Editor's config
-   */
-  #config: Required<CoreConfig>;
-
-  /**
    * OT Client
    */
   #client: OTClient | null = null;
@@ -57,41 +62,34 @@ export class CollaborationManager {
   #debounceTimer?: ReturnType<typeof setTimeout>;
 
   /**
-   * Creates an instance of CollaborationManager
-   * @param config - Editor's config
-   * @param model - EditorJSModel instance to listen to and apply operations
+   * Editor's config
    */
-  constructor(config: Required<CoreConfig>, model: EditorJSModel) {
-    this.#config = config;
-    this.#model = model;
-    this.#undoRedoManager = new UndoRedoManager();
-    model.addEventListener(EventType.Changed, this.#handleEvent.bind(this));
-  }
+  #config: EditorjsPluginParams['config'];
 
   /**
-   * Connects to OT server
+   * Creates an instance of CollaborationManager plugin
+   * @param params - plugin constructor parameters
    */
-  public connect(): void {
-    if (this.#config.collaborationServer === undefined) {
-      return;
-    }
+  constructor(params: EditorjsPluginParams) {
+    const { api, config, eventBus } = params;
 
-    this.#client = new OTClient(
-      this.#config.collaborationServer,
-      this.#config.userId,
-      (data) => {
-        if (!data) {
-          return;
-        }
+    this.#api = api;
+    this.#config = config;
+    this.#undoRedoManager = new UndoRedoManager();
 
-        this.#model.initializeDocument(data);
-      },
-      (op) => {
-        this.applyOperation(op);
-      }
-    );
+    api.document.onUpdate(this.#handleEvent.bind(this));
 
-    void this.#client.connectDocument(this.#model.serialized);
+    eventBus.addEventListener(`core:${CoreEventType.Undo}`, () => {
+      this.undo();
+    });
+
+    eventBus.addEventListener(`core:${CoreEventType.Redo}`, () => {
+      this.redo();
+    });
+
+    eventBus.addEventListener(`core:${CoreEventType.Ready}`, () => {
+      this.#connect();
+    });
   }
 
   /**
@@ -137,7 +135,7 @@ export class CollaborationManager {
   }
 
   /**
-   * Applies operation to the model
+   * Applies operation to the document via API
    * @param operation - operation to apply
    */
   public applyOperation(operation: Operation | BatchedOperation): void {
@@ -156,15 +154,27 @@ export class CollaborationManager {
 
     switch (operation.type) {
       case OperationType.Insert:
-        this.#model.insertData(operation.userId, operation.index, operation.data.payload as string | BlockNodeSerialized[]);
+        this.#api.document.insertData({
+          userId: operation.userId,
+          index: operation.index,
+          data: operation.data.payload as string | BlockNodeSerialized[],
+        });
         break;
       case OperationType.Delete:
-        this.#model.removeData(operation.userId, operation.index, operation.data.payload as string | BlockNodeSerialized[]);
+        this.#api.document.removeData({
+          userId: operation.userId,
+          index: operation.index,
+          data: operation.data.payload as string | BlockNodeSerialized[],
+        });
         break;
       case OperationType.Modify:
-        this.#model.modifyData(operation.userId, operation.index, {
-          value: operation.data.payload,
-          previous: (operation.data as ModifyOperationData).prevPayload,
+        this.#api.document.modifyData({
+          userId: operation.userId,
+          index: operation.index,
+          data: {
+            value: operation.data.payload,
+            previous: (operation.data as ModifyOperationData).prevPayload,
+          },
         });
         break;
       default:
@@ -173,8 +183,8 @@ export class CollaborationManager {
   }
 
   /**
-   * Handles EditorJSModel events
-   * @param e - event to handle
+   * Handles document update events
+   * @param e - model event to handle
    */
   #handleEvent(e: ModelEvents): void {
     let operation: Operation | null = null;
@@ -272,6 +282,32 @@ export class CollaborationManager {
   }
 
   /**
+   * Connects to the OT server if a collaboration server is configured
+   */
+  #connect(): void {
+    if (this.#config.collaborationServer === undefined) {
+      return;
+    }
+
+    this.#client = new OTClient(
+      this.#config.collaborationServer,
+      this.#config.userId,
+      (data) => {
+        if (!data) {
+          return;
+        }
+
+        this.#api.blocks.render(data);
+      },
+      (op) => {
+        this.applyOperation(op);
+      }
+    );
+
+    void this.#client.connectDocument(this.#api.document.data);
+  }
+
+  /**
    * Puts current batch to the undo stack and clears the batch
    */
   #putBatchToUndo(): void {
@@ -291,5 +327,12 @@ export class CollaborationManager {
     this.#debounceTimer = setTimeout(() => {
       this.#putBatchToUndo();
     }, DEBOUNCE_TIMEOUT);
+  }
+
+  /**
+   * Destroys the plugin instance: clears the debounce timer
+   */
+  public destroy(): void {
+    clearTimeout(this.#debounceTimer);
   }
 }
