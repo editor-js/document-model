@@ -7,7 +7,7 @@ import { BatchedOperation } from './BatchedOperation.js';
 import { Operation, OperationType } from './Operation.js';
 import { UndoRedoManager } from './UndoRedoManager.js';
 import { createManager } from '../test/mocks/createManager.js';
-import { MockWebSocket } from '../test/mocks/ws.js';
+import { OTClient } from './client/index.js';
 
 const userId = 'user';
 const remoteUserId = 'remote-user';
@@ -1360,30 +1360,22 @@ describe('CollaborationManager', () => {
     });
 
     it('should close ot client connection', async () => {
-      const originalWebSocket = globalThis.WebSocket;
+      const model = new EditorJSModel(userId, { identifier: documentId });
+      const { manager, eventBus } = createManager({
+        ...config,
+        collaborationServer: 'ws://test-collab.invalid/document',
+      } as Required<CoreConfig>, model);
 
-      try {
-        globalThis.WebSocket = MockWebSocket as unknown as typeof WebSocket;
+      eventBus.dispatchEvent(new CustomEvent(`core:${CoreEventType.Ready}`));
+      await Promise.resolve();
 
-        const model = new EditorJSModel(userId, { identifier: documentId });
-        const { manager, eventBus } = createManager({
-          ...config,
-          collaborationServer: 'ws://test-collab.invalid/document',
-        } as Required<CoreConfig>, model);
+      const closeSpy = jest.spyOn(OTClient.prototype, 'close');
 
-        eventBus.dispatchEvent(new CustomEvent(`core:${CoreEventType.Ready}`));
-        await Promise.resolve();
+      manager.destroy();
+      await Promise.resolve();
 
-        const closeSpy = jest.spyOn(MockWebSocket.lastInstance!, 'close');
-
-        manager.destroy();
-        await Promise.resolve();
-
-        expect(closeSpy).toHaveBeenCalledTimes(1);
-        closeSpy.mockRestore();
-      } finally {
-        globalThis.WebSocket = originalWebSocket;
-      }
+      expect(closeSpy).toHaveBeenCalledTimes(1);
+      closeSpy.mockRestore();
     });
   });
 });

@@ -110,13 +110,13 @@ export class CollaborationManager implements EditorjsPlugin {
     this.#unsubscribeDocumentUpdates = api.document.onUpdate(this.#handleEvent.bind(this));
 
     eventBus.addEventListener(`core:${CoreEventType.Undo}`, onUndo);
-    this.#unsubscribeUndo = () => eventBus.removeEventListener(`core:${CoreEventType.Undo}`, onUndo);
+    this.#unsubscribeUndo = () => void eventBus.removeEventListener(`core:${CoreEventType.Undo}`, onUndo);
 
     eventBus.addEventListener(`core:${CoreEventType.Redo}`, onRedo);
-    this.#unsubscribeRedo = () => eventBus.removeEventListener(`core:${CoreEventType.Redo}`, onRedo);
+    this.#unsubscribeRedo = () => void eventBus.removeEventListener(`core:${CoreEventType.Redo}`, onRedo);
 
     eventBus.addEventListener(`core:${CoreEventType.Ready}`, onReady);
-    this.#unsubscribeReady = () => eventBus.removeEventListener(`core:${CoreEventType.Ready}`, onReady);
+    this.#unsubscribeReady = () => void eventBus.removeEventListener(`core:${CoreEventType.Ready}`, onReady);
   }
 
   /**
