@@ -11,6 +11,7 @@ const OTHER_USER_ID = 'other-user';
 jest.unstable_mockModule('@editorjs/model', () => {
   const EditorJSModel = jest.fn(() => ({
     addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
     insertData: jest.fn(),
     removeData: jest.fn(),
     modifyData: jest.fn(),
@@ -51,6 +52,7 @@ const { UndoRedoManager } = await import('./UndoRedoManager.js');
 
 type MockModel = {
   addEventListener: jest.Mock;
+  removeEventListener: jest.Mock;
   insertData: jest.Mock;
   removeData: jest.Mock;
   modifyData: jest.Mock;
@@ -202,6 +204,15 @@ describe('UndoRedoManager', () => {
       manager.destroy();
 
       expect(clearTimeoutSpy).toHaveBeenCalled();
+    });
+
+    it('should remove the model updates listener', () => {
+      manager.destroy();
+
+      expect(model.removeEventListener).toHaveBeenCalledWith(
+        'model:changed',
+        expect.any(Function)
+      );
     });
   });
 
@@ -508,6 +519,37 @@ describe('UndoRedoManager', () => {
       manager.redo();
 
       expect(model.removeData).toHaveBeenCalledWith(USER_ID, index, 'hello');
+    });
+
+    it('should re-apply an undone Modified event by calling model.modifyData with the same values', () => {
+      const index = createIndex({ textRange: [0, 5] });
+
+      fireModelEvent(
+        modelChangedListener,
+        createPayload(
+          EventAction.Modified,
+          {
+            index,
+            data: {
+              value: 'new',
+              previous: 'old',
+            },
+          }
+        )
+      );
+      jest.runAllTimers();
+
+      manager.undo();
+      manager.redo();
+
+      expect(model.modifyData).toHaveBeenCalledWith(
+        USER_ID,
+        index,
+        {
+          value: 'new',
+          previous: 'old',
+        }
+      );
     });
 
     it('should flush the current batch (from an undo triggered mid-typing) and then redo', () => {

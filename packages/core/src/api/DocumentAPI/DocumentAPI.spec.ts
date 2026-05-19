@@ -3,8 +3,12 @@ import { beforeEach, describe, expect, jest } from '@jest/globals';
 import type { CoreConfigValidated, EventBus } from '@editorjs/sdk';
 
 jest.unstable_mockModule('@editorjs/sdk', () => ({
-  UndoCoreEvent: jest.fn(),
-  RedoCoreEvent: jest.fn(),
+  UndoCoreEvent: class UndoCoreEvent {
+    public name = 'undo';
+  },
+  RedoCoreEvent: class RedoCoreEvent {
+    public name = 'redo';
+  },
   EventBus: jest.fn(),
 }));
 
@@ -28,10 +32,12 @@ describe('DocumentAPI', () => {
   // @ts-expect-error - mock object, don't need to pass any arguments
   const model = new EditorJSModel();
 
+  const dispatchEvent = jest.fn();
+
   const documentAPI = new DocumentAPI(
     model,
     {} as unknown as CoreConfigValidated,
-    { dispatchEvent: jest.fn() } as unknown as EventBus
+    { dispatchEvent } as unknown as EventBus
   );
 
   beforeEach(() => {
@@ -60,6 +66,22 @@ describe('DocumentAPI', () => {
       const data = documentAPI.data;
 
       expect(data).toEqual(mockedSerializedModel);
+    });
+  });
+
+  describe('.undo()', () => {
+    it('should dispatch an undo core event', () => {
+      documentAPI.undo();
+
+      expect(dispatchEvent).toBeCalledWith(expect.objectContaining({ name: 'undo' }));
+    });
+  });
+
+  describe('.redo()', () => {
+    it('should dispatch an redo core event', () => {
+      documentAPI.redo();
+
+      expect(dispatchEvent).toBeCalledWith(expect.objectContaining({ name: 'redo' }));
     });
   });
 });

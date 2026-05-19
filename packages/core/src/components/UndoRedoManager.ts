@@ -85,7 +85,7 @@ export class UndoRedoManager {
   };
 
   /**
-   * Reddo Core Event listener. Stored to be removed on destroy
+   * Redo Core Event listener. Stored to be removed on destroy
    * @param event - redo core event
    */
   #redoListener = (event: RedoCoreEvent): void => {
@@ -94,6 +94,14 @@ export class UndoRedoManager {
     }
 
     this.redo();
+  };
+
+  /**
+   * Model updates listener. Stored to be removed on destroy
+   * @param e - model event
+   */
+  #modelUpdatesListener = (e: ModelEvents): void => {
+    this.#handleEvent(e);
   };
 
   /**
@@ -112,9 +120,7 @@ export class UndoRedoManager {
     this.#model = model;
     this.#eventBus = eventBus;
 
-    model.addEventListener(EventType.Changed, (e: ModelEvents) => {
-      this.#handleEvent(e);
-    });
+    model.addEventListener(EventType.Changed, this.#modelUpdatesListener);
 
     eventBus.addEventListener(`core:${CoreEventType.Undo}`, this.#undoListener);
     eventBus.addEventListener(`core:${CoreEventType.Redo}`, this.#redoListener);
@@ -141,7 +147,7 @@ export class UndoRedoManager {
       this.#isApplying = false;
     }
 
-    this.#redoStack.push(events.map(this.#inverse).reverse());
+    this.#redoStack.push(events.map(e => this.#inverse(e)).reverse());
   }
 
   /**
@@ -174,6 +180,7 @@ export class UndoRedoManager {
     clearTimeout(this.#debounceTimer);
     this.#eventBus.removeEventListener(`core:${CoreEventType.Undo}`, this.#undoListener);
     this.#eventBus.removeEventListener(`core:${CoreEventType.Redo}`, this.#redoListener);
+    this.#model.removeEventListener(EventType.Changed, this.#modelUpdatesListener);
   }
 
   /**
@@ -212,6 +219,7 @@ export class UndoRedoManager {
    */
   #inverse(event: EventPayloadBase<EventAction>): EventPayloadBase<EventAction> {
     let newAction;
+    let newPayload = event.data;
 
     switch (event.action) {
       case EventAction.Added:
@@ -222,12 +230,17 @@ export class UndoRedoManager {
         break;
       case EventAction.Modified:
         newAction = EventAction.Modified;
+        newPayload = {
+          previous: (event.data as ModifiedEventData).value,
+          value: (event.data as ModifiedEventData).previous,
+        } as ModifiedEventData;
         break;
     }
 
     return {
       ...event,
       action: newAction,
+      data: newPayload,
     };
   }
 

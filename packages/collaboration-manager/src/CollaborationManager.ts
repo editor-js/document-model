@@ -10,7 +10,8 @@ import type {
   UndoCoreEvent,
   EditorAPI,
   EditorjsPlugin,
-  EditorjsPluginParams
+  EditorjsPluginParams,
+  RedoCoreEvent
 } from '@editorjs/sdk';
 import {
   CoreEventType,
@@ -105,7 +106,7 @@ export class CollaborationManager implements EditorjsPlugin {
 
       this.undo();
     };
-    const onRedo = (e: UndoCoreEvent): void => {
+    const onRedo = (e: RedoCoreEvent): void => {
       e.preventDefault();
 
       this.redo();
