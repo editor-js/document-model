@@ -8,7 +8,7 @@ import {
   type ModifyDataParams
 } from '@editorjs/sdk';
 import { inject, injectable } from 'inversify';
-import { TOKENS } from '../../tokens';
+import { TOKENS } from '../../tokens.js';
 
 /**
  * Document API
