@@ -104,6 +104,10 @@ export class DocumentAPI implements DocumentApiInterface {
    * Undoes the last change in the document
    */
   public undo(): void {
+    /**
+     * To enable Plugins to cancel the default undo/redo behavior,
+     * we have to dispatch event here instead of a direct call
+     */
     this.#eventBus.dispatchEvent(new UndoCoreEvent());
   }
 
@@ -111,6 +115,10 @@ export class DocumentAPI implements DocumentApiInterface {
    * Redoes the last undone change in the document
    */
   public redo(): void {
+    /**
+     * To enable Plugins to cancel the default undo/redo behavior,
+     * we have to dispatch event here instead of a direct call
+     */
     this.#eventBus.dispatchEvent(new RedoCoreEvent());
   }
 }
