@@ -229,4 +229,20 @@ describe('OTClient', () => {
       sendSpy.mockRestore();
     });
   });
+
+  describe('close', () => {
+    it('should close websocket connection', async () => {
+      const client = new OTClient('ws://test-collab.invalid/document', userId, jest.fn(), jest.fn());
+
+      await client.connectDocument(stubDocument);
+
+      const closeSpy = jest.spyOn(MockWebSocket.lastInstance!, 'close');
+
+      client.close();
+      await Promise.resolve();
+
+      expect(closeSpy).toHaveBeenCalledTimes(1);
+      closeSpy.mockRestore();
+    });
+  });
 });

@@ -98,6 +98,13 @@ export class MockWebSocket {
   }
 
   /**
+   * Closes websocket connection
+   */
+  public close(): void {
+    this.readyState = 3;
+  }
+
+  /**
    * Deliver a server → client WebSocket payload (remote operation, etc.).
    * @param payload - payload to receive from the server
    */

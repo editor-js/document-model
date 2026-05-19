@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
-import { createDataKey, IndexBuilder } from '@editorjs/model';
+import { createDataKey, EventType, IndexBuilder } from '@editorjs/model';
 import { EditorJSModel } from '@editorjs/model';
-import type { CoreConfig } from '@editorjs/sdk';
+import { CoreEventType, type CoreConfig } from '@editorjs/sdk';
 import { beforeAll, jest } from '@jest/globals';
 import { BatchedOperation } from './BatchedOperation.js';
 import { Operation, OperationType } from './Operation.js';
 import { UndoRedoManager } from './UndoRedoManager.js';
 import { createManager } from '../test/mocks/createManager.js';
+import { MockWebSocket } from '../test/mocks/ws.js';
 
 const userId = 'user';
 const remoteUserId = 'remote-user';
@@ -1340,6 +1341,49 @@ describe('CollaborationManager', () => {
         })],
         properties: {},
       });
+    });
+  });
+
+  describe('destroy', () => {
+    it('should unsubscribe model and core event listeners', () => {
+      const model = new EditorJSModel(userId, { identifier: documentId });
+      const removeModelListenerSpy = jest.spyOn(model, 'removeEventListener');
+      const { manager, eventBus } = createManager(config as Required<CoreConfig>, model);
+      const removeEventBusListenerSpy = jest.spyOn(eventBus, 'removeEventListener');
+
+      manager.destroy();
+
+      expect(removeModelListenerSpy).toHaveBeenCalledWith(EventType.Changed, expect.any(Function));
+      expect(removeEventBusListenerSpy).toHaveBeenCalledWith(`core:${CoreEventType.Undo}`, expect.any(Function));
+      expect(removeEventBusListenerSpy).toHaveBeenCalledWith(`core:${CoreEventType.Redo}`, expect.any(Function));
+      expect(removeEventBusListenerSpy).toHaveBeenCalledWith(`core:${CoreEventType.Ready}`, expect.any(Function));
+    });
+
+    it('should close ot client connection', async () => {
+      const originalWebSocket = globalThis.WebSocket;
+
+      try {
+        globalThis.WebSocket = MockWebSocket as unknown as typeof WebSocket;
+
+        const model = new EditorJSModel(userId, { identifier: documentId });
+        const { manager, eventBus } = createManager({
+          ...config,
+          collaborationServer: 'ws://test-collab.invalid/document',
+        } as Required<CoreConfig>, model);
+
+        eventBus.dispatchEvent(new CustomEvent(`core:${CoreEventType.Ready}`));
+        await Promise.resolve();
+
+        const closeSpy = jest.spyOn(MockWebSocket.lastInstance!, 'close');
+
+        manager.destroy();
+        await Promise.resolve();
+
+        expect(closeSpy).toHaveBeenCalledTimes(1);
+        closeSpy.mockRestore();
+      } finally {
+        globalThis.WebSocket = originalWebSocket;
+      }
     });
   });
 });

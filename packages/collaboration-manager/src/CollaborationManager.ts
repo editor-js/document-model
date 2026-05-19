@@ -62,6 +62,26 @@ export class CollaborationManager implements EditorjsPlugin {
   #debounceTimer?: ReturnType<typeof setTimeout>;
 
   /**
+   * Cleanup callback for document updates listener
+   */
+  #unsubscribeDocumentUpdates?: () => void;
+
+  /**
+   * Cleanup callback for undo event listener
+   */
+  #unsubscribeUndo?: () => void;
+
+  /**
+   * Cleanup callback for redo event listener
+   */
+  #unsubscribeRedo?: () => void;
+
+  /**
+   * Cleanup callback for ready event listener
+   */
+  #unsubscribeReady?: () => void;
+
+  /**
    * Editor's config
    */
   #config: EditorjsPluginParams['config'];
@@ -77,19 +97,26 @@ export class CollaborationManager implements EditorjsPlugin {
     this.#config = config;
     this.#undoRedoManager = new UndoRedoManager();
 
-    api.document.onUpdate(this.#handleEvent.bind(this));
-
-    eventBus.addEventListener(`core:${CoreEventType.Undo}`, () => {
+    const onUndo = (): void => {
       this.undo();
-    });
-
-    eventBus.addEventListener(`core:${CoreEventType.Redo}`, () => {
+    };
+    const onRedo = (): void => {
       this.redo();
-    });
-
-    eventBus.addEventListener(`core:${CoreEventType.Ready}`, () => {
+    };
+    const onReady = (): void => {
       this.#connect();
-    });
+    };
+
+    this.#unsubscribeDocumentUpdates = api.document.onUpdate(this.#handleEvent.bind(this));
+
+    eventBus.addEventListener(`core:${CoreEventType.Undo}`, onUndo);
+    this.#unsubscribeUndo = () => eventBus.removeEventListener(`core:${CoreEventType.Undo}`, onUndo);
+
+    eventBus.addEventListener(`core:${CoreEventType.Redo}`, onRedo);
+    this.#unsubscribeRedo = () => eventBus.removeEventListener(`core:${CoreEventType.Redo}`, onRedo);
+
+    eventBus.addEventListener(`core:${CoreEventType.Ready}`, onReady);
+    this.#unsubscribeReady = () => eventBus.removeEventListener(`core:${CoreEventType.Ready}`, onReady);
   }
 
   /**
@@ -334,5 +361,11 @@ export class CollaborationManager implements EditorjsPlugin {
    */
   public destroy(): void {
     clearTimeout(this.#debounceTimer);
+    this.#unsubscribeDocumentUpdates?.();
+    this.#unsubscribeUndo?.();
+    this.#unsubscribeRedo?.();
+    this.#unsubscribeReady?.();
+    this.#client?.close();
+    this.#client = null;
   }
 }
