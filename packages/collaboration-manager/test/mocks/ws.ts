@@ -1,4 +1,4 @@
-import { EditorDocumentSerialized } from '@editorjs/model';
+import type { EditorDocumentSerialized } from '@editorjs/model';
 import type { HandshakePayload } from '../../src/client/Message.js';
 import { MessageType } from '../../src/client/MessageType.js';
 
@@ -31,7 +31,6 @@ export class MockWebSocket {
 
   /**
    * Adds event listener
-   *
    * @param type - event type
    * @param listener - listener function
    */
@@ -52,7 +51,6 @@ export class MockWebSocket {
 
   /**
    * Removes event listener
-   *
    * @param type - event type
    * @param listener - listener function
    */
@@ -66,12 +64,18 @@ export class MockWebSocket {
 
   /**
    * Sends data to the server
-   *
    * @param data - data to send
    */
   public send(data: string | ArrayBufferLike | Blob | ArrayBufferView): void {
-    const raw = typeof data === 'string' ? data : String(data);
-    const message = JSON.parse(raw) as { type: string; payload: { document?: string; data?: EditorDocumentSerialized } };
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
+    const raw = typeof data === 'string' ? data : data.toString();
+    const message = JSON.parse(raw) as {
+      type: MessageType;
+      payload: {
+        document?: string;
+        data?: EditorDocumentSerialized;
+      };
+    };
 
     if (message.type === MessageType.Handshake) {
       const handshakePayload = message.payload as HandshakePayload;
@@ -94,8 +98,14 @@ export class MockWebSocket {
   }
 
   /**
+   * Closes websocket connection
+   */
+  public close(): void {
+    this.readyState = 3;
+  }
+
+  /**
    * Deliver a server → client WebSocket payload (remote operation, etc.).
-   *
    * @param payload - payload to receive from the server
    */
   public receiveFromServer(payload: unknown): void {
@@ -104,12 +114,11 @@ export class MockWebSocket {
 
   /**
    * Emits event
-   *
    * @param type - event type
    * @param event - event object
    */
   #emit(type: string, event: { data: string }): void {
-    this.listeners.get(type)?.forEach(fn => {
+    this.listeners.get(type)?.forEach((fn) => {
       fn(event);
     });
   }

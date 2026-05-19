@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { beforeEach, describe, expect, jest } from '@jest/globals';
+import type { CoreConfigValidated } from '@editorjs/sdk';
 
 jest.unstable_mockModule('@editorjs/model', () => {
   const EditorJSModel = jest.fn(() => ({
@@ -21,7 +22,7 @@ describe('DocumentAPI', () => {
   // @ts-expect-error - mock object, don't need to pass any arguments
   const model = new EditorJSModel();
 
-  const documentAPI = new DocumentAPI(model);
+  const documentAPI = new DocumentAPI(model, {} as unknown as CoreConfigValidated);
 
   beforeEach(() => {
     jest.resetAllMocks();
