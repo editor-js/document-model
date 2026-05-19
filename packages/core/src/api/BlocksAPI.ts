@@ -71,9 +71,10 @@ export class BlocksAPI implements BlocksApiInterface {
    * Removes Block by index or id, or current block if params are not passed
    * @param params - delete parameters
    * @param params.block - index or id of a block to delete
+   * @param params.userId - user id to attribute the change to
    */
-  public delete({ block }: NonNullable<Parameters<BlocksApiInterface['delete']>[0]> = {}): void {
-    return this.#blocksManager.deleteBlock(block);
+  public delete({ block, userId = this.#config.userId }: NonNullable<Parameters<BlocksApiInterface['delete']>[0]> = {}): void {
+    return this.#blocksManager.deleteBlock(block, userId);
   }
 
   /**
@@ -81,9 +82,10 @@ export class BlocksAPI implements BlocksApiInterface {
    * @param params - move parameters
    * @param params.toIndex - index where the block is moved to
    * @param [params.fromIndex] - block to move. Current block if not passed
+   * @param [params.userId] - user id to attribute the change to
    */
-  public move({ toIndex, fromIndex }: Parameters<BlocksApiInterface['move']>[0]): void {
-    return this.#blocksManager.move(toIndex, fromIndex);
+  public move({ toIndex, fromIndex, userId = this.#config.userId }: Parameters<BlocksApiInterface['move']>[0]): void {
+    return this.#blocksManager.move(toIndex, fromIndex, userId);
   }
 
   /**
@@ -98,9 +100,10 @@ export class BlocksAPI implements BlocksApiInterface {
    * @param params - insertMany parameters
    * @param params.blocks - array of blocks to insert
    * @param [params.index] - index to insert blocks at. If undefined, inserts at the end
+   * @param [params.userId] - user id to attribute the change to
    */
-  public insertMany({ blocks, index }: Parameters<BlocksApiInterface['insertMany']>[0]): void {
-    return this.#blocksManager.insertMany(blocks, index);
+  public insertMany({ blocks, index, userId = this.#config.userId }: Parameters<BlocksApiInterface['insertMany']>[0]): void {
+    return this.#blocksManager.insertMany(blocks, index, userId);
   }
 
   /**
@@ -111,8 +114,9 @@ export class BlocksAPI implements BlocksApiInterface {
    * @param [params.index] - index to insert block at
    * @param [params.focus] - flag indicates if new block should be focused @todo implement
    * @param [params.replace] - flag indicates if block at index should be replaced @todo implement
+   * @param [params.userId] - user id to attribute the change to
    */
-  public insert({ type, data, index, focus, replace }: NonNullable<Parameters<BlocksApiInterface['insert']>[0]> = {}): void {
+  public insert({ type, data, index, focus, replace, userId = this.#config.userId }: NonNullable<Parameters<BlocksApiInterface['insert']>[0]> = {}): void {
     const blockType = type ?? this.#config.defaultBlock;
     const blockData = data ?? {};
 
@@ -122,6 +126,7 @@ export class BlocksAPI implements BlocksApiInterface {
       index,
       replace,
       focus,
+      userId,
     });
   };
 
@@ -157,10 +162,11 @@ export class BlocksAPI implements BlocksApiInterface {
    * @param params.block - index or id of the block
    * @param params.key - data key of the new data node
    * @param [params.initialData] - optional initial data
+   * @param [params.userId] - user id to attribute the change to
    */
-  public createData({ block, key, initialData }: Parameters<BlocksApiInterface['createData']>[0]): void {
+  public createData({ block, key, initialData, userId = this.#config.userId }: Parameters<BlocksApiInterface['createData']>[0]): void {
     this.#model.createDataNode(
-      this.#config.userId,
+      userId,
       block as BlockIndexOrId,
       key,
       initialData
@@ -172,9 +178,10 @@ export class BlocksAPI implements BlocksApiInterface {
    * @param params - removeData parameters
    * @param params.block - index or identifier of the block
    * @param params.key - data key of the node to remove
+   * @param [params.userId] - user id to attribute the change to
    */
-  public removeData({ block, key }: Parameters<BlocksApiInterface['removeData']>[0]): void {
-    this.#model.removeDataNode(this.#config.userId, block as BlockIndexOrId, key);
+  public removeData({ block, key, userId = this.#config.userId }: Parameters<BlocksApiInterface['removeData']>[0]): void {
+    this.#model.removeDataNode(userId, block as BlockIndexOrId, key);
   }
 
   /**
@@ -183,8 +190,9 @@ export class BlocksAPI implements BlocksApiInterface {
    * @param params.block - index or identifier of the block
    * @param params.key - key of the data node to update
    * @param params.value - new value
+   * @param [params.userId] - user id to attribute the change to
    */
-  public updateValue({ block, key, value }: Parameters<BlocksApiInterface['updateValue']>[0]): void {
-    this.#model.updateValue(this.#config.userId, block as BlockIndexOrId, createDataKey(key), value);
+  public updateValue({ block, key, value, userId = this.#config.userId }: Parameters<BlocksApiInterface['updateValue']>[0]): void {
+    this.#model.updateValue(userId, block as BlockIndexOrId, createDataKey(key), value);
   }
 }

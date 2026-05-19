@@ -45,10 +45,11 @@ export class TextAPI implements TextAPIInterface {
    * @param params.block - block index or identifier
    * @param params.key - data key of the text node
    * @param params.start - start offset
+   * @param [params.userId] - user id to attribute the change to
    */
-  public insert({ text, block, key, start }: Parameters<TextAPIInterface['insert']>[0]): void {
+  public insert({ text, block, key, start, userId = this.#config.userId }: Parameters<TextAPIInterface['insert']>[0]): void {
     this.#model.insertText(
-      this.#config.userId,
+      userId,
       block as BlockIndexOrId,
       createDataKey(key),
       text,
@@ -63,10 +64,11 @@ export class TextAPI implements TextAPIInterface {
    * @param params.key - data key of the text node
    * @param params.start - range start
    * @param params.end - range end
+   * @param [params.userId] - user id to attribute the change to
    */
-  public remove({ block, key, start, end }: Parameters<TextAPIInterface['remove']>[0]): string {
+  public remove({ block, key, start, end, userId = this.#config.userId }: Parameters<TextAPIInterface['remove']>[0]): string {
     return this.#model.removeText(
-      this.#config.userId,
+      userId,
       block as BlockIndexOrId,
       createDataKey(key),
       start,
@@ -83,10 +85,11 @@ export class TextAPI implements TextAPIInterface {
    * @param params.start - range start
    * @param params.end - range end
    * @param params.data - optional tool's data
+   * @param [params.userId] - user id to attribute the change to
    */
-  public format({ tool, block, key, start, end, data }: Parameters<TextAPIInterface['format']>[0]): void {
+  public format({ tool, block, key, start, end, data, userId = this.#config.userId }: Parameters<TextAPIInterface['format']>[0]): void {
     this.#model.format(
-      this.#config.userId,
+      userId,
       block as BlockIndexOrId,
       createDataKey(key),
       createInlineToolName(tool),
@@ -104,10 +107,11 @@ export class TextAPI implements TextAPIInterface {
    * @param params.key - data key of the text node
    * @param params.start - range start
    * @param params.end - range end
+   * @param [params.userId] - user id to attribute the change to
    */
-  public unformat({ tool, block, key, start, end }: Parameters<TextAPIInterface['unformat']>[0]): void {
+  public unformat({ tool, block, key, start, end, userId = this.#config.userId }: Parameters<TextAPIInterface['unformat']>[0]): void {
     this.#model.unformat(
-      this.#config.userId,
+      userId,
       block as BlockIndexOrId,
       createDataKey(key),
       createInlineToolName(tool),

@@ -36,6 +36,8 @@ export interface BlocksAPI {
     replace?: boolean;
     /** Id of the inserted block */
     id?: string;
+    /** User id. Defaults to the current user id from the config */
+    userId?: string | number;
   }): void;
 
   /**
@@ -60,10 +62,13 @@ export interface BlocksAPI {
    * Removes Block by index or id, or current block if params are not passed
    * @param [params] - optional delete parameters
    * @param [params.block] - index or id of a block to delete
+   * @param [params.userId] - user id. Defaults to the current user id from the config
    */
   delete(params?: {
     /** Index or id of a block to delete */
     block?: number | string;
+    /** User id. Defaults to the current user id from the config */
+    userId?: string | number;
   }): void;
 
   /**
@@ -71,12 +76,15 @@ export interface BlocksAPI {
    * @param params - move parameters
    * @param params.toIndex - index where the block is moved to
    * @param [params.fromIndex] - block to move. Current block if not passed
+   * @param [params.userId] - user id. Defaults to the current user id from the config
    */
   move(params: {
     /** Index where the block is moved to */
     toIndex: number;
     /** Block to move. Current block if not passed */
     fromIndex?: number;
+    /** User id. Defaults to the current user id from the config */
+    userId?: string | number;
   }): void;
 
   /**
@@ -118,12 +126,15 @@ export interface BlocksAPI {
    * @param params - insertMany parameters
    * @param params.blocks - array of blocks to insert
    * @param [params.index] - index to insert blocks at. If undefined, inserts at the end
+   * @param [params.userId] - user id. Defaults to the current user id from the config
    */
   insertMany(params: {
     /** Array of blocks to insert */
     blocks: BlockNodeInit[];
     /** Index to insert blocks at. If undefined, inserts at the end */
     index?: number;
+    /** User id. Defaults to the current user id from the config */
+    userId?: string | number;
   }): void;
 
   /**
@@ -156,12 +167,15 @@ export interface BlocksAPI {
    * @param params - removeData parameters
    * @param params.block - index or id of the block
    * @param params.key - data key to remove
+   * @param [params.userId] - user id. Defaults to the current user id from the config
    */
   removeData(params: {
     /** Index or id of the block */
     block: number | string;
     /** Data key to remove */
     key: string;
+    /** User id. Defaults to the current user id from the config */
+    userId?: string | number;
   }): void;
 
   /**
@@ -170,6 +184,7 @@ export interface BlocksAPI {
    * @param params.block - index or id of the block
    * @param params.key - data key to create
    * @param [params.initialData] - optional initial data
+   * @param [params.userId] - user id. Defaults to the current user id from the config
    */
   createData<V = unknown>(params: {
     /** Index or id of the block */
@@ -178,6 +193,8 @@ export interface BlocksAPI {
     key: string;
     /** Optional initial data */
     initialData?: TextNodeSerialized | ValueSerialized<V>;
+    /** User id. Defaults to the current user id from the config */
+    userId?: string | number;
   }): void;
 
   /**
@@ -186,6 +203,7 @@ export interface BlocksAPI {
    * @param params.block - index or id of the block
    * @param params.key - data key to update
    * @param params.value - new value
+   * @param [params.userId] - user id. Defaults to the current user id from the config
    */
   updateValue<V = unknown>(params: {
     /** Index or id of the block */
@@ -194,6 +212,8 @@ export interface BlocksAPI {
     key: string;
     /** New value */
     value: V;
+    /** User id. Defaults to the current user id from the config */
+    userId?: string | number;
   }): void;
 
   /**

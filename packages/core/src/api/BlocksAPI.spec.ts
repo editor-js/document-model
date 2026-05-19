@@ -68,25 +68,31 @@ describe('BlocksAPI', () => {
     it('should pass explicit index to blocksManager.deleteBlock', () => {
       const api = new BlocksAPI(
         blocksManager,
-        { defaultBlock } as CoreConfigValidated,
+        {
+          defaultBlock,
+          userId: 'userId',
+        } as CoreConfigValidated,
         new EditorJSModel('userId', { identifier: 'docId' })
       );
 
       api.delete({ block: 2 });
 
-      expect(blocksManager.deleteBlock).toHaveBeenCalledWith(2);
+      expect(blocksManager.deleteBlock).toHaveBeenCalledWith(2, 'userId');
     });
 
     it('should pass undefined when index is omitted', () => {
       const api = new BlocksAPI(
         blocksManager,
-        { defaultBlock } as CoreConfigValidated,
+        {
+          defaultBlock,
+          userId: 'userId',
+        } as CoreConfigValidated,
         new EditorJSModel('userId', { identifier: 'docId' })
       );
 
       api.delete();
 
-      expect(blocksManager.deleteBlock).toHaveBeenCalledWith(undefined);
+      expect(blocksManager.deleteBlock).toHaveBeenCalledWith(undefined, 'userId');
     });
   });
 
@@ -94,14 +100,19 @@ describe('BlocksAPI', () => {
     it('should call blocksManager.move with toIndex and fromIndex', () => {
       const api = new BlocksAPI(
         blocksManager,
-        { defaultBlock } as CoreConfigValidated,
+        {
+          defaultBlock,
+          userId: 'userId',
+        } as CoreConfigValidated,
         new EditorJSModel('userId', { identifier: 'docId' })
       );
 
-      api.move({ toIndex: 3,
-        fromIndex: 1 });
+      api.move({
+        toIndex: 3,
+        fromIndex: 1,
+      });
 
-      expect(blocksManager.move).toHaveBeenCalledWith(3, 1);
+      expect(blocksManager.move).toHaveBeenCalledWith(3, 1, 'userId');
     });
   });
 
@@ -124,7 +135,10 @@ describe('BlocksAPI', () => {
     it('should pass blocks and index to blocksManager.insertMany', () => {
       const api = new BlocksAPI(
         blocksManager,
-        { defaultBlock } as CoreConfigValidated,
+        {
+          defaultBlock,
+          userId: 'userId',
+        } as CoreConfigValidated,
         new EditorJSModel('userId', { identifier: 'docId' })
       );
 
@@ -138,13 +152,16 @@ describe('BlocksAPI', () => {
         index: 4,
       });
 
-      expect(blocksManager.insertMany).toHaveBeenCalledWith(blocks, 4);
+      expect(blocksManager.insertMany).toHaveBeenCalledWith(blocks, 4, 'userId');
     });
 
     it('should pass undefined index to blocksManager.insertMany when omitted', () => {
       const api = new BlocksAPI(
         blocksManager,
-        { defaultBlock } as CoreConfigValidated,
+        {
+          defaultBlock,
+          userId: 'userId',
+        } as CoreConfigValidated,
         new EditorJSModel('userId', { identifier: 'docId' })
       );
 
@@ -155,7 +172,7 @@ describe('BlocksAPI', () => {
 
       api.insertMany({ blocks });
 
-      expect(blocksManager.insertMany).toHaveBeenCalledWith(blocks, undefined);
+      expect(blocksManager.insertMany).toHaveBeenCalledWith(blocks, undefined, 'userId');
     });
   });
 
