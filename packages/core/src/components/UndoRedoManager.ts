@@ -131,7 +131,7 @@ export class UndoRedoManager {
    * Flushes the current debounce group first so it is included in the step.
    */
   public undo(): void {
-    this.#flushBatch();
+    this.#putBatchToUndo();
 
     const events = this.#undoStack.pop();
 
@@ -154,7 +154,7 @@ export class UndoRedoManager {
    * Redoes the last undone group of events.
    */
   public redo(): void {
-    this.#flushBatch();
+    this.#putBatchToUndo();
 
     const events = this.#redoStack.pop();
 
@@ -268,7 +268,7 @@ export class UndoRedoManager {
     if (this.#canAddToBatch(detail)) {
       this.#batch!.push(detail);
     } else {
-      this.#flushBatch();
+      this.#putBatchToUndo();
       this.#batch = [detail];
     }
 
@@ -324,7 +324,7 @@ export class UndoRedoManager {
   /**
    * Moves the batch to the undo stack and cancels the debounce timer.
    */
-  #flushBatch(): void {
+  #putBatchToUndo(): void {
     clearTimeout(this.#debounceTimer);
 
     if (this.#batch !== null) {
@@ -339,6 +339,6 @@ export class UndoRedoManager {
    */
   #debounce(): void {
     clearTimeout(this.#debounceTimer);
-    this.#debounceTimer = setTimeout(() => this.#flushBatch(), DEBOUNCE_TIMEOUT);
+    this.#debounceTimer = setTimeout(() => this.#putBatchToUndo(), DEBOUNCE_TIMEOUT);
   }
 }

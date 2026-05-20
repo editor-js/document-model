@@ -45,7 +45,6 @@ export function createManager(config: CoreConfigValidated, model: EditorJSModel)
 
   const api: EditorAPI = {
     document: createMockDocumentAPI(model),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     blocks: {
       render: () => undefined,
     } as unknown as BlocksAPI,
