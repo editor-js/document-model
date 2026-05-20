@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import type {
-  BlockToolAdapter,
+  BlockToolAdapter, EditorAPI,
   EditorJSAdapterPlugin, EditorjsAdapterPluginConstructor,
   EditorjsAdapterPluginParams
 } from '@editorjs/sdk';
@@ -43,8 +43,9 @@ export class DOMAdapters implements EditorJSAdapterPlugin {
    * @param params.model - Model instance
    * @param params.eventBus - EventBus instance
    */
-  constructor({ config, model, eventBus }: EditorjsAdapterPluginParams) {
-    this.#iocContainer.bind<Required<CoreConfig>>(TOKENS.EditorConfig).toConstantValue(config as Required<CoreConfig>);
+  constructor({ config, model, eventBus, api }: EditorjsAdapterPluginParams) {
+    this.#iocContainer.bind<Required<CoreConfig>>(TOKENS.EditorConfig).toConstantValue(config);
+    this.#iocContainer.bind<EditorAPI>(TOKENS.EditorAPI).toConstantValue(api);
     this.#iocContainer.bind(EditorJSModel).toConstantValue(model);
     this.#iocContainer.bind(EventBus).toConstantValue(eventBus);
     this.#iocContainer

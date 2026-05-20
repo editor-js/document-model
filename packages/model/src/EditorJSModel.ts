@@ -194,6 +194,17 @@ export class EditorJSModel extends EventBus {
   }
 
   /**
+   * Resolves a BlockIndexOrId to a numeric block index.
+   * If a number is passed it is returned as-is.
+   * If a BlockId is passed the index is looked up via the O(1) id map.
+   * @param indexOrId - numeric index or block id
+   * @throws Error if the id does not exist in the document
+   */
+  public resolveBlockIndex(indexOrId: BlockIndexOrId): number {
+    return this.#document.resolveBlockIndex(indexOrId);
+  }
+
+  /**
    * Returns the serialized form of a single block without serializing the whole document.
    * @param blockIndexOrId - index or block id to look up
    */
@@ -420,6 +431,15 @@ export class EditorJSModel extends EventBus {
    */
   public getFragments(...parameters: Parameters<EditorDocument['getFragments']>): ReturnType<EditorDocument['getFragments']> {
     return this.#document.getFragments(...parameters);
+  }
+
+  /**
+   * Returns all text inputs content of a block by its index or id.
+   * Keys are dot-notation data keys; values are serialized text node content.
+   * @param parameters - arguments forwarded to EditorDocument.getBlockTextContent
+   */
+  public getBlockTextContent(...parameters: Parameters<EditorDocument['getBlockTextContent']>): ReturnType<EditorDocument['getBlockTextContent']> {
+    return this.#document.getBlockTextContent(...parameters);
   }
 
   /**
