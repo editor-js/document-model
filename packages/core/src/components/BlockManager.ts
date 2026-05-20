@@ -230,17 +230,17 @@ export class BlocksManager {
     const tool = this.#toolsManager.blockTools.get(toolName);
     const canSplit = tool?.options.canSplit === true;
 
-    const blockTextContent = Object.entries(
+    const blockInputs = Object.entries(
       this.#model.getBlockTextContent(blockIndex)
     );
 
-    const splitIndex = blockTextContent.findIndex(([key]) => key === dataKey);
+    const splitIndex = blockInputs.findIndex(([key]) => key === dataKey);
 
     if (splitIndex === -1) {
       throw new Error(`Data key "${dataKey}" not found in block content`);
     }
 
-    const [, splitInput] = blockTextContent[splitIndex];
+    const [, splitInput] = blockInputs[splitIndex];
 
     if (offset < 0 || offset > splitInput.value.length) {
       throw new RangeError(
@@ -253,7 +253,7 @@ export class BlocksManager {
      */
     const textAfter = splitInput.value.slice(offset);
     const fragmentsAfter = sliceFragments(splitInput.fragments, offset);
-    const entriesAfter = blockTextContent.slice(splitIndex + 1);
+    const entriesAfter = blockInputs.slice(splitIndex + 1);
 
     /**
      * If split happens at the beginning of the first input - just insert an empty block before
@@ -288,7 +288,7 @@ export class BlocksManager {
     /**
      * In case the split is at the end of the last input, just add a new block
      */
-    if (offset === splitInput.value.length && splitIndex === blockTextContent.length - 1) {
+    if (offset === splitInput.value.length && splitIndex === blockInputs.length - 1) {
       this.#model.addBlock(
         this.#config.userId,
         {
