@@ -9,6 +9,6 @@ export class RedoCoreEvent extends CoreEventBase<undefined> {
    * RedoCoreEvent constructor function
    */
   constructor() {
-    super(CoreEventType.Redo, undefined);
+    super(CoreEventType.Redo, undefined, { cancelable: true });
   }
 }

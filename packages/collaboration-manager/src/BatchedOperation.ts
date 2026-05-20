@@ -107,6 +107,7 @@ export class BatchedOperation<T extends OperationType = OperationType> extends O
    * Checks if operation can be added to the batch
    *
    * Only text operations with the same type (Insert/Delete) on the same block and data key could be added
+   * @todo delete operations are not being batched properly
    * @param op - operation to check
    */
   public canAdd(op: Operation): boolean {

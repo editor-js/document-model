@@ -23,6 +23,7 @@ import { BlocksManager } from './components/BlockManager.js';
 import { BlockRenderer } from './components/BlockRenderer.js';
 import { SelectionManager } from './components/SelectionManager.js';
 import { TOKENS } from './tokens.js';
+import { UndoRedoManager } from './components/UndoRedoManager.js';
 /**
  * If no holder is provided via config, the editor will be appended to the element with this id
  */
@@ -166,6 +167,7 @@ export default class Core {
       this.#iocContainer.get(SelectionManager);
       this.#iocContainer.get(BlocksManager);
       this.#iocContainer.get(BlockRenderer);
+      this.#iocContainer.get(UndoRedoManager);
 
       this.#model.initializeDocument({ blocks });
 
