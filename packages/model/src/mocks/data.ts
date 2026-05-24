@@ -1,12 +1,14 @@
 // Stryker disable all
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import type { EditorDocumentSerialized } from '../entities/EditorDocument/types/index.js';
+import { createBlockId } from '../entities/BlockNode/types/BlockId.js';
 
 export const data: EditorDocumentSerialized = {
   identifier: 'document',
   properties: {},
   blocks: [
     {
+      id: createBlockId('block-mock-1'),
       name: 'header',
       data: {
         text: {
@@ -17,6 +19,7 @@ export const data: EditorDocumentSerialized = {
       },
     },
     {
+      id: createBlockId('block-mock-2'),
       name: 'paragraph',
       data: {
         text: {
@@ -26,6 +29,7 @@ export const data: EditorDocumentSerialized = {
       },
     },
     {
+      id: createBlockId('block-mock-3'),
       name: 'header',
       data: {
         text: {
@@ -36,6 +40,7 @@ export const data: EditorDocumentSerialized = {
       },
     },
     {
+      id: createBlockId('block-mock-4'),
       name: 'list',
       data: {
         items: [
@@ -65,6 +70,7 @@ export const data: EditorDocumentSerialized = {
       },
     },
     {
+      id: createBlockId('block-mock-5'),
       name: 'header',
       data: {
         text: {
@@ -75,6 +81,7 @@ export const data: EditorDocumentSerialized = {
       },
     },
     {
+      id: createBlockId('block-mock-6'),
       name: 'paragraph',
       data: {
         text: {
@@ -90,6 +97,7 @@ export const data: EditorDocumentSerialized = {
       },
     },
     {
+      id: createBlockId('block-mock-7'),
       name: 'paragraph',
       data: {
         text: {
@@ -115,6 +123,7 @@ export const data: EditorDocumentSerialized = {
       },
     },
     {
+      id: createBlockId('block-mock-8'),
       name: 'header',
       data: {
         text: {
@@ -125,6 +134,7 @@ export const data: EditorDocumentSerialized = {
       },
     },
     {
+      id: createBlockId('block-mock-9'),
       name: 'paragraph',
       data: {
         text: {
@@ -134,6 +144,7 @@ export const data: EditorDocumentSerialized = {
       },
     },
     {
+      id: createBlockId('block-mock-10'),
       name: 'paragraph',
       data: {
         text: {
@@ -165,6 +176,7 @@ export const data: EditorDocumentSerialized = {
       },
     },
     {
+      id: createBlockId('block-mock-11'),
       name: 'paragraph',
       data: {
         text: {
@@ -174,10 +186,12 @@ export const data: EditorDocumentSerialized = {
       },
     },
     {
+      id: createBlockId('block-mock-12'),
       name: 'delimiter',
       data: {},
     },
     {
+      id: createBlockId('block-mock-13'),
       name: 'paragraph',
       data: {
         text: {
@@ -187,6 +201,7 @@ export const data: EditorDocumentSerialized = {
       },
     },
     {
+      id: createBlockId('block-mock-14'),
       name: 'image',
       data: {
         url: 'assets/codex2x.png',

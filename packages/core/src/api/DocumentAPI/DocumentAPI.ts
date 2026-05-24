@@ -1,14 +1,14 @@
 import 'reflect-metadata';
-import { Service } from 'typedi';
 
 import { type EditorDocumentSerialized, EditorJSModel } from '@editorjs/model';
 import { DocumentAPI as DocumentApiInterface } from '@editorjs/sdk';
+import { injectable } from 'inversify';
 
 /**
  * Document API
  *  - provides access to document serialized data
  */
-@Service()
+@injectable()
 export class DocumentAPI implements DocumentApiInterface {
   /**
    * Editor document model instance

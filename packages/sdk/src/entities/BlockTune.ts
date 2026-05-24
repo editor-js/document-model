@@ -4,7 +4,17 @@ import type {
   BlockTune as BlockTuneV2
 } from '@editorjs/editorjs';
 import type { ToolType } from '@/entities/EntityType.js';
-import type { BaseToolConstructor } from '@/entities/BaseTool';
+import type { BaseToolConstructor, BaseToolOptions } from '@/entities/BaseTool';
+
+/**
+ * Options available on **Block Tunes** (`static options` or `use()` overrides).
+ * @template Config - Shape of the plugin-specific {@link BaseToolOptions.config} object.
+ */
+export interface BlockTuneOptions<Config extends ToolConfig = ToolConfig>
+  extends BaseToolOptions<Config> {
+  /** Any additional custom options exposed by the tune developer. */
+  [key: string]: unknown;
+}
 
 /**
  * BlockTune data type
@@ -58,9 +68,9 @@ export type BlockTune<
 > = Omit<BlockTuneV2, 'save'>;
 
 /**
- * Block Tool constructor class
+ * Block Tune constructor class
  */
-export interface BlockTuneConstructor extends BaseToolConstructor {
+export interface BlockTuneConstructor extends BaseToolConstructor<ToolConfig, BlockTuneOptions> {
   new(options: BlockTuneConstructorOptions): BlockTune;
 
   /**

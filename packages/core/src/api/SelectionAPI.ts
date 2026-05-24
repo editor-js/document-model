@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { Service } from 'typedi';
+import { injectable } from 'inversify';
 
 import { SelectionManager } from '../components/SelectionManager.js';
 import { createInlineToolName } from '@editorjs/model';
@@ -10,7 +10,7 @@ import { SelectionAPI as SelectionApiInterface } from '@editorjs/sdk';
  * Selection API class
  * - provides methods to work with selection
  */
-@Service()
+@injectable()
 export class SelectionAPI implements SelectionApiInterface {
   #selectionManager: SelectionManager;
 

@@ -1,7 +1,7 @@
 import { EventAction } from '../../EventBus/index.js';
 import { Index } from '../Index/index.js';
 import { IndexBuilder } from '../Index/IndexBuilder.js';
-import { BlockNode, createBlockToolName, createDataKey } from './index.js';
+import { BlockNode, createBlockToolName, createDataKey, createBlockId } from './index.js';
 import { NonExistingKeyError } from './errors/NonExistingKeyError.js';
 
 import type { BlockTuneName, BlockTuneSerialized } from '../BlockTune/index.js';
@@ -10,7 +10,7 @@ import { ValueNode } from '../ValueNode/index.js';
 
 import type { EditorDocument } from '../EditorDocument/index.js';
 import type { ValueNodeConstructorParameters } from '../ValueNode/index.js';
-import type { InlineFragment, InlineToolData, InlineToolName } from '../inline-fragments/index.js';
+import type { InlineFragment, InlineToolData, InlineToolName, TextNodeSerialized } from '../inline-fragments/index.js';
 import { TextNode } from '../inline-fragments/index.js';
 import type { BlockNodeData, BlockNodeDataSerialized } from './types/index.js';
 import { BlockChildType } from './types/index.js';
@@ -18,6 +18,15 @@ import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
 import { TextAddedEvent, TuneModifiedEvent, ValueModifiedEvent } from '../../EventBus/events/index.js';
 import { EventType } from '../../EventBus/types/EventType.js';
 import { createBlockTuneName } from '../BlockTune/index.js';
+import { get } from '../../utils/keypath.js';
+import { AlreadyExistingKeyError } from './errors/AlreadyExistingKeyError.js';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- needed to spy on conditional-typed getter with @jest/globals strict types
+const ValueNodeProto = ValueNode.prototype as unknown as {
+  serialized: unknown;
+  value: unknown;
+  update: () => void;
+};
 
 jest.mock('../BlockTune');
 
@@ -57,6 +66,32 @@ describe('BlockNode', () => {
     it('should set null as parent by default', () => {
       expect(node.parent)
         .toBeNull();
+    });
+  });
+
+  describe('.id', () => {
+    it('should use the provided id', () => {
+      const expectedId = createBlockId('my-custom-id');
+      const node = new BlockNode({
+        name: createBlockToolName('paragraph'),
+        id: expectedId,
+      });
+
+      expect(node.id).toBe(expectedId);
+    });
+
+    it('should auto-generate an id when none is provided', () => {
+      const node = new BlockNode({ name: createBlockToolName('paragraph') });
+
+      expect(node.id).toBeDefined();
+      expect(typeof node.id).toBe('string');
+    });
+
+    it('should generate different ids for different instances', () => {
+      const node1 = new BlockNode({ name: createBlockToolName('paragraph') });
+      const node2 = new BlockNode({ name: createBlockToolName('paragraph') });
+
+      expect(node1.id).not.toBe(node2.id);
     });
   });
 
@@ -117,7 +152,7 @@ describe('BlockNode', () => {
           [createDataKey(`data-key-${index}c${index}d`)]: index,
         }), {});
 
-      const spy = jest.spyOn(ValueNode.prototype, 'serialized', 'get');
+      const spy = jest.spyOn(ValueNodeProto, 'serialized', 'get');
 
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
@@ -164,7 +199,7 @@ describe('BlockNode', () => {
     });
 
     it('should call .serialized getter of ValueNodes in an array', () => {
-      const spy = jest.spyOn(ValueNode.prototype, 'serialized', 'get');
+      const spy = jest.spyOn(ValueNodeProto, 'serialized', 'get');
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
         data: {
@@ -202,7 +237,7 @@ describe('BlockNode', () => {
     });
 
     it('should call .serialized getter of ValueNodes in a nested object', () => {
-      const spy = jest.spyOn(ValueNode.prototype, 'serialized', 'get');
+      const spy = jest.spyOn(ValueNodeProto, 'serialized', 'get');
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
         data: {
@@ -244,7 +279,7 @@ describe('BlockNode', () => {
     });
 
     it('should call .serialized getter of ValueNodes in an array inside an object', () => {
-      const spy = jest.spyOn(ValueNode.prototype, 'serialized', 'get');
+      const spy = jest.spyOn(ValueNodeProto, 'serialized', 'get');
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
         data: {
@@ -286,7 +321,7 @@ describe('BlockNode', () => {
     });
 
     it('should call .serialized getter of ValueNodes in an object inside an array', () => {
-      const spy = jest.spyOn(ValueNode.prototype, 'serialized', 'get');
+      const spy = jest.spyOn(ValueNodeProto, 'serialized', 'get');
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
         data: {
@@ -326,7 +361,7 @@ describe('BlockNode', () => {
     });
 
     it('should call .serialized getter of ValueNodes in a nested array', () => {
-      const spy = jest.spyOn(ValueNode.prototype, 'serialized', 'get');
+      const spy = jest.spyOn(ValueNodeProto, 'serialized', 'get');
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
         data: {
@@ -364,7 +399,7 @@ describe('BlockNode', () => {
     });
 
     it('should call .serialized getter of object marked as value node', () => {
-      const spy = jest.spyOn(ValueNode.prototype, 'serialized', 'get');
+      const spy = jest.spyOn(ValueNodeProto, 'serialized', 'get');
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
         data: {
@@ -467,7 +502,7 @@ describe('BlockNode', () => {
       expect(blockNode.data[key]).toBeInstanceOf(TextNode);
     });
 
-    it('should emit DataNodeAddedEvent', () => {
+    it('should emit DataNodeAddedEvent', async () => {
       const blockNodeName = createBlockToolName('paragraph');
 
       const blockNode = new BlockNode({
@@ -488,6 +523,10 @@ describe('BlockNode', () => {
 
       blockNode.createDataNode(key, value);
 
+      // createDataNode dispatches the event inside a queueMicrotask, flush
+      // microtasks before asserting that the listener was called.
+      await Promise.resolve();
+
       expect(listener).toBeCalledWith(expect.objectContaining({
         detail: {
           action: EventAction.Added,
@@ -497,29 +536,219 @@ describe('BlockNode', () => {
       }));
     });
 
-    it('should not change the node if key already exists', () => {
+    it('should throw an error if key already exists', () => {
       const key = createDataKey('url');
       const value = 'https://editorjs.io';
       const blockNode = createBlockNodeWithData({ [key]: value });
 
       const currentNode = blockNode.data[key];
 
-      blockNode.createDataNode(key, 'another value');
-
-      expect(blockNode.data[key]).toStrictEqual(currentNode);
+      expect(() => {
+        blockNode.createDataNode(key, 'another value');
+      }).toThrowError(AlreadyExistingKeyError);
     });
 
-    it('should not emit DataNodeAddedEvent if key already exists', () => {
-      const key = createDataKey('url');
+    it('should create value node at a nested path within an object', () => {
+      const blockNode = createBlockNodeWithData({});
+      const key = createDataKey('meta.url');
       const value = 'https://editorjs.io';
-      const blockNode = createBlockNodeWithData({ [key]: value });
+
+      blockNode.createDataNode(key, value);
+
+      expect(get(blockNode.data, 'meta.url')).toBeInstanceOf(ValueNode);
+    });
+
+    it('should create text node at a nested path within an object', () => {
+      const blockNode = createBlockNodeWithData({});
+      const key = createDataKey('meta.title');
+      const value = { [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+        value: 'hello',
+        fragments: [] };
+
+      blockNode.createDataNode(key, value);
+
+      expect(get(blockNode.data, 'meta.title')).toBeInstanceOf(TextNode);
+    });
+
+    it('should create value node at an array index path', () => {
+      const blockNode = createBlockNodeWithData({});
+      const key = createDataKey('items.0');
+      const value = 'first item';
+
+      blockNode.createDataNode(key, value);
+
+      expect(get(blockNode.data, 'items.0')).toBeInstanceOf(ValueNode);
+    });
+
+    it('should create value node in a nested object inside an array', () => {
+      const blockNode = createBlockNodeWithData({});
+      const key = createDataKey('items.0.content');
+      const value = 'content text';
+
+      blockNode.createDataNode(key, value);
+
+      expect(get(blockNode.data, 'items.0.content')).toBeInstanceOf(ValueNode);
+    });
+
+    it('should create text node in a nested object inside an array', () => {
+      const blockNode = createBlockNodeWithData({});
+      const key = createDataKey('items.0.content');
+      const value = {
+        value: 'text',
+        fragments: [],
+        $t: 't',
+      };
+
+      blockNode.createDataNode(key, value);
+
+      expect(get(blockNode.data, 'items.0.content')).toBeInstanceOf(TextNode);
+    });
+
+    it('should throw an error if a nested key already exists', () => {
+      const blockNode = createBlockNodeWithData({ meta: { url: 'editorjs.io' } });
+      const key = createDataKey('meta.url');
+      const existingNode = get(blockNode.data, 'meta.url');
+
+      expect(() => blockNode.createDataNode(key, 'another value'))
+        .toThrowError(AlreadyExistingKeyError);
+
+      expect(get(blockNode.data, 'meta.url')).toStrictEqual(existingNode);
+    });
+
+    it('should emit DataNodeAddedEvent with nested dataKey', async () => {
+      const blockNode = createBlockNodeWithData({});
+      const key = createDataKey('meta.url');
+      const value = 'https://editorjs.io';
       const listener = jest.fn();
 
       blockNode.addEventListener(EventType.Changed, listener);
 
       blockNode.createDataNode(key, value);
 
-      expect(listener).not.toHaveBeenCalled();
+      await Promise.resolve();
+
+      expect(listener).toBeCalledWith(expect.objectContaining({
+        detail: expect.objectContaining({
+          action: EventAction.Added,
+          index: expect.objectContaining({ dataKey: key }),
+        }),
+      }));
+    });
+
+    it('should splice a new node into an existing array at the given index', () => {
+      const blockNode = createBlockNodeWithData({
+        items: [
+          { [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+            value: 'first',
+            fragments: [] },
+          { [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+            value: 'third',
+            fragments: [] },
+        ],
+      });
+
+      blockNode.createDataNode(createDataKey('items.1'), {
+        [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+        value: 'second',
+        fragments: [],
+      });
+
+      const items = (blockNode.data as Record<string, unknown[]>)['items'];
+      const expectedLength = 3;
+
+      expect(items).toHaveLength(expectedLength);
+      expect(items[1]).toBeInstanceOf(TextNode);
+    });
+
+    it('should shift existing nodes right when splicing into an array', () => {
+      const blockNode = createBlockNodeWithData({
+        items: [
+          { [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+            value: 'second',
+            fragments: [] },
+        ],
+      });
+
+      const originalNode = (blockNode.data as Record<string, unknown[]>)['items'][0];
+
+      blockNode.createDataNode(createDataKey('items.0'), {
+        [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+        value: 'first',
+        fragments: [],
+      });
+
+      const items = (blockNode.data as Record<string, unknown[]>)['items'];
+
+      expect(items).toHaveLength(2);
+      expect(items[1]).toStrictEqual(originalNode);
+    });
+  });
+
+  describe('.getDataNode()', () => {
+    it('should return undefined if the key does not exist', () => {
+      const blockNode = createBlockNodeWithData({});
+      const key = createDataKey('nonexistent');
+
+      const result = blockNode.getDataNode(key);
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should return undefined if the nested key does not exist', () => {
+      const blockNode = createBlockNodeWithData({});
+      const result = blockNode.getDataNode(createDataKey('meta.nonexistent'));
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should return undefined if the array index does not exist', () => {
+      const blockNode = createBlockNodeWithData({});
+      const result = blockNode.getDataNode(createDataKey('meta.0'));
+
+      expect(result).toBeUndefined();
+    });
+
+    it('should return serialized ValueNode for a value key', () => {
+      const key = createDataKey('url');
+      const value = 'https://editorjs.io';
+      const blockNode = createBlockNodeWithData({ [key]: value });
+
+      jest.spyOn(ValueNodeProto, 'serialized', 'get').mockReturnValueOnce(value);
+
+      const result = blockNode.getDataNode(key);
+
+      expect(result).toBe(value);
+    });
+
+    it('should return serialized TextNode for a text key', () => {
+      const key = createDataKey('text');
+      const value = {
+        $t: 't',
+        value: 'some text',
+      };
+      const blockNode = createBlockNodeWithData({ [key]: value });
+
+      const serialized = { $t: 't' as const,
+        value: 'some text',
+        fragments: [] } as unknown as TextNodeSerialized;
+
+      jest.spyOn(TextNode.prototype, 'serialized', 'get').mockReturnValueOnce(serialized);
+
+      const result = blockNode.getDataNode(key);
+
+      expect(result).toBe(serialized);
+    });
+
+    it('should throw InvalidNodeTypeError if the key holds a nested object (not a leaf node)', () => {
+      const blockNode = createBlockNodeWithData({
+        nested: {
+          value: 'some-value',
+        },
+      });
+      const key = createDataKey('nested');
+
+      expect(() => blockNode.getDataNode(key))
+        .toThrow(`BlockNode: data with key "${key}" is not a text or a value`);
     });
   });
 
@@ -539,7 +768,7 @@ describe('BlockNode', () => {
       const blockNode = createBlockNodeWithData({ [key]: value });
       const listener = jest.fn();
 
-      jest.spyOn(ValueNode.prototype, 'serialized', 'get').mockReturnValueOnce(value);
+      jest.spyOn(ValueNodeProto, 'serialized', 'get').mockReturnValueOnce(value);
 
       blockNode.addEventListener(EventType.Changed, listener);
 
@@ -547,7 +776,7 @@ describe('BlockNode', () => {
 
       expect(listener).toBeCalledWith(expect.objectContaining({
         detail: {
-          action: EventAction.Added,
+          action: EventAction.Removed,
           index: expect.objectContaining({ dataKey: key }),
           data: value,
         },
@@ -562,6 +791,62 @@ describe('BlockNode', () => {
       blockNode.addEventListener(EventType.Changed, listener);
 
       blockNode.removeDataNode(key);
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    it('should remove data at a nested object path', () => {
+      const blockNode = createBlockNodeWithData({ meta: { url: 'editorjs.io' } });
+
+      blockNode.removeDataNode(createDataKey('meta.url'));
+
+      expect(get(blockNode.data, 'meta.url')).toBeUndefined();
+    });
+
+    it('should not remove sibling properties when removing a nested key', () => {
+      const blockNode = createBlockNodeWithData({ meta: { url: 'editorjs.io',
+        title: 'Editor.js' } });
+
+      blockNode.removeDataNode(createDataKey('meta.url'));
+
+      expect(get(blockNode.data, 'meta.title')).toBeDefined();
+    });
+
+    it('should remove a node at an array index path', () => {
+      const blockNode = createBlockNodeWithData({ items: ['first', 'second'] });
+
+      blockNode.removeDataNode(createDataKey('items.0'));
+
+      // After splice, 'second' shifts to index 0
+      expect((blockNode.data as Record<string, unknown[]>)['items']).toHaveLength(1);
+    });
+
+    it('should emit DataNodeRemovedEvent with a nested dataKey', () => {
+      const blockNode = createBlockNodeWithData({ meta: { url: 'editorjs.io' } });
+      const key = createDataKey('meta.url');
+      const listener = jest.fn();
+
+      jest.spyOn(ValueNodeProto, 'serialized', 'get').mockReturnValueOnce('editorjs.io');
+
+      blockNode.addEventListener(EventType.Changed, listener);
+
+      blockNode.removeDataNode(key);
+
+      expect(listener).toBeCalledWith(expect.objectContaining({
+        detail: expect.objectContaining({
+          action: EventAction.Removed,
+          index: expect.objectContaining({ dataKey: key }),
+        }),
+      }));
+    });
+
+    it('should not emit DataNodeRemovedEvent if nested key doesnt exist', () => {
+      const blockNode = createBlockNodeWithData({ meta: {} });
+      const listener = jest.fn();
+
+      blockNode.addEventListener(EventType.Changed, listener);
+
+      blockNode.removeDataNode(createDataKey('meta.nonexistent'));
 
       expect(listener).not.toHaveBeenCalled();
     });
@@ -699,6 +984,30 @@ describe('BlockNode', () => {
       blockNode.updateValue(dataKey, value);
 
       expect(blockNode.data[dataKey]).toBeInstanceOf(ValueNode);
+    });
+
+    it('should create new ValueNode at a nested path if the node does not exist', () => {
+      const blockNode = new BlockNode({
+        name: createBlockToolName('paragraph'),
+        data: {},
+        parent: {} as EditorDocument,
+      });
+
+      blockNode.updateValue(createDataKey('meta.url'), 'https://editorjs.io');
+
+      expect(get(blockNode.data, 'meta.url')).toBeInstanceOf(ValueNode);
+    });
+
+    it('should create new ValueNode inside an array if the node does not exist', () => {
+      const blockNode = new BlockNode({
+        name: createBlockToolName('paragraph'),
+        data: {},
+        parent: {} as EditorDocument,
+      });
+
+      blockNode.updateValue(createDataKey('items.0'), 'first item');
+
+      expect(get(blockNode.data, 'items.0')).toBeInstanceOf(ValueNode);
     });
 
     it('should throw an error if the ValueNode with the passed dataKey is not a ValueNode', () => {
@@ -846,6 +1155,22 @@ describe('BlockNode', () => {
       node.insertText(key, text);
 
       expect(node.data[key]).toBeInstanceOf(TextNode);
+    });
+
+    it('should create new TextNode at a nested path if the node does not exist', () => {
+      const node = createBlockNodeWithData({});
+
+      node.insertText(createDataKey('meta.title'), text);
+
+      expect(get(node.data, 'meta.title')).toBeInstanceOf(TextNode);
+    });
+
+    it('should create new TextNode inside an array if the node does not exist', () => {
+      const node = createBlockNodeWithData({});
+
+      node.insertText(createDataKey('items.0'), text);
+
+      expect(get(node.data, 'items.0')).toBeInstanceOf(TextNode);
     });
 
     it('should throw an error if node is not a TextNode', () => {
@@ -1438,6 +1763,8 @@ describe('BlockNode', () => {
           tuneKey: key,
           tuneName: tuneName,
         }));
+      expect(event)
+        .toHaveProperty('detail.userId', 'user');
     });
 
     it('should not emit Changed event if ValueNode dispatched event that is not a BaseDocumentEvent', () => {

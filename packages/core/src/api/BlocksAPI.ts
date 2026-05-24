@@ -1,16 +1,17 @@
 import 'reflect-metadata';
-import { Inject, Service } from 'typedi';
+import { inject, injectable } from 'inversify';
+import { TOKENS } from '../tokens.js';
 import { BlocksManager } from '../components/BlockManager.js';
 import { BlockToolData } from '@editorjs/editorjs';
 import { CoreConfigValidated } from '@editorjs/sdk';
 import { BlocksAPI as BlocksApiInterface } from '@editorjs/sdk';
-import { type BlockNodeSerialized, EditorDocumentSerialized } from '@editorjs/model';
+import { type BlockNodeInit, type EditorDocumentSerialized } from '@editorjs/model';
 
 /**
  * Blocks API
  *  - provides methods to work with blocks
  */
-@Service()
+@injectable()
 export class BlocksAPI implements BlocksApiInterface {
   /**
    * BlocksManager instance to work with blocks
@@ -29,7 +30,7 @@ export class BlocksAPI implements BlocksApiInterface {
    */
   constructor(
     blocksManager: BlocksManager,
-    @Inject('EditorConfig') config: CoreConfigValidated
+    @inject(TOKENS.EditorConfig) config: CoreConfigValidated
   ) {
     this.#blocksManager = blocksManager;
     this.#config = config;
@@ -79,7 +80,7 @@ export class BlocksAPI implements BlocksApiInterface {
    * @param blocks - array of blocks to insert
    * @param [index] - index to insert blocks at. If undefined, inserts at the end
    */
-  public insertMany(blocks: BlockNodeSerialized[], index?: number): void {
+  public insertMany(blocks: BlockNodeInit[], index?: number): void {
     return this.#blocksManager.insertMany(blocks, index);
   }
 

@@ -2,6 +2,7 @@ import { IndexBuilder } from '../Index/IndexBuilder.js';
 import { EditorDocument } from './index.js';
 import type { BlockToolName, DataKey } from '../BlockNode/index.js';
 import { BlockNode } from '../BlockNode/index.js';
+import { createBlockId } from '../BlockNode/types/BlockId.js';
 import type { BlockTuneName } from '../BlockTune/index.js';
 import type { InlineToolData, InlineToolName } from '../inline-fragments/index.js';
 import { EventType } from '../../EventBus/types/EventType.js';
@@ -13,6 +14,7 @@ import {
 } from '../../EventBus/events/index.js';
 import { EventAction } from '../../EventBus/types/EventAction.js';
 import { describe, jest } from '@jest/globals';
+import { BlockAlreadyExistsError } from './errors/BlockAlreadyExistsError.js';
 
 jest.mock('../BlockNode');
 
@@ -48,6 +50,7 @@ function createEditorDocumentWithSomeBlocks(): EditorDocument {
 describe('EditorDocument', () => {
   afterEach(() => {
     jest.clearAllMocks();
+    jest.restoreAllMocks();
   });
 
   describe('.initialize()', () => {
@@ -319,10 +322,23 @@ describe('EditorDocument', () => {
         .toThrowError('Index out of bounds');
     });
 
+    it('should throw BlockAlreadyExistsError when a block with the same id is added twice', () => {
+      const document = new EditorDocument({ identifier: 'document' });
+      const duplicateId = createBlockId('duplicate');
+
+      jest.spyOn(BlockNode.prototype, 'id', 'get').mockReturnValue(duplicateId);
+
+      document.addBlock({ name: 'header' as BlockToolName });
+
+      expect(() => document.addBlock({ name: 'paragraph' as BlockToolName }))
+        .toThrow(BlockAlreadyExistsError);
+    });
+
     it('should emit BlockAddedEvent with block node data in details and block index', () => {
       const document = createEditorDocumentWithSomeBlocks();
       const index = 1;
       const blockData = {
+        id: createBlockId('test-block'),
         name: 'header-1a2b' as BlockToolName,
         data: {
           level: 1,
@@ -420,6 +436,7 @@ describe('EditorDocument', () => {
       const index = 1;
 
       const blockData = {
+        id: createBlockId('test-block'),
         name: 'header' as BlockToolName,
         data: {
           level: 1,
@@ -490,6 +507,57 @@ describe('EditorDocument', () => {
       // Assert
       expect(action)
         .toThrowError('Index out of bounds');
+    });
+  });
+
+  describe('.getBlockById()', () => {
+    it('should return the BlockNode with the given id', () => {
+      const document = new EditorDocument({ identifier: 'document' });
+      const expectedId = createBlockId('find-me');
+
+      jest.spyOn(BlockNode.prototype, 'id', 'get').mockReturnValue(expectedId);
+
+      document.addBlock({ name: 'header' as BlockToolName });
+
+      const found = document.getBlockById(expectedId);
+
+      expect(found).toBeInstanceOf(BlockNode);
+      expect(found!.id).toBe(expectedId);
+    });
+
+    it('should return undefined when id does not exist', () => {
+      const document = createEditorDocumentWithSomeBlocks();
+
+      const result = document.getBlockById(createBlockId('non-existent'));
+
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('.getBlockIndexById()', () => {
+    it('should return the correct index for an existing block id', () => {
+      const document = new EditorDocument({ identifier: 'document' });
+      const expectedId = createBlockId('my-block');
+
+      jest.spyOn(BlockNode.prototype, 'id', 'get').mockReturnValue(expectedId);
+
+      document.addBlock({ name: 'header' as BlockToolName });
+
+      expect(document.getBlockIndexById(expectedId)).toBe(0);
+    });
+
+    it('should return -1 for a non-existent block id', () => {
+      const document = createEditorDocumentWithSomeBlocks();
+
+      expect(document.getBlockIndexById(createBlockId('does-not-exist'))).toBe(-1);
+    });
+
+    it('should throw an error when a string id is passed to a mutating method and the id does not exist', () => {
+      const document = createEditorDocumentWithSomeBlocks();
+      const nonExistentId = createBlockId('ghost');
+
+      expect(() => document.removeBlock(nonExistentId))
+        .toThrowError(`Block with id "${nonExistentId}" not found`);
     });
   });
 
@@ -701,6 +769,112 @@ describe('EditorDocument', () => {
       const expectedValue = 'new value';
 
       const action = (): void => document.createDataNode(blockIndexOutOfBound, dataKey, expectedValue);
+
+      expect(action)
+        .toThrowError('Index out of bounds');
+    });
+  });
+
+  describe('.getDataNode()', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should call .getDataNode() method of the BlockNode at the specific index', () => {
+      const blocksData = [
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+      ];
+      const document = new EditorDocument({
+        identifier: 'document',
+      });
+
+      document.initialize({ blocks: blocksData });
+
+      blocksData.forEach((_, i) => {
+        const blockNode = document.getBlock(i);
+
+        jest
+          .spyOn(blockNode, 'getDataNode')
+          .mockImplementation(() => undefined);
+      });
+
+      const blockIndexToQuery = 1;
+      const dataKey = 'data-key-1a2b';
+
+      document.getDataNode(blockIndexToQuery, dataKey);
+
+      expect(document.getBlock(blockIndexToQuery).getDataNode)
+        .toHaveBeenCalledWith(dataKey);
+    });
+
+    it('should not call .getDataNode() method of other BlockNodes', () => {
+      const blocksData = [
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+        {
+          name: 'header' as BlockToolName,
+          data: {},
+        },
+      ];
+      const document = new EditorDocument({
+        identifier: 'document',
+      });
+
+      document.initialize({ blocks: blocksData });
+
+      const blockNodes = blocksData.map((_, i) => {
+        const blockNode = document.getBlock(i);
+
+        jest
+          .spyOn(blockNode, 'getDataNode')
+          .mockImplementation(() => undefined);
+
+        return blockNode;
+      });
+
+      const blockIndexToQuery = 1;
+      const dataKey = 'data-key-1a2b';
+
+      document.getDataNode(blockIndexToQuery, dataKey);
+
+      blockNodes.forEach((blockNode, index) => {
+        if (index === blockIndexToQuery) {
+          return;
+        }
+
+        expect(blockNode.getDataNode)
+          .not
+          .toHaveBeenCalled();
+      });
+    });
+
+    it('should throw an error if the index is out of bounds', () => {
+      const document = new EditorDocument({
+        identifier: 'document',
+      });
+      const blockIndexOutOfBound = document.length + 1;
+      const dataKey = 'data-key-1a2b';
+
+      const action = (): void => {
+        document.getDataNode(blockIndexOutOfBound, dataKey);
+      };
 
       expect(action)
         .toThrowError('Index out of bounds');

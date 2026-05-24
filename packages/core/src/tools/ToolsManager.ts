@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { isFunction, isObject, PromiseQueue } from '@editorjs/helpers';
-import { Inject, Service } from 'typedi';
+import { inject, injectable } from 'inversify';
+import { TOKENS } from '../tokens.js';
 import { type ToolSettings, ToolsFactory } from './ToolsFactory.js';
 import type {
   EditorConfig
@@ -13,14 +14,15 @@ import {
   ToolFacadeClass,
   ToolsCollection,
   EventBus,
-  ToolConstructable
+  type ToolConstructable,
+  type ToolStaticOptions
 } from '@editorjs/sdk';
 
 /**
  * Works with tools
  * @todo - validate tools configurations
  */
-@Service()
+@injectable()
 export default class ToolsManager {
   /**
    * ToolsFactory instance
@@ -89,7 +91,7 @@ export default class ToolsManager {
    * @param eventBus - EventBus instance to exchange events between components
    */
   constructor(
-    @Inject('EditorConfig') editorConfig: EditorConfig,
+    @inject(TOKENS.EditorConfig) editorConfig: EditorConfig,
     eventBus: EventBus
   ) {
     this.#config = this.#prepareConfig(editorConfig.tools ?? {});
@@ -104,7 +106,7 @@ export default class ToolsManager {
    * Calls tools prepare method if it exists and adds tools to relevant collection (available or unavailable tools)
    * @param tools - tools to prepare and their settings
    */
-  public async prepareTools(tools: [ToolConstructable, ToolSettings][]): Promise<void> {
+  public async prepareTools(tools: [ToolConstructable, ToolStaticOptions | undefined][]): Promise<void> {
     const promiseQueue = new PromiseQueue();
 
     const setToAvailableToolsCollection = (toolName: string, tool: ToolFacadeClass): void => {

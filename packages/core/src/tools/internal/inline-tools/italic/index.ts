@@ -19,12 +19,19 @@ export class ItalicInlineTool implements InlineTool {
    */
   public static type = ToolType.Inline as const;
 
-  public static title = 'Italic';
+  /**
+   * Tool name used to identify the tool across the editor.
+   */
+  public static name = 'italic';
 
   /**
    * Default options (merged with second argument of `use(ItalicInlineTool, options)`).
    */
   public static readonly options = {
+    /**
+     * Tool title shown in the inline toolbar
+     */
+    title: 'Italic',
     /**
      * Shortcuts plugin options
      */

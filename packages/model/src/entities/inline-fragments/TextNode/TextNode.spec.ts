@@ -2,10 +2,30 @@ import type { InlineToolName } from '../FormattingInlineNode/index.js';
 import type { InlineFragment } from '../InlineNode/index.js';
 import { TextNode } from './index.js';
 import { ParentInlineNode } from '../ParentInlineNode/index.js';
+import { BlockChildType } from '../../BlockNode/types/index.js';
+import { NODE_TYPE_HIDDEN_PROP } from '../../BlockNode/consts.js';
 
 jest.mock('../ParentInlineNode');
 
 describe('TextNode', () => {
+  describe('.serialized', () => {
+    it('should add NODE_TYPE_HIDDEN_PROP with BlockChildType.Text to the parent serialized output', () => {
+      const superSerialized = {
+        value: 'hello',
+        fragments: [],
+      };
+
+      jest.spyOn(ParentInlineNode.prototype, 'serialized', 'get').mockReturnValueOnce(superSerialized);
+
+      const node = new TextNode();
+      const result = node.serialized;
+
+      expect(result[NODE_TYPE_HIDDEN_PROP]).toBe(BlockChildType.Text);
+      expect(result.value).toBe('hello');
+      expect(result.fragments).toEqual([]);
+    });
+  });
+
   describe('.getFragments()', () => {
     it('should return all fragments for the specific range', () => {
       const boldFragmentStart = 0;
