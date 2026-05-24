@@ -363,6 +363,34 @@ export class BlocksManager {
   }
 
   /**
+   * Converts a block to a new type by exporting its text content and importing it into the new tool.
+   * Both the source and target tools must define conversionConfig.
+   * @param blockId - id or index of the block to convert
+   * @param newType - block tool name to convert to
+   * @param [userId] - user id to attribute the change to
+   * @param [dataOverrides] - optional data fields to merge on top of the converted data
+   */
+  public convertBlock(blockId: string | number, newType: string, userId: string | number = this.#config.userId, dataOverrides?: BlockToolData): void {
+    const blockIndex = this.#model.resolveBlockIndex(blockId as BlockId);
+
+    const block = this.#model.getBlockSerialized(blockIndex);
+
+    const sourceTool = this.#toolsManager.blockTools.get(block.name)!;
+    const targetTool = this.#toolsManager.blockTools.get(newType)!;
+
+    const text = sourceTool.exportTextContent(block.data);
+    const newData = targetTool.importTextContent(text, []);
+    const finalData = dataOverrides !== undefined
+      ? { ...newData,
+          ...dataOverrides }
+      : newData;
+
+    this.#model.removeBlock(userId, blockIndex);
+    this.#model.addBlock(userId, { name: newType,
+      data: finalData }, blockIndex);
+  }
+
+  /**
    * Returns block index where user caret is placed
    */
   #getCurrentBlockIndex(): number | undefined {

@@ -328,6 +328,99 @@ describe('BlocksManager (unit, mocked deps)', () => {
     });
   });
 
+  describe('.convertBlock()', () => {
+    beforeEach(() => {
+      model.resolveBlockIndex = jest.fn(() => 0);
+      model.getBlockSerialized = jest.fn(() => ({
+        name: 'header',
+        id: 'b1',
+        data: { text: { value: 'Hello',
+          fragments: [] } },
+      }));
+    });
+
+    it('exports text from source, imports into target, and replaces block at the same index', () => {
+      const sourceTool = { exportTextContent: jest.fn(() => 'Hello') };
+      const targetTool = { importTextContent: jest.fn(() => ({ text: { value: 'Hello',
+        fragments: [] } })) };
+
+      // @ts-expect-error — mock
+      toolsManager.blockTools.get = jest.fn((name: string) =>
+        name === 'header' ? sourceTool : targetTool
+      );
+
+      blocksManager.convertBlock('b1', 'paragraph');
+
+      expect(sourceTool.exportTextContent).toHaveBeenCalledWith({ text: { value: 'Hello',
+        fragments: [] } });
+      expect(targetTool.importTextContent).toHaveBeenCalledWith('Hello', []);
+      expect(model.removeBlock).toHaveBeenCalledWith(USER_ID, 0);
+      expect(model.addBlock).toHaveBeenCalledWith(
+        USER_ID,
+        { name: 'paragraph',
+          data: { text: { value: 'Hello',
+            fragments: [] } } },
+        0
+      );
+    });
+
+    it('merges dataOverrides on top of the imported data', () => {
+      const sourceTool = { exportTextContent: jest.fn(() => 'Hello') };
+      const targetTool = { importTextContent: jest.fn(() => ({ text: { value: 'Hello',
+        fragments: [] } })) };
+
+      // @ts-expect-error — mock
+      toolsManager.blockTools.get = jest.fn((name: string) =>
+        name === 'header' ? sourceTool : targetTool
+      );
+
+      blocksManager.convertBlock('b1', 'paragraph', USER_ID, { level: 2 });
+
+      expect(model.addBlock).toHaveBeenCalledWith(
+        USER_ID,
+        { name: 'paragraph',
+          data: { text: { value: 'Hello',
+            fragments: [] },
+          level: 2 } },
+        0
+      );
+    });
+
+    it('throws if source tool has no export config', () => {
+      const sourceTool = {
+        exportTextContent: jest.fn(() => {
+          throw new Error('Tool header does not have export configuration for text content');
+        }),
+      };
+      const targetTool = { importTextContent: jest.fn() };
+
+      // @ts-expect-error — mock
+      toolsManager.blockTools.get = jest.fn((name: string) =>
+        name === 'header' ? sourceTool : targetTool
+      );
+
+      expect(() => blocksManager.convertBlock('b1', 'paragraph'))
+        .toThrow('does not have export configuration');
+    });
+
+    it('throws if target tool has no import config', () => {
+      const sourceTool = { exportTextContent: jest.fn(() => 'Hello') };
+      const targetTool = {
+        importTextContent: jest.fn(() => {
+          throw new Error('Tool paragraph does not have import configuration for text content');
+        }),
+      };
+
+      // @ts-expect-error — mock
+      toolsManager.blockTools.get = jest.fn((name: string) =>
+        name === 'header' ? sourceTool : targetTool
+      );
+
+      expect(() => blocksManager.convertBlock('b1', 'paragraph'))
+        .toThrow('does not have import configuration');
+    });
+  });
+
   describe('.splitBlock()', () => {
     /**
      * Restore split-specific mock implementations that jest.resetAllMocks() clears.

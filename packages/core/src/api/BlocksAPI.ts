@@ -124,4 +124,21 @@ export class BlocksAPI implements BlocksApiInterface {
   public split(blockIndexOrId: number | string, dataKey: string, offset: number): void {
     this.#blocksManager.splitBlock(blockIndexOrId as number | BlockId, dataKey as DataKey, offset);
   }
+
+  /**
+   * Converts a block to a new type
+   * @param params - conversion parameters
+   * @param params.block - index or id of the block to convert
+   * @param params.newType - block tool name to convert to
+   * @param [params.dataOverrides] - optional data overrides for the new block
+   * @param [params.userId] - user id to attribute the change to
+   */
+  public convert({
+    block,
+    newType,
+    dataOverrides,
+    userId = this.#config.userId,
+  }: Parameters<BlocksApiInterface['convert']>[0]): void {
+    this.#blocksManager.convertBlock(block, newType, userId, dataOverrides);
+  }
 }
