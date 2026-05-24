@@ -1,4 +1,4 @@
-import type { InlineToolName } from '@editorjs/model';
+import type { BlockNodeSerialized, InlineToolName } from '@editorjs/model';
 
 /**
  * Selection API interface
@@ -11,4 +11,9 @@ export interface SelectionAPI {
    * @param data - optional data for the inline tool
    */
   applyInlineToolForCurrentSelection(tool: InlineToolName, data?: Record<string, unknown>): void;
+
+  /**
+   *
+   */
+  get selectedBlocks(): BlockNodeSerialized[] | null;
 }

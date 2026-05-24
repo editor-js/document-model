@@ -137,8 +137,6 @@ export class BlocksUI implements EditorjsPlugin {
       };
 
       this.#eventBus.dispatchEvent(new CopyUIEvent(payload));
-
-      e.preventDefault();
     });
 
     return blocksHolder;

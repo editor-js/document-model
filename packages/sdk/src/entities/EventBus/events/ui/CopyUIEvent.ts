@@ -10,7 +10,8 @@ export const CopyUIEventName = 'copy';
  */
 export interface CopyUIEventPayload {
   /**
-   * @todo update doc
+   * Native ClipboardEvent
+   * UI does not call .preventDefault() for this event
    */
   nativeEvent: ClipboardEvent;
 }
