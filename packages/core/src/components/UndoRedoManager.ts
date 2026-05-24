@@ -58,7 +58,8 @@ export class UndoRedoManager {
   #redoStack: EventPayloadBase<EventAction>[][] = [];
 
   /**
-   * Array that stores batched events
+   * Array that temporarily stores current batched group of events
+   * On timeout or not batchable event form the Model, this array is being put to undo stack (see #putBatchToundo method)
    */
   #batch: EventPayloadBase<EventAction>[] | null = null;
 
