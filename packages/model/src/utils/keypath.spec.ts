@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { get, has, insert, remove, set } from './keypath.js';
+import { get, has, insert, remove, set, renumberKeys } from './keypath.js';
 
 describe('keypath util', () => {
   const value = 'value';
@@ -391,6 +391,53 @@ describe('keypath util', () => {
       remove(object, ['a', 'b']);
 
       expect(object.a).not.toHaveProperty('b');
+    });
+  });
+
+  describe('renumberKeys()', () => {
+    it('should renumber array-indexed keys so the minimum index becomes 0', () => {
+      const result = renumberKeys(['items.2.text', 'items.3.text']);
+
+      expect(result.get('items.2.text')).toBe('items.0.text');
+      expect(result.get('items.3.text')).toBe('items.1.text');
+    });
+
+    it('should return keys unchanged when they contain no numeric segment', () => {
+      const result = renumberKeys(['title', 'description']);
+
+      expect(result.get('title')).toBe('title');
+      expect(result.get('description')).toBe('description');
+    });
+
+    it('should return an empty map for an empty input', () => {
+      const result = renumberKeys([]);
+
+      expect(result.size).toBe(0);
+    });
+
+    it('should handle a single key starting at 0', () => {
+      const result = renumberKeys(['items.0.text']);
+
+      expect(result.get('items.0.text')).toBe('items.0.text');
+    });
+
+    it('should handle a single key starting at a non-zero index', () => {
+      const result = renumberKeys(['items.5.text']);
+
+      expect(result.get('items.5.text')).toBe('items.0.text');
+    });
+
+    it('should renumber multiple prefixes independently', () => {
+      const result = renumberKeys(['a.3.x', 'b.7.y']);
+
+      expect(result.get('a.3.x')).toBe('a.0.x');
+      expect(result.get('b.7.y')).toBe('b.0.y');
+    });
+
+    it('should preserve suffix segments beyond the numeric index', () => {
+      const result = renumberKeys(['items.4.nested.value']);
+
+      expect(result.get('items.4.nested.value')).toBe('items.0.nested.value');
     });
   });
 });

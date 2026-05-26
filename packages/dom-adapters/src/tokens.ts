@@ -8,4 +8,6 @@ export const TOKENS = {
    */
   // eslint-disable-next-line @typescript-eslint/naming-convention
   EditorConfig: Symbol.for('EditorConfig'),
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  EditorAPI: Symbol.for('EditorAPI'),
 } as const;

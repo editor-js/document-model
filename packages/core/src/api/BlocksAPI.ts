@@ -5,7 +5,7 @@ import { BlocksManager } from '../components/BlockManager.js';
 import { BlockToolData } from '@editorjs/editorjs';
 import { CoreConfigValidated } from '@editorjs/sdk';
 import { BlocksAPI as BlocksApiInterface } from '@editorjs/sdk';
-import { type BlockNodeInit, type EditorDocumentSerialized } from '@editorjs/model';
+import { BlockId, type BlockNodeInit, DataKey, type EditorDocumentSerialized } from '@editorjs/model';
 
 /**
  * Blocks API
@@ -113,4 +113,15 @@ export class BlocksAPI implements BlocksApiInterface {
       focus,
     });
   };
+
+  /**
+   * Splits the block at the given data key and character offset.
+   * Delegates to BlocksManager.splitBlock.
+   * @param blockIndexOrId - numeric index or block id that locates the block
+   * @param dataKey - data key of the text input at which to split
+   * @param offset - character offset within the text value to split at
+   */
+  public split(blockIndexOrId: number | string, dataKey: string, offset: number): void {
+    this.#blocksManager.splitBlock(blockIndexOrId as number | BlockId, dataKey as DataKey, offset);
+  }
 }
