@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { injectable } from 'inversify';
 
 import { SelectionManager } from '../components/SelectionManager.js';
-import { createInlineToolName } from '@editorjs/model';
+import { createInlineToolName, BlockNodeSerialized } from '@editorjs/model';
 import { InlineToolFormatData } from '@editorjs/sdk';
 import { SelectionAPI as SelectionApiInterface } from '@editorjs/sdk';
 
@@ -31,5 +31,12 @@ export class SelectionAPI implements SelectionApiInterface {
    */
   public applyInlineToolForCurrentSelection(toolName: string, data?: InlineToolFormatData): void {
     this.#selectionManager.applyInlineToolForCurrentSelection(createInlineToolName(toolName), data);
+  }
+
+  /**
+   *
+   */
+  public get selectedBlocks(): BlockNodeSerialized[] | null {
+    return this.#selectionManager.selectedBlocks();
   }
 }

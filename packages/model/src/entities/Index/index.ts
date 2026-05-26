@@ -279,4 +279,12 @@ export class Index {
     /* Stryker disable next-line ConditionalExpression, LogicalOperator -- compound data-index predicate; .isDataIndex specs cover field combinations */
     return this.blockIndex !== undefined && this.tuneName === undefined && this.dataKey !== undefined && this.textRange === undefined;
   }
+
+  /**
+   *
+   */
+  public get isCompositeIndex(): boolean {
+    /* Stryker disable next-line ConditionalExpression, LogicalOperator -- compound data-index predicate; .isDataIndex specs cover field combinations */
+    return this.compositeSegments !== undefined && this.compositeSegments.length > 0 && this.blockIndex === undefined && this.tuneName === undefined && this.dataKey === undefined && this.textRange === undefined;
+  }
 }

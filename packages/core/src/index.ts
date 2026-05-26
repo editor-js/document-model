@@ -22,6 +22,8 @@ import { BlocksManager } from './components/BlockManager.js';
 import { BlockRenderer } from './components/BlockRenderer.js';
 import { SelectionManager } from './components/SelectionManager.js';
 import { TOKENS } from './tokens.js';
+import { ClipboardPlugin } from './plugins/ClipboardPlugin.js';
+
 /**
  * If no holder is provided via config, the editor will be appended to the element with this id
  */
@@ -121,6 +123,7 @@ export default class Core {
     this.use(LinkInlineTool);
     this.use(ShortcutsPlugin);
     this.use(DOMAdapters);
+    this.use(ClipboardPlugin);
   }
 
   /**
