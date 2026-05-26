@@ -363,7 +363,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
       currentToolsManager.blockTools.get = jest.fn(getImpl);
     }
 
-    it('should split a block when the tool has canSplit = true', () => {
+    it('should split a block when the tool has canBeSplit = true', () => {
       model.addBlock(USER_ID, {
         name: 'paragraph',
         data: {
@@ -377,7 +377,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
 
       overrideBlockToolsGet(() => ({
         name: 'paragraph',
-        options: { canSplit: true },
+        options: { canBeSplit: true },
         importTextContent: jest.fn(),
         create: jest.fn(),
       }));
@@ -388,7 +388,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
       expect(model.length).toBe(2);
     });
 
-    it('should split at the end of a block and insert an empty block when canSplit = true', () => {
+    it('should split at the end of a block and insert an empty block when canBeSplit = true', () => {
       model.addBlock(USER_ID, {
         name: 'paragraph',
         data: {
@@ -402,7 +402,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
 
       overrideBlockToolsGet(() => ({
         name: 'paragraph',
-        options: { canSplit: true },
+        options: { canBeSplit: true },
         importTextContent: jest.fn(),
         create: jest.fn(),
       }));
@@ -412,7 +412,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
       expect(model.length).toBe(2);
     });
 
-    it('should use default block and importTextContent when the tool has canSplit = false', () => {
+    it('should use default block and importTextContent when the tool has canBeSplit = false', () => {
       model.addBlock(USER_ID, {
         name: 'header',
         data: {
@@ -426,7 +426,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
 
       const paragraphTool = {
         name: 'paragraph',
-        options: { canSplit: true },
+        options: { canBeSplit: true },
         importTextContent: jest.fn((_value: string, fragments: unknown[]) => ({
           text: {
             $t: 't',
@@ -441,7 +441,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
         name === 'header'
           ? {
               name: 'header',
-              options: { canSplit: false },
+              options: { canBeSplit: false },
               importTextContent: jest.fn(),
               create: jest.fn(),
             }
@@ -470,7 +470,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
 
       overrideBlockToolsGet(() => ({
         name: 'paragraph',
-        options: { canSplit: true },
+        options: { canBeSplit: true },
         importTextContent: jest.fn(),
         create: jest.fn(),
       }));
@@ -480,7 +480,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
       );
     });
 
-    it('canSplit = true: block with two flat inputs — should split first input and move second to new block', () => {
+    it('canBeSplit = true: block with two flat inputs — should split first input and move second to new block', () => {
       model.addBlock(USER_ID, {
         name: 'quote',
         data: {
@@ -499,7 +499,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
 
       overrideBlockToolsGet(() => ({
         name: 'quote',
-        options: { canSplit: true },
+        options: { canBeSplit: true },
         importTextContent: jest.fn(),
         create: jest.fn(),
       }));
@@ -527,7 +527,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
       );
     });
 
-    it('canSplit = true: block with two flat inputs — split at exact end of first input creates new block with only second input', () => {
+    it('canBeSplit = true: block with two flat inputs — split at exact end of first input creates new block with only second input', () => {
       model.addBlock(USER_ID, {
         name: 'quote',
         data: {
@@ -546,7 +546,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
 
       overrideBlockToolsGet(() => ({
         name: 'quote',
-        options: { canSplit: true },
+        options: { canBeSplit: true },
         importTextContent: jest.fn(),
         create: jest.fn(),
       }));
@@ -573,7 +573,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
       );
     });
 
-    it('canSplit = true: block with two flat inputs — split at second (last) input only carries truncation to new block', () => {
+    it('canBeSplit = true: block with two flat inputs — split at second (last) input only carries truncation to new block', () => {
       model.addBlock(USER_ID, {
         name: 'quote',
         data: {
@@ -592,7 +592,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
 
       overrideBlockToolsGet(() => ({
         name: 'quote',
-        options: { canSplit: true },
+        options: { canBeSplit: true },
         importTextContent: jest.fn(),
         create: jest.fn(),
       }));
@@ -618,7 +618,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
       );
     });
 
-    it('canSplit = true: block with two flat inputs — split at end of last input inserts empty same-type block', () => {
+    it('canBeSplit = true: block with two flat inputs — split at end of last input inserts empty same-type block', () => {
       model.addBlock(USER_ID, {
         name: 'quote',
         data: {
@@ -637,7 +637,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
 
       overrideBlockToolsGet(() => ({
         name: 'quote',
-        options: { canSplit: true },
+        options: { canBeSplit: true },
         importTextContent: jest.fn(),
         create: jest.fn(),
       }));
@@ -650,7 +650,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
       expect(model.serialized.blocks[1].name).toBe('quote');
     });
 
-    it('canSplit = false: block with two flat inputs — default block receives merged text content', () => {
+    it('canBeSplit = false: block with two flat inputs — default block receives merged text content', () => {
       model.addBlock(USER_ID, {
         name: 'header',
         data: {
@@ -669,7 +669,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
 
       const paragraphTool = {
         name: 'paragraph',
-        options: { canSplit: true },
+        options: { canBeSplit: true },
         // importTextContent receives the merged text and returns block data
         importTextContent: jest.fn((value: string) => ({
           text: {
@@ -685,7 +685,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
         name === 'header'
           ? {
               name: 'header',
-              options: { canSplit: false },
+              options: { canBeSplit: false },
               importTextContent: jest.fn(),
               create: jest.fn(),
             }
@@ -719,7 +719,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
       (currentToolsManager.blockTools as Record<string, unknown>).get = jest.fn(getImpl);
     }
 
-    it('canSplit = true: single array item — splits text correctly across two blocks', () => {
+    it('canBeSplit = true: single array item — splits text correctly across two blocks', () => {
       // Block has one list item whose text we want to split
       model.addBlock(USER_ID, {
         name: 'list',
@@ -738,7 +738,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
 
       overrideBlockToolsGet(() => ({
         name: 'list',
-        options: { canSplit: true },
+        options: { canBeSplit: true },
         importTextContent: jest.fn(),
         create: jest.fn(),
       }));
@@ -764,7 +764,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
       );
     });
 
-    it('canSplit = true: single array item — split at end of text inserts empty same-type block', () => {
+    it('canBeSplit = true: single array item — split at end of text inserts empty same-type block', () => {
       model.addBlock(USER_ID, {
         name: 'list',
         data: {
@@ -782,7 +782,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
 
       overrideBlockToolsGet(() => ({
         name: 'list',
-        options: { canSplit: true },
+        options: { canBeSplit: true },
         importTextContent: jest.fn(),
         create: jest.fn(),
       }));
@@ -795,7 +795,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
       expect(model.serialized.blocks[1].data).toEqual({});
     });
 
-    it('canSplit = true: single array item — split at beginning creates original unchanged and new block with full text', () => {
+    it('canBeSplit = true: single array item — split at beginning creates original unchanged and new block with full text', () => {
       model.addBlock(USER_ID, {
         name: 'list',
         data: {
@@ -813,7 +813,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
 
       overrideBlockToolsGet(() => ({
         name: 'list',
-        options: { canSplit: true },
+        options: { canBeSplit: true },
         importTextContent: jest.fn(),
         create: jest.fn(),
       }));
@@ -832,7 +832,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
       );
     });
 
-    it('canSplit = false: two array items — new default block receives merged text from split point onwards', () => {
+    it('canBeSplit = false: two array items — new default block receives merged text from split point onwards', () => {
       // A non-splittable tool (e.g. a heading-like list) whose items text gets
       // merged into the default paragraph block.
       model.addBlock(USER_ID, {
@@ -859,7 +859,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
 
       const paragraphTool = {
         name: 'paragraph',
-        options: { canSplit: true },
+        options: { canBeSplit: true },
         importTextContent: jest.fn((value: string) => ({
           text: {
             $t: 't',
@@ -874,7 +874,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
         name === 'fancy-list'
           ? {
               name: 'fancy-list',
-              options: { canSplit: false },
+              options: { canBeSplit: false },
               importTextContent: jest.fn(),
               create: jest.fn(),
             }
@@ -900,7 +900,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
       );
     });
 
-    it('canSplit = false: two array items — split at end of first item merges only second item text', () => {
+    it('canBeSplit = false: two array items — split at end of first item merges only second item text', () => {
       model.addBlock(USER_ID, {
         name: 'fancy-list',
         data: {
@@ -925,7 +925,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
 
       const paragraphTool = {
         name: 'paragraph',
-        options: { canSplit: true },
+        options: { canBeSplit: true },
         importTextContent: jest.fn((value: string) => ({
           text: {
             $t: 't',
@@ -940,7 +940,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
         name === 'fancy-list'
           ? {
               name: 'fancy-list',
-              options: { canSplit: false },
+              options: { canBeSplit: false },
               importTextContent: jest.fn(),
               create: jest.fn(),
             }
@@ -960,7 +960,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
       );
     });
 
-    it('canSplit = true: two array items, split at first — documents current behavior (split text overwritten by renumbering)', () => {
+    it('canBeSplit = true: two array items, split at first — documents current behavior (split text overwritten by renumbering)', () => {
       model.addBlock(USER_ID, {
         name: 'list',
         data: {
@@ -985,7 +985,7 @@ describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
 
       overrideBlockToolsGet(() => ({
         name: 'list',
-        options: { canSplit: true },
+        options: { canBeSplit: true },
         importTextContent: jest.fn(),
         create: jest.fn(),
       }));

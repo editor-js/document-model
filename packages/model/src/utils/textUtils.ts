@@ -22,15 +22,18 @@ export function sliceFragments(fragments: InlineFragment[], offset: number): Inl
  * Each entry's value is appended followed by a newline.
  * @param entries - [key, TextNodeSerialized] pairs to merge
  * @param initial - accumulator seed (already contains the first value/fragments)
+ * @param joiner - a substring to add between joined entries, \n by default
  */
 export function mergeTextNodes(
   entries: [string, TextNodeSerialized][],
-  initial: InlineTreeNodeSerialized
+  initial: InlineTreeNodeSerialized,
+  /* @todo do some realworld exmample test to understand which joiner should be here */
+  joiner = '\n'
 ): InlineTreeNodeSerialized {
   return entries.reduce((acc, [, content]) => {
     const currentLength = acc.value.length;
 
-    acc.value += content.value + '\n';
+    acc.value += content.value + joiner;
     acc.fragments.push(
       ...content.fragments.map((fragment): InlineFragment => ({
         ...fragment,

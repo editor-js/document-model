@@ -102,7 +102,7 @@ export interface BlocksAPI {
 
   /**
    * Splits the block at the given data key and character offset.
-   * If the tool supports splitting (canSplit = true) a new block of the same type is inserted after the current one.
+   * If the tool supports splitting (canBeSplit = true) a new block of the same type is inserted after the current one.
    * Otherwise, the default block is inserted with the content after the caret.
    * @param blockIndexOrId - numeric index or block id that locates the block
    * @param key - data key of the text input at which to split

@@ -151,5 +151,20 @@ describe('textUtils', () => {
 
       expect(result.value).toBe('a\nb\nc\n');
     });
+
+    it('should accept a custom joiner string between entries', () => {
+      const initial: InlineTreeNodeSerialized = {
+        value: 'first|',
+        fragments: [],
+      };
+      const entries: [string, TextNodeSerialized][] = [[
+        'b',
+        textNode('second'),
+      ]];
+
+      const result = mergeTextNodes(entries, initial, '|');
+
+      expect(result.value).toBe('first|second|');
+    });
   });
 });

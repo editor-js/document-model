@@ -359,7 +359,7 @@ describe('BlocksManager (unit, mocked deps)', () => {
         },
       }));
       // @ts-expect-error — mock
-      toolsManager.blockTools.get = jest.fn(() => ({ options: { canSplit: true } }));
+      toolsManager.blockTools.get = jest.fn(() => ({ options: { canBeSplit: true } }));
 
       expect(() => blocksManager.splitBlock(0, 'nonexistent' as DataKey, 0))
         .toThrow('Data key "nonexistent" not found in block content');
@@ -373,7 +373,7 @@ describe('BlocksManager (unit, mocked deps)', () => {
         },
       }));
       // @ts-expect-error — mock
-      toolsManager.blockTools.get = jest.fn(() => ({ options: { canSplit: true } }));
+      toolsManager.blockTools.get = jest.fn(() => ({ options: { canBeSplit: true } }));
 
       expect(() => blocksManager.splitBlock(0, 'text' as DataKey, -1))
         .toThrow(RangeError);
@@ -389,7 +389,7 @@ describe('BlocksManager (unit, mocked deps)', () => {
         },
       }));
       // @ts-expect-error — mock
-      toolsManager.blockTools.get = jest.fn(() => ({ options: { canSplit: true } }));
+      toolsManager.blockTools.get = jest.fn(() => ({ options: { canBeSplit: true } }));
 
       expect(() => blocksManager.splitBlock(0, 'text' as DataKey, 6))
         .toThrow(RangeError);
@@ -397,7 +397,7 @@ describe('BlocksManager (unit, mocked deps)', () => {
         .toThrow('Offset 6 is out of range for input "text" with length 5');
     });
 
-    it('canSplit = true: should call removeText with the given offset when splitting in the middle', () => {
+    it('canBeSplit = true: should call removeText with the given offset when splitting in the middle', () => {
       model.getBlockTextContent = jest.fn(() => ({
         text: {
           value: 'Hello World',
@@ -405,14 +405,14 @@ describe('BlocksManager (unit, mocked deps)', () => {
         },
       }));
       // @ts-expect-error — mock
-      toolsManager.blockTools.get = jest.fn(() => ({ options: { canSplit: true } }));
+      toolsManager.blockTools.get = jest.fn(() => ({ options: { canBeSplit: true } }));
 
       blocksManager.splitBlock(0, 'text' as DataKey, 5);
 
       expect(model.removeText).toHaveBeenCalledWith(USER_ID, 0, 'text', 5);
     });
 
-    it('canSplit = true: should NOT call removeText when offset equals input length', () => {
+    it('canBeSplit = true: should NOT call removeText when offset equals input length', () => {
       model.getBlockTextContent = jest.fn(() => ({
         text: {
           value: 'Hello',
@@ -420,14 +420,14 @@ describe('BlocksManager (unit, mocked deps)', () => {
         },
       }));
       // @ts-expect-error — mock
-      toolsManager.blockTools.get = jest.fn(() => ({ options: { canSplit: true } }));
+      toolsManager.blockTools.get = jest.fn(() => ({ options: { canBeSplit: true } }));
 
       blocksManager.splitBlock(0, 'text' as DataKey, 5); // 5 === 'Hello'.length
 
       expect(model.removeText).not.toHaveBeenCalled();
     });
 
-    it('canSplit = true: should call addBlock with the same tool name after splitting', () => {
+    it('canBeSplit = true: should call addBlock with the same tool name after splitting', () => {
       model.getBlockSerialized = jest.fn(() => ({
         name: 'header',
         id: 'b1',
@@ -440,7 +440,7 @@ describe('BlocksManager (unit, mocked deps)', () => {
         },
       }));
       // @ts-expect-error — mock
-      toolsManager.blockTools.get = jest.fn(() => ({ options: { canSplit: true } }));
+      toolsManager.blockTools.get = jest.fn(() => ({ options: { canBeSplit: true } }));
 
       blocksManager.splitBlock(0, 'text' as DataKey, 5);
 
@@ -451,7 +451,7 @@ describe('BlocksManager (unit, mocked deps)', () => {
       );
     });
 
-    it('canSplit = true: should insert empty same-type block when splitting at end of the only input', () => {
+    it('canBeSplit = true: should insert empty same-type block when splitting at end of the only input', () => {
       model.getBlockSerialized = jest.fn(() => ({
         name: 'customBlock',
         id: 'b1',
@@ -464,7 +464,7 @@ describe('BlocksManager (unit, mocked deps)', () => {
         },
       }));
       // @ts-expect-error — mock
-      toolsManager.blockTools.get = jest.fn(() => ({ options: { canSplit: true } }));
+      toolsManager.blockTools.get = jest.fn(() => ({ options: { canBeSplit: true } }));
 
       blocksManager.splitBlock(0, 'text' as DataKey, 8); // 8 === 'All text'.length
 
@@ -479,7 +479,7 @@ describe('BlocksManager (unit, mocked deps)', () => {
       );
     });
 
-    it('canSplit = true: multiple flat inputs — should call removeDataNode for inputs after the split point', () => {
+    it('canBeSplit = true: multiple flat inputs — should call removeDataNode for inputs after the split point', () => {
       model.getBlockTextContent = jest.fn(() => ({
         title: {
           value: 'Hello',
@@ -491,14 +491,14 @@ describe('BlocksManager (unit, mocked deps)', () => {
         },
       }));
       // @ts-expect-error — mock
-      toolsManager.blockTools.get = jest.fn(() => ({ options: { canSplit: true } }));
+      toolsManager.blockTools.get = jest.fn(() => ({ options: { canBeSplit: true } }));
 
       blocksManager.splitBlock(0, 'title' as DataKey, 3);
 
       expect(model.removeDataNode).toHaveBeenCalledWith(USER_ID, 0, 'caption');
     });
 
-    it('canSplit = true: multiple flat inputs — should set both the split text and subsequent inputs in the new block data', () => {
+    it('canBeSplit = true: multiple flat inputs — should set both the split text and subsequent inputs in the new block data', () => {
       const captionContent = {
         value: 'Caption',
         fragments: [],
@@ -512,7 +512,7 @@ describe('BlocksManager (unit, mocked deps)', () => {
         caption: captionContent,
       }));
       // @ts-expect-error — mock
-      toolsManager.blockTools.get = jest.fn(() => ({ options: { canSplit: true } }));
+      toolsManager.blockTools.get = jest.fn(() => ({ options: { canBeSplit: true } }));
 
       // @ts-expect-error — jest mock
       keypath.renumberKeys.mockReturnValue(new Map([['caption', 'caption']]));
@@ -535,7 +535,7 @@ describe('BlocksManager (unit, mocked deps)', () => {
       );
     });
 
-    it('canSplit = true: array-indexed inputs — should call renumberKeys with the keys of entries after the split point', () => {
+    it('canBeSplit = true: array-indexed inputs — should call renumberKeys with the keys of entries after the split point', () => {
       model.getBlockTextContent = jest.fn(() => ({
         'items.0.text': {
           value: 'Item 0',
@@ -551,14 +551,14 @@ describe('BlocksManager (unit, mocked deps)', () => {
         },
       }));
       // @ts-expect-error — mock
-      toolsManager.blockTools.get = jest.fn(() => ({ options: { canSplit: true } }));
+      toolsManager.blockTools.get = jest.fn(() => ({ options: { canBeSplit: true } }));
 
       blocksManager.splitBlock(0, 'items.0.text' as DataKey, 3);
 
       expect(keypath.renumberKeys).toHaveBeenCalledWith(['items.0.text', 'items.1.text', 'items.2.text']);
     });
 
-    it('canSplit = true: array-indexed inputs — should use renumbered keys when setting subsequent inputs', () => {
+    it('canBeSplit = true: array-indexed inputs — should use renumbered keys when setting subsequent inputs', () => {
       const item1Content = {
         value: 'Item 1',
         fragments: [],
@@ -577,7 +577,7 @@ describe('BlocksManager (unit, mocked deps)', () => {
         'items.2.text': item2Content,
       }));
       // @ts-expect-error — mock
-      toolsManager.blockTools.get = jest.fn(() => ({ options: { canSplit: true } }));
+      toolsManager.blockTools.get = jest.fn(() => ({ options: { canBeSplit: true } }));
 
       // Simulate renumberKeys: items.1 → 0, items.2 → 1
       // @ts-expect-error — jest mock
@@ -602,13 +602,13 @@ describe('BlocksManager (unit, mocked deps)', () => {
       );
     });
 
-    it('canSplit = false: should call importTextContent and insert a default block', () => {
+    it('canBeSplit = false: should call importTextContent and insert a default block', () => {
       const importMock = jest.fn(() => ({ text: {
         value: 'World',
         fragments: [],
       } }));
       const paragraphTool = {
-        options: { canSplit: true },
+        options: { canBeSplit: true },
         importTextContent: importMock,
       };
 
@@ -630,7 +630,7 @@ describe('BlocksManager (unit, mocked deps)', () => {
       });
       // @ts-expect-error — mock
       toolsManager.blockTools.get = jest.fn((name: string) =>
-        name === 'paragraph' ? paragraphTool : { options: { canSplit: false } }
+        name === 'paragraph' ? paragraphTool : { options: { canBeSplit: false } }
       );
 
       blocksManager.splitBlock(0, 'text' as DataKey, 5);
@@ -643,7 +643,7 @@ describe('BlocksManager (unit, mocked deps)', () => {
       );
     });
 
-    it('canSplit = false: multiple inputs — should pass all entries after split to mergeTextNodes', () => {
+    it('canBeSplit = false: multiple inputs — should pass all entries after split to mergeTextNodes', () => {
       model.getBlockSerialized = jest.fn(() => ({ name: 'header',
         id: 'b1',
         data: {} }));
@@ -659,13 +659,13 @@ describe('BlocksManager (unit, mocked deps)', () => {
       }));
       const importMock = jest.fn(() => ({}));
       const paragraphTool = {
-        options: { canSplit: true },
+        options: { canBeSplit: true },
         importTextContent: importMock
       };
 
       // @ts-expect-error — mock
       toolsManager.blockTools.get = jest.fn((name: string) =>
-        name === 'paragraph' ? paragraphTool : { options: { canSplit: false } }
+        name === 'paragraph' ? paragraphTool : { options: { canBeSplit: false } }
       );
 
       blocksManager.splitBlock(0, 'title' as DataKey, 3);

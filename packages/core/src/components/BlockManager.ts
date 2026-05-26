@@ -214,7 +214,7 @@ export class BlocksManager {
 
   /**
    * Splits a block at the given data key and offset.
-   * If the tool has canSplit = true, a new block of the same type is inserted after,
+   * If the tool has canBeSplit = true, a new block of the same type is inserted after,
    * with data taken from the inputs after the caret; array-indexed keys are renumbered from 0.
    * Otherwise, the default block is inserted with the extracted text content merged together.
    * @param blockIndexOrId - numeric position or named identifier that locates the block
@@ -228,7 +228,7 @@ export class BlocksManager {
     const toolName = block.name;
 
     const tool = this.#toolsManager.blockTools.get(toolName);
-    const canSplit = tool?.options.canSplit === true;
+    const canBeSplit = tool?.options.canBeSplit === true;
 
     const blockInputs = Object.entries(
       this.#model.getBlockTextContent(blockIndex)
@@ -262,7 +262,7 @@ export class BlocksManager {
       this.#model.addBlock(
         this.#config.userId,
         {
-          name: canSplit ? block.name : this.#config.defaultBlock,
+          name: canBeSplit ? block.name : this.#config.defaultBlock,
           data: {},
         },
         blockIndex
@@ -292,7 +292,7 @@ export class BlocksManager {
       this.#model.addBlock(
         this.#config.userId,
         {
-          name: canSplit ? block.name : this.#config.defaultBlock,
+          name: canBeSplit ? block.name : this.#config.defaultBlock,
           data: {},
         },
         blockIndex + 1
@@ -305,7 +305,7 @@ export class BlocksManager {
      * If block doesn't support splitting into two, insert a new default block utilizing its conversionConfig.import to get the data
      * @todo on initialization validate defaultTool must have conversionConfig.import
      */
-    if (!canSplit) {
+    if (!canBeSplit) {
       const contentAfterAccInit: InlineTreeNodeSerialized = {
         /**
          * @todo check if \n is a proper option here

@@ -46,7 +46,7 @@ export enum BlockToolOptionKey {
   /** Conversion configuration for this tool. */
   ConversionConfig = 'conversionConfig',
   /** Whether the block can be split into multiple blocks of its type. */
-  CanSplit = 'canSplit'
+  CanBeSplit = 'canBeSplit'
 }
 
 /**
@@ -97,7 +97,7 @@ export interface BlockToolOptions<Config extends ToolConfig = ToolConfig, Data e
    *
    * If false or omitted, the default block would be rendered instead.
    */
-  [BlockToolOptionKey.CanSplit]?: boolean;
+  [BlockToolOptionKey.CanBeSplit]?: boolean;
 
   /** Any additional custom options exposed by the tool developer. */
   [key: string]: unknown;
