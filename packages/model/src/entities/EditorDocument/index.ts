@@ -174,7 +174,7 @@ export class EditorDocument extends EventBus {
    * @throws Error if the index is out of bounds
    */
   public removeBlock(indexOrId: BlockIndexOrId): void {
-    const resolvedIndex = this.#resolveBlockIndex(indexOrId);
+    const resolvedIndex = this.resolveBlockIndex(indexOrId);
 
     this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
 
@@ -196,7 +196,7 @@ export class EditorDocument extends EventBus {
    * @throws Error if the index is out of bounds
    */
   public getBlock(indexOrId: BlockIndexOrId): BlockNode {
-    const resolvedIndex = this.#resolveBlockIndex(indexOrId);
+    const resolvedIndex = this.resolveBlockIndex(indexOrId);
 
     this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
 
@@ -235,7 +235,7 @@ export class EditorDocument extends EventBus {
    * @param data - initial data of the node
    */
   public createDataNode(blockIndexOrId: BlockIndexOrId, key: DataKey | string, data: BlockNodeDataSerializedValue): void {
-    const resolvedIndex = this.#resolveBlockIndex(blockIndexOrId);
+    const resolvedIndex = this.resolveBlockIndex(blockIndexOrId);
 
     this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
 
@@ -248,7 +248,7 @@ export class EditorDocument extends EventBus {
    * @param key - key of the node to remove
    */
   public removeDataNode(indexOrId: BlockIndexOrId, key: DataKey | string): void {
-    const resolvedIndex = this.#resolveBlockIndex(indexOrId);
+    const resolvedIndex = this.resolveBlockIndex(indexOrId);
 
     this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
 
@@ -261,11 +261,24 @@ export class EditorDocument extends EventBus {
    * @param key - data key of the data node
    */
   public getDataNode<V = unknown>(indexOrId: BlockIndexOrId, key: DataKey | string): ValueSerialized<V> | TextNodeSerialized | undefined {
-    const resolvedIndex = this.#resolveBlockIndex(indexOrId);
+    const resolvedIndex = this.resolveBlockIndex(indexOrId);
 
     this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
 
     return this.#children[resolvedIndex].getDataNode<V>(createDataKey(key));
+  }
+
+  /**
+   * Returns all text input content of a block, keyed by dot-notation data key.
+   * @param indexOrId - numeric block index or block id
+   * @throws Error if the index is out of bounds
+   */
+  public getBlockTextContent(indexOrId: BlockIndexOrId): Record<DataKey, TextNodeSerialized> {
+    const resolvedIndex = this.resolveBlockIndex(indexOrId);
+
+    this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
+
+    return this.#children[resolvedIndex].getTextContent();
   }
 
   /**
@@ -319,7 +332,7 @@ export class EditorDocument extends EventBus {
    * @throws Error if the index is out of bounds
    */
   public updateValue<T = unknown>(blockIndexOrId: BlockIndexOrId, dataKey: DataKey, value: T): void {
-    const resolvedIndex = this.#resolveBlockIndex(blockIndexOrId);
+    const resolvedIndex = this.resolveBlockIndex(blockIndexOrId);
 
     this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
 
@@ -334,7 +347,7 @@ export class EditorDocument extends EventBus {
    * @throws Error if the index is out of bounds
    */
   public updateTuneData(blockIndexOrId: BlockIndexOrId, tuneName: BlockTuneName, data: Record<string, unknown>): void {
-    const resolvedIndex = this.#resolveBlockIndex(blockIndexOrId);
+    const resolvedIndex = this.resolveBlockIndex(blockIndexOrId);
 
     this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
 
@@ -347,7 +360,7 @@ export class EditorDocument extends EventBus {
    * @param dataKey - key of the data containing the text
    */
   public getText(blockIndexOrId: BlockIndexOrId, dataKey: DataKey): string {
-    const resolvedIndex = this.#resolveBlockIndex(blockIndexOrId);
+    const resolvedIndex = this.resolveBlockIndex(blockIndexOrId);
 
     this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
 
@@ -362,7 +375,7 @@ export class EditorDocument extends EventBus {
    * @param [start] - char index where to insert text
    */
   public insertText(blockIndexOrId: BlockIndexOrId, dataKey: DataKey, text: string, start?: number): void {
-    const resolvedIndex = this.#resolveBlockIndex(blockIndexOrId);
+    const resolvedIndex = this.resolveBlockIndex(blockIndexOrId);
 
     this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
 
@@ -377,7 +390,7 @@ export class EditorDocument extends EventBus {
    * @param [end] - end char index of the range
    */
   public removeText(blockIndexOrId: BlockIndexOrId, dataKey: DataKey, start?: number, end?: number): string {
-    const resolvedIndex = this.#resolveBlockIndex(blockIndexOrId);
+    const resolvedIndex = this.resolveBlockIndex(blockIndexOrId);
 
     this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
 
@@ -394,7 +407,7 @@ export class EditorDocument extends EventBus {
    * @param [data] - Inline Tool data if applicable
    */
   public format(blockIndexOrId: BlockIndexOrId, dataKey: DataKey, tool: InlineToolName, start: number, end: number, data?: InlineToolData): void {
-    const resolvedIndex = this.#resolveBlockIndex(blockIndexOrId);
+    const resolvedIndex = this.resolveBlockIndex(blockIndexOrId);
 
     this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
 
@@ -410,7 +423,7 @@ export class EditorDocument extends EventBus {
    * @param end - end char index of the range
    */
   public unformat(blockIndexOrId: BlockIndexOrId, key: DataKey, tool: InlineToolName, start: number, end: number): void {
-    const resolvedIndex = this.#resolveBlockIndex(blockIndexOrId);
+    const resolvedIndex = this.resolveBlockIndex(blockIndexOrId);
 
     this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
 
@@ -441,7 +454,7 @@ export class EditorDocument extends EventBus {
    * @param [tool] - name of the Inline Tool to filter by
    */
   public getFragments(blockIndexOrId: BlockIndexOrId, dataKey: DataKey, start?: number, end?: number, tool?: InlineToolName): InlineFragment[] {
-    return this.#children[this.#resolveBlockIndex(blockIndexOrId)].getFragments(dataKey, start, end, tool);
+    return this.#children[this.resolveBlockIndex(blockIndexOrId)].getFragments(dataKey, start, end, tool);
   }
 
   /**
@@ -520,6 +533,27 @@ export class EditorDocument extends EventBus {
   }
 
   /**
+   * Resolves a BlockIndexOrId to a numeric block index.
+   * If a number is passed it is returned as-is.
+   * If a BlockId is passed the index is looked up via the O(1) id map.
+   * @param indexOrId - numeric index or block id
+   * @throws Error if the id does not exist in the document
+   */
+  public resolveBlockIndex(indexOrId: BlockIndexOrId): number {
+    if (typeof indexOrId === 'number') {
+      return indexOrId;
+    }
+
+    const index = this.getBlockIndexById(indexOrId);
+
+    if (index === -1) {
+      throw new Error(`Block with id "${indexOrId}" not found`);
+    }
+
+    return index;
+  }
+
+  /**
    * Listens to BlockNode events and bubbles them to the EditorDocument
    * @param block - BlockNode to listen to
    */
@@ -558,26 +592,5 @@ export class EditorDocument extends EventBus {
     if (index < 0 || index > max) {
       throw new Error('Index out of bounds');
     }
-  }
-
-  /**
-   * Resolves a BlockIndexOrId to a numeric block index.
-   * If a number is passed it is returned as-is.
-   * If a BlockId is passed the index is looked up via the O(1) id map.
-   * @param indexOrId - numeric index or block id
-   * @throws Error if the id does not exist in the document
-   */
-  #resolveBlockIndex(indexOrId: BlockIndexOrId): number {
-    if (typeof indexOrId === 'number') {
-      return indexOrId;
-    }
-
-    const index = this.getBlockIndexById(indexOrId);
-
-    if (index === -1) {
-      throw new Error(`Block with id "${indexOrId}" not found`);
-    }
-
-    return index;
   }
 }

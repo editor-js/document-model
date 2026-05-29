@@ -45,6 +45,10 @@ export class Paragraph implements BlockTool<ParagraphData, ParagraphConfig> {
       title: 'Text',
       icon: IconText,
     },
+    conversionConfig: {
+      import: 'text',
+      export: 'text',
+    },
   };
 
   /**

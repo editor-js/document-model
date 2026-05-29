@@ -5,7 +5,7 @@ import { SelectionManager } from '../components/SelectionManager.js';
 import { Caret, CaretManagerEvents, createInlineToolName, EditorJSModel, EventType } from '@editorjs/model';
 import { CoreConfigValidated } from '@editorjs/sdk';
 import { SelectionAPI as SelectionApiInterface } from '@editorjs/sdk';
-import { TOKENS } from '../tokens';
+import { TOKENS } from '../tokens.js';
 
 /**
  * Selection API class
