@@ -4,16 +4,14 @@ import type {
   ModelEvents
 } from '@editorjs/model';
 import {
-  createInlineToolName,
-  EditorJSModel
+  createInlineToolName
 } from '@editorjs/model';
 import {
-  EventType,
   TextFormattedEvent,
   TextUnformattedEvent
 } from '@editorjs/model';
 import { CaretAdapter } from '../CaretAdapter/index.js';
-import type { CoreConfig, InlineTool, ToolLoadedCoreEvent } from '@editorjs/sdk';
+import type { CoreConfig, EditorAPI, InlineTool, ToolLoadedCoreEvent } from '@editorjs/sdk';
 import { CoreEventType, EventBus } from '@editorjs/sdk';
 import { surround } from '../utils/surround.js';
 import { getBoundaryPointByAbsoluteOffset } from '../utils/getRelativeIndex.js';
@@ -28,9 +26,9 @@ import { TOKENS } from '../tokens.js';
 @injectable()
 export class FormattingAdapter {
   /**
-   * Editor model instance
+   * Editor's API
    */
-  #model: EditorJSModel;
+  #api: EditorAPI;
 
   /**
    * Tools, attached to the inline tool adapter
@@ -49,18 +47,18 @@ export class FormattingAdapter {
 
   /**
    * @param config - Editor's config
-   * @param model - editor model instance
+   * @param api - Editor's API
    * @param caretAdapter - caret adapter instance
    * @param eventBus - Editor's EventBus instance
    */
   constructor(
     @inject(TOKENS.EditorConfig) config: Required<CoreConfig>,
-    model: EditorJSModel,
+    @inject(TOKENS.EditorAPI) api: EditorAPI,
     caretAdapter: CaretAdapter,
     eventBus: EventBus
   ) {
     this.#config = config;
-    this.#model = model;
+    this.#api = api;
     this.#caretAdapter = caretAdapter;
 
     /**
@@ -82,7 +80,7 @@ export class FormattingAdapter {
     /**
      * Add event listener for model changes
      */
-    this.#model.addEventListener(EventType.Changed, (event: ModelEvents) => this.#handleModelUpdates(event));
+    this.#api.document.onUpdate((event: ModelEvents) => this.#handleModelUpdates(event));
   }
 
   /**
@@ -157,7 +155,12 @@ export class FormattingAdapter {
       const rangeStart = Math.max(0, textRange[0] - 1);
       const rangeEnd = inputContent !== null ? Math.min(inputContent.length, textRange[1] + 1) : 0;
 
-      const affectedFragments = this.#model.getFragments(blockIndex, dataKey, rangeStart, rangeEnd);
+      const affectedFragments = this.#api.text.getFragments({
+        block: blockIndex,
+        key: dataKey as string,
+        start: rangeStart,
+        end: rangeEnd,
+      });
 
       const leftBoundary = affectedFragments[0]?.range[0] ?? textRange[0];
       let rightBoundary = textRange[1];

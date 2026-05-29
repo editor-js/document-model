@@ -260,12 +260,12 @@ export class EditorDocument extends EventBus {
    * @param indexOrId - block index or block id where data node is stored
    * @param key - data key of the data node
    */
-  public getDataNode(indexOrId: BlockIndexOrId, key: DataKey | string): ValueSerialized | TextNodeSerialized | undefined {
+  public getDataNode<V = unknown>(indexOrId: BlockIndexOrId, key: DataKey | string): ValueSerialized<V> | TextNodeSerialized | undefined {
     const resolvedIndex = this.resolveBlockIndex(indexOrId);
 
     this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
 
-    return this.#children[resolvedIndex].getDataNode(createDataKey(key));
+    return this.#children[resolvedIndex].getDataNode<V>(createDataKey(key));
   }
 
   /**

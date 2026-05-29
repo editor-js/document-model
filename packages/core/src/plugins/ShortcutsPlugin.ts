@@ -1,4 +1,3 @@
-import type { InlineToolName } from '@editorjs/model';
 import type {
   BlockToolFacade,
   BlockTuneFacade,
@@ -100,7 +99,7 @@ export class ShortcutsPlugin implements EditorjsPlugin {
    */
   #processInlineTool(toolName: string): void {
     try {
-      this.#api.selection.applyInlineToolForCurrentSelection(toolName as InlineToolName);
+      this.#api.selection.applyInlineTool({ tool: toolName });
     } catch (error) {
       if (error instanceof IndexError) {
         /**

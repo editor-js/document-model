@@ -5,10 +5,10 @@ export enum EventType {
   /**
    * The document model has been changed
    */
-  Changed = 'changed',
+  Changed = 'model:changed',
 
   /**
    * The position of caret has been updated
    */
-  CaretManagerUpdated = 'caret-updated'
+  CaretManagerUpdated = 'model:caret-updated'
 }

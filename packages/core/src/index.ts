@@ -245,7 +245,6 @@ export default class Core {
         const api = ctx.get(EditorAPI);
 
         return new Adapter({
-          model: this.#model,
           config: this.#config,
           api,
           eventBus,

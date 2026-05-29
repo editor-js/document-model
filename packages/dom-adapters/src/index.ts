@@ -1,14 +1,14 @@
 import 'reflect-metadata';
 import type {
-  BlockToolAdapter, EditorAPI,
-  EditorJSAdapterPlugin, EditorjsAdapterPluginConstructor,
-  EditorjsAdapterPluginParams
+  BlockToolAdapter,
+  EditorJSAdapterPlugin,
+  EditorjsAdapterPluginConstructor,
+  EditorjsPluginParams
 } from '@editorjs/sdk';
 import { EventBus } from '@editorjs/sdk';
 import { PluginType } from '@editorjs/sdk';
 import { DOMBlockToolAdapter } from './BlockToolAdapter/index.js';
 import { InputsRegistry } from './InputsRegistry/index.js';
-import { EditorJSModel } from '@editorjs/model';
 import type { BlockId } from '@editorjs/model';
 import { Container } from 'inversify';
 import { TOKENS } from './tokens.js';
@@ -40,14 +40,13 @@ export class DOMAdapters implements EditorJSAdapterPlugin {
   /**
    * @param params - Plugin parameters
    * @param params.config - Editor's config
-   * @param params.model - Model instance
+   * @param params.api - Editor's API
    * @param params.eventBus - EventBus instance
    */
-  constructor({ config, model, eventBus, api }: EditorjsAdapterPluginParams) {
-    this.#iocContainer.bind<Required<CoreConfig>>(TOKENS.EditorConfig).toConstantValue(config);
-    this.#iocContainer.bind<EditorAPI>(TOKENS.EditorAPI).toConstantValue(api);
-    this.#iocContainer.bind(EditorJSModel).toConstantValue(model);
+  constructor({ config, api, eventBus }: EditorjsPluginParams) {
+    this.#iocContainer.bind<Required<CoreConfig>>(TOKENS.EditorConfig).toConstantValue(config as Required<CoreConfig>);
     this.#iocContainer.bind(EventBus).toConstantValue(eventBus);
+    this.#iocContainer.bind(TOKENS.EditorAPI).toConstantValue(api);
     this.#iocContainer
       .bind(DOMBlockToolAdapter)
       .toSelf()

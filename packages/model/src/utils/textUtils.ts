@@ -27,13 +27,13 @@ export function sliceFragments(fragments: InlineFragment[], offset: number): Inl
 export function mergeTextNodes(
   entries: [string, TextNodeSerialized][],
   initial: InlineTreeNodeSerialized,
-  /* @todo do some realworld exmample test to understand which joiner should be here */
+  /* @todo do some realworld example test to understand which joiner should be here */
   joiner = '\n'
 ): InlineTreeNodeSerialized {
   return entries.reduce((acc, [, content]) => {
     const currentLength = acc.value.length;
 
-    acc.value += content.value + joiner;
+    acc.value += joiner + content.value;
     acc.fragments.push(
       ...content.fragments.map((fragment): InlineFragment => ({
         ...fragment,
