@@ -195,4 +195,17 @@ export class BlocksAPI implements BlocksApiInterface {
   public updateValue({ block, key, value, userId = this.#config.userId }: Parameters<BlocksApiInterface['updateValue']>[0]): void {
     this.#model.updateValue(userId, block as BlockIndexOrId, createDataKey(key), value);
   }
+
+  /**
+   * Splits the block at the given data key and character offset.
+   * Delegates to BlocksManager.splitBlock.
+   * @param params - split parameters
+   * @param params.block - index or id that locates the block
+   * @param params.key - data key of the text input at which to split
+   * @param params.offset - character offset within the text value to split at
+   * @param [params.userId] - user id to attribute the change to
+   */
+  public split({ block, key, offset, userId }: Parameters<BlocksApiInterface['split']>[0]): void {
+    this.#blocksManager.splitBlock(block as BlockIndexOrId, createDataKey(key), offset, userId);
+  }
 }

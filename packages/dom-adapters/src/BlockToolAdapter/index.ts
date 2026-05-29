@@ -467,46 +467,29 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
    */
   #handleSplit(key: string, start: number, end: number): void {
     const currentBlockIndex = this.#api.blocks.getIndexById(this.blockId);
-    const currentValue = this.#api.text.get({ block: this.blockId,
-      key });
-    const newValueAfter = currentValue.slice(end);
-
-    const relatedFragments = this.#api.text.getFragments({ block: this.blockId,
-      key,
-      start: end,
-      end: currentValue.length });
 
     /**
-     * Fragment ranges bounds should be decreased by end index, because end is the index of the first character of the new block
+     * Remove selected text if range is not collapsed
+     * @todo Maybe move to the API
      */
-    relatedFragments.forEach((fragment) => {
-      fragment.range[0] = Math.max(0, fragment.range[0] - end);
-      fragment.range[1] -= end;
-    });
+    if (start !== end) {
+      this.#api.text.remove({
+        block: this.blockId,
+        key,
+        start,
+        end,
+      });
+    }
 
-    this.#api.text.remove({
-      block: this.blockId,
+    this.#api.blocks.split({
+      block: currentBlockIndex,
       key,
-      start,
-      end: currentValue.length,
-    });
-    this.#api.blocks.insert({
-      /**
-       * @todo when implementing split/merge, think of how to not use toolname here
-       */
-      type: this.#toolName,
-      data: {
-        [key]: {
-          $t: 't',
-          value: newValueAfter,
-          fragments: relatedFragments,
-        },
-      },
-      index: currentBlockIndex + 1,
+      offset: start,
     });
 
     /**
      * Raf is needed to ensure that the new block is added so caret can be moved to it
+     * @todo maybe move to the API
      */
     requestAnimationFrame(() => {
       this.#caretAdapter.updateIndex(
