@@ -2,8 +2,8 @@
 // .github/scripts/update-aggregated-comment.js
 // Exports: updateAggregatedComment(report, packageName, prNumber)
 
-const core = require('@actions/core');
-const github = require('@actions/github');
+import core from '@actions/core';
+import github from '@actions/github';
 
 async function updateAggregatedComment(report, packageName, prNumber) {
   if (!report) {
@@ -100,4 +100,4 @@ async function updateAggregatedComment(report, packageName, prNumber) {
   core.info('Updated aggregated PR comment with report.');
 }
 
-module.exports = { updateAggregatedComment };
+export { updateAggregatedComment };

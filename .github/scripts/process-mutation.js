@@ -1,5 +1,5 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 function normalizeStatusToCanonical(s) {
   if (s == null) return '';
@@ -82,7 +82,7 @@ function processMutationReport(reportPath, changedFilesPath) {
   return message;
 }
 
-module.exports = { processMutationReport };
+export { processMutationReport };
 
 // If invoked directly from CLI, read the first arg as the report path and print JSON
 if (require.main === module) {
