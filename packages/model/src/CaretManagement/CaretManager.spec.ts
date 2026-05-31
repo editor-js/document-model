@@ -10,14 +10,14 @@ import { CaretManager } from './CaretManager.js';
 import { jest } from '@jest/globals';
 
 describe('CaretManager', () => {
-  // it('should create new caret', () => {
-  //   const manager = new CaretManager();
-  //
-  //   const caret = manager.createCaret('userId');
-  //
-  //   expect(manager.getCaret(caret.userId)).toBe(caret);
-  // });
-  //
+  it('should create new caret', () => {
+    const manager = new CaretManager();
+
+    const caret = manager.createCaret('userId');
+
+    expect(manager.getCaret(caret.userId)).toBe(caret);
+  });
+
   // it('should create new caret with passed index', () => {
   //   const manager = new CaretManager();
   //   const index = new Index();
