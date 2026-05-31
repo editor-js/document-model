@@ -1,22 +1,4 @@
-const fs = require('fs');
-const path = require('path');
-
-function normalizeStatusToCanonical(s) {
-  if (s == null) return '';
-  const st = String(s).toLowerCase();
-  if (st.includes('surviv')) return 'Survived';
-  if (st.includes('no') && st.includes('coverage')) return 'NoCoverage';
-  if (st.includes('nocoverage')) return 'NoCoverage';
-  if (st.includes('killed')) return 'Killed';
-  if (st.includes('timeout')) return 'Timeout';
-  if (st.includes('runtime')) return 'RuntimeError';
-  if (st.includes('compile')) return 'CompileError';
-  if (st.includes('ignored') || st.includes('skip')) return 'Ignored';
-  if (st === 'survived') return 'Survived';
-  if (st === 'killed') return 'Killed';
-  // return original-ish with capitalization
-  return String(s);
-}
+import fs from 'fs';
 
 function getMetrics(obj) {
   const mutants = [];
