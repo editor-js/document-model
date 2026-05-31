@@ -27,7 +27,7 @@ runs:
           package-name: ${{ inputs.package-name }}
 
       - name: Get changed files
-        uses: tj-actions/changed-files@v39.0.0
+        uses: tj-actions/changed-files@v47
         id: changed-files
         with:
           files_yaml: |

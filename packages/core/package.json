@@ -13,7 +13,7 @@
     "lint:ci": "eslint --config ./eslint.config.mjs ./src --max-warnings 0",
     "lint:fix": "yarn lint --fix",
     "test": "node --experimental-vm-modules $(yarn bin jest)",
-    "test:coverage": "yarn test --coverage=true",
+    "test:coverage": "yarn test --coverage=true --json --outputFile=jest-report.json",
     "test:mutations": "NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" stryker run",
     "clear": "rm -rf ./dist && rm -rf ./tsconfig.build.tsbuildinfo"
   },
