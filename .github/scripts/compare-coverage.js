@@ -97,7 +97,7 @@ export function processReports(headDir, baseDir) {
 
   let message = `${tests.passedTests} tests passed in ${tests.passedSuites} suites.\n`
 
-  message += `Branches coverage: ${categories.branches.head}\n`;
+  message += `Branches coverage: ${categories.branches.head}%\n`;
 
   let warning = '';
 
