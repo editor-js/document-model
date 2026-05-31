@@ -1,22 +1,4 @@
 import fs from 'fs';
-import path from 'path';
-
-function normalizeStatusToCanonical(s) {
-  if (s == null) return '';
-  const st = String(s).toLowerCase();
-  if (st.includes('surviv')) return 'Survived';
-  if (st.includes('no') && st.includes('coverage')) return 'NoCoverage';
-  if (st.includes('nocoverage')) return 'NoCoverage';
-  if (st.includes('killed')) return 'Killed';
-  if (st.includes('timeout')) return 'Timeout';
-  if (st.includes('runtime')) return 'RuntimeError';
-  if (st.includes('compile')) return 'CompileError';
-  if (st.includes('ignored') || st.includes('skip')) return 'Ignored';
-  if (st === 'survived') return 'Survived';
-  if (st === 'killed') return 'Killed';
-  // return original-ish with capitalization
-  return String(s);
-}
 
 function getMetrics(obj) {
   const mutants = [];
@@ -83,11 +65,3 @@ function processMutationReport(reportPath, changedFilesPath) {
 }
 
 export { processMutationReport };
-
-// If invoked directly from CLI, read the first arg as the report path and print JSON
-if (require.main === module) {
-  const reportPath = process.argv[2];
-  const res = processMutationReport(reportPath);
-  console.log(JSON.stringify(res, null, 2));
-}
-
