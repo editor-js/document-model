@@ -53,10 +53,10 @@ runs:
 
     - name: Acquire comment-update lock
       id: acquire_lock
-      uses: softprops/turnstyle@v2
+      uses: softprops/turnstyle@v3
       with:
-        key: aggregated-comment-${{ steps.findPr.outputs.number || github.ref_name || github.ref }}
-        timeout: 600
+        queue-name: aggregated-comment-${{ steps.findPr.outputs.number || github.ref_name || github.ref }}
+        initial-wait-seconds: 600
 
     - name: Create or update PR comment with report
       uses: actions/github-script@v6
@@ -66,7 +66,6 @@ runs:
         PR_NUMBER: ${{ steps.findPr.outputs.number }}
       with:
         script: |
-          const github = require('@actions/github');
           const updater = require('./.github/scripts/update-aggregated-comment.js');
 
           (async () => {
@@ -74,16 +73,10 @@ runs:
               const report = process.env.REPORT || '';
               const packageName = process.env.PACKAGE;
               const pr = process.env.PR_NUMBER || undefined;
-              await updater.updateAggregatedComment(report, packageName, pr, core, github);
+              // Pass the injected core, github and context objects
+              await updater.updateAggregatedComment(report, packageName, pr, core, github, context);
             } catch (err) {
               core.error(err && err.stack ? err.stack : String(err));
               throw err;
             }
           })();
-
-    - name: Release comment-update lock
-      if: ${{ always() }}
-      uses: softprops/turnstyle@v2
-      with:
-        key: aggregated-comment-${{ steps.findPr.outputs.number || github.ref_name || github.ref }}
-        action: 'release'

@@ -1,44 +1,12 @@
-async function updateAggregatedComment(report, packageName, prNumber, core, github) {
+async function updateAggregatedComment(report, packageName, pr, core, github, context) {
   if (!report) {
     core.info('No report provided, skipping comment update.');
     return;
   }
 
   // repo info (owner/repo) available from context
-  const owner = github.context.repo.owner;
-  const repo = github.context.repo.repo;
-
-  // Allow caller to pass the PR number (from workflow / another action). If not provided,
-  // resolve PR number from the GitHub context. For push events there is no pull_request
-  // payload, so we attempt to find an associated PR by commit SHA as a fallback.
-  let pr;
-
-  if (prNumber) {
-    const parsed = Number(prNumber);
-    if (!Number.isNaN(parsed) && parsed > 0) {
-      pr = parsed;
-    }
-  }
-
-  if (!pr) {
-    pr = (github.context.payload.pull_request && github.context.payload.pull_request.number) || github.context.issue.number;
-  }
-
-  if (!pr) {
-    const sha = github.context.sha;
-    if (sha) {
-      try {
-        const assoc = await github.rest.repos.listPullRequestsAssociatedWithCommit({ owner, repo, commit_sha: sha });
-        if (assoc && Array.isArray(assoc.data) && assoc.data.length > 0) {
-          // Prefer an open PR if available
-          const prObj = assoc.data.find(p => p.state === 'open') || assoc.data[0];
-          pr = prObj.number;
-        }
-      } catch (e) {
-        core.info('Error while searching for PR associated with commit: ' + String(e));
-      }
-    }
-  }
+  const owner = context.repo.owner;
+  const repo = context.repo.repo;
 
   if (!pr) {
     core.info('No pull request found in context or associated with the commit; skipping comment step.');
