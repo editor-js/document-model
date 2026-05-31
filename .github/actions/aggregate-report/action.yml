@@ -12,7 +12,7 @@ runs:
   using: 'composite'
   steps:
     - name: Download artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v8
 
     - name: Process coverage reports
       uses: actions/github-script@v9
@@ -49,59 +49,16 @@ runs:
 
             core.setOutput('report', generateReport(PACKAGE, TESTS_MESSAGE, MUTATION_MESSAGE));
 
-    - name: Resolve pull request number
-      id: resolve_pr
-      uses: actions/github-script@v9
-      with:
-        script: |
-          const core = require('@actions/core');
-          const github = require('@actions/github');
-          (async () => {
-            const owner = github.context.repo.owner;
-            const repo = github.context.repo.repo;
-            let pr = (github.context.payload.pull_request && github.context.payload.pull_request.number) || github.context.issue.number;
+    - name: Find current PR's number
+      uses: jwalton/gh-find-current-pr@v1
+      id: findPr
 
-            // try commit-associated PRs if not in context
-            if (!pr) {
-              const sha = github.context.sha;
 
-              if (sha) {
-                try {
-                  const assoc = await github.rest.repos.listPullRequestsAssociatedWithCommit({ owner, repo, commit_sha: sha });
-                  if (assoc && Array.isArray(assoc.data) && assoc.data.length > 0) {
-                    const prObj = assoc.data.find(p => p.state === 'open') || assoc.data[0];
-                    pr = prObj.number;
-                  }
-                } catch (e) {
-                  core.info('Error while searching for PR associated with commit: ' + String(e));
-                }
-              }
-            }
-
-            // fallback: try to find an open PR by branch ref (refs/heads/<branch>)
-            if (!pr) {
-              const ref = github.context.ref || '';
-              const headsPrefix = 'refs/heads/';
-              if (ref.startsWith(headsPrefix)) {
-                const branch = ref.slice(headsPrefix.length);
-                try {
-                  const pulls = await github.rest.pulls.list({ owner, repo, head: `${owner}:${branch}`, state: 'open' });
-                  if (pulls && Array.isArray(pulls.data) && pulls.data.length > 0) {
-                    pr = pulls.data[0].number;
-                  }
-                } catch (e) {
-                  core.info('Error while searching for PR by branch ref: ' + String(e));
-                }
-              }
-            }
-
-            core.setOutput('pr-number', pr ? String(pr) : '');
-          })();
     - name: Acquire comment-update lock
       id: acquire_lock
       uses: softprops/turnstyle@v2
       with:
-        key: aggregated-comment-${{ steps.resolve_pr.outputs.pr-number || github.ref_name || github.ref }}
+        key: aggregated-comment-${{ steps.findPr.outputs.number || github.ref_name || github.ref }}
         timeout: 600
 
     - name: Create or update PR comment with report
@@ -109,7 +66,7 @@ runs:
       env:
         REPORT: ${{ steps.section-report.outputs.report }}
         PACKAGE: ${{ inputs.package-name }}
-        PR_NUMBER: ${{ steps.resolve_pr.outputs.pr-number }}
+        PR_NUMBER: ${{ steps.findPr.outputs.number }}
       with:
         script: |
           const core = require('@actions/core');
@@ -131,5 +88,5 @@ runs:
       if: ${{ always() }}
       uses: softprops/turnstyle@v2
       with:
-        key: aggregated-comment-${{ steps.resolve_pr.outputs.pr-number || github.ref_name || github.ref }}
+        key: aggregated-comment-${{ steps.findPr.outputs.number || github.ref_name || github.ref }}
         action: 'release'

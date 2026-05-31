@@ -15,7 +15,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
 
@@ -47,10 +47,6 @@ runs:
         run: yarn workspace ${{ inputs.package-name }} test:mutations --mutate ${{format('''{0}''', steps.changed-files.outputs.src_all_changed_files)}} --dashboard.module ${{ inputs.package-name }}
         continue-on-error: true
 
-      - name: Find current PR's number
-        uses: jwalton/gh-find-current-pr@v1
-        id: findPr
-
       - name: Save mutated files list
         if: steps.changed-files.outputs.src_any_changed == 'true'
         shell: bash
@@ -64,7 +60,7 @@ runs:
 
       - name: Upload mutation report artifact
         if: steps.changed-files.outputs.src_any_changed == 'true'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v7
         with:
           name: mutation-report
           path: |

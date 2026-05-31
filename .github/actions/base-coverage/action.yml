@@ -12,13 +12,13 @@ runs:
   using: "composite"
   steps:
     - name: Checkout base ref
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         ref: ${{ steps.resolve_base.outputs.base_ref }}
         fetch-depth: 0
 
     - name: Setup Node
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v6
       with:
         node-version-file: .nvmrc
 
@@ -33,7 +33,7 @@ runs:
       working-directory: ${{ inputs.working-directory }}
 
     - name: Upload base coverage artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v7
       with:
         name: test-report-base
         path: |
