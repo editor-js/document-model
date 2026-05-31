@@ -40,6 +40,8 @@ describe('EditorJSModel', () => {
       'getBlockId',
       'getBlockIndexById',
       'getBlockSerialized',
+      'getBlockTextContent',
+      'resolveBlockIndex',
     ];
     const ownProperties = Object.getOwnPropertyNames(EditorJSModel.prototype);
 

@@ -383,6 +383,40 @@ export class BlockNode extends EventBus {
   }
 
   /**
+   * Returns all text inputs content
+   */
+  public getTextContent(): Record<DataKey, TextNodeSerialized> {
+    return this.#getTextContent(this.#data);
+  }
+
+  /**
+   * Recursively iterates over data and collects all the text inputs content
+   * @param data - data to collect text from
+   * @param prefix - key prefix for nested data
+   */
+  #getTextContent(data: BlockNodeData | BlockNodeData[] = this.#data, prefix = ''): Record<DataKey, TextNodeSerialized> {
+    const result: Record<DataKey, TextNodeSerialized> = {};
+
+    const entries = Array.isArray(data)
+      ? data.map((item, index) => [index, item] as const)
+      : Object.entries(data);
+
+    for (const [key, value] of entries) {
+      const fullKey = prefix ? `${prefix}.${key}` : String(key);
+
+      if (value instanceof TextNode) {
+        result[fullKey as DataKey] = value.serialized;
+      } else if (Array.isArray(value)) {
+        Object.assign(result, this.#getTextContent(value, fullKey));
+      } else if (typeof value === 'object' && value !== null && !(value instanceof ValueNode)) {
+        Object.assign(result, this.#getTextContent(value as BlockNodeData, fullKey));
+      }
+    }
+
+    return result;
+  }
+
+  /**
    * Initializes BlockNode with passed block data
    * @param data - block data
    */

@@ -161,9 +161,14 @@ export default class Core {
       this.#initializeAdapter();
 
       this.#initializePlugins();
-
       await this.#initializeTools();
 
+      /**
+       * Need to initialize internal modules before plugins and tools
+       * @todo think of how to remove this?
+       * @todo add e2e initialization tests
+       * Currently only BlockRenderer would be enough, but that would be hard to debug. Easier just add every module here
+       */
       this.#iocContainer.get(SelectionManager);
       this.#iocContainer.get(BlocksManager);
       this.#iocContainer.get(BlockRenderer);

@@ -155,7 +155,7 @@ export class BatchedOperation<T extends OperationType = OperationType> extends O
      * - Backspace: each deletion decrements the position: [3,3], [2,2], [1,1] ...
      * - Forward delete: the position stays the same after each deletion: [0,0], [0,0] ...
      */
-    return op.index.textRange![0] === lastOp.index.textRange![0] - 1 ||
-      op.index.textRange![0] === lastOp.index.textRange![0];
+    return op.index.textRange![0] === lastOp.index.textRange![0] - 1
+      || op.index.textRange![0] === lastOp.index.textRange![0];
   }
 }
