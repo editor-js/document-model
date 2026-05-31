@@ -19,7 +19,7 @@ runs:
       id: process_test_report
       with:
         script: |
-          import processReports from './.github/scripts/compare-coverage.js';
+          const processReports = require('./.github/scripts/compare-coverage.js')
 
           core.setOutput('message', processReports('test-report', 'test-report-base'));
 
@@ -28,7 +28,7 @@ runs:
       id: process_mutation_report
       with:
         script: |
-          import processReports from './.github/scripts/process-mutation.js';
+          const processReports = require('./.github/scripts/process-mutation.js')
 
           core.setOutput('message', processReports('mutation-report/mutation/mutation.json', 'mutation-report/changed-files.json'));
 
@@ -41,8 +41,7 @@ runs:
         PACKAGE: ${{ inputs.package-name }}
       with:
         script: |
-            import { generateReport } from './.github/scripts/generate-report.js';
-
+            const generateReport = require('./.github/scripts/generate-report.js').generateReport
             const { TESTS_MESSAGE, MUTATION_MESSAGE, PACKAGE } = process.env;
 
             core.setOutput('report', generateReport(PACKAGE, TESTS_MESSAGE, MUTATION_MESSAGE));
@@ -67,7 +66,7 @@ runs:
         PR_NUMBER: ${{ steps.findPr.outputs.number }}
       with:
         script: |
-          import updater from './.github/scripts/update-aggregated-comment.js';
+          const updater = require('./.github/scripts/update-aggregated-comment.js');
 
           (async () => {
             try {

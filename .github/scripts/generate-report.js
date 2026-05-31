@@ -1,8 +1,10 @@
-function generateReport(pkg, testMessage, mutationMessage) {
+#!/usr/bin/env node
+
+function generateReport(package, testMessage, mutationMessage) {
   let md = '';
 
-  md += `<!-- ${pkg} REPORT -->\n`;
-  md += `## ${pkg}\n\n`;
+  md += `<!-- ${package} REPORT -->\n`;
+  md += `## ${package}\n\n`;
 
   md += `### Unit tests report\n ${testMessage}\n\n`;
 
@@ -11,10 +13,10 @@ function generateReport(pkg, testMessage, mutationMessage) {
   }
 
 
-  md += `<!-- END ${pkg} REPORT -->\n`;
+  md += `<!-- END ${package} REPORT -->\n`;
 
   return md;
 }
 
-export { generateReport };
+module.exports = { generateReport };
 
