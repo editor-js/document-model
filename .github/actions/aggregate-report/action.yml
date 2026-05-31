@@ -66,6 +66,7 @@ runs:
         PR_NUMBER: ${{ steps.findPr.outputs.number }}
       with:
         script: |
+          const github = require('@actions/github');
           const updater = require('./.github/scripts/update-aggregated-comment.js');
 
           (async () => {
