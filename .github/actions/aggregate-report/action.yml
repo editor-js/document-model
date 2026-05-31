@@ -56,7 +56,6 @@ runs:
       uses: softprops/turnstyle@v3
       with:
         queue-name: aggregated-comment-${{ steps.findPr.outputs.number || github.ref_name || github.ref }}
-        initial-wait-seconds: 600
 
     - name: Create or update PR comment with report
       uses: actions/github-script@v6

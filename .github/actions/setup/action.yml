@@ -8,7 +8,7 @@ runs:
       shell: bash
 
     - name: Restore yarn cache folder
-      uses: actions/cache@v3
+      uses: actions/cache@v5
       id: yarn-cache
       with:
         path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
