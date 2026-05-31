@@ -51,51 +51,27 @@ runs:
         uses: jwalton/gh-find-current-pr@v1
         id: findPr
 
-      - name: Comment on successful mutation testing
-        uses: thollander/actions-comment-pull-request@v2
-        if: steps.changed-files.outputs.src_any_changed == 'true' && steps.run-mutation-tests.outcome == 'success' && ${{ steps.findPr.outputs.number != '' }}
+      - name: Save mutated files list
+        if: steps.changed-files.outputs.src_any_changed == 'true'
+        shell: bash
+        run: |
+          echo "${{ format('[{0}]', format('''{0}''', steps.changed-files.outputs.src_all_changed_files)) }}" > changed-files.json
+
+      - name: Save empty list if no files changed
+        if: steps.changed-files.outputs.src_any_changed == 'false'
+        shell: bash
+        run: echo "[]" > changed-files.json
+
+      - name: Upload mutation report artifact
+        if: steps.changed-files.outputs.src_any_changed == 'true'
+        uses: actions/upload-artifact@v3
         with:
-          message: |
-            ✅ Mutation testing passed for `${{ inputs.working-directory }}`
+          name: mutation-report
+          path: |
+            ${{ inputs.working-directory }}/reports/mutation/mutation.json
+            changed-files.json
 
-            Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${{ steps.findPr.outputs.number }}?module=${{ inputs.package-name }}
-
-            <details>
-              <summary>Mutated files</summary>
-              <pre>
-            ${{ join(fromJson(format('[{0}]', format('''{0}''', steps.changed-files.outputs.src_all_changed_files))), '<br />') }}
-              </pre>
-            </details>
-          comment_tag: mutation-tests for `${{ inputs.working-directory }}`
-          pr_number: ${{ steps.findPr.outputs.number != '' && steps.findPr.outputs.number || '1'}}
-
-      - name: Comment on failed mutation testing
-        uses: thollander/actions-comment-pull-request@v2
-        if: steps.changed-files.outputs.src_any_changed == 'true' && steps.run-mutation-tests.outcome == 'failure' && ${{ steps.findPr.outputs.number != '' }}
-        with:
-          message: |
-            ❌ Mutation testing hasn't passed score threshold for `${{ inputs.working-directory }}`
-
-            Report: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${{ steps.findPr.outputs.number }}?module=${{ inputs.package-name }}
-
-            <details>
-              <summary>Mutated files</summary>
-              <pre>
-            ${{ join(fromJson(format('[{0}]', format('''{0}''', steps.changed-files.outputs.src_all_changed_files))), '<br />') }}
-              </pre>
-            </details>
-          comment_tag: mutation-tests for `${{ inputs.working-directory }}`
-          pr_number: ${{ steps.findPr.outputs.number != '' && steps.findPr.outputs.number || '1'}}
-
-      - name: Comment on empty changes
-        uses: thollander/actions-comment-pull-request@v2
-        if: steps.changed-files.outputs.src_any_changed == 'false' && ${{ steps.findPr.outputs.number != '' }}
-        with:
-          message: |
-            ⏭️ No files to mutate for `${{ inputs.working-directory }}`
-
-          comment_tag: mutation-tests for `${{ inputs.working-directory }}`
-          pr_number: ${{ steps.findPr.outputs.number != '' && steps.findPr.outputs.number || '1'}}
+      # reporting will be triggered by workflow_run on workflow completion
 
       - if: steps.changed-files.outputs.src_any_changed == 'true' && steps.run-mutation-tests.outcome == 'failure'
         shell: bash

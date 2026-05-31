@@ -56,3 +56,44 @@ jobs:
           package-name: '@editorjs/dom-adapters'
           working-directory: './packages/dom-adapters'
           stryker_dashboard_api_key: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
+
+  report:
+    name: Aggregate and post report
+    if: ${{ github.ref != 'refs/heads/main' && github.head_ref != 'main' }}
+    needs: [tests, mutation-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate aggregated report and comment
+        uses: ./.github/actions/aggregate-report
+        with:
+          package-name: '@editorjs/dom-adapters'
+
+  mutation-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build dependencies
+        uses: ./.github/actions/build
+        with:
+          package-name: '@editorjs/dom-adapters'
+
+      - name: Run mutation tests for changed files
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: ./.github/actions/mutation-tests-changed-files
+        with:
+          package-name: '@editorjs/dom-adapters'
+          working-directory: './packages/dom-adapters'
+          stryker_dashboard_api_key: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
+
+      - name: Run mutation tests for all files
+        if: ${{ github.event_name == 'merge_group' }}
+        uses: ./.github/actions/mutation-tests-all-files
+        with:
+          package-name: '@editorjs/dom-adapters'
+          working-directory: './packages/dom-adapters'
+          stryker_dashboard_api_key: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
+

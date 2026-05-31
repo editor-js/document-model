@@ -20,3 +20,18 @@ jobs:
         uses: ./.github/actions/build
         with:
           package-name: '@editorjs/sdk'
+
+  report:
+    name: Aggregate and post report
+    if: ${{ github.ref != 'refs/heads/main' && github.head_ref != 'main' }}
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate aggregated report and comment
+        uses: ./.github/actions/aggregate-report
+        with:
+          package-name: '@editorjs/sdk'
+
