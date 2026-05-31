@@ -9,6 +9,6 @@ export class UndoCoreEvent extends CoreEventBase<undefined> {
    * UndoCoreEvent constructor function
    */
   constructor() {
-    super(CoreEventType.Undo, undefined);
+    super(CoreEventType.Undo, undefined, { cancelable: true });
   }
 }

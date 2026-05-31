@@ -57,4 +57,14 @@ export interface DocumentAPI {
    * @param params - modify operation parameters
    */
   modifyData(params: ModifyDataParams): void;
+
+  /**
+   * Undoes the last change in the document
+   */
+  undo(): void;
+
+  /**
+   * Redoes the last undone change in the document
+   */
+  redo(): void;
 }
