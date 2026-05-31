@@ -64,4 +64,5 @@ jobs:
         uses: ./.github/actions/aggregate-report
         with:
           package-name: '@editorjs/collaboration-manager'
+          working-directory: './packages/collaboration-manager'
 

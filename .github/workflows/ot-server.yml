@@ -65,4 +65,5 @@ jobs:
         uses: ./.github/actions/aggregate-report
         with:
           package-name: '@editorjs/ot-server'
+          working-directory: './packages/ot-server'
 

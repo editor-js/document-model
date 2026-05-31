@@ -33,6 +33,7 @@ runs:
         path: |
           ${{ inputs.working-directory }}/coverage
           ${{ inputs.working-directory }}/jest-report.json
+        retention-days: 3
 
     - name: Run base coverage action
       uses: ./.github/actions/base-coverage

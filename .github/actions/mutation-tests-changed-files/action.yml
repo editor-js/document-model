@@ -51,7 +51,7 @@ runs:
         if: steps.changed-files.outputs.src_any_changed == 'true'
         shell: bash
         run: |
-          echo "${{ format('[{0}]', format('''{0}''', steps.changed-files.outputs.src_all_changed_files)) }}" > changed-files.json
+          echo "${{ format('[{0}]', format('"{0}"', steps.changed-files.outputs.src_all_changed_files)) }}" > changed-files.json
 
       - name: Save empty list if no files changed
         if: steps.changed-files.outputs.src_any_changed == 'false'
@@ -65,6 +65,7 @@ runs:
           path: |
             ${{ inputs.working-directory }}/reports/mutation/mutation.json
             changed-files.json
+          retention-days: 3
 
       # reporting will be triggered by workflow_run on workflow completion
 

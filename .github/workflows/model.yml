@@ -70,3 +70,4 @@ jobs:
         uses: ./.github/actions/aggregate-report
         with:
           package-name: '@editorjs/model'
+          working-directory: './packages/model'
