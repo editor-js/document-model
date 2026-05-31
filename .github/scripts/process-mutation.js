@@ -30,17 +30,18 @@ function getMetrics(obj) {
 
 
 function processMutationReport(reportPath, changedFilesPath) {
-  if (!fs.existsSync(reportPath)) {
+  if (!fs.existsSync(reportPath) && !fs.existsSync(changedFilesPath)) {
     return '';
   }
-
-  const raw = fs.readFileSync(reportPath, 'utf8');
-  const obj = JSON.parse(raw);
   const changedFiles = JSON.parse(fs.readFileSync(changedFilesPath, 'utf8'));
 
   if (changedFiles.length === 0) {
     return 'No files to mutate found.';
   }
+
+  const raw = fs.readFileSync(reportPath, 'utf8');
+  const obj = JSON.parse(raw);
+
 
   const metrics = getMetrics(obj);
 
