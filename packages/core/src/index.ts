@@ -23,6 +23,7 @@ import { BlocksManager } from './components/BlockManager.js';
 import { BlockRenderer } from './components/BlockRenderer.js';
 import { SelectionManager } from './components/SelectionManager.js';
 import { TOKENS } from './tokens.js';
+import { UndoRedoManager } from './components/UndoRedoManager.js';
 /**
  * If no holder is provided via config, the editor will be appended to the element with this id
  */
@@ -159,18 +160,19 @@ export default class Core {
 
       this.#initializeAdapter();
 
+      this.#initializePlugins();
+      await this.#initializeTools();
+
       /**
        * Need to initialize internal modules before plugins and tools
        * @todo think of how to remove this?
        * @todo add e2e initialization tests
        * Currently only BlockRenderer would be enough, but that would be hard to debug. Easier just add every module here
        */
-      this.#iocContainer.get(BlockRenderer);
-      this.#iocContainer.get(BlocksManager);
       this.#iocContainer.get(SelectionManager);
-
-      this.#initializePlugins();
-      await this.#initializeTools();
+      this.#iocContainer.get(BlocksManager);
+      this.#iocContainer.get(BlockRenderer);
+      this.#iocContainer.get(UndoRedoManager);
 
       this.#model.initializeDocument({ blocks });
 

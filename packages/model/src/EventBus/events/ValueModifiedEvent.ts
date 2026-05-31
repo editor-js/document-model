@@ -1,5 +1,5 @@
 import type { Index } from '../../entities/Index/index.js';
-import type { ModifiedEventData } from '../types/EventPayloadBase.js';
+import type { ModifiedEventData } from './BaseEvent.js';
 import { EventAction } from '../types/EventAction.js';
 import { BaseDocumentEvent } from './BaseEvent.js';
 

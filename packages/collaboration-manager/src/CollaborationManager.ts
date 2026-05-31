@@ -6,11 +6,15 @@ import {
   TextFormattedEvent, TextRemovedEvent,
   TextUnformattedEvent
 } from '@editorjs/model';
+import type {
+  UndoCoreEvent,
+  EditorAPI,
+  EditorjsPlugin,
+  EditorjsPluginParams,
+  RedoCoreEvent
+} from '@editorjs/sdk';
 import {
   CoreEventType,
-  type EditorAPI,
-  type EditorjsPlugin,
-  type EditorjsPluginParams,
   PluginType
 } from '@editorjs/sdk';
 import { OTClient } from './client/index.js';
@@ -97,10 +101,14 @@ export class CollaborationManager implements EditorjsPlugin {
     this.#config = config;
     this.#undoRedoManager = new UndoRedoManager();
 
-    const onUndo = (): void => {
+    const onUndo = (e: UndoCoreEvent): void => {
+      e.preventDefault();
+
       this.undo();
     };
-    const onRedo = (): void => {
+    const onRedo = (e: RedoCoreEvent): void => {
+      e.preventDefault();
+
       this.redo();
     };
     const onReady = (): void => {

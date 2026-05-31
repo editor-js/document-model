@@ -3,9 +3,9 @@ import 'reflect-metadata';
 import { type EditorDocumentSerialized, EditorJSModel, EventType, type ModelEvents } from '@editorjs/model';
 import {
   CoreConfigValidated,
-  DocumentAPI as DocumentApiInterface,
+  DocumentAPI as DocumentApiInterface, EventBus,
   type InsertRemoveDataParams,
-  type ModifyDataParams
+  type ModifyDataParams, RedoCoreEvent, UndoCoreEvent
 } from '@editorjs/sdk';
 import { inject, injectable } from 'inversify';
 import { TOKENS } from '../../tokens.js';
@@ -27,17 +27,25 @@ export class DocumentAPI implements DocumentApiInterface {
   #config: CoreConfigValidated;
 
   /**
+   * Editor's event bus instance
+   */
+  #eventBus: EventBus;
+
+  /**
    * DocumentAPI constructor
    * All parameters are injected through the IoC container
    * @param model - Editor's Document Model instance
    * @param config - Editor's config
+   * @param eventBus - Editor's event bus instance
    */
   constructor(
     model: EditorJSModel,
-    @inject(TOKENS.EditorConfig) config: CoreConfigValidated
+    @inject(TOKENS.EditorConfig) config: CoreConfigValidated,
+    eventBus: EventBus
   ) {
     this.#model = model;
     this.#config = config;
+    this.#eventBus = eventBus;
   }
 
   /**
@@ -90,5 +98,27 @@ export class DocumentAPI implements DocumentApiInterface {
    */
   public modifyData({ userId = this.#config.userId, index, data }: ModifyDataParams): void {
     this.#model.modifyData(userId, index, data);
+  }
+
+  /**
+   * Undoes the last change in the document
+   */
+  public undo(): void {
+    /**
+     * To enable Plugins to cancel the default undo/redo behavior,
+     * we have to dispatch event here instead of a direct call
+     */
+    this.#eventBus.dispatchEvent(new UndoCoreEvent());
+  }
+
+  /**
+   * Redoes the last undone change in the document
+   */
+  public redo(): void {
+    /**
+     * To enable Plugins to cancel the default undo/redo behavior,
+     * we have to dispatch event here instead of a direct call
+     */
+    this.#eventBus.dispatchEvent(new RedoCoreEvent());
   }
 }
