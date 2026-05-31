@@ -1,0 +1,90 @@
+---
+title: Collaboration OT Flow
+config:
+  theme: neutral
+---
+%% See: ../collaboration.md
+sequenceDiagram
+  actor LocalUser as Local User
+  participant EditorJSModel
+  participant CollaborationManager
+  participant UndoRedoManager
+  participant OTClient
+  participant OTServer as OT Server
+  actor RemoteUser as Remote User
+
+  %% ── Connect ──────────────────────────────────────
+  LocalUser->>CollaborationManager: connect()
+  CollaborationManager->>OTClient: new OTClient(serverAddr, userId)
+  OTClient->>OTServer: WebSocket open
+  CollaborationManager->>OTClient: connectDocument(model.serialized)
+  OTClient->>OTServer: Handshake(documentId, userId, rev, data)
+  OTServer-->>OTClient: Handshake(data?)
+  alt server has newer document state
+    OTClient->>EditorJSModel: initializeDocument(data)
+  end
+
+  %% ── Local edit → server ──────────────────────────
+  LocalUser->>EditorJSModel: insertText, addBlock, etc.
+  EditorJSModel-->>CollaborationManager: TextAddedEvent, BlockAddedEvent, etc.
+  CollaborationManager->>CollaborationManager: build Operation from event
+  CollaborationManager->>OTClient: send(operation)
+  OTClient->>OTServer: Operation(type, index, payload, userId, rev)
+  OTServer-->>OTClient: Ack(userId, rev)
+
+  %% ── Batch & undo stack ───────────────────────────
+  CollaborationManager->>CollaborationManager: create/grow BatchedOperation, reset debounce timer
+  Note over CollaborationManager: debounce timeout fires (or incompatible op / remote op received)
+  CollaborationManager->>UndoRedoManager: put(currentBatch)
+
+  %% ── Remote edit → local model ────────────────────
+  RemoteUser->>OTServer: Operation(type, index, payload, userId, rev)
+  OTServer-->>OTClient: Operation(type, index, payload, userId, rev)
+  OTClient->>OTClient: transform against pending operations (OT)
+  OTClient->>CollaborationManager: onRemoteOperation(transformedOp)
+  CollaborationManager->>EditorJSModel: insertData, removeData, modifyData
+
+  %% ── Undo ─────────────────────────────────────────
+  LocalUser->>CollaborationManager: undo()
+  Note over CollaborationManager: #putBatchToUndo() — flush currentBatch
+  CollaborationManager->>UndoRedoManager: put(currentBatch)
+  CollaborationManager->>UndoRedoManager: undo()
+  UndoRedoManager-->>CollaborationManager: invertedOperation
+  CollaborationManager->>EditorJSModel: applyOperation(invertedOperation)
+
+  %% ══════════════════════════════════════════════════
+  %% Operational Transformation: concurrent edit scenario
+  %% ══════════════════════════════════════════════════
+  %% Both users start at the same document revision N.
+  %% User A types before receiving User B's operation,
+  %% so their ops are based on the same state and must be transformed.
+
+  rect rgb(235, 245, 255)
+    Note over LocalUser, RemoteUser: OT: concurrent edits (both at rev N)
+
+    LocalUser->>OTClient: send Op-A (e.g. insert "x" at pos 5, rev N)
+    OTClient->>OTServer: Op-A(Insert, pos=5, rev=N)
+    Note over OTClient: Op-A is now in pendingOperations
+
+    RemoteUser->>OTServer: Op-B(Insert, pos=3, rev=N)
+
+    OTServer->>OTServer: apply Op-B first (wins the race), rev = N+1
+    OTServer-->>OTClient: broadcast Op-B(Insert, pos=3, rev=N+1)
+
+    Note over OTClient: Op-A is still pending (no Ack yet)
+
+    Note over OTClient: Step 1 — transform each pending op against the remote op,<br/>so pending ops stay valid on top of the new server state:<br/>Op-A' = Op-A.transform(Op-B)  →  pos 5 shifts to 6
+    OTClient->>OTClient: Op-A (pending) = Op-A.transform(Op-B)
+
+    Note over OTClient: Step 2 — transform the remote op against each pending op<br/>in sequence, so it applies correctly to local state:<br/>Op-B' = Op-B.transform(Op-A)  →  pos 3 unchanged (before pos 5)
+    OTClient->>OTClient: Op-B' = Op-B.transform(Op-A)
+
+    OTClient->>CollaborationManager: onRemoteOperation(Op-B')
+    CollaborationManager->>EditorJSModel: insertData at pos 3 (Op-B')
+
+    OTServer->>OTServer: transform Op-A against Op-B, apply, rev = N+2
+    OTServer-->>OTClient: Ack Op-A(rev=N+2)
+    Note over OTClient: pendingOperations cleared, rev = N+2
+  end
+
+

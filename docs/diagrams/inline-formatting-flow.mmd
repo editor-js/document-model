@@ -1,0 +1,58 @@
+---
+title: Inline Formatting Flow
+config:
+  theme: neutral
+---
+%% See: ../input-handling.md
+sequenceDiagram
+  participant EventBus
+  participant ToolsManager
+  participant FormattingAdapter
+  participant SelectionManager
+  participant EditorJSModel
+  participant CaretAdapter
+  participant InputsRegistry
+  participant InlineTool
+  participant DOM
+  actor User
+
+  %% ── Setup: FormattingAdapter caches tool instances ──
+  EventBus-->>FormattingAdapter: ToolLoadedCoreEvent (inline tool)
+  FormattingAdapter->>InlineTool: tool.create()
+  FormattingAdapter->>FormattingAdapter: attachTool(name, instance)
+
+  %% ── User applies inline tool ─────────────────────────
+  User->>SelectionManager: applyInlineToolForCurrentSelection(toolName, data)
+  SelectionManager->>EditorJSModel: getCaret(userId)
+  EditorJSModel-->>SelectionManager: Caret (index with segments)
+  SelectionManager->>ToolsManager: inlineTools.get(toolName).create()
+  ToolsManager-->>SelectionManager: InlineTool instance
+
+  loop for each text segment in composite index
+    SelectionManager->>EditorJSModel: getFragments(blockIndex, dataKey, start, end, toolName)
+    EditorJSModel-->>SelectionManager: InlineFragment[]
+    SelectionManager->>InlineTool: getFormattingOptions(textRange, fragments)
+    InlineTool-->>SelectionManager: action (Format or Unformat), range
+    alt Format
+      SelectionManager->>EditorJSModel: format(userId, blockIndex, dataKey, toolName, start, end, data)
+    else Unformat
+      SelectionManager->>EditorJSModel: unformat(userId, blockIndex, dataKey, toolName, start, end)
+    end
+  end
+
+  %% ── Model event → FormattingAdapter re-renders DOM ──
+  EditorJSModel-->>FormattingAdapter: TextFormattedEvent or TextUnformattedEvent
+  FormattingAdapter->>CaretAdapter: findInput(blockIndex, dataKey)
+  CaretAdapter->>InputsRegistry: getInput(blockIndex, dataKey)
+  InputsRegistry-->>CaretAdapter: HTMLElement
+  CaretAdapter-->>FormattingAdapter: HTMLElement (input)
+  FormattingAdapter->>EditorJSModel: getFragments(blockIndex, dataKey, rangeStart, rangeEnd)
+  EditorJSModel-->>FormattingAdapter: affected InlineFragment[]
+  FormattingAdapter->>FormattingAdapter: rerenderRange — clear range, re-wrap all fragments
+  loop for each affected fragment
+    FormattingAdapter->>InlineTool: createWrapper(toolData)
+    InlineTool-->>FormattingAdapter: HTMLElement wrapper
+    FormattingAdapter->>DOM: surround(wrapper, input, range)
+  end
+  FormattingAdapter->>CaretAdapter: updateIndex(index, userId)
+  CaretAdapter->>DOM: restore caret position

@@ -1,0 +1,178 @@
+---
+title: Events Catalog
+config:
+  theme: neutral
+  layout: dagre
+---
+%% See: ../events.md
+classDiagram
+
+  direction LR
+
+  %% ── Base classes ─────────────────────────────────
+  class BaseDocumentEvent {
+    <<abstract CustomEvent>>
+    detail.index: Index
+    detail.action: EventAction
+    detail.data: unknown
+    detail.userId: string or number
+  }
+
+  class CoreEventBase {
+    <<abstract CustomEvent>>
+    detail: Payload
+  }
+
+  class UIEventBase {
+    <<abstract CustomEvent>>
+    detail: Payload
+  }
+
+  %% ── Event Dispatchers ────────────────────────────
+  class EditorJSModel {
+    <<model EventBus>>
+  }
+
+  class CaretManager {
+    <<model EventBus>>
+  }
+
+  class CoreEventBus["Core EventBus"] {
+    <<sdk EventBus>>
+  }
+
+  class BlockToolAdapterBus["BlockToolAdapter"] {
+    <<adapter EventBus, per-block>>
+  }
+
+  %% ── @editorjs/model ──────────────────────────────
+  namespace model {
+    class BlockAddedEvent {
+      detail.data: BlockNodeSerialized
+    }
+    class BlockRemovedEvent {
+      detail.data: BlockNodeSerialized
+    }
+    class TextAddedEvent {
+      detail.data: string
+    }
+    class TextRemovedEvent {
+      detail.data: string
+    }
+    class TextFormattedEvent {
+      detail.data.tool: InlineToolName
+      detail.data.data: InlineToolData
+    }
+    class TextUnformattedEvent {
+      detail.data.tool: InlineToolName
+      detail.data.data: InlineToolData
+    }
+    class DataNodeAddedEvent {
+      detail.data: BlockNodeDataSerializedValue
+    }
+    class DataNodeRemovedEvent {
+      detail.data: BlockNodeDataSerializedValue
+    }
+    class ValueModifiedEvent {
+      detail.data.value: T
+      detail.data.previous: T
+    }
+    class TuneModifiedEvent {
+      detail.data.value: T
+      detail.data.previous: T
+    }
+    class CaretManagerCaretUpdatedEvent {
+      <<CustomEvent~CaretSerialized~>>
+      detail.index: SerializedIndex or null
+      detail.userId: string or number
+    }
+    class CaretManagerCaretAddedEvent {
+      <<CustomEvent~CaretSerialized~>>
+      detail.index: SerializedIndex
+      detail.userId: string or number
+    }
+    class CaretManagerCaretRemovedEvent {
+      <<CustomEvent~CaretSerialized~>>
+      detail.userId: string or number
+    }
+  }
+
+  %% ── @editorjs/sdk — EventBus ─────────────────────
+  namespace sdk {
+    class BlockAddedCoreEvent {
+      detail.tool: string
+      detail.data: BlockToolData
+      detail.index: number
+      detail.ui: HTMLElement
+    }
+    class BlockRemovedCoreEvent {
+      detail.tool: string
+      detail.index: number
+    }
+    class ToolLoadedCoreEvent {
+      detail.tool: ToolFacadeClass
+    }
+    class SelectionChangedCoreEvent {
+      detail.index: Index or null
+      detail.availableInlineTools: Map~InlineToolName, InlineTool~
+      detail.fragments: InlineFragment[]
+    }
+    class UndoCoreEvent {
+      detail: undefined
+    }
+    class RedoCoreEvent {
+      detail: undefined
+    }
+    class BeforeInputUIEvent {
+      detail.data: string
+      detail.inputType: string
+      detail.targetRanges: StaticRange[]
+      detail.isCrossInputSelection: boolean
+    }
+  }
+
+  %% ── @editorjs/sdk — BlockToolAdapter (per-block) ─
+  namespace adapter {
+    class KeyAddedEvent {
+      detail: string
+    }
+    class KeyRemovedEvent {
+      detail: string
+    }
+    class ValueNodeChangedEvent {
+      detail.key: string
+      detail.value: unknown
+    }
+  }
+
+  %% ── Inheritance ──────────────────────────────────
+  BlockAddedEvent --|> BaseDocumentEvent
+  BlockRemovedEvent --|> BaseDocumentEvent
+  TextAddedEvent --|> BaseDocumentEvent
+  TextRemovedEvent --|> BaseDocumentEvent
+  TextFormattedEvent --|> BaseDocumentEvent
+  TextUnformattedEvent --|> BaseDocumentEvent
+  DataNodeAddedEvent --|> BaseDocumentEvent
+  DataNodeRemovedEvent --|> BaseDocumentEvent
+  ValueModifiedEvent --|> BaseDocumentEvent
+  TuneModifiedEvent --|> BaseDocumentEvent
+
+  BlockAddedCoreEvent --|> CoreEventBase
+  BlockRemovedCoreEvent --|> CoreEventBase
+  ToolLoadedCoreEvent --|> CoreEventBase
+  SelectionChangedCoreEvent --|> CoreEventBase
+  UndoCoreEvent --|> CoreEventBase
+  RedoCoreEvent --|> CoreEventBase
+
+  BeforeInputUIEvent --|> UIEventBase
+
+  %% ── Dispatchers ──────────────────────────────────
+  BaseDocumentEvent ..> EditorJSModel : dispatched on
+  CaretManagerCaretUpdatedEvent ..> EditorJSModel : dispatched on EventType.CaretManagerUpdated
+  CaretManagerCaretAddedEvent ..> EditorJSModel : dispatched on EventType.CaretManagerUpdated
+  CaretManagerCaretRemovedEvent ..> EditorJSModel : dispatched on EventType.CaretManagerUpdated
+  CoreEventBase ..> CoreEventBus : dispatched on
+  UIEventBase ..> CoreEventBus : dispatched on
+  KeyAddedEvent ..> BlockToolAdapterBus : dispatched on
+  KeyRemovedEvent ..> BlockToolAdapterBus : dispatched on
+  ValueNodeChangedEvent ..> BlockToolAdapterBus : dispatched on

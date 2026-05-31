@@ -1,0 +1,149 @@
+---
+title: Model Tree Structure
+config:
+  theme: neutral
+---
+%% See: ../model.md
+classDiagram
+  direction TB
+
+
+  %% ── Document tree ────────────────────────────────
+  class EditorJSModel {
+    <<EventBus>>
+    -document: EditorDocument
+    -caretManager: CaretManager
+    -currentUserId: string or number
+    +length: number
+    +serialized: EditorDocumentSerialized
+    +addBlock(userId, data, index?)
+    +removeBlock(userId, index)
+    +updateValue(userId, blockIndex, dataKey, value)
+    +format(userId, blockIndex, dataKey, ...)
+    +unformat(userId, blockIndex, dataKey, ...)
+    +createCaret(userId, index?): Caret
+    +getCaret(userId): Caret
+    +removeCaret(userId)
+  }
+
+  class EditorDocument {
+    +identifier: DocumentId
+    +children: BlockNode[]
+    +length: number
+    +initialize(blocks)
+    +addBlock(data, index?)
+    +removeBlock(index)
+    +updateValue(blockIndex, dataKey, value)
+  }
+
+  class BlockNode {
+    +name: BlockToolName
+    +data: BlockNodeData
+    +tunes: Record~BlockTuneName, BlockTune~
+    +parent: EditorDocument
+    +createDataNode(key, data)
+    +removeDataNode(key)
+    +updateValue(key, value)
+    +getText(key): string
+    +getFragments(key, ...): InlineFragment[]
+  }
+
+  class BlockTune {
+    +name: BlockTuneName
+    +data: Record~string, unknown~
+    +update(key, value)
+  }
+
+  class TextNode {
+    +length: number
+    +getText(start?, end?): string
+    +insertText(text, index?)
+    +removeText(start?, end?)
+    +format(tool, start, end, data?)
+    +unformat(tool, start, end)
+    +getFragments(start?, end?, tool?): InlineFragment[]
+  }
+
+  class ValueNode~T~ {
+    +value: T
+    +update(value: T)
+  }
+
+  class ParentInlineNode {
+    <<abstract>>
+    +children: InlineNode[]
+    +insertText(text, index?)
+    +removeText(start?, end?)
+    +format(tool, start, end, data?)
+    +unformat(tool, start, end)
+    +getFragments(start?, end?): InlineFragment[]
+  }
+
+  class FormattingInlineNode {
+    +tool: InlineToolName
+    +data?: InlineToolData
+    +format(tool, start, end, data?)
+    +unformat(tool, start, end)
+    +split(index): FormattingInlineNode
+  }
+
+  class TextInlineNode {
+    +value: string
+    +length: number
+    +insertText(text, index?)
+    +removeText(start?, end?)
+    +format(tool, start, end, data?): InlineNode[]
+  }
+
+  %% ── Caret management ─────────────────────────────
+  class CaretManager {
+    <<EventBus>>
+    -registry: Map~userId, Caret~
+    +getCaret(userId): Caret
+    +createCaret(userId, index?): Caret
+    +updateCaret(caret)
+    +removeCaret(caret)
+  }
+
+  class Caret {
+    <<EventBus>>
+    -userId: string or number
+    -index: Index or null
+    +update(index: Index or null)
+    +toJSON(): CaretSerialized
+  }
+
+  %% ── Base ─────────────────────────────────────────
+  class EventBus {
+    <<EventTarget>>
+  }
+
+  %% EventBus inheritance
+  CaretManager --|> EventBus
+  Caret --|> EventBus
+  EditorJSModel --|> EventBus
+  EditorDocument --|> EventBus
+  BlockNode --|> EventBus
+  BlockTune --|> EventBus
+  ValueNode --|> EventBus
+  ParentInlineNode --|> EventBus
+
+  %% Document composition
+  EditorJSModel "1" *-- "1" EditorDocument : document
+
+  %% Tree structure
+  EditorDocument "1" *-- "0..*" BlockNode : children
+  BlockNode "1" *-- "0..*" TextNode : data[key]
+  BlockNode "1" *-- "0..*" ValueNode : data[key]
+  BlockNode "1" *-- "0..*" BlockTune : tunes[name]
+
+  %% Inline tree
+  TextNode --|> ParentInlineNode
+  FormattingInlineNode --|> ParentInlineNode
+  ParentInlineNode "1" *-- "0..*" FormattingInlineNode : children
+  ParentInlineNode "1" *-- "0..*" TextInlineNode : children
+
+  %% Caret management (declared last → placed right)
+  EditorJSModel "1" *-- "1" CaretManager : caretManager
+  CaretManager "1" *-- "0..*" Caret : registry
+
