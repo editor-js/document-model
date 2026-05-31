@@ -107,7 +107,6 @@ export class BatchedOperation<T extends OperationType = OperationType> extends O
    * Checks if operation can be added to the batch
    *
    * Only text operations with the same type (Insert/Delete) on the same block and data key could be added
-   * @todo delete operations are not being batched properly
    * @param op - operation to check
    */
   public canAdd(op: Operation): boolean {
@@ -143,6 +142,20 @@ export class BatchedOperation<T extends OperationType = OperationType> extends O
       return false;
     }
 
-    return op.index.textRange![0] === lastOp.index.textRange![1] + 1;
+    if (op.type === OperationType.Insert) {
+      /**
+       * For Insert operations, each character is appended sequentially:
+       * [0,0], [1,1], [2,2] ...
+       */
+      return op.index.textRange![0] === lastOp.index.textRange![1] + 1;
+    }
+
+    /**
+     * For Delete operations two consecutive patterns are allowed:
+     * - Backspace: each deletion decrements the position: [3,3], [2,2], [1,1] ...
+     * - Forward delete: the position stays the same after each deletion: [0,0], [0,0] ...
+     */
+    return op.index.textRange![0] === lastOp.index.textRange![0] - 1 ||
+      op.index.textRange![0] === lastOp.index.textRange![0];
   }
 }
