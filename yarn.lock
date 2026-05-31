@@ -2341,15 +2341,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@editorjs/helpers@npm:^1.2.1":
-  version: 1.2.1
-  resolution: "@editorjs/helpers@npm:1.2.1"
-  dependencies:
-    codex-tooltip: "npm:^1.0.5"
-  checksum: 1ac9ef2a6f31780631483ccd1e78e1ee00757f74298f5e481b868a0dd169b6e8623a29b890eb9ceaea98f9e1d19a03a8bc3d9b59c6c910e276cedd13302c8c6f
-  languageName: node
-  linkType: hard
-
 "@editorjs/helpers@npm:^1.2.2":
   version: 1.2.2
   resolution: "@editorjs/helpers@npm:1.2.2"
@@ -2421,15 +2412,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@editorjs/ui-kit@npm:^1.1.4":
-  version: 1.1.4
-  resolution: "@editorjs/ui-kit@npm:1.1.4"
+"@editorjs/ui-kit@npm:^1.1.5":
+  version: 1.1.5
+  resolution: "@editorjs/ui-kit@npm:1.1.5"
   dependencies:
     "@codexteam/icons": "npm:^0.3.3"
     "@editorjs/caret": "npm:^1.1.0"
     "@editorjs/dom": "npm:^1.1.0"
-    "@editorjs/helpers": "npm:^1.2.1"
-  checksum: 27db9866d69da601af9735e4a7c28d8cc8eca8aede91bc103405e6ba1e6e0a819f7412c550651636c6f895f270d1acd39b60c3d116ab4f3e239a2a64000d8350
+    "@editorjs/helpers": "npm:^1.2.2"
+  checksum: c46cc31874e5271b097486e0abdd626a23d9cd6acd1a81abda580c5a762bdb513984a6eb380639ba8a1cfb945a1cdcfe790482c19508eaf438293f7d10f83568
   languageName: node
   linkType: hard
 
@@ -2446,7 +2437,7 @@ __metadata:
     "@editorjs/helpers": "npm:^1.2.2"
     "@editorjs/model": "workspace:^"
     "@editorjs/sdk": "workspace:^"
-    "@editorjs/ui-kit": "npm:^1.1.4"
+    "@editorjs/ui-kit": "npm:^1.1.5"
     eslint: "npm:^9.9.1"
     eslint-config-codex: "npm:^2.0.3"
     postcss: "npm:^8.5.10"
