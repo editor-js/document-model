@@ -34,7 +34,7 @@ runs:
 
     - name: Generate markdown report
       id: section-report
-      uses: actions/github-script@v6
+      uses: actions/github-script@v9
       env:
         TESTS_MESSAGE: ${{ steps.process_test_report.outputs.message }}
         MUTATION_MESSAGE: ${{ steps.process_mutation_report.outputs.message }}
@@ -58,7 +58,7 @@ runs:
         queue-name: aggregated-comment-${{ steps.findPr.outputs.number || github.ref_name || github.ref }}
 
     - name: Create or update PR comment with report
-      uses: actions/github-script@v6
+      uses: actions/github-script@v9
       env:
         REPORT: ${{ steps.section-report.outputs.report }}
         PACKAGE: ${{ inputs.package-name }}

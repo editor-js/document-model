@@ -3,7 +3,7 @@ import path from 'path';
 
 function findCoverageJson(dir) {
   if (!dir) return null;
-  const report = path.join(dir, 'coverage', 'coverage-final.json');
+  const report = path.join(dir, 'coverage', 'coverage-summary.json');
 
 
   if (fs.existsSync(report)) {
