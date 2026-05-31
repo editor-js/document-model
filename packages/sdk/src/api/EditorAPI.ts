@@ -1,6 +1,7 @@
 import type { BlocksAPI } from './BlocksAPI.js';
 import type { SelectionAPI } from './SelectionAPI.js';
 import type { DocumentAPI } from './DocumentAPI.js';
+import type { TextAPI } from './TextAPI.js';
 
 /**
  * Editor API interface
@@ -21,4 +22,9 @@ export interface EditorAPI {
    * Document API instance to work with Editor's document
    */
   document: DocumentAPI;
+
+  /**
+   * Text API to work with the text content of the document
+   */
+  text: TextAPI;
 }

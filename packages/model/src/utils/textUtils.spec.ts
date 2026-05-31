@@ -100,7 +100,7 @@ describe('textUtils', () => {
 
     it('should concatenate values separated by newlines', () => {
       const initial: InlineTreeNodeSerialized = {
-        value: 'first\n',
+        value: 'first',
         fragments: [],
       };
       const entries: [string, TextNodeSerialized][] = [
@@ -109,16 +109,16 @@ describe('textUtils', () => {
 
       const result = mergeTextNodes(entries, initial);
 
-      expect(result.value).toBe('first\nsecond\n');
+      expect(result.value).toBe('first\nsecond');
     });
 
     it('should adjust fragment ranges to be relative to the merged value', () => {
       /**
-       * 'abc\n' is 4 chars long so 'def' starts at offset 4
+       * 'abc' is 3 chars long so 'def' starts at offset 3
        */
-      const initialLength = 4;
+      const initialLength = 3;
       const initial: InlineTreeNodeSerialized = {
-        value: 'abc\n',
+        value: 'abc',
         fragments: [],
       };
       const entries: [string, TextNodeSerialized][] = [
@@ -139,7 +139,7 @@ describe('textUtils', () => {
 
     it('should handle multiple entries in order', () => {
       const initial: InlineTreeNodeSerialized = {
-        value: 'a\n',
+        value: 'a',
         fragments: [],
       };
       const entries: [string, TextNodeSerialized][] = [
@@ -149,12 +149,12 @@ describe('textUtils', () => {
 
       const result = mergeTextNodes(entries, initial);
 
-      expect(result.value).toBe('a\nb\nc\n');
+      expect(result.value).toBe('a\nb\nc');
     });
 
     it('should accept a custom joiner string between entries', () => {
       const initial: InlineTreeNodeSerialized = {
-        value: 'first|',
+        value: 'first',
         fragments: [],
       };
       const entries: [string, TextNodeSerialized][] = [[
@@ -164,7 +164,7 @@ describe('textUtils', () => {
 
       const result = mergeTextNodes(entries, initial, '|');
 
-      expect(result.value).toBe('first|second|');
+      expect(result.value).toBe('first|second');
     });
   });
 });

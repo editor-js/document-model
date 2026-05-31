@@ -1,4 +1,5 @@
 import {
+  BlockIndexOrId,
   BlockChildType,
   type BlockId,
   type BlockNodeInit,
@@ -49,6 +50,10 @@ interface InsertBlockParameters {
    */
   focus?: boolean;
   // tunes?: {[name: string]: BlockTuneData};
+  /**
+   * User id to attribute the change to
+   */
+  userId?: string | number;
 }
 
 /**
@@ -117,6 +122,7 @@ export class BlocksManager {
    * @param parameters.index - index to insert block at
    // * @param parameters.needToFocus - flag indicates if caret should be set to block after insert
    * @param parameters.replace - flag indicates if block at index should be replaced
+   * @param parameters.userId - user id to attribute the change to
    */
   public insert({
     id = undefined,
@@ -125,6 +131,7 @@ export class BlocksManager {
     index,
     focus = false,
     replace = false,
+    userId = this.#config.userId,
     // tunes = {},
   }: InsertBlockParameters = {}): void {
     let newIndex = index;
@@ -134,10 +141,10 @@ export class BlocksManager {
     }
 
     if (replace) {
-      this.#model.removeBlock(this.#config.userId, newIndex);
+      this.#model.removeBlock(userId, newIndex);
     }
 
-    this.#model.addBlock(this.#config.userId, {
+    this.#model.addBlock(userId, {
       ...data,
       id,
       name: type,
@@ -154,9 +161,10 @@ export class BlocksManager {
    * Inserts several Blocks to specified index
    * @param blocks - array of blocks to insert
    * @param [index] - index to insert blocks at. If undefined, inserts at the end
+   * @param [userId] - user id to attribute the change to
    */
-  public insertMany(blocks: BlockNodeInit[], index: number = this.#model.length): void {
-    blocks.forEach((block, i) => this.#model.addBlock(this.#config.userId, block, index + i));
+  public insertMany(blocks: BlockNodeInit[], index: number = this.#model.length, userId: string | number = this.#config.userId): void {
+    blocks.forEach((block, i) => this.#model.addBlock(userId, block, index + i));
   }
 
   /**
@@ -176,25 +184,27 @@ export class BlocksManager {
 
   /**
    * Removes Block by index, or current block if index is not passed
-   * @param index - index of a block to delete
+   * @param indexOrId - index or identifier of a block to delete
+   * @param [userId] - user id to attribute the change to
    */
-  public deleteBlock(index: number | undefined = this.#getCurrentBlockIndex()): void {
-    if (index === undefined) {
+  public deleteBlock(indexOrId: number | string | undefined = this.#getCurrentBlockIndex(), userId: string | number = this.#config.userId): void {
+    if (indexOrId === undefined) {
       /**
        * @todo see what happens in legacy
        */
       throw new Error('No block selected to delete');
     }
 
-    this.#model.removeBlock(this.#config.userId, index);
+    this.#model.removeBlock(userId, indexOrId as BlockIndexOrId);
   }
 
   /**
    * Moves a block to a new index
    * @param toIndex - index where the block is moved to
    * @param [fromIndex] - block to move. Current block if not passed
+   * @param [userId] - user id to attribute the change to
    */
-  public move(toIndex: number, fromIndex: number | undefined = this.#getCurrentBlockIndex()): void {
+  public move(toIndex: number, fromIndex: number | undefined = this.#getCurrentBlockIndex(), userId: string | number = this.#config.userId): void {
     if (fromIndex === undefined) {
       throw new Error('No block selected to move');
     }
@@ -208,8 +218,8 @@ export class BlocksManager {
 
     const block = this.#model.getBlockSerialized(fromIndex);
 
-    this.#model.removeBlock(this.#config.userId, fromIndex);
-    this.#model.addBlock(this.#config.userId, block, toIndex);
+    this.#model.removeBlock(userId, fromIndex);
+    this.#model.addBlock(userId, block, toIndex);
   }
 
   /**
@@ -220,8 +230,9 @@ export class BlocksManager {
    * @param blockIndexOrId - numeric position or named identifier that locates the block
    * @param dataKey - the data key at which the split is performed
    * @param offset - character offset within the data key's text value to split at
+   * @param userId - optional id of the user who made the operation. By default — current user id
    */
-  public splitBlock(blockIndexOrId: number | BlockId, dataKey: DataKey, offset: number): void {
+  public splitBlock(blockIndexOrId: number | BlockId, dataKey: DataKey, offset: number, userId: string | number = this.#config.userId): void {
     const blockIndex = this.#model.resolveBlockIndex(blockIndexOrId);
 
     const block = this.#model.getBlockSerialized(blockIndex);
@@ -260,7 +271,7 @@ export class BlocksManager {
      */
     if (offset === 0 && splitIndex === 0) {
       this.#model.addBlock(
-        this.#config.userId,
+        userId,
         {
           name: canBeSplit ? block.name : this.#config.defaultBlock,
           data: {},
@@ -275,14 +286,14 @@ export class BlocksManager {
      * Remove text in the split input (fragments will be adjusted by the model)
      */
     if (offset < splitInput.value.length) {
-      this.#model.removeText(this.#config.userId, blockIndex, dataKey, offset);
+      this.#model.removeText(userId, blockIndex, dataKey, offset);
     }
 
     /**
      * Remove all the inputs in the current block after the split
      */
     entriesAfter.forEach(([key]) => {
-      this.#model.removeDataNode(this.#config.userId, blockIndex, key);
+      this.#model.removeDataNode(userId, blockIndex, key);
     });
 
     /**
@@ -290,7 +301,7 @@ export class BlocksManager {
      */
     if (offset === splitInput.value.length && splitIndex === blockInputs.length - 1) {
       this.#model.addBlock(
-        this.#config.userId,
+        userId,
         {
           name: canBeSplit ? block.name : this.#config.defaultBlock,
           data: {},
@@ -307,10 +318,7 @@ export class BlocksManager {
      */
     if (!canBeSplit) {
       const contentAfterAccInit: InlineTreeNodeSerialized = {
-        /**
-         * @todo check if \n is a proper option here
-         */
-        value: textAfter + '\n',
+        value: textAfter,
         fragments: fragmentsAfter,
       };
 
@@ -323,7 +331,7 @@ export class BlocksManager {
       /**
        * Insert new block with the content after the caret, converted using the default block's import method
        */
-      this.#model.addBlock(this.#config.userId, {
+      this.#model.addBlock(userId, {
         name: this.#config.defaultBlock,
         data: newBlockData,
       }, blockIndex + 1);
@@ -356,7 +364,7 @@ export class BlocksManager {
       });
     }
 
-    this.#model.addBlock(this.#config.userId, {
+    this.#model.addBlock(userId, {
       name: toolName,
       data: newData,
     }, blockIndex + 1);

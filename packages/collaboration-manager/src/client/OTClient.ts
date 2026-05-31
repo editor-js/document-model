@@ -140,6 +140,15 @@ export class OTClient {
   }
 
   /**
+   * Closes websocket connection
+   */
+  public close(): void {
+    void this.#ws.then((ws) => {
+      ws.close();
+    });
+  }
+
+  /**
    * Sends next operation from the pending ops array
    */
   async #sendNextOperation(): Promise<void> {

@@ -676,7 +676,7 @@ describe('BlocksManager (unit, mocked deps)', () => {
           expect.arrayContaining(['description']),
         ]),
         // initial accumulator contains text after offset in 'title'
-        expect.objectContaining({ value: 'lo\n' }) // 'Hello'.slice(3) + '\n'
+        expect.objectContaining({ value: 'lo' }) // 'Hello'.slice(3)
       );
     });
   });
