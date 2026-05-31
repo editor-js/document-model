@@ -3,11 +3,15 @@ on:
   pull_request:
   merge_group:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - run: yarn
 
@@ -24,7 +28,7 @@ jobs:
   tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - run: yarn
 
@@ -38,11 +42,28 @@ jobs:
         with:
           package-name: '@editorjs/ot-server'
           working-directory: './packages/ot-server'
+
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Build the package
         uses: ./.github/actions/build
         with:
           package-name: '@editorjs/ot-server'
+
+  report:
+    name: Aggregate and post report
+    if: ${{ github.ref != 'refs/heads/main' && github.head_ref != 'main' }}
+    needs: [tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Generate aggregated report and comment
+        uses: ./.github/actions/aggregate-report
+        with:
+          package-name: '@editorjs/ot-server'
+          working-directory: './packages/ot-server'
+

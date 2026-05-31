@@ -3,11 +3,15 @@ on:
   pull_request:
   merge_group:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Run ESLint check
         uses: ./.github/actions/lint
         with:
@@ -16,7 +20,7 @@ jobs:
   tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Run unit tests
         uses: ./.github/actions/unit-tests
@@ -26,7 +30,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Build the package
         uses: ./.github/actions/build
         with:
@@ -35,7 +39,7 @@ jobs:
   mutation-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Run mutation tests for changed files
         if: ${{ github.event_name == 'pull_request' }}
@@ -52,3 +56,18 @@ jobs:
           package-name: '@editorjs/model'
           working-directory: './packages/model'
           stryker_dashboard_api_key: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
+
+  report:
+    name: Aggregate and post report
+    if: ${{ github.ref != 'refs/heads/main' && github.head_ref != 'main' }}
+    needs: [tests, mutation-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Generate aggregated report and comment
+        uses: ./.github/actions/aggregate-report
+        with:
+          package-name: '@editorjs/model'
+          working-directory: './packages/model'

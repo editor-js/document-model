@@ -1,0 +1,45 @@
+name: Base coverage
+description: "Checkout base ref, run package coverage and upload artifact"
+inputs:
+  package-name:
+    description: 'Full package name (workspace)'
+    required: true
+  working-directory:
+    description: 'Working directory relative to repo root (package folder)'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout base ref
+      uses: actions/checkout@v6
+      with:
+        ref: ${{ steps.resolve_base.outputs.base_ref }}
+        fetch-depth: 0
+
+    - name: Setup Node
+      uses: actions/setup-node@v6
+      with:
+        node-version-file: .nvmrc
+
+    - name: Setup environment
+      uses: ./.github/actions/setup
+
+    - name: Build the package
+      shell: bash
+      run: yarn workspace ${{ inputs.package-name }} run build
+      working-directory: ${{ inputs.working-directory }}
+
+    - name: Run coverage
+      shell: bash
+      run: yarn workspace ${{ inputs.package-name }} test:coverage
+      working-directory: ${{ inputs.working-directory }}
+
+    - name: Upload base coverage artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: test-report-base
+        path: |
+          ${{ inputs.working-directory }}/coverage
+          ${{ inputs.working-directory }}/jest-report.json
+

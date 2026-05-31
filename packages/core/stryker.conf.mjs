@@ -11,6 +11,7 @@ const config = {
     allowEmojis: true,
   },
   reporters: [
+    'json',
     'html',
     'clear-text',
     'progress',
