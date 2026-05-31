@@ -66,6 +66,8 @@ runs:
         PR_NUMBER: ${{ steps.findPr.outputs.number }}
       with:
         script: |
+          const core = require('@actions/core');
+          const github = require('@actions/github');
           const updater = require('./.github/scripts/update-aggregated-comment.js');
 
           (async () => {
@@ -73,7 +75,7 @@ runs:
               const report = process.env.REPORT || '';
               const packageName = process.env.PACKAGE;
               const pr = process.env.PR_NUMBER || undefined;
-              await updater.updateAggregatedComment(report, packageName, pr);
+              await updater.updateAggregatedComment(report, packageName, pr, core, github);
             } catch (err) {
               core.error(err && err.stack ? err.stack : String(err));
               throw err;

@@ -1,11 +1,4 @@
-#!/usr/bin/env node
-// .github/scripts/update-aggregated-comment.js
-// Exports: updateAggregatedComment(report, packageName, prNumber)
-
-import core from '@actions/core';
-import github from '@actions/github';
-
-async function updateAggregatedComment(report, packageName, prNumber) {
+async function updateAggregatedComment(report, packageName, prNumber, core, github) {
   if (!report) {
     core.info('No report provided, skipping comment update.');
     return;
