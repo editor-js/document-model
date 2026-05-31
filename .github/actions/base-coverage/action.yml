@@ -22,10 +22,13 @@ runs:
       with:
         node-version-file: .nvmrc
 
-    - name: Install dependencies
-      run: yarn --frozen-lockfile
-      working-directory: ${{ inputs.working-directory }}
+    - name: Setup environment
+      uses: ./.github/actions/setup
+
+    - name: Build the package
       shell: bash
+      run: yarn workspace ${{ inputs.package-name }} run build
+      working-directory: ${{ inputs.working-directory }}
 
     - name: Run coverage
       shell: bash
