@@ -33,5 +33,10 @@ export enum CoreEventType {
   /**
    * Event is fired when redo action should be performed
    */
-  Redo = 'redo'
+  Redo = 'redo',
+
+  /**
+   * Event is fired when the Editor is fully initialized (document and tools are ready)
+   */
+  Ready = 'ready'
 }
