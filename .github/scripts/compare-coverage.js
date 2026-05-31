@@ -80,7 +80,7 @@ function compute(headSummary, baseSummary) {
   return out;
 }
 
-export default function processReports(headDir, baseDir) {
+export function processReports(headDir, baseDir) {
   const headCov = findCoverageJson(headDir);
   const baseCov = findCoverageJson(baseDir);
   const headJest = findJestJsonResults(headDir);

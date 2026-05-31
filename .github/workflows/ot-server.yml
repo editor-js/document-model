@@ -38,6 +38,7 @@ jobs:
         with:
           package-name: '@editorjs/ot-server'
           working-directory: './packages/ot-server'
+
   build:
     runs-on: ubuntu-latest
     steps:
