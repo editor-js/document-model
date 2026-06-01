@@ -67,8 +67,8 @@ async function updateAggregatedComment(unitTestRow, mutationRow, packageName, pr
     const afterSection = body.substring(sectionEndIdx);
     const sectionContent = body.substring(sectionStartIdx + sectionStart.length, sectionEndIdx);
 
-    // Split into lines and find the data row for this package
-    const lines = sectionContent.split('\n');
+    // Split into lines, trim, and filter out empty lines
+    let lines = sectionContent.split('\n').map(l => l.trim()).filter(l => l.length > 0);
     let packageRowLineIdx = -1;
 
     for (let i = 0; i < lines.length; i++) {
@@ -88,7 +88,7 @@ async function updateAggregatedComment(unitTestRow, mutationRow, packageName, pr
       lines.push(newRow);
     }
 
-    return beforeSection + lines.join('\n') + afterSection;
+    return beforeSection + '\n' + lines.join('\n') + '\n' + afterSection;
   }
 
   // Update unit tests table

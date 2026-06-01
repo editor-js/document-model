@@ -42,3 +42,4 @@ runs:
         path: |
           ${{ inputs.working-directory }}/coverage
           ${{ inputs.working-directory }}/jest-report.json
+        retention-days: 3
