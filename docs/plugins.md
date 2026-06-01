@@ -4,7 +4,7 @@
 
 `core.use(...)` registers UI components/plugins by static `type` (values from `ToolType` for tools, `PluginType.Adapter` for adapters, and `PluginType.Plugin` for general plugins).
 
-Tools are configured through editor config (`tools`) and loaded by `ToolsManager` during `initialize()`.
+Tools are registered via `core.use(ToolConstructor, options)` during setup. The `tools` config field provides tool settings/options that `ToolsManager` applies during `initialize()`.
 
 | Type | Interface / Source | Purpose |
 |---|---|---|
@@ -39,7 +39,7 @@ Programmatic block management — delegates to `BlocksManager`.
 
 | Method | Description |
 |---|---|
-| `insert(type?, data?, index?, focus?, replace?)` | Insert a block of the given tool type |
+| `insert(type?, data?, index?, id?, focus?, replace?)` | Insert a block of the given tool type |
 | `insertMany(blocks, index?)` | Insert multiple serialised blocks |
 | `delete(index?)` | Remove a block (defaults to caret block) |
 | `move(toIndex, fromIndex?)` | Move a block to a new position |
@@ -57,11 +57,16 @@ Inline tool application — delegates to `SelectionManager`.
 
 ### `api.document`
 
-Read-only document access — delegates to `DocumentAPI`.
+Document access and mutations — delegates to `DocumentAPI`.
 
-| Property | Description |
+| Method | Description |
 |---|---|
 | `data` | Returns `EditorDocumentSerialized` — the current serialised document state |
+| `insertData(params)` | Insert data at the specified index |
+| `removeData(params)` | Remove data at the specified index |
+| `modifyData(params)` | Modify data at the specified index |
+| `undo()` | Undo the last change in the document (dispatches `UndoCoreEvent`) |
+| `redo()` | Redo the last undone change (dispatches `RedoCoreEvent`) |
 
 
 → [`diagrams/plugin-lifecycle-flow.mmd`](diagrams/plugin-lifecycle-flow.mmd)

@@ -40,13 +40,13 @@ Dispatched on the IoC-managed `EventBus` (one instance per editor) with prefixed
 
 | Event | Type string | `detail` shape | Who dispatches |
 |---|---|---|---|
-| `BlockAddedCoreEvent` | `core:block-added` | `{ tool, data, index, ui: HTMLElement }` | `BlockRenderer` |
-| `BlockRemovedCoreEvent` | `core:block-removed` | `{ tool, index }` | `BlockRenderer` |
-| `ToolLoadedCoreEvent` | `core:tool-loaded` | `{ tool: ToolFacadeClass }` | `ToolsManager` |
-| `SelectionChangedCoreEvent` | `core:selection-changed` | `{ index, availableInlineTools, fragments }` | `SelectionManager` |
-| `UndoCoreEvent` | `core:undo` | — | `BlocksUI` (Cmd/Ctrl+Z) |
-| `RedoCoreEvent` | `core:redo` | — | `BlocksUI` (Cmd/Ctrl+Shift+Z) |
-| `BeforeInputUIEvent` | `ui:before-input` | `{ data, inputType, targetRanges, isCrossInputSelection }` | `BlocksUI` |
+| `BlockAddedCoreEvent` | `core:block:added` | `{ tool, data, index, ui: HTMLElement }` | `BlockRenderer` |
+| `BlockRemovedCoreEvent` | `core:block:removed` | `{ tool, index }` | `BlockRenderer` |
+| `ToolLoadedCoreEvent` | `core:tool:loaded` | `{ tool: ToolFacadeClass }` | `ToolsManager` |
+| `SelectionChangedCoreEvent` | `core:selection:changed` | `{ index, availableInlineTools, fragments }` | `SelectionManager` |
+| `UndoCoreEvent` | `core:undo` | — | `DocumentAPI.undo()` or `BlocksUI` (Cmd/Ctrl+Z) |
+| `RedoCoreEvent` | `core:redo` | — | `DocumentAPI.redo()` or `BlocksUI` (Cmd/Ctrl+Shift+Z) |
+| `BeforeInputUIEvent` | `ui:before-input` | `{ data, inputType, targetRanges, isCrossInputSelection, isComposing }` | `BlocksUI` |
 
 `BlockAddedCoreEvent` carries the rendered `HTMLElement` in `detail.ui`, while the model-level `BlockAddedEvent` carries serialised data — they are complementary.
 

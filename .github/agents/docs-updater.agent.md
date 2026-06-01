@@ -83,8 +83,7 @@ Template for a new diagram:
 ```
 ---
 title: <Human-readable title>
-config:
-  theme: neutral
+
 ---
 %% See: ../relevant-doc.md
 sequenceDiagram   (or classDiagram, etc.)

@@ -1,7 +1,6 @@
 ---
 title: Architecture Overview
-config:
-  theme: neutral
+
 ---
 %% See: ../architecture.md
 classDiagram
@@ -94,6 +93,11 @@ classDiagram
       +initialize()
       +use(plugin): Core
     }
+
+    class UndoRedoManager {
+      +undo()
+      +redo()
+    }
   }
 
   %% Infrastructure relations
@@ -103,11 +107,17 @@ classDiagram
   %% Core — owns & wires
   Core *-- EditorJSModel
   Core *-- CollaborationManager
+  Core *-- UndoRedoManager : creates (listens on EventBus)
   Core ..> EditorjsPluginConstructor : registers via use()
   Core ..> EditorjsAdapterPluginConstructor : registers via use()
 
+  %% Undo handlers
+  UndoRedoManager --> EventBus : listens for undo/redo events
+  CollaborationManager --> EventBus : listens for undo/redo events
+
   %% Model interactions
   CollaborationManager --> EditorJSModel : listens / applies ops
+  UndoRedoManager --> EditorJSModel : listens to model changes & applies undo/redo
   BlockToolAdapter --> EditorJSModel : syncs DOM↔model
 
   %% Tool contracts

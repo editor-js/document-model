@@ -1,7 +1,6 @@
 ---
 title: Collaboration OT Flow
-config:
-  theme: neutral
+
 ---
 %% See: ../collaboration.md
 sequenceDiagram
@@ -46,7 +45,7 @@ sequenceDiagram
 
   %% ── Undo ─────────────────────────────────────────
   LocalUser->>CollaborationManager: undo()
-  Note over CollaborationManager: #putBatchToUndo() — flush currentBatch
+  Note over CollaborationManager: #35;putBatchToUndo() — flush currentBatch
   CollaborationManager->>UndoRedoManager: put(currentBatch)
   CollaborationManager->>UndoRedoManager: undo()
   UndoRedoManager-->>CollaborationManager: invertedOperation

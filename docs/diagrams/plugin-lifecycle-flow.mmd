@@ -1,7 +1,5 @@
 ---
 title: Plugin Lifecycle Flow
-config:
-  theme: neutral
 ---
 %% See: ../plugins.md
 sequenceDiagram
@@ -20,7 +18,7 @@ sequenceDiagram
   %% ── Constructor ──────────────────────────────────
   Dev->>Core: new Core(config)
   Core->>IoC: bind EditorConfig, EventBus, EditorJSModel, ToolsManager
-  Core->>Plugins: bind DOMAdapters, Paragraph, Bold, Italic, Link, ShortcutsPlugin
+   Core->>Plugins: bind DOMAdapters, Paragraph, BoldInlineTool, ItalicInlineTool, LinkInlineTool, ShortcutsPlugin
 
   %% ── Registration ─────────────────────────────────
 
@@ -36,7 +34,7 @@ sequenceDiagram
   %% ── await initialize() ───────────────────────────
   Dev->>Core: await initialize()
 
-  Core->>IoC: bind TOKENS.Adapter as toDynamicValue(ctx => new Adapter(model, config, api, eventBus))
+   Core->>IoC: bind TOKENS.Adapter as toDynamicValue(ctx => new Adapter({ model, config, api, eventBus }))
 
   Core->>Plugins: getAll(PluginType.Plugin)
   Plugins-->>Core: [SomePlugin, ...]
@@ -46,16 +44,16 @@ sequenceDiagram
   Core->>Plugins: getAll(ToolType.Block / Inline / Tune)
   Plugins-->>Core: [[SomeTool, settings], ...]
   Core->>ToolsManager: prepareTools(blockTools, inlineTools, blockTunes)
-  loop for each tool
-    ToolsManager->>Tool: Tool.prepare(toolName, config)
-    ToolsManager->>ToolsManager: wrap in BlockToolFacade or InlineToolFacade
-    ToolsManager->>EventBus: dispatch ToolLoadedCoreEvent(facade)
-  end
+   loop for each tool
+     ToolsManager->>Tool: Tool.prepare({ toolName, config })
+     ToolsManager->>ToolsManager: wrap in BlockToolFacade or InlineToolFacade
+     ToolsManager->>EventBus: dispatch ToolLoadedCoreEvent(facade)
+   end
 
   Core->>IoC: get SelectionManager, BlocksManager, BlockRenderer
 
-  Core->>EditorJSModel: initializeDocument(blocks)
-  EditorJSModel-->>BlockRenderer: BlockAddedEvent (per block)
+   Core->>EditorJSModel: initializeDocument({ blocks })
+   EditorJSModel-->>BlockRenderer: BlockAddedEvent (per block)
   BlockRenderer->>Adapter: createBlockToolAdapter(blockIndex, toolName)
   BlockRenderer->>Tool: facade.create(adapter, data)
 

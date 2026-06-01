@@ -1,62 +1,47 @@
 ---
 title: Undo / Redo Flow
-config:
-  theme: neutral
+
 ---
 %% See: ../collaboration.md
 sequenceDiagram
   actor User
+  participant BlocksUI
+  participant DocumentAPI
+  participant EventBus
+  participant CoreUndoRedoManager as "UndoRedoManager (Core)"
   participant CollaborationManager
-  participant UndoRedoManager
-  participant OTClient
   participant EditorJSModel
 
-  %% ── Rapid typing — ops are batched ──────────────
-  User->>EditorJSModel: insertText "H" (op1)
+  %% ── User interaction ─────────────────────────────
+  User->>BlocksUI: presses Cmd/Ctrl+Z or Cmd/Ctrl+Shift+Z
+  BlocksUI->>DocumentAPI: undo() or redo()
+
+  %% ── Event dispatch and handling ──────────────────
+  DocumentAPI->>EventBus: dispatchEvent(UndoCoreEvent)
+  EventBus-->>CollaborationManager: listener receives event
+  EventBus-->>CoreUndoRedoManager: listener receives event
+
+  %% ── Collaboration manager handles (takes over) ───
+  CollaborationManager->>CollaborationManager: e.preventDefault()
+  CollaborationManager->>CollaborationManager: >#putBatchToUndo() — flush currentBatch
+  CollaborationManager->>CollaborationManager: pop undoStack (OT operations)
+  CollaborationManager->>CollaborationManager: inverse operation → Delete
+  Note over CollaborationManager: May send to OT server if connected
+
+  %% ── Core manager sees event prevented and skips ──
+  Note over CoreUndoRedoManager: Check if event.defaultPrevented = true
+  Note over CoreUndoRedoManager: Event was prevented, skip undo processing
+
+  %% ── Rapid edits are batched ──────────────────────
+  User->>EditorJSModel: insertText "H"
+  EditorJSModel-->>CoreUndoRedoManager: TextAddedEvent (grouped by debounce)
   EditorJSModel-->>CollaborationManager: TextAddedEvent
-  CollaborationManager->>OTClient: send(op1)
-  CollaborationManager->>CollaborationManager: #currentBatch = new BatchedOperation(op1), reset debounce
+  CollaborationManager->>CollaborationManager: create BatchedOperation(op), reset timer
 
-  User->>EditorJSModel: insertText "i" (op2)
+  User->>EditorJSModel: insertText "i"
+  EditorJSModel-->>CoreUndoRedoManager: TextAddedEvent (still in same debounce window)
   EditorJSModel-->>CollaborationManager: TextAddedEvent
-  CollaborationManager->>OTClient: send(op2)
-  CollaborationManager->>CollaborationManager: currentBatch.add(op2), reset debounce
+  CollaborationManager->>CollaborationManager: batch.add(op) if canAdd() passes
 
-  User->>EditorJSModel: insertText "!" (op3)
-  EditorJSModel-->>CollaborationManager: TextAddedEvent
-  CollaborationManager->>OTClient: send(op3)
-  CollaborationManager->>CollaborationManager: currentBatch.add(op3), reset debounce
-
-  %% ── Batch terminates on timeout ──────────────────
-  Note over CollaborationManager: debounce timeout fires
-  CollaborationManager->>UndoRedoManager: put(currentBatch)
-
-  %% ── Batch terminated early by incompatible op ────
-  User->>EditorJSModel: insertText "X" (opA — different block/key)
-  EditorJSModel-->>CollaborationManager: TextAddedEvent
-  Note over CollaborationManager: currentBatch.canAdd(opA) → false
-  CollaborationManager->>UndoRedoManager: put(currentBatch)
-  CollaborationManager->>CollaborationManager: #currentBatch = new BatchedOperation(opA)
-
-  %% ── Undo ─────────────────────────────────────────
-  User->>CollaborationManager: undo()
-  Note over CollaborationManager: #putBatchToUndo() — flush currentBatch
-  CollaborationManager->>UndoRedoManager: put(currentBatch)
-
-  CollaborationManager->>UndoRedoManager: undo()
-  UndoRedoManager->>UndoRedoManager: pop undoStack → op.inverse() → Delete "Hi!"
-  UndoRedoManager->>UndoRedoManager: push inverted op to redoStack
-  UndoRedoManager-->>CollaborationManager: invertedOp (Delete "Hi!")
-
-  CollaborationManager->>EditorJSModel: applyOperation(invertedOp)
-
-  %% ── Redo ─────────────────────────────────────────
-  User->>CollaborationManager: redo()
-  Note over CollaborationManager: #putBatchToUndo() — flush currentBatch
-  CollaborationManager->>UndoRedoManager: redo()
-  UndoRedoManager->>UndoRedoManager: pop redoStack → op.inverse() → Insert "Hi!"
-  UndoRedoManager->>UndoRedoManager: push inverted op back to undoStack
-  UndoRedoManager-->>CollaborationManager: invertedOp (Insert "Hi!")
-
-  CollaborationManager->>EditorJSModel: applyOperation(invertedOp)
+  Note over CollaborationManager: Debounce timeout fires → batch moves to undo stack
 

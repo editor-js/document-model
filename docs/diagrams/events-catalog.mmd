@@ -1,7 +1,6 @@
 ---
 title: Events Catalog
 config:
-  theme: neutral
   layout: dagre
 ---
 %% See: ../events.md
@@ -81,11 +80,11 @@ classDiagram
       detail.data.value: T
       detail.data.previous: T
     }
-    class CaretManagerCaretUpdatedEvent {
-      <<CustomEvent~CaretSerialized~>>
-      detail.index: SerializedIndex or null
-      detail.userId: string or number
-    }
+     class CaretManagerCaretUpdatedEvent {
+       <<CustomEvent~CaretSerialized~>>
+       detail.index: string | null
+       detail.userId: string or number
+     }
     class CaretManagerCaretAddedEvent {
       <<CustomEvent~CaretSerialized~>>
       detail.index: SerializedIndex
@@ -123,12 +122,13 @@ classDiagram
     class RedoCoreEvent {
       detail: undefined
     }
-    class BeforeInputUIEvent {
-      detail.data: string
-      detail.inputType: string
-      detail.targetRanges: StaticRange[]
-      detail.isCrossInputSelection: boolean
-    }
+     class BeforeInputUIEvent {
+       detail.data: string
+       detail.inputType: string
+       detail.targetRanges: StaticRange[]
+       detail.isCrossInputSelection: boolean
+       detail.isComposing: boolean
+     }
   }
 
   %% ── @editorjs/sdk — BlockToolAdapter (per-block) ─

@@ -31,11 +31,13 @@ Two event transports (never mixed):
 
 1. `new Core(config)` binds IoC services and built-ins.
 2. `core.use(...)` registers UI components/plugins by `plugin.type`.
-3. `core.initialize()` initializes the adapter plugin (`DOMAdapters` or a custom replacement) first.
-4. UI plugins are instantiated (`EditorjsPlugin` instances, e.g. `EditorjsUI`).
-5. Tools are prepared and announced with `ToolLoadedCoreEvent`.
-6. Initial document is inserted into `EditorJSModel`; `BlockRenderer` reacts to each `BlockAddedEvent` to create a `BlockToolAdapter`, render the tool, and emit `BlockAddedCoreEvent`.
-7. Collaboration manager connects (if server config is provided).
+3. `core.initialize()`:
+   - Initializes the adapter plugin (`DOMAdapters` or a custom replacement).
+   - Instantiates UI plugins (`EditorjsPlugin` instances, e.g. `EditorjsUI`).
+   - Prepares tools and emits `ToolLoadedCoreEvent` for each.
+   - Resolves core services (`SelectionManager`, `BlocksManager`, `BlockRenderer`, `UndoRedoManager`).
+   - Inserts initial document into `EditorJSModel`; `BlockRenderer` reacts to each `BlockAddedEvent` to create a `BlockToolAdapter`, render the tool, and emit `BlockAddedCoreEvent`.
+   - Dispatches `CoreEventType.Ready`; collaboration manager connects if server config is provided.
 
 ---
 
@@ -56,12 +58,13 @@ The system stays decoupled because each step communicates through interfaces and
 
 ## Canonical terms
 
-- `EditorjsPlugin`: general UI/behavior plugin registered via `core.use()` with `PluginType.Plugin`.
+- `EditorjsPlugin`: general UI/behavior plugin registered via `core.use()` with `PluginType.Plugin`. UI components like `BlocksUI` typically declare a `static type` from `UiComponentType` but are bound to `PluginType.Plugin` internally.
 - `UiComponentType`: reserved string keys for UI component slots (`shell`, `blocks`, `inline-toolbar`, `toolbox`, `toolbar`). These name components in the UI layer but are **not** used as arguments to `core.use()` — plugins are registered by `PluginType` or `ToolType` values.
-- `BlockTool` / `InlineTool` / `BlockTune`: tool contracts provided via config and prepared during `initialize()`.
+- `BlockTool` / `InlineTool` / `BlockTune`: tool contracts registered via `core.use(ToolConstructor, options)` during setup. The `tools` config field provides tool settings that `ToolsManager` applies during `initialize()`.
 - `Index`: serializable location in the document tree, independent of DOM nodes. Fields: `documentId`, `blockIndex`, `dataKey`, `textRange`, `tuneName`, `tuneKey`, `propertyName`. A `compositeSegments` array holds multiple per-input text indices for cross-block selections. Built with `IndexBuilder`; serialized to a compact string for caret storage and OT operations.
 - `DataKey`: branded string identifying a data slot inside a `BlockNode` (e.g. `"text"`, `"caption"`). Created via `createDataKey()`.
 - `BatchedOperation`: groups rapid single-character inserts or deletes on the same data key into one logical edit for undo/redo. Lives in `@editorjs/collaboration-manager`.
+- `UndoRedoManager`: exists in two forms: in `@editorjs/core` for single-user undo/redo (listens to model events and groups by debounce), and in `@editorjs/collaboration-manager` for OT-aware undo/redo (manages operation stacks).
 - `InputsRegistry`: shared map of `(blockIndex, dataKey) → HTMLElement` maintained by `DOMAdapters`. Both `DOMBlockToolAdapter` and `CaretAdapter` read from it.
 - `BlockRenderer`: internal `@editorjs/core` component that subscribes to `BlockAddedEvent`/`BlockRemovedEvent` and creates/tears down `BlockToolAdapter` instances. Not to be confused with `BlocksManager` which handles the programmatic insert/delete/move API.
 - `CaretManager`: owns one `Caret` per collaborating user. Dispatches `CaretManagerCaretUpdatedEvent` on `EditorJSModel` when any caret changes.

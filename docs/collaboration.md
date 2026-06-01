@@ -51,10 +51,23 @@ Operations are processed sequentially per document — `DocumentManager` queues 
 
 ## Undo / Redo
 
-`BatchedOperation` groups rapid edits with debounce and terminates on timeout or incompatible operation type.
+There are two undo/redo systems:
 
-`UndoRedoManager` stores completed batches. Undo/redo invert and apply operations while event re-recording is disabled (`shouldHandleEvents = false`) to avoid stack pollution.
+### Single-user undo/redo (`@editorjs/core`)
 
+`UndoRedoManager` in Core listens to document model events directly, groups consecutive changes by a 500ms debounce window, and stores logical steps on stacks.
+
+Undo/redo inverts and re-applies the stored events while suppressing re-record to avoid stack pollution.
+
+This manager respects `UndoCoreEvent` and `RedoCoreEvent` — if either event's `defaultPrevented` is true, the manager skips the operation, allowing other handlers (like `CollaborationManager`) to take precedence.
+
+### Collaborative undo/redo (`@editorjs/collaboration-manager`)
+
+`UndoRedoManager` in Collaboration stores `Operation` instances and inverts them for the OT pipeline.
+
+`BatchedOperation` groups rapid single-character inserts or deletes on the same data key into one logical edit for better history granularity. Insert operations are batched when each character is appended sequentially (`[0,0]`, `[1,1]`, `[2,2]`...). Delete operations are batched in two patterns: **backspace** where position decrements after each deletion (`[3,3]`, `[2,2]`, `[1,1]`...), or **forward delete** where position stays the same (`[0,0]`, `[0,0]`...).
+
+When a user presses Cmd/Ctrl+Z or calls `api.document.undo()`, `DocumentAPI` dispatches a `UndoCoreEvent`. `CollaborationManager` listens first and immediately calls `preventDefault()` to take over undo/redo handling, forwarding the operation through the OT server (if connected). Core's `UndoRedoManager` also listens but only processes undo if not prevented by an earlier handler.
 
 → [`diagrams/undo-redo-flow.mmd`](diagrams/undo-redo-flow.mmd)
 
