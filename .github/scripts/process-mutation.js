@@ -30,7 +30,7 @@ function getMetrics(obj) {
 }
 
 
-function processMutationReport(artitfactName, reportPath, changedFilesPath) {
+function processMutationReport(artitfactName, reportPath, changedFilesPath, prNumber, packageName) {
   const reportFile = path.join(artitfactName, reportPath);
   const changedFilesFile = path.join(artitfactName, changedFilesPath);
 
@@ -65,6 +65,10 @@ function processMutationReport(artitfactName, reportPath, changedFilesPath) {
     message += `> [!WARNING]\n> Mutation score is below the high threshold of ${metrics.thresholds.low}%\n`;
   }
 
+  if (prNumber && packageName) {
+    const encodedPackageName = encodeURIComponent(packageName);
+    message += `\nDashboard URL: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${prNumber}?module=${encodedPackageName}`;
+  }
 
   return message;
 }

@@ -17,6 +17,10 @@ runs:
     - name: Download artifacts
       uses: actions/download-artifact@v8
 
+    - name: Find current PR's number
+      uses: jwalton/gh-find-current-pr@v1
+      id: findPr
+
     - name: Process coverage reports
       uses: actions/github-script@v9
       id: process_test_report
@@ -31,11 +35,13 @@ runs:
       id: process_mutation_report
       env:
         WORKING_DIR: ${{ inputs.working-directory }}
+        PR_NUMBER: ${{ steps.findPr.outputs.number }}
+        PACKAGE_NAME: ${{ inputs.package-name }}
       with:
         script: |
           const processMutationReport = require('./.github/scripts/process-mutation.js').processMutationReport;
 
-          core.setOutput('message', processMutationReport('mutation-report', `${process.env.WORKING_DIR}/reports/mutation/mutation.json`, 'changed-files.json'));
+          core.setOutput('message', processMutationReport('mutation-report', `${process.env.WORKING_DIR}/reports/mutation/mutation.json`, 'changed-files.json', process.env.PR_NUMBER, process.env.PACKAGE_NAME));
 
     - name: Generate markdown report
       id: section-report
@@ -46,14 +52,10 @@ runs:
         PACKAGE: ${{ inputs.package-name }}
       with:
         script: |
-            const generateReport = require('./.github/scripts/generate-report.js').generateReport;
-            const { TESTS_MESSAGE, MUTATION_MESSAGE, PACKAGE } = process.env;
+          const generateReport = require('./.github/scripts/generate-report.js').generateReport;
+          const { TESTS_MESSAGE, MUTATION_MESSAGE, PACKAGE } = process.env;
 
-            core.setOutput('report', generateReport(PACKAGE, TESTS_MESSAGE, MUTATION_MESSAGE));
-
-    - name: Find current PR's number
-      uses: jwalton/gh-find-current-pr@v1
-      id: findPr
+          core.setOutput('report', generateReport(PACKAGE, TESTS_MESSAGE, MUTATION_MESSAGE));
 
 
     - name: Acquire comment-update lock
