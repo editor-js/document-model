@@ -61,16 +61,16 @@ function processMutationReport(artitfactName, reportPath, changedFilesPath, prNu
 
   switch (true) {
     case (score < metrics.thresholds.break):
-      scoreMessage += `<span title="Below break threshold (survived: ${metrics.survived}, not covered: ${metrics.notCovered})">❌</span>`;
+      scoreMessage += ` <span title="Below break threshold (survived: ${metrics.survived}, not covered: ${metrics.notCovered})">❌</span>`;
       break;
     case (score < metrics.thresholds.low):
-      scoreMessage += `<span title="Below low threshold (survived: ${metrics.survived}, not covered: ${metrics.notCovered})">🔴</span>`;
+      scoreMessage += ` <span title="Below low threshold (survived: ${metrics.survived}, not covered: ${metrics.notCovered})">🔴</span>`;
       break;
     case (score < metrics.thresholds.high):
-      scoreMessage += `<span title="Below high threshold (survived: ${metrics.survived}, not covered: ${metrics.notCovered})">🟡</span>`;
+      scoreMessage += ` <span title="Below high threshold (survived: ${metrics.survived}, not covered: ${metrics.notCovered})">🟡</span>`;
       break;
     case (score > metrics.thresholds.high):
-      scoreMessage += `<span title="Above high threshold (survived: ${metrics.survived}, not covered: ${metrics.notCovered})">🟢</span>`;
+      scoreMessage += ` <span title="Above high threshold (survived: ${metrics.survived}, not covered: ${metrics.notCovered})">🟢</span>`;
       break;
   }
 
