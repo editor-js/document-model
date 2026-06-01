@@ -42,7 +42,7 @@ const createBlockNodeWithData = (data: BlockNodeDataSerialized, tunes: Record<st
   });
 };
 
-describe.skip('BlockNode', () => {
+describe('BlockNode', () => {
   describe('NonExistingKeyError', () => {
     it('should format message with key', () => {
       const key = createDataKey('k');
