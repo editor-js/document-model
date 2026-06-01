@@ -250,8 +250,10 @@ export interface BlocksAPI {
   /**
    * Converts block to another type. Both blocks should provide the conversionConfig.
    * @param params.block - index or id of the block to convert. Should provide 'conversionConfig.export' method
+   * @param params.key - data key of the text input at which to split
    * @param params.newType - new block type. Should provide 'conversionConfig.import' method
-   * @param [params.dataOverrides] - optional data overrides for the new block
+   * @param [params.dataOverrides] - optional data overrides for the new block. Merged shallowly:
+   *   object-valued keys are replaced wholesale, not deep-merged.
    * @param [params.userId] - user id to attribute the change to
    * @throws Error if conversion is not possible
    */
@@ -259,9 +261,11 @@ export interface BlocksAPI {
   convert(params: {
     /** Index or id of the block to convert */
     block: number | string;
+    /** Data key of the text input to split */
+    key: string;
     /** Block tool name to convert to */
     newType: string;
-    /** Optional data overrides for the new block */
+    /** Optional data overrides for the new block. Merged shallowly: object-valued keys are replaced wholesale, not deep-merged. */
     dataOverrides?: BlockToolData;
     /** User id. Defaults to the current user id from the config */
     userId?: string | number;
