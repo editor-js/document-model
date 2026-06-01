@@ -35,7 +35,7 @@ runs:
         script: |
           const processMutationReport = require('./.github/scripts/process-mutation.js').processMutationReport;
 
-          core.setOutput('message', processMutationReport(`${process.env.WORKING_DIR}/mutation-report/mutation/mutation.json`, 'mutation-report/changed-files.json'));
+          core.setOutput('message', processMutationReport('mutation-report', `${process.env.WORKING_DIR}/reports/mutation/mutation.json`, 'changed-files.json'));
 
     - name: Generate markdown report
       id: section-report

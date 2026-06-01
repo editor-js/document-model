@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 
 function getMetrics(obj) {
   const mutants = [];
@@ -29,17 +30,20 @@ function getMetrics(obj) {
 }
 
 
-function processMutationReport(reportPath, changedFilesPath) {
-  if (!fs.existsSync(reportPath) && !fs.existsSync(changedFilesPath)) {
+function processMutationReport(artitfactName, reportPath, changedFilesPath) {
+  const reportFile = path.join(artitfactName, reportPath);
+  const changedFilesFile = path.join(artitfactName, changedFilesPath);
+
+  if (!fs.existsSync(reportFile) && !fs.existsSync(changedFilesFile)) {
     return '';
   }
-  const changedFiles = JSON.parse(fs.readFileSync(changedFilesPath, 'utf8'));
+  const changedFiles = JSON.parse(fs.readFileSync(changedFilesFile, 'utf8'));
 
   if (changedFiles.length === 0) {
     return 'No files to mutate found.';
   }
 
-  const raw = fs.readFileSync(reportPath, 'utf8');
+  const raw = fs.readFileSync(reportFile, 'utf8');
   const obj = JSON.parse(raw);
 
 
