@@ -12,6 +12,21 @@ if [ -z "$BASE_REF" ] || [ -z "$PKG_DIR" ]; then
   exit 1
 fi
 
+# Handle different base ref formats
+# Try to resolve the base ref - could be just "main" or "origin/main"
+RESOLVED_BASE_REF="$BASE_REF"
+
+# If base ref doesn't exist, try with origin prefix
+if ! git rev-parse --verify "$RESOLVED_BASE_REF" >/dev/null 2>&1; then
+  RESOLVED_BASE_REF="origin/$BASE_REF"
+fi
+
+# If still doesn't exist, try to fetch it
+if ! git rev-parse --verify "$RESOLVED_BASE_REF" >/dev/null 2>&1; then
+  git fetch origin "$BASE_REF:$BASE_REF" 2>/dev/null || true
+  RESOLVED_BASE_REF="$BASE_REF"
+fi
+
 # Helper function to get all dependencies (direct and transitive)
 get_all_deps() {
   local pkg=$1
@@ -36,7 +51,7 @@ get_all_deps() {
 }
 
 # Check if this package changed
-if git diff --name-only "$BASE_REF...HEAD" | grep -q "^${PKG_DIR}/"; then
+if git diff --name-only "$RESOLVED_BASE_REF...HEAD" | grep -q "^${PKG_DIR}/"; then
   exit 0
 fi
 
@@ -48,7 +63,7 @@ ALL_DEPS=$(get_all_deps "$PKG_NAME" "" | sort -u)
 for dep in $ALL_DEPS; do
   # Map package name to directory - try exact match and underscore variant
   DEP_DIR=$(find packages -maxdepth 1 -type d \( -name "$dep" -o -name "$(echo $dep | sed 's/-/_/g')" \) 2>/dev/null | head -1)
-  if [ -n "$DEP_DIR" ] && git diff --name-only "$BASE_REF...HEAD" | grep -q "^$DEP_DIR/"; then
+  if [ -n "$DEP_DIR" ] && git diff --name-only "$RESOLVED_BASE_REF...HEAD" | grep -q "^$DEP_DIR/"; then
     exit 0
   fi
 done
