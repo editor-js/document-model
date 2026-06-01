@@ -2,11 +2,12 @@
 
 ## Architecture
 
-`CollaborationManager` bridges `EditorJSModel` and `OTClient` (WebSocket client):
+`CollaborationManager` is a plugin (`@editorjs/collaboration-manager`) registered in `Core` during setup. It bridges `EditorJSModel` and `OTClient` (WebSocket client):
 
-1. Converts local model changes into `Operation` and sends them.
-2. Applies incoming remote operations back to the model.
-3. Batches rapid operations and forwards completed batches to `UndoRedoManager`.
+1. Subscribes to model change events and converts them into `Operation` messages sent over WebSocket.
+2. Listens for incoming remote operations and applies them back to the model.
+3. Batches rapid operations (500ms debounce window) and forwards completed batches to its own `UndoRedoManager`.
+4. On `CoreEventType.Ready`, connects to the OT server if server config is provided.
 
 ## Operational transformation
 

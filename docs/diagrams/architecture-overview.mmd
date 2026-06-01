@@ -76,9 +76,10 @@ classDiagram
     }
   }
 
-  %% Layer 2b — Collaboration  (@editorjs/collaboration-manager)
+  %% Layer 2b — Collaboration plugin  (@editorjs/collaboration-manager)
   namespace collaborationManager {
     class CollaborationManager {
+      <<EditorjsPlugin>>
       +connect()
       +applyOperation(operation)
       +undo()
@@ -106,7 +107,6 @@ classDiagram
 
   %% Core — owns & wires
   Core *-- EditorJSModel
-  Core *-- CollaborationManager
   Core *-- UndoRedoManager : creates (listens on EventBus)
   Core ..> EditorjsPluginConstructor : registers via use()
   Core ..> EditorjsAdapterPluginConstructor : registers via use()
@@ -126,6 +126,7 @@ classDiagram
   %% Plugin contracts
   EditorjsPluginConstructor ..> EditorjsPlugin : creates
   EditorjsPlugin ..> EventBus : receives
+  CollaborationManager --|> EditorjsPlugin : implements
 
   %% Adapter plugin contracts
   EditorjsAdapterPluginConstructor ..> EditorJSAdapterPlugin : creates
