@@ -75,7 +75,7 @@ function processMutationReport(artitfactName, reportPath, changedFilesPath, prNu
   }
 
   // | Package | Mutation score | Dashboard URL |
-  return `| ${packageName} | ${scoreMessage} | ${dashboardUrl}`;
+  return `| ${packageName} | ${scoreMessage} | ${dashboardUrl} |`;
 }
 
 export { processMutationReport };
