@@ -49,7 +49,7 @@ function processMutationReport(artitfactName, reportPath, changedFilesPath, prNu
 
   const metrics = getMetrics(obj);
 
-  let message = `Mutation tests run with mutation score ${metrics.score}%.\n`;
+  let message = `Mutation tests run with mutation score ${(metrics.score * 100).toFixed(2)}%.\n`;
 
   if (metrics.survived) {
     message += `Survived mutants: ${metrics.survived}\n`;
