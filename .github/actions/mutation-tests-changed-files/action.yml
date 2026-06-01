@@ -35,7 +35,7 @@ runs:
               - 'src/**/*.ts'
               - '!src/**/*.spec.ts'
               - '!src/**/__mocks__/**'
-          separator: "','"
+          separator: ','
           path: ${{ inputs.working-directory }}
 
       - name: Run mutation tests
@@ -44,14 +44,14 @@ runs:
           STRYKER_DASHBOARD_API_KEY: ${{ inputs.stryker_dashboard_api_key }}
         shell: bash
         id: run-mutation-tests
-        run: yarn workspace ${{ inputs.package-name }} test:mutations --mutate ${{format('''{0}''', steps.changed-files.outputs.src_all_changed_files)}} --dashboard.module ${{ inputs.package-name }}
+        run: yarn workspace ${{ inputs.package-name }} test:mutations --mutate "${{ steps.changed-files.outputs.src_all_changed_files }}" --dashboard.module ${{ inputs.package-name }}
         continue-on-error: true
 
       - name: Save mutated files list
         if: steps.changed-files.outputs.src_any_changed == 'true'
         shell: bash
         run: |
-          echo "${{ format('[{0}]', format('"{0}"', steps.changed-files.outputs.src_all_changed_files)) }}" > changed-files.json
+          echo "${{ steps.changed-files.outputs.src_all_changed_files }}" | sed 's/,/","/g' | sed 's/^/["/;s/$/"]/' > changed-files.json
 
       - name: Save empty list if no files changed
         if: steps.changed-files.outputs.src_any_changed == 'false'
