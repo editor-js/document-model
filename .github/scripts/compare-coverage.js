@@ -103,12 +103,12 @@ export function processReports(headDir, baseDir) {
 
   for (const cat in categories) {
     if (categories[cat].delta < 0) {
-      warning += `Coverage for ${cat} dropped by ${categories[cat].delta.toFixed(2)}%\n`;
+      warning += `\n> Coverage for ${cat} dropped by ${categories[cat].delta.toFixed(2)}%\n`;
     }
   }
 
   if (warning.length > 0) {
-    message += `> [!WARNING]\n> ${message}\n`;
+    message += `> [!WARNING]${warning}`;
   }
 
   return message;

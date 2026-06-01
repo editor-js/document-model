@@ -59,7 +59,7 @@ jobs:
 
   report:
     name: Aggregate and post report
-    if: ${{ always() && github.ref != 'refs/heads/main' && github.head_ref != 'main' }}
+    if: ${{ always() && github.event_name == 'pull_request' }}
     needs: [tests, mutation-tests]
     runs-on: ubuntu-latest
     steps:

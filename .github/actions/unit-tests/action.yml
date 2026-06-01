@@ -36,6 +36,7 @@ runs:
         retention-days: 3
 
     - name: Run base coverage action
+      if: ${{ github.event_name == 'pull_request' }}
       uses: ./.github/actions/base-coverage
       with:
         package-name: ${{ inputs.package-name }}

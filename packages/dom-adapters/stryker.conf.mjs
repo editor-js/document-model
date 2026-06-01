@@ -2,29 +2,30 @@
 /** @type {import('@stryker-mutator/api/core').PartialStrykerOptions} */
 const config = {
   _comment:
-    "This config was generated using 'stryker init'. Please take a look at: https://stryker-mutator.io/docs/stryker-js/configuration/ for more information.",
-  packageManager: "yarn",
+    'This config was generated using \'stryker init\'. Please take a look at: https://stryker-mutator.io/docs/stryker-js/configuration/ for more information.',
+  packageManager: 'yarn',
   thresholds: {
     break: 0,
   },
-  thresholds_comment: "Minimum required coverage. Increase once we're closer to 100%.",
+  thresholds_comment: 'Minimum required coverage. Increase once we\'re closer to 100%.',
   clearTextReporter: {
     allowEmojis: true,
   },
   reporters: [
-    "html",
-    "clear-text",
-    "progress",
-    "dashboard",
+    'json',
+    'html',
+    'clear-text',
+    'progress',
+    'dashboard',
   ],
-  testRunner: "jest",
+  testRunner: 'jest',
   testRunner_comment:
-    "Take a look at https://stryker-mutator.io/docs/stryker-js/jest-runner for information about the jest plugin.",
-  coverageAnalysis: "perTest",
-  tsconfigFile: "tsconfig.json",
-  checkers: ["typescript"],
+    'Take a look at https://stryker-mutator.io/docs/stryker-js/jest-runner for information about the jest plugin.',
+  coverageAnalysis: 'perTest',
+  tsconfigFile: 'tsconfig.json',
+  checkers: ['typescript'],
   timeoutMS: 10000,
-  mutate: ["./src/**/*.ts", "!./src/**/__mocks__/*.ts", "!./src/**/*.spec.ts"],
+  mutate: ['./src/**/*.ts', '!./src/**/__mocks__/*.ts', '!./src/**/*.spec.ts'],
   /*
    * In some cases PRs might not have any unit-tests
    */

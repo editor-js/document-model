@@ -34,13 +34,17 @@ function processMutationReport(artitfactName, reportPath, changedFilesPath, prNu
   const reportFile = path.join(artitfactName, reportPath);
   const changedFilesFile = path.join(artitfactName, changedFilesPath);
 
-  if (!fs.existsSync(reportFile) && !fs.existsSync(changedFilesFile)) {
+  if (!fs.existsSync(changedFilesFile)) {
     return '';
   }
   const changedFiles = JSON.parse(fs.readFileSync(changedFilesFile, 'utf8'));
 
   if (changedFiles.length === 0) {
     return 'No files to mutate found.';
+  }
+
+  if (!fs.existsSync(reportFile)) {
+    return 'Report artifact not found.';
   }
 
   const raw = fs.readFileSync(reportFile, 'utf8');
@@ -59,9 +63,9 @@ function processMutationReport(artitfactName, reportPath, changedFilesPath, prNu
     message += `Not covered mutants: ${metrics.notCovered}\n`;
   }
 
-  if (metrics.score < metrics.thresholds.low) {
+  if (metrics.score * 100 < metrics.thresholds.low) {
     message += `> [!WARNING]\n> Mutation score is below the low threshold of ${metrics.thresholds.low}%\n`;
-  } else if (metrics.score < metrics.thresholds.high) {
+  } else if (metrics.score * 100 < metrics.thresholds.high) {
     message += `> [!CAUTION]\n> Mutation score is below the high threshold of ${metrics.thresholds.low}%\n`;
   }
 
