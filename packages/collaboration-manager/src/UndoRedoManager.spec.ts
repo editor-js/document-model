@@ -222,9 +222,7 @@ describe('UndoRedoManager', () => {
           .addDocumentId(doc)
           .addBlockIndex(0)
           .addDataKey(createDataKey('text'))
-          /* eslint-disable @typescript-eslint/no-magic-numbers */
           .addTextRange([0, 0])
-          /* eslint-enable @typescript-eslint/no-magic-numbers */
           .build(),
         { payload: 'xx' },
         'remote'

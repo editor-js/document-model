@@ -46,12 +46,6 @@ if [ -z "$RESOLVED_BASE_REF" ]; then
   elif git rev-parse --verify "main" >/dev/null 2>&1; then
     RESOLVED_BASE_REF="main"
     debug "Resolved base ref as: main"
-  elif git rev-parse --verify "origin/master" >/dev/null 2>&1; then
-    RESOLVED_BASE_REF="origin/master"
-    debug "Resolved base ref as: origin/master"
-  elif git rev-parse --verify "master" >/dev/null 2>&1; then
-    RESOLVED_BASE_REF="master"
-    debug "Resolved base ref as: master"
   fi
 fi
 
