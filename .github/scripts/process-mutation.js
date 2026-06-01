@@ -60,9 +60,9 @@ function processMutationReport(artitfactName, reportPath, changedFilesPath, prNu
   }
 
   if (metrics.score < metrics.thresholds.low) {
-    message += `> [!CAUTION]\n> Mutation score is below the low threshold of ${metrics.thresholds.low}%\n`;
+    message += `> [!WARNING]\n> Mutation score is below the low threshold of ${metrics.thresholds.low}%\n`;
   } else if (metrics.score < metrics.thresholds.high) {
-    message += `> [!WARNING]\n> Mutation score is below the high threshold of ${metrics.thresholds.low}%\n`;
+    message += `> [!CAUTION]\n> Mutation score is below the high threshold of ${metrics.thresholds.low}%\n`;
   }
 
   if (prNumber && packageName) {
