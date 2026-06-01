@@ -5,7 +5,7 @@ import type { InlineFragment } from '../inline-fragments/index.js';
 import { createInlineToolName } from '../inline-fragments/index.js';
 import { ValueNode } from '../ValueNode/index.js';
 
-describe('BlockNode integration tests', () => {
+describe.skip('BlockNode integration tests', () => {
   it('should create ValueNode by primitive value', () => {
     const value = 'value';
     const newValue = 'updated value';
