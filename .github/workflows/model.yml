@@ -3,71 +3,13 @@ on:
   pull_request:
   merge_group:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: Run ESLint check
-        uses: ./.github/actions/lint
-        with:
-          package-name: '@editorjs/model'
+  package-check:
+    uses: ./.github/workflows/package-check.yml
+    with:
+      package-name: '@editorjs/model'
+      working-directory: './packages/model'
+      include-mutations: true
+    secrets:
+      stryker_dashboard_api_key: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
 
-  tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Run unit tests
-        uses: ./.github/actions/unit-tests
-        with:
-          package-name: '@editorjs/model'
-          working-directory: './packages/model'
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: Build the package
-        uses: ./.github/actions/build
-        with:
-          package-name: '@editorjs/model'
-
-  mutation-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Run mutation tests for changed files
-        if: ${{ github.event_name == 'pull_request' }}
-        uses: ./.github/actions/mutation-tests-changed-files
-        with:
-          package-name: '@editorjs/model'
-          working-directory: './packages/model'
-          stryker_dashboard_api_key: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
-
-      - name: Run mutation tests for all files
-        if: ${{ github.event_name == 'merge_group' }}
-        uses: ./.github/actions/mutation-tests-all-files
-        with:
-          package-name: '@editorjs/model'
-          working-directory: './packages/model'
-          stryker_dashboard_api_key: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
-
-  report:
-    name: Aggregate and post report
-    if: ${{ always() && github.event_name == 'pull_request' }}
-    needs: [tests, mutation-tests]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Generate aggregated report and comment
-        uses: ./.github/actions/aggregate-report
-        with:
-          package-name: '@editorjs/model'
-          working-directory: './packages/model'

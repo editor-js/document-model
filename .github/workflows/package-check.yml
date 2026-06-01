@@ -1,0 +1,128 @@
+name: Package check
+on:
+  workflow_call:
+    inputs:
+      package-name:
+        description: 'Full package name (e.g., @editorjs/core)'
+        required: true
+        type: string
+      working-directory:
+        description: 'Package working directory (e.g., ./packages/core)'
+        required: true
+        type: string
+      include-mutations:
+        description: 'Whether to include mutation tests'
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      stryker_dashboard_api_key:
+        description: 'Stryker dashboard API key for mutation tests'
+        required: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  should-run:
+    name: Check if package needs CI
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Determine if CI should run
+        id: check
+        run: |
+          # Always run for merge_group
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "run=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Check if package or dependencies changed (returns 0 if yes, 1 if no)
+          if bash scripts/should-run-ci.sh "${{ github.base_ref }}" "${{ inputs.working-directory }}"; then
+            echo "run=true" >> $GITHUB_OUTPUT
+          else
+            echo "run=false" >> $GITHUB_OUTPUT
+          fi
+
+  lint:
+    needs: should-run
+    if: ${{ needs.should-run.outputs.run == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Run ESLint check
+        uses: ./.github/actions/lint
+        with:
+          package-name: ${{ inputs.package-name }}
+
+  tests:
+    needs: should-run
+    if: ${{ needs.should-run.outputs.run == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Run unit tests
+        uses: ./.github/actions/unit-tests
+        with:
+          package-name: ${{ inputs.package-name }}
+          working-directory: ${{ inputs.working-directory }}
+
+  build:
+    needs: should-run
+    if: ${{ needs.should-run.outputs.run == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build the package
+        uses: ./.github/actions/build
+        with:
+          package-name: ${{ inputs.package-name }}
+
+  mutation-tests:
+    needs: should-run
+    if: ${{ inputs.include-mutations && needs.should-run.outputs.run == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Run mutation tests for changed files
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: ./.github/actions/mutation-tests-changed-files
+        with:
+          package-name: ${{ inputs.package-name }}
+          working-directory: ${{ inputs.working-directory }}
+          stryker_dashboard_api_key: ${{ secrets.stryker_dashboard_api_key }}
+
+      - name: Run mutation tests for all files
+        if: ${{ github.event_name == 'merge_group' }}
+        uses: ./.github/actions/mutation-tests-all-files
+        with:
+          package-name: ${{ inputs.package-name }}
+          working-directory: ${{ inputs.working-directory }}
+          stryker_dashboard_api_key: ${{ secrets.stryker_dashboard_api_key }}
+
+  report:
+    name: Aggregate and post report
+    needs: [tests, mutation-tests]
+    if: ${{ always() && github.event_name == 'pull_request' && (needs.tests.result != 'skipped' || needs.mutation-tests.result != 'skipped') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Generate aggregated report and comment
+        uses: ./.github/actions/aggregate-report
+        with:
+          package-name: ${{ inputs.package-name }}
+          working-directory: ${{ inputs.working-directory }}
+
+
+

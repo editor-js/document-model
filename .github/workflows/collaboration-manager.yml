@@ -3,66 +3,13 @@ on:
   pull_request:
   merge_group:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - run: yarn
-
-      - name: Build the package
-        uses: ./.github/actions/build
-        with:
-          package-name: '@editorjs/collaboration-manager'
-
-      - name: Run ESLint check
-        uses: ./.github/actions/lint
-        with:
-          package-name: '@editorjs/collaboration-manager'
-
-  tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - run: yarn
-
-      - name: Build the package
-        uses: ./.github/actions/build
-        with:
-          package-name: '@editorjs/collaboration-manager'
-
-      - name: Run unit tests
-        uses: ./.github/actions/unit-tests
-        with:
-          package-name: '@editorjs/collaboration-manager'
-          working-directory: './packages/collaboration-manager'
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: Build the package
-        uses: ./.github/actions/build
-        with:
-          package-name: '@editorjs/collaboration-manager'
-
-  report:
-    name: Aggregate and post report
-    if: ${{ always() && github.event_name == 'pull_request' }}
-    needs: [tests]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Generate aggregated report and comment
-        uses: ./.github/actions/aggregate-report
-        with:
-          package-name: '@editorjs/collaboration-manager'
-          working-directory: './packages/collaboration-manager'
+  package-check:
+    uses: ./.github/workflows/package-check.yml
+    with:
+      package-name: '@editorjs/collaboration-manager'
+      working-directory: './packages/collaboration-manager'
+      include-mutations: false
+    secrets:
+      stryker_dashboard_api_key: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
 

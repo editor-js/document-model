@@ -8,7 +8,9 @@ inputs:
   stryker_dashboard_api_key:
     description: 'Stryker dashboard api key'
     required: true
-
+  working-directory:
+    description: 'Path to the ./packages/name_of_your_package_folder'
+    required: true
 runs:
   using: "composite"
   steps:
