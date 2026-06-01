@@ -185,7 +185,7 @@ export class InlineToolbarUI implements EditorjsPlugin {
         });
       } else {
         button.addEventListener('click', () => {
-          this.#api.selection.applyInlineToolForCurrentSelection(name);
+          this.#api.selection.applyInlineTool({ tool: name });
         });
       }
 
@@ -200,7 +200,10 @@ export class InlineToolbarUI implements EditorjsPlugin {
    */
   #renderToolActions(name: InlineToolName, tool: InlineTool): void {
     const { element } = tool.renderActions?.((data: InlineToolFormatData) => {
-      this.#api.selection.applyInlineToolForCurrentSelection(name, data);
+      this.#api.selection.applyInlineTool({
+        tool: name,
+        data,
+      });
     }) ?? { element: null };
 
     if (element === null) {

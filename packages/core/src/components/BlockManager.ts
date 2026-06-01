@@ -1,17 +1,23 @@
 import {
+  BlockIndexOrId,
+  BlockChildType,
+  type BlockId,
   type BlockNodeInit,
+  type DataKey,
   type EditorDocumentSerialized,
-  EditorJSModel
+  EditorJSModel,
+  type InlineTreeNodeSerialized,
+  keypath,
+  mergeTextNodes,
+  NODE_TYPE_HIDDEN_PROP,
+  sliceFragments
 } from '@editorjs/model';
 import 'reflect-metadata';
 import { inject, injectable } from 'inversify';
 import { TOKENS } from '../tokens.js';
 import ToolsManager from '../tools/ToolsManager.js';
 import { BlockToolData } from '@editorjs/editorjs';
-import {
-  CoreConfigValidated,
-  EventBus
-} from '@editorjs/sdk';
+import { CoreConfigValidated, EventBus } from '@editorjs/sdk';
 
 /**
  * Parameters for the BlocksManager.insert() method
@@ -44,6 +50,10 @@ interface InsertBlockParameters {
    */
   focus?: boolean;
   // tunes?: {[name: string]: BlockTuneData};
+  /**
+   * User id to attribute the change to
+   */
+  userId?: string | number;
 }
 
 /**
@@ -112,6 +122,7 @@ export class BlocksManager {
    * @param parameters.index - index to insert block at
    // * @param parameters.needToFocus - flag indicates if caret should be set to block after insert
    * @param parameters.replace - flag indicates if block at index should be replaced
+   * @param parameters.userId - user id to attribute the change to
    */
   public insert({
     id = undefined,
@@ -120,6 +131,7 @@ export class BlocksManager {
     index,
     focus = false,
     replace = false,
+    userId = this.#config.userId,
     // tunes = {},
   }: InsertBlockParameters = {}): void {
     let newIndex = index;
@@ -129,10 +141,10 @@ export class BlocksManager {
     }
 
     if (replace) {
-      this.#model.removeBlock(this.#config.userId, newIndex);
+      this.#model.removeBlock(userId, newIndex);
     }
 
-    this.#model.addBlock(this.#config.userId, {
+    this.#model.addBlock(userId, {
       ...data,
       id,
       name: type,
@@ -149,9 +161,10 @@ export class BlocksManager {
    * Inserts several Blocks to specified index
    * @param blocks - array of blocks to insert
    * @param [index] - index to insert blocks at. If undefined, inserts at the end
+   * @param [userId] - user id to attribute the change to
    */
-  public insertMany(blocks: BlockNodeInit[], index: number = this.#model.length): void {
-    blocks.forEach((block, i) => this.#model.addBlock(this.#config.userId, block, index + i));
+  public insertMany(blocks: BlockNodeInit[], index: number = this.#model.length, userId: string | number = this.#config.userId): void {
+    blocks.forEach((block, i) => this.#model.addBlock(userId, block, index + i));
   }
 
   /**
@@ -171,25 +184,27 @@ export class BlocksManager {
 
   /**
    * Removes Block by index, or current block if index is not passed
-   * @param index - index of a block to delete
+   * @param indexOrId - index or identifier of a block to delete
+   * @param [userId] - user id to attribute the change to
    */
-  public deleteBlock(index: number | undefined = this.#getCurrentBlockIndex()): void {
-    if (index === undefined) {
+  public deleteBlock(indexOrId: number | string | undefined = this.#getCurrentBlockIndex(), userId: string | number = this.#config.userId): void {
+    if (indexOrId === undefined) {
       /**
        * @todo see what happens in legacy
        */
       throw new Error('No block selected to delete');
     }
 
-    this.#model.removeBlock(this.#config.userId, index);
+    this.#model.removeBlock(userId, indexOrId as BlockIndexOrId);
   }
 
   /**
    * Moves a block to a new index
    * @param toIndex - index where the block is moved to
    * @param [fromIndex] - block to move. Current block if not passed
+   * @param [userId] - user id to attribute the change to
    */
-  public move(toIndex: number, fromIndex: number | undefined = this.#getCurrentBlockIndex()): void {
+  public move(toIndex: number, fromIndex: number | undefined = this.#getCurrentBlockIndex(), userId: string | number = this.#config.userId): void {
     if (fromIndex === undefined) {
       throw new Error('No block selected to move');
     }
@@ -203,8 +218,156 @@ export class BlocksManager {
 
     const block = this.#model.getBlockSerialized(fromIndex);
 
-    this.#model.removeBlock(this.#config.userId, fromIndex);
-    this.#model.addBlock(this.#config.userId, block, toIndex);
+    this.#model.removeBlock(userId, fromIndex);
+    this.#model.addBlock(userId, block, toIndex);
+  }
+
+  /**
+   * Splits a block at the given data key and offset.
+   * If the tool has canBeSplit = true, a new block of the same type is inserted after,
+   * with data taken from the inputs after the caret; array-indexed keys are renumbered from 0.
+   * Otherwise, the default block is inserted with the extracted text content merged together.
+   * @param blockIndexOrId - numeric position or named identifier that locates the block
+   * @param dataKey - the data key at which the split is performed
+   * @param offset - character offset within the data key's text value to split at
+   * @param userId - optional id of the user who made the operation. By default — current user id
+   */
+  public splitBlock(blockIndexOrId: number | BlockId, dataKey: DataKey, offset: number, userId: string | number = this.#config.userId): void {
+    const blockIndex = this.#model.resolveBlockIndex(blockIndexOrId);
+
+    const block = this.#model.getBlockSerialized(blockIndex);
+    const toolName = block.name;
+
+    const tool = this.#toolsManager.blockTools.get(toolName);
+    const canBeSplit = tool?.options.canBeSplit === true;
+
+    const blockInputs = Object.entries(
+      this.#model.getBlockTextContent(blockIndex)
+    );
+
+    const splitIndex = blockInputs.findIndex(([key]) => key === dataKey);
+
+    if (splitIndex === -1) {
+      throw new Error(`Data key "${dataKey}" not found in block content`);
+    }
+
+    const [, splitInput] = blockInputs[splitIndex];
+
+    if (offset < 0 || offset > splitInput.value.length) {
+      throw new RangeError(
+        `Offset ${offset} is out of range for input "${dataKey}" with length ${splitInput.value.length}`
+      );
+    }
+
+    /**
+     * Text and fragments from the input that was split
+     */
+    const textAfter = splitInput.value.slice(offset);
+    const fragmentsAfter = sliceFragments(splitInput.fragments, offset);
+    const entriesAfter = blockInputs.slice(splitIndex + 1);
+
+    /**
+     * If split happens at the beginning of the first input - just insert an empty block before
+     */
+    if (offset === 0 && splitIndex === 0) {
+      this.#model.addBlock(
+        userId,
+        {
+          name: canBeSplit ? block.name : this.#config.defaultBlock,
+          data: {},
+        },
+        blockIndex
+      );
+
+      return;
+    }
+
+    /**
+     * Remove text in the split input (fragments will be adjusted by the model)
+     */
+    if (offset < splitInput.value.length) {
+      this.#model.removeText(userId, blockIndex, dataKey, offset);
+    }
+
+    /**
+     * Remove all the inputs in the current block after the split
+     */
+    entriesAfter.forEach(([key]) => {
+      this.#model.removeDataNode(userId, blockIndex, key);
+    });
+
+    /**
+     * In case the split is at the end of the last input, just add a new block
+     */
+    if (offset === splitInput.value.length && splitIndex === blockInputs.length - 1) {
+      this.#model.addBlock(
+        userId,
+        {
+          name: canBeSplit ? block.name : this.#config.defaultBlock,
+          data: {},
+        },
+        blockIndex + 1
+      );
+
+      return;
+    }
+
+    /**
+     * If block doesn't support splitting into two, insert a new default block utilizing its conversionConfig.import to get the data
+     * @todo on initialization validate defaultTool must have conversionConfig.import
+     */
+    if (!canBeSplit) {
+      const contentAfterAccInit: InlineTreeNodeSerialized = {
+        value: textAfter,
+        fragments: fragmentsAfter,
+      };
+
+      const contentAfter = mergeTextNodes(entriesAfter, contentAfterAccInit);
+
+      const defaultTool = this.#toolsManager.blockTools.get(this.#config.defaultBlock)!;
+
+      const newBlockData = defaultTool.importTextContent(contentAfter.value, contentAfter.fragments);
+
+      /**
+       * Insert new block with the content after the caret, converted using the default block's import method
+       */
+      this.#model.addBlock(userId, {
+        name: this.#config.defaultBlock,
+        data: newBlockData,
+      }, blockIndex + 1);
+
+      return;
+    }
+
+    /**
+     * In case Tool supports splitting into two blocks, extract inputs after the split and add new block with the extracted data
+     */
+    const newData: Record<string, unknown> = {};
+
+    /**
+     * Need to add split input to properly renumber array indexes
+     */
+    entriesAfter.unshift([dataKey as string, {
+      value: textAfter,
+      fragments: fragmentsAfter,
+      [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text as BlockChildType.Text,
+    }]);
+
+    if (entriesAfter.length > 0) {
+      /**
+       * In case data contains an array, we need to renumber the keys to start from 0
+       */
+      const renumbered = keypath.renumberKeys(entriesAfter.map(([key]) => key));
+
+      entriesAfter.forEach(([key, content]) => {
+        keypath.set(newData, renumbered.get(key) ?? key, content);
+      });
+    }
+
+    this.#model.addBlock(userId, {
+      name: toolName,
+      data: newData,
+    }, blockIndex + 1);
   }
 
   /**

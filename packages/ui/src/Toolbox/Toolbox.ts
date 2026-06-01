@@ -144,12 +144,12 @@ export class ToolboxUI implements EditorjsPlugin {
         ...toolbox,
         closeOnActivate: true,
         onActivate: () => {
-          void this.#api.blocks.insert(
-            tool.name,
-            toolbox.data ?? {},
-            this.#selectedBlockIndex === -1 ? undefined : this.#selectedBlockIndex + 1,
-            true
-          );
+          void this.#api.blocks.insert({
+            type: tool.name,
+            data: toolbox.data ?? {},
+            index: this.#selectedBlockIndex === -1 ? undefined : this.#selectedBlockIndex + 1,
+            focus: true,
+          });
         },
       }
     );

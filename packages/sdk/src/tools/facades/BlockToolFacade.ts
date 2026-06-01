@@ -16,13 +16,15 @@ import {
 import { type InlineToolFacade } from './InlineToolFacade.js';
 import { type BlockTuneFacade } from './BlockTuneFacade.js';
 import { ToolsCollection } from '../ToolsCollection.js';
-import type { BlockToolConstructor, BlockToolConstructorOptions, BlockTool as IBlockTool } from '../../entities';
+import type { BlockToolConstructor, BlockToolConstructorOptions, BlockTool, BlockToolData } from '../../entities';
 import { ToolType } from '../../entities';
+import { BlockChildType, NODE_TYPE_HIDDEN_PROP, keypath } from '@editorjs/model';
+import type { InlineFragment } from '@editorjs/model';
 
 /**
  * Class to work with Block tools constructables
  */
-export class BlockToolFacade extends BaseToolFacade<ToolType.Block, IBlockTool> {
+export class BlockToolFacade extends BaseToolFacade<ToolType.Block, BlockTool> {
   /**
    * Tool type for BlockToolFacade tools — Block
    */
@@ -55,10 +57,9 @@ export class BlockToolFacade extends BaseToolFacade<ToolType.Block, IBlockTool> 
    * @param options.block - BlockAPI for current Block
    * @param options.readOnly - True if Editor is in read-only mode
    */
-  public create({ data, block, readOnly, adapter }: Pick<BlockToolConstructorOptions, 'data' | 'block' | 'readOnly' | 'adapter'>): IBlockTool {
+  public create({ data, block, readOnly, adapter }: Pick<BlockToolConstructorOptions, 'data' | 'block' | 'readOnly' | 'adapter'>): BlockTool {
     return new this.constructable({
       adapter,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       data,
       block,
       readOnly,
@@ -152,6 +153,39 @@ export class BlockToolFacade extends BaseToolFacade<ToolType.Block, IBlockTool> 
   // public get conversionConfig(): ConversionConfig | undefined {
   //   return this.constructable[InternalBlockToolSettings.ConversionConfig];
   // }
+
+  /**
+   * Returns block data from plain text using the tool's conversion config import function.
+   * If the import config is a function, it is called with the text value.
+   * Otherwise, a default text node structure is returned.
+   * @param value - plain text to convert
+   * @param fragments - inline fragments associated with the text
+   */
+  public importTextContent(value: string, fragments: InlineFragment[]): BlockToolData {
+    const conversionConfig = this.options[BlockToolOptionKey.ConversionConfig];
+    const importFnOrProp = conversionConfig?.import;
+
+    if (importFnOrProp === undefined) {
+      throw new Error(`Tool ${this.name} does not have import configuration for text content`);
+    }
+
+    /**
+     * @todo pass fragments to the import function?
+     */
+    if (typeof importFnOrProp === 'function') {
+      return importFnOrProp(value);
+    }
+
+    const result: BlockToolData = {};
+
+    keypath.set(result, importFnOrProp, {
+      value,
+      fragments,
+      [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text as BlockChildType.Text,
+    });
+
+    return result;
+  }
 
   /**
    * Returns enabled inline tools for Tool
