@@ -18,10 +18,14 @@ export default [
       'n/no-unpublished-import': ['error', {
         allowModules: [
           'eslint-config-codex',
+        ],
+        ignoreTypeImport: true,
+      }],
+      'n/no-missing-import': ['error', {
+        allowModules: [
           '@editorjs/model',
           '@editorjs/sdk',
         ],
-        ignoreTypeImport: true,
       }],
       // @todo: remove when we setup eslint to correctly handle the types
       '@typescript-eslint/no-unsafe-call': 'off',

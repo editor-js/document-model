@@ -18,10 +18,14 @@ export default [
       'n/no-unpublished-import': ['error', {
         allowModules: [
           'eslint-config-codex',
+        ],
+        ignoreTypeImport: true,
+      }],
+      'n/no-missing-import': ['error', {
+        allowModules: [
           '@editorjs/model',
           '@editorjs/collaboration-manager',
         ],
-        ignoreTypeImport: true,
       }],
       'n/no-unsupported-features/node-builtins': ['error', {
         version: '>=24.0.0',

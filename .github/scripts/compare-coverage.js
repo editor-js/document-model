@@ -65,9 +65,7 @@ export function processReports(pkg, headDir, baseDir) {
   }
 
   // | Package | Branches coverage | Delta |
-  const tableRow = `| ${pkg} | ${baseCov.branches.pct}% | ${delta}`;
-
-  return tableRow;
+  return `| ${pkg} | ${headCov.branches.pct}% | ${delta}`;
 }
 
 
