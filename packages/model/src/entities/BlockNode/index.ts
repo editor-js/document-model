@@ -89,6 +89,8 @@ export class BlockNode extends EventBus {
   }: BlockNodeConstructorParameters) {
     super();
 
+    console.log('test');
+
     this.#id = id !== undefined ? createBlockId(id) : generateBlockId();
     this.#name = createBlockToolName(name);
     this.#parent = parent ?? null;
