@@ -18,6 +18,8 @@ export default [
       'n/no-unpublished-import': ['error', {
         allowModules: [
           'eslint-config-codex',
+          '@editorjs/model',
+          '@editorjs/sdk',
         ],
         ignoreTypeImport: true,
       }],

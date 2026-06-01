@@ -40,11 +40,11 @@ function processMutationReport(artitfactName, reportPath, changedFilesPath, prNu
   const changedFiles = JSON.parse(fs.readFileSync(changedFilesFile, 'utf8'));
 
   if (changedFiles.length === 0) {
-    return 'No files to mutate found.';
+    return `| ${packageName} | No files to mutate found. | |`;
   }
 
   if (!fs.existsSync(reportFile)) {
-    return 'Report artifact not found.';
+    return `| ${packageName} | Report artifact not found. | |`;
   }
 
   const raw = fs.readFileSync(reportFile, 'utf8');
@@ -53,28 +53,29 @@ function processMutationReport(artitfactName, reportPath, changedFilesPath, prNu
 
   const metrics = getMetrics(obj);
 
-  let message = `Mutation tests run with mutation score ${(metrics.score * 100).toFixed(2)}%.\n`;
+  const encodedPackageName = encodeURIComponent(packageName);
+  const dashboardUrl = `[Dashboard](https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${prNumber}?module=${encodedPackageName})`;
 
-  if (metrics.survived) {
-    message += `Survived mutants: ${metrics.survived}\n`;
+  const score = (metrics.score * 100).toFixed(2);
+  let scoreMessage = `${score}%`;
+
+  switch (true) {
+    case (score < metrics.thresholds.break):
+      scoreMessage += `<span title="Below break threshold (survived: ${metrics.survived}, not covered: ${metrics.notCovered})">❌</span>`;
+      break;
+    case (score < metrics.thresholds.low):
+      scoreMessage += `<span title="Below low threshold (survived: ${metrics.survived}, not covered: ${metrics.notCovered})">🔴</span>`;
+      break;
+    case (score < metrics.thresholds.high):
+      scoreMessage += `<span title="Below high threshold (survived: ${metrics.survived}, not covered: ${metrics.notCovered})">🟡</span>`;
+      break;
+    case (score > metrics.thresholds.high):
+      scoreMessage += `<span title="Above high threshold (survived: ${metrics.survived}, not covered: ${metrics.notCovered})">🟢</span>`;
+      break;
   }
 
-  if (metrics.notCovered) {
-    message += `Not covered mutants: ${metrics.notCovered}\n`;
-  }
-
-  if (metrics.score * 100 < metrics.thresholds.low) {
-    message += `> [!WARNING]\n> Mutation score is below the low threshold of ${metrics.thresholds.low}%\n`;
-  } else if (metrics.score * 100 < metrics.thresholds.high) {
-    message += `> [!CAUTION]\n> Mutation score is below the high threshold of ${metrics.thresholds.low}%\n`;
-  }
-
-  if (prNumber && packageName) {
-    const encodedPackageName = encodeURIComponent(packageName);
-    message += `\nDashboard URL: https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${prNumber}?module=${encodedPackageName}`;
-  }
-
-  return message;
+  // | Package | Mutation score | Dashboard URL |
+  return `| ${packageName} | ${scoreMessage} | ${dashboardUrl}`;
 }
 
 export { processMutationReport };

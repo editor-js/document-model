@@ -1,9 +1,4 @@
-async function updateAggregatedComment(report, packageName, pr, core, github, context) {
-  if (!report) {
-    core.info('No report provided, skipping comment update.');
-    return;
-  }
-
+async function updateAggregatedComment(unitTestRow, mutationRow, packageName, pr, core, github, context) {
   // repo info (owner/repo) available from context
   const owner = context.repo.owner;
   const repo = context.repo.repo;
@@ -20,45 +15,106 @@ async function updateAggregatedComment(report, packageName, pr, core, github, co
   const globalStart = `<!-- AGGREGATED REPORT -->`;
   const globalEnd = `<!-- END AGGREGATED REPORT -->`;
 
+  // Table section markers
+  const unitTestsStart = `<!-- UNIT TESTS TABLE -->`;
+  const unitTestsEnd = `<!-- END UNIT TESTS TABLE -->`;
+  const mutationTestsStart = `<!-- MUTATION TESTS TABLE -->`;
+  const mutationTestsEnd = `<!-- END MUTATION TESTS TABLE -->`;
+
+  // Table headers and separators
+  const unitTestsHeader = `| Package | Coverage | Delta |`;
+  const mutationTestsHeader = `| Package | Mutation score | Dashboard URL |`;
+  const separator = `| --- | --- | --- |`;
+
   // find existing global comment containing the aggregated markers
   let existing = comments.find(c => c.body && c.body.includes(globalStart) && c.body.includes(globalEnd));
 
+  let commentBody;
+
   if (!existing) {
-    // create a new global comment that will hold all package sections
-    const body = `${globalStart}\n${report}\n${globalEnd}`;
-    await github.rest.issues.createComment({ owner, repo, issue_number: Number(pr), body });
-    core.info('Created new aggregated PR comment with report.');
+    // create a new global comment with both tables
+    const unitTestsTable = `${unitTestsStart}\n${unitTestsHeader}\n${separator}\n${unitTestRow}\n${unitTestsEnd}`;
+    const mutationTestsTable = `${mutationTestsStart}\n${mutationTestsHeader}\n${separator}\n${mutationRow}\n${mutationTestsEnd}`;
+
+    commentBody = `${globalStart}\n## Unit Tests\n${unitTestsTable}\n\n## Mutation Tests\n${mutationTestsTable}\n${globalEnd}`;
+    await github.rest.issues.createComment({ owner, repo, issue_number: Number(pr), body: commentBody });
+    core.info('Created new aggregated PR comment with test tables.');
     return;
   }
 
-  // Update existing aggregated comment: replace package section if present, otherwise insert before global end marker
-  const body = existing.body || '';
-  const pkgStart = `<!-- ${packageName} REPORT -->`;
-  const pkgEnd = `<!-- END ${packageName} REPORT -->`;
-  const psi = body.indexOf(pkgStart);
-  const pei = body.indexOf(pkgEnd);
-  let newBody;
+  // Update existing comment
+  commentBody = existing.body || '';
 
-  if (psi !== -1 && pei !== -1 && pei > psi) {
-    // replace existing package section
-    const before = body.substring(0, psi);
-    const after = body.substring(pei + pkgEnd.length);
+  // Helper function to update or create a table section
+  function updateTableSection(body, sectionStart, sectionEnd, header, separator, newRow, pkgName) {
+    const sectionStartIdx = body.indexOf(sectionStart);
 
-    newBody = before + report + after;
-  } else {
-    // insert the package section just before the global end marker
-    const gi = body.indexOf(globalEnd);
+    if (sectionStartIdx === -1) {
+      // Table section doesn't exist, create it with header, separator, and new row
+      const tableContent = `${sectionStart}\n${header}\n${separator}\n${newRow}\n${sectionEnd}`;
 
-    if (gi === -1) {
-      // malformed existing comment, append at end
-      newBody = body + '\n\n' + report;
-    } else {
-      newBody = body.substring(0, gi) + report + '\n' + body.substring(gi);
+      // Insert before the global end marker
+      const globalEndIdx = body.indexOf(globalEnd);
+      if (globalEndIdx === -1) {
+        return body + '\n\n' + tableContent;
+      }
+      return body.substring(0, globalEndIdx) + '\n' + tableContent + '\n' + body.substring(globalEndIdx);
     }
+
+    // Table section exists, find and update or append row
+    const sectionEndIdx = body.indexOf(sectionEnd, sectionStartIdx);
+    const beforeSection = body.substring(0, sectionStartIdx + sectionStart.length);
+    const afterSection = body.substring(sectionEndIdx);
+    const sectionContent = body.substring(sectionStartIdx + sectionStart.length, sectionEndIdx);
+
+    // Split into lines and find the data row for this package
+    const lines = sectionContent.split('\n');
+    let packageRowLineIdx = -1;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      // Data rows: contain pipes, contain package name, and don't contain dashes (separator indicator)
+      if (line.includes('|') && line.includes(pkgName) && !line.includes('---')) {
+        packageRowLineIdx = i;
+        break;
+      }
+    }
+
+    if (packageRowLineIdx !== -1) {
+      // Replace existing package row
+      lines[packageRowLineIdx] = newRow;
+    } else {
+      // Append new package row
+      lines.push(newRow);
+    }
+
+    return beforeSection + lines.join('\n') + afterSection;
   }
 
-  await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body: newBody });
-  core.info('Updated aggregated PR comment with report.');
+  // Update unit tests table
+  commentBody = updateTableSection(
+    commentBody,
+    unitTestsStart,
+    unitTestsEnd,
+    unitTestsHeader,
+    separator,
+    unitTestRow,
+    packageName
+  );
+
+  // Update mutation tests table
+  commentBody = updateTableSection(
+    commentBody,
+    mutationTestsStart,
+    mutationTestsEnd,
+    mutationTestsHeader,
+    separator,
+    mutationRow,
+    packageName
+  );
+
+  await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body: commentBody });
+  core.info('Updated aggregated PR comment with test tables.');
 }
 
 export { updateAggregatedComment };

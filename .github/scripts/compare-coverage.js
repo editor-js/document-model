@@ -10,34 +10,13 @@ function findCoverageJson(dir) {
     try {
       return JSON.parse(fs.readFileSync(report, 'utf8'));
     } catch (report) {
-      // continue
+      console.error(report);
     }
   }
 
   return null;
 }
 
-function findJestJsonResults(dir) {
-  if (!dir) return null;
-
-  const report = path.join(dir, 'jest-report.json')
-
-  try {
-      const raw = fs.readFileSync(report, 'utf8');
-      const obj = JSON.parse(raw);
-
-      if (typeof obj === 'object' && obj !== null) {
-        const hasTests = ('numPassedTests' in obj) || ('numPassedTestSuites' in obj) || ('numPassedAssertions' in obj);
-        const hasSuites = ('numPassedTestSuites' in obj) || ('testResults' in obj && Array.isArray(obj.testResults));
-
-        if (hasTests || hasSuites) return obj;
-      }
-  } catch (e) {
-    // ignore parse errors
-  }
-
-  return null;
-}
 
 function pctFromCoverageSummary(obj, category) {
   if (!obj) return null;
@@ -47,17 +26,6 @@ function pctFromCoverageSummary(obj, category) {
   if (obj[category] && typeof obj[category].pct === 'number') return obj[category].pct;
 
   return null;
-}
-
-function extractPassedCounts(jestJson) {
-  if (!jestJson) return { passedTests: null, passedSuites: null };
-  const passedTests = ('numPassedTests' in jestJson) ? Number(jestJson.numPassedTests) : (jestJson.numPassedAssertions ? Number(jestJson.numPassedAssertions) : null);
-  let passedSuites = null;
-  if ('numPassedTestSuites' in jestJson) passedSuites = Number(jestJson.numPassedTestSuites);
-  else if (Array.isArray(jestJson.testResults)) {
-    passedSuites = jestJson.testResults.filter(r => r.status === 'passed').length;
-  }
-  return { passedTests: Number.isFinite(passedTests) ? passedTests : null, passedSuites: Number.isFinite(passedSuites) ? passedSuites : null };
 }
 
 function compute(headSummary, baseSummary) {
@@ -80,38 +48,26 @@ function compute(headSummary, baseSummary) {
   return out;
 }
 
-export function processReports(headDir, baseDir) {
+export function processReports(pkg, headDir, baseDir) {
   const headCov = findCoverageJson(headDir);
   const baseCov = findCoverageJson(baseDir);
-  const headJest = findJestJsonResults(headDir);
 
   const categories = compute(headCov, baseCov);
-  const headCounts = extractPassedCounts(headJest);
 
-// prefer head counts; if missing, fallback to base counts; otherwise null
-  const tests = {
-    passedTests: headCounts.passedTests != null ? headCounts.passedTests : 'N/A',
-    passedSuites: headCounts.passedSuites != null ? headCounts.passedSuites : 'N/A'
-  };
+  let delta = categories.branches.delta;
 
-
-  let message = `${tests.passedTests} tests passed in ${tests.passedSuites} suites.\n`
-
-  message += `Branches coverage: ${categories.branches.head}%\n`;
-
-  let warning = '';
-
-  for (const cat in categories) {
-    if (categories[cat].delta < 0) {
-      warning += `\n> Coverage for ${cat} dropped by ${categories[cat].delta.toFixed(2)}%\n`;
-    }
+  if (delta < 0) {
+    delta = `+${delta}% 🟢`;
+  } else if (delta > 0) {
+    delta = `-${delta}% 🔴`;
+  } else if (delta === 0) {
+    delta = `0% ⚪️`;
   }
 
-  if (warning.length > 0) {
-    message += `> [!WARNING]${warning}`;
-  }
+  // | Package | Branches coverage | Delta |
+  const tableRow = `| ${pkg} | ${baseCov.branches.pct}% | ${delta}`;
 
-  return message;
+  return tableRow;
 }
 
 

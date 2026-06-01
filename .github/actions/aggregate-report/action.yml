@@ -19,23 +19,25 @@ runs:
 
     - name: Find current PR's number
       uses: jwalton/gh-find-current-pr@v1
-      id: findPr
+      id: find_pr
 
     - name: Process coverage reports
       uses: actions/github-script@v9
       id: process_test_report
+      env:
+        PACKAGE_NAME: ${{ inputs.package-name }}
       with:
         script: |
           const processReports = require('./.github/scripts/compare-coverage.js').processReports;
 
-          core.setOutput('message', processReports('test-report', 'test-report-base'));
+          core.setOutput('message', processReports(process.env.PACKAGE_NAME, 'test-report', 'test-report-base'));
 
     - name: Process mutation report
       uses: actions/github-script@v9
       id: process_mutation_report
       env:
         WORKING_DIR: ${{ inputs.working-directory }}
-        PR_NUMBER: ${{ steps.findPr.outputs.number }}
+        PR_NUMBER: ${{ steps.find_pr.outputs.number }}
         PACKAGE_NAME: ${{ inputs.package-name }}
       with:
         script: |
@@ -43,44 +45,32 @@ runs:
 
           core.setOutput('message', processMutationReport('mutation-report', `${process.env.WORKING_DIR}/reports/mutation/mutation.json`, 'changed-files.json', process.env.PR_NUMBER, process.env.PACKAGE_NAME));
 
-    - name: Generate markdown report
-      id: section-report
-      uses: actions/github-script@v9
-      env:
-        TESTS_MESSAGE: ${{ steps.process_test_report.outputs.message }}
-        MUTATION_MESSAGE: ${{ steps.process_mutation_report.outputs.message }}
-        PACKAGE: ${{ inputs.package-name }}
-      with:
-        script: |
-          const generateReport = require('./.github/scripts/generate-report.js').generateReport;
-          const { TESTS_MESSAGE, MUTATION_MESSAGE, PACKAGE } = process.env;
-
-          core.setOutput('report', generateReport(PACKAGE, TESTS_MESSAGE, MUTATION_MESSAGE));
-
-
     - name: Acquire comment-update lock
       id: acquire_lock
       uses: softprops/turnstyle@v3
       with:
-        queue-name: aggregated-comment-${{ steps.findPr.outputs.number || github.ref_name || github.ref }}
+        queue-name: aggregated-comment-${{ steps.find_pr.outputs.number || github.ref_name || github.ref }}}}
 
     - name: Create or update PR comment with report
       uses: actions/github-script@v9
       env:
         REPORT: ${{ steps.section-report.outputs.report }}
         PACKAGE: ${{ inputs.package-name }}
-        PR_NUMBER: ${{ steps.findPr.outputs.number }}
+        PR_NUMBER: ${{ steps.find_pr.outputs.number }}
+        MUTATION_MESSAGE: ${{ steps.process_mutation_report.outputs.message }}
+        UNIT_TEST_MESSAGE: ${{ steps.process_test_report.outputs.message }}
       with:
         script: |
           const updater = require('./.github/scripts/update-aggregated-comment.js');
 
           (async () => {
             try {
-              const report = process.env.REPORT || '';
               const packageName = process.env.PACKAGE;
+              const mutationRow = process.env.MUTATION_MESSAGE;
+              const unitTestRow = process.env.UNIT_TEST_MESSAGE;
               const pr = process.env.PR_NUMBER || undefined;
               // Pass the injected core, github and context objects
-              await updater.updateAggregatedComment(report, packageName, pr, core, github, context);
+              await updater.updateAggregatedComment(unitTestRow, mutationRow, packageName, pr, core, github, context);
             } catch (err) {
               core.error(err && err.stack ? err.stack : String(err));
               throw err;
