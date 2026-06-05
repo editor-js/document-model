@@ -10,20 +10,6 @@ jest.unstable_mockModule('@codexteam/icons', () => ({
   IconCross: '<svg/>',
 }));
 
-let clickHandler: () => void;
-
-jest.unstable_mockModule('@editorjs/dom', () => ({
-  make: jest.fn(() => ({
-    addEventListener: jest.fn((event: string, handler: () => void) => {
-      if (event === 'click') {
-        clickHandler = handler;
-      }
-    }),
-    innerHTML: '',
-    title: '',
-  })),
-}));
-
 const { DeleteBlockTune } = await import('./index.js');
 
 describe('DeleteBlockTune', () => {
@@ -48,24 +34,21 @@ describe('DeleteBlockTune', () => {
     mockApi.blocks.getIndexById.mockReturnValue(1);
   });
 
-  it('render() returns an element', () => {
-    const element = tune.render();
-
-    expect(element).toBeDefined();
+  it('should have title and icon', () => {
+    expect(tune.title).toBe('Delete');
+    expect(tune.icon).toBeDefined();
   });
 
-  it('click deletes the block at the resolved index', () => {
-    tune.render();
-    clickHandler();
+  it('should delete the block at the resolved index on activate()', () => {
+    tune.activate();
 
     expect(mockApi.blocks.getIndexById).toHaveBeenCalledWith(String(mockBlockId));
     expect(mockApi.blocks.delete).toHaveBeenCalledWith({ block: 1 });
   });
 
-  it('resolves index at click-time, not construction-time', () => {
+  it('should resolve index at activate-time, not construction-time', () => {
     mockApi.blocks.getIndexById.mockReturnValue(4);
-    tune.render();
-    clickHandler();
+    tune.activate();
 
     expect(mockApi.blocks.delete).toHaveBeenCalledWith({ block: 4 });
   });

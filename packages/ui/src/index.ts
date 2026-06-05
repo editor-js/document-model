@@ -104,3 +104,4 @@ export * from './InlineToolbar/InlineToolbar.js';
 export * from './Blocks/Blocks.js';
 export * from './Toolbox/Toolbox.js';
 export * from './Toolbar/Toolbar.js';
+export * from './BlockTunes/BlockTunesUI.js';

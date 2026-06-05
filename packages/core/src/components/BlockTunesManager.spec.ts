@@ -64,7 +64,7 @@ describe('BlockTunesManager', () => {
     mockApi.blocks.getIdByIndex.mockReturnValue(mockBlockId);
   });
 
-  it('emits BlockSelectedCoreEvent with tune instances when a block is selected', () => {
+  it('should emit BlockSelectedCoreEvent with tune instances when a block is selected', () => {
     blockSelectedListener({ detail: { index: 2,
       block: {} } } as unknown as CustomEvent);
 
@@ -77,7 +77,7 @@ describe('BlockTunesManager', () => {
     expect(eventBus.dispatchEvent).toHaveBeenCalled();
   });
 
-  it('does not emit when blockId is undefined', () => {
+  it('should not emit when blockId is undefined', () => {
     mockApi.blocks.getIdByIndex.mockReturnValue(undefined as unknown as string);
 
     blockSelectedListener({ detail: { index: 99,
@@ -86,7 +86,7 @@ describe('BlockTunesManager', () => {
     expect(eventBus.dispatchEvent).not.toHaveBeenCalled();
   });
 
-  it('calls facade.create() for each registered tune with blockId and api', () => {
+  it('should call facade.create() for each registered tune with blockId and api', () => {
     blockSelectedListener({ detail: { index: 0,
       block: {} } } as unknown as CustomEvent);
 

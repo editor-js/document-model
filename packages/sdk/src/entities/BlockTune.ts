@@ -60,7 +60,6 @@ export interface BlockTuneConstructorOptions<
 
 /**
  * Block Tune interface for version 3
- * @todo describe the interface when the adapter implementation is done
  */
 export type BlockTune<
   /**
@@ -77,7 +76,27 @@ export type BlockTune<
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Config extends ToolConfig = any
-> = Omit<BlockTuneV2, 'save'>;
+> = Omit<BlockTuneV2, 'save' | 'render'> & {
+  /**
+   * Returns an HTML element for the tune (legacy render-based pattern)
+   */
+  render?(): HTMLElement;
+
+  /**
+   * Label shown in the block settings popover
+   */
+  title?: string;
+
+  /**
+   * SVG icon shown in the block settings popover
+   */
+  icon?: string;
+
+  /**
+   * Called when the tune is activated (clicked in the popover)
+   */
+  activate?(): void;
+};
 
 /**
  * Block Tune constructor class

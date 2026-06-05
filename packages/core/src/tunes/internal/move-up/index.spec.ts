@@ -10,20 +10,6 @@ jest.unstable_mockModule('@codexteam/icons', () => ({
   IconChevronUp: '<svg/>',
 }));
 
-let clickHandler: () => void;
-
-jest.unstable_mockModule('@editorjs/dom', () => ({
-  make: jest.fn(() => ({
-    addEventListener: jest.fn((event: string, handler: () => void) => {
-      if (event === 'click') {
-        clickHandler = handler;
-      }
-    }),
-    innerHTML: '',
-    title: '',
-  })),
-}));
-
 const { MoveUpTune } = await import('./index.js');
 
 describe('MoveUpTune', () => {
@@ -48,33 +34,29 @@ describe('MoveUpTune', () => {
     mockApi.blocks.getIndexById.mockReturnValue(2);
   });
 
-  it('render() returns an element', () => {
-    const element = tune.render();
-
-    expect(element).toBeDefined();
+  it('should have title and icon', () => {
+    expect(tune.title).toBe('Move up');
+    expect(tune.icon).toBeDefined();
   });
 
-  it('click moves block up by one position', () => {
-    tune.render();
-    clickHandler();
+  it('should move block up by one position on activate()', () => {
+    tune.activate();
 
     expect(mockApi.blocks.getIndexById).toHaveBeenCalledWith(String(mockBlockId));
     expect(mockApi.blocks.move).toHaveBeenCalledWith({ toIndex: 1,
       fromIndex: 2 });
   });
 
-  it('click does nothing when block is already first', () => {
+  it('should do nothing on activate() when block is already first', () => {
     mockApi.blocks.getIndexById.mockReturnValue(0);
-    tune.render();
-    clickHandler();
+    tune.activate();
 
     expect(mockApi.blocks.move).not.toHaveBeenCalled();
   });
 
-  it('resolves index at click-time, not construction-time', () => {
+  it('should resolve index at activate-time, not construction-time', () => {
     mockApi.blocks.getIndexById.mockReturnValue(3);
-    tune.render();
-    clickHandler();
+    tune.activate();
 
     expect(mockApi.blocks.move).toHaveBeenCalledWith({ toIndex: 2,
       fromIndex: 3 });

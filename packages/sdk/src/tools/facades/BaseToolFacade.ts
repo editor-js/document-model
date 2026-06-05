@@ -10,7 +10,8 @@ import { ToolType } from '../../entities/EntityType.js';
 import { type BlockTuneFacade } from './BlockTuneFacade.js';
 import type {
   BlockTool, BlockToolConstructor, InlineTool, InlineToolConstructor, BlockTuneConstructor,
-  ToolTypeToOptions
+  ToolTypeToOptions,
+  BlockTune
 } from '../../entities';
 import type { ToolStaticOptions, BlockToolOptions, InlineToolOptions, BlockTuneOptions } from '../../entities/BaseTool.js';
 import { BaseToolOptionKey } from '../../entities/BaseTool.js';
@@ -81,7 +82,7 @@ interface ConstructorOptions {
 /**
  * Base abstract class for Tools
  */
-export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass extends (Tool | InlineTool | BlockTool) = (Tool | InlineTool | BlockTool)> {
+export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass extends (Tool | InlineTool | BlockTool | BlockTune) = (Tool | InlineTool | BlockTool | BlockTune)> {
   /**
    * Tool name specified in EditorJS config
    */

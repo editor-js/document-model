@@ -1,6 +1,5 @@
 import type { BlockTune, BlockTuneConstructor, BlockTuneConstructorOptions } from '@editorjs/sdk';
 import { ToolType } from '@editorjs/sdk';
-import { make } from '@editorjs/dom';
 import { IconCross } from '@codexteam/icons';
 import type { EditorAPI } from '@editorjs/sdk';
 import type { BlockId } from '@editorjs/model';
@@ -12,6 +11,9 @@ export class DeleteBlockTune implements BlockTune {
   public static readonly type = ToolType.Tune as const;
   public static readonly name = 'deleteBlock';
 
+  public readonly title = 'Delete';
+  public readonly icon = IconCross;
+
   #api: EditorAPI;
   #blockId: BlockId;
 
@@ -20,19 +22,10 @@ export class DeleteBlockTune implements BlockTune {
     this.#blockId = blockId;
   }
 
-  public render(): HTMLElement {
-    const button = make('button') as HTMLButtonElement;
+  public activate(): void {
+    const index = this.#api.blocks.getIndexById(String(this.#blockId));
 
-    button.innerHTML = IconCross;
-    button.title = 'Delete';
-
-    button.addEventListener('click', () => {
-      const index = this.#api.blocks.getIndexById(String(this.#blockId));
-
-      this.#api.blocks.delete({ block: index });
-    });
-
-    return button;
+    this.#api.blocks.delete({ block: index });
   }
 }
 

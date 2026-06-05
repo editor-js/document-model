@@ -10,20 +10,6 @@ jest.unstable_mockModule('@codexteam/icons', () => ({
   IconChevronDown: '<svg/>',
 }));
 
-let clickHandler: () => void;
-
-jest.unstable_mockModule('@editorjs/dom', () => ({
-  make: jest.fn(() => ({
-    addEventListener: jest.fn((event: string, handler: () => void) => {
-      if (event === 'click') {
-        clickHandler = handler;
-      }
-    }),
-    innerHTML: '',
-    title: '',
-  })),
-}));
-
 const { MoveDownTune } = await import('./index.js');
 
 describe('MoveDownTune', () => {
@@ -50,35 +36,31 @@ describe('MoveDownTune', () => {
     mockApi.blocks.getBlocksCount.mockReturnValue(3);
   });
 
-  it('render() returns an element', () => {
-    const element = tune.render();
-
-    expect(element).toBeDefined();
+  it('should have title and icon', () => {
+    expect(tune.title).toBe('Move down');
+    expect(tune.icon).toBeDefined();
   });
 
-  it('click moves block down by one position', () => {
-    tune.render();
-    clickHandler();
+  it('should move block down by one position on activate()', () => {
+    tune.activate();
 
     expect(mockApi.blocks.getIndexById).toHaveBeenCalledWith(String(mockBlockId));
     expect(mockApi.blocks.move).toHaveBeenCalledWith({ toIndex: 2,
       fromIndex: 1 });
   });
 
-  it('click does nothing when block is already last', () => {
+  it('should do nothing on activate() when block is already last', () => {
     mockApi.blocks.getIndexById.mockReturnValue(2);
     mockApi.blocks.getBlocksCount.mockReturnValue(3);
-    tune.render();
-    clickHandler();
+    tune.activate();
 
     expect(mockApi.blocks.move).not.toHaveBeenCalled();
   });
 
-  it('resolves index at click-time, not construction-time', () => {
+  it('should resolve index at activate-time, not construction-time', () => {
     mockApi.blocks.getIndexById.mockReturnValue(0);
     mockApi.blocks.getBlocksCount.mockReturnValue(5);
-    tune.render();
-    clickHandler();
+    tune.activate();
 
     expect(mockApi.blocks.move).toHaveBeenCalledWith({ toIndex: 1,
       fromIndex: 0 });
