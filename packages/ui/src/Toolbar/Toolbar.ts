@@ -1,5 +1,5 @@
-import type { EditorAPI, EditorjsPlugin, EditorjsPluginParams, EventBus } from '@editorjs/sdk';
-import { UiComponentType } from '@editorjs/sdk';
+import type { BlockSelectedCoreEvent, BlockTune, EditorAPI, EditorjsPlugin, EditorjsPluginParams, EventBus } from '@editorjs/sdk';
+import { CoreEventType, UiComponentType } from '@editorjs/sdk';
 import { make } from '@editorjs/dom';
 import { css } from './Toolbar.const.js';
 import type { ToolboxRenderedUIEvent } from '../Toolbox/events/index.js';
@@ -27,6 +27,11 @@ interface ToolbarNodes {
    * Plus button to open Toolbox popover
    */
   plusButton: HTMLButtonElement;
+
+  /**
+   * Container for block tune action buttons
+   */
+  tuneButtons: HTMLDivElement;
 }
 
 /**
@@ -54,6 +59,7 @@ export class ToolbarUI implements EditorjsPlugin {
     plusButton: make('button', Style[css.plusButton], {
       innerHTML: IconPlus,
     }) as HTMLButtonElement,
+    tuneButtons: make('div', Style[css.tuneButtons]) as HTMLDivElement,
   };
 
   /**
@@ -84,6 +90,10 @@ export class ToolbarUI implements EditorjsPlugin {
       }
 
       this.moveTo(event.detail.block);
+    });
+
+    this.#eventBus.addEventListener(`core:${CoreEventType.BlockSelected}`, (event: BlockSelectedCoreEvent) => {
+      this.#renderTunes(event.detail.availableBlockTunes);
     });
   }
 
@@ -117,6 +127,7 @@ export class ToolbarUI implements EditorjsPlugin {
   #render(): void {
     this.#nodes.holder.appendChild(this.#nodes.actions);
     this.#nodes.actions.appendChild(this.#nodes.plusButton);
+    this.#nodes.holder.appendChild(this.#nodes.tuneButtons);
 
     this.#nodes.plusButton.addEventListener('click', () => {
       this.#openToolbox();
@@ -125,6 +136,22 @@ export class ToolbarUI implements EditorjsPlugin {
     this.#eventBus.dispatchEvent(new ToolbarRenderedUIEvent({
       toolbar: this.#nodes.holder,
     }));
+  }
+
+  /**
+   * Renders tune action buttons into the toolbar
+   * @param tunes - map of tune name to tune instance
+   */
+  #renderTunes(tunes: Map<string, BlockTune>): void {
+    this.#nodes.tuneButtons.innerHTML = '';
+
+    tunes.forEach((tune) => {
+      const element = tune.render();
+
+      if (element instanceof HTMLElement) {
+        this.#nodes.tuneButtons.appendChild(element);
+      }
+    });
   }
 
   /**

@@ -5,6 +5,8 @@ import type {
 } from '@editorjs/editorjs';
 import type { ToolType } from '@/entities/EntityType.js';
 import type { BaseToolConstructor, BaseToolOptions } from '@/entities/BaseTool';
+import type { BlockId } from '@editorjs/model';
+import type { EditorAPI } from '@/api/EditorAPI.js';
 
 /**
  * Options available on **Block Tunes** (`static options` or `use()` overrides).
@@ -44,6 +46,16 @@ export interface BlockTuneConstructorOptions<
    * Config could be passed by tools user through the Editor config
    */
   config: Config;
+
+  /**
+   * Editor API for performing block operations (move, delete, etc.)
+   */
+  api: EditorAPI;
+
+  /**
+   * ID of the block this tune instance is bound to
+   */
+  blockId: BlockId;
 }
 
 /**
