@@ -96,6 +96,12 @@ export type BlockTune<
    * Called when the tune is activated (clicked in the popover)
    */
   activate?(): void;
+
+  /**
+   * Returns true when the tune action is not applicable in the current state.
+   * The corresponding popover item will be rendered as disabled.
+   */
+  isDisabled?(): boolean;
 };
 
 /**

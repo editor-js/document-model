@@ -22,6 +22,12 @@ export class MoveDownTune implements BlockTune {
     this.#blockId = blockId;
   }
 
+  public isDisabled(): boolean {
+    const index = this.#api.blocks.getIndexById(String(this.#blockId));
+
+    return index === this.#api.blocks.getBlocksCount() - 1;
+  }
+
   public activate(): void {
     const index = this.#api.blocks.getIndexById(String(this.#blockId));
     const count = this.#api.blocks.getBlocksCount();

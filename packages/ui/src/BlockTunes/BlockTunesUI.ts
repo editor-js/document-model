@@ -9,7 +9,7 @@ import type {
   EventBus
 } from '@editorjs/sdk';
 import { CoreEventType, UiComponentType } from '@editorjs/sdk';
-import { PopoverDesktop, PopoverEvent } from '@editorjs/ui-kit';
+import { PopoverDesktop, PopoverEvent, PopoverItemType } from '@editorjs/ui-kit';
 import {
   BlockTunesClosedUIEvent,
   BlockTunesOpenedUIEvent,
@@ -42,11 +42,16 @@ export class BlockTunesUI implements EditorjsPlugin {
     this.#eventBus = eventBus;
     this.#editorConfig = config;
 
-    this.#popover = new PopoverDesktop({
-      scopeElement: this.#editorConfig.holder,
-      searchable: false,
-      items: [],
-    });
+    this.#popover = new PopoverDesktop(
+      {
+        scopeElement: this.#editorConfig.holder,
+        searchable: false,
+        items: [],
+      },
+      {
+        [PopoverItemType.Default]: { wrapperTag: 'button' },
+      }
+    );
 
     this.#popover.on(PopoverEvent.Closed, () => {
       this.#eventBus.dispatchEvent(new BlockTunesClosedUIEvent({}));
@@ -89,6 +94,7 @@ export class BlockTunesUI implements EditorjsPlugin {
         title: tune.title,
         icon: tune.icon,
         closeOnActivate: true,
+        isDisabled: tune.isDisabled?.(),
         onActivate: () => {
           tune.activate?.();
         },

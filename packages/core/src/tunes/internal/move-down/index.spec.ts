@@ -49,6 +49,20 @@ describe('MoveDownTune', () => {
       fromIndex: 1 });
   });
 
+  it('should be disabled when block is last', () => {
+    mockApi.blocks.getIndexById.mockReturnValue(2);
+    mockApi.blocks.getBlocksCount.mockReturnValue(3);
+
+    expect(tune.isDisabled()).toBe(true);
+  });
+
+  it('should not be disabled when block is not last', () => {
+    mockApi.blocks.getIndexById.mockReturnValue(1);
+    mockApi.blocks.getBlocksCount.mockReturnValue(3);
+
+    expect(tune.isDisabled()).toBe(false);
+  });
+
   it('should do nothing on activate() when block is already last', () => {
     mockApi.blocks.getIndexById.mockReturnValue(2);
     mockApi.blocks.getBlocksCount.mockReturnValue(3);

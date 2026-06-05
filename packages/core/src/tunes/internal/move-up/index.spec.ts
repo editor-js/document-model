@@ -47,6 +47,18 @@ describe('MoveUpTune', () => {
       fromIndex: 2 });
   });
 
+  it('should be disabled when block is first', () => {
+    mockApi.blocks.getIndexById.mockReturnValue(0);
+
+    expect(tune.isDisabled()).toBe(true);
+  });
+
+  it('should not be disabled when block is not first', () => {
+    mockApi.blocks.getIndexById.mockReturnValue(1);
+
+    expect(tune.isDisabled()).toBe(false);
+  });
+
   it('should do nothing on activate() when block is already first', () => {
     mockApi.blocks.getIndexById.mockReturnValue(0);
     tune.activate();
