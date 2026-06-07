@@ -1,0 +1,135 @@
+---
+title: Architecture Overview
+
+---
+%% See: ../architecture.md
+classDiagram
+  direction LR
+
+
+  %% Layer 0 — Contracts  (@editorjs/sdk)
+  namespace sdk {
+
+    class EventBus {
+      <<EventTarget>>
+      +addEventListener(type, callback)
+      +removeEventListener(type, callback)
+      +dispatchEvent(event)
+    }
+
+    class BlockToolAdapter {
+      <<interface>>
+      +attachInput(keyRaw, input: HTMLElement)
+    }
+
+    class BlockTool {
+      <<interface>>
+      +render(): HTMLElement
+      +validate?(data): boolean
+      +destroy?()
+    }
+
+    class EditorjsPlugin {
+      <<interface>>
+      +destroy?()
+    }
+
+    class EditorjsPluginConstructor {
+      <<interface>>
+      +type: string
+      +new(params: EditorjsPluginParams): EditorjsPlugin
+    }
+
+    class EditorJSAdapterPlugin {
+      <<interface>>
+      +createBlockToolAdapter(blockIndex, toolName): BlockToolAdapter
+    }
+
+    class EditorjsAdapterPluginConstructor {
+      <<interface>>
+      +type: string
+      +new(params: EditorjsAdapterPluginParams): EditorJSAdapterPlugin
+    }
+  }
+
+  %% Layer 1 — Data model  (@editorjs/model)
+  namespace model {
+    class EditorJSModel {
+      +serialized: EditorDocumentSerialized
+      +initializeDocument(config)
+      +addBlock(userId, blockData, index?)
+      +removeBlock(userId, index)
+      +insertText(userId, blockIndex, dataKey, text, start?)
+      +removeText(userId, blockIndex, dataKey, start, end?)
+      +format(userId, blockIndex, dataKey, tool, start, end, data?)
+      +getFragments(blockIndex, dataKey, start?, end?, tool?)
+      +createCaret(userId): Caret
+      +getCaret(userId): Caret
+      +updateCaret(userId, caret)
+    }
+  }
+
+  %% Layer 2a — DOM binding  (@editorjs/dom-adapters)
+  namespace domAdapters {
+    class DOMAdapters {
+      +createBlockToolAdapter(blockIndex, toolName): BlockToolAdapter
+    }
+  }
+
+  %% Layer 2b — Collaboration plugin  (@editorjs/collaboration-manager)
+  namespace collaborationManager {
+    class CollaborationManager {
+      <<EditorjsPlugin>>
+      +connect()
+      +applyOperation(operation)
+      +undo()
+      +redo()
+    }
+  }
+
+  %% Layer 3 — Orchestrator  (@editorjs/core)
+  namespace core {
+    class Core {
+      +constructor(config)
+      +initialize()
+      +use(plugin): Core
+    }
+
+    class UndoRedoManager {
+      +undo()
+      +redo()
+    }
+  }
+
+  %% Infrastructure relations
+  EditorJSModel --|> EventBus : extends
+  Core *-- EventBus : creates & holds
+
+  %% Core — owns & wires
+  Core *-- EditorJSModel
+  Core *-- UndoRedoManager : creates (listens on EventBus)
+  Core ..> EditorjsPluginConstructor : registers via use()
+  Core ..> EditorjsAdapterPluginConstructor : registers via use()
+
+  %% Undo handlers
+  UndoRedoManager --> EventBus : listens for undo/redo events
+  CollaborationManager --> EventBus : listens for undo/redo events
+
+  %% Model interactions
+  CollaborationManager --> EditorJSModel : listens / applies ops
+  UndoRedoManager --> EditorJSModel : listens to model changes & applies undo/redo
+  BlockToolAdapter --> EditorJSModel : syncs DOM↔model
+
+  %% Tool contracts
+  BlockTool ..> BlockToolAdapter : receives via constructor
+
+  %% Plugin contracts
+  EditorjsPluginConstructor ..> EditorjsPlugin : creates
+  EditorjsPlugin ..> EventBus : receives
+  CollaborationManager --|> EditorjsPlugin : implements
+
+  %% Adapter plugin contracts
+  EditorjsAdapterPluginConstructor ..> EditorJSAdapterPlugin : creates
+  DOMAdapters ..|> EditorJSAdapterPlugin : implements
+  EditorJSAdapterPlugin ..> BlockToolAdapter : creates
+  EditorJSAdapterPlugin ..> EventBus : receives

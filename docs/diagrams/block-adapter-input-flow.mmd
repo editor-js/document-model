@@ -1,0 +1,52 @@
+---
+title: Block Adapter Input Flow
+
+---
+%% See: ../input-handling.md
+sequenceDiagram
+  actor User
+  participant BlocksManager
+  participant EditorJSModel
+  participant BlockRenderer
+  participant DOMAdapters
+  participant InputsRegistry
+  participant DOMBlockToolAdapter
+  participant BlockTool
+  participant EventBus
+
+  %% ── Block insertion & adapter creation ──────────
+  User->>BlocksManager: insert(toolName, data, index)
+  BlocksManager->>EditorJSModel: addBlock(userId, data, index)
+  EditorJSModel-->>BlockRenderer: BlockAddedEvent
+  BlockRenderer->>DOMAdapters: createBlockToolAdapter(blockIndex, toolName)
+  DOMAdapters->>InputsRegistry: insertBlock(blockIndex)
+  DOMAdapters->>DOMBlockToolAdapter: resolve from IoC container
+  DOMAdapters->>DOMBlockToolAdapter: setBlockIndex(blockIndex), setToolName(toolName)
+  BlockRenderer->>BlockTool: tool.create({ adapter, data })
+  BlockTool->>BlockTool: render()
+  BlockTool->>DOMBlockToolAdapter: createDataNode(key, initialData)
+  DOMBlockToolAdapter->>EditorJSModel: createDataNode(userId, blockIndex, key, data)
+  BlockTool->>DOMBlockToolAdapter: attachInput(key, inputElement)
+  DOMBlockToolAdapter->>InputsRegistry: register(blockIndex, key, inputElement)
+  BlockRenderer->>EventBus: dispatch BlockAddedCoreEvent (ui element)
+
+  %% ── User types (text node) ───────────────────────
+  User->>EventBus: BeforeInputUIEvent (delegated from DOM)
+  EventBus-->>DOMBlockToolAdapter: BeforeInputUIEvent
+  DOMBlockToolAdapter->>EditorJSModel: insertText(userId, blockIndex, key, text, start)
+  EditorJSModel-->>DOMBlockToolAdapter: TextAddedEvent
+  DOMBlockToolAdapter->>DOMBlockToolAdapter: update DOM range
+
+  %% ── Value node registration ──────────────────────
+  BlockTool->>DOMBlockToolAdapter: createDataNode(key, initialValue)
+  DOMBlockToolAdapter->>EditorJSModel: createDataNode(userId, blockIndex, key, data)
+  EditorJSModel-->>DOMBlockToolAdapter: DataNodeAddedEvent
+  DOMBlockToolAdapter-->>BlockTool: KeyAddedEvent
+
+  %% ── Tool updates value node ──────────────────────
+  BlockTool->>DOMBlockToolAdapter: updateValue(key, newValue)
+  DOMBlockToolAdapter->>EditorJSModel: updateValue(userId, blockIndex, key, newValue)
+  EditorJSModel-->>DOMBlockToolAdapter: ValueModifiedEvent
+  DOMBlockToolAdapter-->>BlockTool: ValueNodeChangedEvent
+
+

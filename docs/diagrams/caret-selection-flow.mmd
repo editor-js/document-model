@@ -1,0 +1,44 @@
+---
+title: Caret & Selection Flow
+
+---
+%% See: ../input-handling.md
+sequenceDiagram
+  actor User
+  participant DOM
+  participant InputsRegistry
+  participant CaretAdapter
+  participant EditorJSModel
+  participant SelectionManager
+  participant ToolsManager
+  participant EventBus
+
+  %% ── User moves caret / changes selection ────────────
+  User->>DOM: click or keyboard navigation
+  DOM->>CaretAdapter: selectionchange event
+  CaretAdapter->>InputsRegistry: entries() — iterate all registered inputs
+  CaretAdapter->>CaretAdapter: clip selection range per input, build Index per segment
+  CaretAdapter->>CaretAdapter: sort segments in document order
+  CaretAdapter->>EditorJSModel: caret.update(index or compositeIndex)
+
+  %% ── Model dispatches caret event ────────────────────
+  EditorJSModel-->>SelectionManager: CaretManagerCaretUpdatedEvent (local userId)
+  EditorJSModel-->>CaretAdapter: CaretManagerCaretUpdatedEvent (local userId)
+
+  %% ── SelectionManager computes available tools ───────
+  SelectionManager->>EditorJSModel: getFragments per segment
+  EditorJSModel-->>SelectionManager: InlineFragment[]
+  SelectionManager->>ToolsManager: inlineTools.entries() — create instances on-demand
+  SelectionManager->>EventBus: dispatch SelectionChangedCoreEvent(index, availableInlineTools, fragments)
+
+  %% ── CaretAdapter restores DOM selection (round-trip) ─
+  CaretAdapter->>InputsRegistry: findInput(blockIndex, dataKey)
+  InputsRegistry-->>CaretAdapter: HTMLElement
+  CaretAdapter->>CaretAdapter: compare current DOM selection with model index
+  alt selection differs
+    CaretAdapter->>DOM: selection.addRange(range)
+  end
+
+  %% ── Remote caret (collaborator) ─────────────────────
+  EditorJSModel-->>CaretAdapter: CaretManagerCaretUpdatedEvent (remote userId)
+
