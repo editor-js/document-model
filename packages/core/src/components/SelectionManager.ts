@@ -2,11 +2,11 @@ import 'reflect-metadata';
 import {
   CaretManagerEvents,
   createInlineToolData,
-  FormattingAction,
+  FormattingAction, IndexBuilder,
   InlineFragment,
   InlineToolName
 } from '@editorjs/model';
-import { CaretManagerCaretUpdatedEvent, Index, EditorJSModel, createInlineToolName } from '@editorjs/model';
+import { CaretManagerCaretUpdatedEvent, Index, EditorJSModel } from '@editorjs/model';
 import { EventType } from '@editorjs/model';
 import {
   EventBus,
@@ -94,11 +94,10 @@ export class SelectionManager {
           /**
            * @todo implement filter by current BlockTool configuration
            */
-          availableInlineTools: new Map(
+          availableInlineTools: Array.from(
             this.#toolsManager
               .inlineTools
-              .entries()
-              .map(([name, facade]) => [createInlineToolName(name), facade.create()])
+              .values()
           ),
           fragments,
         }));
@@ -109,30 +108,53 @@ export class SelectionManager {
   }
 
   /**
-   * Apply format with data formed in toolbar
-   * @param toolName - name of the inline tool, whose format would be applied
-   * @param data - fragment data for the current selection
+   * Returns index of current user's caret (selection) or null
    */
-  public applyInlineToolForCurrentSelection(toolName: InlineToolName, data: InlineToolFormatData = {}): void {
-    /**
-     * @todo use inline tool data formed in toolbar
-     */
+  public get currentSelection(): Readonly<Index> | null {
     const userCaret = this.#model.getCaret(this.#config.userId);
 
-    const index = userCaret?.index ?? null;
+    return userCaret?.index ?? null;
+  }
 
-    if (index === null) {
-      throw new IndexError('SelectionManager[applyInlineToolForCurrentSelection]: caret index is outside of the input');
+  /**
+   * Apply format with data formed in toolbar
+   * @param params - method parameters, see comments to the param types
+   */
+  public applyInlineTool({
+    toolName,
+    data = {},
+    userId = this.#config.userId,
+    caretIndex = this.currentSelection,
+    keepSelection = true,
+    action: actionOverride,
+  }: {
+    /** Name of the inline tool to apply */
+    toolName: InlineToolName;
+    /** Inline tool formatting data */
+    data?: InlineToolFormatData;
+    /** ID of the user applying the change */
+    userId?: string | number;
+    /** Caret index to apply formatting for */
+    caretIndex?: Readonly<Index> | null;
+    /** Optional action override for formatting/unformatting */
+    action?: FormattingAction;
+    /** If true, Manager will restore the selection after applying the tool. True by defulat */
+    keepSelection?: boolean;
+  }): void {
+    if (caretIndex === null) {
+      throw new IndexError('SelectionManager[applyInlineTool]: caret index is outside of the input');
     }
+
+    const caret = this.#model.getCaret(userId);
 
     /**
      * @todo do not store middle segments in the index, use only the first and last segments
      * Also, we need to sort inputs inside first/last block by document order to restore selection
      */
-    const segments = index.getTextSegments();
+    const segments = caretIndex.getTextSegments();
 
     if (segments.length === 0) {
-      throw new IndexError('SelectionManager[applyInlineToolForCurrentSelection]: caret index is outside of the input');
+      throw new IndexError('SelectionManager[applyInlineTool]: caret index is outside of the input');
     }
 
     const tool = this.#toolsManager.inlineTools.get(toolName)?.create();
@@ -141,7 +163,7 @@ export class SelectionManager {
      * @todo think of config synchronisation. If remote user has some tools current user doesn't there's going to be mismatch in the data
      */
     if (tool === undefined) {
-      throw new Error(`SelectionManager[applyInlineToolForCurrentSelection]: tool ${toolName} is not attached`);
+      throw new Error(`SelectionManager[applyInlineTool]: tool ${toolName} is not attached`);
     }
 
     for (const segment of segments) {
@@ -165,15 +187,31 @@ export class SelectionManager {
 
       const { action, range } = tool.getFormattingOptions(textRange, fragments);
 
-      switch (action) {
+      switch (actionOverride ?? action) {
         case FormattingAction.Format:
-          this.#model.format(this.#config.userId, blockIndex, dataKey, toolName, ...range, createInlineToolData(data));
+          this.#model.format(userId, blockIndex, dataKey, toolName, ...range, createInlineToolData(data));
 
           break;
         case FormattingAction.Unformat:
-          this.#model.unformat(this.#config.userId, blockIndex, dataKey, toolName, ...range);
+          this.#model.unformat(userId, blockIndex, dataKey, toolName, ...range);
 
           break;
+      }
+
+      /**
+       * Keep selection param is applied only for the current user
+       */
+      if (userId === this.#config.userId) {
+        if (keepSelection) {
+          caret?.update(caretIndex);
+        } else {
+          caret?.update(
+            new IndexBuilder()
+              .from(caretIndex)
+              .addTextRange([caretIndex.textRange![1], caretIndex.textRange![1]])
+              .build()
+          );
+        }
       }
     }
   };

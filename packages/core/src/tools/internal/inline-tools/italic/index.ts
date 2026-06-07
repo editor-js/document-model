@@ -1,9 +1,10 @@
-import type { ToolFormattingOptions, InlineTool, InlineToolConstructor } from '@editorjs/sdk';
+import type { ToolFormattingOptions, InlineTool, InlineToolConstructor, MenuConfig } from '@editorjs/sdk';
 import { ToolType } from '@editorjs/sdk';
 import type { InlineFragment, TextRange } from '@editorjs/model';
 import { FormattingAction } from '@editorjs/model';
 import { IntersectType } from '@editorjs/model';
 import { make } from '@editorjs/dom';
+import { IconItalic } from '@codexteam/icons';
 
 /**
  * Italic Tool
@@ -43,6 +44,15 @@ export class ItalicInlineTool implements InlineTool {
    * If two fragment intersect, they should be merged
    */
   public intersectType: IntersectType = IntersectType.Extend;
+
+  /**
+   * Returns inline toolbar configuration for the tool
+   */
+  public getToolbarConfig(): MenuConfig {
+    return {
+      icon: IconItalic,
+    };
+  }
 
   /**
    * Renders wrapper for tool without actual content

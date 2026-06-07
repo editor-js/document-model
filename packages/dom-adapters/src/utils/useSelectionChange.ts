@@ -64,8 +64,18 @@ export const useSelectionChange = createSingleton(() => {
 
   /**
    * Handler for document "selection change" event.
+   * @param e - selection change event
    */
-  function onDocumentSelectionChanged(): void {
+  function onDocumentSelectionChanged(e: Event): void {
+    /**
+     * Selection changes in the HTMLInputElement bubbles up.
+     * We don't support native inputs within the Editor document,
+     * so just ignore those events to avoid unnecessary processing.
+     */
+    if (!(e.target instanceof Document)) {
+      return;
+    }
+
     const selection = document.getSelection();
 
     /**

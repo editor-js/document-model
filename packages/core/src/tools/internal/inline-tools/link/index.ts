@@ -1,16 +1,30 @@
 import type {
-  ActionsElementWithOptions,
-  ToolFormattingOptions,
+  EditorAPI,
   InlineTool,
-  InlineToolFormatData, InlineToolConstructor
+  InlineToolConstructor,
+  InlineToolConstructorOptions,
+  InlineToolFormatData,
+  ToolFormattingOptions,
+  MenuConfig
 } from '@editorjs/sdk';
-import {
-  ToolType
-} from '@editorjs/sdk';
+import { ToolType, PopoverItemType } from '@editorjs/sdk';
+/**
+ * @todo Export these types from SDK so Tool doesn't need to add model as a dependency.
+ */
 import type { InlineFragment, TextRange } from '@editorjs/model';
-import { FormattingAction } from '@editorjs/model';
-import { IntersectType } from '@editorjs/model';
+import { FormattingAction, IntersectType } from '@editorjs/model';
 import { make } from '@editorjs/dom';
+import { IconLink, IconUnlink } from '@codexteam/icons';
+
+/**
+ * @todo Type tools data through InlineTool interface generic
+ */
+interface LinkData {
+  /**
+   * Link href
+   */
+  href: string;
+}
 
 /**
  * Link Tool
@@ -48,6 +62,89 @@ export class LinkInlineTool implements InlineTool {
   public intersectType: IntersectType = IntersectType.Replace;
 
   /**
+   * EditorJS API instance
+   */
+  #api: EditorAPI;
+
+  /**
+   * Tool constructor function
+   * @param param0 - inline tool parameters
+   * @param param0.api - EditorJS api
+   */
+  constructor({ api }: InlineToolConstructorOptions) {
+    this.#api = api;
+  }
+
+  /**
+   * Returns inline toolbar configuration for the tool
+   * @param range - selected range
+   * @param fragments - fragments of the tool in the selected range
+   */
+  public getToolbarConfig(range: TextRange, fragments: InlineFragment[]): MenuConfig {
+    const isActive = this.isActive(range, fragments);
+    const data = isActive ? fragments[0].data! : {} as LinkData;
+
+    const linkInput = make('input', 'ejs-inline-toolbar__input', {
+      placeholder: 'Add a link',
+      enterKeyHint: 'done',
+      value: data.href ?? '',
+    }) as HTMLInputElement;
+
+    return {
+      icon: isActive ? IconUnlink : IconLink,
+      onActivate: () => {
+        if (!isActive) {
+          return;
+        }
+
+        const caretIndex = this.#api.selection.caretIndex;
+
+        this.#api.selection.applyInlineTool({
+          tool: LinkInlineTool.name,
+          data: {},
+          caretIndex: caretIndex!,
+          action: FormattingAction.Unformat,
+        });
+      },
+      children: {
+        isFlippable: false,
+        items: [{
+          type: PopoverItemType.Html,
+          element: linkInput,
+        }],
+        isOpen: isActive,
+        onOpen: (close: (parent?: boolean) => void): void => {
+          const caretIndex = this.#api.selection.caretIndex;
+
+          linkInput.addEventListener('keydown', (event: KeyboardEvent) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+
+              close(true);
+
+              this.#api.selection.applyInlineTool({
+                tool: LinkInlineTool.name,
+                data: { href: linkInput.value },
+                caretIndex: caretIndex!,
+                /** @todo Replace link instead of applying the formatting again. Needs to be implemented in the model */
+                action: isActive ? FormattingAction.None : FormattingAction.Format,
+                keepSelection: false,
+              });
+            }
+          });
+
+          if (!isActive) {
+            queueMicrotask(() => {
+              linkInput.focus();
+            });
+          }
+        },
+      },
+    };
+  }
+
+  /**
    * Renders wrapper for tool without actual content
    * @param data - inline tool data formed in toolbar
    * @returns Created html element
@@ -55,8 +152,8 @@ export class LinkInlineTool implements InlineTool {
   public createWrapper(data: InlineToolFormatData): HTMLElement {
     const linkElement = make('a') as HTMLLinkElement;
 
-    if (typeof data.link === 'string') {
-      linkElement.href = data.link;
+    if (typeof data.href === 'string') {
+      linkElement.href = data.href;
     }
 
     return linkElement;
@@ -87,7 +184,7 @@ export class LinkInlineTool implements InlineTool {
       /**
        * Check if current index is inside of model fragment
        */
-      if (range[0] === fragment.range[0] && range[1] === fragment.range[1]) {
+      if (range[0] >= fragment.range[0] && range[1] <= fragment.range[1]) {
         isActive = true;
 
         /**
@@ -98,23 +195,6 @@ export class LinkInlineTool implements InlineTool {
     });
 
     return isActive;
-  }
-
-  /**
-   * Function that is responsible for rendering data form element
-   * @param callback function that should be triggered, when data completely formed
-   * @returns rendered data form element with options required in toolbar
-   */
-  public renderActions(callback: (data: InlineToolFormatData) => void): ActionsElementWithOptions {
-    const linkInput = make('input') as HTMLInputElement;
-
-    linkInput.addEventListener('keydown', (event: KeyboardEvent) => {
-      if (event.key === 'Enter') {
-        callback({ link: linkInput.value });
-      }
-    });
-
-    return { element: linkInput };
   }
 }
 

@@ -41,23 +41,15 @@ export class FormattingAdapter {
   #caretAdapter: CaretAdapter;
 
   /**
-   * Editor's config
-   */
-  #config: Required<CoreConfig>;
-
-  /**
-   * @param config - Editor's config
    * @param api - Editor's API
    * @param caretAdapter - caret adapter instance
    * @param eventBus - Editor's EventBus instance
    */
   constructor(
-    @inject(TOKENS.EditorConfig) config: Required<CoreConfig>,
     @inject(TOKENS.EditorAPI) api: EditorAPI,
     caretAdapter: CaretAdapter,
     eventBus: EventBus
   ) {
-    this.#config = config;
     this.#api = api;
     this.#caretAdapter = caretAdapter;
 
@@ -134,45 +126,39 @@ export class FormattingAdapter {
    * @param event - model change event
    */
   #handleModelUpdates(event: ModelEvents): void {
-    if (event instanceof TextFormattedEvent || event instanceof TextUnformattedEvent) {
-      const tool = this.#tools.get(event.detail.data.tool);
-      const { textRange, blockIndex, dataKey } = event.detail.index;
-
-      if (tool === undefined || textRange === undefined || blockIndex === undefined || dataKey === undefined) {
-        return;
-      }
-
-      const input = this.#caretAdapter.findInput(blockIndex, dataKey.toString());
-
-      if (input === undefined) {
-        console.warn('No input found for the index', event.detail.index);
-
-        return;
-      }
-
-      const inputContent = input.textContent;
-
-      const rangeStart = Math.max(0, textRange[0] - 1);
-      const rangeEnd = inputContent !== null ? Math.min(inputContent.length, textRange[1] + 1) : 0;
-
-      const affectedFragments = this.#api.text.getFragments({
-        block: blockIndex,
-        key: dataKey as string,
-        start: rangeStart,
-        end: rangeEnd,
-      });
-
-      const leftBoundary = affectedFragments[0]?.range[0] ?? textRange[0];
-      let rightBoundary = textRange[1];
-
-      for (const fragment of affectedFragments) {
-        rightBoundary = Math.max(rightBoundary, fragment.range[1]);
-      }
-
-      this.#rerenderRange(input, leftBoundary, rightBoundary, affectedFragments);
-
-      this.#caretAdapter.updateIndex(event.detail.index, event.detail.userId);
+    if (!(event instanceof TextFormattedEvent || event instanceof TextUnformattedEvent)) {
+      return;
     }
+
+    const tool = this.#tools.get(event.detail.data.tool);
+    const { textRange, blockIndex, dataKey } = event.detail.index;
+
+    if (tool === undefined || textRange === undefined || blockIndex === undefined || dataKey === undefined) {
+      return;
+    }
+    const input = this.#caretAdapter.findInput(blockIndex, dataKey.toString());
+
+    if (input === undefined) {
+      console.warn('No input found for the index', event.detail.index);
+
+      return;
+    }
+    const inputContent = input.textContent;
+    const rangeStart = Math.max(0, textRange[0] - 1);
+    const rangeEnd = inputContent !== null ? Math.min(inputContent.length, textRange[1] + 1) : 0;
+    const affectedFragments = this.#api.text.getFragments({
+      block: blockIndex,
+      key: dataKey as string,
+      start: rangeStart,
+      end: rangeEnd,
+    });
+    const leftBoundary = affectedFragments[0]?.range[0] ?? textRange[0];
+    let rightBoundary = textRange[1];
+
+    for (const fragment of affectedFragments) {
+      rightBoundary = Math.max(rightBoundary, fragment.range[1]);
+    }
+    this.#rerenderRange(input, leftBoundary, rightBoundary, affectedFragments);
   }
 
   /**
