@@ -11,6 +11,7 @@ export default {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^codex-tooltip$': '<rootDir>/test/mocks/codex-tooltip.ts',
   },
+  coverageReporters: ['lcov', 'json-summary', 'text-summary'],
   transform: {
     ...createDefaultEsmPreset().transform,
   },
