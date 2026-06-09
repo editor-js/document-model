@@ -3,7 +3,7 @@
 import { jest } from '@jest/globals';
 import type { CoreConfigValidated } from '@editorjs/sdk';
 // @ts-expect-error - TS don't import types via import() so have to import them here as well
-import type { CaretManagerEvents, InlineFragment, InlineToolName, EventType, Index } from '@editorjs/model';
+import type { CaretManagerEvents, InlineFragment, InlineToolName, EventType, Index, FormattingAction } from '@editorjs/model';
 
 // Register ESM mocks before importing the module under test
 jest.unstable_mockModule('@editorjs/model', () => {
@@ -27,11 +27,17 @@ jest.unstable_mockModule('@editorjs/model', () => {
     serialized: { blocks: [] },
   }));
 
+  class IndexBuilderMock {
+    public from = jest.fn(() => this);
+    public addTextRange = jest.fn(() => this);
+    public build = jest.fn(() => ({ getTextSegments: jest.fn(() => []) }));
+  }
+
   return {
     EditorJSModel,
     CaretManagerCaretUpdatedEvent: caretManagerCaretUpdatedEvent,
     Index: { parse: jest.fn() },
-    IndexBuilder: jest.fn(),
+    IndexBuilder: IndexBuilderMock,
     EventType: eventType,
     createInlineToolData: (data: Record<string, unknown>) => data,
     createInlineToolName: (name: string) => name,
@@ -362,6 +368,102 @@ describe('SelectionManager', () => {
       expect(() => {
         selectionManager.applyInlineTool({ toolName: 'bold' as InlineToolName });
       }).toThrow('DataKey of the index should be defined');
+    });
+
+    it('should collapse selection to end when keepSelection is false', () => {
+      const caretUpdateMock = jest.fn();
+      const toolMock = {
+        getFormattingOptions: jest.fn(() => ({ action: 'format',
+          range: [0, 3] })),
+      };
+      const facadeMock = { create: jest.fn(() => toolMock) };
+
+      (toolsManager as unknown as { inlineTools: Map<unknown, unknown> }).inlineTools = new Map([['bold', facadeMock]]);
+
+      const indexMock = {
+        getTextSegments: jest.fn(() => [{ blockIndex: 0,
+          dataKey: 'text',
+          textRange: [0, 3] }]),
+      };
+
+      jest.spyOn(model, 'getCaret')
+        .mockReturnValue({
+          index: indexMock,
+          update: caretUpdateMock,
+        } as unknown as ReturnType<typeof model.getCaret>);
+      jest.spyOn(model, 'getFragments').mockReturnValue([]);
+
+      selectionManager.applyInlineTool({
+        toolName: 'bold' as InlineToolName,
+        keepSelection: false,
+      });
+
+      expect(caretUpdateMock).toHaveBeenCalledWith(expect.objectContaining({ getTextSegments: expect.any(Function) }));
+    });
+
+    it('should override tool action when action parameter is provided', () => {
+      const mockUnformat = jest.spyOn(model, 'unformat').mockImplementation(() => undefined);
+      const toolMock = {
+        getFormattingOptions: jest.fn(() => ({ action: 'format',
+          range: [0, 3] })),
+      };
+      const facadeMock = { create: jest.fn(() => toolMock) };
+
+      (toolsManager as unknown as { inlineTools: Map<unknown, unknown> }).inlineTools = new Map([['bold', facadeMock]]);
+
+      const indexMock = {
+        getTextSegments: jest.fn(() => [{ blockIndex: 0,
+          dataKey: 'text',
+          textRange: [0, 3] }]),
+      };
+
+      jest.spyOn(model, 'getCaret')
+        .mockReturnValue({
+          index: indexMock,
+          update: jest.fn(),
+        } as unknown as ReturnType<typeof model.getCaret>);
+      jest.spyOn(model, 'getFragments').mockReturnValue([]);
+
+      // Tool suggests Format, but we override with Unformat
+      selectionManager.applyInlineTool({
+        toolName: 'bold' as InlineToolName,
+        action: 'unformat' as FormattingAction,
+      });
+
+      expect(mockUnformat).toHaveBeenCalled();
+    });
+
+    it('should not update caret for non-current userId', () => {
+      const caretUpdateMock = jest.fn();
+      const toolMock = {
+        getFormattingOptions: jest.fn(() => ({ action: 'format',
+          range: [0, 3] })),
+      };
+      const facadeMock = { create: jest.fn(() => toolMock) };
+
+      (toolsManager as unknown as { inlineTools: Map<unknown, unknown> }).inlineTools = new Map([['bold', facadeMock]]);
+
+      const indexMock = {
+        getTextSegments: jest.fn(() => [{ blockIndex: 0,
+          dataKey: 'text',
+          textRange: [0, 3] }]),
+      };
+
+      jest.spyOn(model, 'getCaret')
+        .mockReturnValue({
+          index: indexMock,
+          update: caretUpdateMock,
+        } as unknown as ReturnType<typeof model.getCaret>);
+      jest.spyOn(model, 'getFragments').mockReturnValue([]);
+
+      // Apply tool with a different userId
+      selectionManager.applyInlineTool({
+        toolName: 'bold' as InlineToolName,
+        userId: 'another-user',
+      });
+
+      // Caret should not be updated for non-current user
+      expect(caretUpdateMock).not.toHaveBeenCalled();
     });
   });
 });

@@ -257,14 +257,17 @@ export class InlineToolbarUI implements EditorjsPlugin {
     const range = selection.getRangeAt(0);
 
     const rect = range.getBoundingClientRect();
-    const holderRect = this.#config.holder.getBoundingClientRect();
+
+    // Use offsetParent (the positioned ancestor) instead of holder to ensure accurate positioning
+    // when the toolbar is appended to a different container
+    const offsetParent = this.#nodes.holder.offsetParent as HTMLElement;
+    const offsetParentRect = offsetParent?.getBoundingClientRect() ?? { x: 0,
+      y: 0,
+      top: 0 };
 
     const newPosition = {
-      /**
-       * @todo if holder has paddings, toolbar is shifted to the left. Think on how to resolve this
-       */
-      x: rect.x - holderRect.x,
-      y: rect.y + rect.height - holderRect.top,
+      x: rect.x - offsetParentRect.x,
+      y: rect.y + rect.height - offsetParentRect.top,
     } as const;
 
     /**

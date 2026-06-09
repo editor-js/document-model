@@ -205,12 +205,20 @@ export class SelectionManager {
         if (keepSelection) {
           caret?.update(caretIndex);
         } else {
-          caret?.update(
-            new IndexBuilder()
-              .from(caretIndex)
-              .addTextRange([caretIndex.textRange![1], caretIndex.textRange![1]])
-              .build()
-          );
+          // For composite selections, don't try to add textRange since composite indices
+          // must not have root-level textRange. Only set textRange for single-segment selections.
+          const selectedSegments = caretIndex.getTextSegments();
+
+          if (selectedSegments.length === 1 && selectedSegments[0].textRange !== undefined) {
+            caret?.update(
+              new IndexBuilder()
+                .from(caretIndex)
+                .addTextRange([selectedSegments[0].textRange[1], selectedSegments[0].textRange[1]])
+                .build()
+            );
+          } else {
+            caret?.update(caretIndex);
+          }
         }
       }
     }
