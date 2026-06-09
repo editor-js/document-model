@@ -10,7 +10,8 @@
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
-    "isolatedModules": true,
+    /** @todo Change back to true when codex-tooltip is fixed */
+    "isolatedModules": false,
     "noEmit": true,
     "jsx": "preserve",
 
@@ -26,8 +27,8 @@
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],
   "references": [
-    { 
-      "path": "./tsconfig.node.json" 
+    {
+      "path": "./tsconfig.node.json"
     },
     {
       "path": "../core/tsconfig.json"

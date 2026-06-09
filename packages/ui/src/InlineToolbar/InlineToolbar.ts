@@ -1,15 +1,24 @@
 import { make } from '@editorjs/dom';
 import { InlineToolbarRenderedUIEvent } from './InlineToolbarRenderedUIEvent.js';
-import type { EditorAPI,
-  SelectionChangedCoreEvent,
+import type {
+  CoreConfigValidated,
+  EditorAPI,
   EditorjsPlugin,
   EditorjsPluginParams,
-  InlineTool,
-  InlineToolFormatData,
-  EventBus } from '@editorjs/sdk';
-import { CoreEventType, UiComponentType } from '@editorjs/sdk';
-import type { InlineFragment, InlineToolName, TextRange } from '@editorjs/model';
+  EventBus,
+  InlineToolFacade,
+  SelectionChangedCoreEvent
+} from '@editorjs/sdk';
+import {
+  CoreEventType,
+  InlineToolOptionKey,
+  UiComponentType
+} from '@editorjs/sdk';
+import type { InlineFragment, TextRange } from '@editorjs/model';
 import Style from './InlineToolbar.module.pcss';
+import type { PopoverItemDefaultBaseParams, PopoverItemParams } from '@editorjs/ui-kit';
+import { PopoverInline, PopoverItemType } from '@editorjs/ui-kit';
+import { beautifyShortcut, capitalize } from '@editorjs/helpers';
 
 /**
  * Inline Toolbar UI module
@@ -39,19 +48,31 @@ export class InlineToolbarUI implements EditorjsPlugin {
   #api: EditorAPI;
 
   /**
+   * Editor's Config
+   */
+  #config: CoreConfigValidated;
+
+  /**
+   * Popover instance for inline tool buttons
+   */
+  #popover: PopoverInline | null = null;
+
+  /**
    * InlineToolbarUI class constructor
    * @param params - Plugin parameters
    */
   constructor({
     api,
     eventBus,
+    config,
   }: EditorjsPluginParams) {
     this.#eventBus = eventBus;
     this.#api = api;
+    this.#config = config;
 
     this.#render();
 
-    this.#eventBus.addEventListener(`core:${CoreEventType.SelectionChanged}`, (event: SelectionChangedCoreEvent) => this.#handleSelectionChange(event));
+    this.#eventBus.addEventListener(`core:${CoreEventType.SelectionChanged}`, (event: SelectionChangedCoreEvent) => void this.#handleSelectionChange(event));
   }
 
   /**
@@ -65,7 +86,7 @@ export class InlineToolbarUI implements EditorjsPlugin {
    * Handles the selection change core event
    * @param event - SelectionChangedCoreEvent event
    */
-  #handleSelectionChange(event: SelectionChangedCoreEvent): void {
+  async #handleSelectionChange(event: SelectionChangedCoreEvent): Promise<void> {
     const { availableInlineTools, index, fragments } = event.detail;
     const selection = window.getSelection();
     const segments = index?.getTextSegments() ?? [];
@@ -103,7 +124,7 @@ export class InlineToolbarUI implements EditorjsPlugin {
       return;
     }
 
-    this.#updateToolsList(availableInlineTools, textRange, fragments);
+    await this.#renderPopover(availableInlineTools, textRange, fragments);
     this.#move();
     this.#show();
   }
@@ -114,34 +135,117 @@ export class InlineToolbarUI implements EditorjsPlugin {
   #render(): void {
     this.#nodes.holder = make('div', Style['inline-toolbar']);
 
-    this.#nodes.holder.style.display = 'none';
-    this.#nodes.holder.style.position = 'absolute';
-
-    this.#nodes.buttons = make('div', Style['inline-toolbar-list']);
-    this.#nodes.holder.appendChild(this.#nodes.buttons);
-
-    this.#nodes.actions = make('div', Style['inline-toolbar-actions']);
-    this.#nodes.holder.appendChild(this.#nodes.actions);
-
     this.#eventBus.dispatchEvent(new InlineToolbarRenderedUIEvent({ toolbar: this.#nodes.holder }));
+  }
+
+  /**
+   * Creates a new InlinePopover instance and adds it to the Editor UI
+   * @param availableInlineTools - inline tools to render in the toolbar
+   * @param textRange - selected text range
+   * @param fragments - inline tool fragments for the selected text range
+   */
+  async #renderPopover(
+    availableInlineTools: InlineToolFacade[],
+    textRange: TextRange,
+    fragments: InlineFragment[]
+  ): Promise<void> {
+    if (this.#popover !== null) {
+      this.#popover.destroy();
+      this.#popover = null;
+    }
+
+    const popoverItems = Array.from(availableInlineTools).map(async (tool, i) => {
+      const toolFragments = fragments.filter((fragment: InlineFragment) => fragment.tool === tool.name);
+      const shortcut = tool.options.shortcut;
+      const instance = tool.create();
+      const toolbarConfig = await instance.getToolbarConfig(textRange, toolFragments);
+
+      const shortcutBeautified = shortcut !== undefined ? beautifyShortcut(shortcut) : undefined;
+      const toolTitle = capitalize(tool.options[InlineToolOptionKey.Title] ?? tool.name);
+
+      const popoverItemParams: PopoverItemDefaultBaseParams = {
+        name: tool.name,
+        onActivate: () => this.#onToolClick(tool),
+        isActive: () => instance.isActive(
+          textRange,
+          toolFragments
+        ),
+        hint: {
+          title: toolTitle,
+          description: shortcutBeautified,
+        },
+      };
+
+      return [toolbarConfig]
+        .flat()
+        .map((item): PopoverItemParams[] => {
+          switch (item.type) {
+            case PopoverItemType.Html:
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- TS doesn't see its as any
+              return [{
+                ...popoverItemParams,
+                ...item,
+              }];
+            case PopoverItemType.Separator:
+              return [{
+                type: PopoverItemType.Separator,
+              }];
+
+            case PopoverItemType.Default:
+            default:
+              const items: PopoverItemParams[] = [
+                {
+                  ...popoverItemParams,
+                  ...item,
+                  type: PopoverItemType.Default,
+                },
+              ];
+
+              if ('children' in item && i !== 0) {
+                items.unshift({
+                  type: PopoverItemType.Separator,
+                });
+              }
+
+              if ('children' in item && i < availableInlineTools.length - 1) {
+                items.push({
+                  type: PopoverItemType.Separator,
+                });
+              }
+
+              return items;
+          }
+        })
+        .flat();
+    });
+
+    this.#popover = new PopoverInline({
+      items: (await Promise.all(popoverItems)).flat(),
+      scopeElement: this.#config.holder,
+      closeOnOutsideClick: false,
+    });
+
+    this.#nodes.holder.appendChild(this.#popover.getElement());
   }
 
   /**
    * Shows the Inline Toolbar
    */
   #show(): void {
-    this.#nodes.holder.style.display = 'block';
+    this.#popover?.show();
   }
 
   /**
    * Hides the Inline Toolbar
    */
   #hide(): void {
-    this.#nodes.holder.style.display = 'none';
+    this.#popover?.hide();
+    this.#popover?.destroy();
   }
 
   /**
    * Moves the Inline Toolbar to the current selection
+   * @todo Think on how it should work for cross-block selection
    */
   #move(): void {
     const selection = window.getSelection();
@@ -154,64 +258,31 @@ export class InlineToolbarUI implements EditorjsPlugin {
 
     const rect = range.getBoundingClientRect();
 
-    this.#nodes.holder.style.top = `${rect.top}px`;
-    this.#nodes.holder.style.left = `${rect.left}px`;
-    this.#nodes.holder.style.zIndex = '1000';
+    // Use offsetParent (the positioned ancestor) instead of holder to ensure accurate positioning
+    // when the toolbar is appended to a different container
+    const offsetParent = this.#nodes.holder.offsetParent as HTMLElement;
+    const offsetParentRect = offsetParent?.getBoundingClientRect() ?? { x: 0,
+      y: 0,
+      top: 0 };
+
+    const newPosition = {
+      x: rect.x - offsetParentRect.x,
+      y: rect.y + rect.height - offsetParentRect.top,
+    } as const;
+
+    /**
+     * @todo add right overflow handling
+     */
+
+    this.#nodes.holder.style.top = `${newPosition.y}px`;
+    this.#nodes.holder.style.left = `${newPosition.x}px`;
   }
 
   /**
-   * Renders the list of available inline tools in the Inline Toolbar
-   * @param tools - Inline Tools available for the current selection
-   * @param textRange - current selection text range
-   * @param fragments - inline fragments for the current selection
+   * Applies the inline tool to the current selection
+   * @param tool - tool to apply
    */
-  #updateToolsList(tools: Map<InlineToolName, InlineTool>, textRange: TextRange, fragments: InlineFragment[]): void {
-    this.#nodes.buttons.innerHTML = '';
-
-    Array.from(tools.entries()).forEach(([name, tool]) => {
-      const button = make('button');
-
-      button.textContent = name;
-
-      const isActive = tool.isActive(textRange, fragments.filter((fragment: InlineFragment) => fragment.tool === name));
-
-      if (isActive) {
-        button.style.fontWeight = 'bold';
-      }
-
-      if (Object.hasOwnProperty.call(tool.constructor.prototype, 'renderActions')) {
-        button.addEventListener('click', () => {
-          this.#renderToolActions(name, tool);
-        });
-      } else {
-        button.addEventListener('click', () => {
-          this.#api.selection.applyInlineTool({ tool: name });
-        });
-      }
-
-      this.#nodes.buttons.appendChild(button);
-    });
-  }
-
-  /**
-   * Renders the actions for the inline tool
-   * @param name - name of the inline tool to render actions for
-   * @param tool - inline tool instance
-   */
-  #renderToolActions(name: InlineToolName, tool: InlineTool): void {
-    const { element } = tool.renderActions?.((data: InlineToolFormatData) => {
-      this.#api.selection.applyInlineTool({
-        tool: name,
-        data,
-      });
-    }) ?? { element: null };
-
-    if (element === null) {
-      return;
-    }
-
-    this.#nodes.actions.innerHTML = '';
-
-    this.#nodes.actions.appendChild(element);
+  #onToolClick(tool: InlineToolFacade): void {
+    this.#api.selection.applyInlineTool({ tool: tool.name });
   }
 }

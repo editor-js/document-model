@@ -56,10 +56,10 @@ export function processReports(pkg, headDir, baseDir) {
 
   let delta = categories.branches.delta;
 
-  if (delta < 0) {
+  if (delta > 0) {
     delta = `+${delta}% 🟢`;
-  } else if (delta > 0) {
-    delta = `-${delta}% 🔴`;
+  } else if (delta < 0) {
+    delta = `${delta}% 🔴`;
   } else if (delta === 0) {
     delta = `0% ⚪️`;
   }
