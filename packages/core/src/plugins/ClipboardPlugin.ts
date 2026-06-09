@@ -30,16 +30,16 @@ export class ClipboardPlugin implements EditorjsPlugin {
         return;
       }
 
-      nativeEvent.preventDefault();
-
       const currentDOMSelection = window.getSelection();
 
       if (!currentDOMSelection) {
         return;
       }
 
-      const selectionAsPlainText = currentDOMSelection?.toString() ?? '';
+      const selectionAsPlainText = currentDOMSelection.toString();
       const selectionAsHTML = this.#parseDOMSelectionToHTML(currentDOMSelection);
+
+      nativeEvent.preventDefault();
 
       nativeEvent.clipboardData?.setData('text/plain', selectionAsPlainText);
       nativeEvent.clipboardData?.setData('text/html', selectionAsHTML);
