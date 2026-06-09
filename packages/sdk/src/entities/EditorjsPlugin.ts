@@ -38,10 +38,6 @@ export interface EditorjsPlugin {
  */
 export interface EditorjsPluginConstructor<
   /**
-   * Plugin's params. Has to be a generic param as constructor can not be overloaded
-   */
-  Params extends EditorjsPluginParams = EditorjsPluginParams,
-  /**
    * Plugin's instance interface. Has to be a generic param as constructor can not be overloaded
    */
   Instance extends EditorjsPlugin = EditorjsPlugin
@@ -49,7 +45,7 @@ export interface EditorjsPluginConstructor<
   /**
    * Create new EditorjsPlugin instance
    */
-  new (params: Params): Instance;
+  new (params: EditorjsPluginParams): Instance;
 
   /**
    * Plugin's entity type: UI plugin, Tool, etc.

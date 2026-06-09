@@ -1,4 +1,9 @@
-import { CopyUIEvent } from '@editorjs/sdk';
+import type {
+  BlockAddedCoreEvent,
+  BlockRemovedCoreEvent, CopyUIEvent, EditorAPI,
+  EditorjsPlugin,
+  EditorjsPluginParams
+} from '@editorjs/sdk';
 import {
   CoreEventType,
   UiComponentType,
@@ -42,11 +47,17 @@ export class BlocksUI implements EditorjsPlugin {
   #eventBus: EventBus;
 
   /**
+   * Editor's API
+   */
+  #api: EditorAPI;
+
+  /**
    * EditorUI constructor method
    * @param params - Plugin parameters
    */
   constructor(params: EditorjsPluginParams) {
     this.#eventBus = params.eventBus;
+    this.#api = params.api;
     this.#blocksHolder = this.#prepareBlocksHolder();
 
     this.#eventBus.addEventListener(`core:${CoreEventType.BlockAdded}`, (event: BlockAddedCoreEvent<HTMLElement>) => {
@@ -119,14 +130,14 @@ export class BlocksUI implements EditorjsPlugin {
       }
 
       if (e.shiftKey) {
-        this.#eventBus.dispatchEvent(new Event('core:redo'));
+        this.#api.document.redo();
 
         e.preventDefault();
 
         return;
       }
 
-      this.#eventBus.dispatchEvent(new Event('core:undo'));
+      this.#api.document.undo();
 
       e.preventDefault();
     });

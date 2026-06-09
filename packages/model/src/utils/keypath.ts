@@ -125,3 +125,58 @@ export function remove(data: Record<string | number | symbol, any>, keys: string
     delete parent[lastKey];
   }
 }
+
+/**
+ * Renumbers array-indexed segments in a set of dot-notation keys so that
+ * each prefix's first array index becomes 0.
+ *
+ * For example, given keys `['items.2.text', 'items.3.text']` the result is
+ * `{ 'items.2.text': 'items.0.text', 'items.3.text': 'items.1.text' }`.
+ *
+ * Keys that contain no numeric segment are returned unchanged.
+ * @param keys - flat dot-notation data keys to renumber
+ * @returns a map of original key → renumbered key
+ */
+export function renumberKeys(keys: string[]): Map<string, string> {
+  const minArrayIndices = new Map<string, number>();
+
+  for (const key of keys) {
+    const segments = key.split('.');
+    const numericIdx = segments.findIndex(s => !isNaN(Number(s)) && s !== '');
+
+    if (numericIdx !== -1) {
+      const prefix = segments.slice(0, numericIdx).join('.');
+      const index = Number(segments[numericIdx]);
+      const current = minArrayIndices.get(prefix);
+
+      if (current === undefined || index < current) {
+        minArrayIndices.set(prefix, index);
+      }
+    }
+  }
+
+  const result = new Map<string, string>();
+
+  for (const key of keys) {
+    const segments = key.split('.');
+    const numericIdx = segments.findIndex(s => !isNaN(Number(s)) && s !== '');
+
+    if (numericIdx !== -1) {
+      const prefix = segments.slice(0, numericIdx).join('.');
+      const minIndex = minArrayIndices.get(prefix);
+
+      if (minIndex !== undefined) {
+        const renumbered = [...segments];
+
+        renumbered[numericIdx] = String(Number(segments[numericIdx]) - minIndex);
+        result.set(key, renumbered.join('.'));
+
+        continue;
+      }
+    }
+
+    result.set(key, key);
+  }
+
+  return result;
+}

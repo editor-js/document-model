@@ -9,7 +9,9 @@ export default {
   moduleNameMapper: {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^codex-tooltip$': '<rootDir>/test/mocks/codex-tooltip.ts',
   },
+  coverageReporters: ['lcov', 'json-summary', 'text-summary'],
   transform: {
     ...createDefaultEsmPreset().transform,
   },

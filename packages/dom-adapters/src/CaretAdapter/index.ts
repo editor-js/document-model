@@ -2,14 +2,12 @@ import { isNativeInput } from '@editorjs/dom';
 import {
   type Caret,
   type CaretManagerEvents,
-  EditorJSModel,
-  EventType,
   Index,
   IndexBuilder,
   createDataKey,
   createBlockId
 } from '@editorjs/model';
-import type { CoreConfig } from '@editorjs/sdk';
+import type { CoreConfig, EditorAPI } from '@editorjs/sdk';
 import {
   getAbsoluteRangeOffset,
   getBoundaryPointByAbsoluteOffset,
@@ -33,9 +31,9 @@ export class CaretAdapter {
   #container: HTMLElement;
 
   /**
-   * Editor.js model
+   * Editor's API
    */
-  #model: EditorJSModel;
+  #api: EditorAPI;
 
   /**
    * Shared inputs registry — single source of truth for (blockIndex, dataKey) → HTMLElement.
@@ -55,19 +53,19 @@ export class CaretAdapter {
 
   /**
    * @param config - Editor's config
-   * @param model - Editor.js model
+   * @param api - Editor's API
    * @param registry - shared inputs registry
    */
   constructor(
     @inject(TOKENS.EditorConfig) config: Required<CoreConfig>,
-    model: EditorJSModel,
+    @inject(TOKENS.EditorAPI) api: EditorAPI,
     registry: InputsRegistry
   ) {
     this.#config = config;
-    this.#model = model;
+    this.#api = api;
     this.#inputsRegistry = registry;
     this.#container = config.holder;
-    this.#currentUserCaret = this.#model.createCaret(this.#config.userId);
+    this.#currentUserCaret = this.#api.selection.createCaret(this.#config.userId);
 
     const { on } = useSelectionChange();
 
@@ -76,7 +74,7 @@ export class CaretAdapter {
      */
     on(this.#container, selection => this.#onSelectionChange(selection), this);
 
-    this.#model.addEventListener(EventType.CaretManagerUpdated, event => this.#onModelCaretUpdate(event));
+    this.#api.selection.onCaretUpdate(event => this.#onModelCaretUpdate(event));
   }
 
   /**
@@ -98,7 +96,7 @@ export class CaretAdapter {
       return;
     }
 
-    const caretToUpdate = this.#model.getCaret(userId);
+    const caretToUpdate = this.#api.selection.getCaret(userId);
 
     if (caretToUpdate === undefined) {
       return;
@@ -115,13 +113,13 @@ export class CaretAdapter {
    * @returns input element or undefined if not found
    */
   public findInput(blockIndex: number, dataKeyRaw: string): HTMLElement | undefined {
-    const blockId = this.#model.getBlockId(blockIndex);
+    const blockId = this.#api.blocks.getIdByIndex(blockIndex);
 
     if (blockId === undefined) {
       return undefined;
     }
 
-    return this.#inputsRegistry.getInput(blockId, createDataKey(dataKeyRaw));
+    return this.#inputsRegistry.getInput(blockId, dataKeyRaw);
   }
 
   /**
@@ -213,7 +211,7 @@ export class CaretAdapter {
         continue;
       }
 
-      const blockIndex = this.#model.getBlockIndexById(createBlockId(blockId));
+      const blockIndex = this.#api.blocks.getIndexById(createBlockId(blockId));
 
       if (blockIndex === -1) {
         continue;

@@ -4,6 +4,7 @@ import { Container } from 'inversify';
 import {
   type BlockToolConstructor,
   CoreEventType,
+  CoreEventBase,
   EventBus,
   type InlineToolConstructor,
   PluginType,
@@ -22,6 +23,7 @@ import { BlocksManager } from './components/BlockManager.js';
 import { BlockRenderer } from './components/BlockRenderer.js';
 import { SelectionManager } from './components/SelectionManager.js';
 import { TOKENS } from './tokens.js';
+import { UndoRedoManager } from './components/UndoRedoManager.js';
 import { ClipboardPlugin } from './plugins/ClipboardPlugin.js';
 
 /**
@@ -30,7 +32,7 @@ import { ClipboardPlugin } from './plugins/ClipboardPlugin.js';
 const DEFAULT_HOLDER_ID = 'editorjs';
 
 /**
- * Editor entry poit
+ * Editor entry point
  * - initializes Model
  * - subscribes to model updates
  * - creates Adapters for Tools
@@ -61,11 +63,6 @@ export default class Core {
    * Inversion of Control container for loaded plugins
    */
   #plugins: Container;
-
-  /**
-   * Collaboration manager
-   */
-  #collaborationManager: CollaborationManager;
 
   /**
    * @param config - Editor configuration
@@ -99,29 +96,18 @@ export default class Core {
 
     this.#toolsManager = this.#iocContainer.get(ToolsManager);
 
-    this.#collaborationManager = new CollaborationManager(this.#config, this.#model);
-
-    this.#iocContainer.bind(CollaborationManager).toConstantValue(this.#collaborationManager);
-
     if (config.onModelUpdate !== undefined) {
       this.#model.addEventListener(EventType.Changed, () => {
         config.onModelUpdate?.(this.#model);
       });
     }
 
-    eventBus.addEventListener(`core:${CoreEventType.Undo}`, () => {
-      this.#collaborationManager.undo();
-    });
-
-    eventBus.addEventListener(`core:${CoreEventType.Redo}`, () => {
-      this.#collaborationManager.redo();
-    });
-
     this.use(Paragraph);
     this.use(BoldInlineTool);
     this.use(ItalicInlineTool);
     this.use(LinkInlineTool);
     this.use(ShortcutsPlugin);
+    this.use(CollaborationManager);
     this.use(DOMAdapters);
     this.use(ClipboardPlugin);
   }
@@ -177,21 +163,25 @@ export default class Core {
 
       this.#initializeAdapter();
 
+      this.#initializePlugins();
+      await this.#initializeTools();
+
       /**
        * Need to initialize internal modules before plugins and tools
        * @todo think of how to remove this?
        * @todo add e2e initialization tests
        * Currently only BlockRenderer would be enough, but that would be hard to debug. Easier just add every module here
        */
-      this.#iocContainer.get(BlockRenderer);
-      this.#iocContainer.get(BlocksManager);
       this.#iocContainer.get(SelectionManager);
-
-      this.#initializePlugins();
-      await this.#initializeTools();
+      this.#iocContainer.get(BlocksManager);
+      this.#iocContainer.get(BlockRenderer);
+      this.#iocContainer.get(UndoRedoManager);
 
       this.#model.initializeDocument({ blocks });
-      this.#collaborationManager.connect();
+
+      const eventBus = this.#iocContainer.get(EventBus);
+
+      eventBus.dispatchEvent(new CoreEventBase(CoreEventType.Ready, undefined));
     } catch (error) {
       console.error('Editor.js initialization failed', error);
     }
@@ -248,7 +238,6 @@ export default class Core {
         const api = ctx.get(EditorAPI);
 
         return new Adapter({
-          model: this.#model,
           config: this.#config,
           api,
           eventBus,

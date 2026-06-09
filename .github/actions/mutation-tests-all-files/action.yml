@@ -8,11 +8,13 @@ inputs:
   stryker_dashboard_api_key:
     description: 'Stryker dashboard api key'
     required: true
-
+  working-directory:
+    description: 'Path to the ./packages/name_of_your_package_folder'
+    required: true
 runs:
   using: "composite"
   steps:
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
 
@@ -24,7 +26,7 @@ runs:
           package-name: ${{ inputs.package-name }}
 
       - name: Get changed files
-        uses: tj-actions/changed-files@v39.0.0
+        uses: tj-actions/changed-files@v47
         id: changed-files
         with:
           files_yaml: |

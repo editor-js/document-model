@@ -12,7 +12,7 @@ export class InputsRegistry {
   /**
    * Key = block id. Each entry is a (dataKey → element) map for that block.
    */
-  #inputs: Map<BlockId, Map<DataKey, HTMLElement>> = new Map();
+  #inputs: Map<BlockId, Map<string, HTMLElement>> = new Map();
 
   /**
    * Registers (or replaces) an input element for a given block + data key.
@@ -20,7 +20,7 @@ export class InputsRegistry {
    * @param dataKey - data key of the input within the block
    * @param element - the DOM element to register
    */
-  public register(blockId: BlockId, dataKey: DataKey, element: HTMLElement): void {
+  public register(blockId: BlockId, dataKey: string, element: HTMLElement): void {
     let blockMap = this.#inputs.get(blockId);
 
     if (blockMap === undefined) {
@@ -37,7 +37,7 @@ export class InputsRegistry {
    * @param blockId - unique id of the block
    * @param dataKey - optional specific data key to unregister
    */
-  public unregister(blockId: BlockId, dataKey?: DataKey): void {
+  public unregister(blockId: BlockId, dataKey?: string): void {
     if (dataKey === undefined) {
       this.#inputs.delete(blockId);
 
@@ -52,7 +52,7 @@ export class InputsRegistry {
    * @param blockId - unique id of the block
    * @param dataKey - data key of the input
    */
-  public getInput(blockId: BlockId, dataKey: DataKey): HTMLElement | undefined {
+  public getInput(blockId: BlockId, dataKey: string): HTMLElement | undefined {
     return this.#inputs.get(blockId)?.get(dataKey);
   }
 
@@ -60,7 +60,7 @@ export class InputsRegistry {
    * Returns all inputs for a block as a (dataKey → element) map.
    * @param blockId - unique id of the block
    */
-  public getBlockInputs(blockId: BlockId): Map<DataKey, HTMLElement> | undefined {
+  public getBlockInputs(blockId: BlockId): Map<string, HTMLElement> | undefined {
     return this.#inputs.get(blockId);
   }
 
@@ -69,7 +69,7 @@ export class InputsRegistry {
    * Useful for CaretAdapter to iterate all inputs during selection mapping.
    * @yields
    */
-  public *entries(): Iterable<[BlockId, DataKey, HTMLElement]> {
+  public *entries(): Iterable<[BlockId, string, HTMLElement]> {
     for (const [blockId, keyMap] of this.#inputs) {
       for (const [dataKey, element] of keyMap) {
         yield [blockId, dataKey, element];

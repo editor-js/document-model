@@ -167,5 +167,39 @@ describe('BatchedOperation', () => {
 
       expect(batch.canAdd(op2)).toBe(false);
     });
+
+    it('should return true for consecutive backspace Delete operations', () => {
+      // Backspace: position decrements each time – [3,3], [2,2]
+      /* eslint-disable @typescript-eslint/no-magic-numbers */
+      const op1 = new Operation(OperationType.Delete, createIndexByRange([3, 3]), { payload: 'b' }, userId);
+      const op2 = new Operation(OperationType.Delete, createIndexByRange([2, 2]), { payload: 'a' }, userId);
+      /* eslint-enable @typescript-eslint/no-magic-numbers */
+
+      const batch = new BatchedOperation(op1);
+
+      expect(batch.canAdd(op2)).toBe(true);
+    });
+
+    it('should return true for consecutive forward Delete operations', () => {
+      // Forward delete: position stays the same after each deletion – [0,0], [0,0]
+      const op1 = new Operation(OperationType.Delete, templateIndex, { payload: 'a' }, userId);
+      const op2 = new Operation(OperationType.Delete, templateIndex, { payload: 'b' }, userId);
+
+      const batch = new BatchedOperation(op1);
+
+      expect(batch.canAdd(op2)).toBe(true);
+    });
+
+    it('should return false for non-consecutive Delete operations', () => {
+      // Gap of 2 – should not be batched
+      /* eslint-disable @typescript-eslint/no-magic-numbers */
+      const op1 = new Operation(OperationType.Delete, createIndexByRange([3, 3]), { payload: 'c' }, userId);
+      const op2 = new Operation(OperationType.Delete, createIndexByRange([1, 1]), { payload: 'a' }, userId);
+      /* eslint-enable @typescript-eslint/no-magic-numbers */
+
+      const batch = new BatchedOperation(op1);
+
+      expect(batch.canAdd(op2)).toBe(false);
+    });
   });
 });
