@@ -138,7 +138,7 @@ export class SelectionManager {
     caretIndex?: Readonly<Index> | null;
     /** Optional action override for formatting/unformatting */
     action?: FormattingAction;
-    /** If true, Manager will restore the selection after applying the tool. True by defulat */
+    /** If true, Manager will restore the selection after applying the tool. True by default */
     keepSelection?: boolean;
   }): void {
     if (caretIndex === null) {
