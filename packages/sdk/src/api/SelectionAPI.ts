@@ -1,4 +1,4 @@
-import type { Caret, CaretManagerEvents } from '@editorjs/model';
+import type { Caret, CaretManagerEvents, BlockNodeSerialized } from '@editorjs/model';
 
 /**
  * Selection API interface
@@ -31,4 +31,9 @@ export interface SelectionAPI {
    * @param userId - user id. If not provided, returns for current user
    */
   getCaret(userId?: string | number): Caret | undefined;
+
+  /**
+   *
+   */
+  get selectedBlocks(): BlockNodeSerialized[] | null;
 }

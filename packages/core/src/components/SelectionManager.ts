@@ -4,7 +4,7 @@ import {
   createInlineToolData,
   FormattingAction,
   InlineFragment,
-  InlineToolName
+  InlineToolName, BlockNodeSerialized
 } from '@editorjs/model';
 import { CaretManagerCaretUpdatedEvent, Index, EditorJSModel, createInlineToolName } from '@editorjs/model';
 import { EventType } from '@editorjs/model';
@@ -177,4 +177,32 @@ export class SelectionManager {
       }
     }
   };
+
+  /**
+   *
+   */
+  public selectedBlocks(): BlockNodeSerialized[] | null {
+    const userCaret = this.#model.getCaret(this.#config.userId);
+    const index = userCaret?.index ?? null;
+
+    if (index === null) {
+      return null;
+    }
+
+    if (index.isBlockIndex) {
+      const { blockIndex } = index;
+
+      return [this.#model.serialized.blocks[blockIndex!]];
+    }
+
+    if (index.compositeSegments !== undefined) {
+      return index.compositeSegments.map((segment) => {
+        const { blockIndex } = segment;
+
+        return this.#model.serialized.blocks[blockIndex!];
+      });
+    }
+
+    return null;
+  }
 }
