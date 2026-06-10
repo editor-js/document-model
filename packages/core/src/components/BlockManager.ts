@@ -371,6 +371,65 @@ export class BlocksManager {
   }
 
   /**
+   * Converts a block to a new type by exporting its text content and importing it into the new tool.
+   * Both the source and target tools must define conversionConfig.
+   * @param blockIndexOrId - numeric position or named identifier that locates the block
+   * @param dataKey - the data key at which the conversion is performed
+   * @param newType - block tool name to convert to
+   * @param [userId] - user id to attribute the change to
+   * @param [dataOverrides] - optional data fields to merge on top of the converted data. Merged shallowly:
+   *   object-valued keys are replaced wholesale, not deep-merged.
+   */
+  public convertBlock(
+    blockIndexOrId: number | BlockId,
+    dataKey: DataKey,
+    newType: string,
+    userId: string | number = this.#config.userId,
+    dataOverrides?: BlockToolData
+  ): void {
+    const blockIndex = this.#model.resolveBlockIndex(blockIndexOrId);
+
+    const block = this.#model.getBlockSerialized(blockIndex);
+
+    const sourceTool = this.#toolsManager.blockTools.get(block.name);
+    const targetTool = this.#toolsManager.blockTools.get(newType);
+
+    if (sourceTool === undefined) {
+      throw new Error(`Cannot convert block: source tool "${block.name}" is not registered`);
+    }
+    if (targetTool === undefined) {
+      throw new Error(`Cannot convert block: target tool "${newType}" is not registered`);
+    }
+
+    const text = sourceTool.exportTextContent(block.data);
+
+    const blockInputs = Object.entries(
+      this.#model.getBlockTextContent(blockIndex)
+    );
+    const convertIndex = blockInputs.findIndex(([key]) => key === dataKey);
+
+    if (convertIndex === -1) {
+      throw new Error(`Data key "${dataKey}" not found in block content`);
+    }
+
+    const [, convertInput] = blockInputs[convertIndex];
+
+    const newData = targetTool.importTextContent(text, convertInput.fragments);
+    const finalData = dataOverrides !== undefined
+      ? {
+          ...newData,
+          ...dataOverrides,
+        }
+      : newData;
+
+    this.#model.removeBlock(userId, blockIndex);
+    this.#model.addBlock(userId, {
+      name: newType,
+      data: finalData,
+    }, blockIndex);
+  }
+
+  /**
    * Returns block index where user caret is placed
    */
   #getCurrentBlockIndex(): number | undefined {
