@@ -16,8 +16,9 @@ A model-driven, collaboration-ready Editor.js engine split into focused packages
 
 | Package | Description |
 |---|---|
-| [`@editorjs/sdk`](packages/sdk) | Shared contracts — interfaces, base event classes, `EventBus` |
-| [`@editorjs/model`](packages/model) | In-memory document model (`EditorJSModel`, `BlockNode`, `TextNode`, caret management) |
+| [`@editorjs/model-types`](packages/model-types) | Shared low-level types and base event classes used internally by `model` and `sdk` only — not intended for direct use by other packages or tools |
+| [`@editorjs/sdk`](packages/sdk) | Shared contracts — interfaces, base event classes, `EventBus`. The package tools and plugins should depend on |
+| [`@editorjs/model`](packages/model) | In-memory document model (`EditorJSModel`, `BlockNode`, `TextNode`, caret management). Internal engine used by `core`/`ot-server` — tools and plugins should use `@editorjs/sdk` instead |
 | [`@editorjs/dom-adapters`](packages/dom-adapters) | Binds model nodes to DOM inputs (`DOMBlockToolAdapter`, `CaretAdapter`, `FormattingAdapter`) |
 | [`@editorjs/collaboration-manager`](packages/collaboration-manager) | Operational transformation, batching, undo/redo, OT WebSocket client |
 | [`@editorjs/core`](packages/core) | Orchestrator — IoC container, plugin/tool lifecycle, `EditorAPI` |

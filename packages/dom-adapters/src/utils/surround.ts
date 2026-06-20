@@ -1,4 +1,4 @@
-import type { TextRange } from '@editorjs/model';
+import type { TextRange } from '@editorjs/sdk';
 import { getBoundaryPointByAbsoluteOffset } from './getRelativeIndex.js';
 
 /**

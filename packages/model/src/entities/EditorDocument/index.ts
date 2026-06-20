@@ -1,40 +1,38 @@
-import type { DocumentId } from '../../EventBus/index.js';
 import { getContext } from '../../utils/Context.js';
-import { createDataKey, type DataKey } from '../BlockNode/index.js';
 import { BlockNode } from '../BlockNode/index.js';
-import type { BlockId } from '../BlockNode/index.js';
-import type { BlockIndexOrId } from '../BlockNode/index.js';
-import { IndexBuilder } from '../Index/IndexBuilder.js';
-import type { EditorDocumentSerialized, EditorDocumentConstructorParameters, Properties } from './types/index.js';
-import type { BlockTuneName } from '../BlockTune/index.js';
-import type {
-  TextNodeSerialized
-} from '../inline-fragments/index.js';
 import {
-  type InlineFragment,
+  createDataKey,
+  IndexBuilder,
+  EventBus,
+  EventType,
+  type DocumentId,
+  type DataKey,
+  type BlockId,
+  type BlockIndexOrId,
+  type Properties,
   type InlineToolData,
-  type InlineToolName
-} from '../inline-fragments/index.js';
+  type InlineToolName,
+  type BlockTuneEvents,
+  type TextNodeEvents,
+  type ValueNodeEvents
+} from '@editorjs/model-types';
+import type { EditorDocumentSerialized } from './types/index.js';
+import type { EditorDocumentConstructorParameters } from './types/index.js';
+import type { BlockTuneName } from '../BlockTune/index.js';
+import type { TextNodeSerialized, InlineFragment, ValueSerialized } from '@editorjs/model-types';
 import { IoCContainer, TOOLS_REGISTRY } from '../../IoC/index.js';
 import { ToolsRegistry } from '../../tools/index.js';
 import type { BlockNodeDataSerializedValue, BlockNodeSerialized, BlockNodeInit } from '../BlockNode/types/index.js';
 import type { DeepReadonly } from '../../utils/DeepReadonly.js';
-import { EventBus } from '../../EventBus/EventBus.js';
-import { EventType } from '../../EventBus/types/EventType.js';
-import type {
-  BlockTuneEvents,
-  TextNodeEvents,
-  ValueNodeEvents
-} from '../../EventBus/types/EventMap.js';
 import {
   BlockAddedEvent,
   BlockRemovedEvent,
-  PropertyModifiedEvent, type TextFormattedEventData, type TextUnformattedEventData
-} from '../../EventBus/events/index.js';
+  PropertyModifiedEvent,
+  TuneModifiedEvent
+} from '@editorjs/model-types';
 import type { Constructor } from '../../utils/types.js';
-import { BaseDocumentEvent, type ModifiedEventData } from '../../EventBus/events/BaseEvent.js';
-import type { Index } from '../Index/index.js';
-import type { ValueSerialized } from '../ValueNode/index.js';
+import { BaseDocumentEvent, type ModifiedEventData, type TextFormattedEventData, type TextUnformattedEventData } from '@editorjs/model-types';
+import type { Index } from '@editorjs/model-types';
 import { BlockAlreadyExistsError } from './errors/BlockAlreadyExistsError.js';
 
 export type * from './types/index.js';

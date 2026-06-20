@@ -10,6 +10,9 @@ jest.unstable_mockModule('@editorjs/sdk', () => ({
     public name = 'redo';
   },
   EventBus: jest.fn(),
+  EventType: {
+    Changed: 'update',
+  },
 }));
 
 jest.unstable_mockModule('@editorjs/model', () => {
@@ -19,9 +22,6 @@ jest.unstable_mockModule('@editorjs/model', () => {
 
   return {
     EditorJSModel,
-    EventType: {
-      Changed: 'update',
-    },
   };
 });
 
@@ -73,7 +73,7 @@ describe('DocumentAPI', () => {
     it('should dispatch an undo core event', () => {
       documentAPI.undo();
 
-      expect(dispatchEvent).toBeCalledWith(expect.objectContaining({ name: 'undo' }));
+      expect(dispatchEvent).toHaveBeenCalledWith(expect.objectContaining({ name: 'undo' }));
     });
   });
 
@@ -81,7 +81,7 @@ describe('DocumentAPI', () => {
     it('should dispatch an redo core event', () => {
       documentAPI.redo();
 
-      expect(dispatchEvent).toBeCalledWith(expect.objectContaining({ name: 'redo' }));
+      expect(dispatchEvent).toHaveBeenCalledWith(expect.objectContaining({ name: 'redo' }));
     });
   });
 });

@@ -10,7 +10,7 @@ describe('ToolsRegistry', () => {
 
       registry.get(toolName);
 
-      expect(spy).toBeCalledWith(toolName);
+      expect(spy).toHaveBeenCalledWith(toolName);
     });
   });
 });

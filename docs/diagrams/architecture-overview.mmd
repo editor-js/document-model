@@ -7,15 +7,28 @@ classDiagram
   direction LR
 
 
-  %% Layer 0 — Contracts  (@editorjs/sdk)
-  namespace sdk {
-
+  %% Layer 0 — Foundation  (@editorjs/model-types)
+  %% Internal-only: depended on by `model` and `sdk` directly; every other
+  %% package (and all tools/plugins) should get these via `@editorjs/sdk` instead.
+  namespace modelTypes {
     class EventBus {
       <<EventTarget>>
       +addEventListener(type, callback)
       +removeEventListener(type, callback)
       +dispatchEvent(event)
     }
+
+    class Index {
+      +blockIndex: number
+      +dataKey: DataKey
+      +textRange: TextRange
+      +serialize(): string
+      +parse(serialized): Index
+    }
+  }
+
+  %% Layer 1 — Contracts  (@editorjs/sdk)
+  namespace sdk {
 
     class BlockToolAdapter {
       <<interface>>
@@ -52,7 +65,7 @@ classDiagram
     }
   }
 
-  %% Layer 1 — Data model  (@editorjs/model)
+  %% Layer 2 — Data model  (@editorjs/model)
   namespace model {
     class EditorJSModel {
       +serialized: EditorDocumentSerialized
@@ -69,14 +82,14 @@ classDiagram
     }
   }
 
-  %% Layer 2a — DOM binding  (@editorjs/dom-adapters)
+  %% Layer 3a — DOM binding  (@editorjs/dom-adapters)
   namespace domAdapters {
     class DOMAdapters {
       +createBlockToolAdapter(blockIndex, toolName): BlockToolAdapter
     }
   }
 
-  %% Layer 2b — Collaboration plugin  (@editorjs/collaboration-manager)
+  %% Layer 3b — Collaboration plugin  (@editorjs/collaboration-manager)
   namespace collaborationManager {
     class CollaborationManager {
       <<EditorjsPlugin>>
@@ -87,7 +100,7 @@ classDiagram
     }
   }
 
-  %% Layer 3 — Orchestrator  (@editorjs/core)
+  %% Layer 4 — Orchestrator  (@editorjs/core)
   namespace core {
     class Core {
       +constructor(config)
@@ -104,6 +117,10 @@ classDiagram
   %% Infrastructure relations
   EditorJSModel --|> EventBus : extends
   Core *-- EventBus : creates & holds
+
+  %% Foundation usage — model-types is depended on by model and sdk only
+  EditorJSModel ..> Index : uses (caret/selection addressing)
+  BlockToolAdapter ..> Index : uses (caret/selection addressing)
 
   %% Core — owns & wires
   Core *-- EditorJSModel

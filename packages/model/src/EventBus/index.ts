@@ -1,7 +1,4 @@
-export * from './EventBus.js';
-export * from './events/index.js';
-export * from './types/EventAction.js';
+export { EventAction, EventType } from '@editorjs/model-types';
 export type * from './types/EventMap.js';
 export type * from './types/EventTarget.d.ts';
-export * from './types/EventType.js';
 export type * from './types/indexing.js';

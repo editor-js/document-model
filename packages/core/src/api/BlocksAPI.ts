@@ -2,18 +2,9 @@ import 'reflect-metadata';
 import { inject, injectable } from 'inversify';
 import { TOKENS } from '../tokens.js';
 import { BlocksManager } from '../components/BlockManager.js';
-import { CoreConfigValidated } from '@editorjs/sdk';
-import { BlocksAPI as BlocksApiInterface } from '@editorjs/sdk';
-import {
-  BlockId,
-  BlockIndexOrId,
-  createBlockId,
-  createDataKey,
-  EditorDocumentSerialized,
-  EditorJSModel,
-  TextNodeSerialized,
-  ValueSerialized
-} from '@editorjs/model';
+import { CoreConfigValidated, BlocksAPI as BlocksApiInterface, EditorDocumentSerialized, BlockId, BlockIndexOrId, createBlockId, createDataKey } from '@editorjs/sdk';
+import { EditorJSModel } from '@editorjs/model';
+import type { TextNodeSerialized, ValueSerialized } from '@editorjs/sdk';
 
 /**
  * Blocks API

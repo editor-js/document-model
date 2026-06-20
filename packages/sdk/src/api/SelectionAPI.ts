@@ -1,4 +1,4 @@
-import type { Caret, CaretManagerEvents } from '@editorjs/model';
+import type { Caret, CaretManagerEvents } from '@editorjs/model-types';
 
 /**
  * Selection API interface

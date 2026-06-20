@@ -1,17 +1,27 @@
 // Stryker disable all -- we don't count mutation test coverage fot this file as it just proxy calls to EditorDocument
 /* istanbul ignore file -- we don't count test coverage fot this file as it just proxy calls to EditorDocument */
-import { type EditorDocumentSerialized, type Index, IndexBuilder } from './entities/index.js';
-import { type BlockNodeSerialized, type BlockNodeInit, type BlockId, type BlockIndexOrId, EditorDocument } from './entities/index.js';
+import { type BlockNodeSerialized, type BlockNodeInit, EditorDocument } from './entities/index.js';
 import {
   BlockAddedEvent,
-  BlockRemovedEvent, EventAction,
-  EventBus,
-  EventType,
+  BlockRemovedEvent,
   TextAddedEvent,
   TextRemovedEvent
-} from './EventBus/index.js';
-import type { ModelEvents, CaretManagerCaretUpdatedEvent, CaretManagerEvents } from './EventBus/index.js';
-import { BaseDocumentEvent, type ModifiedEventData } from './EventBus/events/BaseEvent.js';
+} from '@editorjs/model-types';
+import {
+  type EditorDocumentSerialized,
+  type Index,
+  IndexBuilder,
+  type BlockId,
+  type BlockIndexOrId,
+  EventAction,
+  EventBus,
+  EventType,
+  type ModelEvents,
+  type CaretManagerCaretUpdatedEvent,
+  type CaretManagerEvents,
+  BaseDocumentEvent,
+  type ModifiedEventData
+} from '@editorjs/model-types';
 import { getContext, WithContext } from './utils/Context.js';
 import type { Constructor } from './utils/types.js';
 import { CaretManager } from './CaretManagement/index.js';

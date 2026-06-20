@@ -1,10 +1,10 @@
-import { Index } from '../Index/index.js';
+import { Index } from '@editorjs/model-types';
 import { ValueNode } from './index.js';
-import { BlockChildType } from '../BlockNode/types/index.js';
-import { NODE_TYPE_HIDDEN_PROP } from '../BlockNode/consts.js';
-import { EventType } from '../../EventBus/types/EventType.js';
-import { ValueModifiedEvent } from '../../EventBus/events/index.js';
-import { EventAction } from '../../EventBus/types/EventAction.js';
+import { BlockChildType } from '@editorjs/model-types';
+import { NODE_TYPE_HIDDEN_PROP } from '@editorjs/model-types';
+import { EventType } from '@editorjs/model-types';
+import { ValueModifiedEvent } from '@editorjs/model-types';
+import { EventAction } from '@editorjs/model-types';
 
 describe('ValueNode', () => {
   describe('.update()', () => {
@@ -35,7 +35,7 @@ describe('ValueNode', () => {
 
       longitudeValueNode.update(updatedLongitude);
 
-      expect(handler).toBeCalledWith(expect.any(ValueModifiedEvent));
+      expect(handler).toHaveBeenCalledWith(expect.any(ValueModifiedEvent));
     });
 
     it('should emit ValueModifiedEvent with correct details', () => {

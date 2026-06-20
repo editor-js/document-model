@@ -18,8 +18,9 @@ import { type BlockTuneFacade } from './BlockTuneFacade.js';
 import { ToolsCollection } from '../ToolsCollection.js';
 import type { BlockToolConstructor, BlockToolConstructorOptions, BlockTool, BlockToolData } from '../../entities';
 import { ToolType } from '../../entities';
-import { BlockChildType, NODE_TYPE_HIDDEN_PROP, keypath } from '@editorjs/model';
-import type { InlineFragment } from '@editorjs/model';
+import { BlockChildType, NODE_TYPE_HIDDEN_PROP } from '@editorjs/model-types';
+import * as keypath from '../../utils/keypath.js';
+import type { InlineFragment } from '@editorjs/model-types';
 
 /**
  * Class to work with Block tools constructables

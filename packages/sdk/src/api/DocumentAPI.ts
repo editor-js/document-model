@@ -1,4 +1,5 @@
-import type { BlockNodeSerialized, EditorDocumentSerialized, Index, ModelEvents, ModifiedEventData } from '@editorjs/model';
+import type { BlockData, DocumentData, ModelEvents, ModifiedEventData } from '@editorjs/model-types';
+import type { Index } from '../entities/index.js';
 
 /**
  * Parameters for insertData and removeData methods
@@ -9,7 +10,7 @@ export interface InsertRemoveDataParams {
   /** Position in the document tree where data should be inserted or removed */
   index: Index;
   /** Text or blocks to insert or remove */
-  data: string | BlockNodeSerialized[];
+  data: string | BlockData[];
 }
 
 /**
@@ -32,7 +33,7 @@ export interface DocumentAPI {
   /**
    * Returns serialized document object
    */
-  get data(): EditorDocumentSerialized;
+  get data(): DocumentData;
 
   /**
    * Registers model's update callback. Returns a cleanup function

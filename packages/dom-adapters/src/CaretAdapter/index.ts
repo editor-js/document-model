@@ -6,7 +6,7 @@ import {
   IndexBuilder,
   createDataKey,
   createBlockId
-} from '@editorjs/model';
+} from '@editorjs/sdk';
 import type { CoreConfig, EditorAPI } from '@editorjs/sdk';
 import {
   getAbsoluteRangeOffset,

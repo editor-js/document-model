@@ -1,4 +1,4 @@
-import type { ValueSerialized } from '@editorjs/model';
+import type { ValueSerialized } from '@editorjs/model-types';
 import { AdapterEventType } from './AdapterEventType.js';
 
 /**

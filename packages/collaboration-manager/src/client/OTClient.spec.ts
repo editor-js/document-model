@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
-import type { DocumentId, EditorDocumentSerialized } from '@editorjs/model';
-import { createDataKey, IndexBuilder } from '@editorjs/model';
+import type { DocumentId, EditorDocumentSerialized } from '@editorjs/sdk';
+import { createDataKey, IndexBuilder } from '@editorjs/sdk';
 import { beforeEach, afterEach, jest, describe, it, expect } from '@jest/globals';
 import { OTClient } from './OTClient.js';
 import { Operation, OperationType } from '../Operation.js';

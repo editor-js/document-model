@@ -3,6 +3,13 @@ import { jest } from '@jest/globals';
 import type { CoreConfigValidated } from '@editorjs/sdk';
 
 // Mock dependencies before importing the module under test
+jest.unstable_mockModule('@editorjs/sdk', () => ({
+  createInlineToolName: jest.fn((name: string) => `inline:${name}`),
+  EventType: {
+    CaretManagerUpdated: 'update',
+  },
+}));
+
 jest.unstable_mockModule('../components/SelectionManager', () => ({
   SelectionManager: jest.fn(() => ({
     applyInlineToolForCurrentSelection: jest.fn(),
@@ -11,15 +18,13 @@ jest.unstable_mockModule('../components/SelectionManager', () => ({
 
 jest.unstable_mockModule('@editorjs/model', () => ({
   EditorJSModel: jest.fn(),
-  createInlineToolName: jest.fn((name: string) => `inline:${name}`),
-  EventType: {
-    CaretManagerUpdated: 'update',
-  },
+  Caret: class {},
 }));
 
 const { SelectionAPI } = await import('./SelectionAPI.js');
 const { SelectionManager } = await import('../components/SelectionManager');
-const { EditorJSModel, createInlineToolName } = await import('@editorjs/model');
+const { EditorJSModel } = await import('@editorjs/model');
+const { createInlineToolName } = await import('@editorjs/sdk');
 
 describe('SelectionAPI', () => {
   // @ts-expect-error - mock object

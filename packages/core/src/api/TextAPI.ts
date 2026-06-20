@@ -1,14 +1,15 @@
+import { EditorJSModel } from '@editorjs/model';
+import type { InlineFragment } from '@editorjs/sdk';
 import {
   BlockIndexOrId,
+  CoreConfigValidated,
   createDataKey,
   createInlineToolData,
   createInlineToolName,
-  EditorJSModel, InlineFragment
-} from '@editorjs/model';
-import type { CoreConfigValidated } from '@editorjs/sdk';
+  TextAPI as TextAPIInterface
+} from '@editorjs/sdk';
 import { inject, injectable } from 'inversify';
 import { TOKENS } from '../tokens.js';
-import { TextAPI as TextAPIInterface } from '@editorjs/sdk';
 
 /**
  * Text API to work with the text content of the document

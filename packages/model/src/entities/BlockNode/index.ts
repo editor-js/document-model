@@ -2,7 +2,6 @@ import { getContext } from '../../utils/Context.js';
 import type { EditorDocument } from '../EditorDocument/index.js';
 import type { BlockTuneName, BlockTuneSerialized } from '../BlockTune/index.js';
 import { BlockTune, createBlockTuneName } from '../BlockTune/index.js';
-import { IndexBuilder } from '../Index/IndexBuilder.js';
 import { InvalidNodeTypeError } from './errors/InvalidNodeTypeError.js';
 import { NonExistingKeyError } from './errors/NonExistingKeyError.js';
 import type {
@@ -13,31 +12,42 @@ import type {
   BlockNodeDataValue,
   BlockNodeSerialized,
   BlockToolName,
-  ChildNode,
-  DataKey
+  ChildNode
 } from './types/index.js';
-import { BlockChildType, createBlockToolName, createDataKey } from './types/index.js';
-import type { BlockId } from './types/index.js';
-import { createBlockId, generateBlockId } from './types/index.js';
-import type { ValueSerialized } from '../ValueNode/index.js';
+import { createBlockToolName } from './types/index.js';
 import { ValueNode } from '../ValueNode/index.js';
-import type { InlineFragment, InlineToolData, InlineToolName, TextNodeSerialized } from '../inline-fragments/index.js';
 import { TextNode } from '../inline-fragments/index.js';
-import { get, has, set, remove, insert } from '../../utils/keypath.js';
-import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
+import type { InlineFragment, TextNodeSerialized, ValueSerialized } from '@editorjs/model-types';
+import {
+  IndexBuilder,
+  BlockChildType,
+  createDataKey,
+  createBlockId,
+  generateBlockId,
+  get,
+  has,
+  set,
+  remove,
+  insert,
+  EventBus,
+  EventType,
+  BaseDocumentEvent,
+  type DataKey,
+  type BlockId,
+  type InlineToolData,
+  type InlineToolName,
+  type TextNodeEvents
+} from '@editorjs/model-types';
+import { NODE_TYPE_HIDDEN_PROP } from '@editorjs/model-types';
 import { mapObject } from '../../utils/mapObject.js';
 import type { DeepReadonly } from '../../utils/DeepReadonly.js';
-import { EventBus } from '../../EventBus/EventBus.js';
-import { EventType } from '../../EventBus/types/EventType.js';
 import {
   DataNodeRemovedEvent,
   DataNodeAddedEvent,
   TuneModifiedEvent,
   ValueModifiedEvent
-} from '../../EventBus/events/index.js';
+} from '@editorjs/model-types';
 import type { Constructor } from '../../utils/types.js';
-import type { TextNodeEvents } from '../../EventBus/types/EventMap.js';
-import { BaseDocumentEvent } from '../../EventBus/events/BaseEvent.js';
 import { AlreadyExistingKeyError } from './errors/AlreadyExistingKeyError.js';
 
 /**
@@ -622,14 +632,10 @@ export type {
   BlockId
 };
 
-export type { BlockNodeInit, BlockIndexOrId } from './types/index.js';
+export type { BlockNodeInit, BlockIndexOrId } from '@editorjs/model-types';
 
 export {
-  createBlockToolName,
-  createDataKey,
-  createBlockId,
-  generateBlockId
+  createBlockToolName
 };
 
-export { NODE_TYPE_HIDDEN_PROP } from './consts.js';
-export { BlockChildType };
+export { createDataKey, createBlockId, generateBlockId, NODE_TYPE_HIDDEN_PROP, BlockChildType } from '@editorjs/model-types';

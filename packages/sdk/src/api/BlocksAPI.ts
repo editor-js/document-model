@@ -2,10 +2,10 @@ import type { BlockToolData } from '@editorjs/editorjs';
 import type {
   BlockId,
   BlockNodeInit,
-  EditorDocumentSerialized,
+  DocumentData,
   TextNodeSerialized,
   ValueSerialized
-} from '@editorjs/model';
+} from '@editorjs/model-types';
 
 /**
  * Blocks API interface
@@ -49,7 +49,7 @@ export interface BlocksAPI {
    * Render passed data
    * @param document - serialized document data to render
    */
-  render(document: EditorDocumentSerialized): void;
+  render(document: DocumentData): void;
 
   /**
    * Render passed HTML string

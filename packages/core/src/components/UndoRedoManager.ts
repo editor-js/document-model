@@ -1,15 +1,19 @@
 import 'reflect-metadata';
 
 import { inject, injectable } from 'inversify';
+import { EditorJSModel } from '@editorjs/model';
 import {
-  EditorJSModel,
+  CoreConfigValidated,
+  CoreEventType,
   EventAction,
+  EventBus,
   EventPayloadBase,
   EventType,
   type ModelEvents,
-  ModifiedEventData
-} from '@editorjs/model';
-import { type CoreConfigValidated, CoreEventType, EventBus, RedoCoreEvent, UndoCoreEvent } from '@editorjs/sdk';
+  ModifiedEventData,
+  RedoCoreEvent,
+  UndoCoreEvent
+} from '@editorjs/sdk';
 import { TOKENS } from '../tokens.js';
 
 /**

@@ -8,7 +8,7 @@ import type { EditorAPI,
   InlineToolFormatData,
   EventBus } from '@editorjs/sdk';
 import { CoreEventType, UiComponentType } from '@editorjs/sdk';
-import type { InlineFragment, InlineToolName, TextRange } from '@editorjs/model';
+import type { Index, InlineFragment, InlineToolName, TextRange } from '@editorjs/sdk';
 import Style from './InlineToolbar.module.pcss';
 
 /**
@@ -74,7 +74,7 @@ export class InlineToolbarUI implements EditorjsPlugin {
      * `isActive` should use a non-collapsed local range, not `segments[0]` unconditionally.
      */
     const firstNonCollapsedSegment = segments.find(
-      segment =>
+      (segment: Index) =>
         segment.textRange !== undefined
         && segment.textRange[0] !== segment.textRange[1]
     );

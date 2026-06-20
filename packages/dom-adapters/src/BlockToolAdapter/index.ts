@@ -5,7 +5,7 @@ import {
   type ModelEvents,
   TextAddedEvent,
   TextRemovedEvent
-} from '@editorjs/model';
+} from '@editorjs/sdk';
 import type {
   BeforeInputUIEvent,
   BeforeInputUIEventPayload,

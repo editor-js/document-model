@@ -18,20 +18,20 @@
     "clear": "rm -rf ./dist && rm -rf ./tsconfig.build.tsbuildinfo"
   },
   "dependencies": {
-    "@editorjs/model": "workspace:^",
     "@editorjs/sdk": "workspace:^"
   },
   "devDependencies": {
+    "@editorjs/model": "workspace:^",
     "@jest/globals": "^29.7.0",
     "@stryker-mutator/core": "^7.0.2",
     "@stryker-mutator/jest-runner": "^7.0.2",
     "@stryker-mutator/typescript-checker": "^7.0.2",
     "@types/eslint": "^8",
-    "@types/jest": "^29.5.12",
+    "@types/jest": "^30.0.0",
     "eslint": "^8.38.0",
     "eslint-config-codex": "^2.0.2",
     "eslint-plugin-import": "^2.29.0",
-    "jest": "^29.7.0",
+    "jest": "^30.4.2",
     "stryker-cli": "^1.0.2",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",

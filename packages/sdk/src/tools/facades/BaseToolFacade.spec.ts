@@ -8,8 +8,8 @@ import { ToolType } from '../../entities/EntityType.js';
 import type { ToolOptions } from './BaseToolFacade.js';
 import { UserToolOptions } from './BaseToolFacade.js';
 import { BlockToolFacade } from './BlockToolFacade.js';
-import type { InlineFragment } from '@editorjs/model';
-import { BlockChildType, NODE_TYPE_HIDDEN_PROP } from '@editorjs/model';
+import type { InlineFragment } from '@editorjs/model-types';
+import { BlockChildType, NODE_TYPE_HIDDEN_PROP } from '@editorjs/model-types';
 
 const emptyApi = {} as ApiMethods;
 

@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers, jsdoc/require-jsdoc, @typescript-eslint/naming-convention */
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { CoreConfigValidated } from '@editorjs/sdk';
-// @ts-expect-error -- jest module mock doesn't import type
-import type { EventType } from '@editorjs/model';
+// @ts-expect-error -- type import
+import type { EventType } from '@editorjs/sdk';
 
 const USER_ID = 'user';
 const OTHER_USER_ID = 'other-user';
@@ -17,18 +17,8 @@ jest.unstable_mockModule('@editorjs/model', () => {
     modifyData: jest.fn(),
   }));
 
-  const EventType = { Changed: 'model:changed' };
-
-  const EventAction = {
-    Added: 'added',
-    Removed: 'removed',
-    Modified: 'modified',
-  };
-
   return {
     EditorJSModel,
-    EventType,
-    EventAction,
   };
 });
 
@@ -42,10 +32,16 @@ jest.unstable_mockModule('@editorjs/sdk', () => ({
     removeEventListener: jest.fn(),
     dispatchEvent: jest.fn(),
   })),
+  EventType: { Changed: 'model:changed' },
+  EventAction: {
+    Added: 'added',
+    Removed: 'removed',
+    Modified: 'modified',
+  },
 }));
 
-const { EditorJSModel, EventType, EventAction } = await import('@editorjs/model');
-const { EventBus } = await import('@editorjs/sdk');
+const { EditorJSModel } = await import('@editorjs/model');
+const { EventType, EventAction, EventBus } = await import('@editorjs/sdk');
 const { UndoRedoManager } = await import('./UndoRedoManager.js');
 
 // ─── helpers ────────────────────────────────────────────────────────────────

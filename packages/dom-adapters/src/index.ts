@@ -9,7 +9,7 @@ import { EventBus } from '@editorjs/sdk';
 import { PluginType } from '@editorjs/sdk';
 import { DOMBlockToolAdapter } from './BlockToolAdapter/index.js';
 import { InputsRegistry } from './InputsRegistry/index.js';
-import type { BlockId } from '@editorjs/model';
+import type { BlockId } from '@editorjs/sdk';
 import { Container } from 'inversify';
 import { TOKENS } from './tokens.js';
 import type { CoreConfig } from '@editorjs/sdk';

@@ -1,5 +1,5 @@
-import type { TextRange } from '@editorjs/model';
-import { IndexBuilder, type Index, type BlockNodeSerialized } from '@editorjs/model';
+import type { TextRange } from '@editorjs/sdk';
+import { IndexBuilder, type Index, type BlockNodeSerialized } from '@editorjs/sdk';
 import { OperationsTransformer } from './OperationsTransformer.js';
 
 /**

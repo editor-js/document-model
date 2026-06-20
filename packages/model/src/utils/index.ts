@@ -1,3 +1,3 @@
-export * from './Nominal.js';
-export * as keypath from './keypath.js';
+export type { Nominal } from '@editorjs/model-types';
+export { create } from '@editorjs/model-types';
 export * from './textUtils.js';

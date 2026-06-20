@@ -1,15 +1,22 @@
-import type { EditorDocumentSerialized, ModelEvents } from '@editorjs/model';
-import { EventType } from '@editorjs/model';
-import type { EditorJSModel } from '@editorjs/model';
-import { EventBus } from '@editorjs/sdk';
+import type { EditorDocumentSerialized, ModelEvents, Index } from '@editorjs/sdk';
+import { EventBus, EventType } from '@editorjs/sdk';
 import type { CoreConfigValidated, DocumentAPI, EditorAPI, InsertRemoveDataParams, ModifyDataParams, BlocksAPI } from '@editorjs/sdk';
 import { CollaborationManager } from '../../src/CollaborationManager.js';
+
+interface EditorModel {
+  serialized: EditorDocumentSerialized;
+  addEventListener(type: string, callback: (event: ModelEvents) => void): void;
+  removeEventListener(type: string, callback: (event: ModelEvents) => void): void;
+  insertData(userId: string | number | undefined, index: Index, data: unknown): void;
+  removeData(userId: string | number | undefined, index: Index, data: unknown): void;
+  modifyData(userId: string | number | undefined, index: Index, data: unknown): void;
+}
 
 /**
  * Creates a mock DocumentAPI backed by a real EditorJSModel instance
  * @param model - the EditorJS model to back the mock API with
  */
-function createMockDocumentAPI(model: EditorJSModel): DocumentAPI {
+function createMockDocumentAPI(model: EditorModel): DocumentAPI {
   return {
     get data(): EditorDocumentSerialized {
       return model.serialized;
@@ -37,7 +44,7 @@ function createMockDocumentAPI(model: EditorJSModel): DocumentAPI {
  * @param model - the EditorJS model instance
  * @returns an object containing the manager and the eventBus used
  */
-export function createManager(config: CoreConfigValidated, model: EditorJSModel): {
+export function createManager(config: CoreConfigValidated, model: EditorModel): {
   manager: CollaborationManager;
   eventBus: EventBus;
 } {

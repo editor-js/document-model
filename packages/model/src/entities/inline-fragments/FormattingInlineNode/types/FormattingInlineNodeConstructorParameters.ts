@@ -1,5 +1,5 @@
-import type { InlineToolName } from './InlineToolName.js';
-import type { InlineToolData } from './InlineToolData.js';
+import type { InlineToolName } from '@editorjs/model-types';
+import type { InlineToolData } from '@editorjs/model-types';
 import type { ChildNodeConstructorOptions } from '../../mixins/ChildNode/index.js';
 import type { ParentNodeConstructorOptions } from '../../mixins/ParentNode/index.js';
 

@@ -2,14 +2,14 @@ import type {
   InlineFragment,
   InlineToolName,
   ModelEvents
-} from '@editorjs/model';
+} from '@editorjs/sdk';
 import {
   createInlineToolName
-} from '@editorjs/model';
+} from '@editorjs/sdk';
 import {
   TextFormattedEvent,
   TextUnformattedEvent
-} from '@editorjs/model';
+} from '@editorjs/sdk';
 import { CaretAdapter } from '../CaretAdapter/index.js';
 import type { CoreConfig, EditorAPI, InlineTool, ToolLoadedCoreEvent } from '@editorjs/sdk';
 import { CoreEventType, EventBus } from '@editorjs/sdk';

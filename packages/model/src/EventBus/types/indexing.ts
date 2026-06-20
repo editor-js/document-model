@@ -1,9 +1,4 @@
-import type { Nominal } from '../../utils/Nominal.js';
-
-/**
- * Alias for a document id
- */
-export type DocumentId = Nominal<string, 'DocumentId'>;
+export type { DocumentId, DocumentIndex } from '@editorjs/model-types';
 
 /**
  * Numeric id for a block node
@@ -11,16 +6,6 @@ export type DocumentId = Nominal<string, 'DocumentId'>;
 type BlockIndexAlias = number;
 
 /**
- * Index for a document node
- */
-export type DocumentIndex = DocumentId;
-
-/**
  * Index for a block node
  */
 export type BlockIndex = [BlockIndexAlias];
-
-/**
- * Index for a text range
- */
-export type TextRange = [number, number];

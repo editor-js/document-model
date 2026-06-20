@@ -1,6 +1,6 @@
-import { EventAction } from '../../EventBus/index.js';
-import { Index } from '../Index/index.js';
-import { IndexBuilder } from '../Index/IndexBuilder.js';
+import { EventAction } from '@editorjs/model-types';
+import { Index } from '@editorjs/model-types';
+import { IndexBuilder } from '@editorjs/model-types';
 import { BlockNode, createBlockToolName, createDataKey, createBlockId } from './index.js';
 import { NonExistingKeyError } from './errors/NonExistingKeyError.js';
 
@@ -10,15 +10,16 @@ import { ValueNode } from '../ValueNode/index.js';
 
 import type { EditorDocument } from '../EditorDocument/index.js';
 import type { ValueNodeConstructorParameters } from '../ValueNode/index.js';
-import type { InlineFragment, InlineToolData, InlineToolName, TextNodeSerialized } from '../inline-fragments/index.js';
+import type { InlineToolData, InlineToolName } from '@editorjs/model-types';
+import { BlockChildType } from '@editorjs/model-types';
+import type { InlineFragment, TextNodeSerialized } from '@editorjs/model-types';
 import { TextNode } from '../inline-fragments/index.js';
 import type { BlockNodeData, BlockNodeDataSerialized } from './types/index.js';
-import { BlockChildType } from './types/index.js';
-import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
-import { TextAddedEvent, TuneModifiedEvent, ValueModifiedEvent } from '../../EventBus/events/index.js';
-import { EventType } from '../../EventBus/types/EventType.js';
+import { NODE_TYPE_HIDDEN_PROP } from '@editorjs/model-types';
+import { TextAddedEvent, TuneModifiedEvent, ValueModifiedEvent } from '@editorjs/model-types';
+import { EventType } from '@editorjs/model-types';
 import { createBlockTuneName } from '../BlockTune/index.js';
-import { get } from '../../utils/keypath.js';
+import { get } from '@editorjs/model-types';
 import { AlreadyExistingKeyError } from './errors/AlreadyExistingKeyError.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- needed to spy on conditional-typed getter with @jest/globals strict types
@@ -527,7 +528,7 @@ describe('BlockNode', () => {
       // microtasks before asserting that the listener was called.
       await Promise.resolve();
 
-      expect(listener).toBeCalledWith(expect.objectContaining({
+      expect(listener).toHaveBeenCalledWith(expect.objectContaining({
         detail: {
           action: EventAction.Added,
           index: expect.objectContaining({ dataKey: key }),
@@ -545,7 +546,7 @@ describe('BlockNode', () => {
 
       expect(() => {
         blockNode.createDataNode(key, 'another value');
-      }).toThrowError(AlreadyExistingKeyError);
+      }).toThrow(AlreadyExistingKeyError);
     });
 
     it('should create value node at a nested path within an object', () => {
@@ -610,7 +611,7 @@ describe('BlockNode', () => {
       const existingNode = get(blockNode.data, 'meta.url');
 
       expect(() => blockNode.createDataNode(key, 'another value'))
-        .toThrowError(AlreadyExistingKeyError);
+        .toThrow(AlreadyExistingKeyError);
 
       expect(get(blockNode.data, 'meta.url')).toStrictEqual(existingNode);
     });
@@ -627,7 +628,7 @@ describe('BlockNode', () => {
 
       await Promise.resolve();
 
-      expect(listener).toBeCalledWith(expect.objectContaining({
+      expect(listener).toHaveBeenCalledWith(expect.objectContaining({
         detail: expect.objectContaining({
           action: EventAction.Added,
           index: expect.objectContaining({ dataKey: key }),
@@ -774,7 +775,7 @@ describe('BlockNode', () => {
 
       blockNode.removeDataNode(key);
 
-      expect(listener).toBeCalledWith(expect.objectContaining({
+      expect(listener).toHaveBeenCalledWith(expect.objectContaining({
         detail: {
           action: EventAction.Removed,
           index: expect.objectContaining({ dataKey: key }),
@@ -832,7 +833,7 @@ describe('BlockNode', () => {
 
       blockNode.removeDataNode(key);
 
-      expect(listener).toBeCalledWith(expect.objectContaining({
+      expect(listener).toHaveBeenCalledWith(expect.objectContaining({
         detail: expect.objectContaining({
           action: EventAction.Removed,
           index: expect.objectContaining({ dataKey: key }),
@@ -1025,7 +1026,7 @@ describe('BlockNode', () => {
       expect(() => {
         blockNode.updateValue(dataKey, value);
       })
-        .toThrowError(`BlockNode: data with key "${dataKey}" is not a ValueNode`);
+        .toThrow(`BlockNode: data with key "${dataKey}" is not a ValueNode`);
     });
   });
 

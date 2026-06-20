@@ -1,4 +1,4 @@
-import { Index } from '../../entities/index.js';
+import { Index } from '@editorjs/model-types';
 import { Caret } from './Caret.js';
 import { CaretEvent, CaretUpdatedEvent } from './types.js';
 import { jest } from '@jest/globals';

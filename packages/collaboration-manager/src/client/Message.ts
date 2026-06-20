@@ -1,4 +1,4 @@
-import type { DocumentId, EditorDocumentSerialized } from '@editorjs/model';
+import type { DocumentId, EditorDocumentSerialized } from '@editorjs/sdk';
 import type { MessageType } from './MessageType.js';
 import type { SerializedOperation } from '../Operation.js';
 

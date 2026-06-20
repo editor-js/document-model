@@ -1,10 +1,9 @@
 export type { BlockNodeConstructorParameters } from './BlockNodeConstructorParameters.js';
-export type { BlockToolName } from './BlockToolName.js';
-export { createBlockToolName } from './BlockToolName.js';
-export type { BlockId, BlockIndexOrId } from './BlockId.js';
-export { createBlockId, generateBlockId } from './BlockId.js';
-export type { DataKey } from './DataKey.js';
-export { createDataKey } from './DataKey.js';
+export type { BlockToolName } from '@editorjs/model-types';
+export { createBlockToolName } from '@editorjs/model-types';
+export type { BlockId, BlockIndexOrId } from '@editorjs/model-types';
+export { createBlockId, generateBlockId } from '@editorjs/model-types';
+export type { DataKey } from '@editorjs/model-types';
+export { createDataKey } from '@editorjs/model-types';
 export type { BlockNodeData, ChildNode, BlockNodeDataValue } from './BlockNodeData.js';
 export type { BlockNodeSerialized, BlockChildNodeSerialized, BlockNodeDataSerialized, BlockNodeDataSerializedValue, BlockNodeInit } from './BlockNodeSerialized.js';
-export { BlockChildType } from './BlockChildType.js';

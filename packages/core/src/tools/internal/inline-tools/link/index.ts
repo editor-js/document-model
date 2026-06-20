@@ -2,14 +2,16 @@ import type {
   ActionsElementWithOptions,
   ToolFormattingOptions,
   InlineTool,
-  InlineToolFormatData, InlineToolConstructor
+  InlineToolFormatData,
+  InlineToolConstructor,
+  TextRange,
+  InlineFragment
 } from '@editorjs/sdk';
 import {
-  ToolType
+  ToolType,
+  FormattingAction,
+  IntersectType
 } from '@editorjs/sdk';
-import type { InlineFragment, TextRange } from '@editorjs/model';
-import { FormattingAction } from '@editorjs/model';
-import { IntersectType } from '@editorjs/model';
 import { make } from '@editorjs/dom';
 
 /**

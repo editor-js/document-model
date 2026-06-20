@@ -1,7 +1,7 @@
-import type { InlineFragment, InlineToolName, ParentInlineNodeConstructorOptions, TextNodeSerialized } from '../index.js';
+import type { InlineToolName, InlineFragment, TextNodeSerialized } from '@editorjs/model-types';
+import { BlockChildType, NODE_TYPE_HIDDEN_PROP } from '@editorjs/model-types';
+import type { ParentInlineNodeConstructorOptions } from '../index.js';
 import { ParentInlineNode } from '../index.js';
-import { BlockChildType } from '../../BlockNode/types/index.js';
-import { NODE_TYPE_HIDDEN_PROP } from '../../BlockNode/consts.js';
 
 interface TextNodeConstructorOptions extends ParentInlineNodeConstructorOptions {
   value?: string;

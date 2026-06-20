@@ -47,7 +47,7 @@ export default [
        * For test files allow dev dependencies imports
        */
       'n/no-unpublished-import': ['error', {
-        allowModules: ['@jest/globals'],
+        allowModules: ['@jest/globals', '@editorjs/model'],
       }],
       /**
        * Used for ws mock in test files

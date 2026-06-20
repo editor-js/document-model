@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import { beforeEach, describe } from '@jest/globals';
 import { EditorJSModel } from './EditorJSModel.js';
-import { createDataKey, IndexBuilder } from './entities/index.js';
-import type { DocumentId } from './EventBus/index.js';
-import type { BlockId } from './entities/BlockNode/index.js';
+import { createDataKey, IndexBuilder, type BlockId } from '@editorjs/model-types';
+import type { DocumentId } from '@editorjs/model-types';
 
 describe('EditorJSModel', () => {
   it('should expose only the public API', () => {
