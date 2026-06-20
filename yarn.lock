@@ -3511,6 +3511,7 @@ __metadata:
   dependencies:
     "@editorjs/collaboration-manager": "workspace:^"
     "@editorjs/model": "workspace:^"
+    "@editorjs/sdk": "workspace:^"
     "@hawk.so/nodejs": "npm:^3.1.5"
     "@types/eslint": "npm:^9.6.1"
     "@types/jest": "npm:^30.0.0"
