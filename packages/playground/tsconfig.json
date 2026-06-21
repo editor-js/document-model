@@ -33,7 +33,16 @@
       "path": "../core/tsconfig.json"
     },
     {
-      "path": "../collaboration-manager/tsconfig.json",
+      "path": "../collaboration-manager/tsconfig.json"
+    },
+    {
+      "path": "../sdk/tsconfig.json"
+    },
+    {
+      "path": "../model/tsconfig.json"
+    },
+    {
+      "path": "../ui/tsconfig.json"
     }
   ]
 }

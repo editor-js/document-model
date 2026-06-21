@@ -1,5 +1,4 @@
-import { EventBus } from '@editorjs/model-types';
-import { create } from '../../../utils/index.js';
+import { EventBus, create } from '@editorjs/model-types';
 import type { DataKey } from '@editorjs/model-types';
 import type { BlockId } from '@editorjs/model-types';
 import { createBlockId } from '@editorjs/model-types';

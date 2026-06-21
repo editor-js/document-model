@@ -1,11 +1,13 @@
 import { CollaborationManager } from '@editorjs/collaboration-manager';
-import { type DocumentId, EditorJSModel, EventType } from '@editorjs/model';
+import { EditorJSModel } from '@editorjs/model';
 import { Container } from 'inversify';
 import {
   type BlockToolConstructor,
+  type DocumentId,
   CoreEventType,
   CoreEventBase,
   EventBus,
+  EventType,
   type InlineToolConstructor,
   PluginType,
   ToolType,

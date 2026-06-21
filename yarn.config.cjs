@@ -6,11 +6,24 @@
  * @typedef {import('@yarnpkg/types').Yarn.Constraints.Workspace} Workspace
  */
 
-/** @type {Record<string, string[]>} */
+/**
+ * Per restricted package: which workspaces may depend on it via `dependencies` and
+ * via `devDependencies`. A `null` list means that dependency type is unrestricted
+ * (e.g. any workspace may depend on `@editorjs/model` for testing purposes).
+ * @type {Record<string, { dependencies: string[], devDependencies: string[] | null }>}
+ */
 const ALLOWED_CONSUMERS = {
-  '@editorjs/model-types': ['@editorjs/model', '@editorjs/sdk'],
-  '@editorjs/model': ['@editorjs/core', '@editorjs/ot-server', '@editorjs/document-playground'],
+  '@editorjs/model-types': {
+    dependencies: ['@editorjs/model', '@editorjs/sdk'],
+    devDependencies: ['@editorjs/model', '@editorjs/sdk'],
+  },
+  '@editorjs/model': {
+    dependencies: ['@editorjs/core', '@editorjs/ot-server', '@editorjs/document-playground'],
+    devDependencies: null,
+  },
 };
+
+const CHECKED_DEPENDENCY_TYPES = ['dependencies', 'devDependencies'];
 
 /**
  * @param {Context} ctx
@@ -18,19 +31,25 @@ const ALLOWED_CONSUMERS = {
 function enforceDependencyConstraints({ Yarn }) {
   for (const workspace of Yarn.workspaces()) {
     for (const dep of Yarn.dependencies({ workspace })) {
-      if (dep.type !== 'dependencies') {
+      if (!CHECKED_DEPENDENCY_TYPES.includes(dep.type)) {
         continue;
       }
 
-      const allowed = ALLOWED_CONSUMERS[dep.ident];
+      const rule = ALLOWED_CONSUMERS[dep.ident];
 
-      if (!allowed) {
+      if (!rule) {
+        continue;
+      }
+
+      const allowed = rule[dep.type];
+
+      if (allowed === null) {
         continue;
       }
 
       if (!allowed.includes(workspace.ident)) {
         dep.error(
-          `Package "${workspace.ident}" must not depend on "${dep.ident}". ` +
+          `Package "${workspace.ident}" must not depend on "${dep.ident}" via ${dep.type}. ` +
           `Only ${allowed.map(a => `"${a}"`).join(', ')} may depend on it.`,
         );
       }

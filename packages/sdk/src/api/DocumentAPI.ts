@@ -1,5 +1,4 @@
-import type { BlockData, DocumentData, ModelEvents, ModifiedEventData } from '@editorjs/model-types';
-import type { Index } from '../entities/index.js';
+import type { BlockData, DocumentData, Index, ModelEvents, ModifiedEventData } from '@editorjs/model-types';
 
 /**
  * Parameters for insertData and removeData methods
