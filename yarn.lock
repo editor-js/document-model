@@ -2458,6 +2458,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@editorjs/ot-server@workspace:packages/ot-server"
   dependencies:
+    "@babel/core": "npm:^7.29.0"
+    "@babel/preset-env": "npm:^7.29.2"
     "@editorjs/collaboration-manager": "workspace:^"
     "@editorjs/model": "workspace:^"
     "@editorjs/sdk": "workspace:^"
@@ -2465,10 +2467,12 @@ __metadata:
     "@types/eslint": "npm:^9.6.1"
     "@types/jest": "npm:^29.5.12"
     "@types/ws": "npm:^8.18.1"
+    babel-jest: "npm:^29.7.0"
     dotenv: "npm:^16.4.7"
     eslint: "npm:^9.24.0"
     eslint-config-codex: "npm:^2.0.3"
     jest: "npm:^29.7.0"
+    ts-jest: "npm:^29.2.5"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.8.3"
     ws: "npm:^8.18.1"
@@ -2479,6 +2483,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@editorjs/sdk@workspace:packages/sdk"
   dependencies:
+    "@babel/core": "npm:^7.29.0"
+    "@babel/preset-env": "npm:^7.29.2"
     "@editorjs/editorjs": "npm:^2.30.8"
     "@editorjs/helpers": "npm:^1.2.2"
     "@editorjs/model-types": "workspace:^"
@@ -2486,6 +2492,7 @@ __metadata:
     "@types/eslint": "npm:^9.6.1"
     "@types/jest": "npm:^29.5.12"
     "@types/node": "npm:^22.10.2"
+    babel-jest: "npm:^29.7.0"
     eslint: "npm:^9.24.0"
     eslint-config-codex: "npm:^2.0.3"
     eslint-plugin-import: "npm:^2.31.0"
