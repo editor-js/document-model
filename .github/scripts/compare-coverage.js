@@ -2,25 +2,14 @@ import fs from 'fs';
 import path from 'path';
 
 function findCoverageJson(dir) {
-  if (!dir || !fs.existsSync(dir)) return null;
+  if (!dir) return null;
+  const report = path.join(dir, 'coverage', 'coverage-summary.json');
 
-  const stack = [dir];
-
-  while (stack.length > 0) {
-    const current = stack.pop();
-
-    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
-      const fullPath = path.join(current, entry.name);
-
-      if (entry.isDirectory()) {
-        stack.push(fullPath);
-      } else if (entry.name === 'coverage-summary.json') {
-        try {
-          return JSON.parse(fs.readFileSync(fullPath, 'utf8'));
-        } catch (err) {
-          console.error(err);
-        }
-      }
+  if (fs.existsSync(report)) {
+    try {
+      return JSON.parse(fs.readFileSync(report, 'utf8'));
+    } catch (err) {
+      console.error(err);
     }
   }
 
