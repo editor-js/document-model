@@ -17,25 +17,41 @@ runs:
         ref: ${{ github.event.pull_request.base.ref }}
         fetch-depth: 0
 
+    - name: Check package exists on base ref
+      id: check
+      shell: bash
+      run: |
+        if [ -f "${{ inputs.working-directory }}/package.json" ]; then
+          echo "exists=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "Package not present on base ref (new package), skipping base coverage"
+          echo "exists=false" >> "$GITHUB_OUTPUT"
+        fi
+
     - name: Setup Node
+      if: steps.check.outputs.exists == 'true'
       uses: actions/setup-node@v6
       with:
         node-version-file: .nvmrc
 
     - name: Setup environment
+      if: steps.check.outputs.exists == 'true'
       uses: ./.github/actions/setup
 
     - name: Build the package
+      if: steps.check.outputs.exists == 'true'
       shell: bash
       run: yarn workspace ${{ inputs.package-name }} run build
       working-directory: ${{ inputs.working-directory }}
 
     - name: Run coverage
+      if: steps.check.outputs.exists == 'true'
       shell: bash
       run: yarn workspace ${{ inputs.package-name }} test:coverage
       working-directory: ${{ inputs.working-directory }}
 
     - name: Upload base coverage artifact
+      if: steps.check.outputs.exists == 'true'
       uses: actions/upload-artifact@v7
       with:
         name: test-report-base

@@ -30,6 +30,10 @@ export default [
       '@typescript-eslint/no-unused-vars': 'off',
       'jsdoc/require-jsdoc': 'off',
       'jsdoc/informative-docs': 'off',
+      // @editorjs/model-types' dist isn't built before lint runs in CI
+      'n/no-missing-import': ['error', {
+        allowModules: ['@editorjs/model-types'],
+      }],
       'n/no-unsupported-features/node-builtins': 'off',
       'n/no-unsupported-features/es-syntax': ['error', { version: '>=20.0.0' }],
       '@typescript-eslint/no-unsafe-declaration-merging': 'off',
