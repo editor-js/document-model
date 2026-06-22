@@ -2,6 +2,7 @@ import type { JestConfigWithTsJest } from 'ts-jest';
 
 export default {
   preset: 'ts-jest',
+  testEnvironment: 'node',
   testMatch: [ '<rootDir>/src/**/*.spec.ts' ],
   extensionsToTreatAsEsm: [ '.ts' ],
   moduleNameMapper: {
@@ -16,5 +17,16 @@ export default {
         useESM: true,
       },
     ],
+    '^.+\\.jsx?$': [
+      'babel-jest',
+      {
+        presets: [
+          ['@babel/preset-env', { targets: { node: 'current' } }],
+        ],
+      },
+    ],
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!@editorjs)',
+  ],
 } as JestConfigWithTsJest;

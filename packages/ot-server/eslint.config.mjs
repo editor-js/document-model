@@ -25,6 +25,7 @@ export default [
         allowModules: [
           '@editorjs/model',
           '@editorjs/collaboration-manager',
+          '@editorjs/sdk',
         ],
       }],
       'n/no-unsupported-features/node-builtins': ['error', {
