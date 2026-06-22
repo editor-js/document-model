@@ -53,6 +53,10 @@ function processMutationReport(artitfactName, reportPath, changedFilesPath, prNu
 
   const metrics = getMetrics(obj);
 
+  if (metrics.total === 0) {
+    return `| ${packageName} | No mutants found. | |`;
+  }
+
   const encodedPackageName = encodeURIComponent(packageName);
   const dashboardUrl = `[Dashboard](https://dashboard.stryker-mutator.io/reports/github.com/editor-js/document-model/PR-${prNumber}?module=${encodedPackageName})`;
 

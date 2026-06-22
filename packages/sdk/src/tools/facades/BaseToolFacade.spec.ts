@@ -1,7 +1,6 @@
 /* eslint-disable jsdoc/require-jsdoc,@typescript-eslint/no-magic-numbers */
 
 import { describe, expect, it } from '@jest/globals';
-import type { API as ApiMethods } from '@editorjs/editorjs';
 import type { BlockToolConstructor, BlockToolData } from '../../entities/BlockTool.js';
 import { BlockToolOptionKey } from '../../entities/BlockTool.js';
 import { ToolType } from '../../entities/EntityType.js';
@@ -10,8 +9,9 @@ import { UserToolOptions } from './BaseToolFacade.js';
 import { BlockToolFacade } from './BlockToolFacade.js';
 import type { InlineFragment } from '@editorjs/model';
 import { BlockChildType, NODE_TYPE_HIDDEN_PROP } from '@editorjs/model';
+import type { EditorAPI } from '@/api';
 
-const emptyApi = {} as ApiMethods;
+const emptyApi = {} as EditorAPI;
 
 /**
  * Block tool facade with only fields needed to exercise BaseToolFacade getters.

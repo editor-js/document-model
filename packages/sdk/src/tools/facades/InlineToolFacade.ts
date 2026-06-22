@@ -46,10 +46,10 @@ export class InlineToolFacade extends BaseToolFacade<ToolType.Inline, InlineTool
        * @todo fix types
        */
       this.#instance = new this.constructable(
-        // {
-        //   api: this.api,
+        {
+          api: this.api,
         //   config: this.config,
-        // }
+        }
       );
     }
 
