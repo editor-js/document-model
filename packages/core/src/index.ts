@@ -1,5 +1,6 @@
 import { CollaborationManager } from '@editorjs/collaboration-manager';
 import { EditorJSModel } from '@editorjs/model';
+import type { Factory } from 'inversify';
 import { Container } from 'inversify';
 import {
   type BlockToolConstructor,
@@ -45,11 +46,6 @@ export default class Core {
   #model: EditorJSModel;
 
   /**
-   * Tools manager is responsible for creating tools
-   */
-  #toolsManager: ToolsManager;
-
-  /**
    * Editor configuration
    */
   #config: CoreConfigValidated;
@@ -68,8 +64,10 @@ export default class Core {
    * @param config - Editor configuration
    */
   constructor(config: CoreConfig) {
-    this.#iocContainer = new Container({ autobind: true,
-      defaultScope: 'Singleton' });
+    this.#iocContainer = new Container({
+      autobind: true,
+      defaultScope: 'Singleton',
+    });
     this.#plugins = new Container();
 
     this.#validateConfig(config);
@@ -94,7 +92,12 @@ export default class Core {
 
     this.#iocContainer.bind(EditorJSModel).toConstantValue(this.#model);
 
-    this.#toolsManager = this.#iocContainer.get(ToolsManager);
+    /**
+     * Bind EditorAPI factory so components can request the API avoiding circular dependencies
+     * ToolsManager is an example: it needs API to provide it to the Tools, but being a dependency to BlocksManager which is a dependency to API
+     */
+    this.#iocContainer.bind<Factory<EditorAPI>>(TOKENS.EditorAPIFactory)
+      .toFactory(ctx => () => ctx.get<EditorAPI>(EditorAPI));
 
     if (config.onModelUpdate !== undefined) {
       this.#model.addEventListener(EventType.Changed, () => {
@@ -162,9 +165,6 @@ export default class Core {
 
       this.#initializeAdapter();
 
-      this.#initializePlugins();
-      await this.#initializeTools();
-
       /**
        * Need to initialize internal modules before plugins and tools
        * @todo think of how to remove this?
@@ -175,6 +175,9 @@ export default class Core {
       this.#iocContainer.get(BlocksManager);
       this.#iocContainer.get(BlockRenderer);
       this.#iocContainer.get(UndoRedoManager);
+
+      this.#initializePlugins();
+      await this.#initializeTools();
 
       this.#model.initializeDocument({ blocks });
 
@@ -187,14 +190,16 @@ export default class Core {
   }
 
   /**
-   * Initalizes loaded tools
+   * Initializes loaded tools
    */
   async #initializeTools(): Promise<void> {
     const blockTools = this.#plugins.getAll<[BlockToolConstructor, ToolStaticOptions | undefined]>(ToolType.Block);
     const inlineTools = this.#plugins.getAll<[InlineToolConstructor, ToolStaticOptions | undefined]>(ToolType.Inline);
     const blockTunes = this.#plugins.getAll<[BlockTuneConstructor, ToolStaticOptions | undefined]>(ToolType.Tune);
 
-    return this.#toolsManager.prepareTools([...blockTools, ...inlineTools, ...blockTunes]);
+    const toolsManager = this.#iocContainer.get(ToolsManager);
+
+    return toolsManager.prepareTools([...blockTools, ...inlineTools, ...blockTunes]);
   }
 
   /**
@@ -216,11 +221,11 @@ export default class Core {
    */
   #initializePlugin(plugin: EditorjsPluginConstructor): void {
     const eventBus = this.#iocContainer.get(EventBus);
-    const api = this.#iocContainer.get(EditorAPI);
+    const apiFactory = this.#iocContainer.get<Factory<EditorAPI>>(TOKENS.EditorAPIFactory) as () => EditorAPI;
 
     new plugin({
       config: this.#config,
-      api,
+      api: apiFactory(),
       eventBus,
     });
   }
@@ -234,11 +239,11 @@ export default class Core {
     this.#iocContainer.bind(TOKENS.Adapter)
       .toDynamicValue((ctx) => {
         const eventBus = ctx.get(EventBus);
-        const api = ctx.get(EditorAPI);
+        const apiFactory = ctx.get<Factory<EditorAPI>>(TOKENS.EditorAPIFactory) as () => EditorAPI;
 
         return new Adapter({
           config: this.#config,
-          api,
+          api: apiFactory(),
           eventBus,
         });
       })

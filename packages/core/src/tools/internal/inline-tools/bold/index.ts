@@ -1,6 +1,7 @@
-import type { ToolFormattingOptions, InlineTool, InlineToolConstructor, TextRange, InlineFragment } from '@editorjs/sdk';
+import type { ToolFormattingOptions, InlineTool, InlineToolConstructor, TextRange, InlineFragment, MenuConfig } from '@editorjs/sdk';
 import { ToolType, FormattingAction, IntersectType } from '@editorjs/sdk';
 import { make } from '@editorjs/dom';
+import { IconBold } from '@codexteam/icons';
 
 /**
  * Bold Tool
@@ -40,6 +41,15 @@ export class BoldInlineTool implements InlineTool {
    * If two fragment intersect, they should be merged
    */
   public intersectType: IntersectType = IntersectType.Extend;
+
+  /**
+   * Returns inline toolbar configuration for the tool
+   */
+  public getToolbarConfig(): MenuConfig {
+    return {
+      icon: IconBold,
+    };
+  }
 
   /**
    * Renders wrapper for tool without actual content

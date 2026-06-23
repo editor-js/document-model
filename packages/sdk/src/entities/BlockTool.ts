@@ -8,6 +8,7 @@ import type { ValueSerialized } from '@editorjs/model-types';
 import type { BlockToolAdapter } from './BlockToolAdapter.js';
 import type { ToolType } from '@/entities/EntityType.js';
 import type { BaseToolConstructor, BaseToolOptions } from '@/entities/BaseTool';
+import type { EditorAPI } from '@/api';
 
 /**
  * Configuration for converting block content to/from other block types.
@@ -121,7 +122,7 @@ export interface BlockToolConstructorOptions<
    * if your tool needs access to DOM-specific methods such as setInput.
    */
   Adapter extends BlockToolAdapter = BlockToolAdapter
-> extends BlockToolConstructorOptionsVersion2 {
+> extends Omit<BlockToolConstructorOptionsVersion2, 'api'> {
   /**
    * Block tool adapter will be passed to the tool to connect data with the DOM
    */
@@ -136,6 +137,11 @@ export interface BlockToolConstructorOptions<
    * Config could be passed by tools user through the Editor config
    */
   config: Config;
+
+  /**
+   * Editor's API instance
+   */
+  api: EditorAPI;
 }
 
 /**

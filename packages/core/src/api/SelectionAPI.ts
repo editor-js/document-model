@@ -3,7 +3,7 @@ import { inject, injectable } from 'inversify';
 
 import { SelectionManager } from '../components/SelectionManager.js';
 import { Caret, EditorJSModel } from '@editorjs/model';
-import { CaretManagerEvents, CoreConfigValidated, createInlineToolName, EventType, SelectionAPI as SelectionApiInterface } from '@editorjs/sdk';
+import { CaretManagerEvents, CoreConfigValidated, createInlineToolName, EventType, Index, SelectionAPI as SelectionApiInterface } from '@editorjs/sdk';
 import { TOKENS } from '../tokens.js';
 
 /**
@@ -33,13 +33,32 @@ export class SelectionAPI implements SelectionApiInterface {
   }
 
   /**
+   * Returns caret index for current user (or null)
+   * @returns Index of the caret for the current user or null
+   */
+  public get caretIndex(): Index | null {
+    return this.#selectionManager.currentSelection;
+  }
+
+  /**
    * Applies passed inline tool to the current selection
    * @param params - methods parameters
    * @param params.tool - Inline Tool name from the config to apply on the current selection
    * @param [params.data] - Inline Tool data to apply to the current selection (e.g. link data)
+   * @param [params.caretIndex] - index where to apply the tool, by default equals current selection
+   * @param [params.action] - by default, method will flip the formatting. You can choose a specific action with this parameter
+   * @param [params.keepSelection] - if false, selection will be collapsed to the right. If true, selection will be restored to the caretIndex. True by default
+   * @param [params.userId] - id of a user to attribute the change to
    */
-  public applyInlineTool({ tool, data }: Parameters<SelectionApiInterface['applyInlineTool']>[0]): void {
-    this.#selectionManager.applyInlineToolForCurrentSelection(createInlineToolName(tool), data);
+  public applyInlineTool({ tool, data, caretIndex, userId, action, keepSelection }: Parameters<SelectionApiInterface['applyInlineTool']>[0]): void {
+    this.#selectionManager.applyInlineTool({
+      toolName: createInlineToolName(tool),
+      data,
+      userId,
+      caretIndex,
+      action,
+      keepSelection,
+    });
   }
 
   /**

@@ -12,4 +12,8 @@ export const TOKENS = {
    * Adapter token
    */
   Adapter: Symbol.for('Adapter'),
+  /**
+   * Editor API token
+   */
+  EditorAPIFactory: Symbol.for('Factory<EditorAPI>'),
 } as const;

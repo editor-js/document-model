@@ -4,6 +4,8 @@ import type { InlineTool as InlineToolVersion2 } from '@editorjs/editorjs';
 import type { InlineToolConstructorOptions as InlineToolConstructorOptionsVersion2, ToolConfig } from '@editorjs/editorjs';
 import type { ToolType } from '@/entities/EntityType.js';
 import type { BaseToolConstructor, BaseToolOptions } from '@/entities/BaseTool';
+import type { EditorAPI } from '@/api';
+import type { MenuConfig } from '@/entities/MenuConfig.js';
 
 /**
  * Canonical keys for Inline Tool options.
@@ -39,8 +41,12 @@ export interface InlineToolOptions<Config extends ToolConfig = ToolConfig>
 /**
  * Extended InlineToolConstructorOptions interface for version 3.
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface InlineToolConstructorOptions extends InlineToolConstructorOptionsVersion2 {}
+export interface InlineToolConstructorOptions extends Omit<InlineToolConstructorOptionsVersion2, 'api'> {
+  /**
+   * EditorJS API instance
+   */
+  api: EditorAPI;
+}
 
 /**
  * Object represents formatting action with text range to be applied on
@@ -67,22 +73,6 @@ export interface ToolbarOptions {
    * Example: Link tool
    */
   fakeSelectionRequired: boolean;
-}
-
-/**
- * Interface that represents return type of the renderActions function of the tool
- * Contains rendered by tool renderActions with options for toolbar
- */
-export interface ActionsElementWithOptions {
-  /**
-   * HTML element rendered by tool for data forming
-   */
-  element: HTMLElement;
-
-  /**
-   * Options of custom toolbar behaviour
-   */
-  toolbarOptions?: ToolbarOptions;
 }
 
 export type InlineToolFormatData = Record<string, unknown>;
@@ -118,10 +108,9 @@ export interface InlineTool extends Omit<InlineToolVersion2, 'save' | 'checkStat
   createWrapper(data?: InlineToolFormatData): HTMLElement;
 
   /**
-   * Create element for toolbar, which will form data required for inline tool
-   * @param callback - callback function that should be triggered, when data is formed, to apply format to model
+   * Inline toolbar items configuration for the Tool
    */
-  renderActions?(callback: (data: InlineToolFormatData) => void): ActionsElementWithOptions;
+  getToolbarConfig(index: TextRange, fragments: InlineFragment[]): MenuConfig | Promise<MenuConfig>;
 }
 
 /**
@@ -134,7 +123,7 @@ export interface InlineToolsConfig extends Record<string, InlineToolConstructor>
  * Inline Tool constructor class
  */
 export interface InlineToolConstructor extends BaseToolConstructor<ToolConfig, InlineToolOptions> {
-  new(): InlineTool;
+  new(params: InlineToolConstructorOptions): InlineTool;
 
   /**
    * Property specifies the entity is an Inline Tool

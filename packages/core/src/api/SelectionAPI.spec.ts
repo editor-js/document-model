@@ -12,7 +12,7 @@ jest.unstable_mockModule('@editorjs/sdk', () => ({
 
 jest.unstable_mockModule('../components/SelectionManager', () => ({
   SelectionManager: jest.fn(() => ({
-    applyInlineToolForCurrentSelection: jest.fn(),
+    applyInlineTool: jest.fn(),
   })),
 }));
 
@@ -44,7 +44,10 @@ describe('SelectionAPI', () => {
       });
 
       expect(createInlineToolName).toHaveBeenCalledWith('bold');
-      expect(selectionManager.applyInlineToolForCurrentSelection).toHaveBeenCalledWith('inline:bold', { level: 1 });
+      expect(selectionManager.applyInlineTool).toHaveBeenCalledWith({
+        toolName: 'inline:bold',
+        data: { level: 1 },
+      });
     });
   });
 });

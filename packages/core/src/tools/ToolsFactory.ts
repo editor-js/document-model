@@ -57,8 +57,7 @@ export class ToolsFactory {
   constructor(
     config: Record<string, ToolSettings>,
     editorConfig: EditorConfig,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    api: any
+    api: EditorAPI
   ) {
     this.#api = api;
     this.#config = config;
@@ -98,8 +97,7 @@ export class ToolsFactory {
       name,
       constructable,
       useToolOptions,
-      api: {},
-      // api: this.api.getMethodsForTool(name, isTune),
+      api: this.#api,
       isDefault: name === this.#editorConfig.defaultBlock,
       defaultPlaceholder: this.#editorConfig.placeholder,
       /**

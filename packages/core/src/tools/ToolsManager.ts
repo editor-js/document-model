@@ -15,8 +15,10 @@ import {
   ToolsCollection,
   EventBus,
   type ToolConstructable,
-  type ToolStaticOptions
+  type ToolStaticOptions,
+  CoreConfigValidated
 } from '@editorjs/sdk';
+import type { EditorAPI } from '../api';
 
 /**
  * Works with tools
@@ -25,9 +27,14 @@ import {
 @injectable()
 export default class ToolsManager {
   /**
-   * ToolsFactory instance
+   * EditorAPI factory function
    */
-  #factory: ToolsFactory;
+  #apiFactory: () => EditorAPI;
+
+  /**
+   * Editor's config
+   */
+  #editorConfig: CoreConfigValidated;
 
   /**
    * Processed tools config
@@ -87,19 +94,20 @@ export default class ToolsManager {
 
   /**
    * @param editorConfig - EditorConfig object
-   * @param editorConfig.tools - Tools configuration passed by user
+   * @param apiFactory - Editor API factory function
    * @param eventBus - EventBus instance to exchange events between components
    */
   constructor(
-    @inject(TOKENS.EditorConfig) editorConfig: EditorConfig,
+    @inject(TOKENS.EditorConfig) editorConfig: CoreConfigValidated,
+    @inject(TOKENS.EditorAPIFactory) apiFactory: () => EditorAPI,
     eventBus: EventBus
   ) {
     this.#config = this.#prepareConfig(editorConfig.tools ?? {});
     this.#eventBus = eventBus;
+    this.#apiFactory = apiFactory;
+    this.#editorConfig = editorConfig;
 
     this.#validateTools();
-
-    this.#factory = new ToolsFactory(this.#config, editorConfig, {});
   }
 
   /**
@@ -117,7 +125,9 @@ export default class ToolsManager {
       }));
     };
 
-    this.#factory.setTools(tools);
+    const factory = new ToolsFactory(this.#config, this.#editorConfig, this.#apiFactory());
+
+    factory.setTools(tools);
 
     tools.forEach(([toolConstructor]) => {
       const toolName = toolConstructor.name;
@@ -125,7 +135,7 @@ export default class ToolsManager {
       if (isFunction(toolConstructor.prepare)) {
         void promiseQueue.add(async () => {
           try {
-            const tool = this.#factory.get(toolName);
+            const tool = factory.get(toolName);
 
             /**
              * Merged plugin `config` only (static `options().config` + `use(Tool, options).config`), aligned with `BaseToolFacade.prepare`.
@@ -162,11 +172,11 @@ export default class ToolsManager {
           } catch (e) {
             console.error(`Tool ${toolName} failed to prepare`, e);
 
-            this.#unavailableTools.set(toolName, this.#factory.get(toolName));
+            this.#unavailableTools.set(toolName, factory.get(toolName));
           }
         });
       } else {
-        setToAvailableToolsCollection(toolName, this.#factory.get(toolName));
+        setToAvailableToolsCollection(toolName, factory.get(toolName));
       }
     });
 
