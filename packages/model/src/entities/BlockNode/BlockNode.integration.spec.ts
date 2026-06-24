@@ -1,6 +1,6 @@
-import { BlockChildType, createInlineToolName } from '@editorjs/model-types';
+import { BlockChildType, createInlineToolName, createDataKey } from '@editorjs/model-types';
 import type { InlineFragment } from '@editorjs/model-types';
-import { BlockNode, createDataKey } from './index.js';
+import { BlockNode } from './index.js';
 import { NODE_TYPE_HIDDEN_PROP } from '@editorjs/model-types';
 import { ValueNode } from '../ValueNode/index.js';
 

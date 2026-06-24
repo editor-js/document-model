@@ -1,10 +1,11 @@
 import { EventAction } from '@editorjs/model-types';
 import { Index } from '@editorjs/model-types';
 import { IndexBuilder } from '@editorjs/model-types';
-import { BlockNode, createBlockToolName, createDataKey, createBlockId } from './index.js';
+import { createDataKey, createBlockId, createBlockToolName, createBlockTuneName } from '@editorjs/model-types';
+import { BlockNode } from './index.js';
 import { NonExistingKeyError } from './errors/NonExistingKeyError.js';
 
-import type { BlockTuneName, BlockTuneSerialized } from '../BlockTune/index.js';
+import type { BlockTuneName, BlockTuneSerialized } from '@editorjs/model-types';
 import { BlockTune } from '../BlockTune/index.js';
 import { ValueNode } from '../ValueNode/index.js';
 
@@ -12,13 +13,12 @@ import type { EditorDocument } from '../EditorDocument/index.js';
 import type { ValueNodeConstructorParameters } from '../ValueNode/index.js';
 import type { InlineToolData, InlineToolName } from '@editorjs/model-types';
 import { BlockChildType } from '@editorjs/model-types';
-import type { InlineFragment, TextNodeSerialized } from '@editorjs/model-types';
+import type { InlineFragment, TextNodeSerialized, BlockNodeDataSerialized } from '@editorjs/model-types';
 import { TextNode } from '../inline-fragments/index.js';
-import type { BlockNodeData, BlockNodeDataSerialized } from './types/index.js';
+import type { BlockNodeData } from './types/index.js';
 import { NODE_TYPE_HIDDEN_PROP } from '@editorjs/model-types';
 import { TextAddedEvent, TuneModifiedEvent, ValueModifiedEvent } from '@editorjs/model-types';
 import { EventType } from '@editorjs/model-types';
-import { createBlockTuneName } from '../BlockTune/index.js';
 import { get } from '@editorjs/model-types';
 import { AlreadyExistingKeyError } from './errors/AlreadyExistingKeyError.js';
 

@@ -1,20 +1,14 @@
 import { getContext } from '../../utils/Context.js';
 import type { EditorDocument } from '../EditorDocument/index.js';
-import type { BlockTuneName, BlockTuneSerialized } from '../BlockTune/index.js';
-import { BlockTune, createBlockTuneName } from '../BlockTune/index.js';
+import { BlockTune } from '../BlockTune/index.js';
 import { InvalidNodeTypeError } from './errors/InvalidNodeTypeError.js';
 import { NonExistingKeyError } from './errors/NonExistingKeyError.js';
 import type {
   BlockNodeConstructorParameters,
   BlockNodeData,
-  BlockNodeDataSerialized,
-  BlockNodeDataSerializedValue,
   BlockNodeDataValue,
-  BlockNodeSerialized,
-  BlockToolName,
   ChildNode
 } from './types/index.js';
-import { createBlockToolName } from './types/index.js';
 import { ValueNode } from '../ValueNode/index.js';
 import { TextNode } from '../inline-fragments/index.js';
 import type { InlineFragment, TextNodeSerialized, ValueSerialized } from '@editorjs/model-types';
@@ -24,6 +18,8 @@ import {
   createDataKey,
   createBlockId,
   generateBlockId,
+  createBlockToolName,
+  createBlockTuneName,
   get,
   has,
   set,
@@ -34,6 +30,12 @@ import {
   BaseDocumentEvent,
   type DataKey,
   type BlockId,
+  type BlockToolName,
+  type BlockTuneName,
+  type BlockTuneSerialized,
+  type BlockNodeDataSerialized,
+  type BlockNodeDataSerializedValue,
+  type BlockNodeSerialized,
   type InlineToolData,
   type InlineToolName,
   type TextNodeEvents
@@ -624,18 +626,3 @@ export class BlockNode extends EventBus {
     );
   }
 }
-
-export type {
-  BlockToolName,
-  DataKey,
-  BlockNodeSerialized,
-  BlockId
-};
-
-export type { BlockNodeInit, BlockIndexOrId } from '@editorjs/model-types';
-
-export {
-  createBlockToolName
-};
-
-export { createDataKey, createBlockId, generateBlockId, NODE_TYPE_HIDDEN_PROP, BlockChildType } from '@editorjs/model-types';

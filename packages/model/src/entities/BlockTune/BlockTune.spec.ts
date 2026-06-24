@@ -1,5 +1,5 @@
-import { BlockTune, createBlockTuneName } from './index.js';
-import { EventType } from '@editorjs/model-types';
+import { BlockTune } from './index.js';
+import { createBlockTuneName, EventType } from '@editorjs/model-types';
 import { TuneModifiedEvent } from '@editorjs/model-types';
 import { EventAction } from '@editorjs/model-types';
 

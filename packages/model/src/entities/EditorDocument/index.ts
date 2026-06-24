@@ -14,15 +14,17 @@ import {
   type InlineToolName,
   type BlockTuneEvents,
   type TextNodeEvents,
-  type ValueNodeEvents
+  type ValueNodeEvents,
+  type EditorDocumentSerialized,
+  type BlockTuneName,
+  type BlockNodeDataSerializedValue,
+  type BlockNodeSerialized,
+  type BlockNodeInit
 } from '@editorjs/model-types';
-import type { EditorDocumentSerialized } from './types/index.js';
 import type { EditorDocumentConstructorParameters } from './types/index.js';
-import type { BlockTuneName } from '../BlockTune/index.js';
 import type { TextNodeSerialized, InlineFragment, ValueSerialized } from '@editorjs/model-types';
 import { IoCContainer, TOOLS_REGISTRY } from '../../IoC/index.js';
 import { ToolsRegistry } from '../../tools/index.js';
-import type { BlockNodeDataSerializedValue, BlockNodeSerialized, BlockNodeInit } from '../BlockNode/types/index.js';
 import type { DeepReadonly } from '../../utils/DeepReadonly.js';
 import {
   BlockAddedEvent,

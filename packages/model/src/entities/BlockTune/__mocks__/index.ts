@@ -1,5 +1,4 @@
-import { createBlockTuneName } from '../types/index.js';
-import { EventBus } from '@editorjs/model-types';
+import { createBlockTuneName, EventBus } from '@editorjs/model-types';
 
 /**
  * Mock for BlockTune class

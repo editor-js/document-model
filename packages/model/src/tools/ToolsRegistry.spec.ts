@@ -1,5 +1,5 @@
 import { ToolsRegistry } from './ToolsRegistry.js';
-import type { BlockToolName } from '../entities/index.js';
+import type { BlockToolName } from '@editorjs/model-types';
 
 describe('ToolsRegistry', () => {
   describe('get()', () => {

@@ -1,5 +1,3 @@
-export type { DocumentId, DocumentIndex } from '@editorjs/model-types';
-
 /**
  * Numeric id for a block node
  */

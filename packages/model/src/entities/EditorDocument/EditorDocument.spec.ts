@@ -1,8 +1,7 @@
 import { IndexBuilder } from '@editorjs/model-types';
 import { EditorDocument } from './index.js';
-import { createBlockId, type DataKey, type InlineToolData, type InlineToolName, type BlockToolName } from '@editorjs/model-types';
+import { createBlockId, type DataKey, type InlineToolData, type InlineToolName, type BlockToolName, type BlockTuneName } from '@editorjs/model-types';
 import { BlockNode } from '../BlockNode/index.js';
-import type { BlockTuneName } from '../BlockTune/index.js';
 import { EventType } from '@editorjs/model-types';
 import {
   BlockAddedEvent,
