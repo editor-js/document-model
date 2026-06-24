@@ -8,6 +8,7 @@ export default {
       tsconfig: '<rootDir>/tsconfig.test.json',
     },
   },
+  coverageReporters: ['lcov', 'json-summary', 'text-summary'],
   testMatch: ['<rootDir>/src/**/*.spec.ts'],
   modulePathIgnorePatterns: ['<rootDir>/.*/__mocks__', '<rootDir>/.*/mocks'],
   extensionsToTreatAsEsm: ['.ts'],

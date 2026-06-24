@@ -21,6 +21,12 @@ export default [
         ],
         ignoreTypeImport: true,
       }],
+      'n/no-missing-import': ['error', {
+        allowModules: [
+          '@editorjs/model',
+          '@editorjs/sdk',
+        ],
+      }],
       // @todo: remove when we setup eslint to correctly handle the types
       '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',

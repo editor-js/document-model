@@ -18,7 +18,7 @@ import {
 /**
  * Subscribes to tool-loaded events and registers keyboard shortcuts from merged tool `options`
  * (`shortcut` for inline tools; `shortcuts` map reserved for block tools / render overrides).
- * Applies formatting via `api.selection.applyInlineToolForCurrentSelection`.
+ * Applies formatting via `api.selection.applyInlineTool`.
  */
 export class ShortcutsPlugin implements EditorjsPlugin {
   /**

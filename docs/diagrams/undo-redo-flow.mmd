@@ -1,0 +1,47 @@
+---
+title: Undo / Redo Flow
+
+---
+%% See: ../collaboration.md
+sequenceDiagram
+  actor User
+  participant BlocksUI
+  participant DocumentAPI
+  participant EventBus
+  participant CoreUndoRedoManager as "UndoRedoManager (Core)"
+  participant CollaborationManager
+  participant EditorJSModel
+
+  %% ── User interaction ─────────────────────────────
+  User->>BlocksUI: presses Cmd/Ctrl+Z or Cmd/Ctrl+Shift+Z
+  BlocksUI->>DocumentAPI: undo() or redo()
+
+  %% ── Event dispatch and handling ──────────────────
+  DocumentAPI->>EventBus: dispatchEvent(UndoCoreEvent)
+  EventBus-->>CollaborationManager: listener receives event
+  EventBus-->>CoreUndoRedoManager: listener receives event
+
+  %% ── Collaboration manager handles (takes over) ───
+  CollaborationManager->>CollaborationManager: e.preventDefault()
+  CollaborationManager->>CollaborationManager: >#putBatchToUndo() — flush currentBatch
+  CollaborationManager->>CollaborationManager: pop undoStack (OT operations)
+  CollaborationManager->>CollaborationManager: inverse operation → Delete
+  Note over CollaborationManager: May send to OT server if connected
+
+  %% ── Core manager sees event prevented and skips ──
+  Note over CoreUndoRedoManager: Check if event.defaultPrevented = true
+  Note over CoreUndoRedoManager: Event was prevented, skip undo processing
+
+  %% ── Rapid edits are batched ──────────────────────
+  User->>EditorJSModel: insertText "H"
+  EditorJSModel-->>CoreUndoRedoManager: TextAddedEvent (grouped by debounce)
+  EditorJSModel-->>CollaborationManager: TextAddedEvent
+  CollaborationManager->>CollaborationManager: create BatchedOperation(op), reset timer
+
+  User->>EditorJSModel: insertText "i"
+  EditorJSModel-->>CoreUndoRedoManager: TextAddedEvent (still in same debounce window)
+  EditorJSModel-->>CollaborationManager: TextAddedEvent
+  CollaborationManager->>CollaborationManager: batch.add(op) if canAdd() passes
+
+  Note over CollaborationManager: Debounce timeout fires → batch moves to undo stack
+

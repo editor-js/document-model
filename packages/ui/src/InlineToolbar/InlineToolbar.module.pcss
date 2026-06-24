@@ -1,38 +1,24 @@
 .inline-toolbar {
-  background: var(--color-bg);
-  transform: translateY(-100%);
-  font-size: var(--font-size-ui);
-  padding: var(--size-padding-toolbar);
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
 
-  button {
-    cursor: pointer;
+  /* @todo move internal tools to a separate package and move this styles to link tool? */
+  &__input {
+    background: #F8F8F8;
+    border: 1px solid rgba(226,226,229,0.20);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 14px;
+    line-height: 22px;
 
-    &:hover {
-      opacity: 0.8;
-    }
-  }
 
-  button, input {
-    font-size: inherit;
-    background: var(--color-bg-secondary);
-    border: none;
     outline: none;
-    color: inherit;
-    border-radius: var(--radius-control);
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
+    font-weight: 500;
+    font-family: inherit;
   }
-
-  input {
-    padding: var(--size-padding-toolbar);
-  }
-
-}
-
-.inline-toolbar-list {
-  display: flex;
-  flex-direction: row;
-  gap: var(--size-padding-toolbar);
-}
-
-.inline-toolbar-actions {
-  margin-top: var(--size-padding-toolbar);
 }

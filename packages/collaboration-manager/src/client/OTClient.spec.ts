@@ -24,13 +24,13 @@ describe('OTClient', () => {
   let OriginalWebSocket: typeof WebSocket;
 
   beforeEach(() => {
-    OriginalWebSocket = globalThis.WebSocket; // eslint-disable-line no-undef
-    globalThis.WebSocket = MockWebSocket as unknown as typeof WebSocket; // eslint-disable-line no-undef
+    OriginalWebSocket = globalThis.WebSocket;
+    globalThis.WebSocket = MockWebSocket as unknown as typeof WebSocket;
     MockWebSocket.lastInstance = null;
   });
 
   afterEach(() => {
-    globalThis.WebSocket = OriginalWebSocket; // eslint-disable-line no-undef
+    globalThis.WebSocket = OriginalWebSocket;
     MockWebSocket.lastInstance = null;
   });
 

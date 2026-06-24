@@ -1,7 +1,6 @@
 /* eslint-disable jsdoc/require-jsdoc,@typescript-eslint/no-magic-numbers */
 
 import { describe, expect, it } from '@jest/globals';
-import type { API as ApiMethods } from '@editorjs/editorjs';
 import type { BlockToolConstructor, BlockToolData } from '../../entities/BlockTool.js';
 import { BlockToolOptionKey } from '../../entities/BlockTool.js';
 import { ToolType } from '../../entities/EntityType.js';
@@ -10,8 +9,9 @@ import { UserToolOptions } from './BaseToolFacade.js';
 import { BlockToolFacade } from './BlockToolFacade.js';
 import type { InlineFragment } from '@editorjs/model';
 import { BlockChildType, NODE_TYPE_HIDDEN_PROP } from '@editorjs/model';
+import type { EditorAPI } from '@/api';
 
-const emptyApi = {} as ApiMethods;
+const emptyApi = {} as EditorAPI;
 
 /**
  * Block tool facade with only fields needed to exercise BaseToolFacade getters.
@@ -162,6 +162,66 @@ describe('BaseToolFacade (via BlockToolFacade)', () => {
       });
 
       expect(facade.config).toEqual({});
+    });
+  });
+
+  describe('exportTextContent', () => {
+    it('throws when the tool has no conversionConfig.export', () => {
+      const facade = createBlockFacade({}, {} as ToolOptions);
+
+      expect(() => facade.exportTextContent({})).toThrow(
+        /does not have export configuration/
+      );
+    });
+
+    it('calls the export function when conversionConfig.export is a function', () => {
+      const exportFn = (data: BlockToolData): string => (data.text as { value: string }).value;
+      const facade = createBlockFacade(
+        { [BlockToolOptionKey.ConversionConfig]: { export: exportFn } },
+        {} as ToolOptions
+      );
+
+      const result = facade.exportTextContent({ text: { value: 'hello' } });
+
+      expect(result).toBe('hello');
+    });
+
+    it('reads a top-level string key from data', () => {
+      const facade = createBlockFacade(
+        { [BlockToolOptionKey.ConversionConfig]: { export: 'text' } },
+        {} as ToolOptions
+      );
+
+      const result = facade.exportTextContent({
+        text: {
+          value: 'hello',
+          fragments: [],
+          [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+        },
+      });
+
+      expect(result).toBe('hello');
+    });
+
+    it('reads a dot-notation keypath from data', () => {
+      const facade = createBlockFacade(
+        { [BlockToolOptionKey.ConversionConfig]: { export: 'items.0.text' } },
+        {} as ToolOptions
+      );
+
+      const result = facade.exportTextContent({
+        items: [
+          {
+            text: {
+              value: 'hello',
+              fragments: [],
+              [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+            },
+          },
+        ],
+      });
+
+      expect(result).toBe('hello');
     });
   });
 

@@ -10,7 +10,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: actions/setup-node@v3
+    - uses: actions/setup-node@v6
       with:
         node-version-file: .nvmrc
     - uses: ./.github/actions/setup
@@ -19,15 +19,26 @@ runs:
       with:
         package-name: ${{ inputs.package-name }}
 
-    # Find current PR's number
-    - uses: jwalton/gh-find-current-pr@v1
-      id: findPr
+    - name: Run unit tests with coverage
+      if: ${{ github.ref != 'refs/heads/main' }} # Skip coverage on main branch to save time and resources
+      shell: bash
+      run: |
+        yarn workspace ${{ inputs.package-name }} test:coverage
 
-    - name: Run unit tests
-      uses: ArtiomTr/jest-coverage-report-action@v2
+    - name: Upload coverage artifact (PRs only)
+      if: ${{ github.event_name == 'pull_request' }}
+      uses: actions/upload-artifact@v7
       with:
-        custom-title: Coverage report for `${{ inputs.working-directory }}`
+        name: test-report
+        path: |
+          ${{ inputs.working-directory }}/coverage
+          ${{ inputs.working-directory }}/jest-report.json
+        retention-days: 3
+
+    - name: Run base coverage action
+      if: ${{ github.event_name == 'pull_request' }}
+      uses: ./.github/actions/base-coverage
+      with:
+        package-name: ${{ inputs.package-name }}
         working-directory: ${{ inputs.working-directory }}
-        test-script: yarn workspace ${{ inputs.package-name }} test
-        package-manager: yarn
-        prnumber: ${{ steps.findPr.outputs.number }}
+

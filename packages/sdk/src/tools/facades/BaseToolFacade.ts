@@ -1,6 +1,4 @@
 import type {
-  // SanitizerConfig,
-  API as ApiMethods,
   Tool
 } from '@editorjs/editorjs';
 import { isFunction } from '@editorjs/helpers';
@@ -15,6 +13,7 @@ import type {
 } from '../../entities';
 import type { ToolStaticOptions, BlockToolOptions, InlineToolOptions, BlockTuneOptions } from '../../entities/BaseTool.js';
 import { BaseToolOptionKey } from '../../entities/BaseTool.js';
+import type { EditorAPI } from '@/api';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- need to allow any type here so extended interfaces pass
 export type ToolConstructable = BlockToolConstructor<any, any, any> | InlineToolConstructor | BlockTuneConstructor;
@@ -66,7 +65,7 @@ interface ConstructorOptions {
   /**
    * Api methods for the Tool
    */
-  api: ApiMethods;
+  api: EditorAPI;
 
   /**
    * Is tool default
@@ -96,7 +95,7 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
   /**
    * EditorJS API for current Tool
    */
-  protected api: ApiMethods;
+  protected api: EditorAPI;
 
   /**
    * Second argument of `use(Tool, options)` (feature flags, `shortcut`, nested `config` for the tool plugin, etc.)

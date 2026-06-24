@@ -4,12 +4,17 @@
  */
 export enum FormattingAction {
   /**
-   * Apply formatting for selction
+   * Apply formatting for selection
    */
   Format = 'format',
 
   /**
    * Delete formatting for selection
    */
-  Unformat = 'unformat'
+  Unformat = 'unformat',
+
+  /**
+   * If nothing should happen, tool can send None
+   */
+  None = 'none'
 }

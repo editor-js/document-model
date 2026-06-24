@@ -10,3 +10,4 @@ export type * from './EditorjsPlugin.js';
 export * from './EntityType.js';
 export * from './IndexError.js';
 export type * from './EditorjsAdapterPlugin.js';
+export * from './MenuConfig.js';
