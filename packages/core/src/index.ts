@@ -18,6 +18,7 @@ import type { CoreConfigValidated, CoreConfig, EditorjsPluginConstructor, BlockT
 import { EditorAPI } from './api/index.js';
 import { generateId } from './utils/uid.js';
 import { Paragraph, BoldInlineTool, LinkInlineTool, ItalicInlineTool } from './tools/internal';
+import { MoveUpTune, DeleteBlockTune, MoveDownTune } from './tunes/internal';
 import { ShortcutsPlugin } from './plugins/ShortcutsPlugin.js';
 import { DOMAdapters } from '@editorjs/dom-adapters';
 import { BlocksManager } from './components/BlockManager.js';
@@ -25,6 +26,7 @@ import { BlockRenderer } from './components/BlockRenderer.js';
 import { SelectionManager } from './components/SelectionManager.js';
 import { TOKENS } from './tokens.js';
 import { UndoRedoManager } from './components/UndoRedoManager.js';
+import { BlockTunesManager } from './components/BlockTunesManager.js';
 /**
  * If no holder is provided via config, the editor will be appended to the element with this id
  */
@@ -107,6 +109,9 @@ export default class Core {
     this.use(BoldInlineTool);
     this.use(ItalicInlineTool);
     this.use(LinkInlineTool);
+    this.use(MoveUpTune);
+    this.use(DeleteBlockTune);
+    this.use(MoveDownTune);
     this.use(ShortcutsPlugin);
     this.use(CollaborationManager);
     this.use(DOMAdapters);
@@ -173,6 +178,7 @@ export default class Core {
       this.#iocContainer.get(BlocksManager);
       this.#iocContainer.get(BlockRenderer);
       this.#iocContainer.get(UndoRedoManager);
+      this.#iocContainer.get(BlockTunesManager);
 
       this.#initializePlugins();
       await this.#initializeTools();

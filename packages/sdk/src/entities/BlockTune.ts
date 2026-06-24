@@ -5,6 +5,9 @@ import type {
 } from '@editorjs/editorjs';
 import type { ToolType } from '@/entities/EntityType.js';
 import type { BaseToolConstructor, BaseToolOptions } from '@/entities/BaseTool';
+import type { BlockId } from '@editorjs/model';
+import type { EditorAPI } from '@/api/EditorAPI.js';
+import type { BlockTuneAdapter } from '@/entities/BlockTuneAdapter.js';
 
 /**
  * Options available on **Block Tunes** (`static options` or `use()` overrides).
@@ -44,11 +47,25 @@ export interface BlockTuneConstructorOptions<
    * Config could be passed by tools user through the Editor config
    */
   config: Config;
+
+  /**
+   * Editor API for performing block operations (move, delete, etc.)
+   */
+  api: EditorAPI;
+
+  /**
+   * ID of the block this tune instance is bound to
+   */
+  blockId: BlockId;
+
+  /**
+   * Adapter providing data persistence and external update subscription for this tune instance
+   */
+  adapter: BlockTuneAdapter;
 }
 
 /**
  * Block Tune interface for version 3
- * @todo describe the interface when the adapter implementation is done
  */
 export type BlockTune<
   /**
@@ -65,7 +82,33 @@ export type BlockTune<
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Config extends ToolConfig = any
-> = Omit<BlockTuneV2, 'save'>;
+> = Omit<BlockTuneV2, 'save' | 'render'> & {
+  /**
+   * Returns an HTML element for the tune (legacy render-based pattern)
+   */
+  render?(): HTMLElement;
+
+  /**
+   * Label shown in the block settings popover
+   */
+  title?: string;
+
+  /**
+   * SVG icon shown in the block settings popover
+   */
+  icon?: string;
+
+  /**
+   * Called when the tune is activated (clicked in the popover)
+   */
+  activate?(): void;
+
+  /**
+   * Returns true when the tune action is not applicable in the current state.
+   * The corresponding popover item will be rendered as disabled.
+   */
+  isDisabled?(): boolean;
+};
 
 /**
  * Block Tune constructor class

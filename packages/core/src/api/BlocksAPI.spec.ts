@@ -18,6 +18,7 @@ jest.unstable_mockModule('@editorjs/model', () => ({
   EditorJSModel: jest.fn(),
   createBlockId: jest.fn(id => id),
   createDataKey: jest.fn(key => key),
+  createBlockTuneName: jest.fn(name => name),
 }));
 
 const { BlocksManager } = await import('../components/BlockManager');
@@ -217,6 +218,111 @@ describe('BlocksAPI', () => {
         replace: true,
         focus: true,
       });
+    });
+  });
+
+  describe('.getTuneData()', () => {
+    it('should return the tune data for the given block and tune name', () => {
+      const tuneData = { align: 'left' };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const model = new EditorJSModel('userId', { identifier: 'docId' }) as any;
+
+      model.getBlockSerialized = jest.fn().mockReturnValue({ tunes: { myTune: tuneData } });
+
+      const api = new BlocksAPI(
+        blocksManager,
+        { defaultBlock } as CoreConfigValidated,
+        model
+      );
+
+      const result = api.getTuneData({ block: 0,
+        tuneName: 'myTune' });
+
+      expect(result).toEqual(tuneData);
+      expect(model.getBlockSerialized).toHaveBeenCalledWith(0);
+    });
+
+    it('should return an empty object when the tune has no data', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const model = new EditorJSModel('userId', { identifier: 'docId' }) as any;
+
+      model.getBlockSerialized = jest.fn().mockReturnValue({ tunes: {} });
+
+      const api = new BlocksAPI(
+        blocksManager,
+        { defaultBlock } as CoreConfigValidated,
+        model
+      );
+
+      const result = api.getTuneData({ block: 0,
+        tuneName: 'missingTune' });
+
+      expect(result).toEqual({});
+    });
+
+    it('should return an empty object when the block has no tunes', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const model = new EditorJSModel('userId', { identifier: 'docId' }) as any;
+
+      model.getBlockSerialized = jest.fn().mockReturnValue({});
+
+      const api = new BlocksAPI(
+        blocksManager,
+        { defaultBlock } as CoreConfigValidated,
+        model
+      );
+
+      const result = api.getTuneData({ block: 0,
+        tuneName: 'anyTune' });
+
+      expect(result).toEqual({});
+    });
+  });
+
+  describe('.updateTuneData()', () => {
+    it('should call model.updateTuneData with userId, block, tuneName, and data', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const model = new EditorJSModel('userId', { identifier: 'docId' }) as any;
+
+      model.updateTuneData = jest.fn();
+
+      const api = new BlocksAPI(
+        blocksManager,
+        {
+          defaultBlock,
+          userId: 'user1',
+        } as CoreConfigValidated,
+        model
+      );
+
+      api.updateTuneData({ block: 1,
+        tuneName: 'align',
+        data: { align: 'center' } });
+
+      expect(model.updateTuneData).toHaveBeenCalledWith('user1', 1, 'align', { align: 'center' });
+    });
+
+    it('should use the provided userId instead of the config userId', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const model = new EditorJSModel('userId', { identifier: 'docId' }) as any;
+
+      model.updateTuneData = jest.fn();
+
+      const api = new BlocksAPI(
+        blocksManager,
+        {
+          defaultBlock,
+          userId: 'defaultUser',
+        } as CoreConfigValidated,
+        model
+      );
+
+      api.updateTuneData({ block: 0,
+        tuneName: 'align',
+        data: {},
+        userId: 'overrideUser' });
+
+      expect(model.updateTuneData).toHaveBeenCalledWith('overrideUser', 0, 'align', {});
     });
   });
 });

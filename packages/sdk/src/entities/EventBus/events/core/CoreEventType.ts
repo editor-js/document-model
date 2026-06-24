@@ -38,5 +38,10 @@ export enum CoreEventType {
   /**
    * Event is fired when the Editor is fully initialized (document and tools are ready)
    */
-  Ready = 'ready'
+  Ready = 'ready',
+
+  /**
+   * Event is fired when a block is selected and its tune instances have been created
+   */
+  BlockSelected = 'block:selected'
 }

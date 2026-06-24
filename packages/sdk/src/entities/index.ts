@@ -4,6 +4,7 @@ export type * from './BlockTool.js';
 export type * from './BlockTune.js';
 export type * from './Config.js';
 export * from './BlockToolAdapter.js';
+export * from './BlockTuneAdapter.js';
 export * from './EventBus/index.js';
 export type * from './EditorjsPlugin.js';
 export * from './EntityType.js';

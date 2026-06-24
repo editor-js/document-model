@@ -4,7 +4,7 @@ import { EditorDocument, EditorJSModel } from '@editorjs/model';
 import Core from '@editorjs/core';
 import { ref, onMounted } from 'vue';
 import { Node } from './components';
-import { EditorjsUI, BlocksUI, InlineToolbarUI, ToolboxUI, ToolbarUI } from '@editorjs/ui';
+import { EditorjsUI, BlocksUI, InlineToolbarUI, ToolboxUI, ToolbarUI, BlockTunesUI } from '@editorjs/ui';
 /**
  * Editor document for visualizing
  */
@@ -68,6 +68,7 @@ onMounted(() => {
     .use(InlineToolbarUI)
     .use(ToolbarUI)
     .use(ToolboxUI)
+    .use(BlockTunesUI)
     .initialize();
 });
 

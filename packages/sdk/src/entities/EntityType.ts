@@ -25,7 +25,12 @@ export enum UiComponentType {
   /**
    * Toolbar area wrapper. Includes Toolbox and Block Settings
    */
-  Toolbar = 'toolbar'
+  Toolbar = 'toolbar',
+
+  /**
+   * Block tunes panel
+   */
+  BlockTunes = 'block-tunes'
 }
 
 /**

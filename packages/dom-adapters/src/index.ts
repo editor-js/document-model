@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import type {
   BlockToolAdapter,
+  BlockTuneAdapter,
   EditorJSAdapterPlugin,
   EditorjsAdapterPluginConstructor,
   EditorjsPluginParams
@@ -8,6 +9,7 @@ import type {
 import { EventBus } from '@editorjs/sdk';
 import { PluginType } from '@editorjs/sdk';
 import { DOMBlockToolAdapter } from './BlockToolAdapter/index.js';
+import { DOMBlockTuneAdapter } from './BlockTuneAdapter/index.js';
 import { InputsRegistry } from './InputsRegistry/index.js';
 import type { BlockId } from '@editorjs/model';
 import { Container } from 'inversify';
@@ -19,6 +21,7 @@ import { CaretAdapter } from './CaretAdapter/index.js';
 export * from './CaretAdapter/index.js';
 export * from './FormattingAdapter/index.js';
 export * from './BlockToolAdapter/index.js';
+export * from './BlockTuneAdapter/index.js';
 
 /**
  * Plugin for the DOM adapters
@@ -38,6 +41,12 @@ export class DOMAdapters implements EditorJSAdapterPlugin {
   #adapters: Map<BlockId, DOMBlockToolAdapter> = new Map();
 
   /**
+   * Map of active BlockTuneAdapter instances keyed by block id, then by tune name.
+   * Used to properly destroy adapters when blocks are removed.
+   */
+  #tuneAdapters: Map<BlockId, Map<string, DOMBlockTuneAdapter>> = new Map();
+
+  /**
    * @param params - Plugin parameters
    * @param params.config - Editor's config
    * @param params.api - Editor's API
@@ -49,6 +58,10 @@ export class DOMAdapters implements EditorJSAdapterPlugin {
     this.#iocContainer.bind(TOKENS.EditorAPI).toConstantValue(api);
     this.#iocContainer
       .bind(DOMBlockToolAdapter)
+      .toSelf()
+      .inTransientScope();
+    this.#iocContainer
+      .bind(DOMBlockTuneAdapter)
       .toSelf()
       .inTransientScope();
 
@@ -96,6 +109,49 @@ export class DOMAdapters implements EditorJSAdapterPlugin {
     const registry = this.#iocContainer.get(InputsRegistry);
 
     registry.removeBlock(blockId);
+  }
+
+  /**
+   * Creates a BlockTuneAdapter for the given block and tune name.
+   * @param blockId - unique id of the block
+   * @param tuneName - name of the tune
+   */
+  public createBlockTuneAdapter(blockId: BlockId, tuneName: string): BlockTuneAdapter {
+    const adapter = this.#iocContainer.get(DOMBlockTuneAdapter);
+
+    adapter.setBlockId(blockId);
+    adapter.setTuneName(tuneName);
+
+    if (!this.#tuneAdapters.has(blockId)) {
+      this.#tuneAdapters.set(blockId, new Map());
+    }
+
+    this.#tuneAdapters.get(blockId)!.set(tuneName, adapter);
+
+    return adapter;
+  }
+
+  /**
+   * Returns the BlockTuneAdapter for the given block and tune, if one exists.
+   * @param blockId - unique id of the block
+   * @param tuneName - name of the tune
+   */
+  public getBlockTuneAdapter(blockId: BlockId, tuneName: string): BlockTuneAdapter | undefined {
+    return this.#tuneAdapters.get(blockId)?.get(tuneName);
+  }
+
+  /**
+   * Destroys all BlockTuneAdapters for the given block.
+   * Called by BlockRenderer when a block is removed from the model.
+   * @param blockId - unique id of the removed block
+   */
+  public destroyBlockTuneAdapters(blockId: BlockId): void {
+    const tuneAdapters = this.#tuneAdapters.get(blockId);
+
+    if (tuneAdapters !== undefined) {
+      tuneAdapters.forEach(adapter => adapter.destroy());
+      this.#tuneAdapters.delete(blockId);
+    }
   }
 }
 

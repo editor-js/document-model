@@ -3,11 +3,13 @@ import { UiComponentType } from '@editorjs/sdk';
 import { make } from '@editorjs/dom';
 import { css } from './Toolbar.const.js';
 import type { ToolboxRenderedUIEvent } from '../Toolbox/events/index.js';
-import { IconPlus } from '@codexteam/icons';
+import { IconPlus, IconMenuSmall } from '@codexteam/icons';
 import Style from './Toolbar.module.pcss';
 import { ToolbarRenderedUIEvent } from './ToolbarRenderedUIEvent.js';
 import type { BlockSelectedUIEvent } from '../Blocks/events/index.js';
 import { ToolboxOpenUIEvent } from '../Toolbox/events/index.js';
+import type { BlockTunesRenderedUIEvent } from '../BlockTunes/events/index.js';
+import { BlockTunesOpenUIEvent } from '../BlockTunes/events/index.js';
 
 /**
  * HTML Nodes toolbar uses in the UI
@@ -27,6 +29,11 @@ interface ToolbarNodes {
    * Plus button to open Toolbox popover
    */
   plusButton: HTMLButtonElement;
+
+  /**
+   * Settings button to open Block Tunes popover
+   */
+  settingsButton: HTMLButtonElement;
 }
 
 /**
@@ -54,6 +61,9 @@ export class ToolbarUI implements EditorjsPlugin {
     plusButton: make('button', Style[css.plusButton], {
       innerHTML: IconPlus,
     }) as HTMLButtonElement,
+    settingsButton: make('button', Style[css.settingsButton], {
+      innerHTML: IconMenuSmall,
+    }) as HTMLButtonElement,
   };
 
   /**
@@ -78,12 +88,16 @@ export class ToolbarUI implements EditorjsPlugin {
 
     this.#subscribeToToolboxEvents();
 
-    this.#eventBus.addEventListener(`ui:blocks:block-selected`, (event: BlockSelectedUIEvent) => {
+    this.#eventBus.addEventListener('ui:blocks:block-selected', (event: BlockSelectedUIEvent) => {
       if (this.#isToolboxOpen) {
         return;
       }
 
       this.moveTo(event.detail.block);
+    });
+
+    this.#eventBus.addEventListener('ui:block-tunes:rendered', (event: BlockTunesRenderedUIEvent) => {
+      this.#nodes.actions.appendChild(event.detail.blockTunes);
     });
   }
 
@@ -117,9 +131,14 @@ export class ToolbarUI implements EditorjsPlugin {
   #render(): void {
     this.#nodes.holder.appendChild(this.#nodes.actions);
     this.#nodes.actions.appendChild(this.#nodes.plusButton);
+    this.#nodes.actions.appendChild(this.#nodes.settingsButton);
 
     this.#nodes.plusButton.addEventListener('click', () => {
       this.#openToolbox();
+    });
+
+    this.#nodes.settingsButton.addEventListener('click', () => {
+      this.#openBlockTunes();
     });
 
     this.#eventBus.dispatchEvent(new ToolbarRenderedUIEvent({
@@ -131,15 +150,15 @@ export class ToolbarUI implements EditorjsPlugin {
    * Subscribes to Toolbox event
    */
   #subscribeToToolboxEvents(): void {
-    this.#eventBus.addEventListener(`ui:toolbox:rendered`, (event: ToolboxRenderedUIEvent) => {
+    this.#eventBus.addEventListener('ui:toolbox:rendered', (event: ToolboxRenderedUIEvent) => {
       this.#addToolbox(event.detail.toolbox);
     });
 
-    this.#eventBus.addEventListener(`ui:toolbox:opened`, () => {
+    this.#eventBus.addEventListener('ui:toolbox:opened', () => {
       this.#isToolboxOpen = true;
     });
 
-    this.#eventBus.addEventListener(`ui:toolbox:closed`, () => {
+    this.#eventBus.addEventListener('ui:toolbox:closed', () => {
       this.#isToolboxOpen = false;
     });
   }
@@ -148,6 +167,13 @@ export class ToolbarUI implements EditorjsPlugin {
    * Dispatches an event to Toolbox plugin to open the toolbox
    */
   #openToolbox(): void {
-    this.#eventBus.dispatchEvent(new ToolboxOpenUIEvent('ui:toolbox:open'));
+    this.#eventBus.dispatchEvent(new ToolboxOpenUIEvent({}));
+  }
+
+  /**
+   * Dispatches an event to BlockTunes plugin to open the block settings popover
+   */
+  #openBlockTunes(): void {
+    this.#eventBus.dispatchEvent(new BlockTunesOpenUIEvent({}));
   }
 }

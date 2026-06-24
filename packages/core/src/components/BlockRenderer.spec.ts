@@ -57,6 +57,7 @@ jest.unstable_mockModule('../tools/ToolsManager', () => ({
         create: jest.fn(() => ({ render: jest.fn(() => Promise.resolve({})) }))
       })),
     },
+    blockTunes: new Map(),
   })),
 }));
 
@@ -84,6 +85,9 @@ describe('BlockRenderer (unit, mocked deps)', () => {
   const adapter: EditorJSAdapterPlugin = {
     createBlockToolAdapter: jest.fn(() => ({})),
     destroyBlockToolAdapter: jest.fn(),
+    createBlockTuneAdapter: jest.fn(() => ({})),
+    getBlockTuneAdapter: jest.fn(() => undefined),
+    destroyBlockTuneAdapters: jest.fn(),
   } as unknown as EditorJSAdapterPlugin;
 
   new BlockRenderer(

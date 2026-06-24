@@ -1,12 +1,12 @@
 import { BaseToolFacade } from './BaseToolFacade.js';
-import type { BlockAPI } from '@editorjs/editorjs';
 import type { BlockTuneConstructor, BlockTune as IBlockTune, BlockTuneData } from '../../entities';
 import { ToolType } from '../../entities';
-// import type { BlockTuneData } from '@editorjs/editorjs';
+import type { BlockId } from '@editorjs/model';
+import type { EditorAPI } from '../../api/EditorAPI.js';
+import type { BlockTuneAdapter } from '../../entities/BlockTuneAdapter.js';
 
 /**
- * Stub class for BlockTunes
- * @todo Implement
+ * Facade for BlockTune tools
  */
 export class BlockTuneFacade extends BaseToolFacade<ToolType.Tune, IBlockTune> {
   /**
@@ -20,17 +20,20 @@ export class BlockTuneFacade extends BaseToolFacade<ToolType.Tune, IBlockTune> {
   protected declare constructable: BlockTuneConstructor;
 
   /**
-   * Constructs new BlockTune instance from constructable
-   * @param data - Tunes data
-   * @param _block - Block API object
+   * Constructs a new BlockTune instance for a specific block
+   * @param data - Tune's persistent data
+   * @param blockId - ID of the block this tune is bound to
+   * @param api - Editor API for performing block operations
+   * @param adapter - Adapter providing data persistence for this tune
    */
-  public create(data: BlockTuneData, _block: BlockAPI): IBlockTune {
+  public create(data: BlockTuneData, blockId: BlockId, api: EditorAPI, adapter: BlockTuneAdapter): IBlockTune {
     return new this.constructable({
-      // api: this.api,
       config: this.config,
-      // block,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       data,
+      api,
+      blockId,
+      adapter,
     });
   }
 }

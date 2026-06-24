@@ -8,6 +8,7 @@ import {
   BlockId,
   BlockIndexOrId,
   createBlockId,
+  createBlockTuneName,
   createDataKey,
   EditorDocumentSerialized,
   EditorJSModel,
@@ -227,5 +228,27 @@ export class BlocksAPI implements BlocksApiInterface {
     userId = this.#config.userId,
   }: Parameters<BlocksApiInterface['convert']>[0]): void {
     this.#blocksManager.convertBlock(block as BlockIndexOrId, createDataKey(key), newType, userId, dataOverrides);
+  }
+
+  /**
+   * Returns the serialized data for the given tune on a block
+   * @param params - getTuneData parameters
+   * @param params.block - index or id of the block
+   * @param params.tuneName - tune to read data from
+   */
+  public getTuneData({ block, tuneName }: Parameters<BlocksApiInterface['getTuneData']>[0]): Record<string, unknown> {
+    return this.#model.getBlockSerialized(block as BlockIndexOrId).tunes?.[tuneName] ?? {};
+  }
+
+  /**
+   * Updates tune data for the given block and tune name
+   * @param params - updateTuneData parameters
+   * @param params.block - index or id of the block
+   * @param params.tuneName - selects which set of registered settings to modify
+   * @param params.data - new tune data (merged into existing data)
+   * @param [params.userId] - user id to attribute the change to
+   */
+  public updateTuneData({ block, tuneName, data, userId = this.#config.userId }: Parameters<BlocksApiInterface['updateTuneData']>[0]): void {
+    this.#model.updateTuneData(userId, block as BlockIndexOrId, createBlockTuneName(tuneName), data);
   }
 }
