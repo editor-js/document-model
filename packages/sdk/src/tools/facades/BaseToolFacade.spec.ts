@@ -165,6 +165,66 @@ describe('BaseToolFacade (via BlockToolFacade)', () => {
     });
   });
 
+  describe('exportTextContent', () => {
+    it('throws when the tool has no conversionConfig.export', () => {
+      const facade = createBlockFacade({}, {} as ToolOptions);
+
+      expect(() => facade.exportTextContent({})).toThrow(
+        /does not have export configuration/
+      );
+    });
+
+    it('calls the export function when conversionConfig.export is a function', () => {
+      const exportFn = (data: BlockToolData): string => (data.text as { value: string }).value;
+      const facade = createBlockFacade(
+        { [BlockToolOptionKey.ConversionConfig]: { export: exportFn } },
+        {} as ToolOptions
+      );
+
+      const result = facade.exportTextContent({ text: { value: 'hello' } });
+
+      expect(result).toBe('hello');
+    });
+
+    it('reads a top-level string key from data', () => {
+      const facade = createBlockFacade(
+        { [BlockToolOptionKey.ConversionConfig]: { export: 'text' } },
+        {} as ToolOptions
+      );
+
+      const result = facade.exportTextContent({
+        text: {
+          value: 'hello',
+          fragments: [],
+          [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+        },
+      });
+
+      expect(result).toBe('hello');
+    });
+
+    it('reads a dot-notation keypath from data', () => {
+      const facade = createBlockFacade(
+        { [BlockToolOptionKey.ConversionConfig]: { export: 'items.0.text' } },
+        {} as ToolOptions
+      );
+
+      const result = facade.exportTextContent({
+        items: [
+          {
+            text: {
+              value: 'hello',
+              fragments: [],
+              [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text,
+            },
+          },
+        ],
+      });
+
+      expect(result).toBe('hello');
+    });
+  });
+
   describe('importTextContent', () => {
     it('throws when the tool has no conversionConfig.import', () => {
       const facade = createBlockFacade({}, {} as ToolOptions);
