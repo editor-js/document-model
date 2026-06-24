@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers, jsdoc/require-jsdoc, @typescript-eslint/naming-convention */
 
 import { jest } from '@jest/globals';
-import type { CoreConfigValidated } from '@editorjs/sdk';
 
 let blockSelectedListener: (event: CustomEvent) => void;
 
@@ -19,6 +18,7 @@ jest.unstable_mockModule('@editorjs/sdk', () => ({
     }),
     dispatchEvent: jest.fn(),
   })),
+  EditorJSAdapterPlugin: jest.fn(),
 }));
 
 const fakeFacade = { create: jest.fn(() => ({ render: jest.fn() })) };
@@ -48,20 +48,31 @@ describe('BlockTunesManager', () => {
     },
   };
 
+  const mockTuneAdapter = {};
+
+  const mockAdapter = {
+    getBlockTuneAdapter: jest.fn(() => mockTuneAdapter),
+    createBlockTuneAdapter: jest.fn(() => mockTuneAdapter),
+    createBlockToolAdapter: jest.fn(),
+    destroyBlockToolAdapter: jest.fn(),
+    destroyBlockTuneAdapters: jest.fn(),
+  };
+
   const eventBus = new EventBus();
   // @ts-expect-error — mocked instance
   const toolsManager = new ToolsManager();
 
   new BlockTunesManager(
-    { userId: 'user' } as unknown as CoreConfigValidated,
     eventBus,
     toolsManager,
-    mockApi as unknown as import('../api/index.js').EditorAPI
+    mockApi as unknown as import('../api/index.js').EditorAPI,
+    mockAdapter as never
   );
 
   beforeEach(() => {
     jest.clearAllMocks();
     mockApi.blocks.getIdByIndex.mockReturnValue(mockBlockId);
+    mockAdapter.getBlockTuneAdapter.mockReturnValue(mockTuneAdapter);
   });
 
   it('should emit BlockSelectedCoreEvent with tune instances when a block is selected', () => {
@@ -86,10 +97,32 @@ describe('BlockTunesManager', () => {
     expect(eventBus.dispatchEvent).not.toHaveBeenCalled();
   });
 
-  it('should call facade.create() for each registered tune with blockId and api', () => {
+  it('should call facade.create() for each registered tune with blockId, api, and adapter', () => {
     blockSelectedListener({ detail: { index: 0,
       block: {} } } as unknown as CustomEvent);
 
-    expect(fakeFacade.create).toHaveBeenCalledWith({}, mockBlockId, mockApi);
+    expect(fakeFacade.create).toHaveBeenCalledWith({}, mockBlockId, mockApi, mockTuneAdapter);
+  });
+
+  it('should use an existing adapter when getBlockTuneAdapter returns one', () => {
+    const existingAdapter = { existing: true };
+
+    mockAdapter.getBlockTuneAdapter.mockReturnValue(existingAdapter);
+
+    blockSelectedListener({ detail: { index: 0,
+      block: {} } } as unknown as CustomEvent);
+
+    expect(mockAdapter.createBlockTuneAdapter).not.toHaveBeenCalled();
+    expect(fakeFacade.create).toHaveBeenCalledWith({}, mockBlockId, mockApi, existingAdapter);
+  });
+
+  it('should create a new adapter when getBlockTuneAdapter returns undefined', () => {
+    mockAdapter.getBlockTuneAdapter.mockReturnValue(undefined as never);
+
+    blockSelectedListener({ detail: { index: 0,
+      block: {} } } as unknown as CustomEvent);
+
+    expect(mockAdapter.createBlockTuneAdapter).toHaveBeenCalled();
+    expect(fakeFacade.create).toHaveBeenCalledWith({}, mockBlockId, mockApi, mockTuneAdapter);
   });
 });

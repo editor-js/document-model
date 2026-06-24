@@ -217,6 +217,36 @@ export interface BlocksAPI {
   }): void;
 
   /**
+   * Returns the serialized data for the given tune on a block
+   * @param params.block - index or id of the block
+   * @param params.tuneName - name of the tune
+   */
+  getTuneData(params: {
+    /** Index or id of the block */
+    block: number | string;
+    /** Name of the tune */
+    tuneName: string;
+  }): Record<string, unknown>;
+
+  /**
+   * Updates tune data for the given block and tune name
+   * @param params.block - index or id of the block
+   * @param params.tuneName - name of the tune
+   * @param params.data - new tune data (merged into existing data)
+   * @param [params.userId] - user id
+   */
+  updateTuneData(params: {
+    /** Index or id of the block */
+    block: number | string;
+    /** Name of the tune */
+    tuneName: string;
+    /** New tune data (merged into existing data) */
+    data: Record<string, unknown>;
+    /** User id */
+    userId?: string | number;
+  }): void;
+
+  /**
    * Splits the block at the given data key and character offset.
    * If the tool supports splitting (canBeSplit = true) a new block of the same type is inserted after the current one.
    * Otherwise, the default block is inserted with the content after the caret.

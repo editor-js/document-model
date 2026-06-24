@@ -111,7 +111,12 @@ export class BlockRenderer {
       throw new Error(`[BlockRenderer] Block Tool ${data.name} not found`);
     }
 
-    const blockToolAdapter = this.#adapter.createBlockToolAdapter(createBlockId(data.id), tool.name);
+    const blockId = createBlockId(data.id);
+    const blockToolAdapter = this.#adapter.createBlockToolAdapter(blockId, tool.name);
+
+    for (const tuneName of this.#toolsManager.blockTunes.keys()) {
+      this.#adapter.createBlockTuneAdapter(blockId, tuneName);
+    }
 
     const block = tool.create({
       adapter: blockToolAdapter,
@@ -147,7 +152,10 @@ export class BlockRenderer {
       throw new Error('[BlockRenderer] Block index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
     }
 
-    this.#adapter.destroyBlockToolAdapter(createBlockId(data.id));
+    const removedBlockId = createBlockId(data.id);
+
+    this.#adapter.destroyBlockToolAdapter(removedBlockId);
+    this.#adapter.destroyBlockTuneAdapters(removedBlockId);
 
     this.#eventBus.dispatchEvent(new BlockRemovedCoreEvent({
       tool: data.name,

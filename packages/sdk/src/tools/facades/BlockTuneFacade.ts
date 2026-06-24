@@ -3,6 +3,7 @@ import type { BlockTuneConstructor, BlockTune as IBlockTune, BlockTuneData } fro
 import { ToolType } from '../../entities';
 import type { BlockId } from '@editorjs/model';
 import type { EditorAPI } from '../../api/EditorAPI.js';
+import type { BlockTuneAdapter } from '../../entities/BlockTuneAdapter.js';
 
 /**
  * Facade for BlockTune tools
@@ -23,14 +24,16 @@ export class BlockTuneFacade extends BaseToolFacade<ToolType.Tune, IBlockTune> {
    * @param data - Tune's persistent data
    * @param blockId - ID of the block this tune is bound to
    * @param api - Editor API for performing block operations
+   * @param adapter - Adapter providing data persistence for this tune
    */
-  public create(data: BlockTuneData, blockId: BlockId, api: EditorAPI): IBlockTune {
+  public create(data: BlockTuneData, blockId: BlockId, api: EditorAPI, adapter: BlockTuneAdapter): IBlockTune {
     return new this.constructable({
       config: this.config,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       data,
       api,
       blockId,
+      adapter,
     });
   }
 }

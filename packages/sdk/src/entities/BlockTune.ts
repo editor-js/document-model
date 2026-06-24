@@ -7,6 +7,7 @@ import type { ToolType } from '@/entities/EntityType.js';
 import type { BaseToolConstructor, BaseToolOptions } from '@/entities/BaseTool';
 import type { BlockId } from '@editorjs/model';
 import type { EditorAPI } from '@/api/EditorAPI.js';
+import type { BlockTuneAdapter } from '@/entities/BlockTuneAdapter.js';
 
 /**
  * Options available on **Block Tunes** (`static options` or `use()` overrides).
@@ -56,6 +57,11 @@ export interface BlockTuneConstructorOptions<
    * ID of the block this tune instance is bound to
    */
   blockId: BlockId;
+
+  /**
+   * Adapter providing data persistence and external update subscription for this tune instance
+   */
+  adapter: BlockTuneAdapter;
 }
 
 /**

@@ -17,7 +17,7 @@ import type { CoreConfigValidated, CoreConfig, EditorjsPluginConstructor, BlockT
 import { EditorAPI } from './api/index.js';
 import { generateId } from './utils/uid.js';
 import { Paragraph, BoldInlineTool, LinkInlineTool, ItalicInlineTool } from './tools/internal';
-import { MoveUpTune, DeleteBlockTune, MoveDownTune } from './tunes/internal/index.js';
+import { MoveUpTune, DeleteBlockTune, MoveDownTune } from './tunes/internal';
 import { ShortcutsPlugin } from './plugins/ShortcutsPlugin.js';
 import { DOMAdapters } from '@editorjs/dom-adapters';
 import { BlocksManager } from './components/BlockManager.js';

@@ -19,4 +19,7 @@ export default {
       },
     ],
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(@editorjs|inversify|@inversifyjs))',
+  ],
 } as JestConfigWithTsJest;

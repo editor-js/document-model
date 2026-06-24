@@ -3,12 +3,12 @@ import { inject, injectable } from 'inversify';
 import {
   BlockSelectedCoreEvent,
   BlockSelectedUIEvent,
-  CoreConfigValidated,
+  EditorJSAdapterPlugin,
   EventBus
 } from '@editorjs/sdk';
-import { TOKENS } from '../tokens.js';
 import ToolsManager from '../tools/ToolsManager.js';
 import { EditorAPI } from '../api/index.js';
+import { TOKENS } from '../tokens.js';
 
 /**
  * BlockTunesManager listens for block selection events, instantiates tune instances
@@ -17,10 +17,10 @@ import { EditorAPI } from '../api/index.js';
 @injectable()
 export class BlockTunesManager {
   constructor(
-    @inject(TOKENS.EditorConfig) _config: CoreConfigValidated,
     eventBus: EventBus,
     toolsManager: ToolsManager,
     api: EditorAPI,
+    @inject(TOKENS.Adapter) adapter: EditorJSAdapterPlugin
   ) {
     eventBus.addEventListener('ui:blocks:block-selected', (event: BlockSelectedUIEvent) => {
       const { index } = event.detail;
@@ -31,10 +31,15 @@ export class BlockTunesManager {
       }
 
       const availableBlockTunes = new Map(
-        Array.from(toolsManager.blockTunes.entries()).map(([name, facade]) => [
-          name,
-          facade.create({}, blockId, api),
-        ])
+        Array.from(toolsManager.blockTunes.entries()).map(([name, facade]) => {
+          const tuneAdapter = adapter.getBlockTuneAdapter(blockId, name)
+            ?? adapter.createBlockTuneAdapter(blockId, name);
+
+          return [
+            name,
+            facade.create({}, blockId, api, tuneAdapter),
+          ];
+        })
       );
 
       eventBus.dispatchEvent(new BlockSelectedCoreEvent({
