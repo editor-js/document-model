@@ -662,4 +662,172 @@ describe('BlocksManager (unit, mocked deps)', () => {
       );
     });
   });
+
+  describe('.convertBlock()', () => {
+    beforeEach(() => {
+      model.resolveBlockIndex = jest.fn(() => 0);
+      model.getBlockSerialized = jest.fn(() => ({
+        name: 'header',
+        id: 'b1',
+        data: {
+          text: {
+            value: 'Hello',
+            fragments: []
+          }
+        }
+      }));
+      model.getBlockTextContent = jest.fn(() => ({
+        text: {
+          value: 'Hello',
+          fragments: []
+        }
+      }));
+    });
+
+    it('should export text from source, imports into target, and replaces block at the same index', () => {
+      const sourceTool = { exportTextContent: jest.fn(() => 'Hello') };
+      const targetTool = {
+        importTextContent: jest.fn(() => ({
+          text: {
+            value: 'Hello',
+            fragments: []
+          }
+        }))
+      };
+
+      // @ts-expect-error — mock
+      toolsManager.blockTools.get = jest.fn((name: string) =>
+        name === 'header' ? sourceTool : targetTool
+      );
+
+      blocksManager.convertBlock(0, 'text' as DataKey, 'paragraph');
+
+      expect(sourceTool.exportTextContent).toHaveBeenCalledWith({
+        text: {
+          value: 'Hello',
+          fragments: []
+        }
+      });
+      expect(targetTool.importTextContent).toHaveBeenCalledWith('Hello', []);
+      expect(model.removeBlock).toHaveBeenCalledWith(USER_ID, 0);
+      expect(model.addBlock).toHaveBeenCalledWith(
+        USER_ID,
+        {
+          name: 'paragraph',
+          data: {
+            text: {
+              value: 'Hello',
+              fragments: []
+            }
+          }
+        },
+        0
+      );
+    });
+
+    it('should merge dataOverrides on top of the imported data', () => {
+      const sourceTool = { exportTextContent: jest.fn(() => 'Hello') };
+      const targetTool = {
+        importTextContent: jest.fn(() => ({
+          text: {
+            value: 'Hello',
+            fragments: []
+          }
+        }))
+      };
+
+      // @ts-expect-error — mock
+      toolsManager.blockTools.get = jest.fn((name: string) =>
+        name === 'header' ? sourceTool : targetTool
+      );
+
+      blocksManager.convertBlock(0, 'text' as DataKey, 'paragraph', USER_ID, { level: 2 });
+
+      expect(model.addBlock).toHaveBeenCalledWith(
+        USER_ID,
+        {
+          name: 'paragraph',
+          data: {
+            text: {
+              value: 'Hello',
+              fragments: []
+            },
+            level: 2
+          }
+        },
+        0
+      );
+    });
+
+    it('should throw if dataKey is not found in block text content', () => {
+      // @ts-expect-error — mock
+      toolsManager.blockTools.get = jest.fn(() => ({
+        exportTextContent: jest.fn(() => 'Hello'),
+        importTextContent: jest.fn()
+      }));
+
+      expect(() => blocksManager.convertBlock(0, 'nonexistent' as DataKey, 'paragraph'))
+        .toThrow('Data key "nonexistent" not found in block content');
+    });
+
+    it('should pass fragments from getBlockTextContent to importTextContent', () => {
+      const fragments = [{
+        type: 'bold',
+        range: [0, 5]
+      }];
+
+      model.getBlockTextContent = jest.fn(() => ({
+        text: {
+          value: 'Hello',
+          fragments
+        }
+      }));
+
+      const sourceTool = { exportTextContent: jest.fn(() => 'Hello') };
+      const targetTool = { importTextContent: jest.fn(() => ({})) };
+
+      // @ts-expect-error — mock
+      toolsManager.blockTools.get = jest.fn((name: string) =>
+        name === 'header' ? sourceTool : targetTool
+      );
+
+      blocksManager.convertBlock(0, 'text' as DataKey, 'paragraph');
+
+      expect(targetTool.importTextContent).toHaveBeenCalledWith('Hello', fragments);
+    });
+
+    it('should throw if source tool has no export config', () => {
+      const sourceTool = {
+        exportTextContent: jest.fn(() => {
+          throw new Error('Tool header does not have export configuration for text content');
+        })
+      };
+      const targetTool = { importTextContent: jest.fn() };
+
+      // @ts-expect-error — mock
+      toolsManager.blockTools.get = jest.fn((name: string) =>
+        name === 'header' ? sourceTool : targetTool
+      );
+
+      expect(() => blocksManager.convertBlock(0, 'text' as DataKey, 'paragraph'))
+        .toThrow('does not have export configuration');
+    });
+
+    it('should throw if target tool has no import config', () => {
+      const sourceTool = { exportTextContent: jest.fn(() => 'Hello') };
+      const targetTool = {
+        importTextContent: jest.fn(() => {
+          throw new Error('Tool paragraph does not have import configuration for text content');
+        })
+      };
+
+      // @ts-expect-error — mock
+      toolsManager.blockTools.get = jest.fn((name: string) =>
+        name === 'header' ? sourceTool : targetTool
+      );
+
+      expect(() => blocksManager.convertBlock(0, 'text' as DataKey, 'paragraph'))
+        .toThrow('does not have import configuration');
+    });
+  });
 });

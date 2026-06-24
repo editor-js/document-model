@@ -20,7 +20,7 @@ import type { BlockToolConstructor, BlockToolConstructorOptions, BlockTool, Bloc
 import { ToolType } from '../../entities';
 import { BlockChildType, NODE_TYPE_HIDDEN_PROP } from '@editorjs/model-types';
 import * as keypath from '../../utils/keypath.js';
-import type { InlineFragment } from '@editorjs/model-types';
+import type { InlineFragment, TextNodeSerialized } from '@editorjs/model-types';
 
 /**
  * Class to work with Block tools constructables
@@ -186,6 +186,29 @@ export class BlockToolFacade extends BaseToolFacade<ToolType.Block, BlockTool> {
     });
 
     return result;
+  }
+
+  /**
+   * Returns block data serialized to a plain-text string using the tool's conversion config export function.
+   * If the export config is a function, it is called with the block data.
+   * If the export config is a string keypath, the value at that path is read from the data.
+   * @param data - serialized block data to convert to plain text
+   */
+  public exportTextContent(data: BlockToolData): string {
+    const conversionConfig = this.options[BlockToolOptionKey.ConversionConfig];
+    const exportFnOrProp = conversionConfig?.export;
+
+    if (exportFnOrProp === undefined) {
+      throw new Error(`Tool ${this.name} does not have export configuration for text content`);
+    }
+
+    if (typeof exportFnOrProp === 'function') {
+      return exportFnOrProp(data);
+    }
+
+    const node = keypath.get<TextNodeSerialized>(data, exportFnOrProp);
+
+    return node?.value ?? '';
   }
 
   /**
