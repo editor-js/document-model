@@ -235,7 +235,8 @@ describe('BlocksAPI', () => {
         model
       );
 
-      const result = api.getTuneData({ block: 0, tuneName: 'myTune' });
+      const result = api.getTuneData({ block: 0,
+        tuneName: 'myTune' });
 
       expect(result).toEqual(tuneData);
       expect(model.getBlockSerialized).toHaveBeenCalledWith(0);
@@ -253,7 +254,8 @@ describe('BlocksAPI', () => {
         model
       );
 
-      const result = api.getTuneData({ block: 0, tuneName: 'missingTune' });
+      const result = api.getTuneData({ block: 0,
+        tuneName: 'missingTune' });
 
       expect(result).toEqual({});
     });
@@ -270,7 +272,8 @@ describe('BlocksAPI', () => {
         model
       );
 
-      const result = api.getTuneData({ block: 0, tuneName: 'anyTune' });
+      const result = api.getTuneData({ block: 0,
+        tuneName: 'anyTune' });
 
       expect(result).toEqual({});
     });
@@ -292,7 +295,9 @@ describe('BlocksAPI', () => {
         model
       );
 
-      api.updateTuneData({ block: 1, tuneName: 'align', data: { align: 'center' } });
+      api.updateTuneData({ block: 1,
+        tuneName: 'align',
+        data: { align: 'center' } });
 
       expect(model.updateTuneData).toHaveBeenCalledWith('user1', 1, 'align', { align: 'center' });
     });
@@ -312,7 +317,10 @@ describe('BlocksAPI', () => {
         model
       );
 
-      api.updateTuneData({ block: 0, tuneName: 'align', data: {}, userId: 'overrideUser' });
+      api.updateTuneData({ block: 0,
+        tuneName: 'align',
+        data: {},
+        userId: 'overrideUser' });
 
       expect(model.updateTuneData).toHaveBeenCalledWith('overrideUser', 0, 'align', {});
     });

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+
 import { jest } from '@jest/globals';
 import type { ModelEvents } from '@editorjs/model';
 
@@ -25,10 +27,10 @@ jest.mock('@editorjs/model', () => ({
 jest.mock('@editorjs/sdk', () => {
   class FakeBlockTuneAdapter extends EventTarget {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    _api: any;
-    blockId: string = '';
-    tuneName: string = '';
-    _cleanup: (() => void) | null = null;
+    public _api: any;
+    public blockId: string = '';
+    public tuneName: string = '';
+    public _cleanup: (() => void) | null = null;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     constructor(api: any) {
@@ -39,20 +41,28 @@ jest.mock('@editorjs/sdk', () => {
       this._cleanup = api.document.onUpdate(jest.fn());
     }
 
-    setBlockId(id: string): void { this.blockId = id; }
-    setTuneName(name: string): void { this.tuneName = name; }
+    public setBlockId(id: string): void {
+      this.blockId = id;
+    }
 
-    getData(): Record<string, unknown> {
+    public setTuneName(name: string): void {
+      this.tuneName = name;
+    }
+
+    public getData(): Record<string, unknown> {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      return this._api.blocks.getTuneData({ block: this.blockId, tuneName: this.tuneName });
+      return this._api.blocks.getTuneData({ block: this.blockId,
+        tuneName: this.tuneName });
     }
 
-    setData(data: Record<string, unknown>): void {
+    public setData(data: Record<string, unknown>): void {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      this._api.blocks.updateTuneData({ block: this.blockId, tuneName: this.tuneName, data });
+      this._api.blocks.updateTuneData({ block: this.blockId,
+        tuneName: this.tuneName,
+        data });
     }
 
-    destroy(): void {
+    public destroy(): void {
       if (this._cleanup) {
         this._cleanup();
       }
@@ -68,7 +78,14 @@ jest.mock('@editorjs/sdk', () => {
 import { DOMBlockTuneAdapter } from './index.js';
 
 describe('DOMBlockTuneAdapter', () => {
-  const makeApi = () => {
+  const makeApi = (): {
+    api: {
+      blocks: { getTuneData: ReturnType<typeof jest.fn>; updateTuneData: ReturnType<typeof jest.fn> };
+      document: { onUpdate: ReturnType<typeof jest.fn> };
+    };
+    cleanupFn: ReturnType<typeof jest.fn>;
+    onUpdate: ReturnType<typeof jest.fn>;
+  } => {
     const cleanupFn = jest.fn();
     const onUpdate = jest.fn<() => () => void>().mockReturnValue(cleanupFn);
 
@@ -144,7 +161,8 @@ describe('DOMBlockTuneAdapter', () => {
 
       const result = adapter.getData();
 
-      expect(api.blocks.getTuneData).toHaveBeenCalledWith({ block: 'block-1', tuneName: 'fontSize' });
+      expect(api.blocks.getTuneData).toHaveBeenCalledWith({ block: 'block-1',
+        tuneName: 'fontSize' });
       expect(result).toEqual({ result: true });
     });
   });

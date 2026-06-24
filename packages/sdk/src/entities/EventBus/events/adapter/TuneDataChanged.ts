@@ -5,7 +5,7 @@ import { AdapterEventType } from './AdapterEventType.js';
  */
 export interface TuneDataChangedPayload {
   /**
-   * Changed tune data key
+   * Data key whose value changed
    */
   key: string;
 
@@ -26,13 +26,15 @@ export interface TuneDataChangedPayload {
 export class TuneDataChangedEvent extends CustomEvent<TuneDataChangedPayload> {
   /**
    * TuneDataChangedEvent constructor
-   * @param key - the data key of the tune entry that changed
+   * @param key - which data field changed
    * @param value - new value
    * @param previous - previous value
    */
   constructor(key: string, value: unknown, previous: unknown) {
     super(AdapterEventType.TuneUpdated, {
-      detail: { key, value, previous },
+      detail: { key,
+        value,
+        previous },
     });
   }
 }

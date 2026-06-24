@@ -16,6 +16,12 @@ import { TOKENS } from '../tokens.js';
  */
 @injectable()
 export class BlockTunesManager {
+  /**
+   * @param eventBus - event bus to listen for block selection events on
+   * @param toolsManager - provides the registered block tune facades
+   * @param api - editor API
+   * @param adapter - adapter plugin used to create/get block tune adapters
+   */
   constructor(
     eventBus: EventBus,
     toolsManager: ToolsManager,

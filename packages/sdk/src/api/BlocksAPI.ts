@@ -219,7 +219,7 @@ export interface BlocksAPI {
   /**
    * Returns the serialized data for the given tune on a block
    * @param params.block - index or id of the block
-   * @param params.tuneName - name of the tune
+   * @param params.tuneName - tune to read data from
    */
   getTuneData(params: {
     /** Index or id of the block */
@@ -231,7 +231,7 @@ export interface BlocksAPI {
   /**
    * Updates tune data for the given block and tune name
    * @param params.block - index or id of the block
-   * @param params.tuneName - name of the tune
+   * @param params.tuneName - tune to update data for
    * @param params.data - new tune data (merged into existing data)
    * @param [params.userId] - user id
    */

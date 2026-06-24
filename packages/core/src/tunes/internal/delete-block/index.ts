@@ -8,7 +8,7 @@ import type { BlockId } from '@editorjs/model';
  * Internal tune that deletes the current block
  */
 export class DeleteBlockTune implements BlockTune {
-  public static readonly type = ToolType.Tune as const;
+  public static readonly type = ToolType.Tune;
   public static readonly name = 'deleteBlock';
 
   public readonly title = 'Delete';
@@ -17,11 +17,19 @@ export class DeleteBlockTune implements BlockTune {
   #api: EditorAPI;
   #blockId: BlockId;
 
+  /**
+   * @param options - tune constructor options
+   * @param options.api - editor API
+   * @param options.blockId - id of the block this tune is attached to
+   */
   constructor({ api, blockId }: BlockTuneConstructorOptions) {
     this.#api = api;
     this.#blockId = blockId;
   }
 
+  /**
+   * Deletes the block this tune is attached to
+   */
   public activate(): void {
     const index = this.#api.blocks.getIndexById(String(this.#blockId));
 

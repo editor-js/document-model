@@ -27,14 +27,14 @@ export interface EditorJSAdapterPlugin extends EditorjsPlugin {
    * Factory for the BlockTuneAdapter. Creates and registers an adapter for a
    * specific tune on a specific block.
    * @param blockId - unique identifier of the block
-   * @param tuneName - name of the tune
+   * @param tuneName - tune to create the adapter for
    */
   createBlockTuneAdapter(blockId: BlockId, tuneName: string): BlockTuneAdapter;
 
   /**
    * Returns the BlockTuneAdapter for the given block and tune, if one exists.
    * @param blockId - unique identifier of the block
-   * @param tuneName - name of the tune
+   * @param tuneName - tune to look up the adapter for
    */
   getBlockTuneAdapter(blockId: BlockId, tuneName: string): BlockTuneAdapter | undefined;
 

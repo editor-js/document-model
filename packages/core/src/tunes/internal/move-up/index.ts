@@ -8,7 +8,7 @@ import type { BlockId } from '@editorjs/model';
  * Internal tune that moves the current block one position up
  */
 export class MoveUpTune implements BlockTune {
-  public static readonly type = ToolType.Tune as const;
+  public static readonly type = ToolType.Tune;
   public static readonly name = 'moveUp';
 
   public readonly title = 'Move up';
@@ -17,15 +17,26 @@ export class MoveUpTune implements BlockTune {
   #api: EditorAPI;
   #blockId: BlockId;
 
+  /**
+   * @param options - tune constructor options
+   * @param options.api - editor API
+   * @param options.blockId - id of the block this tune is attached to
+   */
   constructor({ api, blockId }: BlockTuneConstructorOptions) {
     this.#api = api;
     this.#blockId = blockId;
   }
 
+  /**
+   * Whether the block is already first, so it cannot move up further
+   */
   public isDisabled(): boolean {
     return this.#api.blocks.getIndexById(String(this.#blockId)) === 0;
   }
 
+  /**
+   * Moves the block this tune is attached to one position up
+   */
   public activate(): void {
     const index = this.#api.blocks.getIndexById(String(this.#blockId));
 

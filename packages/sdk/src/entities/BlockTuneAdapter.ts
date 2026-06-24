@@ -46,7 +46,7 @@ export abstract class BlockTuneAdapter extends EventTarget {
 
   /**
    * Sets the block id this adapter is bound to
-   * @param id - block id
+   * @param id - unique identifier of the block to bind to
    */
   public setBlockId(id: BlockId): void {
     this.blockId = id;
@@ -54,7 +54,7 @@ export abstract class BlockTuneAdapter extends EventTarget {
 
   /**
    * Sets the tune name this adapter is bound to
-   * @param name - tune name
+   * @param name - tune to bind to
    */
   public setTuneName(name: string): void {
     this.tuneName = name;
@@ -113,6 +113,7 @@ export abstract class BlockTuneAdapter extends EventTarget {
       return;
     }
 
+    // eslint-disable-next-line jsdoc/require-jsdoc
     const { value, previous } = event.detail.data as { value: unknown; previous: unknown };
     const tuneKey = event.detail.index.tuneKey ?? '';
 
@@ -123,7 +124,7 @@ export abstract class BlockTuneAdapter extends EventTarget {
 
   /**
    * Hook for subclasses to react to model updates for their block/tune
-   * @param event - model event
+   * @param event - the model update event to handle
    */
   protected abstract handleModelUpdate(event: ModelEvents): void;
 }

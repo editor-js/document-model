@@ -1,6 +1,7 @@
-/* eslint-disable @typescript-eslint/no-magic-numbers, jsdoc/require-jsdoc, @typescript-eslint/naming-convention */
+/* eslint-disable jsdoc/require-jsdoc, @typescript-eslint/naming-convention */
 
 import { jest } from '@jest/globals';
+import type { EditorAPI } from '../api/index.js';
 
 let blockSelectedListener: (event: CustomEvent) => void;
 
@@ -65,7 +66,7 @@ describe('BlockTunesManager', () => {
   new BlockTunesManager(
     eventBus,
     toolsManager,
-    mockApi as unknown as import('../api/index.js').EditorAPI,
+    mockApi as unknown as EditorAPI,
     mockAdapter as never
   );
 

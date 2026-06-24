@@ -1,6 +1,8 @@
-/* eslint-disable @typescript-eslint/no-magic-numbers, jsdoc/require-jsdoc, @typescript-eslint/naming-convention */
+/* eslint-disable @typescript-eslint/no-magic-numbers, @typescript-eslint/naming-convention */
 
 import { jest } from '@jest/globals';
+import type { BlockId } from '@editorjs/model';
+import type { EditorAPI } from '@editorjs/sdk';
 
 jest.unstable_mockModule('@editorjs/sdk', () => ({
   ToolType: { Tune: 'tune' },
@@ -20,10 +22,10 @@ describe('MoveUpTune', () => {
     },
   };
 
-  const mockBlockId = 'block-id-123' as unknown as import('@editorjs/model').BlockId;
+  const mockBlockId = 'block-id-123' as unknown as BlockId;
 
   const tune = new MoveUpTune({
-    api: mockApi as unknown as import('@editorjs/sdk').EditorAPI,
+    api: mockApi as unknown as EditorAPI,
     blockId: mockBlockId,
     data: undefined,
     config: {},

@@ -1,4 +1,4 @@
-/* eslint-disable jsdoc/require-jsdoc, @typescript-eslint/naming-convention */
+/* eslint-disable jsdoc/require-jsdoc */
 
 import { describe, expect, it, jest } from '@jest/globals';
 import { ToolType } from '../../entities/EntityType.js';
@@ -7,12 +7,14 @@ import type { BlockTuneConstructor, BlockTuneConstructorOptions } from '../../en
 import type { EditorAPI } from '../../api/EditorAPI.js';
 import type { BlockTuneAdapter } from '../../entities/BlockTuneAdapter.js';
 import type { BlockId } from '@editorjs/model';
+import type { API } from '@editorjs/editorjs';
 
 const mockBlockId = 'test-block-id' as unknown as BlockId;
 const mockApi = {} as EditorAPI;
 const mockAdapter = {} as BlockTuneAdapter;
 
-function createTuneFacade(): { facade: BlockTuneFacade; constructorSpy: jest.Mock } {
+function createTuneFacade(): { facade: BlockTuneFacade;
+  constructorSpy: jest.Mock; } {
   const constructorSpy = jest.fn();
 
   class MockTune {
@@ -32,7 +34,7 @@ function createTuneFacade(): { facade: BlockTuneFacade; constructorSpy: jest.Moc
     name: 'mockTune',
     constructable: MockTune as unknown as BlockTuneConstructor,
     useToolOptions: {},
-    api: {} as import('@editorjs/editorjs').API,
+    api: {} as API,
     isDefault: false,
     defaultPlaceholder: false,
   });
