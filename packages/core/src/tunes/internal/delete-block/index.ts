@@ -18,7 +18,7 @@ export class DeleteBlockTune implements BlockTune {
   #blockId: BlockId;
 
   /**
-   * @param options - tune constructor options
+   * @param options - api and blockId needed to wire up this tune
    * @param options.api - editor API
    * @param options.blockId - id of the block this tune is attached to
    */

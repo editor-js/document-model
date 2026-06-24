@@ -25,10 +25,10 @@ export interface TuneDataChangedPayload {
  */
 export class TuneDataChangedEvent extends CustomEvent<TuneDataChangedPayload> {
   /**
-   * TuneDataChangedEvent constructor
+   * Creates a tune data change event for the given key
    * @param key - which data field changed
    * @param value - new value
-   * @param previous - previous value
+   * @param previous - value before the change
    */
   constructor(key: string, value: unknown, previous: unknown) {
     super(AdapterEventType.TuneUpdated, {

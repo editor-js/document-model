@@ -80,7 +80,8 @@ import { DOMBlockTuneAdapter } from './index.js';
 describe('DOMBlockTuneAdapter', () => {
   const makeApi = (): {
     api: {
-      blocks: { getTuneData: ReturnType<typeof jest.fn>; updateTuneData: ReturnType<typeof jest.fn> };
+      blocks: { getTuneData: ReturnType<typeof jest.fn>;
+        updateTuneData: ReturnType<typeof jest.fn>; };
       document: { onUpdate: ReturnType<typeof jest.fn> };
     };
     cleanupFn: ReturnType<typeof jest.fn>;

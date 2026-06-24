@@ -233,7 +233,7 @@ export interface BlocksAPI {
    * @param params.block - index or id of the block
    * @param params.tuneName - tune to update data for
    * @param params.data - new tune data (merged into existing data)
-   * @param [params.userId] - user id
+   * @param [params.userId] - defaults to the current user id from the config
    */
   updateTuneData(params: {
     /** Index or id of the block */

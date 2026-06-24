@@ -29,6 +29,7 @@ describe('MoveUpTune', () => {
     blockId: mockBlockId,
     data: undefined,
     config: {},
+    adapter: {} as never,
   });
 
   beforeEach(() => {

@@ -4,6 +4,21 @@ import type { EditorAPI } from '../api/index.js';
 import { TuneDataChangedEvent } from './EventBus/events/adapter/index.js';
 
 /**
+ * Shape of the detail.data payload carried by TuneModifiedEvent
+ */
+interface TuneDataChangePayload {
+  /**
+   * Updated tune data
+   */
+  value: unknown;
+
+  /**
+   * Tune data before the update
+   */
+  previous: unknown;
+}
+
+/**
  * Abstract BlockTuneAdapter class — provides data persistence and model-update
  * subscription for a single block tune instance.
  *
@@ -113,8 +128,8 @@ export abstract class BlockTuneAdapter extends EventTarget {
       return;
     }
 
-    // eslint-disable-next-line jsdoc/require-jsdoc
-    const { value, previous } = event.detail.data as { value: unknown; previous: unknown };
+    const tuneDataChange = event.detail.data as TuneDataChangePayload;
+    const { value, previous } = tuneDataChange;
     const tuneKey = event.detail.index.tuneKey ?? '';
 
     this.dispatchEvent(new TuneDataChangedEvent(tuneKey, value, previous));
@@ -124,7 +139,7 @@ export abstract class BlockTuneAdapter extends EventTarget {
 
   /**
    * Hook for subclasses to react to model updates for their block/tune
-   * @param event - the model update event to handle
+   * @param eventDetails - carries the changed model data
    */
-  protected abstract handleModelUpdate(event: ModelEvents): void;
+  protected abstract handleModelUpdate(eventDetails: ModelEvents): void;
 }

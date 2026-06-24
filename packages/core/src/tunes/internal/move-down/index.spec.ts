@@ -30,6 +30,7 @@ describe('MoveDownTune', () => {
     blockId: mockBlockId,
     data: undefined,
     config: {},
+    adapter: {} as never,
   });
 
   beforeEach(() => {

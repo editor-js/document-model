@@ -7,7 +7,6 @@ import type { BlockTuneConstructor, BlockTuneConstructorOptions } from '../../en
 import type { EditorAPI } from '../../api/EditorAPI.js';
 import type { BlockTuneAdapter } from '../../entities/BlockTuneAdapter.js';
 import type { BlockId } from '@editorjs/model';
-import type { API } from '@editorjs/editorjs';
 
 const mockBlockId = 'test-block-id' as unknown as BlockId;
 const mockApi = {} as EditorAPI;
@@ -34,7 +33,7 @@ function createTuneFacade(): { facade: BlockTuneFacade;
     name: 'mockTune',
     constructable: MockTune as unknown as BlockTuneConstructor,
     useToolOptions: {},
-    api: {} as API,
+    api: {} as EditorAPI,
     isDefault: false,
     defaultPlaceholder: false,
   });
