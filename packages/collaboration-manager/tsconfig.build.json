@@ -13,9 +13,6 @@
   "references": [
     {
       "path": "../sdk/tsconfig.build.json"
-    },
-    {
-      "path": "../model/tsconfig.build.json"
     }
   ]
 }

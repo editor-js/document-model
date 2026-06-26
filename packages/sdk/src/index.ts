@@ -62,6 +62,10 @@ export {
   TextFormattedEvent,
   TextUnformattedEvent,
   CaretManagerCaretUpdatedEvent,
+  CaretManagerCaretAddedEvent,
+  CaretManagerCaretRemovedEvent,
   BlockAddedEvent,
-  BlockRemovedEvent
+  BlockRemovedEvent,
+  PropertyModifiedEvent,
+  TuneModifiedEvent
 } from '@editorjs/model-types';

@@ -29,8 +29,7 @@ import type { DeepReadonly } from '../../utils/DeepReadonly.js';
 import {
   BlockAddedEvent,
   BlockRemovedEvent,
-  PropertyModifiedEvent,
-  TuneModifiedEvent
+  PropertyModifiedEvent
 } from '@editorjs/model-types';
 import type { Constructor } from '../../utils/types.js';
 import { BaseDocumentEvent, type ModifiedEventData, type TextFormattedEventData, type TextUnformattedEventData } from '@editorjs/model-types';
