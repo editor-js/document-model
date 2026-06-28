@@ -1,23 +1,13 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers, jsdoc/require-jsdoc,@typescript-eslint/naming-convention */
 
 import { jest } from '@jest/globals';
-import type { CoreConfigValidated } from '@editorjs/sdk';
-// @ts-expect-error - TS don't import types via import() so have to import them here as well
-import type { CaretManagerEvents, InlineFragment, InlineToolName, EventType, Index, FormattingAction } from '@editorjs/model';
+import type { CoreConfigValidated, CaretManagerEvents, InlineToolName, FormattingAction } from '@editorjs/sdk';
+import type { InlineFragment } from '@editorjs/sdk';
+// @ts-expect-error -- type imports
+import type { EventType, Index } from '@editorjs/sdk';
 
 // Register ESM mocks before importing the module under test
 jest.unstable_mockModule('@editorjs/model', () => {
-  const caretManagerCaretUpdatedEvent = function (
-    this: { detail: Record<string, unknown> },
-    detail: Record<string, unknown>
-  ): void {
-    this.detail = detail;
-  };
-
-  const eventType: Record<string, string> = {};
-
-  eventType.CaretManagerUpdated = 'caret-updated';
-
   const EditorJSModel = jest.fn(() => ({
     addEventListener: jest.fn(),
     getFragments: jest.fn(() => []),
@@ -27,6 +17,12 @@ jest.unstable_mockModule('@editorjs/model', () => {
     serialized: { blocks: [] },
   }));
 
+  return {
+    EditorJSModel,
+  };
+});
+
+jest.unstable_mockModule('@editorjs/sdk', () => {
   class IndexBuilderMock {
     public from = jest.fn(() => this);
     public addTextRange = jest.fn(() => this);
@@ -34,26 +30,29 @@ jest.unstable_mockModule('@editorjs/model', () => {
   }
 
   return {
-    EditorJSModel,
-    CaretManagerCaretUpdatedEvent: caretManagerCaretUpdatedEvent,
+    CoreEventType: { ToolLoaded: 'tool-loaded' },
+    SelectionChangedCoreEvent: jest.fn(function (this: { detail: unknown }, detail: unknown) {
+      this.detail = detail;
+    }),
+    EventBus: jest.fn(() => ({ dispatchEvent: jest.fn() })),
+    IndexError: class IndexError extends Error {},
+    CaretManagerCaretUpdatedEvent: function (
+      this: { detail: Record<string, unknown> },
+      detail: Record<string, unknown>
+    ): void {
+      this.detail = detail;
+    },
     Index: { parse: jest.fn() },
     IndexBuilder: IndexBuilderMock,
-    EventType: eventType,
+    EventType: { CaretManagerUpdated: 'caret-updated' },
     createInlineToolData: (data: Record<string, unknown>) => data,
     createInlineToolName: (name: string) => name,
-    FormattingAction: { Format: 'format',
-      Unformat: 'unformat' },
+    FormattingAction: {
+      Format: 'format',
+      Unformat: 'unformat',
+    },
   };
 });
-
-jest.unstable_mockModule('@editorjs/sdk', () => ({
-  CoreEventType: { ToolLoaded: 'tool-loaded' },
-  SelectionChangedCoreEvent: jest.fn(function (this: { detail: unknown }, detail: unknown) {
-    this.detail = detail;
-  }),
-  EventBus: jest.fn(() => ({ dispatchEvent: jest.fn() })),
-  IndexError: class IndexError extends Error {},
-}));
 
 jest.unstable_mockModule('../tools/ToolsManager', () => ({
   default: jest.fn(() => ({
@@ -61,8 +60,8 @@ jest.unstable_mockModule('../tools/ToolsManager', () => ({
   })),
 }));
 
-const { EditorJSModel, EventType, CaretManagerCaretUpdatedEvent, Index } = await import('@editorjs/model');
-const { SelectionChangedCoreEvent, EventBus } = await import('@editorjs/sdk');
+const { EditorJSModel } = await import('@editorjs/model');
+const { CaretManagerCaretUpdatedEvent, EventType, Index, SelectionChangedCoreEvent, EventBus } = await import('@editorjs/sdk');
 const ToolsManager = (await import('../tools/ToolsManager')).default;
 const { SelectionManager } = await import('./SelectionManager.js');
 

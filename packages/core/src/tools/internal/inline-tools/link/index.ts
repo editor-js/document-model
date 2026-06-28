@@ -1,18 +1,20 @@
 import type {
   EditorAPI,
   InlineTool,
+  InlineToolFormatData,
   InlineToolConstructor,
   InlineToolConstructorOptions,
-  InlineToolFormatData,
+  TextRange,
+  InlineFragment,
   ToolFormattingOptions,
   MenuConfig
 } from '@editorjs/sdk';
-import { ToolType, PopoverItemType } from '@editorjs/sdk';
-/**
- * @todo Export these types from SDK so Tool doesn't need to add model as a dependency.
- */
-import type { InlineFragment, TextRange } from '@editorjs/model';
-import { FormattingAction, IntersectType } from '@editorjs/model';
+import {
+  ToolType,
+  FormattingAction,
+  IntersectType,
+  PopoverItemType
+} from '@editorjs/sdk';
 import { make } from '@editorjs/dom';
 import { IconLink, IconUnlink } from '@codexteam/icons';
 

@@ -1,4 +1,4 @@
-import type { EditorDocumentSerialized } from '@editorjs/model';
+import type { EditorDocumentSerialized } from '@editorjs/sdk';
 import { Operation, OperationType, type SerializedOperation } from '../Operation.js';
 import type { HandshakeMessage, HandshakePayload, Message, OperationMessage } from './Message.js';
 import { MessageType } from './MessageType.js';

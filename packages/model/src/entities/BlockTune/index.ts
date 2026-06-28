@@ -1,9 +1,12 @@
 import { getContext } from '../../utils/Context.js';
-import { IndexBuilder } from '../Index/IndexBuilder.js';
-import type { BlockTuneConstructorParameters, BlockTuneSerialized, BlockTuneName } from './types/index.js';
-import { createBlockTuneName } from './types/index.js';
-import { EventBus } from '../../EventBus/EventBus.js';
-import { TuneModifiedEvent } from '../../EventBus/events/index.js';
+import type { BlockTuneConstructorParameters } from './types/index.js';
+import {
+  IndexBuilder,
+  type BlockTuneSerialized,
+  type BlockTuneName,
+  EventBus,
+  TuneModifiedEvent
+} from '@editorjs/model-types';
 
 /**
  * BlockTune class represents a set of additional information associated with a BlockNode.
@@ -62,10 +65,3 @@ export class BlockTune extends EventBus {
     return this.#data;
   }
 }
-
-export type { BlockTuneName };
-export { createBlockTuneName };
-
-export type {
-  BlockTuneSerialized
-};

@@ -1,10 +1,10 @@
-import type { Index } from '../entities/Index/index.js';
+import type { Index } from '@editorjs/model-types';
 import {
   CaretManagerCaretAddedEvent,
   CaretManagerCaretRemovedEvent,
   CaretManagerCaretUpdatedEvent,
   EventBus
-} from '../EventBus/index.js';
+} from '@editorjs/model-types';
 import { Caret } from './Caret/Caret.js';
 import { CaretEvent } from './Caret/types.js';
 
@@ -36,7 +36,7 @@ export class CaretManager extends EventBus {
 
     this.#registry.set(caret.userId, caret);
 
-    caret.addEventListener(CaretEvent.Updated, event => this.updateCaret(event.detail));
+    caret.addEventListener(CaretEvent.Updated, (event: Event) => this.updateCaret((event as CustomEvent<Caret>).detail));
 
     this.dispatchEvent(new CaretManagerCaretAddedEvent(caret.toJSON()));
 

@@ -1,5 +1,5 @@
-import type { DocumentId, Index } from '@editorjs/model';
-import { createDataKey, IndexBuilder } from '@editorjs/model';
+import type { DocumentId, Index } from '@editorjs/sdk';
+import { createDataKey, IndexBuilder } from '@editorjs/sdk';
 import { Operation, OperationType } from './Operation.js';
 import { OperationsTransformer } from './OperationsTransformer.js';
 

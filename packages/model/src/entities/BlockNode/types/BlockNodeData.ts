@@ -1,4 +1,4 @@
-import type { DataKey } from './DataKey.js';
+import type { DataKey } from '@editorjs/model-types';
 import type { ValueNode } from '../../ValueNode/index.js';
 import type { TextNode } from '../../inline-fragments/index.js';
 

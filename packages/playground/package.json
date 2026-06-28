@@ -20,6 +20,7 @@
     "@editorjs/core": "workspace:^",
     "@editorjs/dom-adapters": "workspace:^",
     "@editorjs/model": "workspace:^",
+    "@editorjs/sdk": "workspace:^",
     "@editorjs/ui": "workspace:*",
     "vue": "^3.3.4"
   },

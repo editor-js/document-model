@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
-import type { BlockNodeSerialized, DataKey, DocumentIndex } from '@editorjs/model';
-import { IndexBuilder } from '@editorjs/model';
+import type { BlockNodeSerialized, DataKey, DocumentIndex } from '@editorjs/sdk';
+import { IndexBuilder } from '@editorjs/sdk';
 import { describe } from '@jest/globals';
 import { type InsertOrDeleteOperationData, type ModifyOperationData, Operation, OperationType } from './Operation.js';
 

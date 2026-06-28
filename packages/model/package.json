@@ -6,9 +6,9 @@
   "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
-    "build": "tsc --project tsconfig.build.json",
+    "build": "yarn clear && tsc --build tsconfig.build.json",
     "build:declaration": "yarn build --emitDeclarationOnly",
-    "dev": "tsc --project tsconfig.build.json --watch",
+    "dev": "yarn build --watch",
     "lint": "eslint ./src",
     "lint:ci": "yarn lint --max-warnings 0",
     "lint:fix": "yarn lint --fix",
@@ -17,13 +17,19 @@
     "test:mutations": "stryker run",
     "clear": "rm -rf ./dist && rm -rf ./tsconfig.build.tsbuildinfo"
   },
+  "dependencies": {
+    "@editorjs/model-types": "workspace:^"
+  },
   "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.2",
     "@jest/globals": "^29.7.0",
     "@stryker-mutator/core": "^7.0.2",
     "@stryker-mutator/jest-runner": "^7.0.2",
     "@stryker-mutator/typescript-checker": "^7.0.2",
     "@types/eslint": "^8",
-    "@types/jest": "^29.5.1",
+    "@types/jest": "^29.5.12",
+    "babel-jest": "^29.7.0",
     "eslint": "^8.38.0",
     "eslint-config-codex": "^2.0.3",
     "eslint-plugin-import": "^2.29.0",

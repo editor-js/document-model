@@ -1,3 +1,4 @@
+import { EditorJSModel, mergeTextNodes, sliceFragments } from '@editorjs/model';
 import {
   BlockIndexOrId,
   BlockChildType,
@@ -5,13 +6,11 @@ import {
   type BlockNodeInit,
   type DataKey,
   type EditorDocumentSerialized,
-  EditorJSModel,
   type InlineTreeNodeSerialized,
-  keypath,
-  mergeTextNodes,
   NODE_TYPE_HIDDEN_PROP,
-  sliceFragments
-} from '@editorjs/model';
+  renumberKeys,
+  set
+} from '@editorjs/sdk';
 import 'reflect-metadata';
 import { inject, injectable } from 'inversify';
 import { TOKENS } from '../tokens.js';
@@ -357,10 +356,10 @@ export class BlocksManager {
       /**
        * In case data contains an array, we need to renumber the keys to start from 0
        */
-      const renumbered = keypath.renumberKeys(entriesAfter.map(([key]) => key));
+      const renumbered = renumberKeys(entriesAfter.map(([key]) => key));
 
       entriesAfter.forEach(([key, content]) => {
-        keypath.set(newData, renumbered.get(key) ?? key, content);
+        set(newData, renumbered.get(key) ?? key, content);
       });
     }
 

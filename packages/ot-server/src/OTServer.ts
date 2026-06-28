@@ -5,7 +5,7 @@ import {
   Operation,
   type SerializedOperation
 } from '@editorjs/collaboration-manager';
-import type { DocumentId } from '@editorjs/model';
+import type { DocumentId } from '@editorjs/sdk';
 import { type WebSocket, WebSocketServer } from 'ws';
 import { DocumentManager } from './DocumentManager.js';
 import process from 'process';

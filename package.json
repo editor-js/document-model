@@ -10,6 +10,10 @@
     "build": "yarn workspaces foreach -At run build",
     "test": "yarn workspaces foreach -A run test",
     "lint": "yarn workspaces foreach -A run lint",
-    "lint:fix": "yarn workspaces foreach -A run lint --fix"
+    "lint:fix": "yarn workspaces foreach -A run lint --fix",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
   }
 }

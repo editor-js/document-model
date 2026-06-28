@@ -1,8 +1,7 @@
-import { EventBus } from '../../../EventBus/EventBus.js';
-import { create } from '../../../utils/index.js';
-import type { DataKey } from '../types/index.js';
-import type { BlockId } from '../types/BlockId.js';
-import { createBlockId } from '../types/BlockId.js';
+import { EventBus, create } from '@editorjs/model-types';
+import type { DataKey } from '@editorjs/model-types';
+import type { BlockId } from '@editorjs/model-types';
+import { createBlockId } from '@editorjs/model-types';
 
 export const createDataKey = create<DataKey>();
 

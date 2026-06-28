@@ -1,5 +1,5 @@
 /* eslint-disable jsdoc/require-jsdoc */
-import type { BlockToolName, InlineToolName } from '../entities/index.js';
+import type { BlockToolName, InlineToolName } from '@editorjs/model-types';
 import type { BlockToolConstructable, InlineToolConstructable } from './types/index.js';
 
 /**

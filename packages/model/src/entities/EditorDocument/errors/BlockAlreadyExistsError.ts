@@ -1,4 +1,4 @@
-import type { BlockId } from '../../BlockNode/types/BlockId.js';
+import type { BlockId } from '@editorjs/model-types';
 
 /**
  * Error thrown when attempting to add a block whose id already exists in the document.

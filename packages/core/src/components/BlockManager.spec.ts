@@ -1,13 +1,19 @@
 /* eslint-disable @stylistic/comma-dangle,@typescript-eslint/naming-convention,@typescript-eslint/no-magic-numbers */
 import { beforeEach, jest } from '@jest/globals';
 import type { CoreConfigValidated } from '@editorjs/sdk';
-import type { DataKey } from '@editorjs/model';
+import type { DataKey } from '@editorjs/sdk';
 
 const BLOCKS_COUNT = 7;
 const USER_ID = 'user';
 
 jest.unstable_mockModule('@editorjs/sdk', () => ({
-  EventBus: jest.fn(),
+  EventBus: jest.fn(() => ({ dispatchEvent: jest.fn() })),
+  EventType: { Changed: 'changed' },
+  BlockChildType: { Text: 't' },
+  NODE_TYPE_HIDDEN_PROP: '$t',
+  createBlockId: jest.fn((id: string) => id as never),
+  set: jest.fn(() => undefined),
+  renumberKeys: jest.fn(() => new Map()),
 }));
 
 // Register ESM mocks before importing the module under test
@@ -30,31 +36,10 @@ jest.unstable_mockModule('@editorjs/model', () => {
     },
   }));
 
-  const EventBus = jest.fn(() => ({ dispatchEvent: jest.fn() }));
-
-  const EventType = { Changed: 'changed' };
-
-  const keypath = {
-    set: jest.fn(),
-    get: jest.fn(),
-    has: jest.fn(),
-    renumberKeys: jest.fn(() => new Map()),
-  };
-
-  const sliceFragments = jest.fn((frags: unknown[]) => frags);
-  const mergeTextNodes = jest.fn((_entries: unknown[], initial: unknown) => initial);
-  const NODE_TYPE_HIDDEN_PROP = '$t';
-  const BlockChildType = { Text: 't' };
-
   return {
     EditorJSModel,
-    EventBus,
-    EventType,
-    keypath,
-    sliceFragments,
-    mergeTextNodes,
-    NODE_TYPE_HIDDEN_PROP,
-    BlockChildType,
+    mergeTextNodes: jest.fn((_entries: unknown[], initial: unknown) => initial),
+    sliceFragments: jest.fn((frags: unknown[]) => frags),
   };
 });
 
@@ -67,7 +52,8 @@ jest.unstable_mockModule('../tools/ToolsManager', () => ({
 }));
 
 // Now import the modules (they will receive the mocks registered above)
-const { EditorJSModel, EventBus, keypath, mergeTextNodes, sliceFragments } = await import('@editorjs/model');
+const { EditorJSModel, mergeTextNodes, sliceFragments } = await import('@editorjs/model');
+const { EventBus, set, renumberKeys } = await import('@editorjs/sdk');
 const ToolsManager = (await import('../tools/ToolsManager')).default;
 const { BlocksManager } = await import('./BlockManager.js');
 
@@ -333,10 +319,8 @@ describe('BlocksManager (unit, mocked deps)', () => {
      * Restore split-specific mock implementations that jest.resetAllMocks() clears.
      */
     beforeEach(() => {
-      // @ts-expect-error — jest mock
-      keypath.renumberKeys.mockReturnValue(new Map());
-      // @ts-expect-error — jest mock
-      keypath.set.mockImplementation(() => undefined);
+      jest.mocked(renumberKeys).mockReturnValue(new Map());
+      jest.mocked(set).mockImplementation(() => undefined);
       // @ts-expect-error — jest mock
       mergeTextNodes.mockImplementation((_entries: unknown[], init: unknown) => init);
       // @ts-expect-error — jest mock
@@ -514,20 +498,19 @@ describe('BlocksManager (unit, mocked deps)', () => {
       // @ts-expect-error — mock
       toolsManager.blockTools.get = jest.fn(() => ({ options: { canBeSplit: true } }));
 
-      // @ts-expect-error — jest mock
-      keypath.renumberKeys.mockReturnValue(new Map([['caption', 'caption']]));
+      jest.mocked(renumberKeys).mockReturnValue(new Map([['caption', 'caption']]));
 
       blocksManager.splitBlock(0, 'title' as DataKey, 3);
 
-      // keypath.set should be called for the split input and for each entry after
-      expect(keypath.set).toHaveBeenCalledTimes(2);
-      expect(keypath.set).toHaveBeenNthCalledWith(
+      // set should be called for the split input and for each entry after
+      expect(jest.mocked(set)).toHaveBeenCalledTimes(2);
+      expect(jest.mocked(set)).toHaveBeenNthCalledWith(
         1,
         expect.any(Object),
         'title',
         expect.objectContaining({ value: 'lo' }) // 'Hello'.slice(3)
       );
-      expect(keypath.set).toHaveBeenNthCalledWith(
+      expect(jest.mocked(set)).toHaveBeenNthCalledWith(
         2,
         expect.any(Object),
         'caption',
@@ -555,7 +538,7 @@ describe('BlocksManager (unit, mocked deps)', () => {
 
       blocksManager.splitBlock(0, 'items.0.text' as DataKey, 3);
 
-      expect(keypath.renumberKeys).toHaveBeenCalledWith(['items.0.text', 'items.1.text', 'items.2.text']);
+      expect(renumberKeys).toHaveBeenCalledWith(['items.0.text', 'items.1.text', 'items.2.text']);
     });
 
     it('canBeSplit = true: array-indexed inputs — should use renumbered keys when setting subsequent inputs', () => {
@@ -580,8 +563,7 @@ describe('BlocksManager (unit, mocked deps)', () => {
       toolsManager.blockTools.get = jest.fn(() => ({ options: { canBeSplit: true } }));
 
       // Simulate renumberKeys: items.1 → 0, items.2 → 1
-      // @ts-expect-error — jest mock
-      keypath.renumberKeys.mockReturnValue(
+      jest.mocked(renumberKeys).mockReturnValue(
         new Map([
           ['items.1.text', 'items.0.text'],
           ['items.2.text', 'items.1.text'],
@@ -590,12 +572,12 @@ describe('BlocksManager (unit, mocked deps)', () => {
 
       blocksManager.splitBlock(0, 'items.0.text' as DataKey, 3);
 
-      expect(keypath.set).toHaveBeenCalledWith(
+      expect(jest.mocked(set)).toHaveBeenCalledWith(
         expect.any(Object),
         'items.0.text', // renumbered from items.1.text
         item1Content
       );
-      expect(keypath.set).toHaveBeenCalledWith(
+      expect(jest.mocked(set)).toHaveBeenCalledWith(
         expect.any(Object),
         'items.1.text', // renumbered from items.2.text
         item2Content

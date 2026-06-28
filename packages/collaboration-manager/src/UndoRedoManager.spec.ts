@@ -1,5 +1,5 @@
-import type { DocumentId } from '@editorjs/model';
-import { createDataKey, IndexBuilder } from '@editorjs/model';
+import type { DocumentId } from '@editorjs/sdk';
+import { createDataKey, IndexBuilder } from '@editorjs/sdk';
 import { describe } from '@jest/globals';
 import { jest } from '@jest/globals';
 import { Operation, OperationType } from './Operation.js';

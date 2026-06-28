@@ -5,12 +5,11 @@ function findCoverageJson(dir) {
   if (!dir) return null;
   const report = path.join(dir, 'coverage', 'coverage-summary.json');
 
-
   if (fs.existsSync(report)) {
     try {
       return JSON.parse(fs.readFileSync(report, 'utf8'));
-    } catch (report) {
-      console.error(report);
+    } catch (err) {
+      console.error(err);
     }
   }
 
@@ -54,6 +53,8 @@ export function processReports(pkg, headDir, baseDir) {
 
   const categories = compute(headCov, baseCov);
 
+  const headPct = categories.branches.head != null ? `${categories.branches.head}%` : 'N/A';
+
   let delta = categories.branches.delta;
 
   if (delta > 0) {
@@ -65,7 +66,7 @@ export function processReports(pkg, headDir, baseDir) {
   }
 
   // | Package | Branches coverage | Delta |
-  return `| ${pkg} | ${categories.branches.head}% | ${delta} |`;
+  return `| ${pkg} | ${headPct} | ${delta} |`;
 }
 
 

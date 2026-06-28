@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { CaretManagerCaretUpdatedEvent, type EditorJSModel, EventType, Index } from '@editorjs/model';
+import type { EditorJSModel } from '@editorjs/model';
+import { CaretManagerCaretUpdatedEvent, EventType, Index } from '@editorjs/sdk';
 import { onUpdated, ref } from 'vue';
 
 const indexes = ref<Map<string | number, string>>(new Map());

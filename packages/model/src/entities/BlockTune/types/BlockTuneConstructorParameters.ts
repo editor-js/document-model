@@ -1,5 +1,4 @@
-import type { BlockTuneName } from './BlockTuneName.js';
-import type { BlockTuneSerialized } from './BlockTuneSerialized.js';
+import type { BlockTuneName, BlockTuneSerialized } from '@editorjs/model-types';
 
 export interface BlockTuneConstructorParameters {
   /**

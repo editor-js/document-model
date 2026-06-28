@@ -1,14 +1,8 @@
-import { type JestConfigWithTsJest, createDefaultEsmPreset } from 'ts-jest';
+import type { JestConfigWithTsJest } from 'ts-jest';
 
 export default {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  globals: {
-    'ts-jest': {
-      tsconfig: '<rootDir>/tsconfig.test.json',
-    },
-  },
-  coverageReporters: ['lcov', 'json-summary', 'text-summary'],
   testMatch: ['<rootDir>/src/**/*.spec.ts'],
   modulePathIgnorePatterns: ['<rootDir>/.*/__mocks__', '<rootDir>/.*/mocks'],
   extensionsToTreatAsEsm: ['.ts'],
@@ -16,7 +10,25 @@ export default {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^codex-tooltip$': '<rootDir>/test/mocks/codex-tooltip.ts',
   },
+  coverageReporters: ['lcov', 'json-summary', 'text-summary'],
   transform: {
-    ...createDefaultEsmPreset().transform,
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        useESM: true,
+        tsconfig: '<rootDir>/tsconfig.test.json',
+      },
+    ],
+    '^.+\\.jsx?$': [
+      'babel-jest',
+      {
+        presets: [
+          ['@babel/preset-env', { targets: { node: 'current' } }],
+        ],
+      },
+    ],
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!@editorjs)',
+  ],
 } as JestConfigWithTsJest;

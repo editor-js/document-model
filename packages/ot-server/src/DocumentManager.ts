@@ -1,5 +1,6 @@
 import { type ModifyOperationData, type Operation, OperationType } from '@editorjs/collaboration-manager';
-import { type BlockNodeSerialized, type EditorDocumentSerialized, EditorJSModel } from '@editorjs/model';
+import { EditorJSModel } from '@editorjs/model';
+import type { BlockNodeSerialized, EditorDocumentSerialized } from '@editorjs/sdk';
 
 /**
  * Class to process operations and aplly them to the document state

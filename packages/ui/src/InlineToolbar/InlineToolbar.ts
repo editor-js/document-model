@@ -14,7 +14,7 @@ import {
   InlineToolOptionKey,
   UiComponentType
 } from '@editorjs/sdk';
-import type { InlineFragment, TextRange } from '@editorjs/model';
+import type { Index, InlineFragment, TextRange } from '@editorjs/sdk';
 import Style from './InlineToolbar.module.pcss';
 import type { PopoverItemDefaultBaseParams, PopoverItemParams } from '@editorjs/ui-kit';
 import { PopoverInline, PopoverItemType } from '@editorjs/ui-kit';
@@ -95,7 +95,7 @@ export class InlineToolbarUI implements EditorjsPlugin {
      * `isActive` should use a non-collapsed local range, not `segments[0]` unconditionally.
      */
     const firstNonCollapsedSegment = segments.find(
-      segment =>
+      (segment: Index) =>
         segment.textRange !== undefined
         && segment.textRange[0] !== segment.textRange[1]
     );

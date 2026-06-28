@@ -1,7 +1,7 @@
-import type { InlineToolName, InlineToolData } from '../index.js';
+import type { InlineToolName, InlineToolData, InlineTreeNodeSerialized } from '@editorjs/model-types';
 import { FormattingInlineNode } from '../index.js';
 import type { TextInlineNodeConstructorParameters } from './types/index.js';
-import type { InlineNode, InlineTreeNodeSerialized } from '../InlineNode/index.js';
+import type { InlineNode } from '../InlineNode/index.js';
 import { ChildNode } from '../mixins/ChildNode/index.js';
 
 export type * from './types/index.js';

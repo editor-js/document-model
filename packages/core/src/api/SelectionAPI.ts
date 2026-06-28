@@ -2,9 +2,8 @@ import 'reflect-metadata';
 import { inject, injectable } from 'inversify';
 
 import { SelectionManager } from '../components/SelectionManager.js';
-import { Caret, CaretManagerEvents, createInlineToolName, EditorJSModel, EventType, Index } from '@editorjs/model';
-import { CoreConfigValidated } from '@editorjs/sdk';
-import { SelectionAPI as SelectionApiInterface } from '@editorjs/sdk';
+import { Caret, EditorJSModel } from '@editorjs/model';
+import { CaretManagerEvents, CoreConfigValidated, createInlineToolName, EventType, Index, SelectionAPI as SelectionApiInterface } from '@editorjs/sdk';
 import { TOKENS } from '../tokens.js';
 
 /**

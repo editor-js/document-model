@@ -1,6 +1,6 @@
 import { CoreEventBase } from './CoreEventBase.js';
 import { CoreEventType } from './CoreEventType.js';
-import type { Index, InlineFragment } from '@editorjs/model';
+import type { InlineFragment, Index } from '@editorjs/model-types';
 import type { InlineToolFacade } from '@/tools';
 
 /**

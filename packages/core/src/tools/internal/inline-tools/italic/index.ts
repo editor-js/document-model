@@ -1,8 +1,5 @@
-import type { ToolFormattingOptions, InlineTool, InlineToolConstructor, MenuConfig } from '@editorjs/sdk';
-import { ToolType } from '@editorjs/sdk';
-import type { InlineFragment, TextRange } from '@editorjs/model';
-import { FormattingAction } from '@editorjs/model';
-import { IntersectType } from '@editorjs/model';
+import type { ToolFormattingOptions, InlineTool, InlineToolConstructor, TextRange, InlineFragment, MenuConfig } from '@editorjs/sdk';
+import { ToolType, FormattingAction, IntersectType } from '@editorjs/sdk';
 import { make } from '@editorjs/dom';
 import { IconItalic } from '@codexteam/icons';
 

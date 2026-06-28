@@ -1,7 +1,4 @@
-/**
- * @todo maybe invert dependency, so SDK is not dependant on the model
- */
-import type { Caret, CaretManagerEvents, FormattingAction, Index } from '@editorjs/model';
+import type { Caret, CaretManagerEvents, FormattingAction, Index } from '@editorjs/model-types';
 
 /**
  * Selection API interface

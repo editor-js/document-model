@@ -1,11 +1,11 @@
 import type { ToolConfig } from '@editorjs/editorjs';
-import type { TextNodeSerialized } from '@editorjs/model';
 import type {
   BlockTool,
   BlockToolConstructor,
   BlockToolConstructorOptions,
   BlockToolData,
-  KeyAddedEvent
+  KeyAddedEvent,
+  TextNodeSerialized
 } from '@editorjs/sdk';
 import { KeyRemovedEvent } from '@editorjs/sdk';
 import { ToolType } from '@editorjs/sdk';

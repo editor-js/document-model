@@ -1,5 +1,9 @@
 # Plugins & Tools
 
+## Package boundary
+
+Tools and plugins should only depend on `@editorjs/sdk` — never on `@editorjs/model` or `@editorjs/model-types` directly. `sdk` re-exports every type a tool/plugin author needs (`Index`, event classes, `BlockTool`/`InlineTool`/`BlockTune` contracts, etc.); `model` is the engine implementation that `core` and `ot-server` orchestrate, and `model-types` is an internal foundation shared only by `model` and `sdk`. Neither is part of the stable, tool-facing API.
+
 ## Registration
 
 `core.use(...)` registers UI components/plugins by static `type` (values from `ToolType` for tools, `PluginType.Adapter` for adapters, and `PluginType.Plugin` for general plugins).

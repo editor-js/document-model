@@ -9,6 +9,8 @@ classDiagram
   direction LR
 
   %% ── Base classes ─────────────────────────────────
+  %% BaseDocumentEvent is defined in @editorjs/model-types, like the
+  %% concrete events below it.
   class BaseDocumentEvent {
     <<abstract CustomEvent>>
     detail.index: Index
@@ -44,8 +46,10 @@ classDiagram
     <<adapter EventBus, per-block>>
   }
 
-  %% ── @editorjs/model ──────────────────────────────
-  namespace model {
+  %% ── @editorjs/model-types ────────────────────────
+  %% Defined here, internal-only; re-exported by both `model` (for
+  %% EditorJSModel to dispatch) and `sdk` (for tools/plugins to consume).
+  namespace modelTypes {
     class BlockAddedEvent {
       detail.data: BlockNodeSerialized
     }
@@ -77,6 +81,10 @@ classDiagram
       detail.data.previous: T
     }
     class TuneModifiedEvent {
+      detail.data.value: T
+      detail.data.previous: T
+    }
+    class PropertyModifiedEvent {
       detail.data.value: T
       detail.data.previous: T
     }
@@ -156,6 +164,7 @@ classDiagram
   DataNodeRemovedEvent --|> BaseDocumentEvent
   ValueModifiedEvent --|> BaseDocumentEvent
   TuneModifiedEvent --|> BaseDocumentEvent
+  PropertyModifiedEvent --|> BaseDocumentEvent
 
   BlockAddedCoreEvent --|> CoreEventBase
   BlockRemovedCoreEvent --|> CoreEventBase

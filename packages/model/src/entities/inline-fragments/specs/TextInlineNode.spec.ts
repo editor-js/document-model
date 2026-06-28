@@ -1,5 +1,5 @@
 import { TextInlineNode } from '../TextInlineNode/index.js';
-import type { InlineToolName } from '../FormattingInlineNode/index.js';
+import type { InlineToolName } from '@editorjs/model-types';
 import { FormattingInlineNode } from '../FormattingInlineNode/index.js';
 import type { ParentNode } from '../mixins/ParentNode/index.js';
 import type { InlineNode } from '../InlineNode/index.js';
@@ -62,13 +62,13 @@ describe('TextInlineNode', () => {
     it('should throw an error if index is less than 0', () => {
       const f = (): void => node.insertText(text, -1);
 
-      expect(f).toThrowError();
+      expect(f).toThrow();
     });
 
     it('should throw an error if index is greater than node length', () => {
       const f = (): void => node.insertText(text, initialText.length + 1);
 
-      expect(f).toThrowError();
+      expect(f).toThrow();
     });
   });
 
@@ -93,26 +93,26 @@ describe('TextInlineNode', () => {
     });
 
     it('should throw an error if start is invalid index', () => {
-      expect(() => node.getText(-1)).toThrowError();
-      expect(() => node.getText(initialText.length + 1)).toThrowError();
+      expect(() => node.getText(-1)).toThrow();
+      expect(() => node.getText(initialText.length + 1)).toThrow();
     });
 
     it('should throw an error if end is invalid index', () => {
-      expect(() => node.getText(0, initialText.length + 1)).toThrowError();
+      expect(() => node.getText(0, initialText.length + 1)).toThrow();
     });
 
     it('should throw an error if end index is greater than start index', () => {
       const start = 5;
       const end = 3;
 
-      expect(() => node.getText(start, end)).toThrowError();
+      expect(() => node.getText(start, end)).toThrow();
     });
 
     it('should not throw an error if end index is equal to start index', () => {
       const start = 5;
       const end = 5;
 
-      expect(() => node.getText(start, end)).not.toThrowError();
+      expect(() => node.getText(start, end)).not.toThrow();
     });
   });
 
@@ -153,7 +153,7 @@ describe('TextInlineNode', () => {
 
       node.removeText();
 
-      expect(node.remove).toBeCalled();
+      expect(node.remove).toHaveBeenCalled();
     });
   });
 
@@ -216,7 +216,7 @@ describe('TextInlineNode', () => {
 
       const fragments = node.format(name, start, end);
 
-      expect(parentMock.insertAfter).toBeCalledWith(node, ...fragments);
+      expect(parentMock.insertAfter).toHaveBeenCalledWith(node, ...fragments);
     });
   });
 
@@ -256,7 +256,7 @@ describe('TextInlineNode', () => {
     it('should insert new node to the parent', () => {
       const newNode = node.split(index);
 
-      expect(parentMock.insertAfter).toBeCalledWith(node, newNode);
+      expect(parentMock.insertAfter).toHaveBeenCalledWith(node, newNode);
     });
   });
 
@@ -309,7 +309,7 @@ describe('TextInlineNode', () => {
     });
 
     it('should throw an error if node to merge is not TextInlineNode', () => {
-      expect(() => node.mergeWith({} as InlineNode)).toThrowError();
+      expect(() => node.mergeWith({} as InlineNode)).toThrow();
     });
   });
 });

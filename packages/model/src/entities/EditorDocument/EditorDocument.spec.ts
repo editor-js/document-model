@@ -1,18 +1,15 @@
-import { IndexBuilder } from '../Index/IndexBuilder.js';
+import { IndexBuilder } from '@editorjs/model-types';
 import { EditorDocument } from './index.js';
-import type { BlockToolName, DataKey } from '../BlockNode/index.js';
+import { createBlockId, type DataKey, type InlineToolData, type InlineToolName, type BlockToolName, type BlockTuneName } from '@editorjs/model-types';
 import { BlockNode } from '../BlockNode/index.js';
-import { createBlockId } from '../BlockNode/types/BlockId.js';
-import type { BlockTuneName } from '../BlockTune/index.js';
-import type { InlineToolData, InlineToolName } from '../inline-fragments/index.js';
-import { EventType } from '../../EventBus/types/EventType.js';
+import { EventType } from '@editorjs/model-types';
 import {
   BlockAddedEvent,
   BlockRemovedEvent,
   PropertyModifiedEvent,
   TuneModifiedEvent
-} from '../../EventBus/events/index.js';
-import { EventAction } from '../../EventBus/types/EventAction.js';
+} from '@editorjs/model-types';
+import { EventAction } from '@editorjs/model-types';
 import { describe, jest } from '@jest/globals';
 import { BlockAlreadyExistsError } from './errors/BlockAlreadyExistsError.js';
 
@@ -304,7 +301,7 @@ describe('EditorDocument', () => {
 
       // Assert
       expect(action)
-        .toThrowError('Index out of bounds');
+        .toThrow('Index out of bounds');
     });
 
     it('should throw an error if index is greater then document length', () => {
@@ -319,7 +316,7 @@ describe('EditorDocument', () => {
 
       // Assert
       expect(action)
-        .toThrowError('Index out of bounds');
+        .toThrow('Index out of bounds');
     });
 
     it('should throw BlockAlreadyExistsError when a block with the same id is added twice', () => {
@@ -416,7 +413,7 @@ describe('EditorDocument', () => {
 
       // Assert
       expect(action)
-        .toThrowError('Index out of bounds');
+        .toThrow('Index out of bounds');
     });
 
     it('should throw an error if index is greater then document length', () => {
@@ -428,7 +425,7 @@ describe('EditorDocument', () => {
 
       // Assert
       expect(action)
-        .toThrowError('Index out of bounds');
+        .toThrow('Index out of bounds');
     });
 
     it('should emit BlockRemovedEvent with block node data in details and block index', () => {
@@ -494,7 +491,7 @@ describe('EditorDocument', () => {
 
       // Assert
       expect(action)
-        .toThrowError('Index out of bounds');
+        .toThrow('Index out of bounds');
     });
 
     it('should throw an error if index is greater then document length', () => {
@@ -506,7 +503,7 @@ describe('EditorDocument', () => {
 
       // Assert
       expect(action)
-        .toThrowError('Index out of bounds');
+        .toThrow('Index out of bounds');
     });
   });
 
@@ -557,7 +554,7 @@ describe('EditorDocument', () => {
       const nonExistentId = createBlockId('ghost');
 
       expect(() => document.removeBlock(nonExistentId))
-        .toThrowError(`Block with id "${nonExistentId}" not found`);
+        .toThrow(`Block with id "${nonExistentId}" not found`);
     });
   });
 
@@ -771,7 +768,7 @@ describe('EditorDocument', () => {
       const action = (): void => document.createDataNode(blockIndexOutOfBound, dataKey, expectedValue);
 
       expect(action)
-        .toThrowError('Index out of bounds');
+        .toThrow('Index out of bounds');
     });
   });
 
@@ -877,7 +874,7 @@ describe('EditorDocument', () => {
       };
 
       expect(action)
-        .toThrowError('Index out of bounds');
+        .toThrow('Index out of bounds');
     });
   });
 
@@ -985,7 +982,7 @@ describe('EditorDocument', () => {
       const action = (): void => document.removeDataNode(blockIndexOutOfBound, dataKey);
 
       expect(action)
-        .toThrowError('Index out of bounds');
+        .toThrow('Index out of bounds');
     });
   });
 
@@ -1096,7 +1093,7 @@ describe('EditorDocument', () => {
       const action = (): void => document.updateValue(blockIndexOutOfBound, dataKey, expectedValue);
 
       expect(action)
-        .toThrowError('Index out of bounds');
+        .toThrow('Index out of bounds');
     });
   });
 
@@ -1213,7 +1210,7 @@ describe('EditorDocument', () => {
       const action = (): void => document.updateTuneData(blockIndexOutOfBound, tuneName, updateData);
 
       expect(action)
-        .toThrowError('Index out of bounds');
+        .toThrow('Index out of bounds');
     });
   });
 
@@ -1306,7 +1303,7 @@ describe('EditorDocument', () => {
 
     it('should throw an error if index is out of bounds', () => {
       expect(() => document.insertText(document.length + 1, dataKey, text))
-        .toThrowError('Index out of bounds');
+        .toThrow('Index out of bounds');
     });
   });
 
@@ -1584,7 +1581,7 @@ describe('EditorDocument', () => {
 
     it('should throw an error if index is out of bounds', () => {
       expect(() => document.removeText(document.length + 1, dataKey))
-        .toThrowError('Index out of bounds');
+        .toThrow('Index out of bounds');
     });
   });
 
@@ -1638,7 +1635,7 @@ describe('EditorDocument', () => {
 
     it('should throw an error if index is out of bounds', () => {
       expect(() => document.format(document.length + 1, dataKey, tool, start, end))
-        .toThrowError('Index out of bounds');
+        .toThrow('Index out of bounds');
     });
   });
 
@@ -1682,7 +1679,7 @@ describe('EditorDocument', () => {
 
     it('should throw an error if index is out of bounds', () => {
       expect(() => document.unformat(document.length + 1, dataKey, tool, start, end))
-        .toThrowError('Index out of bounds');
+        .toThrow('Index out of bounds');
     });
   });
 
@@ -1698,7 +1695,7 @@ describe('EditorDocument', () => {
       document.serialized;
 
       expect(spy)
-        .toBeCalledTimes(document.length);
+        .toHaveBeenCalledTimes(document.length);
     });
 
     it('should return document properties', () => {

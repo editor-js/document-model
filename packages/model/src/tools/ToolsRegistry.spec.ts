@@ -1,5 +1,5 @@
 import { ToolsRegistry } from './ToolsRegistry.js';
-import type { BlockToolName } from '../entities/index.js';
+import type { BlockToolName } from '@editorjs/model-types';
 
 describe('ToolsRegistry', () => {
   describe('get()', () => {
@@ -10,7 +10,7 @@ describe('ToolsRegistry', () => {
 
       registry.get(toolName);
 
-      expect(spy).toBeCalledWith(toolName);
+      expect(spy).toHaveBeenCalledWith(toolName);
     });
   });
 });

@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers, @typescript-eslint/no-explicit-any */
 import { sliceFragments, mergeTextNodes } from './textUtils.js';
-import type { InlineFragment, InlineTreeNodeSerialized, TextNodeSerialized } from '../entities/inline-fragments/InlineNode/index.js';
-import type { InlineToolName } from '../entities/inline-fragments/index.js';
-import { BlockChildType, NODE_TYPE_HIDDEN_PROP } from '../entities/BlockNode/index.js';
+import type { InlineFragment, InlineTreeNodeSerialized, TextNodeSerialized } from '@editorjs/model-types';
+import type { InlineToolName } from '@editorjs/model-types';
+import { BlockChildType, NODE_TYPE_HIDDEN_PROP } from '@editorjs/model-types';
 
 /**
  * Helper to create a TextNodeSerialized with the required hidden-type prop.

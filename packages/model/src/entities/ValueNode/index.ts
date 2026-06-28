@@ -1,10 +1,11 @@
 import { getContext } from '../../utils/Context.js';
-import { IndexBuilder } from '../Index/IndexBuilder.js';
-import type { ValueNodeConstructorParameters, ValueSerialized } from './types/index.js';
-import { BlockChildType } from '../BlockNode/types/index.js';
-import { NODE_TYPE_HIDDEN_PROP } from '../BlockNode/consts.js';
-import { EventBus } from '../../EventBus/EventBus.js';
-import { ValueModifiedEvent } from '../../EventBus/events/ValueModifiedEvent.js';
+import { IndexBuilder } from '@editorjs/model-types';
+import type { ValueNodeConstructorParameters } from './types/index.js';
+import type { ValueSerialized } from '@editorjs/model-types';
+import { BlockChildType } from '@editorjs/model-types';
+import { NODE_TYPE_HIDDEN_PROP } from '@editorjs/model-types';
+import { EventBus } from '@editorjs/model-types';
+import { ValueModifiedEvent } from '@editorjs/model-types';
 
 /**
  * ValueNode class represents a node in a tree-like structure, used to store and manipulate data associated with a BlockNode.
@@ -69,6 +70,5 @@ export class ValueNode<ValueType = unknown> extends EventBus {
 }
 
 export type {
-  ValueNodeConstructorParameters,
-  ValueSerialized
+  ValueNodeConstructorParameters
 };

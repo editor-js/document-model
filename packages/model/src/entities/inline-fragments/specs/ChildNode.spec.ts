@@ -48,7 +48,7 @@ describe('ChildNode mixin', () => {
 
     dummy = new Dummy({ parent: parentMock });
 
-    expect(spy).toBeCalledWith(dummy);
+    expect(spy).toHaveBeenCalledWith(dummy);
   });
 
   it('should add remove method to the decorated class', () => {
@@ -85,7 +85,7 @@ describe('ChildNode mixin', () => {
 
       dummy.remove();
 
-      expect(spy).toBeCalledWith(dummy);
+      expect(spy).toHaveBeenCalledWith(dummy);
     });
 
     it('should set node\'s parent to null', () => {
@@ -105,7 +105,7 @@ describe('ChildNode mixin', () => {
 
       dummy.appendTo(parentMock);
 
-      expect(spy).toBeCalledWith(dummy);
+      expect(spy).toHaveBeenCalledWith(dummy);
     });
 
     it('should set node\'s parent on appendTo call', () => {
@@ -123,7 +123,7 @@ describe('ChildNode mixin', () => {
 
       dummyWithParent.appendTo(parentMock);
 
-      expect(spy).not.toBeCalled();
+      expect(spy).not.toHaveBeenCalled();
     });
   });
 });

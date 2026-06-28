@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import { Operation, OperationType, type OperationTypeToData } from '@editorjs/collaboration-manager';
-import { IndexBuilder } from '@editorjs/model';
+import { IndexBuilder } from '@editorjs/sdk';
 import { DocumentManager } from './DocumentManager.js';
 
 // eslint-disable-next-line jsdoc/require-param

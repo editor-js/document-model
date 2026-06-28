@@ -1,20 +1,23 @@
 import 'reflect-metadata';
+import { EditorJSModel } from '@editorjs/model';
+import type { InlineFragment } from '@editorjs/sdk';
 import {
+  CaretManagerCaretUpdatedEvent,
   CaretManagerEvents,
+  CoreConfigValidated,
   createInlineToolData,
-  FormattingAction, IndexBuilder,
-  InlineFragment,
-  InlineToolName
-} from '@editorjs/model';
-import { CaretManagerCaretUpdatedEvent, Index, EditorJSModel } from '@editorjs/model';
-import { EventType } from '@editorjs/model';
-import {
   EventBus,
-  SelectionChangedCoreEvent, IndexError, CoreConfigValidated
+  EventType,
+  FormattingAction,
+  Index,
+  IndexBuilder,
+  IndexError,
+  InlineToolFormatData,
+  InlineToolName,
+  SelectionChangedCoreEvent
 } from '@editorjs/sdk';
 import { inject, injectable } from 'inversify';
 import { TOKENS } from '../tokens.js';
-import { InlineToolFormatData } from '@editorjs/sdk';
 import ToolsManager from '../tools/ToolsManager.js';
 
 /**

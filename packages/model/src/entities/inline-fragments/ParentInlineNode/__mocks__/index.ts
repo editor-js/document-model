@@ -1,4 +1,5 @@
-import type { InlineFragment, InlineNode } from '../../InlineNode/index.js';
+import type { InlineFragment } from '@editorjs/model-types';
+import type { InlineNode } from '../../InlineNode/index.js';
 
 /**
  * We still need actual class for private and protected methods we can't mock

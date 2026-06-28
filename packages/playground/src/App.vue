@@ -54,10 +54,10 @@ onMounted(() => {
 
       ],
     },
-    onModelUpdate: (m: EditorJSModel) => {
-      model.value = m;
-      serialized.value = m.serialized;
-      editorDocument.value = m.devModeGetDocument();
+    onModelUpdate: (m: unknown) => {
+      model.value = m as EditorJSModel;
+      serialized.value = (m as EditorJSModel).serialized;
+      editorDocument.value = (m as EditorJSModel).devModeGetDocument();
     },
 
   });

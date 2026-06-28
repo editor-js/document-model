@@ -14,8 +14,26 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - name: Download artifacts
+    - name: Download head coverage artifact
       uses: actions/download-artifact@v8
+      continue-on-error: true
+      with:
+        name: test-report
+        path: test-report
+
+    - name: Download base coverage artifact
+      uses: actions/download-artifact@v8
+      continue-on-error: true
+      with:
+        name: test-report-base
+        path: test-report-base
+
+    - name: Download mutation report artifact
+      uses: actions/download-artifact@v8
+      continue-on-error: true
+      with:
+        name: mutation-report
+        path: mutation-report
 
     - name: Find current PR's number
       uses: jwalton/gh-find-current-pr@v1

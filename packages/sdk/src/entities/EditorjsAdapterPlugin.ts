@@ -1,5 +1,5 @@
 import type { EditorjsPlugin, EditorjsPluginConstructor } from '@/entities/EditorjsPlugin';
-import type { BlockId } from '@editorjs/model';
+import type { BlockId } from '@editorjs/model-types';
 import type { PluginType } from '@/entities/EntityType';
 import type { BlockToolAdapter } from '@/entities/BlockToolAdapter';
 

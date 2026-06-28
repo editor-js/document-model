@@ -1,11 +1,11 @@
+import { EditorJSModel } from '@editorjs/model';
 import {
   BlockAddedEvent,
   BlockRemovedEvent,
   createBlockId,
-  EditorJSModel,
   EventType,
   ModelEvents
-} from '@editorjs/model';
+} from '@editorjs/sdk';
 import 'reflect-metadata';
 import { inject, injectable } from 'inversify';
 import { TOKENS } from '../tokens.js';
