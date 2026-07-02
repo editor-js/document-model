@@ -35,6 +35,7 @@ A model-driven, collaboration-ready Editor.js engine split into focused packages
 | [`@editorjs/paragraph`](packages/tools/paragraph) | Built-in Paragraph block tool |
 | [`@editorjs/bold`](packages/tools/bold) | Built-in Bold inline tool |
 | [`@editorjs/italic`](packages/tools/italic) | Built-in Italic inline tool |
+| [`@editorjs/inline-link`](packages/tools/inline-link) | Built-in Link inline tool |
 
 ## Documentation
 
@@ -120,4 +121,3 @@ Thank you to all our backers!
 - [Good First Tasks](https://github.com/codex-team/editor.js/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+task%22)
 - [Contributing](https://editorjs.io/contributing/)
 - [Telegram Chat](https://t.me/codex_editor)
-

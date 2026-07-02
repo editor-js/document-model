@@ -1,0 +1,27 @@
+name: Link check
+on:
+  pull_request:
+  merge_group:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Run ESLint check
+        uses: ./.github/actions/lint
+        with:
+          package-name: "@editorjs/inline-link"
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build the package
+        uses: ./.github/actions/build
+        with:
+          package-name: "@editorjs/inline-link"
