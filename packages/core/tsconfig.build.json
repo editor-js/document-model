@@ -18,6 +18,9 @@
     },
     {
       "path": "../tools/paragraph/tsconfig.build.json"
+    },
+    {
+      "path": "../tools/bold/tsconfig.build.json"
     }
   ]
 }

@@ -2245,6 +2245,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@editorjs/bold@workspace:^, @editorjs/bold@workspace:packages/tools/bold":
+  version: 0.0.0-use.local
+  resolution: "@editorjs/bold@workspace:packages/tools/bold"
+  dependencies:
+    "@codexteam/icons": "npm:^0.3.3"
+    "@editorjs/dom": "npm:^1.1.0"
+    "@editorjs/sdk": "workspace:^"
+    "@types/eslint": "npm:^9.6.1"
+    "@types/node": "npm:^22.10.2"
+    eslint: "npm:^9.24.0"
+    eslint-config-codex: "npm:^2.0.3"
+    eslint-plugin-import: "npm:^2.31.0"
+    typescript: "npm:^5.5.4"
+  languageName: unknown
+  linkType: soft
+
 "@editorjs/caret@npm:^1.1.0":
   version: 1.1.0
   resolution: "@editorjs/caret@npm:1.1.0"
@@ -2287,6 +2303,7 @@ __metadata:
     "@babel/core": "npm:^7.29.0"
     "@babel/preset-env": "npm:^7.29.2"
     "@codexteam/icons": "npm:^0.3.3"
+    "@editorjs/bold": "workspace:^"
     "@editorjs/collaboration-manager": "workspace:^"
     "@editorjs/dom": "npm:^1.1.0"
     "@editorjs/dom-adapters": "workspace:^"
