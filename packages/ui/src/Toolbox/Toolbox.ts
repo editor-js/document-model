@@ -14,7 +14,6 @@ import {
 import { PopoverDesktop, PopoverEvent } from '@editorjs/ui-kit';
 import type { BlockSelectedUIEvent } from '../Blocks/events/index.js';
 import { ToolboxRenderedUIEvent, ToolboxClosedUIEvent, ToolboxOpenedUIEvent } from './events/index.js';
-import type { ToolboxOptionsEntry } from './ToolboxConfigEntry.js';
 
 /**
  * UI module responsible for rendering the toolbox
@@ -132,27 +131,31 @@ export class ToolboxUI implements EditorjsPlugin {
   }
 
   /**
-   * Adds tool button in the toolbox
+   * Adds tool button(s) in the toolbox
    * @param tool - Block tool to add to the toolbox
    */
   public addTool(tool: BlockToolFacade): void {
-    const toolbox = (tool.options.toolbox ?? {}) as ToolboxOptionsEntry;
+    const entries = tool.toolbox;
 
-    this.#popover.addItem(
-      {
+    if (entries === undefined) {
+      return;
+    }
+
+    for (const entry of entries) {
+      this.#popover.addItem({
         title: tool.name,
-        ...toolbox,
+        ...entry,
         closeOnActivate: true,
         onActivate: () => {
           void this.#api.blocks.insert({
             type: tool.name,
-            data: toolbox.data ?? {},
+            data: entry.data ?? {},
             index: this.#selectedBlockIndex === -1 ? undefined : this.#selectedBlockIndex + 1,
             focus: true,
           });
         },
-      }
-    );
+      });
+    }
   }
 
   /**
