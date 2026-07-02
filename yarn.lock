@@ -2309,6 +2309,7 @@ __metadata:
     "@editorjs/dom-adapters": "workspace:^"
     "@editorjs/editorjs": "npm:^2.30.5"
     "@editorjs/helpers": "npm:^1.2.2"
+    "@editorjs/italic": "workspace:^"
     "@editorjs/model": "workspace:^"
     "@editorjs/paragraph": "workspace:^"
     "@editorjs/sdk": "workspace:^"
@@ -2429,6 +2430,22 @@ __metadata:
   checksum: bec78e033c77e1e887d4f1a235d7548623df239bc2755bd8f8dc1d1acddb400a7c77eb82a07e6b47ac578cbf841858fbf84889990026500da2de375f3bdcc166
   languageName: node
   linkType: hard
+
+"@editorjs/italic@workspace:^, @editorjs/italic@workspace:packages/tools/italic":
+  version: 0.0.0-use.local
+  resolution: "@editorjs/italic@workspace:packages/tools/italic"
+  dependencies:
+    "@codexteam/icons": "npm:^0.3.3"
+    "@editorjs/dom": "npm:^1.1.0"
+    "@editorjs/sdk": "workspace:^"
+    "@types/eslint": "npm:^9.6.1"
+    "@types/node": "npm:^22.10.2"
+    eslint: "npm:^9.24.0"
+    eslint-config-codex: "npm:^2.0.3"
+    eslint-plugin-import: "npm:^2.31.0"
+    typescript: "npm:^5.5.4"
+  languageName: unknown
+  linkType: soft
 
 "@editorjs/model-types@workspace:^, @editorjs/model-types@workspace:packages/model-types":
   version: 0.0.0-use.local
@@ -12776,22 +12793,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yargs@npm:^17.3.1":
-  version: 17.7.3
-  resolution: "yargs@npm:17.7.3"
-  dependencies:
-    cliui: "npm:^8.0.1"
-    escalade: "npm:^3.1.1"
-    get-caller-file: "npm:^2.0.5"
-    require-directory: "npm:^2.1.1"
-    string-width: "npm:^4.2.3"
-    y18n: "npm:^5.0.5"
-    yargs-parser: "npm:^21.1.1"
-  checksum: a3826798c03b159e139d0580a3b2733953889a9a1bac8e4e1ca7a1a249b55315b213c323a6a1dbdb305f6e59496a9eaa810742c87e34abcf1a0584d8f59212a1
-  languageName: node
-  linkType: hard
-
-"yargs@npm:^17.7.2":
+"yargs@npm:^17.3.1, yargs@npm:^17.7.2":
   version: 17.7.2
   resolution: "yargs@npm:17.7.2"
   dependencies:
