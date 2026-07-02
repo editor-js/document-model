@@ -4,6 +4,7 @@ import { EditorDocument, EditorJSModel } from '@editorjs/model';
 import EditorJS from '@editorjs/editorjs';
 import { ref, onMounted } from 'vue';
 import { Node } from './components';
+import { Header } from '@editorjs/header';
 /**
  * Editor document for visualizing
  */
@@ -58,6 +59,9 @@ onMounted(() => {
       editorDocument.value = (m as EditorJSModel).devModeGetDocument();
     },
 
+    tools: {
+      header: [Header, { config: { levels: [1, 2, 3, 4, 5, 6] } }],
+    },
   });
 
   editor.isReady.catch((error: unknown) => console.error('Editor.js failed to initialize', error));

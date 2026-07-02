@@ -44,6 +44,9 @@
     },
     {
       "path": "../ui/tsconfig.json"
+    },
+    {
+      "path": "../tools/header/tsconfig.json"
     }
   ]
 }

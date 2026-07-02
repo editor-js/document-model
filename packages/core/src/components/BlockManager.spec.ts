@@ -143,6 +143,22 @@ describe('BlocksManager (unit, mocked deps)', () => {
       );
     });
 
+    it('should nest data under a data property instead of flattening it onto the block', () => {
+      blocksManager.insert({
+        type: 'header',
+        data: { level: 2 }
+      });
+
+      expect(model.addBlock).toHaveBeenCalledWith(
+        USER_ID,
+        expect.objectContaining({
+          name: 'header',
+          data: { level: 2 }
+        }),
+        BLOCKS_COUNT
+      );
+    });
+
     it('should use model.length as insertion/removal index when replace is true and index is omitted', () => {
       blocksManager.insert({
         replace: true
