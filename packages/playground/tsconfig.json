@@ -35,6 +35,9 @@
     },
     {
       "path": "../collaboration-manager/tsconfig.json",
+    },
+    {
+      "path": "../tools/header/tsconfig.json"
     }
   ]
 }
