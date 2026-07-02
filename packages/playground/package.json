@@ -19,6 +19,7 @@
     "@editorjs/collaboration-manager": "workspace:^",
     "@editorjs/core": "workspace:^",
     "@editorjs/dom-adapters": "workspace:^",
+    "@editorjs/header": "workspace:^",
     "@editorjs/model": "workspace:^",
     "@editorjs/ui": "workspace:*",
     "vue": "^3.3.4"
