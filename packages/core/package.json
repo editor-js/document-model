@@ -45,6 +45,7 @@
     "@editorjs/editorjs": "^2.30.5",
     "@editorjs/helpers": "^1.2.2",
     "@editorjs/model": "workspace:^",
+    "@editorjs/paragraph": "workspace:^",
     "@editorjs/sdk": "workspace:^",
     "inversify": "^8.1.0",
     "reflect-metadata": "^0.2.2"
