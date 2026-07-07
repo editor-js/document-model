@@ -1,14 +1,13 @@
 import type {
-  FormattingInlineNodeConstructorParameters,
-  InlineToolName,
-  InlineToolData
+  FormattingInlineNodeConstructorParameters
 } from './types/index.js';
-import type { InlineFragment, InlineNode } from '../InlineNode/index.js';
+import type { InlineToolName, InlineToolData, InlineFragment } from '@editorjs/model-types';
+import type { InlineNode } from '../InlineNode/index.js';
 import { ParentNode } from '../mixins/ParentNode/index.js';
 import { ChildNode } from '../mixins/ChildNode/index.js';
 import { ParentInlineNode } from '../ParentInlineNode/index.js';
 
-export * from './types/index.js';
+export type * from './types/index.js';
 
 /**
  * We need to extend FormattingInlineNode interface with ChildNode and ParentNode ones to use the methods from mixins

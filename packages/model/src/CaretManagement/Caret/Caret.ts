@@ -1,25 +1,6 @@
-import type { Index } from '../../entities/Index/index.js';
-import type { CaretSerialized, CaretEvent } from './types.js';
+import type { Index, CaretSerialized } from '@editorjs/model-types';
 import { CaretUpdatedEvent } from './types.js';
-import { EventBus } from '../../EventBus/index.js';
-
-/**
- * Interface to extend EventTarget methods
- */
-export interface Caret {
-  /**
-   * Adds CaretEvent listener
-   * @param event - type of event
-   * @param listener - listener
-   */
-  addEventListener<K extends CaretUpdatedEvent>(event: CaretEvent, listener: (event: K) => void): void;
-
-  /**
-   * Dispatches CaretUpdatedEvent
-   * @param event - event to dispatch
-   */
-  dispatchEvent(event: CaretUpdatedEvent): boolean;
-}
+import { EventBus } from '@editorjs/model-types';
 
 /**
  * Caret is responsible for storing caret index

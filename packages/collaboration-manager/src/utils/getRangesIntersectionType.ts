@@ -1,4 +1,4 @@
-import type { TextRange } from '@editorjs/model';
+import type { TextRange } from '@editorjs/sdk';
 
 /**
  * Represents the type of intersection between two text ranges.

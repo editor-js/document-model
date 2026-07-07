@@ -1,19 +1,5 @@
+import type { CaretSerialized } from '@editorjs/model-types';
 import type { Caret } from './Caret.js';
-
-/**
- * Caret serialized data
- */
-export interface CaretSerialized {
-  /**
-   * Caret id
-   */
-  readonly userId: string | number;
-
-  /**
-   * Caret index
-   */
-  readonly index: string | null;
-}
 
 /**
  * Enumeration of Caret events

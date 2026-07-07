@@ -1,7 +1,7 @@
-import type { InlineTool } from '@/entities/InlineTool.js';
 import { CoreEventBase } from './CoreEventBase.js';
 import { CoreEventType } from './CoreEventType.js';
-import type { Index, InlineFragment, InlineToolName } from '@editorjs/model';
+import type { InlineFragment, Index } from '@editorjs/model-types';
+import type { InlineToolFacade } from '@/tools';
 
 /**
  * Payload of SelectionChangedCoreEvent custom event
@@ -16,7 +16,7 @@ export interface SelectionChangedCoreEventPayload {
   /**
    * Inline tools available for the current selection
    */
-  readonly availableInlineTools: Map<InlineToolName, InlineTool>;
+  readonly availableInlineTools: InlineToolFacade[];
 
   /**
    * Inline fragments available for the current selection

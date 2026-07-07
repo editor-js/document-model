@@ -1,7 +1,8 @@
-import type { ChildNode } from '../index.js';
-import { TextInlineNode, createInlineToolData, createInlineToolName, FormattingInlineNode } from '../index.js';
-import type { ParentNode } from '../mixins/ParentNode/index.js';
+import { createInlineToolData, createInlineToolName } from '@editorjs/model-types';
 import type { InlineNode } from '../InlineNode/index.js';
+import type { ChildNode } from '../index.js';
+import { TextInlineNode, FormattingInlineNode } from '../index.js';
+import type { ParentNode } from '../mixins/ParentNode/index.js';
 import { ParentInlineNode } from '../ParentInlineNode/index.js';
 
 jest.mock('../ParentInlineNode');
@@ -46,7 +47,7 @@ describe('FormattingInlineNode', () => {
 
       node.removeText(start, end);
 
-      expect(spy).toBeCalledWith(start, end);
+      expect(spy).toHaveBeenCalledWith(start, end);
     });
 
     it('should return removed text', () => {
@@ -65,7 +66,7 @@ describe('FormattingInlineNode', () => {
 
       node.removeText();
 
-      expect(removeSpy).toBeCalled();
+      expect(removeSpy).toHaveBeenCalled();
 
       removeSpy.mockRestore();
       lengthSpy.mockRestore();
@@ -81,7 +82,7 @@ describe('FormattingInlineNode', () => {
 
       node.getFragments(start, end);
 
-      expect(spy).toBeCalledWith(start, end);
+      expect(spy).toHaveBeenCalledWith(start, end);
     });
 
     it('should return fragment with the range from 0 to the length of formatting node', () => {
@@ -115,8 +116,8 @@ describe('FormattingInlineNode', () => {
     const index = 5;
 
     it('should throw an error if index is invalid', () => {
-      expect(() => node.split(-1)).toThrowError();
-      expect(() => node.split(node.length + 1)).toThrowError();
+      expect(() => node.split(-1)).toThrow();
+      expect(() => node.split(node.length + 1)).toThrow();
     });
 
     it('should not split (return null) if index is 0', () => {
@@ -148,7 +149,7 @@ describe('FormattingInlineNode', () => {
 
       node.split(index + firstChildMock.length);
 
-      expect(spy).toBeCalledWith(index);
+      expect(spy).toHaveBeenCalledWith(index);
     });
 
     it('should insert new node to the parent', () => {
@@ -156,7 +157,7 @@ describe('FormattingInlineNode', () => {
 
       const newNode = node.split(index);
 
-      expect(spy).toBeCalledWith(node, newNode);
+      expect(spy).toHaveBeenCalledWith(node, newNode);
     });
   });
 
@@ -175,7 +176,7 @@ describe('FormattingInlineNode', () => {
 
       node.format(anotherTool, start, end, data);
 
-      expect(spy).toBeCalledWith(anotherTool, start, end, data);
+      expect(spy).toHaveBeenCalledWith(anotherTool, start, end, data);
     });
   });
 
@@ -204,7 +205,7 @@ describe('FormattingInlineNode', () => {
 
       node.unformat(anotherTool, start, end);
 
-      expect(spy).toBeCalledWith(anotherTool, start, end);
+      expect(spy).toHaveBeenCalledWith(anotherTool, start, end);
     });
 
     it('should not call parent unformat() method if tools are equal', () => {
@@ -212,7 +213,7 @@ describe('FormattingInlineNode', () => {
 
       node.unformat(tool, start, end);
 
-      expect(spy).not.toBeCalled();
+      expect(spy).not.toHaveBeenCalled();
     });
 
     it('should split node into two if unformatting applied from the start to the middle of the text', () => {
@@ -294,7 +295,7 @@ describe('FormattingInlineNode', () => {
 
       node.mergeWith(nodeToMerge);
 
-      expect(spy).toBeCalledWith(child);
+      expect(spy).toHaveBeenCalledWith(child);
     });
 
     it('should append several children of merged node to the current', () => {
@@ -309,8 +310,8 @@ describe('FormattingInlineNode', () => {
 
       node.mergeWith(nodeToMerge);
 
-      expect(spy).toBeCalledWith(firstChild);
-      expect(spy).toBeCalledWith(secondChild);
+      expect(spy).toHaveBeenCalledWith(firstChild);
+      expect(spy).toHaveBeenCalledWith(secondChild);
     });
 
     it('should remove merged node', () => {
@@ -320,7 +321,7 @@ describe('FormattingInlineNode', () => {
 
       node.mergeWith(nodeToMerge);
 
-      expect(spy).toBeCalled();
+      expect(spy).toHaveBeenCalled();
     });
 
     it('should throw an error if node to merge is not equal to the current', () => {

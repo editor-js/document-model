@@ -1,16 +1,16 @@
-import type { InlineToolName, ChildNode } from '../index.js';
+import { createInlineToolData } from '@editorjs/model-types';
+import type { InlineToolName } from '@editorjs/model-types';
+import type { InlineNode } from '../InlineNode/index.js';
+import type { ChildNode } from '../index.js';
 import { TextInlineNode, FormattingInlineNode } from '../index.js';
 import { ParentInlineNode } from '../ParentInlineNode/index.js';
-import type { InlineNode } from '../InlineNode/index.js';
-import { EventType } from '../../../EventBus/types/EventType.js';
+import { EventType, EventAction } from '@editorjs/model-types';
 import {
   TextAddedEvent,
   TextFormattedEvent,
   TextRemovedEvent,
   TextUnformattedEvent
-} from '../../../EventBus/events/index.js';
-import { EventAction } from '../../../EventBus/types/EventAction.js';
-import { createInlineToolData } from '../index.js';
+} from '@editorjs/model-types';
 
 jest.mock('../TextInlineNode');
 jest.mock('../FormattingInlineNode');
@@ -79,17 +79,17 @@ describe('ParentInlineNode', () => {
     const end = 5;
 
     it('should throw an error if start index is invalid', () => {
-      expect(() => node.getText(-1)).toThrowError();
-      expect(() => node.getText(node.length + 1)).toThrowError();
+      expect(() => node.getText(-1)).toThrow();
+      expect(() => node.getText(node.length + 1)).toThrow();
     });
 
     it('should throw an error if end index is invalid', () => {
-      expect(() => node.getText(0, -1)).toThrowError();
-      expect(() => node.getText(0, node.length + 1)).toThrowError();
+      expect(() => node.getText(0, -1)).toThrow();
+      expect(() => node.getText(0, node.length + 1)).toThrow();
     });
 
     it('should throw an error if end is less than start', () => {
-      expect(() => node.getText(end, start)).toThrowError();
+      expect(() => node.getText(end, start)).toThrow();
     });
 
     it('should call getText() for the relevant child', () => {
@@ -97,7 +97,7 @@ describe('ParentInlineNode', () => {
 
       node.getText(start, end);
 
-      expect(spy).toBeCalledWith(start, end);
+      expect(spy).toHaveBeenCalledWith(start, end);
     });
 
     it('should adjust index by child offset', () => {
@@ -107,7 +107,7 @@ describe('ParentInlineNode', () => {
 
       node.getText(offset + start, offset + end);
 
-      expect(spy).toBeCalledWith(start, end);
+      expect(spy).toHaveBeenCalledWith(start, end);
     });
 
     it('should not call getText() for previous child if start equals its length', () => {
@@ -117,7 +117,7 @@ describe('ParentInlineNode', () => {
 
       node.getText(childLength, childLength + end);
 
-      expect(spy).not.toBeCalled();
+      expect(spy).not.toHaveBeenCalled();
     });
 
     it('should not call getText() for next child if end equals its start index', () => {
@@ -125,7 +125,7 @@ describe('ParentInlineNode', () => {
 
       node.getText(start, childMock.length);
 
-      expect(spy).not.toBeCalled();
+      expect(spy).not.toHaveBeenCalled();
     });
 
     it('should not call getText() for if start equals end', () => {
@@ -133,7 +133,7 @@ describe('ParentInlineNode', () => {
 
       node.getText(start, start);
 
-      expect(spy).not.toBeCalled();
+      expect(spy).not.toHaveBeenCalled();
     });
 
     it('should call getText for all relevant children', () => {
@@ -143,8 +143,8 @@ describe('ParentInlineNode', () => {
 
       node.getText(start, offset + end);
 
-      expect(spy).toBeCalledWith(start, offset);
-      expect(anotherSpy).toBeCalledWith(0, end);
+      expect(spy).toHaveBeenCalledWith(start, offset);
+      expect(anotherSpy).toHaveBeenCalledWith(0, end);
     });
 
     it('should return all text by default', () => {
@@ -153,8 +153,8 @@ describe('ParentInlineNode', () => {
 
       node.getText();
 
-      expect(spy).toBeCalledWith(0, childMock.length);
-      expect(anotherSpy).toBeCalledWith(0, anotherChildMock.length);
+      expect(spy).toHaveBeenCalledWith(0, childMock.length);
+      expect(anotherSpy).toHaveBeenCalledWith(0, anotherChildMock.length);
     });
   });
 
@@ -163,8 +163,8 @@ describe('ParentInlineNode', () => {
     const index = 3;
 
     it('should throw a error if index is invalid', () => {
-      expect(() => node.insertText(newText, -1)).toThrowError();
-      expect(() => node.insertText(newText, node.length + 1)).toThrowError();
+      expect(() => node.insertText(newText, -1)).toThrow();
+      expect(() => node.insertText(newText, node.length + 1)).toThrow();
     });
 
     it('should create empty text node if node is empty', () => {
@@ -180,7 +180,7 @@ describe('ParentInlineNode', () => {
 
       node.insertText(newText);
 
-      expect(spy).not.toBeCalled();
+      expect(spy).not.toHaveBeenCalled();
     });
 
     it('should call insertText() of the child with the passed index', () => {
@@ -188,7 +188,7 @@ describe('ParentInlineNode', () => {
 
       node.insertText(newText, index);
 
-      expect(spy).toBeCalledWith(newText, index);
+      expect(spy).toHaveBeenCalledWith(newText, index);
     });
 
     it('should adjust index by child offset', () => {
@@ -198,7 +198,7 @@ describe('ParentInlineNode', () => {
 
       node.insertText(newText, index + offset);
 
-      expect(spy).toBeCalledWith(newText, index);
+      expect(spy).toHaveBeenCalledWith(newText, index);
     });
 
     it('should append text to the last child by default', () => {
@@ -206,7 +206,7 @@ describe('ParentInlineNode', () => {
 
       node.insertText(newText);
 
-      expect(spy).toBeCalledWith(newText, anotherFormattingNodeMock.length);
+      expect(spy).toHaveBeenCalledWith(newText, anotherFormattingNodeMock.length);
     });
 
     it('should normalize subtree on insertion', () => {
@@ -214,7 +214,7 @@ describe('ParentInlineNode', () => {
 
       node.insertText(newText);
 
-      expect(spy).toBeCalled();
+      expect(spy).toHaveBeenCalled();
     });
 
     it('should emit TextAddedEvent with correct text as data and text range as index', () => {
@@ -238,17 +238,17 @@ describe('ParentInlineNode', () => {
     const end = 5;
 
     it('should throw a error if start index is invalid', () => {
-      expect(() => node.removeText(-1)).toThrowError();
-      expect(() => node.removeText(node.length + 1)).toThrowError();
+      expect(() => node.removeText(-1)).toThrow();
+      expect(() => node.removeText(node.length + 1)).toThrow();
     });
 
     it('should throw an error if end index is invalid', () => {
-      expect(() => node.removeText(0, -1)).toThrowError();
-      expect(() => node.removeText(0, node.length + 1)).toThrowError();
+      expect(() => node.removeText(0, -1)).toThrow();
+      expect(() => node.removeText(0, node.length + 1)).toThrow();
     });
 
     it('should throw an error if end is less than start', () => {
-      expect(() => node.removeText(end, start)).toThrowError();
+      expect(() => node.removeText(end, start)).toThrow();
     });
 
     it('should remove text from appropriate child', () => {
@@ -256,7 +256,7 @@ describe('ParentInlineNode', () => {
 
       node.removeText(start, end);
 
-      expect(spy).toBeCalledWith(start, end);
+      expect(spy).toHaveBeenCalledWith(start, end);
     });
 
     it('should adjust indices by child offset', () => {
@@ -266,7 +266,7 @@ describe('ParentInlineNode', () => {
 
       node.removeText(offset + start, offset + end);
 
-      expect(spy).toBeCalledWith(start, end);
+      expect(spy).toHaveBeenCalledWith(start, end);
     });
 
     it('should call removeText for each affected child', () => {
@@ -277,8 +277,8 @@ describe('ParentInlineNode', () => {
 
       node.removeText(start, offset + end);
 
-      expect(spy).toBeCalledWith(start, offset);
-      expect(anotherSpy).toBeCalledWith(0, end);
+      expect(spy).toHaveBeenCalledWith(start, offset);
+      expect(anotherSpy).toHaveBeenCalledWith(0, end);
     });
 
     it('should remove all text by default', () => {
@@ -287,8 +287,8 @@ describe('ParentInlineNode', () => {
 
       node.removeText();
 
-      expect(spy).toBeCalledWith(0, childMock.length);
-      expect(anotherSpy).toBeCalledWith(0, formattingNodeMock.length);
+      expect(spy).toHaveBeenCalledWith(0, childMock.length);
+      expect(anotherSpy).toHaveBeenCalledWith(0, formattingNodeMock.length);
     });
 
     it('should normalize subtree on removal', () => {
@@ -296,7 +296,7 @@ describe('ParentInlineNode', () => {
 
       node.removeText();
 
-      expect(spy).toBeCalled();
+      expect(spy).toHaveBeenCalled();
     });
 
     it('should emit TextRemovedEvent with removed text as data and range as index', () => {
@@ -325,17 +325,17 @@ describe('ParentInlineNode', () => {
     });
 
     it('should throw a error if start index is invalid', () => {
-      expect(() => node.getFragments(-1)).toThrowError();
-      expect(() => node.getFragments(node.length + 1)).toThrowError();
+      expect(() => node.getFragments(-1)).toThrow();
+      expect(() => node.getFragments(node.length + 1)).toThrow();
     });
 
     it('should throw an error if end index is invalid', () => {
-      expect(() => node.getFragments(0, -1)).toThrowError();
-      expect(() => node.getFragments(0, node.length + 1)).toThrowError();
+      expect(() => node.getFragments(0, -1)).toThrow();
+      expect(() => node.getFragments(0, node.length + 1)).toThrow();
     });
 
     it('should throw an error if end is less than start', () => {
-      expect(() => node.getFragments(end, start)).toThrowError();
+      expect(() => node.getFragments(end, start)).toThrow();
     });
 
     it('should call getFragments for relevant children', () => {
@@ -344,8 +344,8 @@ describe('ParentInlineNode', () => {
 
       node.getFragments(start, end);
 
-      expect(spyToBeCalled).toBeCalledWith(start - childMock.length, end - childMock.length);
-      expect(spyNotToBeCalled).not.toBeCalled();
+      expect(spyToBeCalled).toHaveBeenCalledWith(start - childMock.length, end - childMock.length);
+      expect(spyNotToBeCalled).not.toHaveBeenCalled();
     });
 
     it('should not get fragments for text nodes', () => {
@@ -419,21 +419,21 @@ describe('ParentInlineNode', () => {
     const tool = 'bold' as InlineToolName;
 
     it('should throw a error if start index is invalid', () => {
-      expect(() => node.format(tool, -1, 0)).toThrowError();
-      expect(() => node.format(tool, node.length + 1, node.length)).toThrowError();
+      expect(() => node.format(tool, -1, 0)).toThrow();
+      expect(() => node.format(tool, node.length + 1, node.length)).toThrow();
     });
 
     it('should throw an error if end index is invalid', () => {
-      expect(() => node.format(tool, 0, -1)).toThrowError();
-      expect(() => node.format(tool, 0, node.length + 1)).toThrowError();
+      expect(() => node.format(tool, 0, -1)).toThrow();
+      expect(() => node.format(tool, 0, node.length + 1)).toThrow();
     });
 
     it('should throw an error if end is less than start', () => {
-      expect(() => node.format(tool, end, start)).toThrowError();
+      expect(() => node.format(tool, end, start)).toThrow();
     });
 
     it('should not throw an error if end equals start', () => {
-      expect(() => node.format(tool, start, start)).not.toThrowError();
+      expect(() => node.format(tool, start, start)).not.toThrow();
     });
 
     it('should apply formatting to the relevant child', () => {
@@ -441,7 +441,7 @@ describe('ParentInlineNode', () => {
 
       node.format(tool, start, end);
 
-      expect(spy).toBeCalledWith(tool, start, end, undefined);
+      expect(spy).toHaveBeenCalledWith(tool, start, end, undefined);
     });
 
     it('should adjust index by child offset', () => {
@@ -451,7 +451,7 @@ describe('ParentInlineNode', () => {
 
       node.format(tool, offset + start, offset + end);
 
-      expect(spy).toBeCalledWith(tool, start, end, undefined);
+      expect(spy).toHaveBeenCalledWith(tool, start, end, undefined);
     });
 
     it('should format all relevant children', () => {
@@ -462,8 +462,8 @@ describe('ParentInlineNode', () => {
 
       node.format(tool, start, offset + end);
 
-      expect(spy).toBeCalledWith(tool, start, offset, undefined);
-      expect(anotherSpy).toBeCalledWith(tool, 0, end, undefined);
+      expect(spy).toHaveBeenCalledWith(tool, start, offset, undefined);
+      expect(anotherSpy).toHaveBeenCalledWith(tool, 0, end, undefined);
     });
 
     it('should normalize subtree on format', () => {
@@ -471,7 +471,7 @@ describe('ParentInlineNode', () => {
 
       node.format(tool, start, end);
 
-      expect(spy).toBeCalled();
+      expect(spy).toHaveBeenCalled();
     });
 
     it('should emit TextFormattedEvent with inline fragment as data and affected range as index', () => {
@@ -512,7 +512,7 @@ describe('ParentInlineNode', () => {
 
       node.unformat(tool, start, end);
 
-      expect(spy).toBeCalledWith(tool, start - childMock.length, end - childMock.length);
+      expect(spy).toHaveBeenCalledWith(tool, start - childMock.length, end - childMock.length);
     });
 
     it('should call unformat for all relevant children', () => {
@@ -523,8 +523,8 @@ describe('ParentInlineNode', () => {
 
       node.unformat(tool, start, offset + end);
 
-      expect(spy).toBeCalledWith(tool, start - childMock.length, offset);
-      expect(anotherSpy).toBeCalledWith(tool, 0, end - childMock.length);
+      expect(spy).toHaveBeenCalledWith(tool, start - childMock.length, offset);
+      expect(anotherSpy).toHaveBeenCalledWith(tool, 0, end - childMock.length);
     });
 
     it('should not unformat text nodes', () => {
@@ -538,7 +538,7 @@ describe('ParentInlineNode', () => {
 
       node.unformat(tool, start, end);
 
-      expect(spy).toBeCalled();
+      expect(spy).toHaveBeenCalled();
     });
 
     it('should emit TextUnformattedEvent with inline fragment as data and range as index', () => {

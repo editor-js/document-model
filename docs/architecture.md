@@ -1,9 +1,10 @@
 # Architecture Overview
 
-The editor is split into eight packages in a layered dependency direction.
+The editor is split into nine packages in a layered dependency direction.
 
 | Package | Role |
 |---|---|
+| `@editorjs/model-types` | Shared low-level types, nominal brands, and base event classes (`Index`, `BaseDocumentEvent`, the model event classes, `EventBus`). No runtime dependencies of its own. |
 | `@editorjs/sdk` | Shared contracts — interfaces, base event classes, `EventBus` |
 | `@editorjs/model` | In-memory document model (`EditorJSModel`) |
 | `@editorjs/dom-adapters` | Binds model nodes to DOM inputs; default adapter implementation |
@@ -15,12 +16,14 @@ The editor is split into eight packages in a layered dependency direction.
 
 ## Dependency rules
 
+- `model-types` is the foundation layer: it has no dependency on `model` or `sdk`, and **only `model` and `sdk` may depend on it directly**. Every other package (`dom-adapters`, `collaboration-manager`, `ui`, and tools/plugins in general) that needs `Index`, event classes, or other model-types primitives should get them re-exported through `@editorjs/sdk` instead of depending on `@editorjs/model-types` directly. This exists so `model` and `sdk` can share the same `Index`/event/nominal-type definitions without `sdk` depending on the full `model` engine (and vice versa) — see `packages/model-types/src/index.ts` for the exact re-exported surface.
 - `sdk` is the contract layer all other packages depend on.
+- `model` is the engine implementation that backs `EditorJSModel`. It is consumed directly by `core` (the orchestrator) and `ot-server` (server-side document state), but **tools and plugins should never import `@editorjs/model` directly** — they should depend on `@editorjs/sdk`'s contracts (`BlockTool`, `InlineTool`, `Index`, event types, etc.) instead. `sdk` re-exports everything from `model` that a tool/plugin author legitimately needs, so `model` itself isn't part of the stable, tool-facing API surface and is free to change its internals.
 - `core` wires runtime dependencies; it should be the only orchestrator.
 - `model` does not depend on DOM concerns.
-- `dom-adapters` and `collaboration-manager` observe/apply model changes through public APIs and events.
-- `ui` depends on `sdk` and `model`; it is registered as an `EditorjsPlugin` via `core.use()`.
-- `ot-server` depends on `collaboration-manager` (for `Operation` / message types) and `model`; it runs server-side only.
+- `dom-adapters` and `collaboration-manager` observe/apply model changes through public APIs and events, and depend only on `sdk` (not `model` or `model-types`).
+- `ui` depends on `sdk`; it is registered as an `EditorjsPlugin` via `core.use()`.
+- `ot-server` depends on `collaboration-manager` (for `Operation` / message types), `model`, and `sdk`; it runs server-side only.
 
 ## Runtime ownership
 

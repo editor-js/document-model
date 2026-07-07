@@ -9,7 +9,7 @@ jobs:
     with:
       package-name: '@editorjs/collaboration-manager'
       working-directory: './packages/collaboration-manager'
-      include-mutations: false
+      include-mutations: true
     secrets:
       stryker_dashboard_api_key: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
 

@@ -61,7 +61,7 @@ describe('ParentNode mixin', () => {
         children: [childMock],
       });
 
-      expect(spy).toBeCalledWith(dummy);
+      expect(spy).toHaveBeenCalledWith(dummy);
     });
   });
 
@@ -89,7 +89,7 @@ describe('ParentNode mixin', () => {
         children: [childMock],
       });
 
-      expect(spy).toBeCalledWith(dummy);
+      expect(spy).toHaveBeenCalledWith(dummy);
     });
   });
 
@@ -150,7 +150,7 @@ describe('ParentNode mixin', () => {
 
       dummy.insertAfter(childMock, childMockToInsert);
 
-      expect(spy).toBeCalledWith(dummy);
+      expect(spy).toHaveBeenCalledWith(dummy);
     });
 
     it('should call appendTo for each passed child', () => {
@@ -168,7 +168,7 @@ describe('ParentNode mixin', () => {
       dummy.insertAfter(childMock, childMockToInsert, anotherChildMockToInsert);
 
       spies.forEach((spy) => {
-        expect(spy).toBeCalledWith(dummy);
+        expect(spy).toHaveBeenCalledWith(dummy);
       });
     });
 
@@ -221,7 +221,7 @@ describe('ParentNode mixin', () => {
 
       dummy.removeChild(childMock);
 
-      expect(spy).toBeCalled();
+      expect(spy).toHaveBeenCalled();
     });
   });
 

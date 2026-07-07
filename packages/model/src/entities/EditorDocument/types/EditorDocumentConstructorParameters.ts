@@ -1,4 +1,4 @@
-import type { Properties } from './Properties.js';
+import type { Properties } from '@editorjs/model-types';
 import type { ToolsRegistry } from '../../../tools/ToolsRegistry.js';
 
 export interface EditorDocumentConstructorParameters {

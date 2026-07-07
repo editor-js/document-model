@@ -1,5 +1,5 @@
-import type { Index } from '@editorjs/model';
-import { createDataKey, IndexBuilder, type TextRange } from '@editorjs/model';
+import type { Index } from '@editorjs/sdk';
+import { createDataKey, IndexBuilder, type TextRange } from '@editorjs/sdk';
 import { BatchedOperation } from './BatchedOperation.js';
 import type { SerializedOperation } from './Operation.js';
 import { Operation, OperationType } from './Operation.js';

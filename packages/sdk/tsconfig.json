@@ -26,7 +26,7 @@
   ],
   "references": [
     {
-      "path": "../model/tsconfig.build.json"
+      "path": "../model-types/tsconfig.build.json"
     }
   ]
 }

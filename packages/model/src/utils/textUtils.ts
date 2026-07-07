@@ -1,4 +1,4 @@
-import type { InlineFragment, InlineTreeNodeSerialized, TextNodeSerialized } from '../entities/inline-fragments/InlineNode/index.js';
+import type { InlineFragment, InlineTreeNodeSerialized, TextNodeSerialized } from '@editorjs/model-types';
 
 /**
  * Returns the fragments that fall after a given character offset,

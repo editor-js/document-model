@@ -1,4 +1,4 @@
-import { type JestConfigWithTsJest, createDefaultEsmPreset } from 'ts-jest';
+import type { JestConfigWithTsJest } from 'ts-jest';
 
 export default {
   preset: 'ts-jest',
@@ -7,12 +7,27 @@ export default {
   modulePathIgnorePatterns: ['<rootDir>/.*/__mocks__', '<rootDir>/.*/mocks'],
   extensionsToTreatAsEsm: ['.ts'],
   moduleNameMapper: {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^codex-tooltip$': '<rootDir>/test/mocks/codex-tooltip.ts',
   },
   coverageReporters: ['lcov', 'json-summary', 'text-summary'],
   transform: {
-    ...createDefaultEsmPreset().transform,
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        useESM: true,
+      },
+    ],
+    '^.+\\.jsx?$': [
+      'babel-jest',
+      {
+        presets: [
+          ['@babel/preset-env', { targets: { node: 'current' } }],
+        ],
+      },
+    ],
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!@editorjs)',
+  ],
 } as JestConfigWithTsJest;

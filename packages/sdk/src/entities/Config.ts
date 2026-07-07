@@ -1,5 +1,4 @@
 import type { EditorConfig } from '@editorjs/editorjs';
-import type { EditorJSModel } from '@editorjs/model';
 
 /**
  * Editor.js configuration
@@ -14,9 +13,10 @@ export interface CoreConfig extends EditorConfig {
    * DEV MODE ONLY
    *
    * Allows to subscribe to model updates. Used in playground for visualizing model changes
+   * @todo remove or replace with some stable API
    * @param model - EditorJSModel instance
    */
-  onModelUpdate?: (model: EditorJSModel) => void;
+  onModelUpdate?(model: unknown): void;
 
   /**
    * Current user's identifier

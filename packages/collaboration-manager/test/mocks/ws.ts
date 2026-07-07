@@ -1,4 +1,4 @@
-import type { EditorDocumentSerialized } from '@editorjs/model';
+import type { EditorDocumentSerialized } from '@editorjs/sdk';
 import type { HandshakePayload } from '../../src/client/Message.js';
 import { MessageType } from '../../src/client/MessageType.js';
 

@@ -1,10 +1,4 @@
-import { Index } from '../entities/index.js';
-import {
-  CaretManagerCaretAddedEvent,
-  CaretManagerCaretRemovedEvent,
-  CaretManagerCaretUpdatedEvent,
-  EventType
-} from '../EventBus/index.js';
+import { Index, CaretManagerCaretAddedEvent, CaretManagerCaretRemovedEvent, CaretManagerCaretUpdatedEvent, EventType } from '@editorjs/model-types';
 import { Caret } from './Caret/index.js';
 import { CaretManager } from './CaretManager.js';
 import { jest } from '@jest/globals';

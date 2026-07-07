@@ -1,6 +1,6 @@
-import type { InlineToolData, InlineToolName } from '../FormattingInlineNode/index.js';
-import type { BlockChildType } from '../../BlockNode/types/index.js';
-import type { NODE_TYPE_HIDDEN_PROP } from '../../BlockNode/consts.js';
+import type { InlineToolData, InlineToolName } from '@editorjs/model-types';
+import type { InlineTreeNodeSerialized } from '@editorjs/model-types';
+import type { InlineFragment, TextNodeSerialized } from '@editorjs/model-types';
 
 /**
  * Interface describing abstract InlineNode — common properties and methods for all inline nodes
@@ -90,50 +90,4 @@ export interface InlineNode {
    * Normalizes nodes subtree
    */
   normalize(): void;
-}
-
-/**
- * Serialized inline fragment
- */
-export interface InlineFragment {
-  /**
-   * Name of the applied Inline Tool
-   */
-  tool: InlineToolName;
-
-  /**
-   * Inline Tool Data if applicable
-   */
-  data?: InlineToolData;
-
-  /**
-   * Range of the fragment
-   */
-  range: [start: number, end: number];
-}
-
-/**
- * Serialized Inline Node value
- *
- * Interface used for tree nodes except TextNode which is a tree root
- */
-export interface InlineTreeNodeSerialized {
-  /**
-   * Text value of the node and its subtree
-   */
-  value: string;
-
-  /**
-   * Fragments which node and its subtree contains
-   */
-  fragments: InlineFragment[];
-}
-
-/**
- * Root type representing serialized TextNode data
- *
- * Interface used for a tree root
- */
-export interface TextNodeSerialized extends InlineTreeNodeSerialized {
-  [NODE_TYPE_HIDDEN_PROP]: BlockChildType.Text;
 }

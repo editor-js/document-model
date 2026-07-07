@@ -8,26 +8,29 @@
   "scripts": {
     "build": "tsc --build tsconfig.build.json",
     "build:declaration": "yarn build --emitDeclarationOnly",
-    "dev": "tsc --project tsconfig.build.json --watch",
+    "dev": "yarn build --watch",
     "lint": "eslint ./src",
     "lint:ci": "yarn lint --max-warnings 0",
     "lint:fix": "yarn lint --fix",
-    "test": "node --experimental-vm-modules $(yarn bin jest)",
+    "test": "jest",
     "test:coverage": "yarn test --coverage=true",
-    "test:mutations": "NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" stryker run",
+    "test:mutations": "yarn workspace @editorjs/model build && stryker run",
     "clear": "rm -rf ./dist && rm -rf ./tsconfig.build.tsbuildinfo"
   },
   "dependencies": {
-    "@editorjs/model": "workspace:^",
     "@editorjs/sdk": "workspace:^"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.2",
+    "@editorjs/model": "workspace:^",
     "@jest/globals": "^29.7.0",
     "@stryker-mutator/core": "^7.0.2",
     "@stryker-mutator/jest-runner": "^7.0.2",
     "@stryker-mutator/typescript-checker": "^7.0.2",
     "@types/eslint": "^8",
     "@types/jest": "^29.5.12",
+    "babel-jest": "^29.7.0",
     "eslint": "^8.38.0",
     "eslint-config-codex": "^2.0.2",
     "eslint-plugin-import": "^2.29.0",

@@ -1,7 +1,6 @@
 // Stryker disable all
 /* eslint-disable @typescript-eslint/no-magic-numbers */
-import type { EditorDocumentSerialized } from '../entities/EditorDocument/types/index.js';
-import { createBlockId } from '../entities/BlockNode/types/BlockId.js';
+import { type EditorDocumentSerialized, createBlockId } from '@editorjs/model-types';
 
 export const data: EditorDocumentSerialized = {
   identifier: 'document',

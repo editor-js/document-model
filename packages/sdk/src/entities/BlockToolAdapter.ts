@@ -1,11 +1,11 @@
-import type { BlockId, EventBus, ModelEvents, TextNodeSerialized, ValueSerialized } from '@editorjs/model';
+import type { BlockId, TextNodeSerialized, ValueSerialized, EventBus, ModelEvents } from '@editorjs/model-types';
 import {
   DataNodeAddedEvent,
   DataNodeRemovedEvent,
-  NODE_TYPE_HIDDEN_PROP,
   ValueModifiedEvent,
+  NODE_TYPE_HIDDEN_PROP,
   BlockChildType
-} from '@editorjs/model';
+} from '@editorjs/model-types';
 import type { CoreConfig } from '@/entities/Config';
 import { KeyAddedEvent, KeyRemovedEvent, ValueNodeChangedEvent } from './EventBus/events/adapter/index.js';
 import type { EditorAPI } from '../api/index.js';

@@ -1,4 +1,4 @@
-import type { EventMap } from '@editorjs/model';
+import type { EventMap } from '@editorjs/sdk';
 
 /**
  * Augment EventTarget's addEventListener method to accept CustomEvent

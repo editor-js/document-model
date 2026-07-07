@@ -1,4 +1,4 @@
-import { IndexBuilder } from '@editorjs/model';
+import { IndexBuilder } from '@editorjs/sdk';
 import { Operation, OperationType } from './Operation.js';
 import { getRangesIntersectionType, RangeIntersectionType } from './utils/getRangesIntersectionType.js';
 

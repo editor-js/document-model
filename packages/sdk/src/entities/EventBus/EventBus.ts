@@ -1,4 +1,5 @@
 import type { Event } from './Event.js';
+import { EventBus } from '@editorjs/model-types';
 
 /**
  * Extension for the EventTarget interface to allow for custom events.
@@ -26,8 +27,4 @@ declare global {
   }
 }
 
-/**
- * EventBus class to handle events between components
- * Extends native EventTarget class
- */
-export class EventBus extends EventTarget {}
+export { EventBus };

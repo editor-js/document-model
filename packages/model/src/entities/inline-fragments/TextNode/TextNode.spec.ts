@@ -1,9 +1,8 @@
-import type { InlineToolName } from '../FormattingInlineNode/index.js';
-import type { InlineFragment } from '../InlineNode/index.js';
+import type { InlineToolName } from '@editorjs/model-types';
+import { BlockChildType, NODE_TYPE_HIDDEN_PROP } from '@editorjs/model-types';
+import type { InlineFragment } from '@editorjs/model-types';
 import { TextNode } from './index.js';
 import { ParentInlineNode } from '../ParentInlineNode/index.js';
-import { BlockChildType } from '../../BlockNode/types/index.js';
-import { NODE_TYPE_HIDDEN_PROP } from '../../BlockNode/consts.js';
 
 jest.mock('../ParentInlineNode');
 

@@ -2,18 +2,9 @@ import 'reflect-metadata';
 import { inject, injectable } from 'inversify';
 import { TOKENS } from '../tokens.js';
 import { BlocksManager } from '../components/BlockManager.js';
-import { CoreConfigValidated } from '@editorjs/sdk';
-import { BlocksAPI as BlocksApiInterface } from '@editorjs/sdk';
-import {
-  BlockId,
-  BlockIndexOrId,
-  createBlockId,
-  createDataKey,
-  EditorDocumentSerialized,
-  EditorJSModel,
-  TextNodeSerialized,
-  ValueSerialized
-} from '@editorjs/model';
+import { CoreConfigValidated, BlocksAPI as BlocksApiInterface, EditorDocumentSerialized, BlockId, BlockIndexOrId, createBlockId, createDataKey } from '@editorjs/sdk';
+import { EditorJSModel } from '@editorjs/model';
+import type { TextNodeSerialized, ValueSerialized } from '@editorjs/sdk';
 
 /**
  * Blocks API
@@ -207,5 +198,25 @@ export class BlocksAPI implements BlocksApiInterface {
    */
   public split({ block, key, offset, userId }: Parameters<BlocksApiInterface['split']>[0]): void {
     this.#blocksManager.splitBlock(block as BlockIndexOrId, createDataKey(key), offset, userId);
+  }
+
+  /**
+   * Converts a block to a new type
+   * @param params - conversion parameters
+   * @param params.block - index or id of the block to convert
+   * @param params.key - data key of the text input at which to convert
+   * @param params.newType - block tool name to convert to
+   * @param [params.dataOverrides] - optional data overrides for the new block. Merged shallowly:
+   *   object-valued keys are replaced wholesale, not deep-merged.
+   * @param [params.userId] - user id to attribute the change to
+   */
+  public convert({
+    block,
+    key,
+    newType,
+    dataOverrides,
+    userId = this.#config.userId,
+  }: Parameters<BlocksApiInterface['convert']>[0]): void {
+    this.#blocksManager.convertBlock(block as BlockIndexOrId, createDataKey(key), newType, userId, dataOverrides);
   }
 }

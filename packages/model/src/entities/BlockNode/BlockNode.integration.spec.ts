@@ -1,8 +1,7 @@
-import { BlockNode, createDataKey } from './index.js';
-import { BlockChildType } from './types/index.js';
-import { NODE_TYPE_HIDDEN_PROP } from './consts.js';
-import type { InlineFragment } from '../inline-fragments/index.js';
-import { createInlineToolName } from '../inline-fragments/index.js';
+import { BlockChildType, createInlineToolName, createDataKey } from '@editorjs/model-types';
+import type { InlineFragment } from '@editorjs/model-types';
+import { BlockNode } from './index.js';
+import { NODE_TYPE_HIDDEN_PROP } from '@editorjs/model-types';
 import { ValueNode } from '../ValueNode/index.js';
 
 describe('BlockNode integration tests', () => {

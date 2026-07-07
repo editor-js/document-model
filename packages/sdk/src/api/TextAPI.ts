@@ -1,6 +1,6 @@
 import type {
   InlineFragment
-} from '@editorjs/model';
+} from '@editorjs/model-types';
 
 /**
  * Interface representing text position within a block

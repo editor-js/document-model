@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
-import { createDataKey, EventType, IndexBuilder } from '@editorjs/model';
+import { createDataKey, EventType, IndexBuilder } from '@editorjs/sdk';
 import { EditorJSModel } from '@editorjs/model';
 import { CoreEventType, type CoreConfig } from '@editorjs/sdk';
 import { beforeAll, jest } from '@jest/globals';

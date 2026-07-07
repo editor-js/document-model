@@ -5,8 +5,9 @@ import type { CoreConfigValidated } from '@editorjs/sdk';
 import type { BlocksManager } from '../components/BlockManager';
 // @ts-expect-error - TS don't import types via import() so have to import them here as well
 import type ToolsManager from '../tools/ToolsManager';
-import type { TextNodeSerialized } from '@editorjs/model';
-
+import type { TextNodeSerialized } from '@editorjs/sdk';
+import { EventBus, EventType, BlockAddedEvent, BlockRemovedEvent } from '@editorjs/sdk';
+import { EditorJSModel } from '@editorjs/model';
 const USER_ID = 'integration-user';
 const DOCUMENT_ID = 'integration-doc';
 
@@ -14,14 +15,6 @@ const DOCUMENT_ID = 'integration-doc';
  * Mock console.error to suppress expected error logs
  */
 console.error = jest.fn();
-
-jest.unstable_mockModule('@editorjs/sdk', () => ({
-  BlockAddedCoreEvent: jest.fn(),
-  BlockRemovedCoreEvent: jest.fn(),
-  EventBus: jest.fn(() => ({
-    dispatchEvent: jest.fn(),
-  })),
-}));
 
 /**
  * Mock DOM adapters — they require a real DOM environment
@@ -51,9 +44,6 @@ jest.unstable_mockModule('../tools/ToolsManager', () => ({
   })),
 }));
 
-// Import real model (no mock) and mocked adapters
-const { EditorJSModel, EventType, BlockAddedEvent, BlockRemovedEvent } = await import('@editorjs/model');
-const { EventBus } = await import('@editorjs/sdk');
 const ToolsManager = (await import('../tools/ToolsManager')).default;
 const { BlocksManager } = await import('../components/BlockManager.js');
 const { BlocksAPI } = await import('./BlocksAPI.js');

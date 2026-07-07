@@ -5,7 +5,7 @@ import {
   TextAddedEvent,
   TextFormattedEvent, TextRemovedEvent,
   TextUnformattedEvent
-} from '@editorjs/model';
+} from '@editorjs/sdk';
 import type {
   UndoCoreEvent,
   EditorAPI,

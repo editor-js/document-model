@@ -1,15 +1,11 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
-import type {
-  TextNodeSerialized
-} from '../index.js';
+import { createInlineToolData, createInlineToolName, BlockChildType } from '@editorjs/model-types';
+import type { TextNodeSerialized } from '@editorjs/model-types';
 import {
   TextInlineNode,
-  TextNode,
-  createInlineToolData,
-  createInlineToolName
+  TextNode
 } from '../index.js';
-import { BlockChildType } from '../../BlockNode/types/index.js';
-import { NODE_TYPE_HIDDEN_PROP } from '../../BlockNode/consts.js';
+import { NODE_TYPE_HIDDEN_PROP } from '@editorjs/model-types';
 
 describe('Inline fragments tree integration', () => {
   describe('text insertion', () => {
@@ -131,7 +127,7 @@ describe('Inline fragments tree integration', () => {
       const index = 100;
 
       expect(() => tree.removeText(index))
-        .toThrowError();
+        .toThrow();
     });
   });
 

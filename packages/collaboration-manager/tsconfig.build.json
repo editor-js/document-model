@@ -12,10 +12,10 @@
   ],
   "references": [
     {
-      "path": "../model/tsconfig.build.json"
+      "path": "../sdk/tsconfig.build.json"
     },
     {
-      "path": "../sdk/tsconfig.build.json"
+      "path": "../model/tsconfig.build.json"
     }
   ]
 }

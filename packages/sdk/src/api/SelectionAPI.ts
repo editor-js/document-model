@@ -1,4 +1,4 @@
-import type { Caret, CaretManagerEvents, BlockNodeSerialized } from '@editorjs/model';
+import type { BlockNodeSerialized, Caret, CaretManagerEvents, FormattingAction, Index } from '@editorjs/model-types';
 
 /**
  * Selection API interface
@@ -8,11 +8,38 @@ export interface SelectionAPI {
   /**
    * Applies inline tool for the current selection
    * @param params - method parameters
-   * @param params.tool - name of the inline tool to apply
-   * @param [params.data] - optional data for the inline tool
    */
-  // eslint-disable-next-line jsdoc/require-jsdoc,@stylistic/object-property-newline -- type declaration
-  applyInlineTool({ tool, data }: { tool: string; data?: Record<string, unknown> }): void;
+  applyInlineTool({ tool, data, caretIndex }: {
+    /**
+     * name of the inline tool to apply
+     */
+    tool: string;
+    /**
+     * optional data for the inline tool
+     */
+    data?: Record<string, unknown>;
+    /**
+     * caret index where to apply the tool. By default — current caret index
+     */
+    caretIndex?: Index;
+    /**
+     * ID of a user who made the change
+     */
+    userId?: string | number;
+
+    /**
+     * By default, method changes the tool state,
+     * with this option you can choose a specific action
+     */
+    action?: FormattingAction;
+
+    /**
+     * If true, selection will be restored after the tool is applied.
+     * If false, selection will be collapsed to the end
+     * By default equals true
+     */
+    keepSelection?: boolean;
+  }): void;
 
   /**
    * Registers a callback for CaretManager updates. Returns a cleanup function
@@ -31,6 +58,11 @@ export interface SelectionAPI {
    * @param userId - user id. If not provided, returns for current user
    */
   getCaret(userId?: string | number): Caret | undefined;
+
+  /**
+   * Current caret index
+   */
+  caretIndex: Index | null;
 
   /**
    *

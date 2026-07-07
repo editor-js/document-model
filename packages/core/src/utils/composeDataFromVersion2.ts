@@ -1,6 +1,7 @@
 import type { OutputData } from '@editorjs/editorjs';
-import type { InlineFragment } from '@editorjs/model';
-import { createInlineToolData, createInlineToolName, TextNode, ValueNode, type BlockNodeInit } from '@editorjs/model';
+import { TextNode, ValueNode } from '@editorjs/model';
+import type { InlineFragment } from '@editorjs/sdk';
+import { createInlineToolData, createInlineToolName, type BlockNodeInit } from '@editorjs/sdk';
 
 /**
  * Removes HTML tags from the input string

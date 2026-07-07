@@ -1,18 +1,18 @@
 import { getContext } from '../../../utils/Context.js';
-import { IndexBuilder } from '../../Index/IndexBuilder.js';
-import type { InlineFragment, InlineNode, InlineTreeNodeSerialized } from '../InlineNode/index.js';
+import { IndexBuilder } from '@editorjs/model-types';
+import type { InlineNode } from '../InlineNode/index.js';
+import type { InlineFragment, InlineTreeNodeSerialized, InlineToolData, InlineToolName } from '@editorjs/model-types';
 import type { ParentNodeConstructorOptions } from '../mixins/ParentNode/index.js';
 import { ParentNode } from '../mixins/ParentNode/index.js';
 import type { ChildNode } from '../mixins/ChildNode/index.js';
-import type { InlineToolData, InlineToolName } from '../FormattingInlineNode/index.js';
 import { TextInlineNode } from '../index.js';
-import { EventBus } from '../../../EventBus/EventBus.js';
+import { EventBus } from '@editorjs/model-types';
 import {
   TextAddedEvent,
-  TextRemovedEvent,
   TextFormattedEvent,
+  TextRemovedEvent,
   TextUnformattedEvent
-} from '../../../EventBus/events/index.js';
+} from '@editorjs/model-types';
 
 /**
  * We need to extend ParentInlineNode interface with ParentNode ones to use the methods from mixins

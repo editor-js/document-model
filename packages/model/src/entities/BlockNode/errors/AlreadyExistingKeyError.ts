@@ -1,4 +1,4 @@
-import type { DataKey } from '../types/index.js';
+import type { DataKey } from '@editorjs/model-types';
 
 /**
  * Error is thrown on attempt to create data with already existing key

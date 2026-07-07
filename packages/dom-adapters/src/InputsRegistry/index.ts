@@ -1,4 +1,4 @@
-import type { BlockId, DataKey } from '@editorjs/model';
+import type { BlockId, DataKey } from '@editorjs/sdk';
 import { injectable } from 'inversify';
 
 /**

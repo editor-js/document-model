@@ -1,7 +1,7 @@
 /* eslint-disable jsdoc/require-jsdoc, @stylistic/comma-dangle,@typescript-eslint/naming-convention */
 import { beforeEach, jest } from '@jest/globals';
 import type { BlockToolFacade, EditorJSAdapterPlugin } from '@editorjs/sdk';
-import type { BlockId, Index } from '@editorjs/model';
+import type { BlockId, Index } from '@editorjs/sdk';
 
 const USER_ID = 'user';
 
@@ -13,7 +13,25 @@ console.error = jest.fn();
 jest.unstable_mockModule('@editorjs/sdk', () => ({
   BlockAddedCoreEvent: jest.fn(),
   BlockRemovedCoreEvent: jest.fn(),
-  EventBus: jest.fn(),
+  CoreEventType: {
+    Undo: 'undo',
+    Redo: 'redo'
+  },
+  EventBus: jest.fn(() => ({ dispatchEvent: jest.fn() })),
+  BlockAddedEvent: function (this: { detail: unknown }, index: Index, data: unknown): void {
+    this.detail = {
+      index,
+      data
+    };
+  },
+  BlockRemovedEvent: function (this: { detail: unknown }, index: Index, data: unknown): void {
+    this.detail = {
+      index,
+      data
+    };
+  },
+  EventType: { Changed: 'changed' },
+  createBlockId: (str: string) => str,
 }));
 
 jest.unstable_mockModule('@editorjs/model', () => {
@@ -21,31 +39,8 @@ jest.unstable_mockModule('@editorjs/model', () => {
     addEventListener: jest.fn(),
   }));
 
-  const EventBus = jest.fn(() => ({ dispatchEvent: jest.fn() }));
-
-  const BlockAddedEvent = function (this: { detail: unknown }, index: Index, data: unknown): void {
-    this.detail = {
-      index,
-      data
-    };
-  };
-
-  const BlockRemovedEvent = function (this: { detail: unknown }, index: Index, data: unknown): void {
-    this.detail = {
-      index,
-      data
-    };
-  };
-
-  const EventType = { Changed: 'changed' };
-
   return {
     EditorJSModel,
-    EventBus,
-    BlockAddedEvent,
-    BlockRemovedEvent,
-    EventType,
-    createBlockId: (str: string) => str,
   };
 });
 
@@ -61,7 +56,8 @@ jest.unstable_mockModule('../tools/ToolsManager', () => ({
 }));
 
 // Now import the modules (they will receive the mocks registered above)
-const { EditorJSModel, EventBus, BlockAddedEvent, BlockRemovedEvent } = await import('@editorjs/model');
+const { EditorJSModel } = await import('@editorjs/model');
+const { BlockAddedEvent, BlockRemovedEvent, EventBus } = await import('@editorjs/sdk');
 const ToolsManager = (await import('../tools/ToolsManager')).default;
 const { BlockRenderer } = await import('./BlockRenderer.js');
 
