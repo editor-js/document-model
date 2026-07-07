@@ -231,21 +231,20 @@ export class SelectionManager {
    *
    */
   public selectedBlocks(): BlockNodeSerialized[] | null {
-    const userCaret = this.#model.getCaret(this.#config.userId);
-    const index = userCaret?.index ?? null;
+    const currentSelectionIndex = this.currentSelection;
 
-    if (index === null) {
+    if (currentSelectionIndex === null) {
       return null;
     }
 
-    if (index.isBlockIndex) {
-      const { blockIndex } = index;
+    if (currentSelectionIndex.isBlockIndex) {
+      const { blockIndex } = currentSelectionIndex;
 
       return [this.#model.serialized.blocks[blockIndex!]];
     }
 
-    if (index.compositeSegments !== undefined) {
-      return index.compositeSegments.map((segment) => {
+    if (currentSelectionIndex.compositeSegments !== undefined) {
+      return currentSelectionIndex.compositeSegments.map((segment) => {
         const { blockIndex } = segment;
 
         return this.#model.serialized.blocks[blockIndex!];
