@@ -1,24 +1,32 @@
-import type { CopyUIEvent, EditorAPI, EditorjsPlugin, EditorjsPluginParams } from '@editorjs/sdk';
+import type { CopyUIEvent, EditorAPI, EditorjsPlugin, EditorjsPluginParams, EventBus } from '@editorjs/sdk';
 import { CopyUIEventName } from '@editorjs/sdk';
 import { PluginType } from '@editorjs/sdk';
 
 /**
- * @todo update doc
+ * Clipboard plugin handles copy events and provides rich clipboard data for selected blocks.
+ * When a user copies content, this plugin intercepts the event and adds EditorJS-specific data
+ * including the selected blocks metadata alongside plain text and HTML content.
  */
 export class ClipboardPlugin implements EditorjsPlugin {
   public static readonly type = PluginType.Plugin;
 
   readonly #api: EditorAPI;
+  readonly #eventBus: EventBus;
+  #copyEventListener: ((e: CopyUIEvent) => void) | undefined;
 
   /**
-   * @param params @todo update doc
+   * @param params - plugin configuration and dependencies
+   * @param params.config - EditorJS configuration
+   * @param params.api - EditorAPI instance for block and selection access
+   * @param params.eventBus - EventBus for event subscriptions
    */
   constructor(params: EditorjsPluginParams) {
     const { api, eventBus } = params;
 
     this.#api = api;
+    this.#eventBus = eventBus;
 
-    eventBus.addEventListener(`ui:${CopyUIEventName}`, (e: CopyUIEvent) => {
+    this.#copyEventListener = (e: CopyUIEvent) => {
       const { nativeEvent } = e.detail;
 
       const selectedBlocks = this.#api.selection.selectedBlocks;
@@ -44,33 +52,48 @@ export class ClipboardPlugin implements EditorjsPlugin {
       nativeEvent.clipboardData?.setData('text/plain', selectionAsPlainText);
       nativeEvent.clipboardData?.setData('text/html', selectionAsHTML);
       nativeEvent.clipboardData?.setData('application/x-editor-js', JSON.stringify(selectedBlocks));
-    });
+    };
+
+    eventBus.addEventListener(`ui:${CopyUIEventName}`, this.#copyEventListener);
   }
 
   /**
-   * @todo update doc
+   * Destroys the plugin and removes all event listeners
    */
   public destroy(): void {
-    // do nothing
+    this.removeEventListener();
   }
 
   /**
-   *
-   * @param selection
+   * Removes the event listener for copy events
+   * @internal
+   */
+  private removeEventListener(): void {
+    if (this.#copyEventListener !== undefined) {
+      this.#eventBus.removeEventListener(`ui:${CopyUIEventName}`, this.#copyEventListener);
+    }
+    this.#copyEventListener = undefined;
+  }
+
+  /**
+   * Parses DOM selection to HTML string
+   * @internal
+   * @param selection - DOM selection to parse
+   * @returns HTML string representation of the selection
    */
   #parseDOMSelectionToHTML(selection: Selection): string {
     if (selection.rangeCount === 0) {
       return '';
     }
 
-    const container = document.createElement('div');
+    const template = document.createElement('template');
 
     for (let i = 0; i < selection.rangeCount; i++) {
       const range = selection.getRangeAt(i);
 
-      container.appendChild(range.cloneContents());
+      template.content.appendChild(range.cloneContents());
     }
 
-    return container.innerHTML;
+    return template.innerHTML;
   }
 }
