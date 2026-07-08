@@ -1,4 +1,4 @@
-import type { CopyUIEvent, EditorAPI, EditorjsPlugin, EditorjsPluginParams, EventBus } from '@editorjs/sdk';
+import type { BlockData, CopyUIEvent, EditorAPI, EditorjsPlugin, EditorjsPluginParams, EventBus } from '@editorjs/sdk';
 import { CopyUIEventName } from '@editorjs/sdk';
 import { PluginType } from '@editorjs/sdk';
 
@@ -46,12 +46,13 @@ export class ClipboardPlugin implements EditorjsPlugin {
 
       const selectionAsPlainText = currentDOMSelection.toString();
       const selectionAsHTML = this.#parseDOMSelectionToHTML(currentDOMSelection);
+      const clipboardEditorJSObject = this.#createClipboardObject(selectedBlocks);
 
       nativeEvent.preventDefault();
 
       nativeEvent.clipboardData?.setData('text/plain', selectionAsPlainText);
       nativeEvent.clipboardData?.setData('text/html', selectionAsHTML);
-      nativeEvent.clipboardData?.setData('application/x-editor-js', JSON.stringify(selectedBlocks));
+      nativeEvent.clipboardData?.setData('application/x-editor-js', JSON.stringify(clipboardEditorJSObject));
     };
 
     eventBus.addEventListener(`ui:${CopyUIEventName}`, this.#copyEventListener);
@@ -96,4 +97,42 @@ export class ClipboardPlugin implements EditorjsPlugin {
 
     return template.innerHTML;
   }
+
+  /**
+   *
+   * @param blocks - content to create a clipboard object
+   */
+  #createClipboardObject(blocks: BlockData[] = []): ClipboardEditorJSObject {
+    return {
+      blocks,
+      meta: {
+        version: '3.0.0',
+      },
+    };
+  }
+}
+
+/**
+ *
+ */
+interface ClipboardEditorJSObject {
+  /**
+   *
+   */
+  blocks: BlockData[];
+
+  /**
+   *
+   */
+  meta: Meta;
+}
+
+/**
+ *
+ */
+interface Meta {
+  /**
+   *
+   */
+  version: string;
 }
