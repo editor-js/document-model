@@ -6,7 +6,8 @@ import { UIEventBase } from './UIEventBase.js';
 export const CopyUIEventName = 'copy';
 
 /**
- * Payload @todo update doc
+ * Payload of CopyUIEvent
+ * Contains a native clipboard event
  */
 export interface CopyUIEventPayload {
   /**
@@ -17,7 +18,7 @@ export interface CopyUIEventPayload {
 }
 
 /**
- * Delegated copy event from the editor @todo update doc
+ * Delegated copy event from the editor block holder
  */
 export class CopyUIEvent extends UIEventBase<CopyUIEventPayload> {
   /**

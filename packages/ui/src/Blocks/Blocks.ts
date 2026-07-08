@@ -1,19 +1,14 @@
-import type {
-  BlockAddedCoreEvent,
-  BlockRemovedCoreEvent, CopyUIEvent, EditorAPI,
-  EditorjsPlugin,
-  EditorjsPluginParams
-} from '@editorjs/sdk';
-import {
-  CoreEventType,
-  UiComponentType,
-  BeforeInputUIEvent
-} from '@editorjs/sdk';
 import type { EventBus,
   BlockAddedCoreEvent,
   BlockRemovedCoreEvent, CopyUIEventPayload,
   EditorjsPlugin,
-  EditorjsPluginParams } from '@editorjs/sdk';
+  EditorjsPluginParams, EditorAPI } from '@editorjs/sdk';
+import {
+  CoreEventType,
+  CopyUIEvent,
+  UiComponentType,
+  BeforeInputUIEvent
+} from '@editorjs/sdk';
 import Style from './Blocks.module.pcss';
 import { isNativeInput, make } from '@editorjs/dom';
 import { BlocksHolderRenderedUIEvent, BlockSelectedUIEvent } from './events/index.js';
