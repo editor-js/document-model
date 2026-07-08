@@ -90,9 +90,9 @@ export class SelectionAPI implements SelectionApiInterface {
   }
 
   /**
-   *
+   * Returns array of selected blocks
    */
-  public get selectedBlocks(): BlockNodeSerialized[] | null {
+  public get selectedBlocks(): BlockNodeSerialized[] {
     return this.#selectionManager.selectedBlocks();
   }
 }

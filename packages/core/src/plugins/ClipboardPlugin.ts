@@ -99,13 +99,15 @@ export class ClipboardPlugin implements EditorjsPlugin {
   }
 
   /**
-   *
+   * Creates representation of copied from EditorJS data as an object with metadata
+   * @internal
    * @param blocks - content to create a clipboard object
    */
   #createClipboardObject(blocks: BlockData[] = []): ClipboardEditorJSObject {
     return {
       blocks,
       meta: {
+        // @todo get version info from Core
         version: '3.0.0',
       },
     };
@@ -113,26 +115,26 @@ export class ClipboardPlugin implements EditorjsPlugin {
 }
 
 /**
- *
+ * Custom EditorJS data-type object for clipboard events
  */
 interface ClipboardEditorJSObject {
   /**
-   *
+   * Array of copied blocks data
    */
   blocks: BlockData[];
 
   /**
-   *
+   * Metadata from EditorJS
    */
   meta: Meta;
 }
 
 /**
- *
+ * Metadata from EditorJS
  */
 interface Meta {
   /**
-   *
+   * Version of EditorJS Core
    */
   version: string;
 }

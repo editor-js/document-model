@@ -228,7 +228,7 @@ export class SelectionManager {
   };
 
   /**
-   *
+   * Returns an array of selected blocks using the current selection index
    */
   public selectedBlocks(): BlockNodeSerialized[] {
     const currentSelectionIndex = this.currentSelection;

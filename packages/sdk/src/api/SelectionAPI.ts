@@ -65,7 +65,7 @@ export interface SelectionAPI {
   caretIndex: Index | null;
 
   /**
-   *
+   * Returns array of selected blocks
    */
   get selectedBlocks(): BlockNodeSerialized[];
 }
