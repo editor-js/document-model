@@ -62,14 +62,14 @@ export class ClipboardPlugin implements EditorjsPlugin {
    * Destroys the plugin and removes all event listeners
    */
   public destroy(): void {
-    this.removeEventListener();
+    this.#removeEventListener();
   }
 
   /**
    * Removes the event listener for copy events
    * @internal
    */
-  private removeEventListener(): void {
+  #removeEventListener(): void {
     if (this.#copyEventListener !== undefined) {
       this.#eventBus.removeEventListener(`ui:${CopyUIEventName}`, this.#copyEventListener);
     }
