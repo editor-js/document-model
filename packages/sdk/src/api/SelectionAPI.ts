@@ -67,5 +67,5 @@ export interface SelectionAPI {
   /**
    *
    */
-  get selectedBlocks(): BlockNodeSerialized[] | null;
+  get selectedBlocks(): BlockNodeSerialized[];
 }

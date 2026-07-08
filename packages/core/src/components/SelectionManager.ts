@@ -230,11 +230,11 @@ export class SelectionManager {
   /**
    *
    */
-  public selectedBlocks(): BlockNodeSerialized[] | null {
+  public selectedBlocks(): BlockNodeSerialized[] {
     const currentSelectionIndex = this.currentSelection;
 
     if (currentSelectionIndex === null) {
-      return null;
+      return [];
     }
 
     if (currentSelectionIndex.isBlockIndex) {
@@ -251,6 +251,6 @@ export class SelectionManager {
       });
     }
 
-    return null;
+    return [];
   }
 }

@@ -34,7 +34,7 @@ export class ClipboardPlugin implements EditorjsPlugin {
       /**
        * Don't override native event if there are no blocks selected
        */
-      if (selectedBlocks === null || selectedBlocks.length === 0) {
+      if (selectedBlocks.length === 0) {
         return;
       }
 
