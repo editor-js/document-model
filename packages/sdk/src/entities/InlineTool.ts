@@ -2,10 +2,10 @@ import type { TextRange, InlineFragment } from '@editorjs/model-types';
 import type { FormattingAction, IntersectType } from '@editorjs/model-types';
 import type { InlineTool as InlineToolVersion2 } from '@editorjs/editorjs';
 import type { InlineToolConstructorOptions as InlineToolConstructorOptionsVersion2, ToolConfig } from '@editorjs/editorjs';
-import type { ToolType } from '@/entities/EntityType.js';
-import type { BaseToolConstructor, BaseToolOptions } from '@/entities/BaseTool';
-import type { EditorAPI } from '@/api';
-import type { MenuConfig } from '@/entities/MenuConfig.js';
+import type { ToolType } from './EntityType.js';
+import type { BaseToolConstructor, BaseToolOptions } from './BaseTool';
+import type { EditorAPI } from '../api';
+import type { MenuConfig } from './MenuConfig.js';
 
 /**
  * Canonical keys for Inline Tool options.

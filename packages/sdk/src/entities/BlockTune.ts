@@ -3,8 +3,8 @@ import type {
   ToolConfig,
   BlockTune as BlockTuneV2
 } from '@editorjs/editorjs';
-import type { ToolType } from '@/entities/EntityType.js';
-import type { BaseToolConstructor, BaseToolOptions } from '@/entities/BaseTool';
+import type { ToolType } from './EntityType.js';
+import type { BaseToolConstructor, BaseToolOptions } from './BaseTool';
 
 /**
  * Options available on **Block Tunes** (`static options` or `use()` overrides).

@@ -1,7 +1,7 @@
 import { CoreEventBase } from './CoreEventBase.js';
 import { CoreEventType } from './CoreEventType.js';
 import type { InlineFragment, Index } from '@editorjs/model-types';
-import type { InlineToolFacade } from '@/tools';
+import type { InlineToolFacade } from '../../../../tools';
 
 /**
  * Payload of SelectionChangedCoreEvent custom event
