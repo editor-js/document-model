@@ -2488,6 +2488,7 @@ __metadata:
     "@editorjs/editorjs": "npm:^2.30.8"
     "@editorjs/helpers": "npm:^1.2.2"
     "@editorjs/model-types": "workspace:^"
+    "@editorjs/ui-kit": "npm:^1.1.5"
     "@jest/globals": "npm:^29.7.0"
     "@types/eslint": "npm:^9.6.1"
     "@types/jest": "npm:^29.5.12"
