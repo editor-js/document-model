@@ -14,10 +14,7 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "preserveConstEnums": true,
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "preserveConstEnums": true
   },
   "include": ["src/**/*"],
   "exclude": [
