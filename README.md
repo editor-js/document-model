@@ -14,6 +14,8 @@ A model-driven, collaboration-ready Editor.js engine split into focused packages
 
 ## Packages
 
+### Base packages
+
 | Package | Description |
 |---|---|
 | [`@editorjs/model-types`](packages/model-types) | Shared low-level types and base event classes used internally by `model` and `sdk` only — not intended for direct use by other packages or tools |
@@ -25,6 +27,12 @@ A model-driven, collaboration-ready Editor.js engine split into focused packages
 | [`@editorjs/ui`](packages/ui) | Default UI shell (`EditorjsUI`, `BlocksUI`, `Toolbar`, `InlineToolbar`, `Toolbox`) |
 | [`@editorjs/ot-server`](packages/ot-server) | Standalone WebSocket OT server (`OTServer`, `DocumentManager`) |
 | [`playground`](packages/playground) | Vite dev sandbox for manual testing |
+
+### Tools/Plugins
+
+| Package | Description |
+|---|---|
+| [`@editorjs/paragraph`](packages/tools/paragraph) | Built-in Paragraph block tool |
 
 ## Documentation
 

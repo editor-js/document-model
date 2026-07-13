@@ -8,9 +8,6 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "types": ["jest", "node"],
     "rootDir": "src",
     "outDir": "dist",
     "declaration": true,
@@ -24,19 +21,10 @@
   ],
   "references": [
     {
-      "path": "../model/tsconfig.build.json"
+      "path": "../../sdk/tsconfig.build.json"
     },
     {
-      "path": "../sdk/tsconfig.build.json"
-    },
-    {
-      "path": "../dom-adapters/tsconfig.build.json"
-    },
-    {
-      "path": "../collaboration-manager/tsconfig.build.json"
-    },
-    {
-      "path": "../tools/paragraph/tsconfig.build.json"
+      "path": "../../dom-adapters/tsconfig.build.json"
     }
   ]
 }

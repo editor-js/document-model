@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": [
+    "node_modules/**/*",
+    "dist/**/*",
+    "**/*.spec.ts"
+  ],
+  "references": [
+    {
+      "path": "../../sdk/tsconfig.build.json"
+    },
+    {
+      "path": "../../dom-adapters/tsconfig.build.json"
+    }
+  ]
+}

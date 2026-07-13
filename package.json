@@ -4,7 +4,8 @@
   "private": true,
   "packageManager": "yarn@4.0.1",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "packages/tools/*"
   ],
   "scripts": {
     "build": "yarn workspaces foreach -At run build",
