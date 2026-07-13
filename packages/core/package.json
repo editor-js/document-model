@@ -45,6 +45,7 @@
     "@editorjs/dom-adapters": "workspace:^",
     "@editorjs/editorjs": "^2.30.5",
     "@editorjs/helpers": "^1.2.2",
+    "@editorjs/italic": "workspace:^",
     "@editorjs/model": "workspace:^",
     "@editorjs/paragraph": "workspace:^",
     "@editorjs/sdk": "workspace:^",

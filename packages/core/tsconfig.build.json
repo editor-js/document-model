@@ -21,6 +21,9 @@
     },
     {
       "path": "../tools/bold/tsconfig.build.json"
+    },
+    {
+      "path": "../tools/italic/tsconfig.build.json"
     }
   ]
 }
