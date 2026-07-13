@@ -33,6 +33,7 @@ A model-driven, collaboration-ready Editor.js engine split into focused packages
 | Package | Description |
 |---|---|
 | [`@editorjs/paragraph`](packages/tools/paragraph) | Built-in Paragraph block tool |
+| [`@editorjs/bold`](packages/tools/bold) | Built-in Bold inline tool |
 
 ## Documentation
 

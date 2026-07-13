@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@codexteam/icons": "^0.3.3",
+    "@editorjs/bold": "workspace:^",
     "@editorjs/collaboration-manager": "workspace:^",
     "@editorjs/dom": "^1.1.0",
     "@editorjs/dom-adapters": "workspace:^",

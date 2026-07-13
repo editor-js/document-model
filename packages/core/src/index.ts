@@ -20,7 +20,8 @@ import type { CoreConfigValidated, CoreConfig, EditorjsPluginConstructor, BlockT
 import { EditorAPI } from './api/index.js';
 import { generateId } from './utils/uid.js';
 import { Paragraph } from '@editorjs/paragraph';
-import { BoldInlineTool, LinkInlineTool, ItalicInlineTool } from './tools/internal';
+import { BoldInlineTool } from '@editorjs/bold';
+import { LinkInlineTool, ItalicInlineTool } from './tools/internal';
 import { ShortcutsPlugin } from './plugins/ShortcutsPlugin.js';
 import { DOMAdapters } from '@editorjs/dom-adapters';
 import { BlocksManager } from './components/BlockManager.js';
