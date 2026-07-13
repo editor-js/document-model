@@ -2302,13 +2302,12 @@ __metadata:
   dependencies:
     "@babel/core": "npm:^7.29.0"
     "@babel/preset-env": "npm:^7.29.2"
-    "@codexteam/icons": "npm:^0.3.3"
     "@editorjs/bold": "workspace:^"
     "@editorjs/collaboration-manager": "workspace:^"
-    "@editorjs/dom": "npm:^1.1.0"
     "@editorjs/dom-adapters": "workspace:^"
     "@editorjs/editorjs": "npm:^2.30.5"
     "@editorjs/helpers": "npm:^1.2.2"
+    "@editorjs/inline-link": "workspace:^"
     "@editorjs/italic": "workspace:^"
     "@editorjs/model": "workspace:^"
     "@editorjs/paragraph": "workspace:^"
@@ -2430,6 +2429,22 @@ __metadata:
   checksum: bec78e033c77e1e887d4f1a235d7548623df239bc2755bd8f8dc1d1acddb400a7c77eb82a07e6b47ac578cbf841858fbf84889990026500da2de375f3bdcc166
   languageName: node
   linkType: hard
+
+"@editorjs/inline-link@workspace:^, @editorjs/inline-link@workspace:packages/tools/inline-link":
+  version: 0.0.0-use.local
+  resolution: "@editorjs/inline-link@workspace:packages/tools/inline-link"
+  dependencies:
+    "@codexteam/icons": "npm:^0.3.3"
+    "@editorjs/dom": "npm:^1.1.0"
+    "@editorjs/sdk": "workspace:^"
+    "@types/eslint": "npm:^9.6.1"
+    "@types/node": "npm:^22.10.2"
+    eslint: "npm:^9.24.0"
+    eslint-config-codex: "npm:^2.0.3"
+    eslint-plugin-import: "npm:^2.31.0"
+    typescript: "npm:^5.5.4"
+  languageName: unknown
+  linkType: soft
 
 "@editorjs/italic@workspace:^, @editorjs/italic@workspace:packages/tools/italic":
   version: 0.0.0-use.local

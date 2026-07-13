@@ -24,6 +24,9 @@
     },
     {
       "path": "../tools/italic/tsconfig.build.json"
+    },
+    {
+      "path": "../tools/inline-link/tsconfig.build.json"
     }
   ]
 }
