@@ -4,12 +4,12 @@ import type {
 import { isFunction } from '@editorjs/helpers';
 import { type BlockToolFacade } from './BlockToolFacade.js';
 import { type InlineToolFacade } from './InlineToolFacade.js';
-import { ToolType, BaseToolOptionKey } from '../../entities';
+import { ToolType, BaseToolOptionKey } from '../../entities/index.js';
 import { type BlockTuneFacade } from './BlockTuneFacade.js';
 import type {
   BlockTool, BlockToolConstructor, InlineTool, InlineToolConstructor, BlockTuneConstructor,
   ToolTypeToOptions, ToolStaticOptions, BlockToolOptions, InlineToolOptions, BlockTuneOptions
-} from '../../entities';
+} from '../../entities/index.js';
 import type { EditorAPI } from '../../api';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- need to allow any type here so extended interfaces pass

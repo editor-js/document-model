@@ -1,8 +1,8 @@
 /* eslint-disable jsdoc/require-jsdoc,@typescript-eslint/no-magic-numbers */
 
 import { describe, expect, it } from '@jest/globals';
-import type { BlockToolConstructor, BlockToolData } from '../../entities';
-import { BlockToolOptionKey, ToolType } from '../../entities';
+import type { BlockToolConstructor, BlockToolData } from '../../entities/index.js';
+import { BlockToolOptionKey, ToolType } from '../../entities/index.js';
 import type { ToolOptions } from './BaseToolFacade.js';
 import { UserToolOptions } from './BaseToolFacade.js';
 import { BlockToolFacade } from './BlockToolFacade.js';
