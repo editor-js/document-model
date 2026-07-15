@@ -14,6 +14,8 @@ A model-driven, collaboration-ready Editor.js engine split into focused packages
 
 ## Packages
 
+### Base packages
+
 | Package | Description |
 |---|---|
 | [`@editorjs/model-types`](packages/model-types) | Shared low-level types and base event classes used internally by `model` and `sdk` only — not intended for direct use by other packages or tools |
@@ -25,6 +27,15 @@ A model-driven, collaboration-ready Editor.js engine split into focused packages
 | [`@editorjs/ui`](packages/ui) | Default UI shell (`EditorjsUI`, `BlocksUI`, `Toolbar`, `InlineToolbar`, `Toolbox`) |
 | [`@editorjs/ot-server`](packages/ot-server) | Standalone WebSocket OT server (`OTServer`, `DocumentManager`) |
 | [`playground`](packages/playground) | Vite dev sandbox for manual testing |
+
+### Tools/Plugins
+
+| Package | Description |
+|---|---|
+| [`@editorjs/paragraph`](packages/tools/paragraph) | Built-in Paragraph block tool |
+| [`@editorjs/bold`](packages/tools/bold) | Built-in Bold inline tool |
+| [`@editorjs/italic`](packages/tools/italic) | Built-in Italic inline tool |
+| [`@editorjs/inline-link`](packages/tools/inline-link) | Built-in Link inline tool |
 
 ## Documentation
 
@@ -110,4 +121,3 @@ Thank you to all our backers!
 - [Good First Tasks](https://github.com/codex-team/editor.js/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+task%22)
 - [Contributing](https://editorjs.io/contributing/)
 - [Telegram Chat](https://t.me/codex_editor)
-

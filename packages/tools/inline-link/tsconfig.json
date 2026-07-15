@@ -8,13 +8,11 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-    "experimentalDecorators": true,
     "rootDir": "src",
     "outDir": "dist",
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true,
-    "preserveConstEnums": true
+    "sourceMap": true
   },
   "include": ["src/**/*"],
   "exclude": [
@@ -23,7 +21,7 @@
   ],
   "references": [
     {
-      "path": "../model-types/tsconfig.build.json"
+      "path": "../../sdk/tsconfig.build.json"
     }
   ]
 }

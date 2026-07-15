@@ -34,6 +34,18 @@
     },
     {
       "path": "../collaboration-manager/tsconfig.build.json"
+    },
+    {
+      "path": "../tools/paragraph/tsconfig.build.json"
+    },
+    {
+      "path": "../tools/bold/tsconfig.build.json"
+    },
+    {
+      "path": "../tools/italic/tsconfig.build.json"
+    },
+    {
+      "path": "../tools/inline-link/tsconfig.build.json"
     }
   ]
 }

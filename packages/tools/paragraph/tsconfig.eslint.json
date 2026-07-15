@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "types": ["node"],
+  },
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/**/*",
+    "eslint.config.mjs",
+  ],
+  "exclude": [
+    "dist/**/*",
+    "node_modules/**/*",
+  ]
+}

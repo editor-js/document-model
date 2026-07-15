@@ -181,7 +181,6 @@ export class InlineToolbarUI implements EditorjsPlugin {
         .map((item): PopoverItemParams[] => {
           switch (item.type) {
             case PopoverItemType.Html:
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- TS doesn't see its as any
               return [{
                 ...popoverItemParams,
                 ...item,
