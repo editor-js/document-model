@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import { Operation, OperationType, type OperationTypeToData } from '@editorjs/collaboration-manager';
-import { IndexBuilder } from '@editorjs/sdk';
+import { Index } from '@editorjs/sdk';
 import { DocumentManager } from './DocumentManager.js';
 
 // eslint-disable-next-line jsdoc/require-param
@@ -16,8 +16,7 @@ function createOperation<T extends OperationType>(
 ): Operation<T> {
   return new Operation(
     type,
-    new IndexBuilder().from(JSON.stringify(index))
-      .build(),
+    Index.parse(index),
     data,
     userId,
     rev
@@ -31,7 +30,7 @@ describe('DocumentManager', () => {
     await manager.process(
       createOperation(
         OperationType.Insert,
-        'doc@0:block@0',
+        '{"k":"block","b":0,"id":"0"}',
         {
           payload: [{
             name: 'paragraph',
@@ -51,7 +50,7 @@ describe('DocumentManager', () => {
     await manager.process(
       createOperation(
         OperationType.Insert,
-        'doc@0:block@0:data@text:[0,0]',
+        '{"k":"text","b":0,"data":"text","r":[0,0],"id":"0"}',
         { payload: 'A' },
         'user',
         1
@@ -60,7 +59,7 @@ describe('DocumentManager', () => {
     await manager.process(
       createOperation(
         OperationType.Insert,
-        'doc@0:block@0:data@text:[0,0]',
+        '{"k":"text","b":0,"data":"text","r":[0,0],"id":"0"}',
         { payload: 'A' },
         'user',
         2
@@ -69,7 +68,7 @@ describe('DocumentManager', () => {
     await manager.process(
       createOperation(
         OperationType.Insert,
-        'doc@0:block@0:data@text:[0,0]',
+        '{"k":"text","b":0,"data":"text","r":[0,0],"id":"0"}',
         { payload: 'A' },
         'user',
         3
@@ -101,7 +100,7 @@ describe('DocumentManager', () => {
     await manager.process(
       createOperation(
         OperationType.Insert,
-        'doc@0:block@0',
+        '{"k":"block","b":0,"id":"0"}',
         {
           payload: [{
             name: 'paragraph',
@@ -121,7 +120,7 @@ describe('DocumentManager', () => {
     await manager.process(
       createOperation(
         OperationType.Insert,
-        'doc@0:block@0:data@text:[0,0]',
+        '{"k":"text","b":0,"data":"text","r":[0,0],"id":"0"}',
         { payload: 'A' },
         'user',
         1
@@ -130,7 +129,7 @@ describe('DocumentManager', () => {
     await manager.process(
       createOperation(
         OperationType.Insert,
-        'doc@0:block@0:data@text:[0,0]',
+        '{"k":"text","b":0,"data":"text","r":[0,0],"id":"0"}',
         { payload: 'B' },
         'user',
         1
@@ -162,7 +161,7 @@ describe('DocumentManager', () => {
     await manager.process(
       createOperation(
         OperationType.Insert,
-        'doc@0:block@0',
+        '{"k":"block","b":0,"id":"0"}',
         {
           payload: [{
             name: 'paragraph',
@@ -182,7 +181,7 @@ describe('DocumentManager', () => {
     await manager.process(
       createOperation(
         OperationType.Insert,
-        'doc@0:block@0:data@text:[0,0]',
+        '{"k":"text","b":0,"data":"text","r":[0,0],"id":"0"}',
         { payload: 'A' },
         'user',
         1
@@ -191,7 +190,7 @@ describe('DocumentManager', () => {
     await manager.process(
       createOperation(
         OperationType.Insert,
-        'doc@0:block@0:data@text:[0,0]',
+        '{"k":"text","b":0,"data":"text","r":[0,0],"id":"0"}',
         { payload: 'A' },
         'user',
         2
@@ -200,7 +199,7 @@ describe('DocumentManager', () => {
     await manager.process(
       createOperation(
         OperationType.Insert,
-        'doc@0:block@0:data@text:[0,0]',
+        '{"k":"text","b":0,"data":"text","r":[0,0],"id":"0"}',
         { payload: 'B' },
         'user',
         1
@@ -232,7 +231,7 @@ describe('DocumentManager', () => {
     void manager.process(
       createOperation(
         OperationType.Insert,
-        'doc@0:block@0',
+        '{"k":"block","b":0,"id":"0"}',
         {
           payload: [{
             name: 'paragraph',
@@ -252,7 +251,7 @@ describe('DocumentManager', () => {
     void manager.process(
       createOperation(
         OperationType.Insert,
-        'doc@0:block@0:data@text:[0,0]',
+        '{"k":"text","b":0,"data":"text","r":[0,0],"id":"0"}',
         { payload: 'A' },
         'user',
         1
@@ -261,7 +260,7 @@ describe('DocumentManager', () => {
     void manager.process(
       createOperation(
         OperationType.Insert,
-        'doc@0:block@0:data@text:[0,0]',
+        '{"k":"text","b":0,"data":"text","r":[0,0],"id":"0"}',
         { payload: 'A' },
         'user',
         2
@@ -273,7 +272,7 @@ describe('DocumentManager', () => {
     await manager.process(
       createOperation(
         OperationType.Insert,
-        'doc@0:block@0:data@text:[0,0]',
+        '{"k":"text","b":0,"data":"text","r":[0,0],"id":"0"}',
         { payload: 'A' },
         'user',
         3

@@ -33,17 +33,46 @@ When a caret changes, `EditorJSModel` exposes that update under `EventType.Caret
 
 `Index` is the universal address type used throughout the system — for event locations, caret positions, and OT operation targets. It is DOM-independent and fully serializable.
 
-| Field | Type | Meaning |
-|---|---|---|
-| `documentId` | `DocumentId?` | Which document the index belongs to |
-| `blockIndex` | `number?` | Position of the block in `EditorDocument.children` |
-| `dataKey` | `DataKey?` | Named data slot inside the block (e.g. `"text"`) |
-| `textRange` | `[number, number]?` | Character-offset range `[start, end]` inside a `TextNode` |
-| `tuneName` | `BlockTuneName?` | Identifies a `BlockTune` entry |
-| `tuneKey` | `string?` | Key inside a tune's data object |
-| `propertyName` | `string?` | Top-level document property |
-| `compositeSegments` | `Index[]?` | For cross-input selections: one text index per covered input, in document order |
+### Class hierarchy
 
-An index that has `blockIndex + dataKey + textRange` (and no `compositeSegments`) is a **text index** (`isTextIndex === true`). An index with only `blockIndex` is a **block index** (`isBlockIndex === true`).
+```
+IndexBase (abstract)
+├── DocumentIndex   — entire document
+├── PropertyIndex   — top-level document property
+├── BlockIndex      — a single block
+├── DataIndex       — a data key inside a block
+├── TuneIndex       — a key inside a block tune
+└── TextIndex       — character range(s) inside a text node
+```
 
-Use `IndexBuilder` to construct indices incrementally, and `Index.parse(serialized)` / `index.serialize()` to round-trip through storage or the network.
+`Index` is a separate abstract class that extends `IndexBase` and holds only static factory methods — it is never instantiated directly. All concrete classes extend `IndexBase`.
+
+### Narrowing
+
+Each index carries a `kind` discriminant (`IndexKind` enum). Use it — or `instanceof` — to narrow before accessing type-specific fields:
+
+```ts
+if (index.kind === IndexKind.Text) {
+  // index is TextIndex — access index.blockIndex, index.dataKey, index.textRange
+} else if (index instanceof BlockIndex) {
+  // access index.blockIndex
+}
+```
+
+### Construction
+
+Use the static factory methods on `Index`:
+
+```ts
+Index.document(documentId)
+Index.property(name, documentId?)
+Index.block(blockIndex, documentId?)
+Index.data(blockIndex, dataKey, documentId?)
+Index.tune(blockIndex, tuneName, tuneKey, documentId?)
+Index.text(segments)
+Index.parse(serialized)        // deserialize from string
+```
+
+### Serialization
+
+`index.serialize()` produces a compact JSON string; `Index.parse(serialized)` is the inverse. The format is documented in [Index Serialization Format](index-serialization.md).

@@ -11,7 +11,7 @@ describe('Caret', () => {
   });
 
   it('should initialize with passed index', () => {
-    const index = new Index();
+    const index = Index.block(0);
     const caret = new Caret('user', index);
 
     expect(caret.index).toBe(index);
@@ -19,7 +19,7 @@ describe('Caret', () => {
 
   it('should update index', () => {
     const caret = new Caret('user');
-    const index = new Index();
+    const index = Index.block(0);
 
     caret.update(index);
 
@@ -28,7 +28,7 @@ describe('Caret', () => {
 
   it('should dispatch updated event on index update', () => {
     const caret = new Caret('user');
-    const index = new Index();
+    const index = Index.block(0);
 
     const handler = jest.fn();
 
@@ -43,7 +43,7 @@ describe('Caret', () => {
   });
 
   it('should serialize to JSON', () => {
-    const index = new Index();
+    const index = Index.block(0);
     const caret = new Caret('user', index);
 
     expect(caret.toJSON()).toEqual({

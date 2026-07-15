@@ -1,5 +1,5 @@
-import type { DocumentId, Index } from '@editorjs/sdk';
-import { createDataKey, IndexBuilder } from '@editorjs/sdk';
+import type { BlockIndex, DocumentId, TextIndex } from '@editorjs/sdk';
+import { createDataKey, Index } from '@editorjs/sdk';
 import { Operation, OperationType } from './Operation.js';
 import { OperationsTransformer } from './OperationsTransformer.js';
 
@@ -13,18 +13,12 @@ describe('OperationsTransformer', () => {
 
   describe('transform', () => {
     const dataIndex = (blockIndex: number, dataKey: ReturnType<typeof createDataKey>): Index =>
-      new IndexBuilder()
-        .addDocumentId('doc1' as DocumentId)
-        .addBlockIndex(blockIndex)
-        .addDataKey(dataKey)
-        .build();
+      Index.data(blockIndex, dataKey, 'doc1' as DocumentId);
 
     it('should not transform operations on different documents', () => {
       const operation = new Operation(
         OperationType.Insert,
-        new IndexBuilder().addDocumentId('doc1' as DocumentId)
-          .addBlockIndex(0)
-          .build(),
+        Index.block(0, 'doc1' as DocumentId),
         { payload: 'test' },
         'user1',
         1
@@ -32,9 +26,7 @@ describe('OperationsTransformer', () => {
 
       const againstOp = new Operation(
         OperationType.Insert,
-        new IndexBuilder().addDocumentId('doc2' as DocumentId)
-          .addBlockIndex(0)
-          .build(),
+        Index.block(0, 'doc2' as DocumentId),
         { payload: 'test' },
         'user2',
         1
@@ -50,9 +42,7 @@ describe('OperationsTransformer', () => {
         it('should increase block index when transforming against Insert operation', () => {
           const operation = new Operation(
             OperationType.Insert,
-            new IndexBuilder().addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(2)
-              .build(),
+            Index.block(2, 'doc1' as DocumentId),
             { payload: 'test' },
             'user1',
             1
@@ -60,9 +50,7 @@ describe('OperationsTransformer', () => {
 
           const againstOp = new Operation(
             OperationType.Insert,
-            new IndexBuilder().addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(1)
-              .build(),
+            Index.block(1, 'doc1' as DocumentId),
             { payload: 'test' },
             'user2',
             1
@@ -70,15 +58,13 @@ describe('OperationsTransformer', () => {
 
           const result = transformer.transform(operation, againstOp);
 
-          expect(result.index.blockIndex).toBe(3);
+          expect((result.index as BlockIndex).blockIndex).toBe(3);
         });
 
         it('should decrease block index when transforming against Delete operation before current block', () => {
           const operation = new Operation(
             OperationType.Insert,
-            new IndexBuilder().addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(2)
-              .build(),
+            Index.block(2, 'doc1' as DocumentId),
             { payload: 'test' },
             'user1',
             1
@@ -86,9 +72,7 @@ describe('OperationsTransformer', () => {
 
           const againstOp = new Operation(
             OperationType.Delete,
-            new IndexBuilder().addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(1)
-              .build(),
+            Index.block(1, 'doc1' as DocumentId),
             { payload: 'test' },
             'user2',
             1
@@ -96,15 +80,13 @@ describe('OperationsTransformer', () => {
 
           const result = transformer.transform(operation, againstOp);
 
-          expect(result.index.blockIndex).toBe(1);
+          expect((result.index as BlockIndex).blockIndex).toBe(1);
         });
 
         it('should return Neutral operation when transforming against Delete operation of the same block', () => {
           const operation = new Operation(
             OperationType.Modify,
-            new IndexBuilder().addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(1)
-              .build(),
+            Index.block(1, 'doc1' as DocumentId),
             { payload: 'test' },
             'user1',
             1
@@ -112,9 +94,7 @@ describe('OperationsTransformer', () => {
 
           const againstOp = new Operation(
             OperationType.Delete,
-            new IndexBuilder().addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(1)
-              .build(),
+            Index.block(1, 'doc1' as DocumentId),
             { payload: 'test' },
             'user2',
             1
@@ -128,9 +108,7 @@ describe('OperationsTransformer', () => {
         it('should not change block operation when against block operation is Modify', () => {
           const operation = new Operation(
             OperationType.Insert,
-            new IndexBuilder().addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(2)
-              .build(),
+            Index.block(2, 'doc1' as DocumentId),
             { payload: 'test' },
             'user1',
             1
@@ -138,9 +116,7 @@ describe('OperationsTransformer', () => {
 
           const againstOp = new Operation(
             OperationType.Modify,
-            new IndexBuilder().addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(1)
-              .build(),
+            Index.block(1, 'doc1' as DocumentId),
             { payload: 'x',
               prevPayload: null },
             'user2',
@@ -149,7 +125,7 @@ describe('OperationsTransformer', () => {
 
           const result = transformer.transform(operation, againstOp);
 
-          expect(result.index.blockIndex).toBe(2);
+          expect((result.index as BlockIndex).blockIndex).toBe(2);
         });
       });
 
@@ -157,9 +133,7 @@ describe('OperationsTransformer', () => {
         it('should not transform block operation against text operation', () => {
           const operation = new Operation(
             OperationType.Insert,
-            new IndexBuilder().addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(1)
-              .build(),
+            Index.block(1, 'doc1' as DocumentId),
             { payload: 'test' },
             'user1',
             1
@@ -167,12 +141,10 @@ describe('OperationsTransformer', () => {
 
           const againstOp = new Operation(
             OperationType.Insert,
-            new IndexBuilder()
-              .addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(1)
-              .addDataKey(createDataKey('text'))
-              .addTextRange([0, 1])
-              .build(),
+            Index.text([{ blockIndex: 1,
+              dataKey: createDataKey('text'),
+              textRange: [0, 1],
+              documentId: 'doc1' as DocumentId }]),
             { payload: 'a' },
             'user2',
             1
@@ -188,9 +160,7 @@ describe('OperationsTransformer', () => {
         it('should not change block operation when against operation is data operation', () => {
           const operation = new Operation(
             OperationType.Insert,
-            new IndexBuilder().addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(1)
-              .build(),
+            Index.block(1, 'doc1' as DocumentId),
             { payload: 'test' },
             'user1',
             1
@@ -218,12 +188,10 @@ describe('OperationsTransformer', () => {
           const textKey = createDataKey('text');
           const operation = new Operation(
             OperationType.Insert,
-            new IndexBuilder()
-              .addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(1)
-              .addDataKey(textKey)
-              .addTextRange([2, 5])
-              .build(),
+            Index.text([{ blockIndex: 1,
+              dataKey: textKey,
+              textRange: [2, 5],
+              documentId: 'doc1' as DocumentId }]),
             { payload: 'abc' },
             'user1',
             4
@@ -248,12 +216,10 @@ describe('OperationsTransformer', () => {
         it('should shift right text range when Insert is before current operation', () => {
           const operation = new Operation(
             OperationType.Insert,
-            new IndexBuilder()
-              .addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(1)
-              .addDataKey(createDataKey('text'))
-              .addTextRange([5, 8])
-              .build(),
+            Index.text([{ blockIndex: 1,
+              dataKey: createDataKey('text'),
+              textRange: [5, 8],
+              documentId: 'doc1' as DocumentId }]),
             { payload: 'test' },
             'user1',
             1
@@ -261,12 +227,10 @@ describe('OperationsTransformer', () => {
 
           const againstOp = new Operation(
             OperationType.Insert,
-            new IndexBuilder()
-              .addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(1)
-              .addDataKey(createDataKey('text'))
-              .addTextRange([2, 2])
-              .build(),
+            Index.text([{ blockIndex: 1,
+              dataKey: createDataKey('text'),
+              textRange: [2, 2],
+              documentId: 'doc1' as DocumentId }]),
             { payload: 'abc' },
             'user2',
             1
@@ -274,18 +238,16 @@ describe('OperationsTransformer', () => {
 
           const result = transformer.transform(operation, againstOp);
 
-          expect(result.index.textRange).toEqual([8, 11]);
+          expect((result.index as TextIndex).textRange).toEqual([8, 11]);
         });
 
         it('should extend text range when Insert is inside current operation range', () => {
           const operation = new Operation(
             OperationType.Modify,
-            new IndexBuilder()
-              .addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(1)
-              .addDataKey(createDataKey('text'))
-              .addTextRange([2, 8])
-              .build(),
+            Index.text([{ blockIndex: 1,
+              dataKey: createDataKey('text'),
+              textRange: [2, 8],
+              documentId: 'doc1' as DocumentId }]),
             { payload: 'test' },
             'user1',
             1
@@ -293,12 +255,10 @@ describe('OperationsTransformer', () => {
 
           const againstOp = new Operation(
             OperationType.Insert,
-            new IndexBuilder()
-              .addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(1)
-              .addDataKey(createDataKey('text'))
-              .addTextRange([4, 4])
-              .build(),
+            Index.text([{ blockIndex: 1,
+              dataKey: createDataKey('text'),
+              textRange: [4, 4],
+              documentId: 'doc1' as DocumentId }]),
             { payload: 'abc' },
             'user2',
             1
@@ -306,7 +266,7 @@ describe('OperationsTransformer', () => {
 
           const result = transformer.transform(operation, againstOp);
 
-          expect(result.index.textRange).toEqual([2, 11]);
+          expect((result.index as TextIndex).textRange).toEqual([2, 11]);
         });
       });
 
@@ -314,12 +274,10 @@ describe('OperationsTransformer', () => {
         it('should shift text range left when Delete is before current operation', () => {
           const operation = new Operation(
             OperationType.Insert,
-            new IndexBuilder()
-              .addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(1)
-              .addDataKey(createDataKey('text'))
-              .addTextRange([8, 10])
-              .build(),
+            Index.text([{ blockIndex: 1,
+              dataKey: createDataKey('text'),
+              textRange: [8, 10],
+              documentId: 'doc1' as DocumentId }]),
             { payload: 'test' },
             'user1',
             1
@@ -327,12 +285,10 @@ describe('OperationsTransformer', () => {
 
           const againstOp = new Operation(
             OperationType.Delete,
-            new IndexBuilder()
-              .addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(1)
-              .addDataKey(createDataKey('text'))
-              .addTextRange([2, 5])
-              .build(),
+            Index.text([{ blockIndex: 1,
+              dataKey: createDataKey('text'),
+              textRange: [2, 5],
+              documentId: 'doc1' as DocumentId }]),
             { payload: 'abc' },
             'user2',
             1
@@ -340,18 +296,16 @@ describe('OperationsTransformer', () => {
 
           const result = transformer.transform(operation, againstOp);
 
-          expect(result.index.textRange).toEqual([5, 7]);
+          expect((result.index as TextIndex).textRange).toEqual([5, 7]);
         });
 
         it('should return Neutral operation when Delete fully covers current operation', () => {
           const operation = new Operation(
             OperationType.Modify,
-            new IndexBuilder()
-              .addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(1)
-              .addDataKey(createDataKey('text'))
-              .addTextRange([3, 5])
-              .build(),
+            Index.text([{ blockIndex: 1,
+              dataKey: createDataKey('text'),
+              textRange: [3, 5],
+              documentId: 'doc1' as DocumentId }]),
             { payload: 'test' },
             'user1',
             1
@@ -359,12 +313,10 @@ describe('OperationsTransformer', () => {
 
           const againstOp = new Operation(
             OperationType.Delete,
-            new IndexBuilder()
-              .addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(1)
-              .addDataKey(createDataKey('text'))
-              .addTextRange([2, 8])
-              .build(),
+            Index.text([{ blockIndex: 1,
+              dataKey: createDataKey('text'),
+              textRange: [2, 8],
+              documentId: 'doc1' as DocumentId }]),
             { payload: 'abcdef' },
             'user2',
             1
@@ -378,12 +330,10 @@ describe('OperationsTransformer', () => {
         it('should apply Left intersection when delete removes the left part of the current range', () => {
           const operation = new Operation(
             OperationType.Insert,
-            new IndexBuilder()
-              .addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(1)
-              .addDataKey(createDataKey('text'))
-              .addTextRange([8, 10])
-              .build(),
+            Index.text([{ blockIndex: 1,
+              dataKey: createDataKey('text'),
+              textRange: [8, 10],
+              documentId: 'doc1' as DocumentId }]),
             { payload: 'ab' },
             'user1',
             1
@@ -391,12 +341,10 @@ describe('OperationsTransformer', () => {
 
           const againstOp = new Operation(
             OperationType.Delete,
-            new IndexBuilder()
-              .addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(1)
-              .addDataKey(createDataKey('text'))
-              .addTextRange([5, 9])
-              .build(),
+            Index.text([{ blockIndex: 1,
+              dataKey: createDataKey('text'),
+              textRange: [5, 9],
+              documentId: 'doc1' as DocumentId }]),
             { payload: 'xxxx' },
             'user2',
             1
@@ -404,18 +352,16 @@ describe('OperationsTransformer', () => {
 
           const result = transformer.transform(operation, againstOp);
 
-          expect(result.index.textRange).toEqual([5, 6]);
+          expect((result.index as TextIndex).textRange).toEqual([5, 6]);
         });
 
         it('should apply Right intersection when delete removes the right part of the current range', () => {
           const operation = new Operation(
             OperationType.Insert,
-            new IndexBuilder()
-              .addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(1)
-              .addDataKey(createDataKey('text'))
-              .addTextRange([5, 8])
-              .build(),
+            Index.text([{ blockIndex: 1,
+              dataKey: createDataKey('text'),
+              textRange: [5, 8],
+              documentId: 'doc1' as DocumentId }]),
             { payload: 'abc' },
             'user1',
             1
@@ -423,12 +369,10 @@ describe('OperationsTransformer', () => {
 
           const againstOp = new Operation(
             OperationType.Delete,
-            new IndexBuilder()
-              .addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(1)
-              .addDataKey(createDataKey('text'))
-              .addTextRange([7, 11])
-              .build(),
+            Index.text([{ blockIndex: 1,
+              dataKey: createDataKey('text'),
+              textRange: [7, 11],
+              documentId: 'doc1' as DocumentId }]),
             { payload: 'abcd' },
             'user2',
             1
@@ -436,19 +380,17 @@ describe('OperationsTransformer', () => {
 
           const result = transformer.transform(operation, againstOp);
 
-          expect(result.index.textRange).toEqual([5, 7]);
+          expect((result.index as TextIndex).textRange).toEqual([5, 7]);
           expect(result.data.payload).toEqual('ab');
         });
 
         it('should shrink range when delete is strictly inside the current text range', () => {
           const operation = new Operation(
             OperationType.Modify,
-            new IndexBuilder()
-              .addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(1)
-              .addDataKey(createDataKey('text'))
-              .addTextRange([4, 14])
-              .build(),
+            Index.text([{ blockIndex: 1,
+              dataKey: createDataKey('text'),
+              textRange: [4, 14],
+              documentId: 'doc1' as DocumentId }]),
             { payload: { tool: 'bold' } },
             'user1',
             1
@@ -456,12 +398,10 @@ describe('OperationsTransformer', () => {
 
           const againstOp = new Operation(
             OperationType.Delete,
-            new IndexBuilder()
-              .addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(1)
-              .addDataKey(createDataKey('text'))
-              .addTextRange([6, 9])
-              .build(),
+            Index.text([{ blockIndex: 1,
+              dataKey: createDataKey('text'),
+              textRange: [6, 9],
+              documentId: 'doc1' as DocumentId }]),
             { payload: 'abc' },
             'user2',
             1
@@ -469,7 +409,7 @@ describe('OperationsTransformer', () => {
 
           const result = transformer.transform(operation, againstOp);
 
-          expect(result.index.textRange).toEqual([4, 11]);
+          expect((result.index as TextIndex).textRange).toEqual([4, 11]);
         });
       });
 
@@ -477,12 +417,10 @@ describe('OperationsTransformer', () => {
         it('should leave text operation unchanged when against operation is Modify', () => {
           const operation = new Operation(
             OperationType.Insert,
-            new IndexBuilder()
-              .addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(1)
-              .addDataKey(createDataKey('text'))
-              .addTextRange([2, 5])
-              .build(),
+            Index.text([{ blockIndex: 1,
+              dataKey: createDataKey('text'),
+              textRange: [2, 5],
+              documentId: 'doc1' as DocumentId }]),
             { payload: 'abc' },
             'user1',
             1
@@ -490,12 +428,10 @@ describe('OperationsTransformer', () => {
 
           const againstOp = new Operation(
             OperationType.Modify,
-            new IndexBuilder()
-              .addDocumentId('doc1' as DocumentId)
-              .addBlockIndex(1)
-              .addDataKey(createDataKey('text'))
-              .addTextRange([3, 4])
-              .build(),
+            Index.text([{ blockIndex: 1,
+              dataKey: createDataKey('text'),
+              textRange: [3, 4],
+              documentId: 'doc1' as DocumentId }]),
             { payload: { tool: 'bold' },
               prevPayload: null },
             'user2',
@@ -505,7 +441,7 @@ describe('OperationsTransformer', () => {
           const result = transformer.transform(operation, againstOp);
 
           expect(result.type).toBe(operation.type);
-          expect(result.index.textRange).toEqual(operation.index.textRange);
+          expect((result.index as TextIndex).textRange).toEqual((operation.index as TextIndex).textRange);
           expect(result.data).toEqual(operation.data);
         });
       });

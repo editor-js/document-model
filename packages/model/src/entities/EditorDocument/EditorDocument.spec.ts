@@ -1,4 +1,4 @@
-import { IndexBuilder } from '@editorjs/model-types';
+import { Index, PartialIndex } from '@editorjs/model-types';
 import { EditorDocument } from './index.js';
 import { createBlockId, type DataKey, type InlineToolData, type InlineToolName, type BlockToolName, type BlockTuneName } from '@editorjs/model-types';
 import { BlockNode } from '../BlockNode/index.js';
@@ -1331,10 +1331,9 @@ describe('EditorDocument', () => {
 
     it('should call .insertText() method if text index provided', () => {
       const spy = jest.spyOn(document, 'insertText');
-      const index = new IndexBuilder().addBlockIndex(blockIndex)
-        .addDataKey(dataKey)
-        .addTextRange([0, 0])
-        .build();
+      const index = Index.text([{ blockIndex,
+        dataKey,
+        textRange: [0, 0] }]);
 
       document.insertData(index, text);
 
@@ -1344,10 +1343,7 @@ describe('EditorDocument', () => {
 
     it('should call .createDatNode() if data key index is provided', () => {
       const spy = jest.spyOn(document, 'createDataNode');
-      const index = new IndexBuilder()
-        .addBlockIndex(blockIndex)
-        .addDataKey(dataKey)
-        .build();
+      const index = Index.data(blockIndex, dataKey);
       const value = { value: text,
         $t: 't' };
 
@@ -1359,9 +1355,7 @@ describe('EditorDocument', () => {
 
     it('should call .addBlock() if block index is provided', () => {
       const spy = jest.spyOn(document, 'addBlock');
-      const index = new IndexBuilder()
-        .addBlockIndex(blockIndex)
-        .build();
+      const index = Index.block(blockIndex);
 
       document.insertData(index, [block.serialized]);
 
@@ -1370,9 +1364,7 @@ describe('EditorDocument', () => {
     });
 
     it('should throw an error if index is not supported', () => {
-      const index = new IndexBuilder()
-        .addPropertyName('readOnly')
-        .build();
+      const index = Index.property('readOnly');
 
       expect(() => document.insertData(index, 'data'))
         .toThrow('Unsupported index');
@@ -1405,11 +1397,9 @@ describe('EditorDocument', () => {
     it('should call .removeText() method if text index provided', () => {
       const spy = jest.spyOn(document, 'removeText');
       const rangeEnd = 5;
-      const index = new IndexBuilder()
-        .addBlockIndex(blockIndex)
-        .addDataKey(dataKey)
-        .addTextRange([0, rangeEnd])
-        .build();
+      const index = Index.text([{ blockIndex,
+        dataKey,
+        textRange: [0, rangeEnd] }]);
 
       document.removeData(index, 'hello');
 
@@ -1419,10 +1409,7 @@ describe('EditorDocument', () => {
 
     it('should call .removeDatNode() if data key index is provided', () => {
       const spy = jest.spyOn(document, 'removeDataNode');
-      const index = new IndexBuilder()
-        .addBlockIndex(blockIndex)
-        .addDataKey(dataKey)
-        .build();
+      const index = Index.data(blockIndex, dataKey);
 
       document.removeData(index, {});
 
@@ -1432,9 +1419,7 @@ describe('EditorDocument', () => {
 
     it('should call .removeBlock() if block index is provided', () => {
       const spy = jest.spyOn(document, 'removeBlock');
-      const index = new IndexBuilder()
-        .addBlockIndex(blockIndex)
-        .build();
+      const index = Index.block(blockIndex);
 
       const blockData = {
         name: 'paragraph',
@@ -1450,9 +1435,7 @@ describe('EditorDocument', () => {
     });
 
     it('should throw an error if index is not supported', () => {
-      const index = new IndexBuilder()
-        .addPropertyName('readOnly')
-        .build();
+      const index = Index.property('readOnly');
 
       expect(() => document.removeData(index, 'data'))
         .toThrow('Unsupported index');
@@ -1485,11 +1468,9 @@ describe('EditorDocument', () => {
     it('should call .format() method if text index and modified value provided', () => {
       const spy = jest.spyOn(document, 'format');
       const rangeEnd = 5;
-      const index = new IndexBuilder()
-        .addBlockIndex(blockIndex)
-        .addDataKey(dataKey)
-        .addTextRange([0, rangeEnd])
-        .build();
+      const index = Index.text([{ blockIndex,
+        dataKey,
+        textRange: [0, rangeEnd] }]);
 
       document.modifyData(index, {
         value: {
@@ -1505,11 +1486,9 @@ describe('EditorDocument', () => {
     it('should call .unformat() method if text index and previous modified value provided', () => {
       const spy = jest.spyOn(document, 'unformat');
       const rangeEnd = 5;
-      const index = new IndexBuilder()
-        .addBlockIndex(blockIndex)
-        .addDataKey(dataKey)
-        .addTextRange([0, rangeEnd])
-        .build();
+      const index = Index.text([{ blockIndex,
+        dataKey,
+        textRange: [0, rangeEnd] }]);
 
       document.modifyData(index, {
         previous: {
@@ -1728,13 +1707,12 @@ describe('EditorDocument', () => {
 
       document.addEventListener(EventType.Changed, handler);
 
-      const builder = new IndexBuilder();
-
-      builder.addTuneKey('value').addTuneName('tune' as BlockTuneName);
+      const partial = new PartialIndex({ tuneKey: 'value',
+        tuneName: 'tune' as BlockTuneName });
 
       blockNode.dispatchEvent(
         new TuneModifiedEvent(
-          builder.build(),
+          partial,
           {
             value: 'value',
             previous: 'previous',
@@ -1755,13 +1733,12 @@ describe('EditorDocument', () => {
 
       document.addEventListener(EventType.Changed, handler);
 
-      const builder = new IndexBuilder();
-
-      builder.addTuneKey('value').addTuneName('tune' as BlockTuneName);
+      const partial = new PartialIndex({ tuneKey: 'value',
+        tuneName: 'tune' as BlockTuneName });
 
       blockNode.dispatchEvent(
         new TuneModifiedEvent(
-          builder.build(),
+          partial,
           {
             value: 'value',
             previous: 'previous',

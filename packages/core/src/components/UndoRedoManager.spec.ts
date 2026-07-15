@@ -38,10 +38,11 @@ jest.unstable_mockModule('@editorjs/sdk', () => ({
     Removed: 'removed',
     Modified: 'modified',
   },
+  TextIndex: class TextIndex {},
 }));
 
 const { EditorJSModel } = await import('@editorjs/model');
-const { EventType, EventAction, EventBus } = await import('@editorjs/sdk');
+const { EventType, EventAction, EventBus, TextIndex } = await import('@editorjs/sdk');
 const { UndoRedoManager } = await import('./UndoRedoManager.js');
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -71,12 +72,20 @@ function createIndex(options: {
   dataKey?: string;
   textRange?: [number, number] | undefined;
 } = {}) {
-  return {
-    isTextIndex: options.isTextIndex ?? true,
+  const isTextIndex = options.isTextIndex ?? true;
+
+  const fields = {
+    isTextIndex,
     blockIndex: options.blockIndex ?? 0,
     dataKey: options.dataKey ?? 'text',
     textRange: 'textRange' in options ? options.textRange : ([0, 0] as [number, number]),
   };
+
+  // Non-text indices must NOT be instances of TextIndex, so #canAddToBatch's
+  // `instanceof TextIndex` guard correctly rejects them.
+  return isTextIndex
+    ? Object.assign(new (TextIndex as unknown as new () => object)(), fields)
+    : fields;
 }
 
 /**

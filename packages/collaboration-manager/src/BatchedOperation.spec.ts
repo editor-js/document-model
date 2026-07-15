@@ -1,14 +1,11 @@
-import type { Index } from '@editorjs/sdk';
-import { createDataKey, IndexBuilder, type TextRange } from '@editorjs/sdk';
+import { createDataKey, Index, type TextIndex, type TextRange } from '@editorjs/sdk';
 import { BatchedOperation } from './BatchedOperation.js';
 import type { SerializedOperation } from './Operation.js';
 import { Operation, OperationType } from './Operation.js';
 
-const createIndexByRange = (range: TextRange): Index => new IndexBuilder()
-  .addBlockIndex(0)
-  .addDataKey(createDataKey('key'))
-  .addTextRange(range)
-  .build();
+const createIndexByRange = (range: TextRange): Index => Index.text([{ blockIndex: 0,
+  dataKey: createDataKey('key'),
+  textRange: range }]);
 
 const templateIndex = createIndexByRange([0, 0]);
 
@@ -99,8 +96,8 @@ describe('BatchedOperation', () => {
       expect(transformedBatch.operations.length).toBe(2);
       // Check if text ranges were shifted by 1 due to insertion
       /* eslint-disable @typescript-eslint/no-magic-numbers */
-      expect(transformedBatch.operations[0].index.textRange![0]).toBe(2);
-      expect(transformedBatch.operations[1].index.textRange![0]).toBe(3);
+      expect((transformedBatch.operations[0].index as TextIndex).textRange![0]).toBe(2);
+      expect((transformedBatch.operations[1].index as TextIndex).textRange![0]).toBe(3);
       /* eslint-enable @typescript-eslint/no-magic-numbers */
     });
 

@@ -20,12 +20,13 @@ const prototype = computed(() => {
 /**
  * Array of properties of an object
  */
-type PropsList<Obj> = Array<keyof Obj>
+type PropsList<Obj> = Array<keyof Obj>;
 
 /**
  * Returns the properties of a class instance
  *
- * @param object - The object to get the properties of
+ * @param {object} object - The class instance to get properties from
+ * @returns {Array<keyof T>} The property names
  */
 function getClassProperties<T extends object>(object: T): PropsList<T> {
   const descriptors = Object.getOwnPropertyDescriptors(object);
@@ -34,7 +35,7 @@ function getClassProperties<T extends object>(object: T): PropsList<T> {
     .filter(([, descriptor]) => {
       return descriptor.get !== undefined;
     })
-    .map(([ name ]) => {
+    .map(([name]) => {
       return name as keyof typeof props.node;
     });
 }
@@ -68,7 +69,8 @@ const properties = computed<PropsList<typeof props.node>>(() => {
 /**
  * Returns the name of the parent object
  *
- * @param object - The object to get the parent name of
+ * @param {object} object - Any class instance to identify by name
+ * @returns {string} Parent constructor name
  */
 function getParentObjectName(object: object): string {
   // @ts-expect-error TS does not support __proto__

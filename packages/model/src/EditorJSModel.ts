@@ -5,12 +5,13 @@ import {
   BlockAddedEvent,
   BlockRemovedEvent,
   TextAddedEvent,
-  TextRemovedEvent
+  TextRemovedEvent,
+  type TextIndex,
+  type BlockIndex
 } from '@editorjs/model-types';
 import {
   type EditorDocumentSerialized,
   type Index,
-  IndexBuilder,
   type BlockId,
   type BlockIndexOrId,
   type BlockNodeInit,
@@ -484,10 +485,7 @@ export class EditorJSModel extends EventBus {
           this.#updateUserCaretByRemoteChange(event);
         }
 
-        const index = new IndexBuilder()
-          .from(event.detail.index)
-          .addDocumentId(this.#document.identifier)
-          .build();
+        const index = event.detail.index.withDocumentId(this.#document.identifier);
 
         /**
          * Here could be any logic to filter EditorDocument events;
@@ -517,38 +515,43 @@ export class EditorJSModel extends EventBus {
     }
 
     const caretIndex = userCaret.index;
-
-    const newIndex = new IndexBuilder().from(caretIndex);
     const index = event.detail.index;
+    let updatedIndex: Index | null = null;
 
     switch (true) {
       case (event instanceof TextAddedEvent):
       case (event instanceof TextRemovedEvent): {
-        if (index.blockIndex !== caretIndex.blockIndex || index.dataKey !== caretIndex.dataKey) {
+        const textIndex = index as TextIndex;
+        const textCaretIndex = caretIndex as TextIndex;
+
+        if (textIndex.blockIndex !== textCaretIndex.blockIndex || textIndex.dataKey !== textCaretIndex.dataKey) {
           return;
         }
 
-        if (index.textRange![0] > caretIndex.textRange![0]) {
+        if (textIndex.textRange![0] > textCaretIndex.textRange![0]) {
           return;
         }
 
         const delta = event.detail.data.length * (event.detail.action === EventAction.Added ? 1 : -1);
 
-        newIndex.addTextRange([caretIndex.textRange![0] + delta, caretIndex.textRange![1] + delta]);
+        updatedIndex = textCaretIndex.withTextRange([textCaretIndex.textRange![0] + delta, textCaretIndex.textRange![1] + delta]);
 
         break;
       }
 
       case (event instanceof BlockRemovedEvent):
       case (event instanceof BlockAddedEvent): {
-        if (index.blockIndex! >= caretIndex.blockIndex!) {
+        const blockIndex = index as BlockIndex;
+        const blockCaretIndex = caretIndex as BlockIndex;
+
+        if (blockIndex.blockIndex >= blockCaretIndex.blockIndex) {
           return;
         }
 
         /**
          * @todo if removed block is the one the caret currently in — move caret to the previous block
          */
-        newIndex.addBlockIndex(caretIndex.blockIndex! + (event.detail.action === EventAction.Added ? 1 : -1));
+        updatedIndex = blockCaretIndex.withBlockIndex(blockCaretIndex.blockIndex + (event.detail.action === EventAction.Added ? 1 : -1));
 
         break;
       }
@@ -557,6 +560,8 @@ export class EditorJSModel extends EventBus {
         return;
     }
 
-    userCaret.update(newIndex.build());
+    if (updatedIndex !== null) {
+      userCaret.update(updatedIndex);
+    }
   }
 }

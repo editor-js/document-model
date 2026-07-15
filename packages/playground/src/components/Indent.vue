@@ -5,7 +5,7 @@ const props = defineProps<{
   /**
    * True to hide the content.
    */
-  collapsed?: boolean
+  collapsed?: boolean;
 }>();
 
 const isHidden = ref(props.collapsed ?? true);
@@ -15,7 +15,7 @@ const isHidden = ref(props.collapsed ?? true);
  */
 function collapseExpand() {
   isHidden.value = !isHidden.value;
-};
+}
 </script>
 
 <template>

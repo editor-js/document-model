@@ -3,7 +3,7 @@ import {
   type Caret,
   type CaretManagerEvents,
   Index,
-  IndexBuilder,
+  TextIndex,
   createDataKey,
   createBlockId
 } from '@editorjs/sdk';
@@ -124,12 +124,12 @@ export class CaretAdapter {
 
   /**
    * Restores a multi-block selection from a composite caret index (cross-input selection).
-   * @param index - composite index with {@link Index.compositeSegments}
+   * @param index - composite index
    */
-  #restoreDomSelectionFromCompositeIndex(index: Index): void {
-    const segments = index.compositeSegments;
+  #restoreDomSelectionFromCompositeIndex(index: TextIndex): void {
+    const segments = index.getTextSegments();
 
-    if (segments === undefined || segments.length === 0) {
+    if (segments.length === 0) {
       return;
     }
 
@@ -217,14 +217,9 @@ export class CaretAdapter {
         continue;
       }
 
-      const builder = new IndexBuilder();
-
-      builder
-        .addBlockIndex(blockIndex)
-        .addDataKey(createDataKey(dataKeyStr))
-        .addTextRange(textRange);
-
-      segments.push(builder.build());
+      segments.push(Index.text([{ blockIndex,
+        dataKey: createDataKey(dataKeyStr),
+        textRange }]));
     }
 
     /**
@@ -259,8 +254,10 @@ export class CaretAdapter {
    */
   #sortCompositeSegmentsInDocumentOrder(segments: Index[]): void {
     segments.sort((a, b) => {
-      const blockA = a.blockIndex;
-      const blockB = b.blockIndex;
+      const textA = a as TextIndex;
+      const textB = b as TextIndex;
+      const blockA = textA.blockIndex;
+      const blockB = textB.blockIndex;
 
       if (blockA !== blockB) {
         return (blockA ?? 0) - (blockB ?? 0);
@@ -268,9 +265,9 @@ export class CaretAdapter {
 
       const blockIndex = blockA ?? 0;
       const inputA
-        = a.dataKey !== undefined ? this.findInput(blockIndex, String(a.dataKey)) : undefined;
+        = textA.dataKey !== undefined ? this.findInput(blockIndex, String(textA.dataKey)) : undefined;
       const inputB
-        = b.dataKey !== undefined ? this.findInput(blockIndex, String(b.dataKey)) : undefined;
+        = textB.dataKey !== undefined ? this.findInput(blockIndex, String(textB.dataKey)) : undefined;
 
       if (inputA !== undefined && inputB !== undefined && inputA !== inputB) {
         const position = inputA.compareDocumentPosition(inputB);
@@ -325,13 +322,13 @@ export class CaretAdapter {
       return;
     }
 
-    if (index.compositeSegments !== undefined && index.compositeSegments.length > 0) {
+    if (index instanceof TextIndex && index.isComposite) {
       this.#restoreDomSelectionFromCompositeIndex(index);
 
       return;
     }
 
-    const { textRange, dataKey, blockIndex } = index;
+    const { textRange, dataKey, blockIndex } = index as TextIndex;
 
     if (textRange === undefined || dataKey === undefined || blockIndex === undefined) {
       return;

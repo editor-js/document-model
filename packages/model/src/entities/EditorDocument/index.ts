@@ -2,7 +2,11 @@ import { getContext } from '../../utils/Context.js';
 import { BlockNode } from '../BlockNode/index.js';
 import {
   createDataKey,
-  IndexBuilder,
+  Index,
+  BlockIndex,
+  DataIndex,
+  TextIndex,
+  type PartialIndex,
   EventBus,
   EventType,
   type DocumentId,
@@ -33,7 +37,6 @@ import {
 } from '@editorjs/model-types';
 import type { Constructor } from '../../utils/types.js';
 import { BaseDocumentEvent, type ModifiedEventData, type TextFormattedEventData, type TextUnformattedEventData } from '@editorjs/model-types';
-import type { Index } from '@editorjs/model-types';
 import { BlockAlreadyExistsError } from './errors/BlockAlreadyExistsError.js';
 
 export type * from './types/index.js';
@@ -155,16 +158,12 @@ export class EditorDocument extends EventBus {
     this.#blockById.set(blockNode.id, blockNode);
     this.#listenAndBubbleBlockEvent(blockNode);
 
-    const builder = new IndexBuilder();
-
-    builder.addBlockIndex(index);
-
     /**
      * Dispatch BlockAddedEvent synchronously so it fires before any child DataNodeAddedEvents
      * (which are queued as microtasks during BlockNode construction), preserving root → leaves order
      * for add events.
      */
-    this.dispatchEvent(new BlockAddedEvent(builder.build(), blockNode.serialized, getContext<string | number>()!));
+    this.dispatchEvent(new BlockAddedEvent(Index.block(index), blockNode.serialized, getContext<string | number>()!));
   }
 
   /**
@@ -181,11 +180,7 @@ export class EditorDocument extends EventBus {
 
     this.#blockById.delete(blockNode.id);
 
-    const builder = new IndexBuilder();
-
-    builder.addBlockIndex(resolvedIndex);
-
-    this.dispatchEvent(new BlockRemovedEvent(builder.build(), blockNode.serialized, getContext<string | number>()!));
+    this.dispatchEvent(new BlockRemovedEvent(Index.block(resolvedIndex), blockNode.serialized, getContext<string | number>()!));
   }
 
   /**
@@ -307,13 +302,9 @@ export class EditorDocument extends EventBus {
 
     this.#properties[name] = value;
 
-    const builder = new IndexBuilder();
-
-    builder.addPropertyName(name);
-
     this.dispatchEvent(
       new PropertyModifiedEvent(
-        builder.build(),
+        Index.property(name),
         {
           value,
           previous: previousValue,
@@ -463,17 +454,15 @@ export class EditorDocument extends EventBus {
    */
   public insertData(index: Index, data: string | BlockNodeInit[] | BlockNodeDataSerializedValue): void {
     switch (true) {
-      case index.isTextIndex:
+      case index instanceof TextIndex:
         this.insertText(index.blockIndex!, index.dataKey!, data as string, index.textRange![0]);
         break;
-
-      case index.isDataIndex:
-        this.createDataNode(index.blockIndex!, index.dataKey!, data);
+      case index instanceof DataIndex:
+        this.createDataNode(index.blockIndex, index.dataKey, data);
         break;
-
-      case index.isBlockIndex:
+      case index instanceof BlockIndex:
         (data as BlockNodeSerialized[])
-          .forEach((blockData, i) => this.addBlock(blockData, index.blockIndex! + i));
+          .forEach((blockData, i) => this.addBlock(blockData, index.blockIndex + i));
         break;
       default:
         throw new Error('Unsupported index');
@@ -487,16 +476,14 @@ export class EditorDocument extends EventBus {
    */
   public removeData(index: Index, data: string | BlockNodeInit[] | BlockNodeDataSerializedValue): void {
     switch (true) {
-      case index.isTextIndex:
+      case index instanceof TextIndex:
         this.removeText(index.blockIndex!, index.dataKey!, index.textRange![0], index.textRange![0] + (data as string).length);
         break;
-
-      case index.isDataIndex:
-        this.removeDataNode(index.blockIndex!, index.dataKey!);
+      case index instanceof DataIndex:
+        this.removeDataNode(index.blockIndex, index.dataKey);
         break;
-
-      case index.isBlockIndex:
-        (data as BlockNodeSerialized[]).forEach(() => this.removeBlock(index.blockIndex!));
+      case index instanceof BlockIndex:
+        (data as BlockNodeSerialized[]).forEach(() => this.removeBlock(index.blockIndex));
         break;
       default:
         throw new Error('Unsupported index');
@@ -509,19 +496,16 @@ export class EditorDocument extends EventBus {
    * @param data - data to modify (includes current and previous values)
    */
   public modifyData(index: Index, data: ModifiedEventData): void {
-    switch (true) {
-      case index.isTextIndex:
-        if (data.value !== null) {
-          this.format(index.blockIndex!, index.dataKey!, (data.value as TextFormattedEventData).tool, index.textRange![0], index.textRange![1]);
-        } else if (data.previous !== null) {
-          this.unformat(index.blockIndex!, index.dataKey!, (data.previous as TextUnformattedEventData).tool, index.textRange![0], index.textRange![1]);
-        }
-
-      default:
-      /**
-       * @todo implement other actions
-       */
+    if (index instanceof TextIndex) {
+      if (data.value !== null) {
+        this.format(index.blockIndex!, index.dataKey!, (data.value as TextFormattedEventData).tool, index.textRange![0], index.textRange![1]);
+      } else if (data.previous !== null) {
+        this.unformat(index.blockIndex!, index.dataKey!, (data.previous as TextUnformattedEventData).tool, index.textRange![0], index.textRange![1]);
+      }
     }
+    /**
+     * @todo implement other actions
+     */
   }
 
   /**
@@ -565,16 +549,15 @@ export class EditorDocument extends EventBus {
         return;
       }
 
-      const builder = new IndexBuilder();
-      const index = this.#children.indexOf(block);
-
-      builder.from(event.detail.index)
-        .addDocumentId(this.identifier)
-        .addBlockIndex(index);
+      const blockIndex = this.#children.indexOf(block);
+      const completeIndex = (event.detail.index as PartialIndex)
+        .withBlockIndex(blockIndex)
+        .withDocumentId(this.identifier)
+        .resolve();
 
       this.dispatchEvent(
         new (event.constructor as Constructor<TextNodeEvents | ValueNodeEvents | BlockTuneEvents>)(
-          builder.build(),
+          completeIndex,
           event.detail.data
         )
       );

@@ -23,12 +23,6 @@ jest.unstable_mockModule('@editorjs/model', () => {
 });
 
 jest.unstable_mockModule('@editorjs/sdk', () => {
-  class IndexBuilderMock {
-    public from = jest.fn(() => this);
-    public addTextRange = jest.fn(() => this);
-    public build = jest.fn(() => ({ getTextSegments: jest.fn(() => []) }));
-  }
-
   return {
     CoreEventType: { ToolLoaded: 'tool-loaded' },
     SelectionChangedCoreEvent: jest.fn(function (this: { detail: unknown }, detail: unknown) {
@@ -43,7 +37,6 @@ jest.unstable_mockModule('@editorjs/sdk', () => {
       this.detail = detail;
     },
     Index: { parse: jest.fn() },
-    IndexBuilder: IndexBuilderMock,
     EventType: { CaretManagerUpdated: 'caret-updated' },
     createInlineToolData: (data: Record<string, unknown>) => data,
     createInlineToolName: (name: string) => name,
@@ -51,6 +44,7 @@ jest.unstable_mockModule('@editorjs/sdk', () => {
       Format: 'format',
       Unformat: 'unformat',
     },
+    TextIndex: class TextIndex {},
   };
 });
 
@@ -61,7 +55,7 @@ jest.unstable_mockModule('../tools/ToolsManager', () => ({
 }));
 
 const { EditorJSModel } = await import('@editorjs/model');
-const { CaretManagerCaretUpdatedEvent, EventType, Index, SelectionChangedCoreEvent, EventBus } = await import('@editorjs/sdk');
+const { CaretManagerCaretUpdatedEvent, EventType, Index, SelectionChangedCoreEvent, EventBus, TextIndex } = await import('@editorjs/sdk');
 const ToolsManager = (await import('../tools/ToolsManager')).default;
 const { SelectionManager } = await import('./SelectionManager.js');
 
@@ -159,12 +153,12 @@ describe('SelectionManager', () => {
         textRange: [1, 3],
       };
 
-      jest.spyOn(Index, 'parse').mockReturnValue({
+      jest.spyOn(Index, 'parse').mockReturnValue(Object.assign(new (TextIndex as unknown as new () => object)(), {
         ...segment,
         getTextSegments() {
           return [segment];
         },
-      } as unknown as Index);
+      }) as unknown as Index);
 
       caretEventsListener(event);
 
@@ -383,6 +377,7 @@ describe('SelectionManager', () => {
         getTextSegments: jest.fn(() => [{ blockIndex: 0,
           dataKey: 'text',
           textRange: [0, 3] }]),
+        withTextRange: jest.fn(() => ({ getTextSegments: jest.fn(() => []) })),
       };
 
       jest.spyOn(model, 'getCaret')

@@ -10,11 +10,11 @@ import {
   EventType,
   FormattingAction,
   Index,
-  IndexBuilder,
   IndexError,
   InlineToolFormatData,
   InlineToolName,
-  SelectionChangedCoreEvent
+  SelectionChangedCoreEvent,
+  TextIndex
 } from '@editorjs/sdk';
 import { inject, injectable } from 'inversify';
 import { TOKENS } from '../tokens.js';
@@ -82,7 +82,7 @@ export class SelectionManager {
         const index = serializedIndex !== null ? Index.parse(serializedIndex) : null;
         let fragments: InlineFragment[] = [];
 
-        if (index !== null) {
+        if (index !== null && index instanceof TextIndex) {
           for (const segment of index.getTextSegments()) {
             if (segment.blockIndex !== undefined && segment.dataKey !== undefined && segment.textRange !== undefined) {
               fragments.push(
@@ -154,7 +154,7 @@ export class SelectionManager {
      * @todo do not store middle segments in the index, use only the first and last segments
      * Also, we need to sort inputs inside first/last block by document order to restore selection
      */
-    const segments = caretIndex.getTextSegments();
+    const segments = (caretIndex as TextIndex).getTextSegments();
 
     if (segments.length === 0) {
       throw new IndexError('SelectionManager[applyInlineTool]: caret index is outside of the input');
@@ -210,15 +210,10 @@ export class SelectionManager {
         } else {
           // For composite selections, don't try to add textRange since composite indices
           // must not have root-level textRange. Only set textRange for single-segment selections.
-          const selectedSegments = caretIndex.getTextSegments();
+          const selectedSegments = (caretIndex as TextIndex).getTextSegments();
 
           if (selectedSegments.length === 1 && selectedSegments[0].textRange !== undefined) {
-            caret?.update(
-              new IndexBuilder()
-                .from(caretIndex)
-                .addTextRange([selectedSegments[0].textRange[1], selectedSegments[0].textRange[1]])
-                .build()
-            );
+            caret?.update(caretIndex.withTextRange([selectedSegments[0].textRange[1], selectedSegments[0].textRange[1]]));
           } else {
             caret?.update(caretIndex);
           }

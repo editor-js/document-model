@@ -1,5 +1,5 @@
-import type { DocumentId } from '@editorjs/sdk';
-import { createDataKey, IndexBuilder } from '@editorjs/sdk';
+import type { BlockIndex, DocumentId, TextIndex } from '@editorjs/sdk';
+import { createDataKey, Index } from '@editorjs/sdk';
 import { describe } from '@jest/globals';
 import { jest } from '@jest/globals';
 import { Operation, OperationType } from './Operation.js';
@@ -16,9 +16,7 @@ const userId = 'user';
 function createOperation(index: number, text: string, type: OperationType = OperationType.Insert): Operation {
   return new Operation(
     type,
-    new IndexBuilder()
-      .addBlockIndex(index)
-      .build(),
+    Index.block(index),
     {
       payload: [{
         name: 'paragraph',
@@ -35,9 +33,7 @@ describe('UndoRedoManager', () => {
 
     const op = new Operation(
       OperationType.Insert,
-      new IndexBuilder()
-        .addBlockIndex(0)
-        .build(),
+      Index.block(0),
       {
         payload: [{
           name: 'paragraph',
@@ -71,9 +67,7 @@ describe('UndoRedoManager', () => {
 
     const op = new Operation(
       OperationType.Insert,
-      new IndexBuilder()
-        .addBlockIndex(0)
-        .build(),
+      Index.block(0),
       {
         payload: [{
           name: 'paragraph',
@@ -97,9 +91,7 @@ describe('UndoRedoManager', () => {
 
     const op = new Operation(
       OperationType.Insert,
-      new IndexBuilder()
-        .addBlockIndex(0)
-        .build(),
+      Index.block(0),
       {
         payload: [{
           name: 'paragraph',
@@ -111,9 +103,7 @@ describe('UndoRedoManager', () => {
 
     const newOp = new Operation(
       OperationType.Insert,
-      new IndexBuilder()
-        .addBlockIndex(0)
-        .build(),
+      Index.block(0),
       {
         payload: [{
           name: 'paragraph',
@@ -192,8 +182,8 @@ describe('UndoRedoManager', () => {
       const redoOp1 = manager.redo();
       const redoOp2 = manager.redo();
 
-      expect(redoOp1?.index.blockIndex?.toString()).toBe('2'); // transformed op2
-      expect(redoOp2?.index.blockIndex?.toString()).toBe('3'); // transformed op3
+      expect((redoOp1?.index as BlockIndex | undefined)?.blockIndex?.toString()).toBe('2'); // transformed op2
+      expect((redoOp2?.index as BlockIndex | undefined)?.blockIndex?.toString()).toBe('3'); // transformed op3
     });
 
     it('should transform stacked text operations against a remote text insert', () => {
@@ -202,14 +192,12 @@ describe('UndoRedoManager', () => {
 
       const stacked = new Operation(
         OperationType.Insert,
-        new IndexBuilder()
-          .addDocumentId(doc)
-          .addBlockIndex(0)
-          .addDataKey(createDataKey('text'))
-          /* eslint-disable @typescript-eslint/no-magic-numbers */
-          .addTextRange([2, 5])
-          /* eslint-enable @typescript-eslint/no-magic-numbers */
-          .build(),
+        /* eslint-disable @typescript-eslint/no-magic-numbers */
+        Index.text([{ blockIndex: 0,
+          dataKey: createDataKey('text'),
+          textRange: [2, 5],
+          documentId: doc }]),
+        /* eslint-enable @typescript-eslint/no-magic-numbers */
         { payload: 'abc' },
         userId
       );
@@ -218,12 +206,10 @@ describe('UndoRedoManager', () => {
 
       const remoteInsert = new Operation(
         OperationType.Insert,
-        new IndexBuilder()
-          .addDocumentId(doc)
-          .addBlockIndex(0)
-          .addDataKey(createDataKey('text'))
-          .addTextRange([0, 0])
-          .build(),
+        Index.text([{ blockIndex: 0,
+          dataKey: createDataKey('text'),
+          textRange: [0, 0],
+          documentId: doc }]),
         { payload: 'xx' },
         'remote'
       );
@@ -234,7 +220,7 @@ describe('UndoRedoManager', () => {
 
       expect(undone?.type).toBe(OperationType.Delete);
       /* eslint-disable @typescript-eslint/no-magic-numbers */
-      expect(undone?.index.textRange).toEqual([4, 7]);
+      expect((undone?.index as TextIndex | undefined)?.textRange).toEqual([4, 7]);
       /* eslint-enable @typescript-eslint/no-magic-numbers */
     });
   });
