@@ -154,6 +154,11 @@ export class SelectionManager {
      * @todo do not store middle segments in the index, use only the first and last segments
      * Also, we need to sort inputs inside first/last block by document order to restore selection
      */
+    /**
+     * @todo caretIndex is typed as Readonly<Index> | null, so this cast is technically unsound.
+     * Not currently reachable — caret.index is only ever set to null or a TextIndex (CaretAdapter/BlockToolAdapter);
+     * there's no block-level caret concept that would store a BlockIndex/DataIndex here. Guard with instanceof if that changes.
+     */
     const segments = (caretIndex as TextIndex).getTextSegments();
 
     if (segments.length === 0) {

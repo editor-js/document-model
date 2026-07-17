@@ -454,6 +454,11 @@ export class EditorDocument extends EventBus {
    */
   public insertData(index: Index, data: string | BlockNodeInit[] | BlockNodeDataSerializedValue): void {
     switch (true) {
+      /**
+       * @todo composite (multi-segment) TextIndex has undefined blockIndex/dataKey/textRange, so the assertions below would throw.
+       * Not currently reachable — index always comes from PartialIndex.resolve(), which only builds single-segment TextIndex.
+       * Guard explicitly if a composite index can ever reach this method.
+       */
       case index instanceof TextIndex:
         this.insertText(index.blockIndex!, index.dataKey!, data as string, index.textRange![0]);
         break;
@@ -476,6 +481,11 @@ export class EditorDocument extends EventBus {
    */
   public removeData(index: Index, data: string | BlockNodeInit[] | BlockNodeDataSerializedValue): void {
     switch (true) {
+      /**
+       * @todo composite (multi-segment) TextIndex has undefined blockIndex/dataKey/textRange, so the assertions below would throw.
+       * Not currently reachable — index always comes from PartialIndex.resolve(), which only builds single-segment TextIndex.
+       * Guard explicitly if a composite index can ever reach this method.
+       */
       case index instanceof TextIndex:
         this.removeText(index.blockIndex!, index.dataKey!, index.textRange![0], index.textRange![0] + (data as string).length);
         break;
@@ -496,6 +506,11 @@ export class EditorDocument extends EventBus {
    * @param data - data to modify (includes current and previous values)
    */
   public modifyData(index: Index, data: ModifiedEventData): void {
+    /**
+     * @todo composite (multi-segment) TextIndex has undefined blockIndex/dataKey/textRange, so the assertions below would throw.
+     * Not currently reachable — index always comes from PartialIndex.resolve(), which only builds single-segment TextIndex.
+     * Guard explicitly if a composite index can ever reach this method.
+     */
     if (index instanceof TextIndex) {
       if (data.value !== null) {
         this.format(index.blockIndex!, index.dataKey!, (data.value as TextFormattedEventData).tool, index.textRange![0], index.textRange![1]);
