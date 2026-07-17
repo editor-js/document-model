@@ -129,8 +129,11 @@ export class LinkInlineTool implements InlineTool {
                 tool: LinkInlineTool.name,
                 data: { href: linkInput.value },
                 caretIndex: caretIndex!,
-                /** @todo Replace link instead of applying the formatting again. Needs to be implemented in the model */
-                action: isActive ? FormattingAction.None : FormattingAction.Format,
+                /**
+                 * Always re-apply as Format: the model now replaces the data of an existing link,
+                 * so editing an existing link updates its href to the new value.
+                 */
+                action: FormattingAction.Format,
                 keepSelection: false,
               });
             }

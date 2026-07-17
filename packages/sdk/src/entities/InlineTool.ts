@@ -89,6 +89,20 @@ export interface InlineTool extends Omit<InlineToolVersion2, 'save' | 'checkStat
   intersectType?: IntersectType;
 
   /**
+   * Optionally overrides how the model decides whether two data objects of this tool are equal.
+   *
+   * The model uses this to tell a no-op re-apply from a data replacement, and to decide whether
+   * two adjacent same-tool fragments may be merged. When omitted, the model falls back to a deep
+   * structural comparison.
+   * @todo Not yet consulted by the model — the wiring that resolves a tool's comparator by name
+   *       is deferred. Provided as a stable extension point for tools whose data equality differs
+   *       from deep equality (e.g. ignoring a derived/display field).
+   * @param a - first inline tool data
+   * @param b - second inline tool data
+   */
+  isSameData?(a?: InlineToolFormatData, b?: InlineToolFormatData): boolean;
+
+  /**
    * Function that returns the state of the tool for the current selection
    * @param index - index of current text selection
    * @param fragments - all fragments of the inline tool inside the current input
