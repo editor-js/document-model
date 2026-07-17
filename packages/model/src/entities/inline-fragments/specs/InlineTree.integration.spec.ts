@@ -342,6 +342,29 @@ describe('Inline fragments tree integration', () => {
         ]);
       });
 
+      it('should replace data only within a re-applied prefix range', () => {
+        const tree = new TextNode({ children: [new TextInlineNode({ value: initialText })] });
+        const dataA = createInlineToolData({ href: 'https://a.com' });
+        const dataB = createInlineToolData({ href: 'https://b.com' });
+        const end = 10;
+
+        tree.format(linkTool, 0, initialText.length, dataA);
+        tree.format(linkTool, 0, end, dataB);
+
+        expect(tree.getFragments()).toStrictEqual([
+          {
+            tool: linkTool,
+            range: [0, end],
+            data: dataB,
+          },
+          {
+            tool: linkTool,
+            range: [end, initialText.length],
+            data: dataA,
+          },
+        ]);
+      });
+
       it('should not merge adjacent same-tool fragments whose data differs', () => {
         const tree = new TextNode({ children: [new TextInlineNode({ value: initialText })] });
         const dataA = createInlineToolData({ href: 'https://a.com' });

@@ -44,6 +44,13 @@ describe('isSameInlineData', () => {
     )).toBe(false);
   });
 
+  it('should return false when one value is an array and the other is not', () => {
+    expect(isSameInlineData(
+      createInlineToolData({ value: [1, 2, 3] }),
+      createInlineToolData({ value: { length: 3 } })
+    )).toBe(false);
+  });
+
   it('should compare array values by order and content', () => {
     expect(isSameInlineData(
       createInlineToolData({ items: [1, 2, 3] }),
