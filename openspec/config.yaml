@@ -1,20 +1,23 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  Tech stack: TypeScript, Yarn 4 (Berry) workspaces monorepo (packages/*, packages/tools/*).
+  Domain: Editor.js document model - a collaborative rich-text editor engine (block/inline
+  data tree, operational-transform based collaboration, pluggable block/inline tools).
+  Key packages: model (EditorJSModel/EditorDocument/BlockNode/inline-fragments/CaretManager),
+  model-types (shared event/type contracts), core, dom-adapters, ot-server (collaboration/OT
+  server), sdk (public API for building tools/plugins - tools should depend on this, not on
+  model directly), ui, collaboration-manager, and packages/tools/* (built-in block/inline
+  tools implementing BlockTool/InlineTool from @editorjs/sdk).
+  Existing architecture docs live in docs/; Mermaid diagrams in docs/diagrams/;
+  consult these before writing new specs/proposals so they don't duplicate or contradict
+  what's already documented there.
+  Testing: Jest with co-located *.spec.ts/*.integration.spec.ts files; some packages also
+  run Stryker mutation testing (test:mutations). Linting via ESLint (yarn lint).
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+rules:
+  tasks:
+    - Write the failing test first, then implement, then refactor (TDD).
+    - Name test cases in should-notation, e.g. it('should return X when Y').
+  proposal:
+    - Cross-check against existing docs in docs/ and note if the proposal supersedes any of them.
