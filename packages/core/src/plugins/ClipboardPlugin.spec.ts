@@ -1,47 +1,36 @@
-/* eslint-disable @typescript-eslint/naming-convention */
+/* eslint-disable jsdoc/require-jsdoc, @typescript-eslint/naming-convention */
 import { jest } from '@jest/globals';
-import { ClipboardPlugin } from './ClipboardPlugin';
 import type { CoreConfigValidated, EditorjsPluginParams } from '@editorjs/sdk';
-import { EventBus } from '@editorjs/sdk';
-import { CopyUIEventName } from '@editorjs/sdk';
-import { EditorAPI } from '../api';
 
-jest.mock('@editorjs/sdk', () => {
-  const originalModule = jest.requireActual('@editorjs/sdk');
+type Listener = (e: Event) => void;
 
+jest.unstable_mockModule('@editorjs/sdk', () => {
   return {
-    // @ts-expect-error - jest.requireActual returns object
-    ...originalModule,
+    CopyUIEventName: 'copy',
+    PluginType: { Plugin: 'Plugin' },
     EventBus: jest.fn().mockImplementation(() => {
-      const listeners = new Map<string, EventListener>();
+      const listeners = new Map<string, Listener>();
 
       return {
-        addEventListener: jest.fn((event: string, fn: EventListener) => {
-          listeners.set(event, fn);
-        }),
-        removeEventListener: jest.fn((event: string) => {
-          listeners.delete(event);
-        }),
-        /**
-         * Test helper: dispatch a previously-registered event
-         * @param event - event name to fire
-         * @param evt - event payload
-         */
+        addEventListener: jest.fn((event: string, fn: Listener) => listeners.set(event, fn)),
+        removeEventListener: jest.fn((event: string) => listeners.delete(event)),
         __fire: (event: string, evt: Event) => listeners.get(event)?.(evt),
       };
     }),
   };
 });
 
-jest.mock('../api', () => {
-  return {
-    EditorAPI: jest.fn().mockImplementation(() => ({
-      selection: {
-        selectedBlocks: [] as unknown[],
-      },
-    })),
-  };
-});
+jest.unstable_mockModule('../api', () => ({
+  EditorAPI: jest.fn().mockImplementation(() => ({
+    selection: { selectedBlocks: [] as unknown[] },
+  })),
+}));
+
+const { EventBus, CopyUIEventName } = await import('@editorjs/sdk');
+const { EditorAPI } = await import('../api');
+const { ClipboardPlugin } = await import('./ClipboardPlugin.js');
+
+type FireableEventBus = InstanceType<typeof EventBus> & { __fire: (event: string, evt: Event) => void };
 
 describe('ClipboardPlugin', () => {
   let pluginParamsMock: EditorjsPluginParams;
@@ -60,7 +49,7 @@ describe('ClipboardPlugin', () => {
 
       new ClipboardPlugin(pluginParamsMock);
 
-      expect(eventBus.addEventListener).toHaveBeenCalled();
+      expect(eventBus.addEventListener).toHaveBeenCalledWith(`ui:${CopyUIEventName}`, expect.any(Function));
     });
   });
 
@@ -71,179 +60,50 @@ describe('ClipboardPlugin', () => {
 
       cp.destroy();
 
-      expect(eventBus.removeEventListener).toHaveBeenCalled();
+      expect(eventBus.removeEventListener).toHaveBeenCalledWith(`ui:${CopyUIEventName}`, expect.any(Function));
     });
   });
 
   describe('CopyUIEvent listener', () => {
-    /**
-     * Shape of `document` exposed to the plugin under test.
-     */
-    interface DocumentStub {
-      /**
-       * Creates a fake element; only `'template'` is exercised by the plugin.
-       */
-      createElement: (tag: string) => unknown;
-    }
-
-    /**
-     * Shape of `window` exposed to the plugin under test.
-     */
-    interface WindowStub {
-      /**
-       * Returns a fake `Selection` matching the `MockDOMSelectionOptions` shape.
-       */
-      getSelection: () => unknown;
-    }
-
-    /**
-     * `globalThis` augmented with the DOM globals the plugin reads at runtime.
-     * Used to stub `window.getSelection` / `document.createElement` under the
-     * `node` Jest test environment.
-     */
-    interface GlobalThisWithDOM {
-      /**
-       * `document` global; only present under DOM-capable test environments.
-       */
-      document?: DocumentStub;
-      /**
-       * `window` global; only present under DOM-capable test environments.
-       */
-      window?: WindowStub;
-    }
-
-    // eslint-disable-next-line jsdoc/require-jsdoc
-    type FireableEventBus = EventBus & { __fire: (event: string, evt: Event) => void };
-
-    /**
-     * Spies returned by `dispatchCopyEvent` for assertions on the native event.
-     */
-    interface DispatchedEventSpies {
-      /**
-       * Spy on the native event's `preventDefault` method.
-       */
-      preventDefault: jest.Mock;
-      /**
-       * Spy on the native event's `clipboardData.setData` method.
-       */
-      setData: jest.Mock;
-    }
-
-    /**
-     * Builds a stub `CopyUIEvent`-shaped object with a `preventDefault` spy and a
-     * `clipboardData.setData` spy, then dispatches it through the EventBus mock.
-     * @returns spies for `preventDefault` and `clipboardData.setData`
-     */
-    function dispatchCopyEvent(): DispatchedEventSpies {
+    function dispatchCopyEvent(): { preventDefault: jest.Mock;
+      setData: jest.Mock; } {
       const eventBus = pluginParamsMock.eventBus as unknown as FireableEventBus;
       const preventDefault = jest.fn();
       const setData = jest.fn();
+      const nativeEvent = { preventDefault,
+        clipboardData: { setData } } as unknown as ClipboardEvent;
 
-      const nativeEvent = {
-        preventDefault,
-        clipboardData: { setData },
-      } as unknown as ClipboardEvent;
-      const uiEvent = { detail: { nativeEvent } } as unknown as Event;
+      eventBus.__fire(`ui:${CopyUIEventName}`, { detail: { nativeEvent } } as unknown as Event);
 
-      eventBus.__fire(`ui:${CopyUIEventName}`, uiEvent);
-
-      return {
-        preventDefault,
-        setData,
-      };
+      return { preventDefault,
+        setData };
     }
 
-    // eslint-disable-next-line jsdoc/require-jsdoc
     function setSelectedBlocks(blocks: unknown[]): void {
-      const { api } = pluginParamsMock;
-
-      // eslint-disable-next-line jsdoc/require-jsdoc
-      (api.selection as { selectedBlocks: unknown[] }).selectedBlocks = blocks;
+      (pluginParamsMock.api.selection as { selectedBlocks: unknown[] }).selectedBlocks = blocks;
     }
 
-    /**
-     * Describes a stubbed DOM selection for the duration of a single test.
-     */
-    interface MockDOMSelectionOptions {
-      /**
-       * Value returned by `selection.toString()`.
-       */
-      plainText: string;
-      /**
-       * Inner HTML of the resulting `HTMLTemplateElement`.
-       */
-      html: string;
-      /**
-       * Number of ranges in the selection. Defaults to `1`.
-       */
-      rangeCount?: number;
-    }
-
-    /**
-     * Stubs the DOM globals (`window.getSelection`, `document.createElement`) so the
-     * plugin's DOM-dependent code paths can be exercised under the `node` test env.
-     * Returns a `restore` callback to undo the mocks in `afterEach`.
-     * @param options - plain text and HTML the selection should expose
-     * @returns restore function that reinstates the original globals
-     */
-    function mockDOMSelection(options: MockDOMSelectionOptions): () => void {
-      const { plainText, html, rangeCount = 1 } = options;
-
-      const cloneContents = jest.fn(() => ({}));
-      const range = { cloneContents };
+    // Stubs the DOM globals the plugin reads at runtime (test env has no jsdom).
+    function mockDOMSelection(plainText: string, html: string): () => void {
       const selection = {
-        rangeCount,
-        toString: jest.fn(() => plainText),
-        getRangeAt: jest.fn(() => range),
-      };
-      const templateContent = {
-        appendChild: jest.fn(),
-      };
-      const template = {
-        content: templateContent,
-        get innerHTML(): string {
-          return html;
-        },
-      };
-      const documentStub = {
-        createElement: jest.fn((tag: string) => {
-          if (tag === 'template') {
-            return template;
-          }
+        rangeCount: 1,
+        toString: () => plainText,
+        getRangeAt: () => ({ cloneContents: () => ({}) }),
+      } as unknown as Selection;
+      const template = { content: { appendChild: (): void => undefined },
+        innerHTML: html } as unknown as HTMLTemplateElement;
 
-          return undefined;
-        }),
-      };
-      const windowStub = {
-        getSelection: jest.fn(() => selection),
-      };
-      const hadDocument = Object.prototype.hasOwnProperty.call(globalThis, 'document');
-      const hadWindow = Object.prototype.hasOwnProperty.call(globalThis, 'window');
-      const g = globalThis as GlobalThisWithDOM;
-      const originalDocument = g.document;
-      const originalWindow = g.window;
-
-      g.document = documentStub;
-      g.window = windowStub;
+      globalThis.document = { createElement: () => template } as unknown as Document;
+      globalThis.window = { getSelection: () => selection } as unknown as Window & typeof globalThis;
 
       return (): void => {
-        if (hadDocument) {
-          g.document = originalDocument;
-        } else {
-          delete g.document;
-        }
-        if (hadWindow) {
-          g.window = originalWindow;
-        } else {
-          delete g.window;
-        }
+        delete (globalThis as { document?: Document }).document;
+        delete (globalThis as { window?: Window }).window;
       };
     }
 
     describe('when no blocks are selected', () => {
-      beforeEach(() => {
-        setSelectedBlocks([]);
-      });
+      beforeEach(() => setSelectedBlocks([]));
 
       it('should not prevent native event', () => {
         new ClipboardPlugin(pluginParamsMock);
@@ -264,19 +124,12 @@ describe('ClipboardPlugin', () => {
           { id: 'b2',
             type: 'header' },
         ]);
+        restoreDOMMocks = mockDOMSelection('hello', '<p>hello</p>');
       });
 
-      afterEach(() => {
-        if (restoreDOMMocks !== undefined) {
-          restoreDOMMocks();
-          restoreDOMMocks = (): void => undefined;
-        }
-      });
+      afterEach(() => restoreDOMMocks());
 
       it('should add current selection as text to native event', () => {
-        restoreDOMMocks = mockDOMSelection({ plainText: 'hello',
-          html: '<p>hello</p>' });
-
         new ClipboardPlugin(pluginParamsMock);
 
         const { setData } = dispatchCopyEvent();
@@ -285,9 +138,6 @@ describe('ClipboardPlugin', () => {
       });
 
       it('should add current selection as html to native event', () => {
-        restoreDOMMocks = mockDOMSelection({ plainText: 'hello',
-          html: '<p>hello</p>' });
-
         new ClipboardPlugin(pluginParamsMock);
 
         const { setData } = dispatchCopyEvent();
@@ -296,9 +146,6 @@ describe('ClipboardPlugin', () => {
       });
 
       it('should add custom editorjs data-type to native event', () => {
-        restoreDOMMocks = mockDOMSelection({ plainText: 'hello',
-          html: '<p>hello</p>' });
-
         new ClipboardPlugin(pluginParamsMock);
 
         const { setData } = dispatchCopyEvent();
