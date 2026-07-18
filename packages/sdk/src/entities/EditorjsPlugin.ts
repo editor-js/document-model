@@ -1,7 +1,7 @@
-import type { EventBus } from '@/entities/EventBus/EventBus.js';
-import type { CoreConfigValidated } from '@/entities/Config.js';
-import type { EditorAPI } from '@/api/EditorAPI.js';
-import type { EntityType } from '@/entities/EntityType.js';
+import type { EventBus } from './EventBus/EventBus.js';
+import type { CoreConfigValidated } from './Config.js';
+import type { EditorAPI } from '../api';
+import type { EntityType } from './EntityType.js';
 
 /**
  * Parameters for EditorjsPlugin constructor

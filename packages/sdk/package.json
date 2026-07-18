@@ -33,6 +33,7 @@
   "dependencies": {
     "@editorjs/editorjs": "^2.30.8",
     "@editorjs/helpers": "^1.2.2",
-    "@editorjs/model-types": "workspace:^"
+    "@editorjs/model-types": "workspace:^",
+    "@editorjs/ui-kit": "^1.1.5"
   }
 }

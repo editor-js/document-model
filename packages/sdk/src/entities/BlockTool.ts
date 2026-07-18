@@ -6,9 +6,9 @@ import type {
 import type { BlockToolConstructorOptions as BlockToolConstructorOptionsVersion2 } from '@editorjs/editorjs';
 import type { ValueSerialized } from '@editorjs/model-types';
 import type { BlockToolAdapter } from './BlockToolAdapter.js';
-import type { ToolType } from '@/entities/EntityType.js';
-import type { BaseToolConstructor, BaseToolOptions } from '@/entities/BaseTool';
-import type { EditorAPI } from '@/api';
+import type { ToolType } from './EntityType.js';
+import type { BaseToolConstructor, BaseToolOptions } from './BaseTool';
+import type { EditorAPI } from '../api';
 
 /**
  * Configuration for converting block content to/from other block types.

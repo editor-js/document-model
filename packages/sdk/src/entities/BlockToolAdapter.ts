@@ -9,7 +9,7 @@ import {
   NODE_TYPE_HIDDEN_PROP,
   BlockChildType
 } from '@editorjs/model-types';
-import type { CoreConfig } from '@/entities/Config';
+import type { CoreConfig } from './Config';
 import { KeyAddedEvent, KeyRemovedEvent, ValueNodeChangedEvent } from './EventBus/events/adapter/index.js';
 import type { EditorAPI } from '../api/index.js';
 
