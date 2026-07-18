@@ -40,7 +40,10 @@ To try changes end-to-end, use the Vite playground:
 cd packages/playground && yarn dev
 ```
 
-The OT collaboration server can be run via Docker: `docker compose up`.
+The OT collaboration server can be run via Docker. It requires a `WSS_PORT` env var (defaults to `8080` if you set it, but `docker compose` needs it explicit) — create a `.env` file at the repo root with `WSS_PORT=8080`, then:
+```bash
+docker compose up
+```
 
 ## Project structure
 
