@@ -81,21 +81,49 @@ describe('ClipboardPlugin', () => {
     }
 
     // Stubs the DOM globals the plugin reads at runtime (test env has no jsdom).
-    function mockDOMSelection(plainText: string, html: string): () => void {
+    // `rangeContents[i]` is what `getRangeAt(i).cloneContents()` yields for range `i`; the mocked
+    // template accumulates whatever gets appended, so the resulting HTML actually reflects how many
+    // times (and in what order) the plugin's loop calls `getRangeAt`/`appendChild` — unlike a fixed
+    // `innerHTML` stub, this fails if the loop skips, double-runs, or misindexes ranges.
+    // Requesting an out-of-bounds index throws, mirroring the real `Selection.getRangeAt` contract.
+    // `createElement` is itself a spy so tests can assert whether a template was built at all —
+    // useful for the `rangeCount === 0` guard, whose "skip the loop" effect alone can't be observed
+    // from the output (an empty loop already produces the same empty HTML as never running one).
+    function mockDOMSelection(plainText: string, rangeContents: string[]): { restore: () => void;
+      createElement: jest.Mock; } {
+      const appended: string[] = [];
       const selection = {
-        rangeCount: 1,
+        rangeCount: rangeContents.length,
         toString: () => plainText,
-        getRangeAt: () => ({ cloneContents: () => ({}) }),
-      } as unknown as Selection;
-      const template = { content: { appendChild: (): void => undefined },
-        innerHTML: html } as unknown as HTMLTemplateElement;
+        getRangeAt: (i: number) => {
+          if (i < 0 || i >= rangeContents.length) {
+            throw new RangeError(`getRangeAt(${i}) is out of range`);
+          }
 
-      globalThis.document = { createElement: () => template } as unknown as Document;
+          return { cloneContents: () => rangeContents[i] };
+        },
+      } as unknown as Selection;
+      const template = {
+        content: {
+          appendChild: (content: unknown): void => {
+            appended.push(content as string);
+          },
+        },
+        get innerHTML(): string {
+          return appended.join('');
+        },
+      } as unknown as HTMLTemplateElement;
+      const createElement = jest.fn(() => template);
+
+      globalThis.document = { createElement } as unknown as Document;
       globalThis.window = { getSelection: () => selection } as unknown as Window & typeof globalThis;
 
-      return (): void => {
-        delete (globalThis as { document?: Document }).document;
-        delete (globalThis as { window?: Window }).window;
+      return {
+        createElement,
+        restore: (): void => {
+          delete (globalThis as { document?: Document }).document;
+          delete (globalThis as { window?: Window }).window;
+        },
       };
     }
 
@@ -112,7 +140,7 @@ describe('ClipboardPlugin', () => {
     });
 
     describe('when blocks are selected', () => {
-      let restoreDOMMocks: () => void;
+      let domMocks: ReturnType<typeof mockDOMSelection>;
 
       beforeEach(() => {
         setSelectedBlocks([
@@ -121,10 +149,10 @@ describe('ClipboardPlugin', () => {
           { id: 'b2',
             type: 'header' },
         ]);
-        restoreDOMMocks = mockDOMSelection('hello', '<p>hello</p>');
+        domMocks = mockDOMSelection('hello', ['<p>hello</p>']);
       });
 
-      afterEach(() => restoreDOMMocks());
+      afterEach(() => domMocks.restore());
 
       it('should add current selection as text to native event', () => {
         new ClipboardPlugin(pluginParamsMock);
@@ -140,6 +168,36 @@ describe('ClipboardPlugin', () => {
         const { setData } = dispatchCopyEvent();
 
         expect(setData).toHaveBeenCalledWith('text/html', '<p>hello</p>');
+      });
+
+      it('should add empty html when the selection has no ranges', () => {
+        domMocks = mockDOMSelection('', []);
+
+        new ClipboardPlugin(pluginParamsMock);
+
+        const { setData } = dispatchCopyEvent();
+
+        expect(setData).toHaveBeenCalledWith('text/html', '');
+      });
+
+      it('should not build a template when the selection has no ranges', () => {
+        domMocks = mockDOMSelection('', []);
+
+        new ClipboardPlugin(pluginParamsMock);
+
+        dispatchCopyEvent();
+
+        expect(domMocks.createElement).not.toHaveBeenCalled();
+      });
+
+      it('should include content from every range when the selection spans multiple ranges', () => {
+        domMocks = mockDOMSelection('hello world', ['<p>hello</p>', '<p>world</p>']);
+
+        new ClipboardPlugin(pluginParamsMock);
+
+        const { setData } = dispatchCopyEvent();
+
+        expect(setData).toHaveBeenCalledWith('text/html', '<p>hello</p><p>world</p>');
       });
 
       it('should add custom editorjs data-type to native event', () => {
