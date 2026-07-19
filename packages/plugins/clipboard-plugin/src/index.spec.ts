@@ -1,6 +1,6 @@
 /* eslint-disable jsdoc/require-jsdoc, @typescript-eslint/naming-convention */
 import { jest } from '@jest/globals';
-import type { CoreConfigValidated, EditorjsPluginParams } from '@editorjs/sdk';
+import type { CoreConfigValidated, EditorAPI, EditorjsPluginParams } from '@editorjs/sdk';
 
 type Listener = (e: Event) => void;
 
@@ -20,17 +20,14 @@ jest.unstable_mockModule('@editorjs/sdk', () => {
   };
 });
 
-jest.unstable_mockModule('../api', () => ({
-  EditorAPI: jest.fn().mockImplementation(() => ({
-    selection: { selectedBlocks: [] as unknown[] },
-  })),
-}));
-
 const { EventBus, CopyUIEventName } = await import('@editorjs/sdk');
-const { EditorAPI } = await import('../api');
-const { ClipboardPlugin } = await import('./ClipboardPlugin.js');
+const { ClipboardPlugin } = await import('./index.js');
 
 type FireableEventBus = InstanceType<typeof EventBus> & { __fire: (event: string, evt: Event) => void };
+
+function createEditorAPIStub(): EditorAPI {
+  return { selection: { selectedBlocks: [] as unknown[] } } as unknown as EditorAPI;
+}
 
 describe('ClipboardPlugin', () => {
   let pluginParamsMock: EditorjsPluginParams;
@@ -38,7 +35,7 @@ describe('ClipboardPlugin', () => {
   beforeEach(() => {
     pluginParamsMock = {
       eventBus: new EventBus(),
-      api: new EditorAPI(),
+      api: createEditorAPIStub(),
       config: {} as CoreConfigValidated,
     };
   });
