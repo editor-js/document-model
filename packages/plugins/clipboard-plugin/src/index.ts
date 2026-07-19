@@ -44,15 +44,24 @@ export class ClipboardPlugin implements EditorjsPlugin {
         return;
       }
 
+      const { clipboardData } = nativeEvent;
+
+      /**
+       * Fall back to native copy behavior if the browser doesn't provide clipboard access
+       */
+      if (!clipboardData) {
+        return;
+      }
+
       const selectionAsPlainText = currentDOMSelection.toString();
       const selectionAsHTML = this.#parseDOMSelectionToHTML(currentDOMSelection);
       const clipboardEditorJSObject = this.#createClipboardObject(selectedBlocks);
 
       nativeEvent.preventDefault();
 
-      nativeEvent.clipboardData?.setData('text/plain', selectionAsPlainText);
-      nativeEvent.clipboardData?.setData('text/html', selectionAsHTML);
-      nativeEvent.clipboardData?.setData('application/x-editor-js', JSON.stringify(clipboardEditorJSObject));
+      clipboardData.setData('text/plain', selectionAsPlainText);
+      clipboardData.setData('text/html', selectionAsHTML);
+      clipboardData.setData('application/x-editor-js', JSON.stringify(clipboardEditorJSObject));
     };
 
     eventBus.addEventListener(`ui:${CopyUIEventName}`, this.#copyEventListener);

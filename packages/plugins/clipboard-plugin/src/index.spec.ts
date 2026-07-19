@@ -160,6 +160,19 @@ describe('ClipboardPlugin', () => {
           })
         );
       });
+
+      it('should not prevent native event when clipboardData is unavailable', () => {
+        new ClipboardPlugin(pluginParamsMock);
+
+        const eventBus = pluginParamsMock.eventBus as unknown as FireableEventBus;
+        const preventDefault = jest.fn();
+        const nativeEvent = { preventDefault,
+          clipboardData: undefined } as unknown as ClipboardEvent;
+
+        eventBus.__fire(`ui:${CopyUIEventName}`, { detail: { nativeEvent } } as unknown as Event);
+
+        expect(preventDefault).not.toHaveBeenCalled();
+      });
     });
   });
 });
