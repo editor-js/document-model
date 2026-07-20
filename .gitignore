@@ -29,5 +29,5 @@ jest-report.json
 
 # ENV
 **/.env
-/.claude/
 /--help/
+.claude/settings.local.json
