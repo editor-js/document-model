@@ -32,4 +32,15 @@ export default [
       }],
     },
   },
+  {
+    files: ['**/*.spec.ts'],
+    rules: {
+      /**
+       * For test files allow dev dependencies imports
+       */
+      'n/no-unpublished-import': ['error', {
+        allowModules: ['@jest/globals'],
+      }],
+    },
+  },
 ];

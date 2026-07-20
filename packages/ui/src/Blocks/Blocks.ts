@@ -43,6 +43,11 @@ export class BlocksUI implements EditorjsPlugin {
   #eventBus: EventBus;
 
   /**
+   * Aborts DOM event listeners added to the blocks holder when the plugin is destroyed
+   */
+  #abortController = new AbortController();
+
+  /**
    * Editor's API
    */
   #api: EditorAPI;
@@ -114,7 +119,7 @@ export class BlocksUI implements EditorjsPlugin {
         targetRanges: e.getTargetRanges(),
         isCrossInputSelection,
       }));
-    });
+    }, { signal: this.#abortController.signal });
 
     blocksHolder.addEventListener('keydown', (e) => {
       if (e.code !== 'KeyZ') {
@@ -136,7 +141,7 @@ export class BlocksUI implements EditorjsPlugin {
       this.#api.document.undo();
 
       e.preventDefault();
-    });
+    }, { signal: this.#abortController.signal });
 
     return blocksHolder;
   }
@@ -221,7 +226,11 @@ export class BlocksUI implements EditorjsPlugin {
    * Cleanup when plugin is destroyed
    */
   public destroy(): void {
+    this.#abortController.abort();
+
     this.#blocks.forEach(block => block.remove());
     this.#blocks = [];
+
+    this.#blocksHolder.remove();
   }
 }

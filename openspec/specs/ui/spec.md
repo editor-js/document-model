@@ -4,7 +4,7 @@
 
 `@editorjs/ui` is the default rendering shell for Editor.js: a set of `EditorjsPlugin` implementations that subscribe to the core `EventBus` to render DOM and dispatch their own `ui:*` events so the pieces can wire themselves together. It owns no document state — it renders what `core` (`BlockManager`/`SelectionManager`, etc.) reports, and forwards user interaction back through `EditorAPI`.
 
-**Note**: this package has no automated test suite (`.spec.ts`/`.test.ts` files); the scenarios below are derived directly from the event-wiring logic in source rather than confirmed by tests.
+**Note**: `EditorjsUI` and `BlocksUI` are covered by co-located `.spec.ts` files; the remaining scenarios below are derived directly from the event-wiring logic in source rather than confirmed by tests.
 
 ## Requirements
 
@@ -16,10 +16,15 @@ The system SHALL provide `EditorjsUI` as the top-level shell that creates the ed
 - **WHEN** `ui:toolbar:rendered`, `ui:inline-toolbar:rendered`, and `ui:blocks:rendered` events are received
 - **THEN** the corresponding rendered elements are appended to the wrapper in the order the events arrive
 
-Implemented in `src/index.ts`.
+#### Scenario: Tearing down the shell on destroy
+- **GIVEN** `EditorjsUI` has appended the editor wrapper to the holder element
+- **WHEN** `destroy()` is called
+- **THEN** the editor wrapper is removed from the holder
+
+Implemented in `src/index.ts`, validated by its co-located `.spec.ts`.
 
 ### Requirement: Blocks holder rendering and input capture
-The system SHALL provide `BlocksUI`, which renders the contenteditable blocks holder, adds/removes block wrappers on `core:BlockAdded`/`core:BlockRemoved`, captures native `beforeinput` and remaps it into a normalized `BeforeInputUIEvent`, handles undo/redo keyboard shortcuts, and dispatches block-hover selection events.
+The system SHALL provide `BlocksUI`, which renders the contenteditable blocks holder, adds/removes block wrappers on `core:BlockAdded`/`core:BlockRemoved`, captures native `beforeinput` and remaps it into a normalized `BeforeInputUIEvent`, handles undo/redo keyboard shortcuts, dispatches block-hover selection events, and releases its blocks holder DOM listeners and the holder element itself on `destroy()`.
 
 #### Scenario: Inserting a block wrapper at an index
 - **GIVEN** a `BlockAddedCoreEvent` with a valid index
@@ -46,7 +51,12 @@ The system SHALL provide `BlocksUI`, which renders the contenteditable blocks ho
 - **WHEN** Cmd/Ctrl+Z is pressed
 - **THEN** `api.document.undo()` is called with the default action prevented; if Shift is also held, `api.document.redo()` is called instead
 
-Implemented in `src/Blocks/Blocks.ts`, `src/Blocks/events/*`.
+#### Scenario: Releasing listeners and the holder on destroy
+- **GIVEN** a `BlocksUI` instance with rendered blocks
+- **WHEN** `destroy()` is called
+- **THEN** the `beforeinput` and `keydown` listeners are removed from the blocks holder, rendered block elements are cleared, and the holder itself is detached from the DOM, so no further UI events are dispatched from this instance
+
+Implemented in `src/Blocks/Blocks.ts`, `src/Blocks/events/*`, validated by the co-located `Blocks.spec.ts`.
 
 ### Requirement: Floating toolbar
 The system SHALL provide `ToolbarUI`, which renders a floating toolbar with a plus-button and actions area, repositions itself to the selected block's offset on `ui:blocks:block-selected` (unless the Toolbox is open), and opens the Toolbox on plus-button click.
