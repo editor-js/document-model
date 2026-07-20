@@ -17,14 +17,14 @@ runs:
         ref: ${{ github.event.pull_request.base.ref }}
         fetch-depth: 0
 
-    - name: Check package exists on base ref
+    - name: Check package tests exist on base ref
       id: check
       shell: bash
       run: |
-        if [ -f "${{ inputs.working-directory }}/package.json" ]; then
+        if [ -f "${{ inputs.working-directory }}/package.json" ] && jq -e '.scripts["test:coverage"]' "${{ inputs.working-directory }}/package.json" > /dev/null; then
           echo "exists=true" >> "$GITHUB_OUTPUT"
         else
-          echo "Package not present on base ref (new package), skipping base coverage"
+          echo "Package not present on base ref or has no test:coverage script (new test suite), skipping base coverage"
           echo "exists=false" >> "$GITHUB_OUTPUT"
         fi
 
