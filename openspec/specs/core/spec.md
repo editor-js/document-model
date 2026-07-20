@@ -12,7 +12,7 @@ The system SHALL provide a `Core` class owning two IoC containers (one for singl
 #### Scenario: Initialization order
 - **GIVEN** tools, plugins, and an adapter have been registered via `use()`
 - **WHEN** `initialize()` is called
-- **THEN** `SelectionManager`, `BlocksManager`, `BlockRenderer`, and `UndoRedoManager` are resolved from the IoC container, plugins are initialized, tools are initialized, the model's document is initialized, and finally a `CoreEventType.Ready` event is dispatched
+- **THEN** `SelectionManager`, `BlocksManager`, and `BlockRenderer` are resolved from the IoC container, plugins are initialized, tools are initialized, `UndoRedoManager` is resolved (after plugins/tools so it observes `defaultPrevented` set by them on undo/redo events), the model's document is initialized, and finally a `CoreEventType.Ready` event is dispatched
 
 #### Scenario: Exactly one adapter is required
 - **GIVEN** one or more `PluginType.Adapter` plugins are registered via `use()`
