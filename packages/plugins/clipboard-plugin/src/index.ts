@@ -3,6 +3,36 @@ import { CopyUIEventName } from '@editorjs/sdk';
 import { PluginType } from '@editorjs/sdk';
 
 /**
+ * Custom EditorJS data-type object for clipboard events
+ */
+interface ClipboardEditorJSObject {
+  /**
+   * Array of copied blocks data
+   */
+  blocks: BlockData[];
+
+  /**
+   * Metadata from EditorJS
+   */
+  meta: Meta;
+}
+
+/**
+ * Metadata from EditorJS
+ */
+interface Meta {
+  /**
+   * Version of EditorJS Core
+   */
+  version: string;
+}
+
+/**
+ * Custom MIME type used to store EditorJS clipboard data alongside plain text and HTML
+ */
+const EDITOR_JS_CLIPBOARD_MIME_TYPE = 'application/x-editor-js';
+
+/**
  * Clipboard plugin handles copy events and provides rich clipboard data for selected blocks.
  * When a user copies content, this plugin intercepts the event and adds EditorJS-specific data
  * including the selected blocks metadata alongside plain text and HTML content.
@@ -61,7 +91,7 @@ export class ClipboardPlugin implements EditorjsPlugin {
 
       clipboardData.setData('text/plain', selectionAsPlainText);
       clipboardData.setData('text/html', selectionAsHTML);
-      clipboardData.setData('application/x-editor-js', JSON.stringify(clipboardEditorJSObject));
+      clipboardData.setData(EDITOR_JS_CLIPBOARD_MIME_TYPE, JSON.stringify(clipboardEditorJSObject));
     };
 
     eventBus.addEventListener(`ui:${CopyUIEventName}`, this.#copyEventListener);
@@ -121,29 +151,4 @@ export class ClipboardPlugin implements EditorjsPlugin {
       },
     };
   }
-}
-
-/**
- * Custom EditorJS data-type object for clipboard events
- */
-interface ClipboardEditorJSObject {
-  /**
-   * Array of copied blocks data
-   */
-  blocks: BlockData[];
-
-  /**
-   * Metadata from EditorJS
-   */
-  meta: Meta;
-}
-
-/**
- * Metadata from EditorJS
- */
-interface Meta {
-  /**
-   * Version of EditorJS Core
-   */
-  version: string;
 }
