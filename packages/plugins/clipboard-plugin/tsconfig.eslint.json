@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "types": ["node", "jest"],
+    "types": ["node", "jest"]
   },
   "extends": "./tsconfig.json",
   "include": [
@@ -12,6 +12,6 @@
   ],
   "exclude": [
     "dist/**/*",
-    "node_modules/**/*",
+    "node_modules/**/*"
   ]
 }

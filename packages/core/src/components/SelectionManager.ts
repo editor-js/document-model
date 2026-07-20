@@ -238,19 +238,46 @@ export class SelectionManager {
     }
 
     if (currentSelectionIndex.isBlockIndex) {
-      const { blockIndex } = currentSelectionIndex;
+      const block = this.#resolveBlock(currentSelectionIndex.blockIndex);
 
-      return [this.#model.serialized.blocks[blockIndex!]];
+      return block !== undefined ? [block] : [];
     }
 
     if (currentSelectionIndex.compositeSegments !== undefined) {
-      return currentSelectionIndex.compositeSegments.map((segment) => {
+      const seenBlockIndexes = new Set<number>();
+      const blocks: BlockNodeSerialized[] = [];
+
+      for (const segment of currentSelectionIndex.compositeSegments) {
         const { blockIndex } = segment;
 
-        return this.#model.serialized.blocks[blockIndex!];
-      });
+        if (blockIndex === undefined || seenBlockIndexes.has(blockIndex)) {
+          continue;
+        }
+
+        seenBlockIndexes.add(blockIndex);
+
+        const block = this.#resolveBlock(blockIndex);
+
+        if (block !== undefined) {
+          blocks.push(block);
+        }
+      }
+
+      return blocks;
     }
 
     return [];
+  }
+
+  /**
+   * Resolves a block by index, guarding against missing or out-of-bounds indexes
+   * @param blockIndex - index of the block to resolve
+   */
+  #resolveBlock(blockIndex: number | undefined): BlockNodeSerialized | undefined {
+    if (blockIndex === undefined || blockIndex < 0 || blockIndex >= this.#model.serialized.blocks.length) {
+      return undefined;
+    }
+
+    return this.#model.serialized.blocks[blockIndex];
   }
 }
