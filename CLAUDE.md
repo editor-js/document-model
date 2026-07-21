@@ -35,7 +35,7 @@ Playground (manual end-to-end testing): `cd packages/playground && yarn dev`
 
 OT server (Docker): create `.env` at repo root with `WSS_PORT=8080`, then `docker compose up`.
 
-**ESM caveat:** `core` and `ot-server` run Jest under `node --experimental-vm-modules` (baked into their `test` script). If you invoke Jest manually in those packages, keep that flag.
+**ESM caveat:** `core` runs Jest under `node --experimental-vm-modules` (baked into its `test` script). `ot-server` uses ESM (`type: module`, `ts-jest` with `useESM: true`) but its `test` script invokes `jest` directly.
 
 ## Architecture
 
