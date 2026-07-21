@@ -1,0 +1,20 @@
+name: Clipboard plugin check
+on:
+  pull_request:
+  merge_group:
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  actions: read
+
+jobs:
+  package-check:
+    uses: ./.github/workflows/package-check.yml
+    with:
+      package-name: '@editorjs/clipboard-plugin'
+      working-directory: './packages/plugins/clipboard-plugin'
+      include-mutations: true
+    secrets:
+      stryker_dashboard_api_key: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
