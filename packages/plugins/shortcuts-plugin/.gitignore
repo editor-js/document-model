@@ -19,16 +19,6 @@ dist/*
 # tests
 coverage/
 reports/
-jest-report.json
 
 # stryker temp files
 .stryker-tmp
-*.tsbuildinfo
-
-.DS_Store
-
-# ENV
-**/.env
-/--help/
-.claude/settings.local.json
-.claude/worktrees/

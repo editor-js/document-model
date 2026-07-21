@@ -23,7 +23,7 @@ import { Paragraph } from '@editorjs/paragraph';
 import { BoldInlineTool } from '@editorjs/bold';
 import { ItalicInlineTool } from '@editorjs/italic';
 import { LinkInlineTool } from '@editorjs/inline-link';
-import { ShortcutsPlugin } from './plugins/ShortcutsPlugin.js';
+import { ShortcutsPlugin } from '@editorjs/shortcuts-plugin';
 import { DOMAdapters } from '@editorjs/dom-adapters';
 import { BlocksManager } from './components/BlockManager.js';
 import { BlockRenderer } from './components/BlockRenderer.js';
