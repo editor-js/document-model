@@ -56,45 +56,80 @@ if [ -z "$RESOLVED_BASE_REF" ]; then
   exit 0
 fi
 
-# Helper function to get all dependencies (direct and transitive)
-get_all_deps() {
+# Build an index of workspace packages: one "<package-name> <directory>" record per line.
+# Workspace locations are derived from the root package.json "workspaces" globs, so nested
+# roots (packages/tools/*, packages/plugins/*, and any future ones) are picked up automatically.
+build_workspace_index() {
+  local globs glob dir name
+
+  globs=$(sed -n '/"workspaces"/,/\]/p' package.json 2>/dev/null \
+    | grep -o '"[^"]*"' | tr -d '"' | grep -v '^workspaces$')
+
+  # Fallback to the historical layout if the root manifest can't be parsed
+  if [ -z "$globs" ]; then
+    debug "Warning: could not read workspaces from package.json, falling back to packages/*"
+    globs="packages/*"
+  fi
+
+  for glob in $globs; do
+    for dir in $glob; do
+      [ -f "$dir/package.json" ] || continue
+      name=$(sed -n 's/^[[:space:]]*"name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$dir/package.json" | head -1)
+      [ -n "$name" ] && echo "$name $dir"
+    done
+  done
+}
+
+WORKSPACES=$(build_workspace_index)
+
+# Resolve a workspace package name to its directory (empty if it is not a workspace package)
+dir_for_pkg() {
+  printf '%s\n' "$WORKSPACES" | awk -v n="$1" '$1 == n { print $2; exit }'
+}
+
+# Resolve a workspace directory to its package name (empty if it is not a workspace package)
+name_for_dir() {
+  printf '%s\n' "$WORKSPACES" | awk -v d="$1" '$2 == d { print $1; exit }'
+}
+
+# Collect all workspace dependencies (direct and transitive) into VISITED.
+# VISITED doubles as the loop guard, so cycles terminate the walk instead of being
+# bounded by an arbitrary recursion depth.
+VISITED=""
+
+collect_deps() {
   local pkg=$1
-  local visited=$2
-  local depth=${3:-0}
+  local dir deps dep
 
-  # Limit recursion depth to prevent infinite loops
-  if [ "$depth" -gt 10 ]; then
-    return
-  fi
+  case " $VISITED " in
+    *" $pkg "*) return ;;
+  esac
 
-  # Avoid infinite loops
-  if echo "$visited" | grep -q "^$pkg$"; then
-    return
-  fi
+  VISITED="$VISITED $pkg"
 
-  visited="$visited $pkg"
+  # Packages outside the workspaces (e.g. @editorjs/editorjs, @editorjs/helpers) have no local directory
+  dir=$(dir_for_pkg "$pkg")
+  [ -n "$dir" ] || return
 
-  # Get direct dependencies (if package.json exists)
-  if [ ! -f "packages/$pkg/package.json" ]; then
-    return
-  fi
+  # Every @editorjs/* mention in the manifest counts (dependencies, devDependencies, peerDependencies).
+  # The package's own "name" is matched too, but the loop guard above absorbs it.
+  deps=$(grep -o '"@editorjs/[^"]*"' "$dir/package.json" 2>/dev/null | tr -d '"' | sort -u || true)
 
-  local deps=$(grep -o '"@editorjs/[^"]*"' "packages/$pkg/package.json" 2>/dev/null | sed 's/"//g' | sed 's/@editorjs\///' || true)
-
-  echo "$deps"
-
-  # Recursively get dependencies of dependencies
   for dep in $deps; do
-    get_all_deps "$dep" "$visited" $((depth + 1))
+    collect_deps "$dep"
   done
 }
 
 # Check if this package changed
 # Normalize the package directory path for comparison (remove leading ./)
-NORMALIZED_PKG_DIR=$(echo "$PKG_DIR" | sed 's|^\.\/||')
+NORMALIZED_PKG_DIR=$(echo "$PKG_DIR" | sed 's|^\.\/||' | sed 's|/$||')
 
-# Get the package name for dependency checking
-PKG_NAME=$(basename "$PKG_DIR")
+# Get the package name for dependency checking (directory name is only a fallback)
+PKG_NAME=$(name_for_dir "$NORMALIZED_PKG_DIR")
+if [ -z "$PKG_NAME" ]; then
+  PKG_NAME=$(basename "$NORMALIZED_PKG_DIR")
+  debug "Warning: $NORMALIZED_PKG_DIR is not a known workspace, falling back to name '$PKG_NAME'"
+fi
 
 debug "Checking package: $PKG_NAME (dir: $PKG_DIR)"
 debug "Base ref: $RESOLVED_BASE_REF"
@@ -108,8 +143,9 @@ fi
 
 debug "Package $PKG_NAME has not changed, checking dependencies..."
 
-# Get ALL dependencies (direct and transitive)
-ALL_DEPS=$(get_all_deps "$PKG_NAME" "" 0 | sort -u)
+# Get ALL dependencies (direct and transitive), excluding the package itself
+collect_deps "$PKG_NAME"
+ALL_DEPS=$(printf '%s\n' $VISITED | grep -v "^$PKG_NAME$" | sort -u)
 
 if [ -n "$ALL_DEPS" ]; then
   debug "Dependencies: $(echo $ALL_DEPS | tr '\n' ' ')"
@@ -119,12 +155,9 @@ fi
 
 # Check if any dependency (direct or indirect) changed
 for dep in $ALL_DEPS; do
-  # Map package name to directory - try exact match and underscore variant
-  DEP_DIR=$(find packages -maxdepth 1 -type d \( -name "$dep" -o -name "$(echo $dep | sed 's/-/_/g')" \) 2>/dev/null | head -1)
+  DEP_DIR=$(dir_for_pkg "$dep")
   if [ -n "$DEP_DIR" ]; then
-    # Normalize for git diff output (remove leading ./)
-    NORMALIZED_DEP_DIR=$(echo "$DEP_DIR" | sed 's|^\.\/||')
-    if git diff --name-only "$RESOLVED_BASE_REF...HEAD" -- "$DEP_DIR" 2>/dev/null | grep -q "^$NORMALIZED_DEP_DIR/"; then
+    if git diff --name-only "$RESOLVED_BASE_REF...HEAD" -- "$DEP_DIR" 2>/dev/null | grep -q "^$DEP_DIR/"; then
       debug "✓ Dependency $dep (in $DEP_DIR) has changed"
       exit 0
     fi
