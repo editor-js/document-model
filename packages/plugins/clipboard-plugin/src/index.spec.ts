@@ -219,6 +219,29 @@ describe('ClipboardPlugin', () => {
         );
       });
 
+      it('should use core version from api when available', () => {
+        const api = pluginParamsMock.api as unknown as { version: string };
+
+        api.version = '3.2.1';
+
+        new ClipboardPlugin(pluginParamsMock);
+
+        const { setData } = dispatchCopyEvent();
+
+        expect(setData).toHaveBeenCalledWith(
+          'application/x-editor-js',
+          JSON.stringify({
+            blocks: [
+              { id: 'b1',
+                type: 'paragraph' },
+              { id: 'b2',
+                type: 'header' },
+            ],
+            meta: { version: '3.2.1' },
+          })
+        );
+      });
+
       it('should not prevent native event when clipboardData is unavailable', () => {
         new ClipboardPlugin(pluginParamsMock);
 
