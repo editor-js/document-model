@@ -200,6 +200,15 @@ describe('ClipboardPlugin', () => {
         expect(setData).toHaveBeenCalledWith('text/html', '<p>hello</p><p>world</p>');
       });
 
+      it('should preserve newlines when copying a selection that spans multiple blocks', () => {
+        domMocks = mockDOMSelection('hello\nworld', ['<p>hello</p>', '<p>world</p>']);
+
+        new ClipboardPlugin(pluginParamsMock);
+
+        const { setData } = dispatchCopyEvent();
+        expect(setData).toHaveBeenCalledWith('text/plain', 'hello\nworld');
+      });
+
       it('should add custom editorjs data-type to native event', () => {
         new ClipboardPlugin(pluginParamsMock);
 
@@ -241,7 +250,6 @@ describe('ClipboardPlugin', () => {
           })
         );
       });
-
       it('should not prevent native event when clipboardData is unavailable', () => {
         new ClipboardPlugin(pluginParamsMock);
 
