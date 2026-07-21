@@ -118,7 +118,7 @@ collect_deps() {
 }
 
 # Check if this package changed
-# Normalize the package directory path for comparison (remove leading ./)
+# Normalize the package directory path so it can be matched against yarn's locations
 NORMALIZED_PKG_DIR=$(echo "$PKG_DIR" | sed 's|^\.\/||' | sed 's|/$||')
 
 # Get the package name for dependency checking (directory name is only a fallback)
@@ -131,9 +131,10 @@ fi
 debug "Checking package: $PKG_NAME (dir: $PKG_DIR)"
 debug "Base ref: $RESOLVED_BASE_REF"
 
-GIT_DIFF_OUTPUT=$(git diff --name-only "$RESOLVED_BASE_REF...HEAD" -- "$PKG_DIR" 2>/dev/null)
-
-if echo "$GIT_DIFF_OUTPUT" | grep -q "^$NORMALIZED_PKG_DIR/"; then
+# `git diff -- <dir>` already restricts its output to that directory, and the pathspec is
+# path-component aware (`-- packages/model` does not match packages/model-types/), so a
+# non-empty result is the answer - no second pass over the paths is needed.
+if [ -n "$(git diff --name-only "$RESOLVED_BASE_REF...HEAD" -- "$PKG_DIR" 2>/dev/null)" ]; then
   debug "✓ Package $PKG_NAME has changed"
   exit 0
 fi
@@ -154,7 +155,7 @@ fi
 for dep in $ALL_DEPS; do
   DEP_DIR=$(dir_for_pkg "$dep")
   if [ -n "$DEP_DIR" ]; then
-    if git diff --name-only "$RESOLVED_BASE_REF...HEAD" -- "$DEP_DIR" 2>/dev/null | grep -q "^$DEP_DIR/"; then
+    if [ -n "$(git diff --name-only "$RESOLVED_BASE_REF...HEAD" -- "$DEP_DIR" 2>/dev/null)" ]; then
       debug "✓ Dependency $dep (in $DEP_DIR) has changed"
       exit 0
     fi
