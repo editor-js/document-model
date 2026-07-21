@@ -57,30 +57,27 @@ if [ -z "$RESOLVED_BASE_REF" ]; then
 fi
 
 # Build an index of workspace packages: one "<package-name> <directory>" record per line.
-# Workspace locations are derived from the root package.json "workspaces" globs, so nested
-# roots (packages/tools/*, packages/plugins/*, and any future ones) are picked up automatically.
+# Locations come from yarn itself, so any workspace layout (nested roots like packages/tools/*
+# and packages/plugins/*, or anything added later) is picked up without teaching this script
+# about it. The root workspace (location ".") is dropped: it is not a package that can change.
+# Both field orders are accepted so a change in yarn's output ordering cannot silently break this.
 build_workspace_index() {
-  local globs glob dir name
-
-  globs=$(sed -n '/"workspaces"/,/\]/p' package.json 2>/dev/null \
-    | grep -o '"[^"]*"' | tr -d '"' | grep -v '^workspaces$')
-
-  # Fallback to the historical layout if the root manifest can't be parsed
-  if [ -z "$globs" ]; then
-    debug "Warning: could not read workspaces from package.json, falling back to packages/*"
-    globs="packages/*"
-  fi
-
-  for glob in $globs; do
-    for dir in $glob; do
-      [ -f "$dir/package.json" ] || continue
-      name=$(sed -n 's/^[[:space:]]*"name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$dir/package.json" | head -1)
-      [ -n "$name" ] && echo "$name $dir"
-    done
-  done
+  yarn workspaces list --json 2>/dev/null \
+    | sed -n -e 's/.*"location":"\([^"]*\)","name":"\([^"]*\)".*/\2 \1/p' \
+             -e 's/.*"name":"\([^"]*\)","location":"\([^"]*\)".*/\1 \2/p' \
+    | grep -v ' \.$'
 }
 
 WORKSPACES=$(build_workspace_index)
+
+# Fail open: if the workspace list is unavailable (no yarn, no node, unexpected output),
+# run CI instead of silently skipping it - a false negative here means a package is never
+# validated on the PR, which is far worse than an unnecessary run.
+if [ -z "$WORKSPACES" ]; then
+  debug "Warning: could not list workspaces via yarn"
+  debug "Assuming all changes are relevant (safe for CI)"
+  exit 0
+fi
 
 # Resolve a workspace package name to its directory (empty if it is not a workspace package)
 dir_for_pkg() {
