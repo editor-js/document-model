@@ -6,7 +6,8 @@
   "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
-    "build": "yarn clear && tsc --build tsconfig.build.json",
+    "build": "yarn build:dependencies && yarn clear && tsc --build tsconfig.build.json",
+    "build:dependencies": "yarn workspaces foreach -Rpt --from $npm_package_name --exclude $npm_package_name run build",
     "build:declaration": "yarn build --emitDeclarationOnly",
     "lint": "eslint ./src",
     "lint:ci": "yarn lint --max-warnings 0",
