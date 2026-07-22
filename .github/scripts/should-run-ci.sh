@@ -56,60 +56,94 @@ if [ -z "$RESOLVED_BASE_REF" ]; then
   exit 0
 fi
 
-# Helper function to get all dependencies (direct and transitive)
-get_all_deps() {
+# Build an index of workspace packages: one "<package-name> <directory>" record per line.
+# Locations come from yarn itself, so any workspace layout (nested roots like packages/tools/*
+# and packages/plugins/*, or anything added later) is picked up without teaching this script
+# about it. The root workspace (location ".") is dropped: it is not a package that can change.
+# Both field orders are accepted so a change in yarn's output ordering cannot silently break this.
+build_workspace_index() {
+  yarn workspaces list --json 2>/dev/null \
+    | sed -n -e 's/.*"location":"\([^"]*\)","name":"\([^"]*\)".*/\2 \1/p' \
+             -e 's/.*"name":"\([^"]*\)","location":"\([^"]*\)".*/\1 \2/p' \
+    | grep -v ' \.$'
+}
+
+WORKSPACES=$(build_workspace_index)
+
+# Fail open: if the workspace list is unavailable (no yarn, no node, unexpected output),
+# run CI instead of silently skipping it - a false negative here means a package is never
+# validated on the PR, which is far worse than an unnecessary run.
+if [ -z "$WORKSPACES" ]; then
+  debug "Warning: could not list workspaces via yarn"
+  debug "Assuming all changes are relevant (safe for CI)"
+  exit 0
+fi
+
+# Resolve a workspace package name to its directory (empty if it is not a workspace package)
+dir_for_pkg() {
+  printf '%s\n' "$WORKSPACES" | awk -v n="$1" '$1 == n { print $2; exit }'
+}
+
+# Resolve a workspace directory to its package name (empty if it is not a workspace package)
+name_for_dir() {
+  printf '%s\n' "$WORKSPACES" | awk -v d="$1" '$2 == d { print $1; exit }'
+}
+
+# Collect all workspace dependencies (direct and transitive) into VISITED.
+# VISITED doubles as the loop guard, so cycles terminate the walk instead of being
+# bounded by an arbitrary recursion depth.
+VISITED=""
+
+collect_deps() {
   local pkg=$1
-  local visited=$2
-  local depth=${3:-0}
+  local dir deps dep
 
-  # Limit recursion depth to prevent infinite loops
-  if [ "$depth" -gt 10 ]; then
-    return
-  fi
+  case " $VISITED " in
+    *" $pkg "*) return ;;
+  esac
 
-  # Avoid infinite loops
-  if echo "$visited" | grep -q "^$pkg$"; then
-    return
-  fi
+  VISITED="$VISITED $pkg"
 
-  visited="$visited $pkg"
+  # Packages outside the workspaces (e.g. @editorjs/editorjs, @editorjs/helpers) have no local directory
+  dir=$(dir_for_pkg "$pkg")
+  [ -n "$dir" ] || return
 
-  # Get direct dependencies (if package.json exists)
-  if [ ! -f "packages/$pkg/package.json" ]; then
-    return
-  fi
+  # Every @editorjs/* mention in the manifest counts (dependencies, devDependencies, peerDependencies).
+  # The package's own "name" is matched too, but the loop guard above absorbs it.
+  deps=$(grep -o '"@editorjs/[^"]*"' "$dir/package.json" 2>/dev/null | tr -d '"' | sort -u || true)
 
-  local deps=$(grep -o '"@editorjs/[^"]*"' "packages/$pkg/package.json" 2>/dev/null | sed 's/"//g' | sed 's/@editorjs\///' || true)
-
-  echo "$deps"
-
-  # Recursively get dependencies of dependencies
   for dep in $deps; do
-    get_all_deps "$dep" "$visited" $((depth + 1))
+    collect_deps "$dep"
   done
 }
 
 # Check if this package changed
-# Normalize the package directory path for comparison (remove leading ./)
-NORMALIZED_PKG_DIR=$(echo "$PKG_DIR" | sed 's|^\.\/||')
+# Normalize the package directory path so it can be matched against yarn's locations
+NORMALIZED_PKG_DIR=$(echo "$PKG_DIR" | sed 's|^\.\/||' | sed 's|/$||')
 
-# Get the package name for dependency checking
-PKG_NAME=$(basename "$PKG_DIR")
+# Get the package name for dependency checking (directory name is only a fallback)
+PKG_NAME=$(name_for_dir "$NORMALIZED_PKG_DIR")
+if [ -z "$PKG_NAME" ]; then
+  PKG_NAME=$(basename "$NORMALIZED_PKG_DIR")
+  debug "Warning: $NORMALIZED_PKG_DIR is not a known workspace, falling back to name '$PKG_NAME'"
+fi
 
 debug "Checking package: $PKG_NAME (dir: $PKG_DIR)"
 debug "Base ref: $RESOLVED_BASE_REF"
 
-GIT_DIFF_OUTPUT=$(git diff --name-only "$RESOLVED_BASE_REF...HEAD" -- "$PKG_DIR" 2>/dev/null)
-
-if echo "$GIT_DIFF_OUTPUT" | grep -q "^$NORMALIZED_PKG_DIR/"; then
+# `git diff -- <dir>` already restricts its output to that directory, and the pathspec is
+# path-component aware (`-- packages/model` does not match packages/model-types/), so a
+# non-empty result is the answer - no second pass over the paths is needed.
+if [ -n "$(git diff --name-only "$RESOLVED_BASE_REF...HEAD" -- "$PKG_DIR" 2>/dev/null)" ]; then
   debug "✓ Package $PKG_NAME has changed"
   exit 0
 fi
 
 debug "Package $PKG_NAME has not changed, checking dependencies..."
 
-# Get ALL dependencies (direct and transitive)
-ALL_DEPS=$(get_all_deps "$PKG_NAME" "" 0 | sort -u)
+# Get ALL dependencies (direct and transitive), excluding the package itself
+collect_deps "$PKG_NAME"
+ALL_DEPS=$(printf '%s\n' $VISITED | grep -v "^$PKG_NAME$" | sort -u)
 
 if [ -n "$ALL_DEPS" ]; then
   debug "Dependencies: $(echo $ALL_DEPS | tr '\n' ' ')"
@@ -119,12 +153,9 @@ fi
 
 # Check if any dependency (direct or indirect) changed
 for dep in $ALL_DEPS; do
-  # Map package name to directory - try exact match and underscore variant
-  DEP_DIR=$(find packages -maxdepth 1 -type d \( -name "$dep" -o -name "$(echo $dep | sed 's/-/_/g')" \) 2>/dev/null | head -1)
+  DEP_DIR=$(dir_for_pkg "$dep")
   if [ -n "$DEP_DIR" ]; then
-    # Normalize for git diff output (remove leading ./)
-    NORMALIZED_DEP_DIR=$(echo "$DEP_DIR" | sed 's|^\.\/||')
-    if git diff --name-only "$RESOLVED_BASE_REF...HEAD" -- "$DEP_DIR" 2>/dev/null | grep -q "^$NORMALIZED_DEP_DIR/"; then
+    if [ -n "$(git diff --name-only "$RESOLVED_BASE_REF...HEAD" -- "$DEP_DIR" 2>/dev/null)" ]; then
       debug "✓ Dependency $dep (in $DEP_DIR) has changed"
       exit 0
     fi
