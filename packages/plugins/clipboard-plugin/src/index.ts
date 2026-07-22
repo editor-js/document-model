@@ -28,6 +28,16 @@ interface Meta {
 }
 
 /**
+ * Source that can provide EditorJS core version.
+ */
+interface CoreVersionSource {
+  /**
+   * EditorJS core version.
+   */
+  version?: string;
+}
+
+/**
  * Custom MIME type used to store EditorJS clipboard data alongside plain text and HTML
  */
 const EDITOR_JS_CLIPBOARD_MIME_TYPE = 'application/x-editor-js';
@@ -40,8 +50,11 @@ const EDITOR_JS_CLIPBOARD_MIME_TYPE = 'application/x-editor-js';
 export class ClipboardPlugin implements EditorjsPlugin {
   public static readonly type = PluginType.Plugin;
 
+  static readonly #fallbackCoreVersion = '3.0.0';
+
   readonly #api: EditorAPI;
   readonly #eventBus: EventBus;
+  readonly #coreVersion: string;
   #copyEventListener: ((e: CopyUIEvent) => void) | undefined;
 
   /**
@@ -55,6 +68,7 @@ export class ClipboardPlugin implements EditorjsPlugin {
 
     this.#api = api;
     this.#eventBus = eventBus;
+    this.#coreVersion = this.#getCoreVersion(params);
 
     this.#copyEventListener = (e: CopyUIEvent) => {
       const { nativeEvent } = e.detail;
@@ -146,9 +160,29 @@ export class ClipboardPlugin implements EditorjsPlugin {
     return {
       blocks,
       meta: {
-        // @todo get version info from Core
-        version: '3.0.0',
+        version: this.#coreVersion,
       },
     };
+  }
+
+  /**
+   * Resolves EditorJS core version from runtime API/config when available.
+   * @param params - plugin initialization params
+   * @returns resolved core version
+   */
+  #getCoreVersion(params: EditorjsPluginParams): string {
+    const apiVersion = (params.api as CoreVersionSource).version;
+
+    if (apiVersion !== undefined && apiVersion.trim() !== '') {
+      return apiVersion;
+    }
+
+    const configVersion = (params.config as CoreVersionSource).version;
+
+    if (configVersion !== undefined && configVersion.trim() !== '') {
+      return configVersion;
+    }
+
+    return ClipboardPlugin.#fallbackCoreVersion;
   }
 }
