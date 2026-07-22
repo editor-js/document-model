@@ -1,15 +1,14 @@
-import type {
+import type { EventBus,
   BlockAddedCoreEvent,
-  BlockRemovedCoreEvent, EditorAPI,
+  BlockRemovedCoreEvent, CopyUIEventPayload,
   EditorjsPlugin,
-  EditorjsPluginParams
-} from '@editorjs/sdk';
+  EditorjsPluginParams, EditorAPI } from '@editorjs/sdk';
 import {
   CoreEventType,
+  CopyUIEvent,
   UiComponentType,
   BeforeInputUIEvent
 } from '@editorjs/sdk';
-import type { EventBus } from '@editorjs/sdk';
 import Style from './Blocks.module.pcss';
 import { isNativeInput, make } from '@editorjs/dom';
 import { BlocksHolderRenderedUIEvent, BlockSelectedUIEvent } from './events/index.js';
@@ -143,6 +142,14 @@ export class BlocksUI implements EditorjsPlugin {
 
       e.preventDefault();
     }, { signal: this.#listenersController.signal });
+
+    blocksHolder.addEventListener('copy', (e) => {
+      const payload: CopyUIEventPayload = {
+        nativeEvent: e,
+      };
+
+      this.#eventBus.dispatchEvent(new CopyUIEvent(payload));
+    });
 
     return blocksHolder;
   }

@@ -1,4 +1,4 @@
-import type { Caret, CaretManagerEvents, FormattingAction, Index } from '@editorjs/model-types';
+import type { BlockNodeSerialized, Caret, CaretManagerEvents, FormattingAction, Index } from '@editorjs/model-types';
 
 /**
  * Selection API interface
@@ -63,4 +63,9 @@ export interface SelectionAPI {
    * Current caret index
    */
   caretIndex: Index | null;
+
+  /**
+   * Returns array of selected blocks
+   */
+  get selectedBlocks(): BlockNodeSerialized[];
 }
