@@ -1,4 +1,4 @@
-import type { BlockToolData } from '@editorjs/editorjs';
+import type { BlockToolData } from 'editorjs-v2';
 import type {
   BlockId,
   BlockNodeInit,

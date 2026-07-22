@@ -10,7 +10,7 @@ import 'reflect-metadata';
 import { inject, injectable } from 'inversify';
 import { TOKENS } from '../tokens.js';
 import ToolsManager from '../tools/ToolsManager.js';
-import { BlockAPI } from '@editorjs/editorjs';
+import { BlockAPI } from 'editorjs-v2';
 import {
   EventBus,
   BlockAddedCoreEvent,

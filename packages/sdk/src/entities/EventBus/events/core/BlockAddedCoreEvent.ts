@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import type { BlockToolData } from '@editorjs/editorjs';
+import type { BlockToolData } from 'editorjs-v2';
 import { CoreEventBase } from './CoreEventBase.js';
 import { CoreEventType } from './CoreEventType.js';
 

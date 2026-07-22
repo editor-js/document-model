@@ -1,4 +1,4 @@
-import type { ToolConfig } from '@editorjs/editorjs';
+import type { ToolConfig } from 'editorjs-v2';
 import type {
   BlockTool,
   BlockToolConstructor,

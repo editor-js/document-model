@@ -38,17 +38,10 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
-    "@editorjs/bold": "workspace:^",
-    "@editorjs/clipboard-plugin": "workspace:^",
-    "@editorjs/collaboration-manager": "workspace:^",
-    "@editorjs/dom-adapters": "workspace:^",
-    "@editorjs/editorjs": "^2.30.5",
     "@editorjs/helpers": "^1.2.2",
-    "@editorjs/inline-link": "workspace:^",
-    "@editorjs/italic": "workspace:^",
     "@editorjs/model": "workspace:^",
-    "@editorjs/paragraph": "workspace:^",
     "@editorjs/sdk": "workspace:^",
+    "editorjs-v2": "npm:@editorjs/editorjs@^2.30.5",
     "inversify": "^8.1.0",
     "reflect-metadata": "^0.2.2"
   }

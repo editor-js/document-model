@@ -2,7 +2,7 @@
 import type {
   ToolConfig,
   BlockTune as BlockTuneV2
-} from '@editorjs/editorjs';
+} from 'editorjs-v2';
 import type { ToolType } from './EntityType.js';
 import type { BaseToolConstructor, BaseToolOptions } from './BaseTool';
 

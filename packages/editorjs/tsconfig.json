@@ -1,0 +1,54 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "rootDir": "src",
+    "outDir": "dist",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
+  },
+  "include": ["src/**/*"],
+  "exclude": [
+    "node_modules/**/*",
+    "dist/**/*"
+  ],
+  "references": [
+    {
+      "path": "../core/tsconfig.build.json"
+    },
+    {
+      "path": "../sdk/tsconfig.build.json"
+    },
+    {
+      "path": "../dom-adapters/tsconfig.build.json"
+    },
+    {
+      "path": "../collaboration-manager/tsconfig.build.json"
+    },
+    {
+      "path": "../ui/tsconfig.build.json"
+    },
+    {
+      "path": "../tools/paragraph/tsconfig.build.json"
+    },
+    {
+      "path": "../tools/bold/tsconfig.build.json"
+    },
+    {
+      "path": "../tools/italic/tsconfig.build.json"
+    },
+    {
+      "path": "../tools/inline-link/tsconfig.build.json"
+    },
+    {
+      "path": "../plugins/clipboard-plugin/tsconfig.build.json"
+    }
+  ]
+}

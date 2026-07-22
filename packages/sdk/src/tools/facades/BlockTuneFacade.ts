@@ -1,8 +1,8 @@
 import { BaseToolFacade } from './BaseToolFacade.js';
-import type { BlockAPI } from '@editorjs/editorjs';
+import type { BlockAPI } from 'editorjs-v2';
 import type { BlockTuneConstructor, BlockTune as IBlockTune, BlockTuneData } from '../../entities';
 import { ToolType } from '../../entities';
-// import type { BlockTuneData } from '@editorjs/editorjs';
+// import type { BlockTuneData } from 'editorjs-v2';
 
 /**
  * Stub class for BlockTunes
