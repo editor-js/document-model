@@ -1,4 +1,5 @@
 import { getContext } from '../../../utils/Context.js';
+import { isSameInlineData } from '../../../utils/index.js';
 import { IndexBuilder } from '@editorjs/model-types';
 import type { InlineNode } from '../InlineNode/index.js';
 import type { InlineFragment, InlineTreeNodeSerialized, InlineToolData, InlineToolName } from '@editorjs/model-types';
@@ -155,9 +156,15 @@ export class ParentInlineNode extends EventBus implements InlineNode {
           const previousFragment = normalized[normalized.length - 1];
 
           /**
-           * @todo compare data
+           * Adjacent fragments are only coalesced when they share the same tool AND data,
+           * so a range whose data was replaced keeps its own fragment in the output.
            */
-          if (previousFragment === undefined || previousFragment.tool !== fragment.tool || previousFragment.range[1] !== fragment.range[0]) {
+          if (
+            previousFragment === undefined
+            || previousFragment.tool !== fragment.tool
+            || previousFragment.range[1] !== fragment.range[0]
+            || !isSameInlineData(previousFragment.data, fragment.data)
+          ) {
             normalized.push(fragment);
 
             return normalized;
