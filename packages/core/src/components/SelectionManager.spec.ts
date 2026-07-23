@@ -45,6 +45,7 @@ jest.unstable_mockModule('@editorjs/sdk', () => {
       Unformat: 'unformat',
     },
     TextIndex: class TextIndex {},
+    BlockIndex: class BlockIndex {},
   };
 });
 
@@ -55,7 +56,7 @@ jest.unstable_mockModule('../tools/ToolsManager', () => ({
 }));
 
 const { EditorJSModel } = await import('@editorjs/model');
-const { CaretManagerCaretUpdatedEvent, EventType, Index, SelectionChangedCoreEvent, EventBus, TextIndex } = await import('@editorjs/sdk');
+const { CaretManagerCaretUpdatedEvent, EventType, Index, SelectionChangedCoreEvent, EventBus, TextIndex, BlockIndex } = await import('@editorjs/sdk');
 const ToolsManager = (await import('../tools/ToolsManager')).default;
 const { SelectionManager } = await import('./SelectionManager.js');
 
@@ -466,6 +467,16 @@ describe('SelectionManager', () => {
       jest.spyOn(model, 'getCaret').mockReturnValue({ index } as unknown as ReturnType<typeof model.getCaret>);
     }
 
+    // Built via Object.create rather than `new` so the real constructors' full
+    // parameter types (TextSegment, DocumentId, ...) don't need to be satisfied here.
+    function mockTextIndex(segments: Array<{ blockIndex: number }>): unknown {
+      return Object.assign(Object.create(TextIndex.prototype), { segments });
+    }
+
+    function mockBlockIndex(blockIndex: number): unknown {
+      return Object.assign(Object.create(BlockIndex.prototype), { blockIndex });
+    }
+
     beforeEach(() => {
       model.serialized.blocks = [];
     });
@@ -476,74 +487,59 @@ describe('SelectionManager', () => {
       expect(selectionManager.selectedBlocks()).toEqual([]);
     });
 
-    it('should return the block for a single block index selection', () => {
+    it('should return an empty array when the current selection is neither a BlockIndex nor a TextIndex', () => {
+      mockCurrentSelection({ segments: [{ blockIndex: 0 }] });
+
+      expect(selectionManager.selectedBlocks()).toEqual([]);
+    });
+
+    it('should return the block for a whole-block selection', () => {
       model.serialized.blocks = [{ id: 'b0' }, { id: 'b1' }] as unknown as typeof model.serialized.blocks;
-      mockCurrentSelection({ isBlockIndex: true,
-        blockIndex: 1 });
+      mockCurrentSelection(mockBlockIndex(1));
+
+      expect(selectionManager.selectedBlocks()).toEqual([{ id: 'b1' }]);
+    });
+
+    it('should return an empty array when a whole-block selection index is out of bounds', () => {
+      model.serialized.blocks = [{ id: 'b0' }] as unknown as typeof model.serialized.blocks;
+      mockCurrentSelection(mockBlockIndex(5));
+
+      expect(selectionManager.selectedBlocks()).toEqual([]);
+    });
+
+    it('should return the block for a single-segment selection', () => {
+      model.serialized.blocks = [{ id: 'b0' }, { id: 'b1' }] as unknown as typeof model.serialized.blocks;
+      mockCurrentSelection(mockTextIndex([{ blockIndex: 1 }]));
 
       expect(selectionManager.selectedBlocks()).toEqual([{ id: 'b1' }]);
     });
 
     it('should return an empty array when the block index is out of bounds', () => {
       model.serialized.blocks = [{ id: 'b0' }] as unknown as typeof model.serialized.blocks;
-      mockCurrentSelection({ isBlockIndex: true,
-        blockIndex: 5 });
+      mockCurrentSelection(mockTextIndex([{ blockIndex: 5 }]));
 
       expect(selectionManager.selectedBlocks()).toEqual([]);
     });
 
-    it('should return an empty array when isBlockIndex is true but blockIndex is undefined', () => {
-      mockCurrentSelection({ isBlockIndex: true,
-        blockIndex: undefined });
-
-      expect(selectionManager.selectedBlocks()).toEqual([]);
-    });
-
-    it('should return one block per composite segment', () => {
+    it('should return one block per segment for a composite selection', () => {
       model.serialized.blocks = [{ id: 'b0' }, { id: 'b1' }] as unknown as typeof model.serialized.blocks;
-      mockCurrentSelection({
-        isBlockIndex: false,
-        compositeSegments: [{ blockIndex: 0 }, { blockIndex: 1 }],
-      });
+      mockCurrentSelection(mockTextIndex([{ blockIndex: 0 }, { blockIndex: 1 }]));
 
       expect(selectionManager.selectedBlocks()).toEqual([{ id: 'b0' }, { id: 'b1' }]);
     });
 
-    it('should dedupe composite segments that point at the same block', () => {
+    it('should dedupe segments that point at the same block', () => {
       model.serialized.blocks = [{ id: 'b0' }, { id: 'b1' }] as unknown as typeof model.serialized.blocks;
-      mockCurrentSelection({
-        isBlockIndex: false,
-        compositeSegments: [{ blockIndex: 0 }, { blockIndex: 0 }, { blockIndex: 1 }],
-      });
+      mockCurrentSelection(mockTextIndex([{ blockIndex: 0 }, { blockIndex: 0 }, { blockIndex: 1 }]));
 
       expect(selectionManager.selectedBlocks()).toEqual([{ id: 'b0' }, { id: 'b1' }]);
     });
 
-    it('should skip composite segments with an undefined block index', () => {
+    it('should skip segments with an out-of-bounds block index', () => {
       model.serialized.blocks = [{ id: 'b0' }] as unknown as typeof model.serialized.blocks;
-      mockCurrentSelection({
-        isBlockIndex: false,
-        compositeSegments: [{ blockIndex: undefined }, { blockIndex: 0 }],
-      });
+      mockCurrentSelection(mockTextIndex([{ blockIndex: 7 }, { blockIndex: 0 }]));
 
       expect(selectionManager.selectedBlocks()).toEqual([{ id: 'b0' }]);
-    });
-
-    it('should skip composite segments with an out-of-bounds block index', () => {
-      model.serialized.blocks = [{ id: 'b0' }] as unknown as typeof model.serialized.blocks;
-      mockCurrentSelection({
-        isBlockIndex: false,
-        compositeSegments: [{ blockIndex: 7 }, { blockIndex: 0 }],
-      });
-
-      expect(selectionManager.selectedBlocks()).toEqual([{ id: 'b0' }]);
-    });
-
-    it('should return an empty array when the index is neither a block index nor composite', () => {
-      mockCurrentSelection({ isBlockIndex: false,
-        compositeSegments: undefined });
-
-      expect(selectionManager.selectedBlocks()).toEqual([]);
     });
   });
 });

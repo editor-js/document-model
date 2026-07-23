@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { EditorJSModel } from '@editorjs/model';
 import type { BlockNodeSerialized, InlineFragment } from '@editorjs/sdk';
 import {
+  BlockIndex,
   CaretManagerCaretUpdatedEvent,
   CaretManagerEvents,
   CoreConfigValidated,
@@ -237,44 +238,44 @@ export class SelectionManager {
       return [];
     }
 
-    if (currentSelectionIndex.isBlockIndex) {
+    if (currentSelectionIndex instanceof BlockIndex) {
       const block = this.#resolveBlock(currentSelectionIndex.blockIndex);
 
       return block !== undefined ? [block] : [];
     }
 
-    if (currentSelectionIndex.compositeSegments !== undefined) {
-      const seenBlockIndexes = new Set<number>();
-      const blocks: BlockNodeSerialized[] = [];
-
-      for (const segment of currentSelectionIndex.compositeSegments) {
-        const { blockIndex } = segment;
-
-        if (blockIndex === undefined || seenBlockIndexes.has(blockIndex)) {
-          continue;
-        }
-
-        seenBlockIndexes.add(blockIndex);
-
-        const block = this.#resolveBlock(blockIndex);
-
-        if (block !== undefined) {
-          blocks.push(block);
-        }
-      }
-
-      return blocks;
+    if (!(currentSelectionIndex instanceof TextIndex)) {
+      return [];
     }
 
-    return [];
+    const seenBlockIndexes = new Set<number>();
+    const blocks: BlockNodeSerialized[] = [];
+
+    for (const segment of currentSelectionIndex.segments) {
+      const { blockIndex } = segment;
+
+      if (seenBlockIndexes.has(blockIndex)) {
+        continue;
+      }
+
+      seenBlockIndexes.add(blockIndex);
+
+      const block = this.#resolveBlock(blockIndex);
+
+      if (block !== undefined) {
+        blocks.push(block);
+      }
+    }
+
+    return blocks;
   }
 
   /**
-   * Resolves a block by index, guarding against missing or out-of-bounds indexes
+   * Resolves a block by index, guarding against out-of-bounds indexes
    * @param blockIndex - index of the block to resolve
    */
-  #resolveBlock(blockIndex: number | undefined): BlockNodeSerialized | undefined {
-    if (blockIndex === undefined || blockIndex < 0 || blockIndex >= this.#model.serialized.blocks.length) {
+  #resolveBlock(blockIndex: number): BlockNodeSerialized | undefined {
+    if (blockIndex < 0 || blockIndex >= this.#model.serialized.blocks.length) {
       return undefined;
     }
 
