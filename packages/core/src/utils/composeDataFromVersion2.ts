@@ -1,4 +1,4 @@
-import type { OutputData } from '@editorjs/editorjs';
+import type { OutputData } from 'editorjs-v2';
 import { TextNode, ValueNode } from '@editorjs/model';
 import type { InlineFragment } from '@editorjs/sdk';
 import { createInlineToolData, createInlineToolName, type BlockNodeInit } from '@editorjs/sdk';

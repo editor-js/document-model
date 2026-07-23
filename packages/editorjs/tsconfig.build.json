@@ -1,0 +1,40 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": [
+    "node_modules/**/*",
+    "dist/**/*",
+    "**/*.spec.ts"
+  ],
+  "references": [
+    {
+      "path": "../core/tsconfig.build.json"
+    },
+    {
+      "path": "../sdk/tsconfig.build.json"
+    },
+    {
+      "path": "../dom-adapters/tsconfig.build.json"
+    },
+    {
+      "path": "../collaboration-manager/tsconfig.build.json"
+    },
+    {
+      "path": "../ui/tsconfig.build.json"
+    },
+    {
+      "path": "../tools/paragraph/tsconfig.build.json"
+    },
+    {
+      "path": "../tools/bold/tsconfig.build.json"
+    },
+    {
+      "path": "../tools/italic/tsconfig.build.json"
+    },
+    {
+      "path": "../tools/inline-link/tsconfig.build.json"
+    },
+    {
+      "path": "../plugins/clipboard-plugin/tsconfig.build.json"
+    }
+  ]
+}

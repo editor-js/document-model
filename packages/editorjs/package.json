@@ -1,17 +1,19 @@
 {
-  "name": "@editorjs/sdk",
+  "name": "@editorjs/editorjs",
   "version": "0.0.0",
   "packageManager": "yarn@4.0.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
-    "build": "yarn clear && tsc --build tsconfig.build.json",
+    "build": "yarn build:dependencies && yarn clear && tsc --build tsconfig.build.json",
+    "build:dependencies": "yarn workspaces foreach -Rpt --from $npm_package_name --exclude $npm_package_name run build",
     "build:declaration": "yarn build --emitDeclarationOnly",
-    "lint": "eslint",
+    "lint": "eslint ./src",
     "lint:ci": "yarn lint --max-warnings 0",
     "lint:fix": "yarn lint --fix",
-    "test": "jest",
+    "test": "node --experimental-vm-modules $(yarn bin jest)",
+    "test:coverage": "yarn test --coverage=true",
     "clear": "rm -rf dist && rm -f tsconfig.build.tsbuildinfo && rm -f tsconfig.tsbuildinfo"
   },
   "devDependencies": {
@@ -31,9 +33,15 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
-    "@editorjs/helpers": "^1.2.2",
-    "@editorjs/model-types": "workspace:^",
-    "@editorjs/ui-kit": "^1.1.5",
-    "editorjs-v2": "npm:@editorjs/editorjs@^2.30.8"
+    "@editorjs/bold": "workspace:^",
+    "@editorjs/clipboard-plugin": "workspace:^",
+    "@editorjs/collaboration-manager": "workspace:^",
+    "@editorjs/core": "workspace:^",
+    "@editorjs/dom-adapters": "workspace:^",
+    "@editorjs/inline-link": "workspace:^",
+    "@editorjs/italic": "workspace:^",
+    "@editorjs/paragraph": "workspace:^",
+    "@editorjs/sdk": "workspace:^",
+    "@editorjs/ui": "workspace:^"
   }
 }

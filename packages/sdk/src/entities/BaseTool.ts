@@ -1,4 +1,4 @@
-import type { ToolConfig } from '@editorjs/editorjs';
+import type { ToolConfig } from 'editorjs-v2';
 import type { BlockToolOptions } from './BlockTool.js';
 import type { InlineToolOptions } from './InlineTool.js';
 import type { BlockTuneOptions } from './BlockTune.js';

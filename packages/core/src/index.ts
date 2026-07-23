@@ -1,4 +1,3 @@
-import { CollaborationManager } from '@editorjs/collaboration-manager';
 import { EditorJSModel } from '@editorjs/model';
 import type { Factory } from 'inversify';
 import { Container } from 'inversify';
@@ -19,18 +18,11 @@ import ToolsManager from './tools/ToolsManager.js';
 import type { CoreConfigValidated, CoreConfig, EditorjsPluginConstructor, BlockTuneConstructor, ToolConstructable, EditorjsAdapterPluginConstructor } from '@editorjs/sdk';
 import { EditorAPI } from './api/index.js';
 import { generateId } from './utils/uid.js';
-import { Paragraph } from '@editorjs/paragraph';
-import { BoldInlineTool } from '@editorjs/bold';
-import { ItalicInlineTool } from '@editorjs/italic';
-import { LinkInlineTool } from '@editorjs/inline-link';
-import { ShortcutsPlugin } from './plugins/ShortcutsPlugin.js';
-import { DOMAdapters } from '@editorjs/dom-adapters';
 import { BlocksManager } from './components/BlockManager.js';
 import { BlockRenderer } from './components/BlockRenderer.js';
 import { SelectionManager } from './components/SelectionManager.js';
 import { TOKENS } from './tokens.js';
 import { UndoRedoManager } from './components/UndoRedoManager.js';
-import { ClipboardPlugin } from '@editorjs/clipboard-plugin';
 
 /**
  * If no holder is provided via config, the editor will be appended to the element with this id
@@ -109,15 +101,6 @@ export default class Core {
         config.onModelUpdate?.(this.#model);
       });
     }
-
-    this.use(Paragraph);
-    this.use(BoldInlineTool);
-    this.use(ItalicInlineTool);
-    this.use(LinkInlineTool);
-    this.use(ShortcutsPlugin);
-    this.use(CollaborationManager);
-    this.use(DOMAdapters);
-    this.use(ClipboardPlugin);
   }
 
   /**
@@ -166,32 +149,55 @@ export default class Core {
    * Initializes the core
    */
   public async initialize(): Promise<void> {
-    try {
-      const { blocks } = composeDataFromVersion2(this.#config.data ?? { blocks: [] });
+    this.#validatePreconditions();
 
-      this.#initializeAdapter();
+    const { blocks } = composeDataFromVersion2(this.#config.data ?? { blocks: [] });
 
-      /**
-       * Need to initialize internal modules before plugins and tools
-       * @todo think of how to remove this?
-       * @todo add e2e initialization tests
-       * Currently only BlockRenderer would be enough, but that would be hard to debug. Easier just add every module here
-       */
-      this.#iocContainer.get(SelectionManager);
-      this.#iocContainer.get(BlocksManager);
-      this.#iocContainer.get(BlockRenderer);
-      this.#iocContainer.get(UndoRedoManager);
+    this.#initializeAdapter();
 
-      this.#initializePlugins();
-      await this.#initializeTools();
+    /**
+     * Need to initialize internal modules before plugins and tools
+     * @todo think of how to remove this?
+     * @todo add e2e initialization tests
+     * Currently only BlockRenderer would be enough, but that would be hard to debug. Easier just add every module here
+     */
+    this.#iocContainer.get(SelectionManager);
+    this.#iocContainer.get(BlocksManager);
+    this.#iocContainer.get(BlockRenderer);
+    this.#iocContainer.get(UndoRedoManager);
 
-      this.#model.initializeDocument({ blocks });
+    this.#initializePlugins();
+    await this.#initializeTools();
 
-      const eventBus = this.#iocContainer.get(EventBus);
+    this.#model.initializeDocument({ blocks });
 
-      eventBus.dispatchEvent(new CoreEventBase(CoreEventType.Ready, undefined));
-    } catch (error) {
-      console.error('Editor.js initialization failed', error);
+    const eventBus = this.#iocContainer.get(EventBus);
+
+    eventBus.dispatchEvent(new CoreEventBase(CoreEventType.Ready, undefined));
+  }
+
+  /**
+   * Validates that the caller has registered everything the headless engine needs before booting.
+   * Throws with a clear message instead of failing deep inside module resolution.
+   */
+  #validatePreconditions(): void {
+    if (!this.#plugins.isBound(PluginType.Adapter)) {
+      throw new Error(
+        'No rendering adapter registered. Register one via `.use()` (e.g. DOMAdapters), or use the `@editorjs/editorjs` package which bundles it.'
+      );
+    }
+
+    const defaultBlock = this.#config.defaultBlock;
+    const blockToolNames = this.#plugins.isBound(ToolType.Block)
+      ? this.#plugins
+          .getAll<[BlockToolConstructor, ToolStaticOptions | undefined]>(ToolType.Block)
+          .map(([tool]) => tool.name)
+      : [];
+
+    if (!blockToolNames.includes(defaultBlock)) {
+      throw new Error(
+        `Default block tool "${defaultBlock}" is not registered. Register it via \`.use()\`, or set \`defaultBlock\` to a registered block tool.`
+      );
     }
   }
 
