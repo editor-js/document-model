@@ -6,6 +6,16 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+# Never publish two runs at once — concurrent `npm publish` of the same version
+# races. Queue instead of cancelling: a cancelled run can leave half the
+# workspaces published.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 jobs:
   publish:
     runs-on: ubuntu-latest

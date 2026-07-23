@@ -20,7 +20,6 @@ runs:
         package-name: ${{ inputs.package-name }}
 
     - name: Run unit tests with coverage
-      if: ${{ github.ref != 'refs/heads/main' }} # Skip coverage on main branch to save time and resources
       shell: bash
       run: |
         yarn workspace ${{ inputs.package-name }} test:coverage

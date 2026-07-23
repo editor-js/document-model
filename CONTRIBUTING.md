@@ -92,7 +92,7 @@ Typical flow for a change:
    ```
 3. **Apply** — implement the tasks in `tasks.md`, following TDD as required by `openspec/config.yaml`.
 4. **Verify** — check the implementation matches the proposal's specs and tasks before wrapping up.
-5. **Archive / Sync** — once merged, archive the change (`openspec archive <change-name>`) to fold its delta specs into `openspec/specs/`, or sync specs without archiving if the change is still in flight.
+5. **Archive** — when the last task is checked, the change is archived (`openspec archive <change-name>`) to move it into `openspec/changes/archive/` and fold its delta specs into `openspec/specs/`. On a PR this is done for you — see [Archiving at merge time](#archiving-at-merge-time) below.
 
 Useful CLI commands while working on a change:
 ```bash
@@ -105,6 +105,20 @@ openspec view                       # interactive dashboard
 If you're using Claude Code in this repo, the same workflow is available as slash commands (`/opsx:explore`, `/opsx:propose`, `/opsx:apply`, `/opsx:verify`, `/opsx:sync`, `/opsx:archive`, `/opsx:update`) and equivalent skills — these wrap the CLI above and keep proposal/spec/task files coherent as you iterate.
 
 Keep specs and code in sync: a PR that changes behavior covered by `openspec/specs/` without a corresponding proposal/archive will likely be asked to add one during review.
+
+### Archiving at merge time
+
+A change is archived **in its final PR**, right before merge, so the spec fold-in is reviewable and lands atomically with the code. CI enforces this:
+
+- **The gate** (`OpenSpec archive gate`) fails a PR / merge-queue build when an active change has **every** task in its `tasks.md` checked but is still sitting in `openspec/changes/`. Changes with unchecked tasks pass, so a change spread across several PRs only needs to be archived in the PR that completes it. Run the same check locally with `node .github/scripts/openspec-archive-gate.mjs`.
+- **The action** — a maintainer comments **`/archive`** on the PR (or `/archive <change-name>` when more than one change is complete). A workflow runs `openspec archive`, then commits the moved change + updated specs to the PR branch. Review that spec diff before merging.
+
+To intentionally land completed code but defer archiving to a follow-up PR, leave the change's final task unchecked until you're ready to archive (task completion *is* the "ready to archive" signal). The `openspec:defer-archive` label additionally silences the informational gate on the PR itself.
+
+**Authoring deltas so the fold is clean.** CI runs the `openspec archive` **CLI** — a deterministic tool, not the agent-driven `/opsx:archive` skill — so the fold is only as good as the delta. The authoring rules live in [`openspec/config.yaml`](openspec/config.yaml) (`rules.specs`) and surface to agents via `openspec instructions specs`. Two that bite most often:
+
+- For `MODIFIED`/`REMOVED`/`RENAMED` requirements, the `### Requirement:` header must match the current `openspec/specs/<capability>/spec.md` **exactly** — a mismatch silently appends a duplicate instead of updating.
+- The CLI can't author a **new** capability's `## Purpose` (it writes a `TBD` placeholder). Put the intended Purpose in the proposal and fill it into the folded spec in the same PR.
 
 ## Testing
 
