@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import type { DocumentId, EditorDocumentSerialized } from '@editorjs/sdk';
-import { createDataKey, IndexBuilder } from '@editorjs/sdk';
+import { createDataKey, Index } from '@editorjs/sdk';
 import { beforeEach, afterEach, jest, describe, it, expect } from '@jest/globals';
 import { OTClient } from './OTClient.js';
 import { Operation, OperationType } from '../Operation.js';
@@ -41,12 +41,10 @@ describe('OTClient', () => {
 
       await client.connectDocument(stubDocument);
 
-      const index = new IndexBuilder()
-        .addDocumentId(documentId)
-        .addBlockIndex(0)
-        .addDataKey(createDataKey('text'))
-        .addTextRange([0, 5])
-        .build();
+      const index = Index.text([{ blockIndex: 0,
+        dataKey: createDataKey('text'),
+        textRange: [0, 5],
+        documentId }]);
 
       const remoteOp = new Operation(OperationType.Insert, index, { payload: 'hello' }, remoteUserId, 1);
 
@@ -65,12 +63,10 @@ describe('OTClient', () => {
 
       await client.connectDocument(stubDocument);
 
-      const index = new IndexBuilder()
-        .addDocumentId(documentId)
-        .addBlockIndex(0)
-        .addDataKey(createDataKey('text'))
-        .addTextRange([0, 5])
-        .build();
+      const index = Index.text([{ blockIndex: 0,
+        dataKey: createDataKey('text'),
+        textRange: [0, 5],
+        documentId }]);
 
       // Same userId as the local user — should be ignored
       const ownOp = new Operation(OperationType.Insert, index, { payload: 'hello' }, userId, 1);
@@ -89,11 +85,7 @@ describe('OTClient', () => {
 
       await client.connectDocument(stubDocument);
 
-      const index = new IndexBuilder()
-        .addDocumentId(documentId)
-        .addBlockIndex(1)
-        .addDataKey(createDataKey('valueA'))
-        .build();
+      const index = Index.data(1, createDataKey('valueA'), documentId);
 
       const localOp = new Operation(OperationType.Modify, index, {
         payload: { n: 1 },
@@ -163,9 +155,7 @@ describe('OTClient', () => {
 
       // Awaiting send() lets the handshake-reply microtask run and #handshake resolve,
       // which triggers onHandshake.
-      const index = new IndexBuilder().addDocumentId(documentId)
-        .addBlockIndex(0)
-        .build();
+      const index = Index.block(0, documentId);
 
       await client.send(new Operation(OperationType.Insert, index, { payload: [] }, userId));
 
@@ -181,12 +171,10 @@ describe('OTClient', () => {
 
       const sendSpy = jest.spyOn(MockWebSocket.lastInstance!, 'send');
 
-      const index = new IndexBuilder()
-        .addDocumentId(documentId)
-        .addBlockIndex(0)
-        .addDataKey(createDataKey('text'))
-        .addTextRange([0, 0])
-        .build();
+      const index = Index.text([{ blockIndex: 0,
+        dataKey: createDataKey('text'),
+        textRange: [0, 0],
+        documentId }]);
 
       const op = new Operation(OperationType.Insert, index, { payload: 'x' }, userId);
 
@@ -207,12 +195,10 @@ describe('OTClient', () => {
 
       const sendSpy = jest.spyOn(MockWebSocket.lastInstance!, 'send');
 
-      const index = new IndexBuilder()
-        .addDocumentId(documentId)
-        .addBlockIndex(0)
-        .addDataKey(createDataKey('text'))
-        .addTextRange([0, 0])
-        .build();
+      const index = Index.text([{ blockIndex: 0,
+        dataKey: createDataKey('text'),
+        textRange: [0, 0],
+        documentId }]);
 
       const op1 = new Operation(OperationType.Insert, index, { payload: 'a' }, userId);
       const op2 = new Operation(OperationType.Insert, index, { payload: 'b' }, userId);

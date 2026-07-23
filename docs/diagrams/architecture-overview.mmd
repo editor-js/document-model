@@ -19,11 +19,14 @@ classDiagram
     }
 
     class Index {
-      +blockIndex: number
-      +dataKey: DataKey
-      +textRange: TextRange
+      <<abstract>>
+      +kind: IndexKind
       +serialize(): string
-      +parse(serialized): Index
+      +parse(serialized)$ Index
+      +block(blockIndex, documentId?)$ BlockIndex
+      +text(segments)$ TextIndex
+      +data(blockIndex, dataKey)$ DataIndex
+      +tune(blockIndex, tuneName, tuneKey)$ TuneIndex
     }
   }
 

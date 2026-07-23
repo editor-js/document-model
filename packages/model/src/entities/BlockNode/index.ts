@@ -13,7 +13,7 @@ import { ValueNode } from '../ValueNode/index.js';
 import { TextNode } from '../inline-fragments/index.js';
 import type { InlineFragment, TextNodeSerialized, ValueSerialized } from '@editorjs/model-types';
 import {
-  IndexBuilder,
+  PartialIndex,
   BlockChildType,
   createDataKey,
   createBlockId,
@@ -216,9 +216,7 @@ export class BlockNode extends EventBus {
       set(this.#data, dataKey as string, mappedData);
     }
 
-    const index = new IndexBuilder()
-      .addDataKey(dataKey)
-      .build();
+    const index = new PartialIndex({ dataKey });
 
     /**
      * Capture the context synchronously before entering the microtask,
@@ -252,9 +250,7 @@ export class BlockNode extends EventBus {
 
     remove(this.#data, dataKey as string);
 
-    const index = new IndexBuilder()
-      .addDataKey(dataKey)
-      .build();
+    const index = new PartialIndex({ dataKey });
 
     this.dispatchEvent(new DataNodeRemovedEvent(index, nodeData, getContext<string | number>()!));
   }
@@ -550,13 +546,10 @@ export class BlockNode extends EventBus {
           return;
         }
 
-        const builder = new IndexBuilder();
-
-        builder.from(event.detail.index).addDataKey(key);
-
         this.dispatchEvent(
           new (event.constructor as Constructor<TextNodeEvents>)(
-            builder.build(),
+            new PartialIndex({ textRange: (event.detail.index as PartialIndex).textRange,
+              dataKey: key }),
             event.detail.data
           )
         );
@@ -580,13 +573,9 @@ export class BlockNode extends EventBus {
           return;
         }
 
-        const builder = new IndexBuilder();
-
-        builder.addDataKey(key);
-
         this.dispatchEvent(
           new ValueModifiedEvent(
-            builder.build(),
+            new PartialIndex({ dataKey: key }),
             event.detail.data,
             getContext<string | number>()!
           )
@@ -611,13 +600,10 @@ export class BlockNode extends EventBus {
           return;
         }
 
-        const builder = new IndexBuilder();
-
-        builder.from(event.detail.index).addTuneName(name);
-
         this.dispatchEvent(
           new TuneModifiedEvent(
-            builder.build(),
+            new PartialIndex({ tuneKey: (event.detail.index as PartialIndex).tuneKey,
+              tuneName: name }),
             event.detail.data,
             'user'
           )

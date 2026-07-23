@@ -1,4 +1,7 @@
-import type { BlockId, TextNodeSerialized, ValueSerialized, EventBus, ModelEvents } from '@editorjs/model-types';
+import type { BlockId, TextNodeSerialized, ValueSerialized, EventBus, ModelEvents, TextIndex } from '@editorjs/model-types';
+import type {
+  DataIndex
+} from '@editorjs/model-types';
 import {
   DataNodeAddedEvent,
   DataNodeRemovedEvent,
@@ -170,7 +173,9 @@ export abstract class BlockToolAdapter extends EventTarget {
    * @param event - Model event
    */
   #handleModelUpdate(event: ModelEvents): void {
-    const { blockIndex } = event.detail.index;
+    const index = event.detail.index as DataIndex | TextIndex;
+
+    const { blockIndex, dataKey } = index;
 
     if (blockIndex === undefined) {
       return;
@@ -183,28 +188,18 @@ export abstract class BlockToolAdapter extends EventTarget {
     }
 
     switch (true) {
-      case event instanceof DataNodeAddedEvent: {
-        const { dataKey } = event.detail.index;
-
+      case event instanceof DataNodeAddedEvent:
         this.dispatchEvent(new KeyAddedEvent(dataKey as string));
-
         break;
-      }
 
-      case event instanceof DataNodeRemovedEvent: {
-        const { dataKey } = event.detail.index;
-
+      case event instanceof DataNodeRemovedEvent:
         this.dispatchEvent(new KeyRemovedEvent(dataKey as string));
-
         break;
-      }
 
       case event instanceof ValueModifiedEvent: {
-        const { dataKey } = event.detail.index;
         const value = event.detail.data;
 
         this.dispatchEvent(new ValueNodeChangedEvent(dataKey as string, value));
-
         break;
       }
     }

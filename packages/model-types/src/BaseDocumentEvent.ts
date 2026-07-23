@@ -1,6 +1,7 @@
 import type { EventAction } from './EventAction.js';
 import { EventType } from './EventType.js';
-import type { Index } from './Index/index.js';
+import type { IndexBase } from './Index/IndexBase.js';
+import type { PartialIndex } from './Index/PartialIndex.js';
 import type { ModifiedEventData } from './EventBus.js';
 
 export type { ModifiedEventData };
@@ -8,11 +9,11 @@ export type { ModifiedEventData };
 /**
  * Common fields for all events related to the document model
  */
-export interface EventPayloadBase<Action extends EventAction, Data = unknown> {
+export interface EventPayloadBase<Action extends EventAction, Data = unknown, I extends IndexBase = IndexBase> {
   /**
    * The index of changed information
    */
-  index: Index;
+  index: I;
 
   /**
    * The action that was performed on the information
@@ -33,7 +34,7 @@ export interface EventPayloadBase<Action extends EventAction, Data = unknown> {
 /**
  * BaseDocumentEvent Custom Event
  */
-export class BaseDocumentEvent<Action extends EventAction, Data = unknown> extends CustomEvent<EventPayloadBase<Action, Data>> {
+export class BaseDocumentEvent<Action extends EventAction, Data = unknown, I extends IndexBase = IndexBase> extends CustomEvent<EventPayloadBase<Action, Data, I>> {
   /**
    * BaseDocumentEvent class constructor
    * @param index - index of the modified value in the document
@@ -41,10 +42,10 @@ export class BaseDocumentEvent<Action extends EventAction, Data = unknown> exten
    * @param data - payload describing the change
    * @param userId - user identifier
    */
-  constructor(index: Index, action: Action, data: Data, userId: string | number) {
+  constructor(index: I | PartialIndex, action: Action, data: Data, userId: string | number) {
     super(EventType.Changed, {
       detail: {
-        index,
+        index: index as I,
         action,
         data,
         userId,
