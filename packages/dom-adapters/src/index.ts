@@ -26,6 +26,11 @@ export * from './BlockToolAdapter/index.js';
 export class DOMAdapters implements EditorJSAdapterPlugin {
   public static type = PluginType.Adapter as const;
 
+  /**
+   * Plugin name used to identify the adapter across the editor
+   */
+  public static readonly name = 'dom-adapters';
+
   #iocContainer: Container = new Container({
     autobind: true,
     defaultScope: 'Singleton',

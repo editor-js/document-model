@@ -11,6 +11,7 @@ import type {
   ToolTypeToOptions, ToolStaticOptions, BlockToolOptions, InlineToolOptions, BlockTuneOptions
 } from '../../entities/index.js';
 import type { EditorAPI } from '../../api';
+import type { ToolPluginOptions, ToolPluginOptionsMap } from '../../index.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- need to allow any type here so extended interfaces pass
 export type ToolConstructable = BlockToolConstructor<any, any, any> | InlineToolConstructor | BlockTuneConstructor;
@@ -145,6 +146,39 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
     return {
       ...staticDefaults,
       ...this.useToolOptions,
+      ...(this.#mergedPluginOptions === undefined
+        ? {}
+        : { [BaseToolOptionKey.Plugins]: this.#mergedPluginOptions }),
+    };
+  }
+
+  /**
+   * Configuration this tool addresses to a single plugin.
+   *
+   * Merging is shallow at the plugin-id level: a slice supplied through `use(Tool, options)`
+   * replaces the tool's static slice for that id wholesale, while ids present in only one of
+   * the two sources are preserved.
+   * @param name - plugin `name` whose slice should be returned
+   * @returns The merged slice, or `undefined` when the tool addresses nothing to that plugin
+   */
+  public pluginOptions<Id extends keyof ToolPluginOptionsMap>(name: Id): ToolPluginOptionsMap[Id] | undefined {
+    return this.#mergedPluginOptions?.[name];
+  }
+
+  /**
+   * All plugin-directed slices merged per plugin id, or `undefined` when neither source has any.
+   */
+  get #mergedPluginOptions(): ToolPluginOptions | undefined {
+    const fromTool = this.constructable.options?.[BaseToolOptionKey.Plugins];
+    const fromUse = this.useToolOptions[BaseToolOptionKey.Plugins];
+
+    if (fromTool === undefined && fromUse === undefined) {
+      return undefined;
+    }
+
+    return {
+      ...fromTool,
+      ...fromUse,
     };
   }
 

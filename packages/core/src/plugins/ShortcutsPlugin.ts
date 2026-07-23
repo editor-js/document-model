@@ -16,25 +16,103 @@ import {
 } from '@editorjs/sdk';
 
 /**
- * Subscribes to tool-loaded events and registers keyboard shortcuts from merged tool `options`
- * (`shortcut` for inline tools; `shortcuts` map reserved for block tools / render overrides).
- * Applies formatting via `api.selection.applyInlineTool`.
+ * Handler invoked when a registered shortcut is pressed
  */
-export class ShortcutsPlugin implements EditorjsPlugin {
+export type ShortcutHandler = (event: KeyboardEvent) => void;
+
+/**
+ * Configuration a tool addresses to the Shortcuts plugin under `options.plugins.shortcuts`
+ */
+export interface ShortcutsToolOptions {
+  /**
+   * Keyboard shortcut string (Editor.js codex notation, e.g. `CMD+B`) that applies the tool
+   */
+  shortcut?: string;
+}
+
+/**
+ * Public API the Shortcuts plugin exposes as `api.plugins.shortcuts`
+ */
+export interface ShortcutsPluginApi {
+  /**
+   * Binds a handler to a keyboard shortcut, replacing whatever was bound to it before
+   * @param shortcut - shortcut string in Editor.js codex notation, e.g. `CMD+K`
+   * @param handler - called with the native event when the shortcut is pressed
+   */
+  register(shortcut: string, handler: ShortcutHandler): void;
+
+  /**
+   * Removes whatever handler is bound to the given shortcut
+   * @param shortcut - shortcut string in Editor.js codex notation
+   */
+  unregister(shortcut: string): void;
+}
+
+declare module '@editorjs/sdk' {
+  /* eslint-disable jsdoc/require-jsdoc -- interface members are documented on the types they alias */
+  interface EditorjsPluginApiMap {
+    /**
+     * Shortcuts plugin's public API
+     */
+    shortcuts: ShortcutsPluginApi;
+  }
+
+  interface ToolPluginOptionsMap {
+    /**
+     * Options tools address to the Shortcuts plugin
+     */
+    shortcuts: ShortcutsToolOptions;
+  }
+  /* eslint-enable jsdoc/require-jsdoc */
+}
+
+/**
+ * Subscribes to tool-loaded events and registers keyboard shortcuts declared by tools under
+ * `options.plugins.shortcuts`, and exposes {@link ShortcutsPluginApi} for registering shortcuts
+ * at runtime. Tool-declared and API-registered shortcuts share one table, so one shortcut always
+ * resolves to exactly one handler.
+ */
+export class ShortcutsPlugin implements EditorjsPlugin<'shortcuts'> {
   /**
    * Registers with `core.use` under {@link PluginType.Plugin} (same id as Typedi multi-registration).
    */
   public static readonly type = PluginType.Plugin;
 
   /**
-   * Shortcut string (Editor.js codex) → inline tool name from config (e.g. `bold`).
+   * Plugin name — keys both `api.plugins.shortcuts` and `options.plugins.shortcuts`.
    */
-  readonly #shortcutToToolName = new Map<string, string>();
+  public static readonly name = 'shortcuts';
+
+  /**
+   * Shortcut string (Editor.js codex) → handler invoked when it is pressed.
+   */
+  readonly #handlers = new Map<string, ShortcutHandler>();
 
   /**
    * API instance
    */
   readonly #api: EditorAPI;
+
+  /**
+   * API exposed to the integrator and to other plugins
+   */
+  public readonly publicApi: ShortcutsPluginApi = {
+    /**
+     * Binds a handler to a shortcut, replacing any handler bound to it before
+     * @param shortcut - shortcut string in Editor.js codex notation
+     * @param handler - called with the native event when the shortcut is pressed
+     */
+    register: (shortcut, handler) => {
+      this.#handlers.set(shortcut, handler);
+    },
+    /**
+     * Removes whatever handler is bound to the given shortcut
+     * @param shortcut - shortcut string in Editor.js codex notation
+     */
+    unregister: (shortcut) => {
+      this.#handlers.delete(shortcut);
+    },
+  };
 
   /**
    * @param params - {@link EditorjsPluginParams}
@@ -48,20 +126,24 @@ export class ShortcutsPlugin implements EditorjsPlugin {
       const { detail } = event as ToolLoadedCoreEvent;
       const { tool } = detail;
 
-      const shortcut = tool.options['shortcut'];
+      const { shortcut } = tool.pluginOptions(ShortcutsPlugin.name) ?? {};
 
-      if (typeof shortcut === 'string') {
-        this.#shortcutToToolName.set(shortcut, tool.name);
+      if (shortcut !== undefined) {
+        this.publicApi.register(shortcut, () => this.#processInlineTool(tool.name));
       }
 
       /**
        * @todo support for "shortcuts" map for block tools / render overrides
        * @example
        * core.use(ListTool, {
-       *   shortcuts: {
-       *     'CMD+U': { style: 'ul'},
-       *     'CMD+O': { style: 'ol'},
-       *   }
+       *   plugins: {
+       *     shortcuts: {
+       *       shortcuts: {
+       *         'CMD+U': { style: 'ul'},
+       *         'CMD+O': { style: 'ol'},
+       *       },
+       *     },
+       *   },
        * })
        */
     });
@@ -74,11 +156,11 @@ export class ShortcutsPlugin implements EditorjsPlugin {
         return;
       }
 
-      for (const [shortcut, toolName] of this.#shortcutToToolName) {
+      for (const [shortcut, handler] of this.#handlers) {
         if (matchKeyboardShortcut(nativeEvent, shortcut) === true) {
           nativeEvent.preventDefault();
 
-          this.#processInlineTool(toolName);
+          handler(nativeEvent);
 
           return;
         }
@@ -90,7 +172,7 @@ export class ShortcutsPlugin implements EditorjsPlugin {
    * Destroys the plugin
    */
   public destroy(): void {
-    this.#shortcutToToolName.clear();
+    this.#handlers.clear();
   }
 
   /**

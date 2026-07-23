@@ -48,7 +48,90 @@ function createBlockFacade(
   });
 }
 
+declare module '../../index.js' {
+  interface ToolPluginOptionsMap {
+    /**
+     * Options addressed to a fake plugin
+     */
+    facadeProbe: {
+      /**
+       * Arbitrary option
+       */
+      shortcut?: string;
+      /**
+       * Second option, used to check a slice is replaced rather than deep-merged
+       */
+      scope?: string;
+    };
+
+    /**
+     * Options addressed to a second fake plugin, used for the disjoint-ids case
+     */
+    facadeOther: {
+      /**
+       * Arbitrary option
+       */
+      enabled: boolean;
+    };
+  }
+}
+
 describe('BaseToolFacade (via BlockToolFacade)', () => {
+  describe('pluginOptions', () => {
+    it('should return the slice a tool declares for the requested plugin', () => {
+      const facade = createBlockFacade(
+        { plugins: { facadeProbe: { shortcut: 'CMD+B' } } },
+        {} as ToolOptions
+      );
+
+      expect(facade.pluginOptions('facadeProbe')).toEqual({ shortcut: 'CMD+B' });
+    });
+
+    it('should return undefined when the tool declares nothing for the plugin', () => {
+      const facade = createBlockFacade(
+        { plugins: { facadeOther: { enabled: true } } },
+        {} as ToolOptions
+      );
+
+      expect(facade.pluginOptions('facadeProbe')).toBeUndefined();
+    });
+
+    it('should return undefined when the tool declares no plugins key at all', () => {
+      const facade = createBlockFacade({}, {} as ToolOptions);
+
+      expect(facade.pluginOptions('facadeProbe')).toBeUndefined();
+    });
+
+    it('should let use() options win over static options for the same plugin', () => {
+      const facade = createBlockFacade(
+        { plugins: { facadeProbe: { shortcut: 'CMD+B' } } },
+        { plugins: { facadeProbe: { shortcut: 'CMD+SHIFT+B' } } } as ToolOptions
+      );
+
+      expect(facade.pluginOptions('facadeProbe')).toEqual({ shortcut: 'CMD+SHIFT+B' });
+    });
+
+    it('should replace the whole slice rather than deep-merging it', () => {
+      const facade = createBlockFacade(
+        { plugins: { facadeProbe: { shortcut: 'CMD+B',
+          scope: 'inline' } } },
+        { plugins: { facadeProbe: { shortcut: 'CMD+SHIFT+B' } } } as ToolOptions
+      );
+
+      expect(facade.pluginOptions('facadeProbe')).toEqual({ shortcut: 'CMD+SHIFT+B' });
+    });
+
+    it('should preserve plugin ids present in only one of the two sources', () => {
+      const facade = createBlockFacade(
+        { plugins: { facadeProbe: { shortcut: 'CMD+B' } } },
+        { plugins: { facadeOther: { enabled: true } } } as ToolOptions
+      );
+
+      expect(facade.pluginOptions('facadeProbe')).toEqual({ shortcut: 'CMD+B' });
+      expect(facade.pluginOptions('facadeOther')).toEqual({ enabled: true });
+    });
+  });
+
   describe('options getter', () => {
     it('merges static options with use() options, later keys win', () => {
       class BlockToolWithStaticOptions {
@@ -77,6 +160,18 @@ describe('BaseToolFacade (via BlockToolFacade)', () => {
         onlyStatic: true,
         onlyUse: 2,
         overlap: 'from-use',
+      });
+    });
+
+    it('should merge the plugins key per plugin id rather than replacing it wholesale', () => {
+      const facade = createBlockFacade(
+        { plugins: { facadeProbe: { shortcut: 'CMD+B' } } },
+        { plugins: { facadeOther: { enabled: true } } } as ToolOptions
+      );
+
+      expect(facade.options.plugins).toEqual({
+        facadeProbe: { shortcut: 'CMD+B' },
+        facadeOther: { enabled: true },
       });
     });
 
