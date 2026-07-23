@@ -27,7 +27,9 @@ runs:
           package-name: ${{ inputs.package-name }}
 
       - name: Get changed files
-        uses: tj-actions/changed-files@v47
+        # Pinned to a full SHA (v47.0.6). tj-actions/changed-files was compromised
+        # in March 2025 via tag re-pointing; a moving tag re-exposes that risk.
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         id: changed-files
         with:
           files_yaml: |
@@ -42,16 +44,22 @@ runs:
         if: steps.changed-files.outputs.src_any_changed == 'true'
         env:
           STRYKER_DASHBOARD_API_KEY: ${{ inputs.stryker_dashboard_api_key }}
+          # Via env, never inlined: these are filenames from the PR, and `${{ }}`
+          # splices them into the shell — a file named `$(...)` would execute.
+          CHANGED_FILES: ${{ steps.changed-files.outputs.src_all_changed_files }}
+          PACKAGE_NAME: ${{ inputs.package-name }}
         shell: bash
         id: run-mutation-tests
-        run: yarn workspace ${{ inputs.package-name }} test:mutations --mutate "${{ steps.changed-files.outputs.src_all_changed_files }}" --dashboard.module ${{ inputs.package-name }}
+        run: yarn workspace "$PACKAGE_NAME" test:mutations --mutate "$CHANGED_FILES" --dashboard.module "$PACKAGE_NAME"
         continue-on-error: true
 
       - name: Save mutated files list
         if: steps.changed-files.outputs.src_any_changed == 'true'
         shell: bash
+        env:
+          CHANGED_FILES: ${{ steps.changed-files.outputs.src_all_changed_files }}
         run: |
-          echo "${{ steps.changed-files.outputs.src_all_changed_files }}" | sed 's/,/","/g' | sed 's/^/["/;s/$/"]/' > changed-files.json
+          printf '%s' "$CHANGED_FILES" | sed 's/,/","/g' | sed 's/^/["/;s/$/"]/' > changed-files.json
 
       - name: Save empty list if no files changed
         if: steps.changed-files.outputs.src_any_changed == 'false'
