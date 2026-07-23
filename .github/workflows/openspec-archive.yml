@@ -258,6 +258,7 @@ jobs:
         env:
           HEAD_REF: ${{ needs.archive-run.outputs.ref }}
           COMMIT: ${{ needs.archive-run.outputs.commit }}
+          EXPECTED_PARENT: ${{ needs.archive-run.outputs.sha }}
           PR: ${{ github.event.issue.number }}
         run: |
           # The bundle's prerequisite is the PR head; fetch it (objects only, no
@@ -266,6 +267,23 @@ jobs:
           # branch was force-pushed onto unrelated history.
           git fetch --no-tags origin "refs/pull/${PR}/head"
           git fetch "${RUNNER_TEMP}/openspec-archive.bundle" HEAD
+
+          # Defense-in-depth: archive-run executed the PR's own code to build this
+          # commit (with a read-only token). Don't trust the bundle blindly — verify
+          # it's built directly on the exact head archive-run resolved, and that it
+          # only touches openspec/, before pushing it with the write token.
+          parent=$(git rev-parse "${COMMIT}^")
+          if [ "$parent" != "$EXPECTED_PARENT" ]; then
+            echo "::error::Archive commit's parent ($parent) does not match the PR head archive-run resolved ($EXPECTED_PARENT) — refusing to push."
+            exit 1
+          fi
+          outside=$(git diff --name-only "$EXPECTED_PARENT" "$COMMIT" | grep -v '^openspec/' || true)
+          if [ -n "$outside" ]; then
+            echo "::error::Archive commit touches paths outside openspec/ — refusing to push:"
+            echo "$outside"
+            exit 1
+          fi
+
           # Fast-forward push of the new commit onto the PR branch. If the branch
           # advanced past the archived head, this is a non-fast-forward and fails
           # rather than clobbering.
