@@ -50,6 +50,7 @@ jobs:
       name: ${{ steps.change.outputs.name }}
       error: ${{ steps.change.outputs.error }}
       changed: ${{ steps.patch.outputs.changed }}
+      commit: ${{ steps.patch.outputs.commit }}
     steps:
       - name: Resolve PR head
         id: pr
@@ -127,10 +128,19 @@ jobs:
           CHANGE: ${{ steps.change.outputs.name }}
         run: yarn openspec archive -y "$CHANGE"
 
-      - name: Capture archive as a patch
+      - name: Build archive commit
+        # The commit is created here, in the unprivileged job, so archive-commit
+        # never has to check out (materialise) the PR branch's untrusted tree while
+        # holding the write token. The finished commit ships as a thin git bundle
+        # (only the new commit, with the PR head as its prerequisite); archive-commit
+        # unbundles the objects and pushes them without ever touching a working tree.
         id: patch
         if: steps.pr.outputs.cross != 'true'
+        env:
+          CHANGE: ${{ steps.change.outputs.name }}
         run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A openspec
           # --cached only: the archive is staged above, and porcelain would also
           # report unrelated dirt from the install step.
@@ -139,23 +149,28 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          # --binary so the patch round-trips through archive-commit exactly, even
-          # if a delta spec ever carries a binary asset.
-          git diff --cached --binary > "${RUNNER_TEMP}/openspec-archive.patch"
+          git commit -m "chore(openspec): archive $CHANGE"
+          echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          # Range bundle: contents are the single new commit, prerequisite is the PR
+          # head (steps.pr.outputs.sha). archive-commit must have that head object
+          # present before it can unbundle.
+          git bundle create "${RUNNER_TEMP}/openspec-archive.bundle" \
+            "${{ steps.pr.outputs.sha }}..HEAD"
           echo "changed=true" >> "$GITHUB_OUTPUT"
 
-      - name: Upload archive patch
+      - name: Upload archive bundle
         if: steps.patch.outputs.changed == 'true'
         uses: actions/upload-artifact@v7
         with:
-          name: openspec-archive-patch
-          path: ${{ runner.temp }}/openspec-archive.patch
+          name: openspec-archive-bundle
+          path: ${{ runner.temp }}/openspec-archive.bundle
           retention-days: 1
           if-no-files-found: error
 
   archive-commit:
-    # Applies the patch and pushes. Runs NO PR code — only git operations and the
-    # write token live here. Runs even when archive-run failed so it can report the
+    # Pushes the archive commit bundle. Runs NO PR code and never checks out the PR
+    # tree — only git object transfer and the write token live here. Runs even when
+    # archive-run failed so it can report the
     # reason; skipped only if archive-run never ran (not an /archive comment).
     needs: archive-run
     if: ${{ !cancelled() && needs.archive-run.result != 'skipped' }}
@@ -219,35 +234,42 @@ jobs:
           gh pr comment "${{ github.event.issue.number }}" --repo "${{ github.repository }}" \
             --body "ℹ️ \`openspec archive\` ran for \`$CHANGE\` but produced no changes under \`openspec/\` — nothing to commit. It was most likely archived already."
 
-      # From here: archive-run succeeded and produced a patch.
-      - name: Checkout PR head
+      # From here: archive-run succeeded and produced a commit bundle.
+      # Deliberately checks out the trusted default branch — never the PR head — so
+      # the write token never sits alongside the PR's untrusted working tree. The
+      # untrusted objects arrive only as git objects (fetched, never checked out or
+      # executed) and are pushed straight through.
+      - name: Checkout default branch
         if: needs.archive-run.outputs.changed == 'true'
         uses: actions/checkout@v6
         with:
-          # Same oid archive-run patched against. If the branch has since moved,
-          # the push below is a non-fast-forward and fails rather than clobbering.
-          ref: ${{ needs.archive-run.outputs.sha }}
           fetch-depth: 0
 
-      - name: Download archive patch
+      - name: Download archive bundle
         if: needs.archive-run.outputs.changed == 'true'
         uses: actions/download-artifact@v8
         with:
-          name: openspec-archive-patch
+          name: openspec-archive-bundle
           path: ${{ runner.temp }}
 
-      - name: Apply, commit & push to PR branch
+      - name: Push archive commit to PR branch
         id: commit
         if: needs.archive-run.outputs.changed == 'true'
         env:
-          CHANGE: ${{ needs.archive-run.outputs.name }}
           HEAD_REF: ${{ needs.archive-run.outputs.ref }}
+          COMMIT: ${{ needs.archive-run.outputs.commit }}
+          PR: ${{ github.event.issue.number }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git apply --index "${RUNNER_TEMP}/openspec-archive.patch"
-          git commit -m "chore(openspec): archive $CHANGE"
-          git push origin "HEAD:$HEAD_REF"
+          # The bundle's prerequisite is the PR head; fetch it (objects only, no
+          # working-tree checkout) so the bundle unpacks. refs/pull/N/head resolves
+          # to the current head, which still contains that prerequisite unless the
+          # branch was force-pushed onto unrelated history.
+          git fetch --no-tags origin "refs/pull/${PR}/head"
+          git fetch "${RUNNER_TEMP}/openspec-archive.bundle" HEAD
+          # Fast-forward push of the new commit onto the PR branch. If the branch
+          # advanced past the archived head, this is a non-fast-forward and fails
+          # rather than clobbering.
+          git push origin "${COMMIT}:refs/heads/${HEAD_REF}"
 
       - name: Report success
         if: steps.commit.outcome == 'success'
