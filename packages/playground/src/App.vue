@@ -61,7 +61,7 @@ onMounted(() => {
 
   });
 
-  void editor.isReady;
+  editor.isReady.catch((error: unknown) => console.error('Editor.js failed to initialize', error));
 });
 
 /**

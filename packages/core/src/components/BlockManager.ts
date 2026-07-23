@@ -15,7 +15,7 @@ import 'reflect-metadata';
 import { inject, injectable } from 'inversify';
 import { TOKENS } from '../tokens.js';
 import ToolsManager from '../tools/ToolsManager.js';
-import { BlockToolData } from 'editorjs-v2';
+import type { BlockToolData } from 'editorjs-v2';
 import { CoreConfigValidated, EventBus } from '@editorjs/sdk';
 
 /**

@@ -151,35 +151,29 @@ export default class Core {
   public async initialize(): Promise<void> {
     this.#validatePreconditions();
 
-    try {
-      const { blocks } = composeDataFromVersion2(this.#config.data ?? { blocks: [] });
+    const { blocks } = composeDataFromVersion2(this.#config.data ?? { blocks: [] });
 
-      this.#initializeAdapter();
+    this.#initializeAdapter();
 
-      /**
-       * Need to initialize internal modules before plugins and tools
-       * @todo think of how to remove this?
-       * @todo add e2e initialization tests
-       * Currently only BlockRenderer would be enough, but that would be hard to debug. Easier just add every module here
-       */
-      this.#iocContainer.get(SelectionManager);
-      this.#iocContainer.get(BlocksManager);
-      this.#iocContainer.get(BlockRenderer);
-      this.#iocContainer.get(UndoRedoManager);
+    /**
+     * Need to initialize internal modules before plugins and tools
+     * @todo think of how to remove this?
+     * @todo add e2e initialization tests
+     * Currently only BlockRenderer would be enough, but that would be hard to debug. Easier just add every module here
+     */
+    this.#iocContainer.get(SelectionManager);
+    this.#iocContainer.get(BlocksManager);
+    this.#iocContainer.get(BlockRenderer);
+    this.#iocContainer.get(UndoRedoManager);
 
-      this.#initializePlugins();
-      await this.#initializeTools();
+    this.#initializePlugins();
+    await this.#initializeTools();
 
-      this.#model.initializeDocument({ blocks });
+    this.#model.initializeDocument({ blocks });
 
-      const eventBus = this.#iocContainer.get(EventBus);
+    const eventBus = this.#iocContainer.get(EventBus);
 
-      eventBus.dispatchEvent(new CoreEventBase(CoreEventType.Ready, undefined));
-    } catch (error) {
-      console.error('Editor.js initialization failed', error);
-
-      throw error;
-    }
+    eventBus.dispatchEvent(new CoreEventBase(CoreEventType.Ready, undefined));
   }
 
   /**

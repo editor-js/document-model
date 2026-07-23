@@ -1,7 +1,7 @@
 # editorjs-bundle Specification
 
 ## Purpose
-TBD - created by archiving change add-editorjs-bundle-package. Update Purpose after archive.
+`@editorjs/editorjs` is the batteries-included entry point for Editor.js: its default export `EditorJS` composes the headless `@editorjs/core` engine with `DOMAdapters`, `CollaborationManager`, a default set of tools (paragraph, bold, italic, link) and plugins (clipboard, shortcuts), and the default UI, so a caller can get a fully functional editor from configuration alone. It auto-initializes from the constructor, exposes an `isReady` promise, and accepts a v2-style `config.tools` map merged over the defaults with override-by-name.
 ## Requirements
 ### Requirement: Batteries-included editor entry point
 The system SHALL provide `@editorjs/editorjs`, a package whose default export is an `EditorJS` class that composes `@editorjs/core` with a default set of tools, plugins, infrastructure, and UI so that a caller can construct a fully functional editor from configuration alone.
@@ -41,4 +41,9 @@ The `EditorJS` class SHALL accept a v2-style `config.tools` map of tool name to 
 - **GIVEN** `config.tools` contains a tool under a name that matches a default tool (e.g. `paragraph`)
 - **WHEN** the editor is composed
 - **THEN** the user-provided tool replaces the default tool of that name, and the default is not also registered
+
+#### Scenario: Tool map key does not match the tool's name
+- **GIVEN** `config.tools` contains an entry whose key does not match the tool constructor's static `name`
+- **WHEN** the editor is composed
+- **THEN** it throws an error rather than silently registering the tool under a name that won't match `defaultBlock` or other lookups
 

@@ -38,4 +38,12 @@ describe('mergeTools', () => {
     expect(result.filter(tool => tool.name === 'paragraph')).toHaveLength(1);
     expect(result).toHaveLength(defaults.length);
   });
+
+  it('throws when a config.tools key does not match the tool\'s static name', () => {
+    const mismatched = toolStub('customParagraph');
+
+    expect(() => mergeTools(defaults, { paragraph: mismatched })).toThrow(
+      /customParagraph/
+    );
+  });
 });
