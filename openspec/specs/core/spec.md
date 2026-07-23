@@ -32,7 +32,7 @@ The system SHALL validate configured tools via `ToolsManager`, calling each tool
 Implemented in `src/tools/ToolsManager.ts`, `src/tools/ToolsFactory.ts`, validated by co-located `.spec.ts` files.
 
 ### Requirement: EditorAPI surface
-The system SHALL expose an `EditorAPI` aggregating `BlocksAPI` (insert/insertMany/delete/move/render/clear/getBlocksCount), `SelectionAPI` (applyInlineTool), `DocumentAPI` (serialized data, onUpdate, insertData/removeData/modifyData, undo/redo), and `TextAPI` (insert/remove/format/unformat/getFragments/get) to tools, plugins, and adapters.
+The system SHALL expose an `EditorAPI` aggregating `BlocksAPI` (insert/insertMany/delete/move/render/clear/getBlocksCount), `SelectionAPI` (applyInlineTool, selectedBlocks), `DocumentAPI` (serialized data, onUpdate, insertData/removeData/modifyData, undo/redo), and `TextAPI` (insert/remove/format/unformat/getFragments/get) to tools, plugins, and adapters.
 
 #### Scenario: Deleting with no block selected
 - **GIVEN** no block is currently selected/no caret is set
@@ -73,6 +73,11 @@ The system SHALL provide `SelectionManager`, which tracks caret/selection state 
 - **GIVEN** a valid selection and a registered inline tool
 - **WHEN** `applyInlineTool()` is called
 - **THEN** it calls `model.format` or `model.unformat` depending on the tool's `getFormattingOptions` result
+
+#### Scenario: Resolving selected blocks
+- **GIVEN** the current selection index is a block index, or a composite index whose segments carry block indexes
+- **WHEN** `selectedBlocks()` is called
+- **THEN** it returns the serialized blocks for each distinct, in-range block index referenced by the selection (deduplicated for composite selections), or an empty array when there is no current selection or no index resolves to an in-range block
 
 Implemented in `src/components/SelectionManager.ts`, validated by its co-located `.spec.ts`.
 

@@ -46,6 +46,11 @@ The system SHALL provide `BlocksUI`, which renders the contenteditable blocks ho
 - **WHEN** Cmd/Ctrl+Z is pressed
 - **THEN** `api.document.undo()` is called with the default action prevented; if Shift is also held, `api.document.redo()` is called instead
 
+#### Scenario: Delegating native copy events
+- **GIVEN** a native `copy` event fires on the blocks holder
+- **WHEN** `BlocksUI` intercepts it
+- **THEN** it dispatches a `CopyUIEvent` on the `EventBus` carrying the native event as `nativeEvent`, without calling `preventDefault` itself
+
 Implemented in `src/Blocks/Blocks.ts`, `src/Blocks/events/*`.
 
 ### Requirement: Floating toolbar

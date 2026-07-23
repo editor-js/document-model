@@ -30,6 +30,8 @@ import { BlockRenderer } from './components/BlockRenderer.js';
 import { SelectionManager } from './components/SelectionManager.js';
 import { TOKENS } from './tokens.js';
 import { UndoRedoManager } from './components/UndoRedoManager.js';
+import { ClipboardPlugin } from '@editorjs/clipboard-plugin';
+
 /**
  * If no holder is provided via config, the editor will be appended to the element with this id
  */
@@ -115,6 +117,7 @@ export default class Core {
     this.use(ShortcutsPlugin);
     this.use(CollaborationManager);
     this.use(DOMAdapters);
+    this.use(ClipboardPlugin);
   }
 
   /**

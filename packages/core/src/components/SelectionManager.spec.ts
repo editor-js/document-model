@@ -460,4 +460,90 @@ describe('SelectionManager', () => {
       expect(caretUpdateMock).not.toHaveBeenCalled();
     });
   });
+
+  describe('.selectedBlocks()', () => {
+    function mockCurrentSelection(index: unknown): void {
+      jest.spyOn(model, 'getCaret').mockReturnValue({ index } as unknown as ReturnType<typeof model.getCaret>);
+    }
+
+    beforeEach(() => {
+      model.serialized.blocks = [];
+    });
+
+    it('should return an empty array when there is no current selection', () => {
+      mockCurrentSelection(null);
+
+      expect(selectionManager.selectedBlocks()).toEqual([]);
+    });
+
+    it('should return the block for a single block index selection', () => {
+      model.serialized.blocks = [{ id: 'b0' }, { id: 'b1' }] as unknown as typeof model.serialized.blocks;
+      mockCurrentSelection({ isBlockIndex: true,
+        blockIndex: 1 });
+
+      expect(selectionManager.selectedBlocks()).toEqual([{ id: 'b1' }]);
+    });
+
+    it('should return an empty array when the block index is out of bounds', () => {
+      model.serialized.blocks = [{ id: 'b0' }] as unknown as typeof model.serialized.blocks;
+      mockCurrentSelection({ isBlockIndex: true,
+        blockIndex: 5 });
+
+      expect(selectionManager.selectedBlocks()).toEqual([]);
+    });
+
+    it('should return an empty array when isBlockIndex is true but blockIndex is undefined', () => {
+      mockCurrentSelection({ isBlockIndex: true,
+        blockIndex: undefined });
+
+      expect(selectionManager.selectedBlocks()).toEqual([]);
+    });
+
+    it('should return one block per composite segment', () => {
+      model.serialized.blocks = [{ id: 'b0' }, { id: 'b1' }] as unknown as typeof model.serialized.blocks;
+      mockCurrentSelection({
+        isBlockIndex: false,
+        compositeSegments: [{ blockIndex: 0 }, { blockIndex: 1 }],
+      });
+
+      expect(selectionManager.selectedBlocks()).toEqual([{ id: 'b0' }, { id: 'b1' }]);
+    });
+
+    it('should dedupe composite segments that point at the same block', () => {
+      model.serialized.blocks = [{ id: 'b0' }, { id: 'b1' }] as unknown as typeof model.serialized.blocks;
+      mockCurrentSelection({
+        isBlockIndex: false,
+        compositeSegments: [{ blockIndex: 0 }, { blockIndex: 0 }, { blockIndex: 1 }],
+      });
+
+      expect(selectionManager.selectedBlocks()).toEqual([{ id: 'b0' }, { id: 'b1' }]);
+    });
+
+    it('should skip composite segments with an undefined block index', () => {
+      model.serialized.blocks = [{ id: 'b0' }] as unknown as typeof model.serialized.blocks;
+      mockCurrentSelection({
+        isBlockIndex: false,
+        compositeSegments: [{ blockIndex: undefined }, { blockIndex: 0 }],
+      });
+
+      expect(selectionManager.selectedBlocks()).toEqual([{ id: 'b0' }]);
+    });
+
+    it('should skip composite segments with an out-of-bounds block index', () => {
+      model.serialized.blocks = [{ id: 'b0' }] as unknown as typeof model.serialized.blocks;
+      mockCurrentSelection({
+        isBlockIndex: false,
+        compositeSegments: [{ blockIndex: 7 }, { blockIndex: 0 }],
+      });
+
+      expect(selectionManager.selectedBlocks()).toEqual([{ id: 'b0' }]);
+    });
+
+    it('should return an empty array when the index is neither a block index nor composite', () => {
+      mockCurrentSelection({ isBlockIndex: false,
+        compositeSegments: undefined });
+
+      expect(selectionManager.selectedBlocks()).toEqual([]);
+    });
+  });
 });

@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { EditorJSModel } from '@editorjs/model';
-import type { InlineFragment } from '@editorjs/sdk';
+import type { BlockNodeSerialized, InlineFragment } from '@editorjs/sdk';
 import {
   CaretManagerCaretUpdatedEvent,
   CaretManagerEvents,
@@ -226,4 +226,58 @@ export class SelectionManager {
       }
     }
   };
+
+  /**
+   * Returns an array of selected blocks using the current selection index
+   */
+  public selectedBlocks(): BlockNodeSerialized[] {
+    const currentSelectionIndex = this.currentSelection;
+
+    if (currentSelectionIndex === null) {
+      return [];
+    }
+
+    if (currentSelectionIndex.isBlockIndex) {
+      const block = this.#resolveBlock(currentSelectionIndex.blockIndex);
+
+      return block !== undefined ? [block] : [];
+    }
+
+    if (currentSelectionIndex.compositeSegments !== undefined) {
+      const seenBlockIndexes = new Set<number>();
+      const blocks: BlockNodeSerialized[] = [];
+
+      for (const segment of currentSelectionIndex.compositeSegments) {
+        const { blockIndex } = segment;
+
+        if (blockIndex === undefined || seenBlockIndexes.has(blockIndex)) {
+          continue;
+        }
+
+        seenBlockIndexes.add(blockIndex);
+
+        const block = this.#resolveBlock(blockIndex);
+
+        if (block !== undefined) {
+          blocks.push(block);
+        }
+      }
+
+      return blocks;
+    }
+
+    return [];
+  }
+
+  /**
+   * Resolves a block by index, guarding against missing or out-of-bounds indexes
+   * @param blockIndex - index of the block to resolve
+   */
+  #resolveBlock(blockIndex: number | undefined): BlockNodeSerialized | undefined {
+    if (blockIndex === undefined || blockIndex < 0 || blockIndex >= this.#model.serialized.blocks.length) {
+      return undefined;
+    }
+
+    return this.#model.serialized.blocks[blockIndex];
+  }
 }
