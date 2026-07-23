@@ -3,6 +3,7 @@ import type { BlockToolOptions } from './BlockTool.js';
 import type { InlineToolOptions } from './InlineTool.js';
 import type { BlockTuneOptions } from './BlockTune.js';
 import type { ToolType } from './EntityType.js';
+import type { ToolPluginOptions } from '../index.js';
 
 /**
  * Canonical keys shared by every tool options interface.
@@ -11,7 +12,12 @@ export enum BaseToolOptionKey {
   /**
    * Plugin-specific configuration object passed to the tool instance.
    */
-  Config = 'config'
+  Config = 'config',
+
+  /**
+   * Configuration the tool addresses to editor plugins, keyed by plugin `name`.
+   */
+  Plugins = 'plugins'
 }
 
 /**
@@ -25,6 +31,14 @@ export interface BaseToolOptions<Config extends ToolConfig = ToolConfig> {
    * in the second argument of `core.use(Tool, options)`.
    */
   [BaseToolOptionKey.Config]?: Config;
+
+  /**
+   * Configuration this tool addresses to editor plugins, keyed by plugin `name`.
+   * Each plugin reads only its own slice via `BaseToolFacade.pluginOptions(name)`.
+   * @example
+   * static options = { plugins: { shortcuts: { shortcut: 'CMD+B' } } };
+   */
+  [BaseToolOptionKey.Plugins]?: ToolPluginOptions;
 }
 
 // Re-export so consumers can import all option types from this file
