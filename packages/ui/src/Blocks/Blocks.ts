@@ -47,6 +47,12 @@ export class BlocksUI implements EditorjsPlugin {
   #api: EditorAPI;
 
   /**
+   * Controls the lifetime of the DOM listeners attached to the blocks holder
+   * so they can all be removed at once on destroy()
+   */
+  #listenersController = new AbortController();
+
+  /**
    * EditorUI constructor method
    * @param params - Plugin parameters
    */
@@ -113,7 +119,7 @@ export class BlocksUI implements EditorjsPlugin {
         targetRanges: e.getTargetRanges(),
         isCrossInputSelection,
       }));
-    });
+    }, { signal: this.#listenersController.signal });
 
     blocksHolder.addEventListener('keydown', (e) => {
       if (e.code !== 'KeyZ') {
@@ -135,7 +141,7 @@ export class BlocksUI implements EditorjsPlugin {
       this.#api.document.undo();
 
       e.preventDefault();
-    });
+    }, { signal: this.#listenersController.signal });
 
     blocksHolder.addEventListener('copy', (e) => {
       const payload: CopyUIEventPayload = {
@@ -230,5 +236,15 @@ export class BlocksUI implements EditorjsPlugin {
   public destroy(): void {
     this.#blocks.forEach(block => block.remove());
     this.#blocks = [];
+
+    /**
+     * Removes the beforeinput/keydown listeners attached to the blocks holder
+     */
+    this.#listenersController.abort();
+
+    /**
+     * Detach the blocks holder itself so it doesn't linger in the DOM
+     */
+    this.#blocksHolder.remove();
   }
 }
