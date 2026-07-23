@@ -70,4 +70,4 @@ sequenceDiagram
   %% ── Destroy ──────────────────────────────────────
   Dev->>Plugin: plugin.destroy()
   Plugin->>EventBus: removeEventListener (cleanup)
-  Plugin->>Registry: unregister(name) (drops the public API)
+  Note over Registry: the registry lives for the lifetime of the Core<br/>instance — Core does not retain plugin instances,<br/>so nothing calls unregister() on teardown today

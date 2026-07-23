@@ -1,6 +1,7 @@
 /* eslint-disable jsdoc/require-jsdoc */
 
 import { describe, expect, it } from '@jest/globals';
+import type { PluginId } from '@editorjs/sdk';
 import { PluginRegistry } from './PluginRegistry.js';
 
 /**
@@ -79,5 +80,23 @@ describe('PluginRegistry', () => {
     registry.unregister('registryProbe');
 
     expect(() => registry.register('registryProbe', { ping: () => 'second' })).not.toThrow();
+  });
+
+  it('should not report a name inherited from Object.prototype as already registered', () => {
+    const registry = new PluginRegistry();
+    const publicApi = { ping: () => 'pong' };
+
+    expect(() => registry.register('toString' as PluginId, publicApi)).not.toThrow();
+    expect((registry.api as Record<string, unknown>).toString).toBe(publicApi);
+  });
+
+  it('should store a "__proto__" name as a plain entry instead of touching the prototype', () => {
+    const registry = new PluginRegistry();
+    const publicApi = { ping: () => 'pong' };
+
+    registry.register('__proto__' as PluginId, publicApi);
+
+    expect(Object.getOwnPropertyDescriptor(registry.api, '__proto__')?.value).toBe(publicApi);
+    expect(({}).hasOwnProperty('ping')).toBe(false);
   });
 });

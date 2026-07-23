@@ -13,9 +13,13 @@ import type { PluginId, PluginsAPI } from '@editorjs/sdk';
 @injectable()
 export class PluginRegistry {
   /**
-   * The shared record backing `api.plugins`
+   * The shared record backing `api.plugins`.
+   *
+   * Created without a prototype so plugin names are plain string keys: nothing is inherited from
+   * `Object.prototype`, and a name like `__proto__` or `toString` is stored as data rather than
+   * hitting an accessor or shadowing a built-in.
    */
-  readonly #record: Record<string, unknown> = {};
+  readonly #record = Object.create(null) as Record<string, unknown>;
 
   /**
    * Registry of plugin public APIs, as exposed through `api.plugins`
@@ -35,7 +39,7 @@ export class PluginRegistry {
       throw new Error('Editor.js plugin must have a non-empty "name" to expose a public API');
     }
 
-    if (name in this.#record) {
+    if (Object.prototype.hasOwnProperty.call(this.#record, name)) {
       throw new Error(`Editor.js plugin with name "${name}" is already registered. Plugin names must be unique`);
     }
 
