@@ -81,6 +81,13 @@ if (violations.length === 0) {
   process.exit(0);
 }
 
+// GitHub workflow commands (`::error::` / `::warning::`) treat the message as a
+// single line: a raw newline ends the command and the rest leaks to the log as
+// plain text. Percent-encode so multi-line details land inside the annotation.
+// https://docs.github.com/actions/reference/workflow-commands-for-github-actions
+const encodeCmd = (s) =>
+  s.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
+
 const list = violations.map((c) => `  - ${c}`).join('\n');
 const message =
   `OpenSpec archive gate: the following change(s) are complete but not archived:\n${list}\n\n` +
@@ -88,9 +95,11 @@ const message =
   `delta specs fold into openspec/specs/ before this merges.`;
 
 if (deferred) {
-  console.warn(`::warning::${message}\n(Deferred via openspec:defer-archive — not blocking.)`);
+  console.warn(
+    `::warning::${encodeCmd(`${message}\n(Deferred via openspec:defer-archive — not blocking.)`)}`,
+  );
   process.exit(0);
 }
 
-console.error(`::error::${message}`);
+console.error(`::error::${encodeCmd(message)}`);
 process.exit(1);

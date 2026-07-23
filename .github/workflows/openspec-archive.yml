@@ -6,6 +6,14 @@ name: OpenSpec archive
 # commits the result to the PR branch. The spec fold-in is therefore reviewable in
 # the PR and lands atomically with the code on merge.
 #
+# Split into two jobs so the write token never sits in scope while the PR branch's
+# own code runs. `archive-run` checks out the PR head and executes untrusted code
+# (setup lifecycle scripts, `openspec archive`) with a read-only token, and emits
+# the archive result as a git patch artifact. `archive-commit` runs NO PR code —
+# it only applies that patch, commits, and pushes with the write token. This is the
+# mitigation for the "untrusted checkout" class: untrusted execution and privileged
+# write are never in the same job.
+#
 # The commit is pushed with the default GITHUB_TOKEN. That does not re-trigger the
 # PR's own checks, so the authoritative gate is the merge_group run in
 # openspec-archive-gate.yml, which re-evaluates fresh at queue time.
@@ -13,10 +21,6 @@ name: OpenSpec archive
 on:
   issue_comment:
     types: [created]
-
-permissions:
-  contents: write
-  pull-requests: write
 
 # One archive at a time per PR: two `/archive` comments racing would both try to
 # push to the same branch. Never cancel in flight — a cancelled run can leave the
@@ -26,35 +30,27 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  archive:
+  archive-run:
     # Only for PR comments beginning with /archive. author_association is a cheap
-    # pre-filter; actual write permission is verified below (COLLABORATOR can be
-    # read-only, and this job holds contents: write).
+    # pre-filter; this job holds only a read token, so running the PR branch's code
+    # here is no more privileged than ordinary pull_request CI. Actual write access
+    # is verified in archive-commit before anything is pushed.
     if: >
       github.event.issue.pull_request &&
       startsWith(github.event.comment.body, '/archive') &&
       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      ref: ${{ steps.pr.outputs.ref }}
+      sha: ${{ steps.pr.outputs.sha }}
+      cross: ${{ steps.pr.outputs.cross }}
+      name: ${{ steps.change.outputs.name }}
+      error: ${{ steps.change.outputs.error }}
+      changed: ${{ steps.patch.outputs.changed }}
     steps:
-      - name: Verify commenter has write access
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COMMENTER: ${{ github.event.comment.user.login }}
-        run: |
-          level=$(gh api "repos/${{ github.repository }}/collaborators/$COMMENTER/permission" --jq .permission)
-          case "$level" in
-            admin|write|maintain) echo "$COMMENTER has $level access." ;;
-            *) echo "::error::$COMMENTER has '$level' access; /archive requires write." ; exit 1 ;;
-          esac
-
-      - name: React to the command
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh api -X POST \
-            "repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions" \
-            -f content=eyes >/dev/null
-
       - name: Resolve PR head
         id: pr
         env:
@@ -62,35 +58,36 @@ jobs:
         run: |
           data=$(gh pr view "${{ github.event.issue.number }}" \
             --repo "${{ github.repository }}" \
-            --json headRefName,isCrossRepository)
+            --json headRefName,headRefOid,isCrossRepository)
           echo "ref=$(echo "$data" | jq -r .headRefName)" >> "$GITHUB_OUTPUT"
+          echo "sha=$(echo "$data" | jq -r .headRefOid)" >> "$GITHUB_OUTPUT"
           echo "cross=$(echo "$data" | jq -r .isCrossRepository)" >> "$GITHUB_OUTPUT"
 
-      - name: Reject fork PRs
-        if: steps.pr.outputs.cross == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh pr comment "${{ github.event.issue.number }}" --repo "${{ github.repository }}" \
-            --body "⚠️ \`/archive\` can't push to a fork branch. Run \`openspec archive -y\` locally and push the commit yourself."
-          exit 1
-
+      # Everything below runs the PR branch's own code. It is skipped for fork PRs:
+      # we can't push to a fork branch anyway, and archive-commit posts the reason.
       - uses: actions/checkout@v6
+        if: steps.pr.outputs.cross != 'true'
         with:
-          ref: ${{ steps.pr.outputs.ref }}
+          # Pinned to the exact oid resolved above, not the branch name, so the
+          # tree we archive is the one archive-commit will apply the patch onto.
+          ref: ${{ steps.pr.outputs.sha }}
           fetch-depth: 0
 
       - uses: actions/setup-node@v6
+        if: steps.pr.outputs.cross != 'true'
         with:
           node-version-file: '.nvmrc'
 
       - run: corepack enable
+        if: steps.pr.outputs.cross != 'true'
 
       - name: Setup environment
+        if: steps.pr.outputs.cross != 'true'
         uses: ./.github/actions/setup
 
       - name: Resolve change to archive
         id: change
+        if: steps.pr.outputs.cross != 'true'
         env:
           # Via env, never inlined into the script: the comment body is
           # attacker-controlled text and `${{ }}` would splice it into the shell.
@@ -125,55 +122,150 @@ jobs:
         # Uses the pinned @fission-ai/openspec devDependency installed by the setup
         # action above — not an unpinned `npx` fetch. This is the deterministic CLI
         # (no agent); it validates the delta, then folds it into openspec/specs/.
+        if: steps.pr.outputs.cross != 'true'
         env:
           CHANGE: ${{ steps.change.outputs.name }}
         run: yarn openspec archive -y "$CHANGE"
 
-      - name: Commit & push to PR branch
-        id: commit
-        env:
-          CHANGE: ${{ steps.change.outputs.name }}
-          HEAD_REF: ${{ steps.pr.outputs.ref }}
+      - name: Capture archive as a patch
+        id: patch
+        if: steps.pr.outputs.cross != 'true'
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A openspec
           # --cached only: the archive is staged above, and porcelain would also
           # report unrelated dirt from the install step.
           if git diff --cached --quiet; then
             echo "No changes produced by archive — nothing to commit."
-            echo "pushed=false" >> "$GITHUB_OUTPUT"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          git commit -m "chore(openspec): archive $CHANGE"
-          git push origin "HEAD:$HEAD_REF"
-          echo "pushed=true" >> "$GITHUB_OUTPUT"
+          # --binary so the patch round-trips through archive-commit exactly, even
+          # if a delta spec ever carries a binary asset.
+          git diff --cached --binary > "${RUNNER_TEMP}/openspec-archive.patch"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
 
-      - name: Report success
-        if: steps.commit.outputs.pushed == 'true'
+      - name: Upload archive patch
+        if: steps.patch.outputs.changed == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: openspec-archive-patch
+          path: ${{ runner.temp }}/openspec-archive.patch
+          retention-days: 1
+          if-no-files-found: error
+
+  archive-commit:
+    # Applies the patch and pushes. Runs NO PR code — only git operations and the
+    # write token live here. Runs even when archive-run failed so it can report the
+    # reason; skipped only if archive-run never ran (not an /archive comment).
+    needs: archive-run
+    if: ${{ !cancelled() && needs.archive-run.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      # Reacting to the trigger comment hits the issue-comments reactions endpoint,
+      # which is gated by `issues`, not `pull-requests`.
+      issues: write
+    steps:
+      - name: React to the command
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CHANGE: ${{ steps.change.outputs.name }}
+        run: |
+          gh api -X POST \
+            "repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions" \
+            -f content=eyes >/dev/null
+
+      - name: Verify commenter has write access
+        # The authoritative privilege gate: author_association in archive-run is a
+        # pre-filter (COLLABORATOR can be read-only), and nothing is pushed until
+        # this passes.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMENTER: ${{ github.event.comment.user.login }}
+        run: |
+          level=$(gh api "repos/${{ github.repository }}/collaborators/$COMMENTER/permission" --jq .permission)
+          case "$level" in
+            admin|write|maintain) echo "$COMMENTER has $level access." ;;
+            *) echo "::error::$COMMENTER has '$level' access; /archive requires write." ; exit 1 ;;
+          esac
+
+      - name: Reject fork PRs
+        if: needs.archive-run.outputs.cross == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh pr comment "${{ github.event.issue.number }}" --repo "${{ github.repository }}" \
-            --body "✅ Archived \`$CHANGE\` — delta specs folded into \`openspec/specs/\` and committed to this PR. Review the spec diff before merging."
+            --body "⚠️ \`/archive\` can't push to a fork branch. Run \`openspec archive -y\` locally and push the commit yourself."
+          exit 1
 
-      - name: Report no-op
-        if: steps.commit.outputs.pushed == 'false'
+      - name: Report archive failure
+        if: needs.archive-run.result == 'failure'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CHANGE: ${{ steps.change.outputs.name }}
-        run: |
-          gh pr comment "${{ github.event.issue.number }}" --repo "${{ github.repository }}" \
-            --body "ℹ️ \`openspec archive\` ran for \`$CHANGE\` but produced no changes under \`openspec/\` — nothing to commit. It was most likely archived already."
-
-      - name: Report failure
-        if: failure()
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ERROR: ${{ steps.change.outputs.error }}
+          ERROR: ${{ needs.archive-run.outputs.error }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           msg="$ERROR"
           [ -z "$msg" ] && msg="\`openspec archive\` failed — see the [workflow run]($RUN_URL)."
           gh pr comment "${{ github.event.issue.number }}" --repo "${{ github.repository }}" --body "❌ $msg"
+          exit 1
+
+      - name: Report no-op
+        if: needs.archive-run.outputs.changed != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHANGE: ${{ needs.archive-run.outputs.name }}
+        run: |
+          gh pr comment "${{ github.event.issue.number }}" --repo "${{ github.repository }}" \
+            --body "ℹ️ \`openspec archive\` ran for \`$CHANGE\` but produced no changes under \`openspec/\` — nothing to commit. It was most likely archived already."
+
+      # From here: archive-run succeeded and produced a patch.
+      - name: Checkout PR head
+        if: needs.archive-run.outputs.changed == 'true'
+        uses: actions/checkout@v6
+        with:
+          # Same oid archive-run patched against. If the branch has since moved,
+          # the push below is a non-fast-forward and fails rather than clobbering.
+          ref: ${{ needs.archive-run.outputs.sha }}
+          fetch-depth: 0
+
+      - name: Download archive patch
+        if: needs.archive-run.outputs.changed == 'true'
+        uses: actions/download-artifact@v8
+        with:
+          name: openspec-archive-patch
+          path: ${{ runner.temp }}
+
+      - name: Apply, commit & push to PR branch
+        id: commit
+        if: needs.archive-run.outputs.changed == 'true'
+        env:
+          CHANGE: ${{ needs.archive-run.outputs.name }}
+          HEAD_REF: ${{ needs.archive-run.outputs.ref }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git apply --index "${RUNNER_TEMP}/openspec-archive.patch"
+          git commit -m "chore(openspec): archive $CHANGE"
+          git push origin "HEAD:$HEAD_REF"
+
+      - name: Report success
+        if: steps.commit.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHANGE: ${{ needs.archive-run.outputs.name }}
+        run: |
+          gh pr comment "${{ github.event.issue.number }}" --repo "${{ github.repository }}" \
+            --body "✅ Archived \`$CHANGE\` — delta specs folded into \`openspec/specs/\` and committed to this PR. Review the spec diff before merging."
+
+      - name: Report push failure
+        # Scoped to the commit step's own outcome so an access/react failure can't
+        # masquerade as a push failure.
+        if: steps.commit.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHANGE: ${{ needs.archive-run.outputs.name }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh pr comment "${{ github.event.issue.number }}" --repo "${{ github.repository }}" \
+            --body "❌ Archived \`$CHANGE\` but couldn't commit it to the branch (the branch likely moved). See the [workflow run]($RUN_URL) and re-run \`/archive\`."

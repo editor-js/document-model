@@ -59,7 +59,10 @@ runs:
         env:
           CHANGED_FILES: ${{ steps.changed-files.outputs.src_all_changed_files }}
         run: |
-          printf '%s' "$CHANGED_FILES" | sed 's/,/","/g' | sed 's/^/["/;s/$/"]/' > changed-files.json
+          # Filenames are PR-controlled; splicing them into JSON by hand (sed)
+          # breaks on a `"` or `\` in a path. jq splits the comma-separated list
+          # and serialises each element as a properly escaped JSON string.
+          jq -cn --arg files "$CHANGED_FILES" '$files | split(",")' > changed-files.json
 
       - name: Save empty list if no files changed
         if: steps.changed-files.outputs.src_any_changed == 'false'
