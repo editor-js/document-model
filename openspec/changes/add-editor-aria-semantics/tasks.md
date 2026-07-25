@@ -6,14 +6,14 @@
 
 ## 2. Blocks holder accessibility (`BlocksUI`)
 
-- [ ] 2.1 Write a failing test asserting the blocks holder element has `role="textbox"` and `aria-multiline="true"` after `BlocksUI` renders it
-- [ ] 2.2 Set `role="textbox"` and `aria-multiline="true"` on the blocks holder element in `packages/ui/src/Blocks/Blocks.ts`
+- [ ] 2.1 Write a failing test asserting the blocks holder element has `role="group"` after `BlocksUI` renders it
+- [ ] 2.2 Set `role="group"` on the blocks holder element in `packages/ui/src/Blocks/Blocks.ts`
 - [ ] 2.3 Confirm the test passes; run `yarn workspace @editorjs/ui test`
 
 ## 3. Paragraph block accessibility
 
-- [ ] 3.1 Write a failing test in `packages/tools/paragraph` asserting the lazily-created contenteditable element has a non-empty `aria-label`
-- [ ] 3.2 Set `aria-label` (e.g. `"Paragraph"`) on the contenteditable `<div>` in `packages/tools/paragraph/src/index.ts` at creation time
+- [ ] 3.1 Write a failing test in `packages/tools/paragraph` asserting the lazily-created contenteditable element has `role="textbox"`, `aria-multiline="true"`, and a non-empty `aria-label`
+- [ ] 3.2 Set `role="textbox"`, `aria-multiline="true"`, and `aria-label` (e.g. `"Paragraph"`) on the contenteditable `<div>` in `packages/tools/paragraph/src/index.ts` at creation time
 - [ ] 3.3 Confirm the test passes; run `yarn workspace @editorjs/paragraph test`
 
 ## 4. Floating toolbar accessibility (`ToolbarUI`)

@@ -1,9 +1,9 @@
 ## ADDED Requirements
 
 ### Requirement: Accessible paragraph block
-`Paragraph` SHALL set an `aria-label` on its contenteditable text element identifying it as a paragraph block, so assistive technology announces the block's purpose when focus enters it.
+`Paragraph` SHALL expose its contenteditable text element as an editable text field to assistive technology, via `role="textbox"`, `aria-multiline="true"`, and a non-empty `aria-label` identifying it as a paragraph block.
 
-#### Scenario: Paragraph contenteditable has an accessible name
+#### Scenario: Paragraph contenteditable is an accessible textbox
 - **GIVEN** a `Paragraph` instance has lazily created its contenteditable `<div>`
 - **WHEN** the element is inspected
-- **THEN** it has a non-empty `aria-label`
+- **THEN** it has `role="textbox"`, `aria-multiline="true"`, and a non-empty `aria-label`

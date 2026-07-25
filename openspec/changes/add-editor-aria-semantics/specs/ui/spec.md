@@ -1,12 +1,12 @@
 ## ADDED Requirements
 
 ### Requirement: Accessible blocks holder
-`BlocksUI` SHALL expose its contenteditable blocks holder element to assistive technology as an editable text region, via `role="textbox"` and `aria-multiline="true"`.
+`BlocksUI` SHALL expose its contenteditable blocks holder element as a structural container, via `role="group"` — the holder itself is not an editable region; each block owns its own `role="textbox"` and accessible name (see the `tools` spec's `Paragraph` requirement), which avoids nesting a `textbox` role inside another `textbox` role between the holder and its contenteditable block children.
 
-#### Scenario: Blocks holder exposes textbox role
+#### Scenario: Blocks holder exposes group role
 - **GIVEN** `BlocksUI` has rendered the blocks holder element
 - **WHEN** the element is inspected
-- **THEN** it has `role="textbox"` and `aria-multiline="true"`
+- **THEN** it has `role="group"`
 
 ### Requirement: Accessible floating toolbar
 `ToolbarUI` SHALL expose its actions container with `role="toolbar"`, and its plus-button control SHALL have an accessible name (`aria-label`) describing its action (opening the toolbox).
