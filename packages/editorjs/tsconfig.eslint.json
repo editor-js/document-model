@@ -9,6 +9,7 @@
     "**/*.spec.ts",
     "jest.config.ts",
     "playwright.config.ts",
+    "playwright.voiceover.config.ts",
     "e2e/**/*"
   ],
   "exclude": [

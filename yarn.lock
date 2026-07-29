@@ -15,6 +15,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@axe-core/playwright@npm:^4.12.1":
+  version: 4.12.1
+  resolution: "@axe-core/playwright@npm:4.12.1"
+  dependencies:
+    axe-core: "npm:~4.12.1"
+  peerDependencies:
+    playwright-core: ">= 1.0.0"
+  checksum: 97c65b666fc95f41137b36a99d4226ea589151ccdf03786a1f5bbaff66b787d2bf38993869252bf6b88c06a3aaf4176d4875a69441fc58c3bbb7fb937d338c70
+  languageName: node
+  linkType: hard
+
 "@babel/code-frame@npm:^7.0.0, @babel/code-frame@npm:^7.12.13, @babel/code-frame@npm:^7.23.5, @babel/code-frame@npm:^7.26.2":
   version: 7.26.2
   resolution: "@babel/code-frame@npm:7.26.2"
@@ -2261,15 +2272,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@editorjs/caret@npm:^1.1.0":
-  version: 1.1.0
-  resolution: "@editorjs/caret@npm:1.1.0"
-  dependencies:
-    "@editorjs/dom": "npm:^1.1.0"
-  checksum: 93dddb81d0683266ea12ab932b1bbac9be9b931d2ac0df87b99d60fc7808c8ababc2e42569afae738a15338017b0d94b6bf5f3f624b5a5d7c1b93cb972d06c6d
-  languageName: node
-  linkType: hard
-
 "@editorjs/clipboard-plugin@workspace:^, @editorjs/clipboard-plugin@workspace:packages/plugins/clipboard-plugin":
   version: 0.0.0-use.local
   resolution: "@editorjs/clipboard-plugin@workspace:packages/plugins/clipboard-plugin"
@@ -2426,6 +2428,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@editorjs/editorjs@workspace:packages/editorjs"
   dependencies:
+    "@axe-core/playwright": "npm:^4.12.1"
     "@babel/core": "npm:^7.29.0"
     "@babel/preset-env": "npm:^7.29.2"
     "@editorjs/bold": "workspace:^"
@@ -2438,8 +2441,10 @@ __metadata:
     "@editorjs/paragraph": "workspace:^"
     "@editorjs/sdk": "workspace:^"
     "@editorjs/ui": "workspace:^"
+    "@guidepup/guidepup": "npm:^0.29.2"
+    "@guidepup/playwright": "npm:^0.18.0"
     "@jest/globals": "npm:^29.7.0"
-    "@playwright/test": "npm:^1.49.1"
+    "@playwright/test": "npm:^1.62.0"
     "@types/eslint": "npm:^9.6.1"
     "@types/jest": "npm:^29.5.12"
     "@types/node": "npm:^22.10.2"
@@ -2448,6 +2453,7 @@ __metadata:
     eslint-config-codex: "npm:^2.0.3"
     eslint-plugin-import: "npm:^2.31.0"
     jest: "npm:^29.7.0"
+    playwright-core: "npm:^1.62.0"
     ts-jest: "npm:^29.2.5"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.5.4"
@@ -2597,7 +2603,7 @@ __metadata:
     "@babel/preset-env": "npm:^7.29.2"
     "@editorjs/helpers": "npm:^1.2.2"
     "@editorjs/model-types": "workspace:^"
-    "@editorjs/ui-kit": "npm:^1.1.5"
+    "@editorjs/ui-kit": "npm:^2.0.0"
     "@jest/globals": "npm:^29.7.0"
     "@types/eslint": "npm:^9.6.1"
     "@types/jest": "npm:^29.5.12"
@@ -2614,18 +2620,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@editorjs/ui-kit@npm:^1.1.5":
-  version: 1.1.5
-  resolution: "@editorjs/ui-kit@npm:1.1.5"
-  dependencies:
-    "@codexteam/icons": "npm:^0.3.3"
-    "@editorjs/caret": "npm:^1.1.0"
-    "@editorjs/dom": "npm:^1.1.0"
-    "@editorjs/helpers": "npm:^1.2.2"
-  checksum: c46cc31874e5271b097486e0abdd626a23d9cd6acd1a81abda580c5a762bdb513984a6eb380639ba8a1cfb945a1cdcfe790482c19508eaf438293f7d10f83568
-  languageName: node
-  linkType: hard
-
 "@editorjs/ui@workspace:^, @editorjs/ui@workspace:packages/ui":
   version: 0.0.0-use.local
   resolution: "@editorjs/ui@workspace:packages/ui"
@@ -2637,7 +2631,7 @@ __metadata:
     "@editorjs/dom-adapters": "workspace:^"
     "@editorjs/helpers": "npm:^1.2.2"
     "@editorjs/sdk": "workspace:^"
-    "@editorjs/ui-kit": "npm:^1.1.5"
+    "@editorjs/ui-kit": "npm:^2.0.0"
     editorjs-v2: "npm:@editorjs/editorjs@^2.30.5"
     eslint: "npm:^9.9.1"
     eslint-config-codex: "npm:^2.0.3"
@@ -3114,6 +3108,23 @@ __metadata:
     "@eslint/core": "npm:^0.13.0"
     levn: "npm:^0.4.1"
   checksum: 2e7fe7a88ebdbbf805e9e7265347b7dcfb6bf50beec314def997572b2e8ae4a7b9504fb67b1698a70c348a0dd87251d1e9028292a96fd49b58cb5277d88bdea7
+  languageName: node
+  linkType: hard
+
+"@guidepup/guidepup@npm:^0.29.2":
+  version: 0.29.2
+  resolution: "@guidepup/guidepup@npm:0.29.2"
+  checksum: 6517918c17ec253a59f4088133487453b59bf339b71a730f65c5465f9e05f41afd3d1034ba91a2e73df3617263551c931dc6ba8890b8b032af22ecc357c6c2d3
+  languageName: node
+  linkType: hard
+
+"@guidepup/playwright@npm:^0.18.0":
+  version: 0.18.0
+  resolution: "@guidepup/playwright@npm:0.18.0"
+  peerDependencies:
+    "@guidepup/guidepup": ">=0.27.0"
+    "@playwright/test": ^1.57.0
+  checksum: 09355c1e04cc9b525c8c897f496424f2fbe1e21b242de9561adc176e2e191ca0ffe323dee144584f39c7e7f812e4f84f2e0d827d784455816465110a3b904037
   languageName: node
   linkType: hard
 
@@ -3737,14 +3748,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@playwright/test@npm:^1.49.1":
-  version: 1.61.1
-  resolution: "@playwright/test@npm:1.61.1"
+"@playwright/test@npm:^1.62.0":
+  version: 1.62.0
+  resolution: "@playwright/test@npm:1.62.0"
   dependencies:
-    playwright: "npm:1.61.1"
+    playwright: "npm:1.62.0"
   bin:
     playwright: cli.js
-  checksum: 08915357031e1bc273a19bb428fb7e51031ca44f25750832e389bcd69c399f6a243f5f832e7832d46153b57b1305f1f5f5dd63f3a3261f928f61e464c6b3c64e
+  checksum: 90b504f3933b97687580d7e6ba42ce9e73a9cdd41da5ae59441104b3dfa1508142ed17e5742acc70fdc2aef79078365859c6a463cebf46a8f7db9506a3ece1d6
   languageName: node
   linkType: hard
 
@@ -5033,6 +5044,13 @@ __metadata:
   dependencies:
     possible-typed-array-names: "npm:^1.0.0"
   checksum: 6c9da3a66caddd83c875010a1ca8ef11eac02ba15fb592dc9418b2b5e7b77b645fa7729380a92d9835c2f05f2ca1b6251f39b993e0feb3f1517c74fa1af02cab
+  languageName: node
+  linkType: hard
+
+"axe-core@npm:~4.12.1":
+  version: 4.12.1
+  resolution: "axe-core@npm:4.12.1"
+  checksum: 08c2ff348524b57dfb68f4e866b1a6363147203b721c734ed00090c16eb911cd015cf71fd96a8bafe42609715f649d21b2e188fae622ac8ef6144b144582f6c4
   languageName: node
   linkType: hard
 
@@ -9894,27 +9912,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"playwright-core@npm:1.61.1":
-  version: 1.61.1
-  resolution: "playwright-core@npm:1.61.1"
+"playwright-core@npm:1.62.0, playwright-core@npm:^1.62.0":
+  version: 1.62.0
+  resolution: "playwright-core@npm:1.62.0"
   bin:
     playwright-core: cli.js
-  checksum: b0e7b1d4de7ca6c1a57eb88f1709609a8b7637092f149e703d84d6c8e01835992ec5ca26b86f1a32fb5f5bc1aad042c3ae27311e131b3dda8a27824a543eb3c7
+  checksum: 1cf036e9ed51ea80d311ac25a871dddbc57d5e7e7a5ad23fc2741452aa8406c95e820901ec38aeecc6fca2ddc383ccc8acb0e2f29a4c12942dd0a1a63e7134a2
   languageName: node
   linkType: hard
 
-"playwright@npm:1.61.1":
-  version: 1.61.1
-  resolution: "playwright@npm:1.61.1"
+"playwright@npm:1.62.0":
+  version: 1.62.0
+  resolution: "playwright@npm:1.62.0"
   dependencies:
     fsevents: "npm:2.3.2"
-    playwright-core: "npm:1.61.1"
+    playwright-core: "npm:1.62.0"
   dependenciesMeta:
     fsevents:
       optional: true
   bin:
     playwright: cli.js
-  checksum: 0cd1a8a7e106202e785450763973bf326d4aa112ed195bbd78b17af43dcfd12e29bc8204ae61c88f748dd0f2bdf69a7827bc3bbf8c1ec4c71b8e35586e05f13c
+  checksum: 52401b5f2b67abcb555c1b1c229e5204a3ac72a604343a99e60b00bd0cd46ad661a9471ced4e6c3ff39de957a0b1f413810d191ce81cd40e455700d73a6a80a5
   languageName: node
   linkType: hard
 

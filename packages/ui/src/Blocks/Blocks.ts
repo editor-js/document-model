@@ -81,6 +81,14 @@ export class BlocksUI implements EditorjsPlugin {
     });
 
     /**
+     * The holder is a structural container, not an editable region of its own.
+     * Being contenteditable, it would otherwise be implicitly mapped to role="textbox"
+     * — nesting a textbox inside the textbox each block already exposes.
+     * Each block owns its own role="textbox" and accessible name instead.
+     */
+    blocksHolder.setAttribute('role', 'group');
+
+    /**
      * Workaround Safari behavior when it deletes blocks if there is no content in them
      * E.g. when you delete all content in the only block, it deletes the block
      */
@@ -157,6 +165,12 @@ export class BlocksUI implements EditorjsPlugin {
     const zeroWidthSpace = document.createTextNode('\u200B');
 
     zeroWidthSpaceWrapper.classList.add(Style['host-holder']);
+
+    /**
+     * Purely a DOM workaround with no content of its own - without this, assistive tech can
+     * land on it and read out its zero-width-space text node as if it were real content
+     */
+    zeroWidthSpaceWrapper.setAttribute('aria-hidden', 'true');
     zeroWidthSpaceWrapper.appendChild(zeroWidthSpace);
 
     blocksHolder.appendChild(zeroWidthSpaceWrapper);

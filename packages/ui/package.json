@@ -48,7 +48,7 @@
     "@editorjs/dom-adapters": "workspace:^",
     "@editorjs/helpers": "^1.2.2",
     "@editorjs/sdk": "workspace:^",
-    "@editorjs/ui-kit": "^1.1.5",
+    "@editorjs/ui-kit": "^2.0.0",
     "editorjs-v2": "npm:@editorjs/editorjs@^2.30.5"
   }
 }
