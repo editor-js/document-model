@@ -32,7 +32,7 @@
 - [x] 4.3 Run the full workspace build + typecheck + lint
 - [x] 4.4 Run the playground and verify end-to-end: editor renders (3 paragraphs), typing updates the model, inline toolbar renders. (Pre-existing, unrelated `collaboration-manager` "Unknown event type DataNodeAddedEvent" console noise remains — out of scope.)
 - [x] 4.5 Add a bundle test asserting a `config.tools` entry named `paragraph` overrides (does not duplicate) the default, and that `isReady` rejects on init failure
-- [ ] 4.6 Re-verify keyboard shortcuts end-to-end in the playground (CMD+B through the bundle) now that `ShortcutsPlugin` is registered
+- [ ] 4.6 (Blocked) Re-verify keyboard shortcuts end-to-end in the playground (CMD+B through the bundle). Verified in-browser that this does **not** work yet and cannot on this branch: `ShortcutsPlugin` listens for `ui:key-down` (`KeydownUIEvent`), but nothing dispatches that event — `packages/ui/src/Blocks/Blocks.ts` only handles CMD+Z/CMD+SHIFT+Z locally and returns early for every other key. Registering the plugin is necessary but not sufficient; the producer side lands with the `BlocksUI` keydown dispatch in the plugin-public-api change (PR #184). Bold itself works: the inline toolbar's B button applies `<b>` to the selection, so this is specifically the shortcut path.
 
 ## 5. Finalize
 
