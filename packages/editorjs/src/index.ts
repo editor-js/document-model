@@ -7,6 +7,7 @@ import { BoldInlineTool } from '@editorjs/bold';
 import { ItalicInlineTool } from '@editorjs/italic';
 import { LinkInlineTool } from '@editorjs/inline-link';
 import { ClipboardPlugin } from '@editorjs/clipboard-plugin';
+import { ShortcutsPlugin } from '@editorjs/shortcuts-plugin';
 import { EditorjsUI, BlocksUI, InlineToolbarUI, ToolbarUI, ToolboxUI } from '@editorjs/ui';
 import { mergeTools } from './mergeTools.js';
 
@@ -71,6 +72,7 @@ export default class EditorJS {
      * Default plugins.
      */
     this.#core.use(ClipboardPlugin);
+    this.#core.use(ShortcutsPlugin);
 
     /**
      * Default tools merged with user-provided `config.tools` (user wins by name).
