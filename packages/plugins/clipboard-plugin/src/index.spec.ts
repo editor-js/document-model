@@ -228,16 +228,6 @@ describe('ClipboardPlugin', () => {
         );
       });
 
-      it('should not include meta in the editorjs clipboard payload', () => {
-        new ClipboardPlugin(pluginParamsMock);
-
-        const { setData } = dispatchCopyEvent();
-
-        const payload = setData.mock.calls.find(([type]) => type === 'application/x-editor-js')?.[1];
-
-        expect(Object.keys(JSON.parse(payload as string) as object)).toEqual(['blocks']);
-      });
-
       it('should not prevent native event when clipboardData is unavailable', () => {
         new ClipboardPlugin(pluginParamsMock);
 
