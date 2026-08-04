@@ -13,6 +13,7 @@
 - [x] 2.5 In `initialize()`, add a synchronous precondition check that throws a clear error naming the missing tool when no registered block tool matches `config.defaultBlock`
 - [x] 2.6 Change the boot `catch` in `initialize()` to re-throw instead of `console.error`
 - [x] 2.7 Update/adjust core tests affected by headless behavior (e.g. tests that assumed default tools or an auto-bound adapter); confirm `yarn test` passes in core (161/161 pass, no changes needed)
+- [x] 2.8 Cover the fail-loud preconditions in `packages/core/src/index.spec.ts`: drive a real `Core`, register stub adapter/block tool/plugin via `use()`, and assert both the throwing paths (missing adapter, missing `defaultBlock`) and the succeeding path (166/166 pass in core)
 
 ## 3. Create the `@editorjs/editorjs` bundle package
 

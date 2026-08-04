@@ -32,6 +32,8 @@ The system SHALL provide a `Core` class owning two IoC containers (one for singl
 - **WHEN** that error propagates out of the boot sequence
 - **THEN** `initialize()` re-throws it to the caller rather than swallowing it with `console.error`
 
+Implemented in `src/index.ts`, validated by its co-located `.spec.ts`.
+
 ### Requirement: Tool registration and validation
 The system SHALL validate configured tools via `ToolsManager`, calling each tool's static `prepare()`, and sorting tools into `available`/`unavailable` collections exposed as `blockTools`/`inlineTools`/`blockTunes`.
 
