@@ -34,6 +34,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          submodules: true
 
       - name: Determine if CI should run
         id: check
@@ -57,6 +58,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          submodules: true
       - name: Run ESLint check
         uses: ./.github/actions/lint
         with:
@@ -68,6 +71,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          submodules: true
 
       - name: Run unit tests
         uses: ./.github/actions/unit-tests
@@ -81,6 +86,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          submodules: true
       - name: Build the package
         uses: ./.github/actions/build
         with:
@@ -92,6 +99,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          submodules: true
 
       - name: Run mutation tests for changed files
         if: ${{ github.event_name == 'pull_request' }}
