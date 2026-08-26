@@ -95,13 +95,3 @@ The system SHALL provide `UndoRedoManager`, which batches consecutive model even
 - **THEN** the default undo/redo behavior is suppressed
 
 Implemented in `src/components/UndoRedoManager.ts`, validated by its co-located `.spec.ts`.
-
-### Requirement: Keyboard shortcuts plugin
-The system SHALL provide a `ShortcutsPlugin` (an `EditorjsPlugin`) that maps keyboard shortcuts declared in a tool's `options.shortcut` to inline-tool application through the `EditorAPI`.
-
-#### Scenario: Triggering an inline tool via shortcut
-- **GIVEN** an inline tool is registered with `options.shortcut` set to a key combination (e.g. `CMD+B`)
-- **WHEN** that key combination is pressed while the editor has focus
-- **THEN** `ShortcutsPlugin` applies the corresponding inline tool to the current selection via the `EditorAPI`
-
-Implemented in `src/plugins/ShortcutsPlugin.ts`.
