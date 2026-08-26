@@ -9,7 +9,8 @@ import {
   type InlineTreeNodeSerialized,
   NODE_TYPE_HIDDEN_PROP,
   renumberKeys,
-  set
+  set,
+  TextIndex
 } from '@editorjs/sdk';
 import 'reflect-metadata';
 import { inject, injectable } from 'inversify';
@@ -435,6 +436,6 @@ export class BlocksManager {
     const userCaret = this.#model.getCaret(this.#config.userId);
     const caretIndex = userCaret?.index;
 
-    return caretIndex?.blockIndex;
+    return caretIndex instanceof TextIndex ? caretIndex.blockIndex : undefined;
   }
 }

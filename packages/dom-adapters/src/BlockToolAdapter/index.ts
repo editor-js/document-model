@@ -1,9 +1,10 @@
 import {
   createDataKey,
   EventAction,
-  IndexBuilder,
+  Index,
   type ModelEvents,
   TextAddedEvent,
+  TextIndex,
   TextRemovedEvent
 } from '@editorjs/sdk';
 import type {
@@ -347,11 +348,11 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
 
     if (newCaretIndex !== null) {
       this.#caretAdapter.updateIndex(
-        new IndexBuilder()
-          .addBlockIndex(this.#api.blocks.getIndexById(this.blockId))
-          .addDataKey(createDataKey(key))
-          .addTextRange([newCaretIndex, newCaretIndex])
-          .build()
+        Index.text([{
+          blockIndex: this.#api.blocks.getIndexById(this.blockId),
+          dataKey: createDataKey(key),
+          textRange: [newCaretIndex, newCaretIndex],
+        }])
       );
     }
   }
@@ -378,7 +379,7 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
     /**
      * In all cases (except formatting commands) we need to handle delete selected text if range is not collapsed.
      */
-    if (range.collapsed === false && !isFormattingInputType) {
+    if (!range.collapsed && !isFormattingInputType) {
       this.#handleDeleteInContentEditable(input, key, range);
     }
 
@@ -493,11 +494,11 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
      */
     requestAnimationFrame(() => {
       this.#caretAdapter.updateIndex(
-        new IndexBuilder()
-          .addBlockIndex(currentBlockIndex + 1)
-          .addDataKey(createDataKey(key))
-          .addTextRange([0, 0])
-          .build()
+        Index.text([{
+          blockIndex: currentBlockIndex + 1,
+          dataKey: createDataKey(key),
+          textRange: [0, 0],
+        }])
       );
     });
   }
@@ -508,9 +509,13 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
    * @param input - input element
    * @param key - data key input is attached to
    */
-  #handleModelUpdateForContentEditableElement(event: ModelEvents, input: HTMLElement, key: string): void {
-    const { userId, index, action } = event.detail;
-    const { textRange, blockIndex: eventBlockIndex } = index;
+  #handleModelUpdateForContentEditableElement(event: TextAddedEvent | TextRemovedEvent, input: HTMLElement, key: string): void {
+    const { userId, action, index, data } = event.detail;
+    const { textRange, blockIndex } = index;
+
+    if (blockIndex === undefined) {
+      return;
+    }
 
     const [start, end] = textRange!;
 
@@ -520,15 +525,11 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
 
     range.setStart(startNode, startOffset);
 
-    const builder = new IndexBuilder();
-
-    builder.addDataKey(createDataKey(key)).addBlockIndex(eventBlockIndex);
-
     let newCaretIndex: number | null = null;
 
     switch (action) {
       case EventAction.Added: {
-        const text = event.detail.data as string;
+        const text = data;
         const textNode = document.createTextNode(text);
 
         range.insertNode(textNode);
@@ -548,8 +549,14 @@ export class DOMBlockToolAdapter extends BlockToolAdapter {
     input.normalize();
 
     if (newCaretIndex !== null) {
-      builder.addTextRange([newCaretIndex, newCaretIndex]);
-      this.#caretAdapter.updateIndex(builder.build(), userId);
+      this.#caretAdapter.updateIndex(
+        Index.text([{
+          blockIndex: blockIndex,
+          dataKey: createDataKey(key),
+          textRange: [newCaretIndex, newCaretIndex],
+        }]),
+        userId
+      );
     }
   };
 
