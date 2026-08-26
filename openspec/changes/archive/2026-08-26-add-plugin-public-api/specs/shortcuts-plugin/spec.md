@@ -1,9 +1,5 @@
-# Shortcuts Plugin
+## MODIFIED Requirements
 
-## Purpose
-
-`@editorjs/shortcuts-plugin` is a built-in `EditorjsPlugin` that maps keyboard shortcuts a tool declares under `options.plugins.shortcuts` to inline-tool application through the `EditorAPI`, and exposes a public API for binding arbitrary handlers to shortcuts at runtime. Both sources share a single shortcut table, so a shortcut always resolves to exactly one handler — the most recently registered. It subscribes to tool-loaded events to collect shortcuts and to delegated keydown events to dispatch them.
-## Requirements
 ### Requirement: Keyboard shortcuts plugin
 The system SHALL provide a `ShortcutsPlugin` (an `EditorjsPlugin` with `name` `shortcuts`) that, on construction, subscribes to the `core:tool:loaded` and `ui:key-down` events, registers the string `shortcut` each loaded tool addresses to it under `options.plugins.shortcuts`, applies the matching inline tool to the current selection via the `EditorAPI` when its shortcut is pressed, and exposes a public API for registering and unregistering shortcuts at runtime. Tool-declared and API-registered shortcuts SHALL share one table, so a shortcut always resolves to exactly one handler.
 
@@ -55,4 +51,3 @@ The system SHALL provide a `ShortcutsPlugin` (an `EditorjsPlugin` with `name` `s
 Shortcuts for block tools and block tunes (a `shortcuts` map under `options.plugins.shortcuts`) are reserved for future work and not yet implemented.
 
 Implemented in `src/index.ts`, validated by its co-located `.spec.ts`.
-
