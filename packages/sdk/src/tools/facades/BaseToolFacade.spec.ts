@@ -13,13 +13,38 @@ import type { EditorAPI } from '../../api';
 const emptyApi = {} as EditorAPI;
 
 /**
+ * Wraps an already-declared tool class in a facade, so a test can keep a reference
+ * to the class itself (e.g. to assert its static `options` were not mutated).
+ * @param constructable - tool class to wrap
+ * @param useToolOptions - second argument of `use(Tool, options)`
+ * @param facadeOpts - `isDefault` / `defaultPlaceholder` for the facade constructor
+ */
+function facadeFor(
+  constructable: unknown,
+  useToolOptions: ToolOptions,
+  facadeOpts: {
+    isDefault?: boolean;
+    defaultPlaceholder?: string | false;
+  } = {}
+): BlockToolFacade {
+  return new BlockToolFacade({
+    api: emptyApi,
+    constructable: constructable as BlockToolConstructor,
+    defaultPlaceholder: facadeOpts.defaultPlaceholder,
+    isDefault: facadeOpts.isDefault ?? false,
+    name: 'test-tool',
+    useToolOptions,
+  });
+}
+
+/**
  * Block tool facade with only fields needed to exercise BaseToolFacade getters.
  * @param staticOptions - optional object set on the mock class as static `options`
  * @param useToolOptions - second argument of `use(Tool, options)`
  * @param facadeOpts - `isDefault` / `defaultPlaceholder` for the facade constructor
  */
 function createBlockFacade(
-  staticOptions: Record<string, unknown> | undefined,
+  staticOptions: unknown,
   useToolOptions: ToolOptions,
   facadeOpts: {
     isDefault?: boolean;
@@ -38,14 +63,12 @@ function createBlockFacade(
     });
   }
 
-  return new BlockToolFacade({
-    api: emptyApi,
-    constructable: MockBlockTool as unknown as BlockToolConstructor,
-    defaultPlaceholder: facadeOpts.defaultPlaceholder,
-    isDefault: facadeOpts.isDefault ?? false,
-    name: 'test-tool',
-    useToolOptions,
-  });
+  return facadeFor(MockBlockTool, useToolOptions, facadeOpts);
+}
+
+interface LevelsConfig {
+  levels?: number[];
+  defaultLevel?: number;
 }
 
 declare module '../../index.js' {
@@ -256,6 +279,103 @@ describe('BaseToolFacade (via BlockToolFacade)', () => {
       });
 
       expect(facade.config).toEqual({});
+    });
+  });
+
+  describe('options factory', () => {
+    it('should call the options factory once with the config passed at use() time', () => {
+      const seen: LevelsConfig[] = [];
+      const factory = (config: LevelsConfig): Record<string, unknown> => {
+        seen.push(config);
+
+        return { config };
+      };
+
+      createBlockFacade(factory, {
+        [UserToolOptions.Config]: { levels: [1, 3] },
+      } as ToolOptions);
+
+      expect(seen).toEqual([{ levels: [1, 3] }]);
+    });
+
+    it('should not call the options factory again when option getters are read repeatedly', () => {
+      let callCount = 0;
+      const factory = (): Record<string, unknown> => {
+        callCount += 1;
+
+        return { config: { levels: [1] } };
+      };
+
+      const facade = createBlockFacade(factory, {} as ToolOptions);
+
+      void facade.options;
+      void facade.config;
+      void facade.options;
+
+      expect(callCount).toBe(1);
+    });
+
+    it('should leave the tool class options untouched after resolving the factory', () => {
+      const factory = (config: LevelsConfig): Record<string, unknown> => ({
+        config: { levels: config.levels ?? [1] },
+      });
+
+      class ToolWithFactoryOptions {
+        public static type = ToolType.Block;
+        public static options = factory;
+      }
+
+      facadeFor(ToolWithFactoryOptions, {
+        [UserToolOptions.Config]: { levels: [2] },
+      } as ToolOptions);
+
+      expect(ToolWithFactoryOptions.options).toBe(factory);
+    });
+
+    it('should resolve options independently for two facades wrapping the same tool class with different configs', () => {
+      class SharedTool {
+        public static type = ToolType.Block;
+        public static options = (config: LevelsConfig): Record<string, unknown> => {
+          const levels = config.levels ?? [1];
+
+          return { config: { defaultLevel: levels[levels.length - 1] } };
+        };
+      }
+
+      const first = facadeFor(SharedTool, {
+        [UserToolOptions.Config]: { levels: [1] },
+      } as ToolOptions);
+      const second = facadeFor(SharedTool, {
+        [UserToolOptions.Config]: { levels: [2, 3] },
+      } as ToolOptions);
+
+      expect(first.config).toEqual({
+        levels: [1],
+        defaultLevel: 1,
+      });
+      expect(second.config).toEqual({
+        levels: [2, 3],
+        defaultLevel: 3,
+      });
+    });
+
+    it('should merge factory-returned config defaults with the use()-time config', () => {
+      const facade = createBlockFacade(
+        (config: LevelsConfig): Record<string, unknown> => ({
+          config: {
+            levels: config.levels ?? [1, 2, 3],
+            defaultLevel: config.defaultLevel ?? 2,
+          },
+        }),
+        {
+          [UserToolOptions.Config]: { levels: [4] },
+        } as ToolOptions
+      );
+
+      expect(facade.config).toEqual({
+        levels: [4],
+        defaultLevel: 2,
+      });
     });
   });
 

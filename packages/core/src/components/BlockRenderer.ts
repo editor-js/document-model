@@ -99,9 +99,10 @@ export class BlockRenderer {
    * @param event - BlockAddedEvent
    */
   async #handleBlockAddedEvent(event: BlockAddedEvent): Promise<void> {
-    const { index, data } = event.detail;
+    const { data } = event.detail;
+    const blockIndex = event.detail.index.blockIndex;
 
-    if (index.blockIndex === undefined) {
+    if (blockIndex === undefined) {
       throw new Error('[BlockRenderer] Block index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
     }
 
@@ -127,7 +128,7 @@ export class BlockRenderer {
         tool: tool.name,
         data: data.data,
         ui: blockElement,
-        index: index.blockIndex,
+        index: blockIndex,
       }));
     } catch (error) {
       console.error(`[BlockRenderer] Block Tool ${data.name} failed to render`, error);
@@ -141,9 +142,10 @@ export class BlockRenderer {
    * @param event - BlockRemovedEvent
    */
   #handleBlockRemovedEvent(event: BlockRemovedEvent): void {
-    const { data, index } = event.detail;
+    const { data } = event.detail;
+    const blockIndex = event.detail.index.blockIndex;
 
-    if (index.blockIndex === undefined) {
+    if (blockIndex === undefined) {
       throw new Error('[BlockRenderer] Block index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
     }
 
@@ -151,7 +153,7 @@ export class BlockRenderer {
 
     this.#eventBus.dispatchEvent(new BlockRemovedCoreEvent({
       tool: data.name,
-      index: index.blockIndex,
+      index: blockIndex,
     }));
 
     /**

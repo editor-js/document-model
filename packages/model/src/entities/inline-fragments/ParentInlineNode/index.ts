@@ -1,5 +1,5 @@
 import { getContext } from '../../../utils/Context.js';
-import { IndexBuilder } from '@editorjs/model-types';
+import { PartialIndex } from '@editorjs/model-types';
 import type { InlineNode } from '../InlineNode/index.js';
 import type { InlineFragment, InlineTreeNodeSerialized, InlineToolData, InlineToolName } from '@editorjs/model-types';
 import type { ParentNodeConstructorOptions } from '../mixins/ParentNode/index.js';
@@ -69,11 +69,7 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
     this.normalize();
 
-    const builder = new IndexBuilder();
-
-    builder.addTextRange([index, index]);
-
-    this.dispatchEvent(new TextAddedEvent(builder.build(), text, getContext<string | number>()!));
+    this.dispatchEvent(new TextAddedEvent(new PartialIndex({ textRange: [index, index] }), text, getContext<string | number>()!));
   }
 
   /**
@@ -96,11 +92,7 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
     this.normalize();
 
-    const builder = new IndexBuilder();
-
-    builder.addTextRange([start, end]);
-
-    this.dispatchEvent(new TextRemovedEvent(builder.build(), removedText, getContext<string | number>()!));
+    this.dispatchEvent(new TextRemovedEvent(new PartialIndex({ textRange: [start, end] }), removedText, getContext<string | number>()!));
 
     return removedText;
   }
@@ -196,13 +188,9 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
     this.normalize();
 
-    const builder = new IndexBuilder();
-
-    builder.addTextRange([start, end]);
-
     this.dispatchEvent(
       new TextFormattedEvent(
-        builder.build(),
+        new PartialIndex({ textRange: [start, end] }),
         {
           tool,
           data,
@@ -244,11 +232,7 @@ export class ParentInlineNode extends EventBus implements InlineNode {
 
     this.normalize();
 
-    const builder = new IndexBuilder();
-
-    builder.addTextRange([start, end]);
-
-    this.dispatchEvent(new TextUnformattedEvent(builder.build(), { tool }, getContext<string | number>()!));
+    this.dispatchEvent(new TextUnformattedEvent(new PartialIndex({ textRange: [start, end] }), { tool }, getContext<string | number>()!));
 
     return newNodes;
   }

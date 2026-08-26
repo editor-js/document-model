@@ -19,7 +19,6 @@ const model = ref<EditorJSModel | null>(null);
 
 const userId = crypto.randomUUID();
 
-
 /**
  * @todo display caret index somewhere
  */
@@ -83,7 +82,7 @@ const collapsedSections = ref<{ [key: string]: boolean }>({
 /**
  * Toggles the collapsed state of a section
  *
- * @param section - section to toggle
+ * @param {string} section - section name to toggle
  */
 function toggleSection(section: string) {
   collapsedSections.value[section] = !collapsedSections.value[section];

@@ -87,7 +87,6 @@ export type {
   ModelEvents,
   CaretManagerEvents,
   DocumentId,
-  DocumentIndex,
   TextFormattedEventData,
   TextUnformattedEventData,
   CaretSerialized,
@@ -109,7 +108,6 @@ export {
   EventAction,
   EventType,
   Index,
-  IndexBuilder,
   BaseDocumentEvent,
   DataNodeAddedEvent,
   DataNodeRemovedEvent,
@@ -124,5 +122,14 @@ export {
   BlockAddedEvent,
   BlockRemovedEvent,
   PropertyModifiedEvent,
-  TuneModifiedEvent
+  TuneModifiedEvent,
+  IndexBase,
+  IndexKind,
+  BlockIndex,
+  DataIndex,
+  TextIndex,
+  TuneIndex,
+  DocumentIndex,
+  PropertyIndex,
+  PartialIndex
 } from '@editorjs/model-types';

@@ -8,7 +8,8 @@ import { ToolType, BaseToolOptionKey } from '../../entities/index.js';
 import { type BlockTuneFacade } from './BlockTuneFacade.js';
 import type {
   BlockTool, BlockToolConstructor, InlineTool, InlineToolConstructor, BlockTuneConstructor,
-  ToolTypeToOptions, ToolStaticOptions, BlockToolOptions, InlineToolOptions, BlockTuneOptions
+  ToolTypeToOptions, ToolStaticOptions, BlockToolOptions, InlineToolOptions, BlockTuneOptions,
+  ToolOptionsFactory
 } from '../../entities/index.js';
 import type { EditorAPI } from '../../api';
 import type { ToolPluginOptions, ToolPluginOptionsMap } from '../../index.js';
@@ -106,6 +107,16 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
   protected readonly constructable: ToolConstructable;
 
   /**
+   * Tool's static options, resolved once for this registration.
+   *
+   * When the tool declares `options` as a {@link ToolOptionsFactory}, the factory is
+   * invoked in the constructor and its result kept here — per facade instance, never
+   * written back onto the shared tool class. Two Core instances registering the same
+   * class with different configs therefore cannot observe each other's derived values.
+   */
+  protected readonly resolvedStaticOptions: ToolTypeToOptions[Type];
+
+  /**
    * Default placeholder specified in EditorJS user configuration
    */
   protected defaultPlaceholder?: string | false;
@@ -133,6 +144,7 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
     this.useToolOptions = useToolOptions;
     this.isDefault = isDefault;
     this.defaultPlaceholder = defaultPlaceholder;
+    this.resolvedStaticOptions = this.resolveStaticOptions(constructable, useToolOptions) as ToolTypeToOptions[Type];
   }
 
   /**
@@ -141,10 +153,8 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
    * @returns Merged static tool options and second-argument `use` options
    */
   public get options(): ToolTypeToOptions[Type] {
-    const staticDefaults = this.constructable.options ?? {};
-
     return {
-      ...staticDefaults,
+      ...this.resolvedStaticOptions,
       ...this.useToolOptions,
       ...(this.#mergedPluginOptions === undefined
         ? {}
@@ -187,8 +197,7 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
    * @returns Merged tool plugin configuration object
    */
   public get config(): Record<string, unknown> {
-    const staticOpts = this.constructable.options;
-    const fromTool = (staticOpts?.[BaseToolOptionKey.Config] ?? {}) as Record<string, unknown>;
+    const fromTool = (this.resolvedStaticOptions[BaseToolOptionKey.Config] ?? {}) as Record<string, unknown>;
     const fromUse = (this.useToolOptions[UserToolOptions.Config] ?? {}) as Record<string, unknown>;
     const merged: Record<string, unknown> = {
       ...fromTool,
@@ -251,6 +260,28 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
    */
   public isTune(): this is BlockTuneFacade {
     return this.type === ToolType.Tune;
+  }
+
+  /**
+   * Resolves a tool class's static options for a single registration.
+   *
+   * A tool may declare `options` either as a plain object or as a {@link ToolOptionsFactory}
+   * of its config. The factory form is invoked here — once, synchronously — with the `config`
+   * supplied to `use(Tool, { config })`, and applies its own defaults for keys the integrator
+   * omitted.
+   * @param constructable - tool class being registered
+   * @param useToolOptions - second argument of `use(Tool, options)`
+   */
+  private resolveStaticOptions(constructable: ToolConstructable, useToolOptions: ToolOptions): ToolOptions {
+    const staticOptions = constructable.options;
+
+    if (isFunction(staticOptions)) {
+      const factory = staticOptions as ToolOptionsFactory;
+
+      return (factory(useToolOptions[UserToolOptions.Config] ?? {}) ?? {}) as ToolOptions;
+    }
+
+    return staticOptions ?? {};
   }
 
   /**

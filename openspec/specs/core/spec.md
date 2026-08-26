@@ -12,7 +12,7 @@ The system SHALL provide a `Core` class owning two IoC containers (one for singl
 #### Scenario: Initialization order
 - **GIVEN** tools, plugins, and an adapter have been registered via `use()`
 - **WHEN** `initialize()` is called
-- **THEN** `SelectionManager`, `BlocksManager`, `BlockRenderer`, and `UndoRedoManager` are resolved from the IoC container, plugins are initialized, tools are initialized, the model's document is initialized, and finally a `CoreEventType.Ready` event is dispatched
+- **THEN** `SelectionManager`, `BlocksManager`, and `BlockRenderer` are resolved from the IoC container, plugins are initialized, tools are initialized, `UndoRedoManager` is resolved (after plugins/tools so it observes `defaultPrevented` set by them on undo/redo events), the model's document is initialized, and finally a `CoreEventType.Ready` event is dispatched
 
 #### Scenario: Exactly one adapter is required
 - **GIVEN** one or more `PluginType.Adapter` plugins are registered via `use()`
@@ -95,13 +95,3 @@ The system SHALL provide `UndoRedoManager`, which batches consecutive model even
 - **THEN** the default undo/redo behavior is suppressed
 
 Implemented in `src/components/UndoRedoManager.ts`, validated by its co-located `.spec.ts`.
-
-### Requirement: Keyboard shortcuts plugin
-The system SHALL provide a `ShortcutsPlugin` (an `EditorjsPlugin`) that maps keyboard shortcuts declared in a tool's `options.shortcut` to inline-tool application through the `EditorAPI`.
-
-#### Scenario: Triggering an inline tool via shortcut
-- **GIVEN** an inline tool is registered with `options.shortcut` set to a key combination (e.g. `CMD+B`)
-- **WHEN** that key combination is pressed while the editor has focus
-- **THEN** `ShortcutsPlugin` applies the corresponding inline tool to the current selection via the `EditorAPI`
-
-Implemented in `src/plugins/ShortcutsPlugin.ts`.

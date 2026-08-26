@@ -24,7 +24,7 @@ import { Paragraph } from '@editorjs/paragraph';
 import { BoldInlineTool } from '@editorjs/bold';
 import { ItalicInlineTool } from '@editorjs/italic';
 import { LinkInlineTool } from '@editorjs/inline-link';
-import { ShortcutsPlugin } from './plugins/ShortcutsPlugin.js';
+import { ShortcutsPlugin } from '@editorjs/shortcuts-plugin';
 import { DOMAdapters } from '@editorjs/dom-adapters';
 import { BlocksManager } from './components/BlockManager.js';
 import { BlockRenderer } from './components/BlockRenderer.js';
@@ -186,10 +186,15 @@ export default class Core {
       this.#iocContainer.get(SelectionManager);
       this.#iocContainer.get(BlocksManager);
       this.#iocContainer.get(BlockRenderer);
-      this.#iocContainer.get(UndoRedoManager);
 
       this.#initializePlugins();
       await this.#initializeTools();
+
+      /**
+       * UndoRedoManager should go after plugins as it uses defaultPrevented on undo/redo events which can be set by plugins
+       * @todo Figure out how to make initialization less complex
+       */
+      this.#iocContainer.get(UndoRedoManager);
 
       this.#model.initializeDocument({ blocks });
 

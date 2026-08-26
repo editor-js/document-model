@@ -1,9 +1,22 @@
-import type { ToolConfig } from '@editorjs/editorjs';
 import type { BlockToolOptions } from './BlockTool.js';
 import type { InlineToolOptions } from './InlineTool.js';
 import type { BlockTuneOptions } from './BlockTune.js';
 import type { ToolType } from './EntityType.js';
 import type { ToolPluginOptions } from '../index.js';
+
+/**
+ * Plugin-specific, tool-author-facing configuration object.
+ *
+ * Kept formally distinct from a tool's static options: `options` is core/plugin-facing
+ * wiring read before any block instance exists, while `ToolConfig` is user data resolved
+ * per tool registration and handed to the tool instance.
+ *
+ * Replaces the legacy `ToolConfig` re-exported from `@editorjs/editorjs`, whose default
+ * type argument was `any` — meaning any tool that omitted the generic silently opted out
+ * of type checking on its own configuration.
+ * @template T - Shape of the tool's own configuration object.
+ */
+export type ToolConfig<T extends object = object> = T;
 
 /**
  * Canonical keys shared by every tool options interface.
@@ -40,6 +53,26 @@ export interface BaseToolOptions<Config extends ToolConfig = ToolConfig> {
    */
   [BaseToolOptionKey.Plugins]?: ToolPluginOptions;
 }
+
+/**
+ * Derives a tool's static options from its resolved configuration.
+ *
+ * Declared in place of a plain options object when some option value depends on
+ * config — e.g. a `toolbox` whose entries follow a `levels` config field. The
+ * factory is called once per tool registration, with the `config` supplied to
+ * `core.use(Tool, { config })`, so it must apply its own defaults for keys the
+ * integrator omitted.
+ *
+ * It must be synchronous: every consumer of static options reads it through a
+ * synchronous facade getter. Asynchronous tool initialization belongs in
+ * {@link BaseToolConstructor.prepare} instead.
+ * @template Config - Shape of the plugin-specific config object.
+ * @template Options - The concrete options interface for this tool type.
+ */
+export type ToolOptionsFactory<
+  Config extends ToolConfig = ToolConfig,
+  Options extends BaseToolOptions<Config> = BaseToolOptions<Config>
+> = (config: Config) => Options;
 
 // Re-export so consumers can import all option types from this file
 export type { BlockToolOptions, InlineToolOptions, BlockTuneOptions };
@@ -91,8 +124,12 @@ export interface BaseToolConstructor<
    * All static configuration for the tool.
    * Values here are defaults; they can be overridden via the second argument
    * of `core.use(Tool, options)`.
+   *
+   * May also be a {@link ToolOptionsFactory} — a synchronous function of the tool's
+   * config — when option values are derived from configuration. The facade resolves
+   * it once, per registration, and never writes the result back onto the tool class.
    */
-  options?: Options;
+  options?: Options | ToolOptionsFactory<Config, Options>;
 
   /**
    * Tool's prepare method. Can be async.

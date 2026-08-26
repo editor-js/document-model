@@ -1,5 +1,5 @@
 import { getContext } from '../../utils/Context.js';
-import { IndexBuilder } from '@editorjs/model-types';
+import { PartialIndex } from '@editorjs/model-types';
 import type { ValueNodeConstructorParameters } from './types/index.js';
 import type { ValueSerialized } from '@editorjs/model-types';
 import { BlockChildType } from '@editorjs/model-types';
@@ -38,10 +38,8 @@ export class ValueNode<ValueType = unknown> extends EventBus {
 
     this.#value = value;
 
-    const builder = new IndexBuilder();
-
     this.dispatchEvent(
-      new ValueModifiedEvent(builder.build(), {
+      new ValueModifiedEvent(new PartialIndex({}), {
         value: this.#value,
         previous: previousValue,
       }, getContext<string | number>()!)
