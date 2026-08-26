@@ -40,6 +40,11 @@ const EDITOR_JS_CLIPBOARD_MIME_TYPE = 'application/x-editor-js';
 export class ClipboardPlugin implements EditorjsPlugin {
   public static readonly type = PluginType.Plugin;
 
+  /**
+   * Plugin name used to identify the plugin across the editor
+   */
+  public static readonly name = 'clipboard';
+
   readonly #api: EditorAPI;
   readonly #eventBus: EventBus;
   #copyEventListener: ((e: CopyUIEvent) => void) | undefined;
