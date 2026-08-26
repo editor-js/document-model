@@ -179,7 +179,7 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
    * All plugin-directed slices merged per plugin id, or `undefined` when neither source has any.
    */
   get #mergedPluginOptions(): ToolPluginOptions | undefined {
-    const fromTool = this.constructable.options?.[BaseToolOptionKey.Plugins];
+    const fromTool = this.resolvedStaticOptions[BaseToolOptionKey.Plugins];
     const fromUse = this.useToolOptions[BaseToolOptionKey.Plugins];
 
     if (fromTool === undefined && fromUse === undefined) {
