@@ -2339,6 +2339,7 @@ __metadata:
     "@editorjs/model": "workspace:^"
     "@editorjs/paragraph": "workspace:^"
     "@editorjs/sdk": "workspace:^"
+    "@editorjs/shortcuts-plugin": "workspace:^"
     "@jest/globals": "npm:^29.7.0"
     "@stryker-mutator/core": "npm:^7.0.2"
     "@stryker-mutator/jest-runner": "npm:^7.0.2"
@@ -2592,6 +2593,32 @@ __metadata:
     eslint-config-codex: "npm:^2.0.3"
     eslint-plugin-import: "npm:^2.31.0"
     jest: "npm:^29.7.0"
+    ts-jest: "npm:^29.2.5"
+    ts-node: "npm:^10.9.2"
+    typescript: "npm:^5.5.4"
+  languageName: unknown
+  linkType: soft
+
+"@editorjs/shortcuts-plugin@workspace:^, @editorjs/shortcuts-plugin@workspace:packages/plugins/shortcuts-plugin":
+  version: 0.0.0-use.local
+  resolution: "@editorjs/shortcuts-plugin@workspace:packages/plugins/shortcuts-plugin"
+  dependencies:
+    "@babel/core": "npm:^7.29.0"
+    "@babel/preset-env": "npm:^7.29.2"
+    "@editorjs/sdk": "workspace:^"
+    "@jest/globals": "npm:^29.7.0"
+    "@stryker-mutator/core": "npm:^7.0.2"
+    "@stryker-mutator/jest-runner": "npm:^7.0.2"
+    "@stryker-mutator/typescript-checker": "npm:^7.0.2"
+    "@types/eslint": "npm:^9.6.1"
+    "@types/jest": "npm:^29.5.12"
+    "@types/node": "npm:^22.10.2"
+    babel-jest: "npm:^29.7.0"
+    eslint: "npm:^9.24.0"
+    eslint-config-codex: "npm:^2.0.3"
+    eslint-plugin-import: "npm:^2.31.0"
+    jest: "npm:^29.7.0"
+    stryker-cli: "npm:^1.0.2"
     ts-jest: "npm:^29.2.5"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.5.4"
