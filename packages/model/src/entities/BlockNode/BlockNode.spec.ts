@@ -1,6 +1,6 @@
 import { EventAction } from '@editorjs/model-types';
 import { Index } from '@editorjs/model-types';
-import { IndexBuilder } from '@editorjs/model-types';
+import { PartialIndex } from '@editorjs/model-types';
 import { createDataKey, createBlockId, createBlockToolName, createBlockTuneName } from '@editorjs/model-types';
 import { BlockNode } from './index.js';
 import { NonExistingKeyError } from './errors/NonExistingKeyError.js';
@@ -1635,8 +1635,7 @@ describe('BlockNode', () => {
 
       node.addEventListener(EventType.Changed, handler);
 
-      textNode.dispatchEvent(new TextAddedEvent(new IndexBuilder().addTextRange(range)
-        .build(), 'Hello', 'user'));
+      textNode.dispatchEvent(new TextAddedEvent(new PartialIndex({ textRange: range }), 'Hello', 'user'));
 
       expect(event).toBeInstanceOf(TextAddedEvent);
       expect(event)
@@ -1687,7 +1686,7 @@ describe('BlockNode', () => {
 
       valueNode.dispatchEvent(
         new ValueModifiedEvent(
-          new Index(),
+          Index.data(0, dataKey),
           {
             value: newValue,
             previous: value,
@@ -1746,9 +1745,7 @@ describe('BlockNode', () => {
 
       tune.dispatchEvent(
         new TuneModifiedEvent(
-          new IndexBuilder()
-            .addTuneKey(key)
-            .build(),
+          new PartialIndex({ tuneKey: key }),
           {
             value: newValue,
             previous: value,

@@ -20,7 +20,7 @@
   "scripts": {
     "build": "vite build",
     "build:declaration": "",
-    "dev": "vite build --watch",
+    "dev": "chokidar 'src/**/*' -c 'yarn build' --initial",
     "prebuild": "yarn clear",
     "lint": "eslint ./src",
     "lint:ci": "yarn lint --max-warnings 0",
@@ -28,6 +28,7 @@
     "clear": "rm -rf ./dist && rm -f tsconfig.tsbuildinfo && rm -f tsconfig.tsbuildinfo.json"
   },
   "devDependencies": {
+    "chokidar-cli": "^3.0.0",
     "eslint": "^9.9.1",
     "eslint-config-codex": "^2.0.3",
     "postcss": "^8.5.10",

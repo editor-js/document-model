@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { EditorJSModel } from '@editorjs/model';
 import type { BlockNodeSerialized, InlineFragment } from '@editorjs/sdk';
 import {
+  BlockIndex,
   CaretManagerCaretUpdatedEvent,
   CaretManagerEvents,
   CoreConfigValidated,
@@ -10,11 +11,11 @@ import {
   EventType,
   FormattingAction,
   Index,
-  IndexBuilder,
   IndexError,
   InlineToolFormatData,
   InlineToolName,
-  SelectionChangedCoreEvent
+  SelectionChangedCoreEvent,
+  TextIndex
 } from '@editorjs/sdk';
 import { inject, injectable } from 'inversify';
 import { TOKENS } from '../tokens.js';
@@ -82,7 +83,7 @@ export class SelectionManager {
         const index = serializedIndex !== null ? Index.parse(serializedIndex) : null;
         let fragments: InlineFragment[] = [];
 
-        if (index !== null) {
+        if (index !== null && index instanceof TextIndex) {
           for (const segment of index.getTextSegments()) {
             if (segment.blockIndex !== undefined && segment.dataKey !== undefined && segment.textRange !== undefined) {
               fragments.push(
@@ -154,7 +155,12 @@ export class SelectionManager {
      * @todo do not store middle segments in the index, use only the first and last segments
      * Also, we need to sort inputs inside first/last block by document order to restore selection
      */
-    const segments = caretIndex.getTextSegments();
+    /**
+     * @todo caretIndex is typed as Readonly<Index> | null, so this cast is technically unsound.
+     * Not currently reachable — caret.index is only ever set to null or a TextIndex (CaretAdapter/BlockToolAdapter);
+     * there's no block-level caret concept that would store a BlockIndex/DataIndex here. Guard with instanceof if that changes.
+     */
+    const segments = (caretIndex as TextIndex).getTextSegments();
 
     if (segments.length === 0) {
       throw new IndexError('SelectionManager[applyInlineTool]: caret index is outside of the input');
@@ -210,15 +216,10 @@ export class SelectionManager {
         } else {
           // For composite selections, don't try to add textRange since composite indices
           // must not have root-level textRange. Only set textRange for single-segment selections.
-          const selectedSegments = caretIndex.getTextSegments();
+          const selectedSegments = (caretIndex as TextIndex).getTextSegments();
 
           if (selectedSegments.length === 1 && selectedSegments[0].textRange !== undefined) {
-            caret?.update(
-              new IndexBuilder()
-                .from(caretIndex)
-                .addTextRange([selectedSegments[0].textRange[1], selectedSegments[0].textRange[1]])
-                .build()
-            );
+            caret?.update(caretIndex.withTextRange([selectedSegments[0].textRange[1], selectedSegments[0].textRange[1]]));
           } else {
             caret?.update(caretIndex);
           }
@@ -237,44 +238,44 @@ export class SelectionManager {
       return [];
     }
 
-    if (currentSelectionIndex.isBlockIndex) {
+    if (currentSelectionIndex instanceof BlockIndex) {
       const block = this.#resolveBlock(currentSelectionIndex.blockIndex);
 
       return block !== undefined ? [block] : [];
     }
 
-    if (currentSelectionIndex.compositeSegments !== undefined) {
-      const seenBlockIndexes = new Set<number>();
-      const blocks: BlockNodeSerialized[] = [];
-
-      for (const segment of currentSelectionIndex.compositeSegments) {
-        const { blockIndex } = segment;
-
-        if (blockIndex === undefined || seenBlockIndexes.has(blockIndex)) {
-          continue;
-        }
-
-        seenBlockIndexes.add(blockIndex);
-
-        const block = this.#resolveBlock(blockIndex);
-
-        if (block !== undefined) {
-          blocks.push(block);
-        }
-      }
-
-      return blocks;
+    if (!(currentSelectionIndex instanceof TextIndex)) {
+      return [];
     }
 
-    return [];
+    const seenBlockIndexes = new Set<number>();
+    const blocks: BlockNodeSerialized[] = [];
+
+    for (const segment of currentSelectionIndex.segments) {
+      const { blockIndex } = segment;
+
+      if (seenBlockIndexes.has(blockIndex)) {
+        continue;
+      }
+
+      seenBlockIndexes.add(blockIndex);
+
+      const block = this.#resolveBlock(blockIndex);
+
+      if (block !== undefined) {
+        blocks.push(block);
+      }
+    }
+
+    return blocks;
   }
 
   /**
-   * Resolves a block by index, guarding against missing or out-of-bounds indexes
+   * Resolves a block by index, guarding against out-of-bounds indexes
    * @param blockIndex - index of the block to resolve
    */
-  #resolveBlock(blockIndex: number | undefined): BlockNodeSerialized | undefined {
-    if (blockIndex === undefined || blockIndex < 0 || blockIndex >= this.#model.serialized.blocks.length) {
+  #resolveBlock(blockIndex: number): BlockNodeSerialized | undefined {
+    if (blockIndex < 0 || blockIndex >= this.#model.serialized.blocks.length) {
       return undefined;
     }
 

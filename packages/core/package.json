@@ -49,6 +49,7 @@
     "@editorjs/model": "workspace:^",
     "@editorjs/paragraph": "workspace:^",
     "@editorjs/sdk": "workspace:^",
+    "@editorjs/shortcuts-plugin": "workspace:^",
     "inversify": "^8.1.0",
     "reflect-metadata": "^0.2.2"
   }
