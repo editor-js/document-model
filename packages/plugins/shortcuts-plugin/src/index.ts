@@ -128,7 +128,11 @@ export class ShortcutsPlugin implements EditorjsPlugin<'shortcuts'> {
 
       const { shortcut } = tool.pluginOptions(ShortcutsPlugin.name) ?? {};
 
-      if (shortcut !== undefined) {
+      /**
+       * Tools may be authored in plain JS, so the declared `string` type is not a runtime
+       * guarantee — a non-string here would throw inside `matchKeyboardShortcut` on every keypress.
+       */
+      if (typeof shortcut === 'string') {
         this.publicApi.register(shortcut, () => this.#processInlineTool(tool.name));
       }
 
