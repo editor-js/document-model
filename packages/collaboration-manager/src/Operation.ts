@@ -1,5 +1,5 @@
 import type { TextRange } from '@editorjs/sdk';
-import { IndexBuilder, type Index, type BlockNodeSerialized } from '@editorjs/sdk';
+import { Index, type TextIndex, type BlockNodeSerialized } from '@editorjs/sdk';
 import { OperationsTransformer } from './OperationsTransformer.js';
 
 /**
@@ -169,11 +169,9 @@ export class Operation<T extends OperationType = OperationType> {
      * Because of TypeScript guards we need to use an if statement here
      */
     if (typeof opOrJSON.index === 'string') {
-      index = new IndexBuilder().from(opOrJSON.index)
-        .build();
+      index = Index.parse(opOrJSON.index);
     } else {
-      index = new IndexBuilder().from(opOrJSON.index)
-        .build();
+      index = opOrJSON.index.clone();
     }
 
     return new Operation(opOrJSON.type, index, opOrJSON.data, opOrJSON.userId, opOrJSON.rev);
@@ -185,11 +183,13 @@ export class Operation<T extends OperationType = OperationType> {
    * @returns effective text range of the operation
    */
   public getEffectiveRange(): TextRange {
+    const textIndex = this.index as TextIndex;
+
     if (this.type === OperationType.Insert) {
-      return [this.index.textRange![0], Math.max(this.index.textRange![1], this.index.textRange![0] + this.data.payload!.length)];
+      return [textIndex.textRange![0], Math.max(textIndex.textRange![1], textIndex.textRange![0] + this.data.payload!.length)];
     }
 
-    return this.index.textRange!;
+    return textIndex.textRange!;
   }
 
   /**

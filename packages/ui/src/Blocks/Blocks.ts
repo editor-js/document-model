@@ -1,15 +1,15 @@
-import type {
+import type { EventBus,
   BlockAddedCoreEvent,
-  BlockRemovedCoreEvent, EditorAPI,
+  BlockRemovedCoreEvent, CopyUIEventPayload,
   EditorjsPlugin,
-  EditorjsPluginParams
-} from '@editorjs/sdk';
+  EditorjsPluginParams, EditorAPI } from '@editorjs/sdk';
 import {
   CoreEventType,
+  CopyUIEvent,
+  KeydownUIEvent,
   UiComponentType,
   BeforeInputUIEvent
 } from '@editorjs/sdk';
-import type { EventBus } from '@editorjs/sdk';
 import Style from './Blocks.module.pcss';
 import { isNativeInput, make } from '@editorjs/dom';
 import { BlocksHolderRenderedUIEvent, BlockSelectedUIEvent } from './events/index.js';
@@ -117,6 +117,17 @@ export class BlocksUI implements EditorjsPlugin {
     });
 
     blocksHolder.addEventListener('keydown', (e) => {
+      /**
+       * Delegate the keydown so plugins (e.g. Shortcuts) can act on it first.
+       * The bus dispatches synchronously, so a plugin that handled the key has already
+       * called preventDefault by the time this returns — treat that as "consumed".
+       */
+      this.#eventBus.dispatchEvent(new KeydownUIEvent({ nativeEvent: e }));
+
+      if (e.defaultPrevented) {
+        return;
+      }
+
       if (e.code !== 'KeyZ') {
         return;
       }
@@ -136,6 +147,14 @@ export class BlocksUI implements EditorjsPlugin {
       this.#api.document.undo();
 
       e.preventDefault();
+    });
+
+    blocksHolder.addEventListener('copy', (e) => {
+      const payload: CopyUIEventPayload = {
+        nativeEvent: e,
+      };
+
+      this.#eventBus.dispatchEvent(new CopyUIEvent(payload));
     });
 
     return blocksHolder;

@@ -35,6 +35,11 @@ export class CollaborationManager implements EditorjsPlugin {
   public static readonly type = PluginType.Plugin;
 
   /**
+   * Plugin name used to identify the plugin across the editor
+   */
+  public static readonly name = 'collaboration';
+
+  /**
    * Editor API instance used to interact with the document
    */
   #api: EditorAPI;

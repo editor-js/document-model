@@ -27,6 +27,12 @@
     },
     {
       "path": "../tools/inline-link/tsconfig.build.json"
+    },
+    {
+      "path": "../plugins/clipboard-plugin/tsconfig.build.json"
+    },
+    {
+      "path": "../plugins/shortcuts-plugin/tsconfig.build.json"
     }
   ]
 }

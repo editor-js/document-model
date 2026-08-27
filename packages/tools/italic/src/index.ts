@@ -33,7 +33,9 @@ export class ItalicInlineTool implements InlineTool {
     /**
      * Shortcuts plugin options
      */
-    shortcut: 'CMD+I',
+    plugins: {
+      shortcuts: { shortcut: 'CMD+I' },
+    },
   } as const;
 
   /**

@@ -3,7 +3,7 @@ import { inject, injectable } from 'inversify';
 
 import { SelectionManager } from '../components/SelectionManager.js';
 import { Caret, EditorJSModel } from '@editorjs/model';
-import { CaretManagerEvents, CoreConfigValidated, createInlineToolName, EventType, Index, SelectionAPI as SelectionApiInterface } from '@editorjs/sdk';
+import { CaretManagerEvents, CoreConfigValidated, createInlineToolName, EventType, Index, SelectionAPI as SelectionApiInterface, BlockNodeSerialized } from '@editorjs/sdk';
 import { TOKENS } from '../tokens.js';
 
 /**
@@ -87,5 +87,12 @@ export class SelectionAPI implements SelectionApiInterface {
    */
   public getCaret(userId = this.#config.userId): Caret | undefined {
     return this.#model.getCaret(userId);
+  }
+
+  /**
+   * Returns array of selected blocks
+   */
+  public get selectedBlocks(): BlockNodeSerialized[] {
+    return this.#selectionManager.selectedBlocks();
   }
 }

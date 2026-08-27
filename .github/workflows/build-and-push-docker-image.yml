@@ -9,6 +9,17 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
+# Explicit, least-privilege: pushing to ghcr.io needs packages: write, which the
+# default token only carries when the repo default is read-write.
+permissions:
+  contents: read
+  packages: write
+
+# Two quick merges to main must not race for the same tags.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest

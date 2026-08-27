@@ -5,9 +5,7 @@
 `@editorjs/ui` is the default rendering shell for Editor.js: a set of `EditorjsPlugin` implementations that subscribe to the core `EventBus` to render DOM and dispatch their own `ui:*` events so the pieces can wire themselves together. It owns no document state — it renders what `core` (`BlockManager`/`SelectionManager`, etc.) reports, and forwards user interaction back through `EditorAPI`.
 
 **Note**: this package has no automated test suite (`.spec.ts`/`.test.ts` files); the scenarios below are derived directly from the event-wiring logic in source rather than confirmed by tests.
-
 ## Requirements
-
 ### Requirement: Shell assembly
 The system SHALL provide `EditorjsUI` as the top-level shell that creates the editor wrapper in the holder element and reactively assembles the Toolbar, InlineToolbar, and Blocks elements into it as each announces its own `*:rendered` event, without holding direct references to those components.
 
@@ -19,7 +17,7 @@ The system SHALL provide `EditorjsUI` as the top-level shell that creates the ed
 Implemented in `src/index.ts`.
 
 ### Requirement: Blocks holder rendering and input capture
-The system SHALL provide `BlocksUI`, which renders the contenteditable blocks holder, adds/removes block wrappers on `core:BlockAdded`/`core:BlockRemoved`, captures native `beforeinput` and remaps it into a normalized `BeforeInputUIEvent`, handles undo/redo keyboard shortcuts, and dispatches block-hover selection events.
+The system SHALL provide `BlocksUI`, which renders the contenteditable blocks holder, adds/removes block wrappers on `core:BlockAdded`/`core:BlockRemoved`, captures native `beforeinput` and remaps it into a normalized `BeforeInputUIEvent`, delegates native `keydown` as a `KeydownUIEvent` so plugins can claim keyboard shortcuts, handles undo/redo keyboard shortcuts for keys no plugin claimed, and dispatches block-hover selection events.
 
 #### Scenario: Inserting a block wrapper at an index
 - **GIVEN** a `BlockAddedCoreEvent` with a valid index
@@ -41,10 +39,25 @@ The system SHALL provide `BlocksUI`, which renders the contenteditable blocks ho
 - **WHEN** `BlocksUI` intercepts it
 - **THEN** the default action is prevented and a `BeforeInputUIEvent` is dispatched carrying `data`, `inputType`, `isComposing`, and `targetRanges`, distinguishing native-input vs. contenteditable sources and cross-input selections
 
+#### Scenario: Delegating native keydown events
+- **GIVEN** a native `keydown` event fires on the blocks holder
+- **WHEN** `BlocksUI` intercepts it
+- **THEN** it dispatches a `KeydownUIEvent` on the `EventBus` carrying the native event as `nativeEvent`, before any of its own key handling
+
+#### Scenario: A plugin claims a keyboard shortcut
+- **GIVEN** a plugin listening for `KeydownUIEvent` calls `preventDefault()` on the native event
+- **WHEN** the dispatch returns
+- **THEN** `BlocksUI` performs no further handling for that key, so a plugin-registered shortcut takes precedence over the built-in handling
+
 #### Scenario: Undo/redo keyboard shortcuts
-- **GIVEN** the blocks holder has focus
+- **GIVEN** the blocks holder has focus and no plugin claimed the key
 - **WHEN** Cmd/Ctrl+Z is pressed
 - **THEN** `api.document.undo()` is called with the default action prevented; if Shift is also held, `api.document.redo()` is called instead
+
+#### Scenario: Delegating native copy events
+- **GIVEN** a native `copy` event fires on the blocks holder
+- **WHEN** `BlocksUI` intercepts it
+- **THEN** it dispatches a `CopyUIEvent` on the `EventBus` carrying the native event as `nativeEvent`, without calling `preventDefault` itself
 
 Implemented in `src/Blocks/Blocks.ts`, `src/Blocks/events/*`.
 
@@ -92,3 +105,4 @@ The system SHALL provide `ToolboxUI`, a searchable popover of block tools popula
 - **THEN** `ToolboxOpenedUIEvent` or `ToolboxClosedUIEvent` is dispatched accordingly
 
 Implemented in `src/Toolbox/Toolbox.ts`, `src/Toolbox/events/*`, `src/Toolbox/ToolboxConfigEntry.ts`.
+

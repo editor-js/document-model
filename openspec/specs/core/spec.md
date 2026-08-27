@@ -3,16 +3,14 @@
 ## Purpose
 
 `@editorjs/core` is the Editor.js orchestrator: an IoC-based composition root (`Core` class) that wires up the document model, tool/plugin lifecycle, and the `EditorAPI` surface consumed by tools, plugins, and adapters. It owns block rendering, selection/caret tracking, and local undo/redo, and requires exactly one registered adapter plugin to bind to the DOM layer.
-
 ## Requirements
-
 ### Requirement: Core composition root
 The system SHALL provide a `Core` class owning two IoC containers (one for singleton services, one for registered tools/plugins), exposing `use()` to register tools/plugins/adapters and `initialize()` to boot the editor.
 
 #### Scenario: Initialization order
 - **GIVEN** tools, plugins, and an adapter have been registered via `use()`
 - **WHEN** `initialize()` is called
-- **THEN** `SelectionManager`, `BlocksManager`, `BlockRenderer`, and `UndoRedoManager` are resolved from the IoC container, plugins are initialized, tools are initialized, the model's document is initialized, and finally a `CoreEventType.Ready` event is dispatched
+- **THEN** `SelectionManager`, `BlocksManager`, and `BlockRenderer` are resolved from the IoC container, plugins are initialized, tools are initialized, `UndoRedoManager` is resolved (after plugins/tools so it observes `defaultPrevented` set by them on undo/redo events), the model's document is initialized, and finally a `CoreEventType.Ready` event is dispatched
 
 #### Scenario: Exactly one adapter is required
 - **GIVEN** one or more `PluginType.Adapter` plugins are registered via `use()`
@@ -32,7 +30,7 @@ The system SHALL validate configured tools via `ToolsManager`, calling each tool
 Implemented in `src/tools/ToolsManager.ts`, `src/tools/ToolsFactory.ts`, validated by co-located `.spec.ts` files.
 
 ### Requirement: EditorAPI surface
-The system SHALL expose an `EditorAPI` aggregating `BlocksAPI` (insert/insertMany/delete/move/render/clear/getBlocksCount), `SelectionAPI` (applyInlineTool), `DocumentAPI` (serialized data, onUpdate, insertData/removeData/modifyData, undo/redo), and `TextAPI` (insert/remove/format/unformat/getFragments/get) to tools, plugins, and adapters.
+The system SHALL expose an `EditorAPI` aggregating `BlocksAPI` (insert/insertMany/delete/move/render/clear/getBlocksCount), `SelectionAPI` (applyInlineTool, selectedBlocks), `DocumentAPI` (serialized data, onUpdate, insertData/removeData/modifyData, undo/redo), and `TextAPI` (insert/remove/format/unformat/getFragments/get) to tools, plugins, and adapters.
 
 #### Scenario: Deleting with no block selected
 - **GIVEN** no block is currently selected/no caret is set
@@ -74,6 +72,11 @@ The system SHALL provide `SelectionManager`, which tracks caret/selection state 
 - **WHEN** `applyInlineTool()` is called
 - **THEN** it calls `model.format` or `model.unformat` depending on the tool's `getFormattingOptions` result
 
+#### Scenario: Resolving selected blocks
+- **GIVEN** the current selection index is a block index, or a composite index whose segments carry block indexes
+- **WHEN** `selectedBlocks()` is called
+- **THEN** it returns the serialized blocks for each distinct, in-range block index referenced by the selection (deduplicated for composite selections), or an empty array when there is no current selection or no index resolves to an in-range block
+
 Implemented in `src/components/SelectionManager.ts`, validated by its co-located `.spec.ts`.
 
 ### Requirement: Local undo/redo
@@ -91,12 +94,30 @@ The system SHALL provide `UndoRedoManager`, which batches consecutive model even
 
 Implemented in `src/components/UndoRedoManager.ts`, validated by its co-located `.spec.ts`.
 
-### Requirement: Keyboard shortcuts plugin
-The system SHALL provide a `ShortcutsPlugin` (an `EditorjsPlugin`) that maps keyboard shortcuts declared in a tool's `options.shortcut` to inline-tool application through the `EditorAPI`.
+### Requirement: Plugin registry
+`Core` SHALL maintain a registry mapping each registered plugin's `name` to its public API, populate it as plugins are instantiated, and back the `api.plugins` namespace with it.
 
-#### Scenario: Triggering an inline tool via shortcut
-- **GIVEN** an inline tool is registered with `options.shortcut` set to a key combination (e.g. `CMD+B`)
-- **WHEN** that key combination is pressed while the editor has focus
-- **THEN** `ShortcutsPlugin` applies the corresponding inline tool to the current selection via the `EditorAPI`
+#### Scenario: Registry is populated during initialization
+- **GIVEN** plugins are registered via `core.use()`
+- **WHEN** `initialize()` instantiates them
+- **THEN** each plugin exposing a `publicApi` has it registered under its `name`
 
-Implemented in `src/plugins/ShortcutsPlugin.ts`.
+#### Scenario: Registration order does not matter
+- **GIVEN** plugin A is constructed before plugin B, and A reads `api.plugins.<B's id>` after initialization completes
+- **WHEN** A performs that read
+- **THEN** B's public API is available, because `api.plugins` resolves entries at access time rather than capturing a snapshot at construction time
+
+#### Scenario: Reading a plugin API before it is constructed
+- **GIVEN** plugin A reads `api.plugins.<B's id>` inside its own constructor, before B has been constructed
+- **WHEN** that read happens
+- **THEN** `undefined` is returned, and the documented contract is that cross-plugin API use belongs after the editor's ready event
+
+#### Scenario: Conflicting plugin ids are rejected
+- **WHEN** two registered plugins declare the same `name`
+- **THEN** initialization fails with an error naming the conflicting id
+
+#### Scenario: Registry is cleared on teardown
+- **GIVEN** plugins have been registered and the editor is torn down
+- **WHEN** each plugin's `destroy()` runs
+- **THEN** its registry entry is removed so no stale public API remains reachable
+

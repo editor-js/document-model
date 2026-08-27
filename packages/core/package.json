@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@editorjs/bold": "workspace:^",
+    "@editorjs/clipboard-plugin": "workspace:^",
     "@editorjs/collaboration-manager": "workspace:^",
     "@editorjs/dom-adapters": "workspace:^",
     "@editorjs/editorjs": "^2.30.5",
@@ -48,6 +49,7 @@
     "@editorjs/model": "workspace:^",
     "@editorjs/paragraph": "workspace:^",
     "@editorjs/sdk": "workspace:^",
+    "@editorjs/shortcuts-plugin": "workspace:^",
     "inversify": "^8.1.0",
     "reflect-metadata": "^0.2.2"
   }
