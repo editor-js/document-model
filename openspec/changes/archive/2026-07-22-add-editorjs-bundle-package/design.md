@@ -4,7 +4,7 @@
 
 Two facts make the split cheap and were verified against the current code:
 - Infra is already decoupled from core internals. `DOMAdapters` is referenced concretely only in the constructor; elsewhere it is injected via `TOKENS.Adapter` as the sdk interface `EditorJSAdapterPlugin` (`BlockRenderer.ts:68`). `CollaborationManager` is a plain `PluginType.Plugin` initialized generically through `#initializePlugin`. Removing both touches only `src/index.ts` + `core/package.json`.
-- `ShortcutsPlugin` (`packages/core/src/plugins/ShortcutsPlugin.ts`) stays in `@editorjs/core`; the headless refactor simply stops auto-registering it. Relocating it is deferred to a separate change.
+- `ShortcutsPlugin` was extracted from core into its own `@editorjs/shortcuts-plugin` package by a separate change; the bundle depends on that package and registers it as a default plugin, so core neither ships nor auto-registers it.
 
 A naming constraint: the monorepo already consumes the published `@editorjs/editorjs` v2 as a types-only dependency in `core`, `sdk`, `ui`, `tools/paragraph`. A workspace package of the same name would shadow it with version-range-dependent resolution.
 
@@ -48,7 +48,7 @@ Build a name→constructor map seeded with defaults, apply `config.tools` on top
 ## Migration Plan
 
 1. **PR 1 — alias rename** (isolated, mergeable alone): rename dep to `editorjs-v2` and update import specifiers in `core`, `sdk`, `ui`, `tools/paragraph`; `yarn install`; build + typecheck. No behavior change.
-2. **PR 2 — headless core + bundle + playground** (atomic): strip core's default `use()` calls + add fail-loud validation (`ShortcutsPlugin` stays in core, unregistered); create `packages/editorjs`; switch playground to `@editorjs/editorjs`; verify end-to-end.
+2. **PR 2 — headless core + bundle + playground** (atomic): strip core's default `use()` calls + add fail-loud validation; create `packages/editorjs`; switch playground to `@editorjs/editorjs`; verify end-to-end. After the `@editorjs/shortcuts-plugin` extraction landed on `main`, this PR merged it in and registers `ShortcutsPlugin` from that package in the bundle.
 
 Rollback: PR 1 and PR 2 are independent commits/branches; either can be reverted. PR 2's revert restores core's hardcoded defaults.
 

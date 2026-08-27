@@ -26,6 +26,7 @@ jest.unstable_mockModule('@editorjs/bold', () => ({ BoldInlineTool: class BoldIn
 jest.unstable_mockModule('@editorjs/italic', () => ({ ItalicInlineTool: class ItalicInlineTool {} }));
 jest.unstable_mockModule('@editorjs/inline-link', () => ({ LinkInlineTool: class LinkInlineTool {} }));
 jest.unstable_mockModule('@editorjs/clipboard-plugin', () => ({ ClipboardPlugin: class ClipboardPlugin {} }));
+jest.unstable_mockModule('@editorjs/shortcuts-plugin', () => ({ ShortcutsPlugin: class ShortcutsPlugin {} }));
 jest.unstable_mockModule('@editorjs/ui', () => ({
   EditorjsUI: class EditorjsUI {},
   BlocksUI: class BlocksUI {},
@@ -66,5 +67,16 @@ describe('EditorJS bundle', () => {
     const registered = use.mock.calls.map(([ctor]) => (ctor as { name: string }).name);
 
     expect(registered).toContain('DOMAdapters');
+  });
+
+  it('registers the default plugins on the underlying Core', () => {
+    initialize.mockResolvedValue(undefined);
+
+    void new EditorJS({} as any);
+
+    const registered = use.mock.calls.map(([ctor]) => (ctor as { name: string }).name);
+
+    expect(registered).toContain('ClipboardPlugin');
+    expect(registered).toContain('ShortcutsPlugin');
   });
 });

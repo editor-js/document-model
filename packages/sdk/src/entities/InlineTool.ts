@@ -1,9 +1,9 @@
 import type { TextRange, InlineFragment } from '@editorjs/model-types';
 import type { FormattingAction, IntersectType } from '@editorjs/model-types';
 import type { InlineTool as InlineToolVersion2 } from 'editorjs-v2';
-import type { InlineToolConstructorOptions as InlineToolConstructorOptionsVersion2, ToolConfig } from 'editorjs-v2';
+import type { InlineToolConstructorOptions as InlineToolConstructorOptionsVersion2 } from 'editorjs-v2';
 import type { ToolType } from './EntityType.js';
-import type { BaseToolConstructor, BaseToolOptions } from './BaseTool';
+import type { BaseToolConstructor, BaseToolOptions, ToolConfig } from './BaseTool';
 import type { EditorAPI } from '../api';
 import type { MenuConfig } from './MenuConfig.js';
 
@@ -87,6 +87,20 @@ export interface InlineTool extends Omit<InlineToolVersion2, 'save' | 'checkStat
    * Type of merging of two ranges which intersect
    */
   intersectType?: IntersectType;
+
+  /**
+   * Optionally overrides how the model decides whether two data objects of this tool are equal.
+   *
+   * The model uses this to tell a no-op re-apply from a data replacement, and to decide whether
+   * two adjacent same-tool fragments may be merged. When omitted, the model falls back to a deep
+   * structural comparison.
+   * @todo Not yet consulted by the model — the wiring that resolves a tool's comparator by name
+   *       is deferred. Provided as a stable extension point for tools whose data equality differs
+   *       from deep equality (e.g. ignoring a derived/display field).
+   * @param a - first inline tool data
+   * @param b - second inline tool data
+   */
+  isSameData?(a?: InlineToolFormatData, b?: InlineToolFormatData): boolean;
 
   /**
    * Function that returns the state of the tool for the current selection

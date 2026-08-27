@@ -51,6 +51,7 @@
     "@editorjs/italic": "workspace:^",
     "@editorjs/paragraph": "workspace:^",
     "@editorjs/sdk": "workspace:^",
+    "@editorjs/shortcuts-plugin": "workspace:^",
     "@editorjs/ui": "workspace:^"
   }
 }

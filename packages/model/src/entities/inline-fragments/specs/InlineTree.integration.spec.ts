@@ -278,6 +278,117 @@ describe('Inline fragments tree integration', () => {
       ]);
     });
 
+    describe('re-applying a data-carrying tool', () => {
+      const linkTool = createInlineToolName('link');
+      const initialText = 'Editor.js is a block-styled editor.';
+
+      it('should replace fragment data when re-applying the same tool with different data', () => {
+        const tree = new TextNode({ children: [new TextInlineNode({ value: initialText })] });
+
+        tree.format(linkTool, 0, initialText.length, createInlineToolData({ href: 'https://a.com' }));
+        tree.format(linkTool, 0, initialText.length, createInlineToolData({ href: 'https://b.com' }));
+
+        expect(tree.getFragments()).toStrictEqual([
+          {
+            tool: linkTool,
+            range: [0, initialText.length],
+            data: createInlineToolData({ href: 'https://b.com' }),
+          },
+        ]);
+      });
+
+      it('should leave the tree unchanged when re-applying the same tool with identical data', () => {
+        const tree = new TextNode({ children: [new TextInlineNode({ value: initialText })] });
+        const data = createInlineToolData({ href: 'https://a.com' });
+
+        tree.format(linkTool, 0, initialText.length, data);
+        tree.format(linkTool, 0, initialText.length, createInlineToolData({ href: 'https://a.com' }));
+
+        expect(tree.getFragments()).toStrictEqual([
+          {
+            tool: linkTool,
+            range: [0, initialText.length],
+            data,
+          },
+        ]);
+      });
+
+      it('should split the fragment and replace data only within the re-applied range', () => {
+        const tree = new TextNode({ children: [new TextInlineNode({ value: initialText })] });
+        const dataA = createInlineToolData({ href: 'https://a.com' });
+        const dataB = createInlineToolData({ href: 'https://b.com' });
+        const start = 5;
+        const end = 10;
+
+        tree.format(linkTool, 0, initialText.length, dataA);
+        tree.format(linkTool, start, end, dataB);
+
+        expect(tree.getFragments()).toStrictEqual([
+          {
+            tool: linkTool,
+            range: [0, start],
+            data: dataA,
+          },
+          {
+            tool: linkTool,
+            range: [start, end],
+            data: dataB,
+          },
+          {
+            tool: linkTool,
+            range: [end, initialText.length],
+            data: dataA,
+          },
+        ]);
+      });
+
+      it('should replace data only within a re-applied prefix range', () => {
+        const tree = new TextNode({ children: [new TextInlineNode({ value: initialText })] });
+        const dataA = createInlineToolData({ href: 'https://a.com' });
+        const dataB = createInlineToolData({ href: 'https://b.com' });
+        const end = 10;
+
+        tree.format(linkTool, 0, initialText.length, dataA);
+        tree.format(linkTool, 0, end, dataB);
+
+        expect(tree.getFragments()).toStrictEqual([
+          {
+            tool: linkTool,
+            range: [0, end],
+            data: dataB,
+          },
+          {
+            tool: linkTool,
+            range: [end, initialText.length],
+            data: dataA,
+          },
+        ]);
+      });
+
+      it('should not merge adjacent same-tool fragments whose data differs', () => {
+        const tree = new TextNode({ children: [new TextInlineNode({ value: initialText })] });
+        const dataA = createInlineToolData({ href: 'https://a.com' });
+        const dataB = createInlineToolData({ href: 'https://b.com' });
+        const boundary = 10;
+
+        tree.format(linkTool, 0, boundary, dataA);
+        tree.format(linkTool, boundary, initialText.length, dataB);
+
+        expect(tree.getFragments()).toStrictEqual([
+          {
+            tool: linkTool,
+            range: [0, boundary],
+            data: dataA,
+          },
+          {
+            tool: linkTool,
+            range: [boundary, initialText.length],
+            data: dataB,
+          },
+        ]);
+      });
+    });
+
     it('should support overlapping formatting for different tools', () => {
       const initialText = 'Editor.js is a block-styled editor.';
       const child = new TextInlineNode({ value: initialText });

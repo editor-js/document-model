@@ -52,6 +52,12 @@ export class BlockToolFacade extends BaseToolFacade<ToolType.Block, BlockTool> {
   protected declare useToolOptions: BlockToolOptions;
 
   /**
+   * Narrowed to BlockToolOptions — the tool's static options after the facade resolved
+   * them, whether they were declared as a plain object or as a factory of the config
+   */
+  protected declare readonly resolvedStaticOptions: BlockToolOptions;
+
+  /**
    * Creates new Tool instance
    * @param options - Tool constructor options
    * @param options.data - Tools data
@@ -73,7 +79,7 @@ export class BlockToolFacade extends BaseToolFacade<ToolType.Block, BlockTool> {
    * Returns true if read-only mode is supported by Tool
    */
   public get isReadOnlySupported(): boolean {
-    return this.constructable.options?.[BlockToolOptionKey.IsReadOnlySupported] === true;
+    return this.resolvedStaticOptions[BlockToolOptionKey.IsReadOnlySupported] === true;
   }
 
   /**
@@ -98,7 +104,7 @@ export class BlockToolFacade extends BaseToolFacade<ToolType.Block, BlockTool> {
    * config. This is made to allow user to override default tool's toolbox representation (single/multiple entries)
    */
   public get toolbox(): ToolboxConfigEntry[] | undefined {
-    const toolToolboxSettings = this.constructable.options?.[BlockToolOptionKey.Toolbox] as ToolboxConfig;
+    const toolToolboxSettings = this.resolvedStaticOptions[BlockToolOptionKey.Toolbox] as ToolboxConfig;
     const userToolboxSettings = this.useToolOptions[UserToolOptions.Toolbox];
 
     if (isEmpty(toolToolboxSettings)) {

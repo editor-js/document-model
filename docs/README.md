@@ -9,6 +9,7 @@ Read by goal:
 - Registration and lifecycle contracts: [Plugins & Tools](plugins.md)
 - OT, batching, undo/redo: [Collaboration](collaboration.md)
 - Which event bus to listen to: [Events](events.md)
+- Index JSON wire format: [Index Serialization Format](index-serialization.md)
 
 ---
 
@@ -61,7 +62,7 @@ The system stays decoupled because each step communicates through interfaces and
 - `EditorjsPlugin`: general UI/behavior plugin registered via `core.use()` with `PluginType.Plugin`. UI components like `BlocksUI` typically declare a `static type` from `UiComponentType` but are bound to `PluginType.Plugin` internally.
 - `UiComponentType`: reserved string keys for UI component slots (`shell`, `blocks`, `inline-toolbar`, `toolbox`, `toolbar`). These name components in the UI layer but are **not** used as arguments to `core.use()` — plugins are registered by `PluginType` or `ToolType` values.
 - `BlockTool` / `InlineTool` / `BlockTune`: tool contracts registered via `core.use(ToolConstructor, options)` during setup. The `tools` config field provides tool settings that `ToolsManager` applies during `initialize()`.
-- `Index`: serializable location in the document tree, independent of DOM nodes. Fields: `documentId`, `blockIndex`, `dataKey`, `textRange`, `tuneName`, `tuneKey`, `propertyName`. A `compositeSegments` array holds multiple per-input text indices for cross-block selections. Built with `IndexBuilder`; serialized to a compact string for caret storage and OT operations.
+- `Index`: serializable location in the document tree, independent of DOM nodes. Subclasses (e.g. `BlockIndex`, `TextIndex`, `DataIndex`) cover distinct target types. Built with immutable factory methods like `Index.block()` or `Index.text()`; serialized to a compact JSON string for caret storage and OT operations.
 - `DataKey`: branded string identifying a data slot inside a `BlockNode` (e.g. `"text"`, `"caption"`). Created via `createDataKey()`.
 - `BatchedOperation`: groups rapid single-character inserts or deletes on the same data key into one logical edit for undo/redo. Lives in `@editorjs/collaboration-manager`.
 - `UndoRedoManager`: exists in two forms: in `@editorjs/core` for single-user undo/redo (listens to model events and groups by debounce), and in `@editorjs/collaboration-manager` for OT-aware undo/redo (manages operation stacks).

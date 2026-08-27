@@ -9,12 +9,6 @@
     },
     {
       "path": "../sdk/tsconfig.build.json"
-    },
-    {
-      "path": "../dom-adapters/tsconfig.build.json"
-    },
-    {
-      "path": "../core/tsconfig.build.json"
     }
   ]
 }

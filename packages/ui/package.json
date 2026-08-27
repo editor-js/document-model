@@ -20,7 +20,7 @@
   "scripts": {
     "build": "vite build",
     "build:declaration": "",
-    "dev": "vite build --watch",
+    "dev": "chokidar 'src/**/*' -c 'yarn build' --initial",
     "prebuild": "yarn clear",
     "lint": "eslint ./src",
     "lint:ci": "yarn lint --max-warnings 0",
@@ -28,6 +28,10 @@
     "clear": "rm -rf ./dist && rm -f tsconfig.tsbuildinfo && rm -f tsconfig.tsbuildinfo.json"
   },
   "devDependencies": {
+    "@editorjs/core": "workspace:^",
+    "@editorjs/dom-adapters": "workspace:^",
+    "@editorjs/paragraph": "workspace:^",
+    "chokidar-cli": "^3.0.0",
     "eslint": "^9.9.1",
     "eslint-config-codex": "^2.0.3",
     "postcss": "^8.5.10",
@@ -43,12 +47,9 @@
   "dependencies": {
     "@codexteam/icons": "^0.3.3",
     "@codexteam/ui": "^0.2.2",
-    "@editorjs/core": "workspace:^",
     "@editorjs/dom": "^1.1.0",
-    "@editorjs/dom-adapters": "workspace:^",
     "@editorjs/helpers": "^1.2.2",
     "@editorjs/sdk": "workspace:^",
-    "@editorjs/ui-kit": "^2.0.0",
-    "editorjs-v2": "npm:@editorjs/editorjs@^2.30.5"
+    "@editorjs/ui-kit": "^2.0.0"
   }
 }
