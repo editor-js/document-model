@@ -1,10 +1,4 @@
-# Clipboard Plugin
-
-## Purpose
-
-`@editorjs/clipboard-plugin` is a built-in `EditorjsPlugin` that enriches native browser copy events with EditorJS-specific clipboard data. When the user copies a selection that spans one or more blocks, it augments the system clipboard with plain text, HTML, and a custom `application/x-editor-js` payload carrying the serialized block data, so paste targets that understand EditorJS can reconstruct the original blocks.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Rich clipboard data on copy
 The system SHALL provide `ClipboardPlugin`, which subscribes to the `ui:copy` event on construction and, when blocks are selected, populates the native clipboard event with `text/plain`, `text/html`, and `application/x-editor-js` data and prevents the native copy action.
@@ -38,5 +32,3 @@ The system SHALL provide `ClipboardPlugin`, which subscribes to the `ui:copy` ev
 - **GIVEN** a `ClipboardPlugin` instance is subscribed to `ui:copy`
 - **WHEN** `destroy()` is called
 - **THEN** it removes the `ui:copy` listener from the `EventBus`
-
-Implemented in `src/index.ts`, validated by its co-located `.spec.ts`.
