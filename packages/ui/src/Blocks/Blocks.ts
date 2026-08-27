@@ -6,6 +6,7 @@ import type { EventBus,
 import {
   CoreEventType,
   CopyUIEvent,
+  KeydownUIEvent,
   UiComponentType,
   BeforeInputUIEvent
 } from '@editorjs/sdk';
@@ -116,6 +117,17 @@ export class BlocksUI implements EditorjsPlugin {
     });
 
     blocksHolder.addEventListener('keydown', (e) => {
+      /**
+       * Delegate the keydown so plugins (e.g. Shortcuts) can act on it first.
+       * The bus dispatches synchronously, so a plugin that handled the key has already
+       * called preventDefault by the time this returns — treat that as "consumed".
+       */
+      this.#eventBus.dispatchEvent(new KeydownUIEvent({ nativeEvent: e }));
+
+      if (e.defaultPrevented) {
+        return;
+      }
+
       if (e.code !== 'KeyZ') {
         return;
       }

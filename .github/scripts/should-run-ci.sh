@@ -56,6 +56,26 @@ if [ -z "$RESOLVED_BASE_REF" ]; then
   exit 0
 fi
 
+# Shared/root files that can affect every package's install, build, or CI. A change
+# to any of these forces CI regardless of which package this is - without it, a
+# lockfile bump or a workflow edit makes every package report "no CI needed" and the
+# PR shows all-green having tested nothing. Checked before workspace resolution since
+# it is independent of it (and `.github/` changes should run CI even if yarn can't).
+ROOT_CHANGES=$(git diff --name-only "$RESOLVED_BASE_REF...HEAD" -- \
+  yarn.lock \
+  package.json \
+  .yarnrc.yml \
+  yarn.config.cjs \
+  .nvmrc \
+  tsconfig.json \
+  .github/ 2>/dev/null)
+
+if [ -n "$ROOT_CHANGES" ]; then
+  debug "✓ Shared/root files changed, running CI:"
+  debug "$ROOT_CHANGES"
+  exit 0
+fi
+
 # Build an index of workspace packages: one "<package-name> <directory>" record per line.
 # Locations come from yarn itself, so any workspace layout (nested roots like packages/tools/*
 # and packages/plugins/*, or anything added later) is picked up without teaching this script

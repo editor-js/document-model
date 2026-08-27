@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import { beforeEach, describe } from '@jest/globals';
 import { EditorJSModel } from './EditorJSModel.js';
-import { createDataKey, IndexBuilder, type BlockId } from '@editorjs/model-types';
+import { createDataKey, Index, type TextIndex, type BlockIndex, type BlockId } from '@editorjs/model-types';
 import type { DocumentId } from '@editorjs/model-types';
 
 describe('EditorJSModel', () => {
@@ -192,10 +192,7 @@ describe('EditorJSModel', () => {
     });
 
     it('should return the caret after it has been created', () => {
-      const index = new IndexBuilder()
-        .addDocumentId(documentId as DocumentId)
-        .addBlockIndex(0)
-        .build();
+      const index = Index.block(0, documentId as DocumentId);
 
       model.createCaret(userId, index);
 
@@ -203,10 +200,7 @@ describe('EditorJSModel', () => {
     });
 
     it('should return undefined for a different user id than the one that created the caret', () => {
-      const index = new IndexBuilder()
-        .addDocumentId(documentId as DocumentId)
-        .addBlockIndex(0)
-        .build();
+      const index = Index.block(0, documentId as DocumentId);
 
       model.createCaret(userId, index);
 
@@ -276,16 +270,11 @@ describe('EditorJSModel', () => {
         },
       },
     ];
-    const currentCaretIndex = new IndexBuilder()
-      .addDocumentId(documentId as DocumentId)
-      .addBlockIndex(1)
-      .addDataKey(createDataKey('text'))
-      .addTextRange([3, 3])
-      .build();
-    const remoteOperationIndex = new IndexBuilder()
-      .from(currentCaretIndex)
-      .addTextRange([0, 0])
-      .build();
+    const currentCaretIndex = Index.text([{ blockIndex: 1,
+      dataKey: createDataKey('text'),
+      textRange: [3, 3],
+      documentId: documentId as DocumentId }]);
+    const remoteOperationIndex = currentCaretIndex.withTextRange([0, 0]);
 
     let model: EditorJSModel;
 
@@ -302,7 +291,7 @@ describe('EditorJSModel', () => {
 
       model.insertData(remoteUserId, remoteOperationIndex, 'a');
 
-      expect(caret.index!.textRange).toEqual([4, 4]);
+      expect((caret.index! as TextIndex).textRange).toEqual([4, 4]);
     });
 
     it('should update user caret on remote text delete operation happened before caret', () => {
@@ -310,7 +299,7 @@ describe('EditorJSModel', () => {
 
       model.removeData(remoteUserId, remoteOperationIndex, 'e');
 
-      expect(caret.index!.textRange).toEqual([2, 2]);
+      expect((caret.index! as TextIndex).textRange).toEqual([2, 2]);
     });
 
     it('should not update caret if remote operation happened after caret', () => {
@@ -318,14 +307,11 @@ describe('EditorJSModel', () => {
 
       model.removeData(
         remoteUserId,
-        new IndexBuilder()
-          .from(remoteOperationIndex)
-          .addTextRange([4, 5])
-          .build(),
+        remoteOperationIndex.withTextRange([4, 5]),
         'e'
       );
 
-      expect(caret.index!.textRange).toEqual([3, 3]);
+      expect((caret.index! as TextIndex).textRange).toEqual([3, 3]);
     });
 
     it('should update user caret on remote block insert operation happened before caret', () => {
@@ -333,12 +319,7 @@ describe('EditorJSModel', () => {
 
       model.insertData(
         remoteUserId,
-        new IndexBuilder()
-          .from(remoteOperationIndex)
-          .addBlockIndex(0)
-          .addDataKey(undefined)
-          .addTextRange(undefined)
-          .build(),
+        Index.block(0, documentId as DocumentId),
         [{
           name: 'paragraph',
           data: {
@@ -350,7 +331,7 @@ describe('EditorJSModel', () => {
         }]
       );
 
-      expect(caret.index!.blockIndex).toEqual(2);
+      expect((caret.index! as BlockIndex).blockIndex).toEqual(2);
     });
 
     it('should update user caret on remote block delete operation happened before caret', () => {
@@ -358,12 +339,7 @@ describe('EditorJSModel', () => {
 
       model.removeData(
         remoteUserId,
-        new IndexBuilder()
-          .from(remoteOperationIndex)
-          .addBlockIndex(0)
-          .addDataKey(undefined)
-          .addTextRange(undefined)
-          .build(),
+        Index.block(0, documentId as DocumentId),
         [{
           name: 'paragraph',
           data: {
@@ -375,7 +351,7 @@ describe('EditorJSModel', () => {
         }]
       );
 
-      expect(caret.index!.blockIndex).toEqual(0);
+      expect((caret.index! as BlockIndex).blockIndex).toEqual(0);
     });
 
     it('should not update user caret on remote block operation happened after caret', () => {
@@ -383,12 +359,7 @@ describe('EditorJSModel', () => {
 
       model.removeData(
         remoteUserId,
-        new IndexBuilder()
-          .from(remoteOperationIndex)
-          .addBlockIndex(1)
-          .addDataKey(undefined)
-          .addTextRange(undefined)
-          .build(),
+        Index.block(1, documentId as DocumentId),
         [{
           name: 'paragraph',
           data: {
@@ -400,7 +371,7 @@ describe('EditorJSModel', () => {
         }]
       );
 
-      expect(caret.index!.blockIndex).toEqual(1);
+      expect((caret.index! as BlockIndex).blockIndex).toEqual(1);
     });
   });
 });

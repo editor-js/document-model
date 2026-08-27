@@ -33,7 +33,9 @@ export class BoldInlineTool implements InlineTool {
     /**
      * Shortcuts plugin options
      */
-    shortcut: 'CMD+B',
+    plugins: {
+      shortcuts: { shortcut: 'CMD+B' },
+    },
   } as const;
 
   /**

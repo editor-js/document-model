@@ -1,7 +1,7 @@
 import { getContext } from '../../utils/Context.js';
 import type { BlockTuneConstructorParameters } from './types/index.js';
 import {
-  IndexBuilder,
+  PartialIndex,
   type BlockTuneSerialized,
   type BlockTuneName,
   EventBus,
@@ -46,12 +46,8 @@ export class BlockTune extends EventBus {
 
     this.#data[key] = value;
 
-    const builder = new IndexBuilder();
-
-    builder.addTuneKey(key);
-
     this.dispatchEvent(
-      new TuneModifiedEvent(builder.build(), {
+      new TuneModifiedEvent(new PartialIndex({ tuneKey: key }), {
         value: this.#data[key],
         previous: previousValue,
       }, getContext<string | number>()!)

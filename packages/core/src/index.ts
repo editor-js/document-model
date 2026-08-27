@@ -11,7 +11,8 @@ import {
   type InlineToolConstructor,
   PluginType,
   ToolType,
-  type ToolStaticOptions
+  type ToolStaticOptions,
+  type PluginId
 } from '@editorjs/sdk';
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
 import ToolsManager from './tools/ToolsManager.js';
@@ -23,6 +24,7 @@ import { BlockRenderer } from './components/BlockRenderer.js';
 import { SelectionManager } from './components/SelectionManager.js';
 import { TOKENS } from './tokens.js';
 import { UndoRedoManager } from './components/UndoRedoManager.js';
+import { PluginRegistry } from './components/PluginRegistry.js';
 
 /**
  * If no holder is provided via config, the editor will be appended to the element with this id
@@ -111,9 +113,13 @@ export default class Core {
   public use(tool: ToolConstructable, options?: ToolStaticOptions): Core;
   /**
    * Injects Plugin into the container to initialize on Editor's init
+   *
+   * The plugin's id is inferred from its static `name`, which types its `publicApi` against
+   * `EditorjsPluginApiMap`. A plugin that omits the declaration widens the id to `string`,
+   * making any declared `publicApi` a compile error here.
    * @param plugin - allows to pass any implementation of editor plugins
    */
-  public use(plugin: EditorjsPluginConstructor | EditorjsAdapterPluginConstructor): Core;
+  public use<Id extends PluginId>(plugin: EditorjsPluginConstructor<Id> | EditorjsAdapterPluginConstructor<Id>): Core;
   /**
    * Overloaded method to register Editor.js Plugins/Tools/etc
    * @param pluginOrTool - entity to register
@@ -164,10 +170,15 @@ export default class Core {
     this.#iocContainer.get(SelectionManager);
     this.#iocContainer.get(BlocksManager);
     this.#iocContainer.get(BlockRenderer);
-    this.#iocContainer.get(UndoRedoManager);
 
     this.#initializePlugins();
     await this.#initializeTools();
+
+    /**
+     * UndoRedoManager should go after plugins as it uses defaultPrevented on undo/redo events which can be set by plugins
+     * @todo Figure out how to make initialization less complex
+     */
+    this.#iocContainer.get(UndoRedoManager);
 
     this.#model.initializeDocument({ blocks });
 
@@ -228,18 +239,22 @@ export default class Core {
   }
 
   /**
-   * Create instance of plugin
+   * Create instance of plugin and register the public API it exposes
    * @param plugin - Plugin constructor to initialize
    */
   #initializePlugin(plugin: EditorjsPluginConstructor): void {
     const eventBus = this.#iocContainer.get(EventBus);
     const apiFactory = this.#iocContainer.get<Factory<EditorAPI>>(TOKENS.EditorAPIFactory) as () => EditorAPI;
 
-    new plugin({
+    const instance = new plugin({
       config: this.#config,
       api: apiFactory(),
       eventBus,
     });
+
+    if (instance.publicApi !== undefined) {
+      this.#iocContainer.get(PluginRegistry).register(plugin.name, instance.publicApi);
+    }
   }
 
   /**

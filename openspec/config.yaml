@@ -19,5 +19,10 @@ rules:
   tasks:
     - Write the failing test first, then implement, then refactor (TDD).
     - Name test cases in should-notation, e.g. it('should return X when Y').
+    - Check off the final task only after `openspec validate <change> --type change` passes. A fully-checked tasks.md is the signal that the change is ready to archive, and CI (the "OpenSpec archive gate") then requires the archive commit to be present in this PR before it can merge.
   proposal:
     - Cross-check against existing docs in docs/ and note if the proposal supersedes any of them.
+  specs:
+    # CI folds deltas by running the `openspec archive` CLI mechanically (no agent), so deltas must fold correctly on their own.
+    - "The fold matches requirements by exact `### Requirement:` header text against the CURRENT openspec/specs/<capability>/spec.md. For MODIFIED/REMOVED/RENAMED, copy the existing header verbatim — a mismatched header silently APPENDS a duplicate requirement instead of updating the intended one."
+    - "`openspec archive` does NOT author a new capability's `## Purpose` — it writes a `TBD - created by archiving` placeholder. When a change introduces a brand-new capability, put the intended Purpose text in the proposal so a human/reviewer fills it into the folded openspec/specs/<capability>/spec.md in the same PR (the mechanical fold cannot)."
