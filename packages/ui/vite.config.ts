@@ -24,12 +24,8 @@ export default defineConfig({
     },
     rollupOptions: {
       external: [
-        '@editorjs/core',
         '@editorjs/dom',
-        '@editorjs/dom-adapters',
-        '@editorjs/editorjs',
         '@editorjs/helpers',
-        '@editorjs/model',
         '@editorjs/sdk'
       ],
     },

@@ -1,8 +1,8 @@
 import type {
   BlockTool as BlockToolVersion2,
   ToolboxConfigEntry
-} from '@editorjs/editorjs';
-import type { BlockToolConstructorOptions as BlockToolConstructorOptionsVersion2 } from '@editorjs/editorjs';
+} from 'editorjs-v2';
+import type { BlockToolConstructorOptions as BlockToolConstructorOptionsVersion2 } from 'editorjs-v2';
 import type { ValueSerialized } from '@editorjs/model-types';
 import type { BlockToolAdapter } from './BlockToolAdapter.js';
 import type { ToolType } from './EntityType.js';

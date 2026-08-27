@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Cross-cutting structural invariants that span multiple packages and aren't owned by any single capability spec: the dependency direction between packages, the event-channel naming convention used across the `EventBus`, the single-adapter contract `core` enforces, and which undo/redo implementation takes precedence when collaboration is enabled. These constrain how packages may depend on and communicate with each other; package-specific behavior lives in the respective capability specs ([[model-types]], [[sdk]], [[model]], [[dom-adapters]], [[collaboration-manager]], [[core]], [[ui]], [[ot-server]], [[tools]]).
+Cross-cutting structural invariants that span multiple packages and aren't owned by any single capability spec: the dependency direction between packages, the event-channel naming convention used across the `EventBus`, the single-adapter contract `core` enforces, and which undo/redo implementation takes precedence when collaboration is enabled. These constrain how packages may depend on and communicate with each other; package-specific behavior lives in the respective capability specs ([[model-types]], [[sdk]], [[model]], [[dom-adapters]], [[collaboration-manager]], [[core]], [[ui]], [[ot-server]], [[tools]], [[editorjs-bundle]]).
 
 ## Requirements
 
@@ -42,19 +42,19 @@ Every event dispatched on an `EventBus` SHALL be namespaced by its origin as a `
 Implemented in `packages/sdk/src/entities/EventBus/events/core/CoreEventBase.ts`, `.../ui/UIEventBase.ts`, `.../core/CoreEventType.ts`, `.../adapter/AdapterEventType.ts`.
 
 ### Requirement: Exactly one adapter plugin is bound
-`Core` SHALL require exactly one `PluginType.Adapter` plugin bound in its plugin container at initialization time. Registering a second adapter via `use()` SHALL replace the previously bound one rather than error or bind both.
+`Core` SHALL require exactly one `PluginType.Adapter` plugin bound in its plugin container at initialization time, and SHALL NOT bind one itself — every adapter reaches the container through a `use()` call. Registering a second adapter via `use()` SHALL replace the previously bound one rather than error or bind both.
 
 #### Scenario: Registering a second adapter replaces the first
 - **GIVEN** an adapter plugin has already been registered via `core.use(SomeAdapter)`
 - **WHEN** `core.use(AnotherAdapter)` is called with another `PluginType.Adapter` plugin
 - **THEN** the container rebinds `PluginType.Adapter` to the new adapter, so only the most recently registered adapter is active when `#initializeAdapter()` runs
 
-#### Scenario: Default adapter is DOMAdapters
+#### Scenario: No adapter is bound by default
 - **GIVEN** a `Core` instance is constructed without an explicit adapter registration
-- **WHEN** the constructor runs
-- **THEN** it calls `this.use(DOMAdapters)`, so `@editorjs/dom-adapters` is bound as the default adapter
+- **WHEN** `initialize()` is called
+- **THEN** it throws rather than falling back to a built-in adapter, because `Core` is headless: binding `@editorjs/dom-adapters` is the caller's job, which [[editorjs-bundle]] does on the caller's behalf
 
-Implemented in `packages/core/src/index.ts` (`use()`, `#initializeAdapter()`), `packages/core/src/tokens.ts` (`TOKENS.Adapter`).
+Implemented in `packages/core/src/index.ts` (`use()`, `#validatePreconditions()`, `#initializeAdapter()`), `packages/core/src/tokens.ts` (`TOKENS.Adapter`), `packages/editorjs/src/index.ts` (`this.#core.use(DOMAdapters)`).
 
 ### Requirement: Collaboration's undo/redo preempts core's local undo/redo
 When `@editorjs/collaboration-manager` is registered, it SHALL intercept `core:undo`/`core:redo` events and call `preventDefault()` on them before `core`'s own `UndoRedoManager` acts, substituting its own OT-aware undo/redo (which accounts for remote operations) for `core`'s local-only undo/redo. This is an intentional override, not a duplicated/competing implementation.

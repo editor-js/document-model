@@ -1,6 +1,6 @@
 import type {
   Tool
-} from '@editorjs/editorjs';
+} from 'editorjs-v2';
 import { isFunction } from '@editorjs/helpers';
 import { type BlockToolFacade } from './BlockToolFacade.js';
 import { type InlineToolFacade } from './InlineToolFacade.js';

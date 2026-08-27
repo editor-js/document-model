@@ -9,7 +9,7 @@ import {
 } from '@editorjs/sdk';
 import type {
   EditorConfig
-} from '@editorjs/editorjs';
+} from 'editorjs-v2';
 
 type ToolConstructor = typeof InlineToolFacade | typeof BlockToolFacade | typeof BlockTuneFacade;
 

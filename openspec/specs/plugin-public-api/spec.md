@@ -1,7 +1,9 @@
 # plugin-public-api Specification
 
 ## Purpose
-TBD - created by archiving change add-plugin-public-api. Update Purpose after archive.
+
+Plugins expose behavior to each other and to the integrator through a `publicApi` object registered under the plugin's static `name`. This capability owns that contract end to end: the `name` as the single identity shared by the runtime registry and the compile-time type maps, the `publicApi` declaration the core reads after constructing a plugin, the `api.plugins` namespace it is served through, and the augmentable `EditorjsPluginApiMap` that types every access without a cast. The registry implementation and its lifecycle live in [[core]]; the plugin and `EditorAPI` contracts it builds on live in [[sdk]]; [[shortcuts-plugin]] is the first consumer. The mirror-image direction — configuration a tool addresses *to* a plugin — is [[tool-plugin-options]].
+
 ## Requirements
 ### Requirement: Plugin identity
 Every plugin constructor SHALL declare a static `name` string that uniquely identifies the plugin within an editor instance. The `name` SHALL be the key used both by the runtime registry and by the compile-time type maps.

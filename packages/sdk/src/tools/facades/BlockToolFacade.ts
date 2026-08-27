@@ -7,7 +7,7 @@ import type {
   // SanitizerConfig,
   ToolboxConfig,
   ToolboxConfigEntry
-} from '@editorjs/editorjs';
+} from 'editorjs-v2';
 import {
   isEmpty
   // cacheable,

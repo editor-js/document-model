@@ -5,7 +5,7 @@ import { TOKENS } from '../tokens.js';
 import { type ToolSettings, ToolsFactory } from './ToolsFactory.js';
 import type {
   EditorConfig
-} from '@editorjs/editorjs';
+} from 'editorjs-v2';
 import {
   InlineTool,
   ToolLoadedCoreEvent,
