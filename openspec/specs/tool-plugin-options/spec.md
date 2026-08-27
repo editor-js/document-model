@@ -1,7 +1,9 @@
 # tool-plugin-options Specification
 
 ## Purpose
-TBD - created by archiving change add-plugin-public-api. Update Purpose after archive.
+
+Tools address configuration to individual plugins through a namespaced `plugins` key on their options, keyed by plugin `name`, so a plugin reads only the slice meant for it instead of inspecting arbitrary tool option keys and so plugin ids can never collide with core option names like `toolbox`. This capability owns the namespace, its merge precedence between a tool's `static options` and the second argument of `core.use(Tool, options)`, the facade accessor plugins read their slice through, and the augmentable `ToolPluginOptionsMap` that types both the declaration and the read. The option types and facade live in [[sdk]]; [[shortcuts-plugin]] is the first consumer and [[tools]] the first declarers. The mirror-image direction — API a plugin exposes *to* its consumers — is [[plugin-public-api]].
+
 ## Requirements
 ### Requirement: Namespaced plugin options on tools
 Tool options SHALL include a `plugins` key whose sub-keys are plugin ids, each holding the configuration that tool addresses to that plugin. The key SHALL be available both in a tool's `static options` and in the second argument of `core.use(Tool, options)`.
