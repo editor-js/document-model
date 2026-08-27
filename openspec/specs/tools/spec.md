@@ -27,7 +27,7 @@ The system SHALL provide `Paragraph`, implementing `BlockTool<ParagraphData, Par
 Implemented in `packages/tools/paragraph/src/index.ts`.
 
 ### Requirement: Bold inline tool
-The system SHALL provide `BoldInlineTool`, implementing `InlineTool` with `name: 'bold'`, `shortcut: 'CMD+B'`, and `intersectType: IntersectType.Extend`, rendering a `<b>` wrapper.
+The system SHALL provide `BoldInlineTool`, implementing `InlineTool` with `name: 'bold'` and `intersectType: IntersectType.Extend`, rendering a `<b>` wrapper. Its `CMD+B` shortcut SHALL be addressed to the shortcuts plugin as `static options.plugins.shortcuts.shortcut` rather than declared as a flat `shortcut` option, since only the namespaced key is read (see [[tool-plugin-options]], [[shortcuts-plugin]]).
 
 #### Scenario: Detecting active state
 - **GIVEN** the current selection range
@@ -47,7 +47,7 @@ The system SHALL provide `BoldInlineTool`, implementing `InlineTool` with `name:
 Implemented in `packages/tools/bold/src/index.ts`.
 
 ### Requirement: Italic inline tool
-The system SHALL provide `ItalicInlineTool`, structurally identical to `BoldInlineTool` — `name: 'italic'`, `shortcut: 'CMD+I'`, `intersectType: IntersectType.Extend` — rendering an `<i>` wrapper, with the same containment-based `isActive` and Format/Unformat toggle behavior.
+The system SHALL provide `ItalicInlineTool`, structurally identical to `BoldInlineTool` — `name: 'italic'`, `intersectType: IntersectType.Extend`, and a `CMD+I` shortcut addressed to the shortcuts plugin under `static options.plugins.shortcuts.shortcut` — rendering an `<i>` wrapper, with the same containment-based `isActive` and Format/Unformat toggle behavior.
 
 #### Scenario: Toggling italic on a selection
 - **GIVEN** a text selection not currently italicized

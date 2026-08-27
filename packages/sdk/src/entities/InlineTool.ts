@@ -1,9 +1,9 @@
 import type { TextRange, InlineFragment } from '@editorjs/model-types';
 import type { FormattingAction, IntersectType } from '@editorjs/model-types';
-import type { InlineTool as InlineToolVersion2 } from '@editorjs/editorjs';
-import type { InlineToolConstructorOptions as InlineToolConstructorOptionsVersion2, ToolConfig } from '@editorjs/editorjs';
+import type { InlineTool as InlineToolVersion2 } from 'editorjs-v2';
+import type { InlineToolConstructorOptions as InlineToolConstructorOptionsVersion2 } from 'editorjs-v2';
 import type { ToolType } from './EntityType.js';
-import type { BaseToolConstructor, BaseToolOptions } from './BaseTool';
+import type { BaseToolConstructor, BaseToolOptions, ToolConfig } from './BaseTool';
 import type { EditorAPI } from '../api';
 import type { MenuConfig } from './MenuConfig.js';
 

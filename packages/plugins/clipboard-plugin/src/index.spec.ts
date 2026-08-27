@@ -224,7 +224,6 @@ describe('ClipboardPlugin', () => {
               { id: 'b2',
                 type: 'header' },
             ],
-            meta: { version: '3.0.0' },
           })
         );
       });

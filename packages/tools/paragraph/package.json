@@ -24,7 +24,7 @@
   "dependencies": {
     "@codexteam/icons": "^0.3.3",
     "@editorjs/dom-adapters": "workspace:^",
-    "@editorjs/editorjs": "^2.30.5",
-    "@editorjs/sdk": "workspace:^"
+    "@editorjs/sdk": "workspace:^",
+    "editorjs-v2": "npm:@editorjs/editorjs@^2.30.5"
   }
 }

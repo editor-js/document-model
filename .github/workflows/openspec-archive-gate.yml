@@ -1,0 +1,33 @@
+name: OpenSpec archive gate
+
+# Fails a PR / merge-queue build when a completed OpenSpec change is left
+# un-archived. The merge_group run is the authoritative one: the merge-queue ref is
+# rebuilt fresh, so it re-evaluates with any archive commit present, whereas the
+# pull_request run can go stale (the /archive workflow pushes with GITHUB_TOKEN,
+# which does not re-trigger PR checks — re-run it manually to clear the red X).
+# Add "OpenSpec archive gate / gate" to the merge queue's required status checks.
+
+on:
+  pull_request:
+  merge_group:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check archive readiness
+        env:
+          # Evaluates to false on merge_group (no pull_request in the payload), so
+          # the label softens the PR check only — the queue gate stays hard.
+          OPENSPEC_DEFER_ARCHIVE: ${{ contains(github.event.pull_request.labels.*.name, 'openspec:defer-archive') }}
+        run: node .github/scripts/openspec-archive-gate.mjs

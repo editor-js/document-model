@@ -78,9 +78,20 @@ export { IntersectType } from './IntersectType.js';
 
 export { EventAction } from './EventAction.js';
 export { EventType } from './EventType.js';
-export type { DocumentId, DocumentIndex } from './indexing.js';
-export { Index } from './Index/index.js';
-export { IndexBuilder } from './Index/IndexBuilder.js';
+export type { DocumentId } from './indexing.js';
+export {
+  Index,
+  IndexBase,
+  IndexKind,
+  DocumentIndex,
+  PropertyIndex,
+  BlockIndex,
+  TuneIndex,
+  DataIndex,
+  TextIndex,
+  PartialIndex,
+  type TextSegment
+} from './Index/index.js';
 export {
   BaseDocumentEvent,
   type EventPayloadBase

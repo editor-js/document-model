@@ -28,27 +28,6 @@
     },
     {
       "path": "../sdk/tsconfig.build.json"
-    },
-    {
-      "path": "../dom-adapters/tsconfig.build.json"
-    },
-    {
-      "path": "../collaboration-manager/tsconfig.build.json"
-    },
-    {
-      "path": "../tools/paragraph/tsconfig.build.json"
-    },
-    {
-      "path": "../tools/bold/tsconfig.build.json"
-    },
-    {
-      "path": "../tools/italic/tsconfig.build.json"
-    },
-    {
-      "path": "../tools/inline-link/tsconfig.build.json"
-    },
-    {
-      "path": "../plugins/clipboard-plugin/tsconfig.build.json"
     }
   ]
 }

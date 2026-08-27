@@ -1,4 +1,4 @@
-import type { EditorConfig } from '@editorjs/editorjs';
+import type { EditorConfig } from 'editorjs-v2';
 
 /**
  * Editor.js configuration

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-magic-numbers, jsdoc/require-jsdoc,@typescript-eslint/naming-convention */
+/* eslint-disable @typescript-eslint/no-magic-numbers */
 import { jest, beforeEach, afterEach, describe, it, expect } from '@jest/globals';
 import type { CoreConfigValidated } from '@editorjs/sdk';
 // @ts-expect-error - TS don't import types via import() so have to import them here as well
@@ -15,18 +15,6 @@ const DOCUMENT_ID = 'integration-doc';
  * Mock console.error to suppress expected error logs
  */
 console.error = jest.fn();
-
-/**
- * Mock DOM adapters — they require a real DOM environment
- */
-jest.unstable_mockModule('@editorjs/dom-adapters', () => ({
-  BlockToolAdapter: jest.fn(() => ({})),
-  CaretAdapter: jest.fn(() => ({
-    attachBlock: jest.fn(),
-    userCaretIndex: undefined as { blockIndex: number } | undefined,
-  })),
-  FormattingAdapter: jest.fn(() => ({})),
-}));
 
 /**
  * Mock ToolsManager — tools rendering is not part of this integration scope
@@ -48,7 +36,7 @@ const ToolsManager = (await import('../tools/ToolsManager')).default;
 const { BlocksManager } = await import('../components/BlockManager.js');
 const { BlocksAPI } = await import('./BlocksAPI.js');
 
-describe('BlocksAPI integration (real model, mocked DOM adapters)', () => {
+describe('BlocksAPI integration (real model, mocked tools)', () => {
   let model: InstanceType<typeof EditorJSModel>;
   let eventBus: InstanceType<typeof EventBus>;
   let blocksManager: BlocksManager;
