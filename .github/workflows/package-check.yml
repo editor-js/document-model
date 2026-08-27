@@ -15,6 +15,11 @@ on:
         required: false
         type: boolean
         default: false
+      include-e2e:
+        description: 'Whether to run the package Playwright e2e suite'
+        required: false
+        type: boolean
+        default: false
     secrets:
       stryker_dashboard_api_key:
         description: 'Stryker dashboard API key for mutation tests'
@@ -85,6 +90,21 @@ jobs:
         uses: ./.github/actions/build
         with:
           package-name: ${{ inputs.package-name }}
+
+  # Kept out of the `tests` job: it needs browsers installed and takes minutes rather than
+  # seconds, and its failures are read differently from a unit-test failure.
+  e2e-tests:
+    needs: should-run
+    if: ${{ inputs.include-e2e && needs.should-run.outputs.run == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Run e2e tests
+        uses: ./.github/actions/e2e-tests
+        with:
+          package-name: ${{ inputs.package-name }}
+          working-directory: ${{ inputs.working-directory }}
 
   mutation-tests:
     needs: should-run

@@ -1,0 +1,53 @@
+name: "E2E tests"
+inputs:
+  package-name:
+    description: 'Name of the package'
+    required: true
+  working-directory:
+    description: 'Package working directory'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version-file: .nvmrc
+
+    - name: Setup environment
+      uses: ./.github/actions/setup
+
+    # Cached separately from the yarn cache: the browsers are ~400MB and are keyed by the
+    # Playwright version rather than by the lockfile, so they survive an unrelated dependency bump.
+    - name: Restore Playwright browsers
+      uses: actions/cache@v5
+      id: playwright-cache
+      with:
+        path: ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-${{ hashFiles('**/yarn.lock') }}
+
+    # `--with-deps` is what makes webkit runnable on a bare ubuntu runner. Re-run without the
+    # browser download on a cache hit, since the system libraries are not part of the cache.
+    - name: Install Playwright browsers
+      shell: bash
+      run: |
+        if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
+          yarn workspace ${{ inputs.package-name }} exec playwright install-deps chromium webkit
+        else
+          yarn workspace ${{ inputs.package-name }} exec playwright install --with-deps chromium webkit
+        fi
+
+    # The suite's own webServer command builds the workspace dependencies first — the fixture
+    # reaches @editorjs/ui and the tools through their `dist`, so an unbuilt change is invisible
+    # to it. See packages/editorjs/e2e/README.md.
+    - name: Run e2e tests
+      shell: bash
+      run: yarn workspace ${{ inputs.package-name }} run test:e2e
+
+    - name: Upload Playwright report
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: playwright-report
+        path: ${{ inputs.working-directory }}/playwright-report/
+        retention-days: 7

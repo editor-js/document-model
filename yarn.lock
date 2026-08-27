@@ -15,6 +15,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@axe-core/playwright@npm:^4.12.1":
+  version: 4.13.0
+  resolution: "@axe-core/playwright@npm:4.13.0"
+  dependencies:
+    axe-core: "npm:~4.13.0"
+  peerDependencies:
+    playwright-core: ">= 1.0.0"
+  checksum: 2400e309d6f6d96b3f3f12b00a80e32cb0213726fcfc3c457b36d17f7136a3361f02a7523286024d7e8ceba9045a5f9c18edd8bc352f76b549faedce298fada2
+  languageName: node
+  linkType: hard
+
 "@babel/code-frame@npm:^7.0.0, @babel/code-frame@npm:^7.12.13, @babel/code-frame@npm:^7.23.5, @babel/code-frame@npm:^7.26.2":
   version: 7.26.2
   resolution: "@babel/code-frame@npm:7.26.2"
@@ -2427,6 +2438,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@editorjs/editorjs@workspace:packages/editorjs"
   dependencies:
+    "@axe-core/playwright": "npm:^4.12.1"
     "@babel/core": "npm:^7.29.0"
     "@babel/preset-env": "npm:^7.29.2"
     "@editorjs/bold": "workspace:^"
@@ -2440,7 +2452,10 @@ __metadata:
     "@editorjs/sdk": "workspace:^"
     "@editorjs/shortcuts-plugin": "workspace:^"
     "@editorjs/ui": "workspace:^"
+    "@guidepup/guidepup": "npm:^0.29.2"
+    "@guidepup/playwright": "npm:^0.18.0"
     "@jest/globals": "npm:^29.7.0"
+    "@playwright/test": "npm:^1.62.0"
     "@types/eslint": "npm:^9.6.1"
     "@types/jest": "npm:^29.5.12"
     "@types/node": "npm:^22.10.2"
@@ -2449,9 +2464,11 @@ __metadata:
     eslint-config-codex: "npm:^2.0.3"
     eslint-plugin-import: "npm:^2.31.0"
     jest: "npm:^29.7.0"
+    playwright-core: "npm:^1.62.0"
     ts-jest: "npm:^29.2.5"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.5.4"
+    vite: "npm:^5.4.11"
   languageName: unknown
   linkType: soft
 
@@ -2597,7 +2614,7 @@ __metadata:
     "@babel/preset-env": "npm:^7.29.2"
     "@editorjs/helpers": "npm:^1.2.2"
     "@editorjs/model-types": "workspace:^"
-    "@editorjs/ui-kit": "npm:^1.1.5"
+    "@editorjs/ui-kit": "npm:^2.0.0"
     "@jest/globals": "npm:^29.7.0"
     "@types/eslint": "npm:^9.6.1"
     "@types/jest": "npm:^29.5.12"
@@ -2640,18 +2657,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@editorjs/ui-kit@npm:^1.1.5":
-  version: 1.1.5
-  resolution: "@editorjs/ui-kit@npm:1.1.5"
-  dependencies:
-    "@codexteam/icons": "npm:^0.3.3"
-    "@editorjs/caret": "npm:^1.1.0"
-    "@editorjs/dom": "npm:^1.1.0"
-    "@editorjs/helpers": "npm:^1.2.2"
-  checksum: c46cc31874e5271b097486e0abdd626a23d9cd6acd1a81abda580c5a762bdb513984a6eb380639ba8a1cfb945a1cdcfe790482c19508eaf438293f7d10f83568
-  languageName: node
-  linkType: hard
-
 "@editorjs/ui@workspace:^, @editorjs/ui@workspace:packages/ui":
   version: 0.0.0-use.local
   resolution: "@editorjs/ui@workspace:packages/ui"
@@ -2664,7 +2669,7 @@ __metadata:
     "@editorjs/helpers": "npm:^1.2.2"
     "@editorjs/paragraph": "workspace:^"
     "@editorjs/sdk": "workspace:^"
-    "@editorjs/ui-kit": "npm:^1.1.5"
+    "@editorjs/ui-kit": "npm:^2.0.0"
     chokidar-cli: "npm:^3.0.0"
     eslint: "npm:^9.9.1"
     eslint-config-codex: "npm:^2.0.3"
@@ -3161,6 +3166,23 @@ __metadata:
   bin:
     openspec: bin/openspec.js
   checksum: 0ba08fac346584212b417a071c8fc805fcc47f53ae47f8a855bea924f1ed326eef919e766457ceb8feddd32cb6ff50ae7363e92c092f71f51dd890701a8ba082
+  languageName: node
+  linkType: hard
+
+"@guidepup/guidepup@npm:^0.29.2":
+  version: 0.29.2
+  resolution: "@guidepup/guidepup@npm:0.29.2"
+  checksum: 6517918c17ec253a59f4088133487453b59bf339b71a730f65c5465f9e05f41afd3d1034ba91a2e73df3617263551c931dc6ba8890b8b032af22ecc357c6c2d3
+  languageName: node
+  linkType: hard
+
+"@guidepup/playwright@npm:^0.18.0":
+  version: 0.18.0
+  resolution: "@guidepup/playwright@npm:0.18.0"
+  peerDependencies:
+    "@guidepup/guidepup": ">=0.27.0"
+    "@playwright/test": ^1.57.0
+  checksum: 09355c1e04cc9b525c8c897f496424f2fbe1e21b242de9561adc176e2e191ca0ffe323dee144584f39c7e7f812e4f84f2e0d827d784455816465110a3b904037
   languageName: node
   linkType: hard
 
@@ -4028,6 +4050,17 @@ __metadata:
   version: 0.1.2
   resolution: "@pkgr/core@npm:0.1.2"
   checksum: 5160ec9f2e3232da681824a42583ef80e637ae6143339bd1db176848efd244dd71d177ccb7fd729261d8dcaf88486ce701d39500d873ed5caf16e8c281e9e28a
+  languageName: node
+  linkType: hard
+
+"@playwright/test@npm:^1.62.0":
+  version: 1.62.1
+  resolution: "@playwright/test@npm:1.62.1"
+  dependencies:
+    playwright: "npm:1.62.1"
+  bin:
+    playwright: cli.js
+  checksum: a84fdc2b0c0f01131fa4c0f0aaebf2698a618ca4a459e3b71ebec4b0b8a5be5b7b1a3cfc063e316d4d75f403a04078d214baf69c4bcbc9606ba12be696d4ff14
   languageName: node
   linkType: hard
 
@@ -5339,6 +5372,13 @@ __metadata:
   dependencies:
     possible-typed-array-names: "npm:^1.0.0"
   checksum: 6c9da3a66caddd83c875010a1ca8ef11eac02ba15fb592dc9418b2b5e7b77b645fa7729380a92d9835c2f05f2ca1b6251f39b993e0feb3f1517c74fa1af02cab
+  languageName: node
+  linkType: hard
+
+"axe-core@npm:~4.13.0":
+  version: 4.13.0
+  resolution: "axe-core@npm:4.13.0"
+  checksum: b9319bedc705fde00e4abd981d8724202cc20102e4ae6d8edfde33cb5265e0fb8f67f32adcb4ad33fbd4a2c8d7ad7ef5af1d933d9ad859bed90e3eae0ee8c52f
   languageName: node
   linkType: hard
 
@@ -7720,12 +7760,31 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fsevents@npm:2.3.2":
+  version: 2.3.2
+  resolution: "fsevents@npm:2.3.2"
+  dependencies:
+    node-gyp: "npm:latest"
+  checksum: 6b5b6f5692372446ff81cf9501c76e3e0459a4852b3b5f1fc72c103198c125a6b8c72f5f166bdd76ffb2fca261e7f6ee5565daf80dca6e571e55bcc589cc1256
+  conditions: os=darwin
+  languageName: node
+  linkType: hard
+
 "fsevents@npm:^2.3.2, fsevents@npm:~2.3.2, fsevents@npm:~2.3.3":
   version: 2.3.3
   resolution: "fsevents@npm:2.3.3"
   dependencies:
     node-gyp: "npm:latest"
   checksum: 4c1ade961ded57cdbfbb5cac5106ec17bc8bccd62e16343c569a0ceeca83b9dfef87550b4dc5cbb89642da412b20c5071f304c8c464b80415446e8e155a038c0
+  conditions: os=darwin
+  languageName: node
+  linkType: hard
+
+"fsevents@patch:fsevents@npm%3A2.3.2#optional!builtin<compat/fsevents>":
+  version: 2.3.2
+  resolution: "fsevents@patch:fsevents@npm%3A2.3.2#optional!builtin<compat/fsevents>::version=2.3.2&hash=df0bf1"
+  dependencies:
+    node-gyp: "npm:latest"
   conditions: os=darwin
   languageName: node
   linkType: hard
@@ -10425,6 +10484,30 @@ __metadata:
   dependencies:
     find-up: "npm:^4.0.0"
   checksum: 9863e3f35132bf99ae1636d31ff1e1e3501251d480336edb1c211133c8d58906bed80f154a1d723652df1fda91e01c7442c2eeaf9dc83157c7ae89087e43c8d6
+  languageName: node
+  linkType: hard
+
+"playwright-core@npm:1.62.1, playwright-core@npm:^1.62.0":
+  version: 1.62.1
+  resolution: "playwright-core@npm:1.62.1"
+  bin:
+    playwright-core: cli.js
+  checksum: 2dab88793a6a5cbfa27641664548ded72a4f869d7eab8d3541e070081b5e09595253aa3dbd42eb4e6eca1b03d96a727c60704359b5b309e71ca58b12549a4c06
+  languageName: node
+  linkType: hard
+
+"playwright@npm:1.62.1":
+  version: 1.62.1
+  resolution: "playwright@npm:1.62.1"
+  dependencies:
+    fsevents: "npm:2.3.2"
+    playwright-core: "npm:1.62.1"
+  dependenciesMeta:
+    fsevents:
+      optional: true
+  bin:
+    playwright: cli.js
+  checksum: f99546873ab2545160ad5a0145fef8e2c1d805efd1ba77356f5b0ee3d8688192b3a2af08cd948bece36ca386fdfad889ef7e53b7aaad309940744c0bbccc0a19
   languageName: node
   linkType: hard
 
@@ -13179,6 +13262,49 @@ __metadata:
   bin:
     vite: bin/vite.js
   checksum: 95b2f94d378305cf8a4fadb40f96da3e59593188733738c486252ecb67ac6439100a44ec9170b66fa319b4d61eea161800e610a0499e61bf110ae6e7e6f233f0
+  languageName: node
+  linkType: hard
+
+"vite@npm:^5.4.11":
+  version: 5.4.21
+  resolution: "vite@npm:5.4.21"
+  dependencies:
+    esbuild: "npm:^0.21.3"
+    fsevents: "npm:~2.3.3"
+    postcss: "npm:^8.4.43"
+    rollup: "npm:^4.20.0"
+  peerDependencies:
+    "@types/node": ^18.0.0 || >=20.0.0
+    less: "*"
+    lightningcss: ^1.21.0
+    sass: "*"
+    sass-embedded: "*"
+    stylus: "*"
+    sugarss: "*"
+    terser: ^5.4.0
+  dependenciesMeta:
+    fsevents:
+      optional: true
+  peerDependenciesMeta:
+    "@types/node":
+      optional: true
+    less:
+      optional: true
+    lightningcss:
+      optional: true
+    sass:
+      optional: true
+    sass-embedded:
+      optional: true
+    stylus:
+      optional: true
+    sugarss:
+      optional: true
+    terser:
+      optional: true
+  bin:
+    vite: bin/vite.js
+  checksum: 479a63e271d2d9e80a8e553e165444179681f33ddec1e7c84a43c4572f67c3d3abd33136389beb42703e32d3e96e1e8a930a222ee1bb64263ba057c187ccf793
   languageName: node
   linkType: hard
 

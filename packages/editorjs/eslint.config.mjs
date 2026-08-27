@@ -36,4 +36,15 @@ export default [
       }],
     },
   },
+  {
+    files: ['e2e/**/*.ts', 'playwright.config.ts', 'playwright.voiceover.config.ts'],
+    rules: {
+      /**
+       * e2e tooling only ships in devDependencies, never published
+       */
+      'n/no-unpublished-import': ['error', {
+        allowModules: ['@playwright/test', 'vite', '@axe-core/playwright', '@guidepup/playwright'],
+      }],
+    },
+  },
 ];

@@ -16,5 +16,9 @@ jobs:
       package-name: '@editorjs/editorjs'
       working-directory: './packages/editorjs'
       include-mutations: false
+      # The ARIA semantics this package's UI depends on are only enforced by the Playwright
+      # suite — nothing in the type surface catches a dropped role or accessible name.
+      # `voiceover.spec.ts` stays out of it: screen readers can't run headless or in parallel.
+      include-e2e: true
     secrets:
       stryker_dashboard_api_key: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
