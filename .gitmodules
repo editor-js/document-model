@@ -1,0 +1,4 @@
+[submodule "packages/tools/header"]
+	path = packages/tools/header
+	url = https://github.com/editor-js/header.git
+	branch = feat/sdk-v3-migration
