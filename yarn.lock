@@ -2358,6 +2358,7 @@ __metadata:
   resolution: "@editorjs/document-playground@workspace:packages/playground"
   dependencies:
     "@editorjs/editorjs": "workspace:^"
+    "@editorjs/header": "workspace:^"
     "@editorjs/model": "workspace:^"
     "@editorjs/sdk": "workspace:^"
     "@types/eslint": "npm:^8"
@@ -2466,7 +2467,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@editorjs/header@workspace:packages/tools/header":
+"@editorjs/header@workspace:^, @editorjs/header@workspace:packages/tools/header":
   version: 0.0.0-use.local
   resolution: "@editorjs/header@workspace:packages/tools/header"
   dependencies:

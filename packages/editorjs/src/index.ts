@@ -9,7 +9,7 @@ import { LinkInlineTool } from '@editorjs/inline-link';
 import { ClipboardPlugin } from '@editorjs/clipboard-plugin';
 import { ShortcutsPlugin } from '@editorjs/shortcuts-plugin';
 import { EditorjsUI, BlocksUI, InlineToolbarUI, ToolbarUI, ToolboxUI } from '@editorjs/ui';
-import { mergeTools } from './mergeTools.js';
+import { mergeTools, type ToolEntry } from './mergeTools.js';
 
 /**
  * Default tools registered by the bundle, keyed later by their static `name`.
@@ -32,8 +32,10 @@ export type EditorJSConfig = Omit<CoreConfig, 'tools'> & {
   /**
    * User tools to register on top of the defaults. A tool provided under a name
    * that matches a default tool replaces that default instead of duplicating it.
+   * Pass a `[tool, options]` tuple instead of a bare constructor to forward
+   * options (most commonly `config`) to `core.use`.
    */
-  tools?: Record<string, ToolConstructable>;
+  tools?: Record<string, ToolEntry>;
 };
 
 /**
@@ -77,8 +79,8 @@ export default class EditorJS {
     /**
      * Default tools merged with user-provided `config.tools` (user wins by name).
      */
-    for (const tool of mergeTools(DEFAULT_TOOLS, tools)) {
-      this.#core.use(tool);
+    for (const [tool, options] of mergeTools(DEFAULT_TOOLS, tools)) {
+      this.#core.use(tool, options);
     }
 
     /**
