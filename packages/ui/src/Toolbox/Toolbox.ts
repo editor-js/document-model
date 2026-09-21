@@ -15,6 +15,7 @@ import { PopoverDesktop, PopoverEvent } from '@editorjs/ui-kit';
 import type { BlockSelectedUIEvent } from '../Blocks/events/index.js';
 import { ToolboxRenderedUIEvent, ToolboxClosedUIEvent, ToolboxOpenedUIEvent } from './events/index.js';
 import type { ToolboxOptionsEntry } from './ToolboxConfigEntry.js';
+import { messages } from '../messages.js';
 
 /**
  * UI module responsible for rendering the toolbox
@@ -82,6 +83,14 @@ export class ToolboxUI implements EditorjsPlugin {
       scopeElement: this.#editorConfig.holder,
       searchable: true,
       items: [],
+
+      /**
+       * Names the menu the popover renders its items into, so assistive technologies
+       * announce what the list is for. Matches the name of the button that opens it
+       */
+      messages: {
+        label: messages.addBlockMenu,
+      },
     });
 
     this.#popover.on(PopoverEvent.Closed, () => {
@@ -143,6 +152,11 @@ export class ToolboxUI implements EditorjsPlugin {
         title: tool.name,
         ...toolbox,
         closeOnActivate: true,
+
+        /**
+         * @todo `focus: true` does not put the caret into the inserted block,
+         * so the user has to click it before typing
+         */
         onActivate: () => {
           void this.#api.blocks.insert({
             type: tool.name,
