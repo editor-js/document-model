@@ -12,7 +12,9 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
-  reporter: 'list',
+  // On CI the html report is written too, for the e2e action to upload: it is what keeps the
+  // traces recorded on a retry (see `trace` below) once the runner is gone.
+  reporter: isCI ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: `http://localhost:${PORT}`,
     trace: 'on-first-retry',
