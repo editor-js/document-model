@@ -441,6 +441,11 @@ export class InlineToolbarUI implements EditorjsPlugin {
     });
 
     /**
+     * The popover can also close on its own, e.g. on Escape, without going through #hide()
+     */
+    this.#popover.on(PopoverEvent.Closed, this.#onPopoverClosed);
+
+    /**
      * Only the popover is swapped, never the whole holder: a live region has to be present in
      * the accessibility tree *before* its text changes for a screen reader to announce it.
      * Re-inserting the region on every render (as replaceChildren did) resets it each time,
@@ -475,6 +480,13 @@ export class InlineToolbarUI implements EditorjsPlugin {
       return;
     }
 
+    /**
+     * destroy() hides the popover on its way out and emits Closed. Unsubscribed first: a rebuild
+     * destroys the outgoing popover while the toolbar stays open, and taking that for a close
+     * would re-announce the toolbar on every selection change
+     */
+    this.#popover.off(PopoverEvent.Closed, this.#onPopoverClosed);
+
     /** destroy() hides the popover on its way out, so hiding it here first would be a no-op */
     this.#popover.destroy();
     this.#popover = null;
@@ -494,6 +506,16 @@ export class InlineToolbarUI implements EditorjsPlugin {
       this.#announce(messages.inlineToolbarAvailable);
     }
   }
+
+  /**
+   * Handles the popover closing by itself rather than through #hide(), e.g. on Escape.
+   * Without this #isVisible stays true, and the next time the toolbar appears it is taken for
+   * a reselection while already open, so it is never announced again
+   */
+  #onPopoverClosed = (): void => {
+    this.#cancelPendingAnnouncement();
+    this.#isVisible = false;
+  };
 
   /**
    * Hides the Inline Toolbar

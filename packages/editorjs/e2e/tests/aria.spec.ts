@@ -524,6 +524,34 @@ test.describe('inline toolbar', () => {
     await expect(status).toHaveText(message);
   });
 
+  test('announces again when reopened after being dismissed with Escape', async ({ page }) => {
+    const message = 'Text formatting toolbar available. Press Tab to enter.';
+    const status = page.getByTestId('inline-toolbar-announcer');
+    const inlineToolbar = page.getByRole('toolbar', { name: 'Text formatting' });
+
+    await selectParagraphText(page);
+
+    await expect(status).toHaveText(message);
+
+    // Escape is handled by the popover itself, not by the editor collapsing the selection,
+    // so the toolbar closes while the text stays selected.
+    await page.keyboard.press('Escape');
+
+    await expect(inlineToolbar).toBeHidden();
+
+    await status.evaluate((el) => {
+      el.textContent = 'sentinel';
+    });
+
+    // Shrinking the selection keeps it non-empty throughout, so the toolbar comes back without
+    // the editor ever hiding it on its own - only the popover's Closed event can have told it
+    // that the toolbar was gone in between.
+    await page.keyboard.press('Shift+ArrowLeft');
+
+    await expect(inlineToolbar).toBeVisible();
+    await expect(status).toHaveText(message);
+  });
+
   test('takes its tools out of the accessibility tree when dismissed', async ({ page }) => {
     await selectParagraphText(page);
 
