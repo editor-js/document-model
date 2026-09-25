@@ -1,6 +1,6 @@
 import type { TextNodeSerialized } from './Text.js';
 import type { ValueSerialized } from './Value.js';
-import type { BlockTuneSerialized } from './BlockTune.js';
+import type { PluginDataSerialized } from './PluginData.js';
 
 // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 export type BlockChildNodeSerialized = ValueSerialized | TextNodeSerialized;
@@ -13,7 +13,7 @@ export interface BlockNodeDataSerialized {
   [key: string]: BlockNodeDataSerializedValue;
 }
 
-/** Describes a block with its id, tool name, data and optional tunes */
+/** Describes a block with its id, tool name, data and optional per-plugin data */
 export interface BlockData {
   /** Block identifier */
   id: string;
@@ -21,8 +21,8 @@ export interface BlockData {
   name: string;
   /** Block content data */
   data: BlockNodeDataSerialized;
-  /** Optional block tune data */
-  tunes?: Record<string, BlockTuneSerialized>;
+  /** Optional per-plugin data, keyed by plugin name */
+  plugins?: Record<string, PluginDataSerialized>;
 }
 
 /** Minimum data required to initialise a block */

@@ -1,6 +1,6 @@
 import { getContext } from '../../utils/Context.js';
 import type { EditorDocument } from '../EditorDocument/index.js';
-import { BlockTune } from '../BlockTune/index.js';
+import { PluginDataNode } from '../PluginDataNode/index.js';
 import { InvalidNodeTypeError } from './errors/InvalidNodeTypeError.js';
 import { NonExistingKeyError } from './errors/NonExistingKeyError.js';
 import type {
@@ -19,7 +19,7 @@ import {
   createBlockId,
   generateBlockId,
   createBlockToolName,
-  createBlockTuneName,
+  createPluginDataName,
   get,
   has,
   set,
@@ -31,8 +31,8 @@ import {
   type DataKey,
   type BlockId,
   type BlockToolName,
-  type BlockTuneName,
-  type BlockTuneSerialized,
+  type PluginDataName,
+  type PluginDataSerialized,
   type BlockNodeDataSerialized,
   type BlockNodeDataSerializedValue,
   type BlockNodeSerialized,
@@ -46,7 +46,7 @@ import type { DeepReadonly } from '../../utils/DeepReadonly.js';
 import {
   DataNodeRemovedEvent,
   DataNodeAddedEvent,
-  TuneModifiedEvent,
+  PluginDataModifiedEvent,
   ValueModifiedEvent
 } from '@editorjs/model-types';
 import type { Constructor } from '../../utils/types.js';
@@ -55,7 +55,7 @@ import { AlreadyExistingKeyError } from './errors/AlreadyExistingKeyError.js';
 /**
  * BlockNode class represents a node in a tree-like structure used to store and manipulate Blocks in an editor document.
  * A BlockNode can contain one or more child nodes of type TextNode or ValueNode.
- * It can also be associated with one or more BlockTunes, which can modify the behavior of the BlockNode.
+ * It can also carry per-plugin data, which plugins use to store their own state for the block.
  */
 export class BlockNode extends EventBus {
   /**
@@ -79,9 +79,13 @@ export class BlockNode extends EventBus {
   #parent: EditorDocument | null;
 
   /**
-   * Private field representing the BlockTunes associated with the BlockNode
+   * Per-plugin data of this block, keyed by plugin name.
+   *
+   * The record has a null prototype: names come from documents, and a plain assignment of a
+   * `__proto__` key to an ordinary object creates no own property at all, which would silently
+   * lose that plugin's data. With no prototype every name is stored as plain data.
    */
-  #tunes: Record<BlockTuneName, BlockTune>;
+  #plugins: Record<PluginDataName, PluginDataNode> = Object.create(null) as Record<PluginDataName, PluginDataNode>;
 
   /**
    * Constructor for BlockNode class.
@@ -90,33 +94,23 @@ export class BlockNode extends EventBus {
    * @param args.name - The name of the BlockNode.
    * @param [args.data] - The content of the BlockNode.
    * @param [args.parent] - The parent EditorDocument of the BlockNode.
-   * @param [args.tunes] - The BlockTunes associated with the BlockNode.
+   * @param [args.plugins] - Per-plugin data associated with the BlockNode.
    */
   constructor({
     id,
     name,
     data = {},
     parent,
-    tunes = {},
+    plugins = {},
   }: BlockNodeConstructorParameters) {
     super();
 
     this.#id = id !== undefined ? createBlockId(id) : generateBlockId();
     this.#name = createBlockToolName(name);
     this.#parent = parent ?? null;
-    this.#tunes = mapObject(
-      tunes,
-      (tuneData: BlockTuneSerialized, tuneName: string) => {
-        const tune = new BlockTune({
-          name: createBlockTuneName(tuneName),
-          data: tuneData,
-        });
-
-        this.#listenAndBubbleTuneEvent(tune, tuneName as BlockTuneName);
-
-        return tune;
-      }
-    );
+    Object.entries(plugins).forEach(([pluginName, pluginData]) => {
+      this.#createPluginDataNode(createPluginDataName(pluginName), pluginData);
+    });
 
     this.#initialize(data);
   }
@@ -150,10 +144,10 @@ export class BlockNode extends EventBus {
   }
 
   /**
-   * Getter to access BlockNode tunes
+   * Getter to access the block's per-plugin data nodes
    */
-  public get tunes(): Readonly<Record<string, BlockTune>> {
-    return this.#tunes;
+  public get plugins(): Readonly<Record<string, PluginDataNode>> {
+    return this.#plugins;
   }
 
   /**
@@ -165,16 +159,21 @@ export class BlockNode extends EventBus {
       entry => this.#serializeData(entry)
     );
 
-    const serializedTunes = mapObject(
-      this.#tunes,
-      tune => tune.serialized
-    );
+    const serializedPlugins: Record<string, PluginDataSerialized> = {};
+
+    Object.entries(this.#plugins).forEach(([pluginName, pluginData]) => {
+      if (pluginData.isEmpty) {
+        return;
+      }
+
+      serializedPlugins[pluginName] = pluginData.serialized;
+    });
 
     return {
       id: this.#id,
       name: this.#name,
       data: serializedData,
-      tunes: serializedTunes,
+      plugins: serializedPlugins,
     };
   }
 
@@ -256,14 +255,21 @@ export class BlockNode extends EventBus {
   }
 
   /**
-   * Updates data in the BlockTune by the BlockTuneName
-   * @param tuneName - The name of the BlockTune
-   * @param data - The data to update the BlockTune with
+   * Updates one plugin's per-block data, creating the plugin's entry when the block has none yet.
+   * Each key is applied separately, so each change is emitted as its own event.
+   * @param pluginName - Name the data is stored under, by convention the plugin's `name`
+   * @param data - Keys to merge into the plugin's data; a key set to `undefined` is removed
    */
-  public updateTuneData(tuneName: BlockTuneName, data: Record<string, unknown>): void {
+  public updatePluginData(pluginName: PluginDataName, data: Record<string, unknown>): void {
+    if (pluginName.length === 0) {
+      throw new Error('BlockNode: plugin data name must not be empty');
+    }
+
+    const pluginData = this.#plugins[pluginName] ?? this.#createPluginDataNode(pluginName);
+
     Object.entries(data)
       .forEach(([key, value]) => {
-        this.#tunes[tuneName].update(key, value);
+        pluginData.update(key, value);
       });
   }
 
@@ -585,27 +591,50 @@ export class BlockNode extends EventBus {
   }
 
   /**
-   * Listens to BlockTune events and bubbles them to the BlockNode
-   * @param tune - BlockTune to listen to
-   * @param name - BlockTune name in the BlockNode data
+   * Creates a PluginDataNode for the passed name and starts bubbling its events.
+   *
+   * The node is created empty even when initial data is passed, and the listener is attached
+   * before any value is set, because PluginDataNode dispatches synchronously: attaching later
+   * would drop the events of the very first write.
+   * @param name - Name the data is stored under
+   * @param data - Initial data, applied after the listener is attached
    */
-  #listenAndBubbleTuneEvent(tune: BlockTune, name: BlockTuneName): void {
-    tune.addEventListener(
+  #createPluginDataNode(name: PluginDataName, data?: PluginDataSerialized): PluginDataNode {
+    const pluginData = new PluginDataNode({ name });
+
+    this.#listenAndBubblePluginDataEvent(pluginData, name);
+
+    this.#plugins[name] = pluginData;
+
+    if (data !== undefined) {
+      Object.entries(data).forEach(([key, value]) => pluginData.update(key, value));
+    }
+
+    return pluginData;
+  }
+
+  /**
+   * Listens to PluginDataNode events and bubbles them to the BlockNode
+   * @param pluginData - PluginDataNode to listen to
+   * @param name - Name the data is stored under
+   */
+  #listenAndBubblePluginDataEvent(pluginData: PluginDataNode, name: PluginDataName): void {
+    pluginData.addEventListener(
       EventType.Changed,
       (event: Event): void => {
         if (!(event instanceof BaseDocumentEvent)) {
           // Stryker disable next-line StringLiteral
-          console.error('BlockNode: BlockTune should only emit BaseDocumentEvent');
+          console.error('BlockNode: PluginDataNode should only emit BaseDocumentEvent');
 
           return;
         }
 
         this.dispatchEvent(
-          new TuneModifiedEvent(
-            new PartialIndex({ tuneKey: (event.detail.index as PartialIndex).tuneKey,
-              tuneName: name }),
+          new PluginDataModifiedEvent(
+            new PartialIndex({ pluginKey: (event.detail.index as PartialIndex).pluginKey,
+              pluginName: name }),
             event.detail.data,
-            'user'
+            getContext<string | number>()!
           )
         );
       }

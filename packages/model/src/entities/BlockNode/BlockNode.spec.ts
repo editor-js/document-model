@@ -1,12 +1,13 @@
 import { EventAction } from '@editorjs/model-types';
 import { Index } from '@editorjs/model-types';
 import { PartialIndex } from '@editorjs/model-types';
-import { createDataKey, createBlockId, createBlockToolName, createBlockTuneName } from '@editorjs/model-types';
+import { createDataKey, createBlockId, createBlockToolName, createPluginDataName } from '@editorjs/model-types';
 import { BlockNode } from './index.js';
 import { NonExistingKeyError } from './errors/NonExistingKeyError.js';
 
-import type { BlockTuneName, BlockTuneSerialized } from '@editorjs/model-types';
-import { BlockTune } from '../BlockTune/index.js';
+import type { PluginDataName, PluginDataSerialized } from '@editorjs/model-types';
+import { PluginDataNode } from '../PluginDataNode/index.js';
+import { runWithContext } from '../../utils/Context.js';
 import { ValueNode } from '../ValueNode/index.js';
 
 import type { EditorDocument } from '../EditorDocument/index.js';
@@ -17,7 +18,7 @@ import type { InlineFragment, TextNodeSerialized, BlockNodeDataSerialized } from
 import { TextNode } from '../inline-fragments/index.js';
 import type { BlockNodeData } from './types/index.js';
 import { NODE_TYPE_HIDDEN_PROP } from '@editorjs/model-types';
-import { TextAddedEvent, TuneModifiedEvent, ValueModifiedEvent } from '@editorjs/model-types';
+import { TextAddedEvent, PluginDataModifiedEvent, ValueModifiedEvent } from '@editorjs/model-types';
 import { EventType } from '@editorjs/model-types';
 import { get } from '@editorjs/model-types';
 import { AlreadyExistingKeyError } from './errors/AlreadyExistingKeyError.js';
@@ -29,17 +30,17 @@ const ValueNodeProto = ValueNode.prototype as unknown as {
   update: () => void;
 };
 
-jest.mock('../BlockTune');
+jest.mock('../PluginDataNode');
 
 jest.mock('../inline-fragments/TextNode');
 
 jest.mock('../ValueNode');
 
-const createBlockNodeWithData = (data: BlockNodeDataSerialized, tunes: Record<string, BlockTuneSerialized> = {}): BlockNode => {
+const createBlockNodeWithData = (data: BlockNodeDataSerialized, plugins: Record<string, PluginDataSerialized> = {}): BlockNode => {
   return new BlockNode({
     name: createBlockToolName('header'),
     data,
-    tunes,
+    plugins,
   });
 };
 
@@ -116,31 +117,31 @@ describe('BlockNode', () => {
         .toEqual(blockNodeName);
     });
 
-    it('should call .serialized getter of all tunes associated with the BlockNode', () => {
-      const blockTunesNames = [
-        'align' as BlockTuneName,
-        'font-size' as BlockTuneName,
-        'font-weight' as BlockTuneName,
+    it('should call .serialized getter of all plugin data nodes associated with the BlockNode', () => {
+      const pluginNames = [
+        'align' as PluginDataName,
+        'font-size' as PluginDataName,
+        'font-weight' as PluginDataName,
       ];
 
-      const blockTunes = blockTunesNames.reduce((acc, name) => ({
+      const pluginsDataMap = pluginNames.reduce((acc, name) => ({
         ...acc,
         [name]: {},
       }), {});
 
-      const spy = jest.spyOn(BlockTune.prototype, 'serialized', 'get');
+      const spy = jest.spyOn(PluginDataNode.prototype, 'serialized', 'get');
 
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
         data: {},
         parent: {} as EditorDocument,
-        tunes: blockTunes,
+        plugins: pluginsDataMap,
       });
 
       blockNode.serialized;
 
       expect(spy)
-        .toHaveBeenCalledTimes(blockTunesNames.length);
+        .toHaveBeenCalledTimes(pluginNames.length);
     });
 
     it('should call .serialized getter of all child ValueNodes associated with the BlockNode', () => {
@@ -434,15 +435,15 @@ describe('BlockNode', () => {
     });
   });
 
-  describe('.tunes', () => {
-    it('should return an object with tunes associated with the BlockNode', () => {
-      const blockTunesNames = [
-        'align' as BlockTuneName,
-        'font-size' as BlockTuneName,
-        'font-weight' as BlockTuneName,
+  describe('.plugins', () => {
+    it('should return an object with plugin data nodes associated with the BlockNode', () => {
+      const pluginNames = [
+        'align' as PluginDataName,
+        'font-size' as PluginDataName,
+        'font-weight' as PluginDataName,
       ];
 
-      const blockTunes = blockTunesNames.reduce((acc, name) => ({
+      const pluginsDataMap = pluginNames.reduce((acc, name) => ({
         ...acc,
         [name]: {},
       }), {});
@@ -451,16 +452,16 @@ describe('BlockNode', () => {
         name: createBlockToolName('paragraph'),
         data: {},
         parent: {} as EditorDocument,
-        tunes: blockTunes,
+        plugins: pluginsDataMap,
       });
 
-      const tunes = Object.entries(blockNode.tunes);
+      const pluginsData = Object.entries(blockNode.plugins);
 
-      tunes.forEach(([name, tune]) => {
+      pluginsData.forEach(([name, pluginData]) => {
         expect(name)
-          .toEqual(createBlockTuneName(name));
-        expect(tune)
-          .toBeInstanceOf(BlockTune);
+          .toEqual(createPluginDataName(name));
+        expect(pluginData)
+          .toBeInstanceOf(PluginDataNode);
       });
     });
   });
@@ -853,20 +854,20 @@ describe('BlockNode', () => {
     });
   });
 
-  describe('.updateTuneData()', () => {
+  describe('.updatePluginData()', () => {
     afterEach(() => {
       jest.clearAllMocks();
     });
 
-    it('should call .update() method of the BlockTune', () => {
-      const blockTuneName = 'align' as BlockTuneName;
+    it('should call .update() method of the PluginDataNode', () => {
+      const pluginDataName = 'align' as PluginDataName;
 
       const blockNode = new BlockNode({
         name: createBlockToolName('paragraph'),
         data: {},
         parent: {} as EditorDocument,
-        tunes: {
-          [blockTuneName]: {},
+        plugins: {
+          [pluginDataName]: {},
         },
       });
 
@@ -876,9 +877,9 @@ describe('BlockNode', () => {
         [dataKey]: dataValue,
       };
 
-      const spy = jest.spyOn(BlockTune.prototype, 'update');
+      const spy = jest.spyOn(PluginDataNode.prototype, 'update');
 
-      blockNode.updateTuneData(blockTuneName, data);
+      blockNode.updatePluginData(pluginDataName, data);
 
       expect(spy)
         .toHaveBeenCalledWith(dataKey, dataValue);
@@ -1703,7 +1704,7 @@ describe('BlockNode', () => {
         }));
     });
 
-    it('should not emit Changed event if ValueNode dispatched event that is not a BaseDocumentEvent', () => {
+    it('should not emit Changed event if PluginDataNode dispatched event that is not a BaseDocumentEvent', () => {
       const handler = jest.fn();
 
       node.addEventListener(EventType.Changed, handler);
@@ -1716,10 +1717,10 @@ describe('BlockNode', () => {
     });
   });
 
-  describe('working with BlockTune events', () => {
+  describe('working with PluginDataNode events', () => {
     let node: BlockNode;
-    let tune: BlockTune;
-    const tuneName = createBlockTuneName('tune');
+    let pluginData: PluginDataNode;
+    const pluginName = createPluginDataName('anchors');
     const key = 'key';
     const value = 'value';
     const newValue = 'new-value';
@@ -1728,49 +1729,75 @@ describe('BlockNode', () => {
       node = createBlockNodeWithData(
         {},
         {
-          [tuneName]: { [key]: value },
+          [pluginName]: { [key]: value },
         }
       );
 
-      tune = node.tunes[tuneName];
+      pluginData = node.plugins[pluginName];
     });
 
-    it('should re-emit event from the BlockTune adding index in Block', () => {
-      let event: TuneModifiedEvent | null = null;
+    it('should re-emit event from the PluginDataNode adding index in Block', () => {
+      let event: PluginDataModifiedEvent | null = null;
       const handler = (e: Event): void => {
-        event = e as TuneModifiedEvent;
+        event = e as PluginDataModifiedEvent;
       };
 
       node.addEventListener(EventType.Changed, handler);
 
-      tune.dispatchEvent(
-        new TuneModifiedEvent(
-          new PartialIndex({ tuneKey: key }),
-          {
-            value: newValue,
-            previous: value,
-          },
-          'user'
-        )
-      );
+      runWithContext('editor-user', () => {
+        pluginData.dispatchEvent(
+          new PluginDataModifiedEvent(
+            new PartialIndex({ pluginKey: key }),
+            {
+              value: newValue,
+              previous: value,
+            },
+            'editor-user'
+          )
+        );
+      });
 
       expect(event)
-        .toBeInstanceOf(TuneModifiedEvent);
+        .toBeInstanceOf(PluginDataModifiedEvent);
       expect(event)
         .toHaveProperty('detail.index', expect.objectContaining({
-          tuneKey: key,
-          tuneName: tuneName,
+          pluginKey: key,
+          pluginName: pluginName,
         }));
       expect(event)
-        .toHaveProperty('detail.userId', 'user');
+        .toHaveProperty('detail.userId', 'editor-user');
     });
 
-    it('should not emit Changed event if ValueNode dispatched event that is not a BaseDocumentEvent', () => {
+    it('should re-emit the event with the acting user from the context, not a placeholder', () => {
+      let event: PluginDataModifiedEvent | null = null;
+
+      node.addEventListener(EventType.Changed, (e: Event): void => {
+        event = e as PluginDataModifiedEvent;
+      });
+
+      runWithContext('another-user', () => {
+        pluginData.dispatchEvent(
+          new PluginDataModifiedEvent(
+            new PartialIndex({ pluginKey: key }),
+            {
+              value: newValue,
+              previous: value,
+            },
+            'another-user'
+          )
+        );
+      });
+
+      expect(event)
+        .toHaveProperty('detail.userId', 'another-user');
+    });
+
+    it('should not emit Changed event if PluginDataNode dispatched event that is not a BaseDocumentEvent', () => {
       const handler = jest.fn();
 
       node.addEventListener(EventType.Changed, handler);
 
-      tune.dispatchEvent(new Event(EventType.Changed));
+      pluginData.dispatchEvent(new Event(EventType.Changed));
 
       expect(handler)
         .not

@@ -1,4 +1,4 @@
-import type { BlockTuneName } from '../BlockTune.js';
+import type { PluginDataName } from '../PluginData.js';
 import type { DataKey } from '../DataKey.js';
 import type { DocumentId } from '../indexing.js';
 import type { TextRange } from '../Text.js';
@@ -13,8 +13,8 @@ export enum IndexKind {
   Property = 'property',
   /** Block scope */
   Block = 'block',
-  /** Block tune scope */
-  Tune = 'tune',
+  /** Plugin per-block data scope */
+  PluginData = 'plugin',
   /** Block data-key scope */
   Data = 'data',
   /** Inline text scope (single or composite) */
@@ -43,10 +43,10 @@ export interface IndexFields {
   textRange?: TextRange;
   /** Data key within the block */
   dataKey?: DataKey;
-  /** Tune name within the block */
-  tuneName?: BlockTuneName;
-  /** Tune key within the block tune */
-  tuneKey?: string;
+  /** Plugin name within the block */
+  pluginName?: PluginDataName;
+  /** Key within the plugin's per-block data */
+  pluginKey?: string;
   /** Block index within the document */
   blockIndex?: number;
   /** Property name within the document */

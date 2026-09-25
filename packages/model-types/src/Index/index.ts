@@ -2,20 +2,20 @@ export { IndexBase, IndexKind, type IndexFields, type TextSegment } from './Inde
 export { DocumentIndex } from './DocumentIndex.js';
 export { PropertyIndex } from './PropertyIndex.js';
 export { BlockIndex } from './BlockIndex.js';
-export { TuneIndex } from './TuneIndex.js';
+export { PluginDataIndex } from './PluginDataIndex.js';
 export { DataIndex } from './DataIndex.js';
 export { TextIndex } from './TextIndex.js';
 export { PartialIndex } from './PartialIndex.js';
 
 import { IndexBase, IndexKind, type TextSegment } from './IndexBase.js';
 import type { DocumentId } from '../indexing.js';
-import type { BlockTuneName } from '../BlockTune.js';
+import type { PluginDataName } from '../PluginData.js';
 import type { DataKey } from '../DataKey.js';
 import type { TextRange } from '../Text.js';
 import { DocumentIndex } from './DocumentIndex.js';
 import { PropertyIndex } from './PropertyIndex.js';
 import { BlockIndex } from './BlockIndex.js';
-import { TuneIndex } from './TuneIndex.js';
+import { PluginDataIndex } from './PluginDataIndex.js';
 import { DataIndex } from './DataIndex.js';
 import { TextIndex } from './TextIndex.js';
 
@@ -106,19 +106,19 @@ export abstract class Index extends IndexBase {
   }
 
   /**
-   * Creates a TuneIndex
+   * Creates a PluginDataIndex
    * @param blockIndex - zero-based block position
-   * @param tuneName - name of the block tune
-   * @param tuneKey - key within the block tune
+   * @param pluginName - name of the plugin owning the data
+   * @param pluginKey - key within the plugin's data
    * @param documentId - optional document identifier
    */
-  public static tune(
+  public static pluginData(
     blockIndex: number,
-    tuneName: BlockTuneName,
-    tuneKey: string,
+    pluginName: PluginDataName,
+    pluginKey: string,
     documentId?: DocumentId
-  ): TuneIndex {
-    return new TuneIndex(blockIndex, tuneName, tuneKey, documentId);
+  ): PluginDataIndex {
+    return new PluginDataIndex(blockIndex, pluginName, pluginKey, documentId);
   }
 
   /**
@@ -172,10 +172,10 @@ export abstract class Index extends IndexBase {
           obj.id as DocumentId | undefined
         );
 
-      case 'tune':
-        return new TuneIndex(
+      case 'plugin':
+        return new PluginDataIndex(
           obj.b as number,
-          obj.tune as BlockTuneName,
+          obj.plugin as PluginDataName,
           obj.key as string,
           obj.id as DocumentId | undefined
         );
