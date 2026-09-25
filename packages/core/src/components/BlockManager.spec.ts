@@ -12,6 +12,7 @@ jest.unstable_mockModule('@editorjs/sdk', () => ({
   BlockChildType: { Text: 't' },
   NODE_TYPE_HIDDEN_PROP: '$t',
   createBlockId: jest.fn((id: string) => id as never),
+  createPluginDataName: jest.fn((name: string) => name as never),
   set: jest.fn(() => undefined),
   renumberKeys: jest.fn(() => new Map()),
   TextIndex: class TextIndex {},
