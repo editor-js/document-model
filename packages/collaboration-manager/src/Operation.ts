@@ -28,8 +28,13 @@ export interface InsertOrDeleteOperationData<T extends OperationPayload = any> {
   payload: ArrayLike<T>;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface ModifyOperationData<T extends Record<any, any> = Record<any, any>> {
+/**
+ * Data of a Modify operation.
+ *
+ * The payload is any JSON value, not just an object: a plugin's per-block data holds scalars,
+ * so `payload: false` has to be representable.
+ */
+export interface ModifyOperationData<T = unknown> {
   /**
    * Operation payload
    */
@@ -186,7 +191,13 @@ export class Operation<T extends OperationType = OperationType> {
     const textIndex = this.index as TextIndex;
 
     if (this.type === OperationType.Insert) {
-      return [textIndex.textRange![0], Math.max(textIndex.textRange![1], textIndex.textRange![0] + this.data.payload!.length)];
+      /**
+       * Only an Insert operation reaches this branch, and its payload is always the inserted
+       * text or block list — unlike a Modify payload, which may be any JSON value.
+       */
+      const { payload } = this.data as InsertOrDeleteOperationData;
+
+      return [textIndex.textRange![0], Math.max(textIndex.textRange![1], textIndex.textRange![0] + payload.length)];
     }
 
     return textIndex.textRange!;

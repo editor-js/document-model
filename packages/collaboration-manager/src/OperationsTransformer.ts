@@ -1,4 +1,5 @@
-import { BlockIndex, DataIndex, TextIndex } from '@editorjs/sdk';
+import { BlockIndex, DataIndex, PluginDataIndex, TextIndex } from '@editorjs/sdk';
+import type { InsertOrDeleteOperationData } from './Operation.js';
 import { Operation, OperationType } from './Operation.js';
 import { getRangesIntersectionType, RangeIntersectionType } from './utils/getRangesIntersectionType.js';
 
@@ -60,6 +61,9 @@ export class OperationsTransformer {
 
       case (againstIndex instanceof DataIndex):
         return this.#transformAgainstDataOperation(operation, againstOp);
+
+      case (againstIndex instanceof PluginDataIndex):
+        return this.#transformAgainstPluginDataOperation(operation, againstOp);
 
       default:
         throw new Error('Unsupported index type');
@@ -195,6 +199,22 @@ export class OperationsTransformer {
   }
 
   /**
+   * Method that transforms operation against a plugin data operation
+   *
+   * Plugin data operations only ever modify one key of one plugin's per-block data, so they
+   * cannot shift another operation's position. Two concurrent writes to the same key are left
+   * untransformed on purpose: the server's order decides, and the last applied one wins.
+   * @param operation - Operation to be transformed
+   * @param againstOp - Operation against which the current operation should be transformed
+   * @returns copy of the current operation
+   */
+  #transformAgainstPluginDataOperation<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> {
+    void againstOp;
+
+    return Operation.from(operation);
+  }
+
+  /**
    * Method that transforms operation against data (value) operation
    *
    * Cases:
@@ -264,7 +284,7 @@ export class OperationsTransformer {
   #transformAgainstTextInsert<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
     let newPayload = operation.data.payload as string;
 
-    const insertedLength = againstOp.data.payload!.length;
+    const insertedLength = (againstOp.data as InsertOrDeleteOperationData).payload.length;
 
     const index = operation.index as TextIndex;
     const againstIndex = againstOp.index as TextIndex;
@@ -352,7 +372,7 @@ export class OperationsTransformer {
    */
   #transformAgainstTextDelete<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
     let newPayload = operation.data.payload as string;
-    const deletedAmount = againstOp.data.payload!.length;
+    const deletedAmount = (againstOp.data as InsertOrDeleteOperationData).payload.length;
 
     const textRange = operation.getEffectiveRange();
     const againstTextRange = againstOp.getEffectiveRange();
