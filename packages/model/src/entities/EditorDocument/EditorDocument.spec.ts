@@ -1500,6 +1500,34 @@ describe('EditorDocument', () => {
       expect(spy)
         .toHaveBeenCalledWith(blockIndex, dataKey, 'bold', 0, rangeEnd);
     });
+
+    it('should call .updatePluginData() when a plugin data index is provided', () => {
+      const spy = jest.spyOn(document, 'updatePluginData');
+      const pluginName = 'anchors' as PluginDataName;
+      const index = Index.pluginData(blockIndex, pluginName, 'id');
+
+      document.modifyData(index, {
+        value: 'intro',
+        previous: undefined,
+      });
+
+      expect(spy)
+        .toHaveBeenCalledWith(blockIndex, pluginName, { id: 'intro' });
+    });
+
+    it('should apply the removal of a plugin data key when the new value is undefined', () => {
+      const spy = jest.spyOn(document, 'updatePluginData');
+      const pluginName = 'anchors' as PluginDataName;
+      const index = Index.pluginData(blockIndex, pluginName, 'id');
+
+      document.modifyData(index, {
+        value: undefined,
+        previous: 'intro',
+      });
+
+      expect(spy)
+        .toHaveBeenCalledWith(blockIndex, pluginName, { id: undefined });
+    });
   });
 
   describe('.removeText()', () => {

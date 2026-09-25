@@ -159,15 +159,16 @@ export class BlockNode extends EventBus {
       entry => this.#serializeData(entry)
     );
 
-    const serializedPlugins: Record<string, PluginDataSerialized> = {};
-
-    Object.entries(this.#plugins).forEach(([pluginName, pluginData]) => {
-      if (pluginData.isEmpty) {
-        return;
-      }
-
-      serializedPlugins[pluginName] = pluginData.serialized;
-    });
+    /**
+     * Built through Object.fromEntries rather than by assignment: a plugin name is document data,
+     * and assigning a `__proto__` key to a plain object would set its prototype instead of adding
+     * the entry, silently dropping that plugin's data from the serialized block.
+     */
+    const serializedPlugins = Object.fromEntries(
+      Object.entries(this.#plugins)
+        .filter(([, pluginData]) => !pluginData.isEmpty)
+        .map(([pluginName, pluginData]) => [pluginName, pluginData.serialized])
+    ) as Record<string, PluginDataSerialized>;
 
     return {
       id: this.#id,
