@@ -33,13 +33,43 @@ export interface EditorjsPluginApiMap {}
 export interface ToolPluginOptionsMap {}
 
 /**
+ * Maps a plugin's `name` to the shape of the per-block data that plugin stores in the Model,
+ * read and written through `api.blocks.getPluginData` / `updatePluginData`.
+ *
+ * Augmented by plugin packages the same way as {@link EditorjsPluginApiMap}.
+ * @example
+ * declare module '@editorjs/sdk' {
+ *   interface EditorjsPluginDataMap {
+ *     anchors: { id: string };
+ *   }
+ * }
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- filled in by plugin packages via module augmentation
+export interface EditorjsPluginDataMap {}
+
+/**
+ * Shape of the per-block data stored by the plugin with the given id.
+ *
+ * Falls back to a plain record for an id absent from {@link EditorjsPluginDataMap}: unlike a
+ * plugin's public API, per-block data is often written by a plugin that has no reason to publish
+ * its shape, so an undeclared id stays usable instead of resolving to `never`.
+ *
+ * The check is deliberately non-distributive (`[Id] extends [...]`), because the default
+ * {@link PluginId} is a union including `string & {}` and a distributive conditional would
+ * collapse a declared id onto the fallback.
+ */
+export type PluginDataFor<Id extends PluginId> = [Id] extends [keyof EditorjsPluginDataMap]
+  ? EditorjsPluginDataMap[Id]
+  : Record<string, unknown>;
+
+/**
  * Identifier of a plugin — the value of its static `name`.
  *
  * Known ids (those present in either map) keep their literal type so they can be looked up in
  * the maps; the `string & {}` arm keeps ids legal for plugins that augment neither map, while
  * still preserving literal inference and autocomplete for the known ones.
  */
-export type PluginId = keyof EditorjsPluginApiMap | keyof ToolPluginOptionsMap | (string & {});
+export type PluginId = keyof EditorjsPluginApiMap | keyof ToolPluginOptionsMap | keyof EditorjsPluginDataMap | (string & {});
 
 /**
  * Registry of plugin public APIs, exposed as `api.plugins`.
@@ -69,8 +99,8 @@ export type {
   BlockNodeInit,
   BlockNodeSerialized,
   BlockToolName,
-  BlockTuneName,
-  BlockTuneSerialized,
+  PluginDataName,
+  PluginDataSerialized,
   TextRange,
   InlineFragment,
   InlineTreeNodeSerialized,
@@ -102,7 +132,7 @@ export {
   generateBlockId,
   createBlockToolName,
   createDataKey,
-  createBlockTuneName,
+  createPluginDataName,
   createInlineToolName,
   createInlineToolData,
   EventAction,
@@ -122,13 +152,13 @@ export {
   BlockAddedEvent,
   BlockRemovedEvent,
   PropertyModifiedEvent,
-  TuneModifiedEvent,
+  PluginDataModifiedEvent,
   IndexBase,
   IndexKind,
   BlockIndex,
   DataIndex,
   TextIndex,
-  TuneIndex,
+  PluginDataIndex,
   DocumentIndex,
   PropertyIndex,
   PartialIndex
