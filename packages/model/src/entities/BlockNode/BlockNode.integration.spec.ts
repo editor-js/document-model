@@ -1,4 +1,4 @@
-import { BlockChildType, createInlineToolName, createDataKey } from '@editorjs/model-types';
+import { BlockChildType, createInlineToolName, createDataKey, createPluginDataName, EventType, PluginDataModifiedEvent } from '@editorjs/model-types';
 import type { InlineFragment } from '@editorjs/model-types';
 import { BlockNode } from './index.js';
 import { NODE_TYPE_HIDDEN_PROP } from '@editorjs/model-types';
@@ -235,6 +235,101 @@ describe('BlockNode integration tests', () => {
       expect(valueNode).toBeInstanceOf(ValueNode);
       expect(valueNode.serialized)
         .toEqual(initData.key);
+    });
+  });
+
+  describe('.updatePluginData() creating entries', () => {
+    it('should create the entry when the block has no data for that plugin', () => {
+      const blockNode = new BlockNode({ name: 'blockNode' });
+
+      blockNode.updatePluginData(createPluginDataName('anchors'), { id: 'intro' });
+
+      expect(blockNode.serialized.plugins)
+        .toEqual({ anchors: { id: 'intro' } });
+    });
+
+    it('should emit an event with undefined previous value for the first write', () => {
+      const blockNode = new BlockNode({ name: 'blockNode' });
+      let event: PluginDataModifiedEvent | null = null;
+
+      blockNode.addEventListener(EventType.Changed, (e: Event): void => {
+        event = e as PluginDataModifiedEvent;
+      });
+
+      blockNode.updatePluginData(createPluginDataName('anchors'), { id: 'intro' });
+
+      expect(event)
+        .toBeInstanceOf(PluginDataModifiedEvent);
+      expect(event)
+        .toHaveProperty('detail.data', {
+          value: 'intro',
+          previous: undefined,
+        });
+    });
+
+    it('should emit one event per changed key', () => {
+      const blockNode = new BlockNode({ name: 'blockNode' });
+      const handler = jest.fn();
+
+      blockNode.addEventListener(EventType.Changed, handler);
+
+      blockNode.updatePluginData(createPluginDataName('anchors'), { id: 'intro',
+        visible: true });
+
+      expect(handler)
+        .toHaveBeenCalledTimes(2);
+    });
+
+    it('should keep other keys when one key is updated', () => {
+      const blockNode = new BlockNode({ name: 'blockNode' });
+      const pluginName = createPluginDataName('anchors');
+
+      blockNode.updatePluginData(pluginName, { id: 'intro',
+        visible: true });
+      blockNode.updatePluginData(pluginName, { visible: false });
+
+      expect(blockNode.serialized.plugins)
+        .toEqual({ anchors: { id: 'intro',
+          visible: false } });
+    });
+
+    it('should drop an entry from serialization once its last key is removed', () => {
+      const blockNode = new BlockNode({ name: 'blockNode' });
+      const pluginName = createPluginDataName('anchors');
+
+      blockNode.updatePluginData(pluginName, { id: 'intro' });
+      blockNode.updatePluginData(pluginName, { id: undefined });
+
+      expect(blockNode.serialized.plugins)
+        .toEqual({});
+    });
+
+    it('should store data for a plugin named like an object prototype member', () => {
+      const blockNode = new BlockNode({ name: 'blockNode' });
+
+      blockNode.updatePluginData(createPluginDataName('__proto__'), { id: 'intro' });
+      blockNode.updatePluginData(createPluginDataName('toString'), { id: 'other' });
+
+      expect(blockNode.serialized.plugins)
+        .toEqual({ '__proto__': { id: 'intro' },
+          'toString': { id: 'other' } });
+      expect(Object.prototype)
+        .not.toHaveProperty('id');
+    });
+
+    it('should round-trip a plugin named like an object prototype member through initialization', () => {
+      const blockNode = new BlockNode({ name: 'blockNode',
+        plugins: { '__proto__': { id: 'intro' } } });
+
+      expect(blockNode.serialized.plugins)
+        .toEqual({ '__proto__': { id: 'intro' } });
+    });
+
+    it('should throw when the plugin data name is empty', () => {
+      const blockNode = new BlockNode({ name: 'blockNode' });
+
+      expect(() => blockNode.updatePluginData(createPluginDataName(''), { id: 'intro' }))
+        .toThrow('plugin data name must not be empty');
     });
   });
 });
