@@ -1,5 +1,5 @@
-import type { BlockIndex, DocumentId, TextIndex } from '@editorjs/sdk';
-import { createDataKey, Index } from '@editorjs/sdk';
+import type { BlockIndex, DocumentId, PluginDataIndex, TextIndex } from '@editorjs/sdk';
+import { createDataKey, createPluginDataName, Index } from '@editorjs/sdk';
 import { Operation, OperationType } from './Operation.js';
 import { OperationsTransformer } from './OperationsTransformer.js';
 
@@ -550,6 +550,97 @@ describe('OperationsTransformer', () => {
           expect(result).toEqual(operation);
         });
       });
+    });
+  });
+
+  describe('Plugin data operations transformation', () => {
+    const pluginIndex = (blockIndex: number, key = 'id'): Index =>
+      Index.pluginData(blockIndex, createPluginDataName('anchors'), key, 'doc1' as DocumentId);
+
+    const pluginOp = (blockIndex: number, key = 'id'): Operation<OperationType.Modify> => new Operation(
+      OperationType.Modify,
+      pluginIndex(blockIndex, key),
+      { payload: false,
+        prevPayload: true },
+      'user1',
+      1
+    );
+
+    it('should shift the block index when a block is inserted above', () => {
+      const operation = pluginOp(2);
+      const againstOp = new Operation(
+        OperationType.Insert,
+        Index.block(0, 'doc1' as DocumentId),
+        { payload: [] },
+        'user2',
+        1
+      );
+
+      const result = transformer.transform(operation, againstOp);
+
+      expect((result.index as PluginDataIndex).blockIndex).toBe(3);
+      expect((result.index as PluginDataIndex).pluginName).toBe('anchors');
+    });
+
+    it('should become Neutral when its own block is removed', () => {
+      const operation = pluginOp(2);
+      const againstOp = new Operation(
+        OperationType.Delete,
+        Index.block(2, 'doc1' as DocumentId),
+        { payload: [] },
+        'user2',
+        1
+      );
+
+      expect(transformer.transform(operation, againstOp).type).toBe(OperationType.Neutral);
+    });
+
+    it('should not be transformed against another plugin data operation', () => {
+      const operation = pluginOp(2);
+      const againstOp = pluginOp(2);
+
+      const result = transformer.transform(operation, againstOp);
+
+      expect(result.type).toBe(OperationType.Modify);
+      expect((result.index as PluginDataIndex).blockIndex).toBe(2);
+    });
+
+    it('should transform a text operation against a plugin data operation without throwing', () => {
+      const operation = new Operation(
+        OperationType.Insert,
+        Index.text([{ blockIndex: 1,
+          dataKey: createDataKey('text'),
+          textRange: [0, 0],
+          documentId: 'doc1' as DocumentId }]),
+        { payload: 'abc' },
+        'user1',
+        1
+      );
+
+      const result = transformer.transform(operation, pluginOp(1));
+
+      expect(result.type).toBe(OperationType.Insert);
+    });
+
+    it('should transform a block operation against a plugin data operation without throwing', () => {
+      const operation = new Operation(
+        OperationType.Insert,
+        Index.block(0, 'doc1' as DocumentId),
+        { payload: [] },
+        'user1',
+        1
+      );
+
+      const result = transformer.transform(operation, pluginOp(0));
+
+      expect(result.type).toBe(OperationType.Insert);
+    });
+
+    it('should invert a plugin data operation by swapping the payloads', () => {
+      const inverted = pluginOp(2).inverse();
+
+      expect(inverted.data).toEqual({ payload: true,
+        prevPayload: false });
     });
   });
 });
