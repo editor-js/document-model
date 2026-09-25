@@ -72,7 +72,7 @@ export class EditorjsUI implements EditorjsPlugin {
    * Method to destroy the plugin
    */
   public destroy(): void {
-    // Cleanup if needed
+    this.#editorWrapper.remove();
   }
 
   /**
