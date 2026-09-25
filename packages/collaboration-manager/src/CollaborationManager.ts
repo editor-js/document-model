@@ -2,6 +2,7 @@ import {
   BlockAddedEvent, type BlockNodeSerialized,
   BlockRemovedEvent,
   type ModelEvents,
+  PluginDataModifiedEvent,
   TextAddedEvent,
   TextFormattedEvent, TextRemovedEvent,
   TextUnformattedEvent
@@ -263,6 +264,12 @@ export class CollaborationManager implements EditorjsPlugin {
       case (e instanceof BlockRemovedEvent):
         operation = new Operation(OperationType.Delete, e.detail.index, {
           payload: [e.detail.data],
+        }, e.detail.userId);
+        break;
+      case (e instanceof PluginDataModifiedEvent):
+        operation = new Operation(OperationType.Modify, e.detail.index, {
+          payload: e.detail.data.value,
+          prevPayload: e.detail.data.previous,
         }, e.detail.userId);
         break;
       // Stryker disable next-line ConditionalExpression
