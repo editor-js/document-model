@@ -8,6 +8,7 @@ import type ToolsManager from '../tools/ToolsManager';
 import type { TextNodeSerialized } from '@editorjs/sdk';
 import { EventBus, EventType, BlockAddedEvent, BlockRemovedEvent } from '@editorjs/sdk';
 import { EditorJSModel } from '@editorjs/model';
+import type { OutputData } from 'editorjs-v2';
 const USER_ID = 'integration-user';
 const DOCUMENT_ID = 'integration-doc';
 
@@ -35,6 +36,7 @@ jest.unstable_mockModule('../tools/ToolsManager', () => ({
 const ToolsManager = (await import('../tools/ToolsManager')).default;
 const { BlocksManager } = await import('../components/BlockManager.js');
 const { BlocksAPI } = await import('./BlocksAPI.js');
+const { composeDataFromVersion2 } = await import('../utils/composeDataFromVersion2.js');
 
 describe('BlocksAPI integration (real model, mocked tools)', () => {
   let model: InstanceType<typeof EditorJSModel>;
@@ -1257,6 +1259,33 @@ describe('BlocksAPI integration (real model, mocked tools)', () => {
     it('should throw for a block id that does not exist', () => {
       expect(() => blocksAPI.getPluginData({ block: 'missing',
         plugin: 'anchors' })).toThrow('missing');
+    });
+
+    it('should expose tune data from a converted v2 document through getPluginData', () => {
+      /**
+       * The path a v2 document actually takes on boot: `composeDataFromVersion2` maps its `tunes`
+       * onto `plugins`, and the model is initialized from the result. `level` is used instead of a
+       * text field so the conversion needs no DOMParser, which this test environment lacks.
+       */
+      const { blocks } = composeDataFromVersion2({
+        blocks: [
+          {
+            type: 'header',
+            data: { level: 2 },
+            tunes: {
+              anchors: { id: 'intro' },
+              alignment: 'left',
+            },
+          },
+        ],
+      } as OutputData);
+
+      model.initializeDocument({ blocks });
+
+      expect(blocksAPI.getPluginData({ block: 0,
+        plugin: 'anchors' })).toEqual({ id: 'intro' });
+      expect(blocksAPI.getPluginData({ block: 0,
+        plugin: 'alignment' })).toEqual({ value: 'left' });
     });
 
     it('should preserve plugin data when a block is moved', () => {
