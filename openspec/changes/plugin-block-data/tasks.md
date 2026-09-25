@@ -12,11 +12,12 @@
 
 - [ ] 2.1 Write failing `BlockNode.spec.ts` cases: updating an absent plugin name should create the entry and emit `PluginDataModifiedEvent` with `previous` `undefined`; updating one key should emit exactly one event; setting a key to `undefined` should remove it and drop an empty entry from serialization
 - [ ] 2.2 Rename the `BlockTune` entity to `PluginDataNode` (`src/entities/PluginDataNode`), implement key deletion on `undefined`, and make `serialized` omit deleted keys
-- [ ] 2.3 Rename `BlockNode.#tunes`/`tunes`/`updateTuneData` → `#plugins`/`plugins`/`updatePluginData` with create-on-first-write, and have `serialized` omit empty entries
-- [ ] 2.4 Rename `EditorDocument.updateTuneData` and `EditorJSModel.updateTuneData` → `updatePluginData`, keeping `@WithContext`, and add a facade test that the event carries the acting `userId`
-- [ ] 2.5 Write a failing test, then add a `PluginDataIndex` branch to `EditorDocument.modifyData` that sets the key to `data.value`
-- [ ] 2.6 Write a failing test at the `BlockNode`/`EditorDocument` level, then replace the hardcoded `'user'` in the bubbled plugin-data event with `getContext()`, as the value-node path does
-- [ ] 2.7 Add a test that a `plugins` entry for an unregistered plugin survives an initialize → serialize round trip
+- [ ] 2.3 Write failing `BlockNode.spec.ts` cases for the store's key handling: a plugin named `__proto__` or `toString` should round-trip as ordinary data, and an empty plugin name should throw
+- [ ] 2.4 Rename `BlockNode.#tunes`/`tunes`/`updateTuneData` → `#plugins`/`plugins`/`updatePluginData`: hold entries in a null-prototype record, reject an empty plugin name, create a missing node **empty** and attach its bubbling listener before the first `update` (the node dispatches synchronously, and without the listener the whole feature silently no-ops), and have `serialized` omit empty entries while still emitting an empty `plugins` map
+- [ ] 2.5 Rename `EditorDocument.updateTuneData` and `EditorJSModel.updateTuneData` → `updatePluginData`, keeping `@WithContext`, and add a facade test that the event carries the acting `userId`
+- [ ] 2.6 Write a failing test, then add a `PluginDataIndex` branch to `EditorDocument.modifyData` that sets the key to `data.value`
+- [ ] 2.7 Write a failing test at the `BlockNode`/`EditorDocument` level, then replace the hardcoded `'user'` in the bubbled plugin-data event with `getContext()`, as the value-node path does
+- [ ] 2.8 Add a test that a `plugins` entry for an unregistered plugin survives an initialize → serialize round trip
 
 ## 3. Core and SDK API: plugin data access
 
@@ -25,7 +26,7 @@
 - [ ] 3.3 Implement them in `core/src/api/BlocksAPI.ts` and `BlockManager` (defaulting `userId` to the config user), and replace the commented-out `tunes` stubs in `BlockManager`
 - [ ] 3.4 Write a failing test, then fix `BlocksManager.insert`, which spreads `{ ...data, id, name }` while `BlockNode` reads a nested `data` key — so `insert({ data })` silently creates an empty block today. Nest `data` and pass `plugins` as its own key
 - [ ] 3.5 Write failing tests, then make `convert` carry plugin data over and `split` create the new block without it (`move` should already pass — add a test to confirm)
-- [ ] 3.6 Write a failing `UndoRedoManager` integration test (first write → undo removes the entry → redo restores it; an update undoes to the previous value), then fix whatever remains after 2.5
+- [ ] 3.6 Write a failing `UndoRedoManager` integration test (first write → undo removes the entry → redo restores it; an update undoes to the previous value), then fix whatever remains after the `modifyData` branch in 2.6
 
 ## 4. Collaboration: plugin data operations
 
