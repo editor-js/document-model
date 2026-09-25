@@ -854,6 +854,24 @@ describe('BlockNode', () => {
     });
   });
 
+  describe('constructing with plugin data', () => {
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should apply every key of the initial plugin data through the node', () => {
+      const spy = jest.spyOn(PluginDataNode.prototype, 'update');
+
+      createBlockNodeWithData({}, { anchors: { id: 'intro',
+        visible: true } });
+
+      expect(spy)
+        .toHaveBeenCalledWith('id', 'intro');
+      expect(spy)
+        .toHaveBeenCalledWith('visible', true);
+    });
+  });
+
   describe('.updatePluginData()', () => {
     afterEach(() => {
       jest.clearAllMocks();
