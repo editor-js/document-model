@@ -11,10 +11,10 @@ export {
   createBlockToolName
 } from './BlockId.js';
 export type {
-  BlockTuneName,
-  BlockTuneSerialized
-} from './BlockTune.js';
-export { createBlockTuneName } from './BlockTune.js';
+  PluginDataName,
+  PluginDataSerialized
+} from './PluginData.js';
+export { createPluginDataName } from './PluginData.js';
 export type { DataKey } from './DataKey.js';
 export { createDataKey } from './DataKey.js';
 export type {
@@ -66,7 +66,7 @@ export type {
   BlockEvents,
   TextNodeEvents,
   ValueNodeEvents,
-  BlockTuneEvents,
+  PluginDataEvents,
   DocumentEvents,
   ModelEvents,
   CaretManagerEvents
@@ -86,7 +86,7 @@ export {
   DocumentIndex,
   PropertyIndex,
   BlockIndex,
-  TuneIndex,
+  PluginDataIndex,
   DataIndex,
   TextIndex,
   PartialIndex,
@@ -113,5 +113,5 @@ export {
   BlockAddedEvent,
   BlockRemovedEvent,
   PropertyModifiedEvent,
-  TuneModifiedEvent
+  PluginDataModifiedEvent
 } from './events/index.js';

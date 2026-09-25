@@ -62,7 +62,7 @@ export class BlockNode extends EventBus {
   /**
    * Mock method
    */
-  public updateTuneData(): void {
+  public updatePluginData(): void {
     return;
   }
 
