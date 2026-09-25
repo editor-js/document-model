@@ -14,6 +14,7 @@ jest.unstable_mockModule('@editorjs/sdk', () => ({
   createBlockId: jest.fn((id: string) => id as never),
   set: jest.fn(() => undefined),
   renumberKeys: jest.fn(() => new Map()),
+  TextIndex: class TextIndex {},
 }));
 
 // Register ESM mocks before importing the module under test
@@ -53,7 +54,7 @@ jest.unstable_mockModule('../tools/ToolsManager', () => ({
 
 // Now import the modules (they will receive the mocks registered above)
 const { EditorJSModel, mergeTextNodes, sliceFragments } = await import('@editorjs/model');
-const { EventBus, set, renumberKeys } = await import('@editorjs/sdk');
+const { EventBus, set, renumberKeys, TextIndex } = await import('@editorjs/sdk');
 const ToolsManager = (await import('../tools/ToolsManager')).default;
 const { BlocksManager } = await import('./BlockManager.js');
 
@@ -268,7 +269,7 @@ describe('BlocksManager (unit, mocked deps)', () => {
 
     it('should call model.getCaret with the configured userId to resolve current block', () => {
       // @ts-expect-error - mock return value does not need full Caret shape
-      model.getCaret = jest.fn(() => ({ index: { blockIndex: 2 } }));
+      model.getCaret = jest.fn(() => ({ index: Object.assign(new TextIndex(), { blockIndex: 2 }) }));
 
       blocksManager.deleteBlock();
 
@@ -280,7 +281,7 @@ describe('BlocksManager (unit, mocked deps)', () => {
   describe('.move()', () => {
     it('should call removeBlock and addBlock when moving current block forward', () => {
       // @ts-expect-error - mock return value does not need full Caret shape
-      model.getCaret = jest.fn(() => ({ index: { blockIndex: 0 } }));
+      model.getCaret = jest.fn(() => ({ index: Object.assign(new TextIndex(), { blockIndex: 0 }) }));
       // @ts-expect-error - mock return value does not need full BlockNodeSerialized shape
       model.getBlockSerialized = jest.fn(() => ({ name: 'a' }));
 

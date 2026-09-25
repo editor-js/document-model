@@ -1,581 +1,507 @@
-import type { DataKey, DocumentIndex, BlockTuneName } from '@editorjs/model-types';
-import { IndexBuilder } from './IndexBuilder.js';
-import { Index } from './index.js';
+/* eslint-disable @typescript-eslint/no-magic-numbers */
+import type { DataKey, BlockTuneName, DocumentId } from '@editorjs/model-types';
+import {
+  Index,
+  IndexKind,
+  BlockIndex,
+  DataIndex,
+  DocumentIndex,
+  PropertyIndex,
+  TextIndex,
+  TuneIndex
+} from './index.js';
 
 describe('Index', () => {
-  it('should serialize index', () => {
-    const index = new Index();
+  describe('factory methods', () => {
+    describe('Index.document()', () => {
+      it('creates a DocumentIndex with the given id', () => {
+        const idx = Index.document('doc1' as DocumentId);
 
-    index.documentId = 'documentId' as DocumentIndex;
-    index.propertyName = 'propertyName';
-    index.blockIndex = 1;
-    index.tuneName = 'tuneName' as BlockTuneName;
-    index.tuneKey = 'tuneKey';
-    index.dataKey = 'dataKey' as DataKey;
-    index.textRange = [
-      1,
-      2,
-    ];
-
-    expect(index.serialize())
-      .toBe(`"doc@documentId:prop@propertyName:block@1:tune@tuneName:tuneKey@tuneKey:data@dataKey:[1,2]"`);
-  });
-
-  it('should filter out undefined values when serializing index', () => {
-    const index = new Index();
-
-    index.documentId = 'documentId' as DocumentIndex;
-    index.propertyName = 'propertyName';
-    index.blockIndex = 1;
-
-    expect(index.serialize())
-      .toBe(`"doc@documentId:prop@propertyName:block@1"`);
-  });
-
-  it('should parse index from string', () => {
-    const serialized = `"doc@documentId:prop@propertyName:block@1:tune@tuneName:tuneKey@tuneKey:data@dataKey:[1,2]"`;
-
-    const index = Index.parse(serialized);
-
-    expect(index.documentId).toBe('documentId');
-    expect(index.propertyName).toBe('propertyName');
-    expect(index.blockIndex).toBe(1);
-    expect(index.tuneName).toBe('tuneName');
-    expect(index.tuneKey).toBe('tuneKey');
-    expect(index.dataKey).toBe('dataKey');
-    expect(index.textRange).toEqual([1, 2]);
-  });
-
-  it('should throw when parsed JSON root is not a legacy string and not a composite object', () => {
-    expect(() => Index.parse('null')).toThrow('Invalid serialized index');
-    expect(() => Index.parse('0')).toThrow('Invalid serialized index');
-    expect(() => Index.parse('true')).toThrow('Invalid serialized index');
-    expect(() => Index.parse('false')).toThrow('Invalid serialized index');
-    expect(() => Index.parse('{}')).toThrow('Invalid serialized index');
-  });
-
-  it('should clone index', () => {
-    const index = new Index();
-
-    index.documentId = 'documentId' as DocumentIndex;
-    index.propertyName = 'propertyName';
-    index.blockIndex = 1;
-    index.tuneName = 'tuneName' as BlockTuneName;
-    index.tuneKey = 'tuneKey';
-    index.dataKey = 'dataKey' as DataKey;
-    index.textRange = [
-      1,
-      2,
-    ];
-
-    const cloned = index.clone();
-
-    expect(cloned).not.toBe(index);
-    expect(cloned).toEqual(index);
-  });
-
-  describe('.validate()', () => {
-    it('should throw an error if index includes data key AND tune name', () => {
-      const index = new Index();
-
-      index.tuneName = 'tuneName' as BlockTuneName;
-      index.tuneKey = 'tuneKey';
-      index.dataKey = 'dataKey' as DataKey;
-
-      expect(() => index.validate()).toThrow('Invalid index');
+        expect(idx).toBeInstanceOf(DocumentIndex);
+        expect(idx.kind).toBe(IndexKind.Document);
+        expect(idx.documentId).toBe('doc1');
+      });
     });
 
-    it('should throw an error if index includes text range AND tune name', () => {
-      const index = new Index();
+    describe('Index.property()', () => {
+      it('creates a PropertyIndex with the given name', () => {
+        const idx = Index.property('time');
 
-      index.tuneName = 'tuneName' as BlockTuneName;
-      index.tuneKey = 'tuneKey';
-      index.textRange = [0, 0];
+        expect(idx).toBeInstanceOf(PropertyIndex);
+        expect(idx.kind).toBe(IndexKind.Property);
+        expect(idx.propertyName).toBe('time');
+        expect(idx.documentId).toBeUndefined();
+      });
 
-      expect(() => index.validate()).toThrow('Invalid index');
+      it('optionally accepts documentId', () => {
+        const idx = Index.property('time', 'doc1' as DocumentId);
+
+        expect(idx.documentId).toBe('doc1');
+      });
     });
 
-    it('should throw an error if index includes tune name but NOT tune key', () => {
-      const index = new Index();
+    describe('Index.block()', () => {
+      it('creates a BlockIndex with the given block number', () => {
+        const idx = Index.block(3);
 
-      index.tuneName = 'tuneName' as BlockTuneName;
+        expect(idx).toBeInstanceOf(BlockIndex);
+        expect(idx.kind).toBe(IndexKind.Block);
+        expect(idx.blockIndex).toBe(3);
+        expect(idx.documentId).toBeUndefined();
+      });
 
-      expect(() => index.validate()).toThrow('Invalid index');
+      it('optionally accepts documentId', () => {
+        const idx = Index.block(3, 'doc1' as DocumentId);
+
+        expect(idx.documentId).toBe('doc1');
+      });
     });
 
-    it('should throw an error if index includes property name AND block index', () => {
-      const index = new Index();
+    describe('Index.tune()', () => {
+      it('creates a TuneIndex with block, tune name, and tune key', () => {
+        const idx = Index.tune(3, 'header' as BlockTuneName, 'level');
 
-      index.propertyName = 'propertyName';
-      index.blockIndex = 1;
+        expect(idx).toBeInstanceOf(TuneIndex);
+        expect(idx.kind).toBe(IndexKind.Tune);
+        expect(idx.blockIndex).toBe(3);
+        expect(idx.tuneName).toBe('header');
+        expect(idx.tuneKey).toBe('level');
+      });
 
-      expect(() => index.validate()).toThrow('Invalid index');
+      it('optionally accepts documentId', () => {
+        const idx = Index.tune(3, 'header' as BlockTuneName, 'level', 'doc1' as DocumentId);
+
+        expect(idx.documentId).toBe('doc1');
+      });
     });
 
-    it('should throw an error if index includes property name AND data key', () => {
-      const index = new Index();
+    describe('Index.data()', () => {
+      it('creates a DataIndex with block and data key', () => {
+        const idx = Index.data(3, 'content' as DataKey);
 
-      index.propertyName = 'propertyName';
-      index.dataKey = 'dataKey' as DataKey;
+        expect(idx).toBeInstanceOf(DataIndex);
+        expect(idx.kind).toBe(IndexKind.Data);
+        expect(idx.blockIndex).toBe(3);
+        expect(idx.dataKey).toBe('content');
+      });
 
-      expect(() => index.validate()).toThrow('Invalid index');
+      it('optionally accepts documentId', () => {
+        const idx = Index.data(3, 'content' as DataKey, 'doc1' as DocumentId);
+
+        expect(idx.documentId).toBe('doc1');
+      });
     });
 
-    it('should throw an error if index includes property name AND tune name', () => {
-      const index = new Index();
+    describe('Index.text()', () => {
+      it('creates a single-segment TextIndex', () => {
+        const idx = Index.text([{ blockIndex: 3,
+          dataKey: 'content' as DataKey,
+          textRange: [0, 5] }]);
 
-      index.propertyName = 'propertyName';
-      index.tuneName = 'tuneName' as BlockTuneName;
+        expect(idx).toBeInstanceOf(TextIndex);
+        expect(idx.kind).toBe(IndexKind.Text);
+        expect(idx.blockIndex).toBe(3);
+        expect(idx.dataKey).toBe('content');
+        expect(idx.textRange).toEqual([0, 5]);
+      });
 
-      expect(() => index.validate()).toThrow('Invalid index');
-    });
+      it('creates a composite TextIndex when given multiple segments', () => {
+        const idx = Index.text([
+          { blockIndex: 0,
+            dataKey: 'key' as DataKey,
+            textRange: [0, 3] },
+          { blockIndex: 1,
+            dataKey: 'key' as DataKey,
+            textRange: [0, 5] },
+        ]);
 
-    it('should throw an error if index includes property name AND tune key', () => {
-      const index = new Index();
+        expect(idx.isComposite).toBe(true);
+      });
 
-      index.propertyName = 'propertyName';
-      index.tuneKey = 'tuneKey';
-
-      expect(() => index.validate()).toThrow('Invalid index');
-    });
-
-    it('should throw an error if index includes property name AND text range', () => {
-      const index = new Index();
-
-      index.propertyName = 'propertyName';
-      index.textRange = [0, 0];
-
-      expect(() => index.validate()).toThrow('Invalid index');
-    });
-
-    it('should throw an error if index includes block index AND text range but NOT data key', () => {
-      const index = new Index();
-
-      index.blockIndex = 1;
-      index.textRange = [0, 0];
-
-      expect(() => index.validate()).toThrow('Invalid index');
-    });
-
-    it('should throw an error if index includes document id AND data key but NOT block index', () => {
-      const index = new Index();
-
-      index.documentId = 'documentId' as DocumentIndex;
-      index.dataKey = 'dataKey' as DataKey;
-
-      expect(() => index.validate()).toThrow('Invalid index');
-    });
-
-    it('should throw an error if index includes document id AND tune name but NOT block index', () => {
-      const index = new Index();
-
-      index.documentId = 'documentId' as DocumentIndex;
-      index.tuneName = 'tuneName' as BlockTuneName;
-      index.tuneKey = 'tuneKey';
-
-      expect(() => index.validate()).toThrow('Invalid index');
-    });
-
-    it('should throw an error if index includes document id AND tune key but NOT block index', () => {
-      const index = new Index();
-
-      index.documentId = 'documentId' as DocumentIndex;
-      index.tuneKey = 'tuneKey';
-
-      expect(() => index.validate()).toThrow('Invalid index');
-    });
-
-    it('should throw an error if index includes document id AND text range but NOT block index', () => {
-      const index = new Index();
-
-      index.documentId = 'documentId' as DocumentIndex;
-      index.textRange = [0, 0];
-
-      expect(() => index.validate()).toThrow('Invalid index');
-    });
-
-    it('should return true if index is valid', () => {
-      const index = new Index();
-
-      index.documentId = 'documentId' as DocumentIndex;
-      index.blockIndex = 1;
-      index.dataKey = 'dataKey' as DataKey;
-      index.textRange = [0, 0];
-
-      expect(index.validate()).toBe(true);
+      it('throws when given an empty segment array', () => {
+        expect(() => Index.text([])).toThrow();
+      });
     });
   });
 
-  describe('.isBlockIndex', () => {
-    it('should return true if index points to the block', () => {
-      const index = new IndexBuilder().addBlockIndex(0)
-        .build();
-
-      expect(index.isBlockIndex).toBe(true);
+  describe('BlockIndex identity', () => {
+    it('is instanceof BlockIndex', () => {
+      expect(Index.block(0)).toBeInstanceOf(BlockIndex);
     });
 
-    it('should return false if index does not include block index', () => {
-      const index = new Index();
-
-      expect(index.isBlockIndex).toBe(false);
+    it('kind is IndexKind.Block', () => {
+      expect(Index.block(0).kind).toBe(IndexKind.Block);
     });
 
-    it('should return false if index points to the text range', () => {
-      const index = new IndexBuilder().addBlockIndex(0)
-        .addDataKey('dataKey' as DataKey)
-        .addTextRange([0, 0])
-        .build();
-
-      expect(index.isBlockIndex).toBe(false);
+    it('DataIndex kind is not Block', () => {
+      expect(Index.data(0, 'key' as DataKey).kind).not.toBe(IndexKind.Block);
     });
 
-    it('should return false if index points to the tune data', () => {
-      const index = new IndexBuilder().addBlockIndex(0)
-        .addTuneName('tuneName' as BlockTuneName)
-        .addTuneKey('tuneKey')
-        .build();
-
-      expect(index.isBlockIndex).toBe(false);
+    it('TuneIndex kind is not Block', () => {
+      expect(Index.tune(0, 'tune' as BlockTuneName, 'key').kind).not.toBe(IndexKind.Block);
     });
   });
 
-  describe('.isDataIndex', () => {
-    const dataKey = 'key' as DataKey;
-
-    it('should return true if index points to the data node', () => {
-      const index = new IndexBuilder()
-        .addBlockIndex(0)
-        .addDataKey(dataKey)
-        .build();
-
-      expect(index.isDataIndex).toBe(true);
+  describe('DataIndex identity', () => {
+    it('is instanceof DataIndex', () => {
+      expect(Index.data(0, 'key' as DataKey)).toBeInstanceOf(DataIndex);
     });
 
-    it('should return false if index does not data key', () => {
-      const index = new Index();
-
-      expect(index.isDataIndex).toBe(false);
+    it('kind is IndexKind.Data', () => {
+      expect(Index.data(0, 'key' as DataKey).kind).toBe(IndexKind.Data);
     });
 
-    it('should return false if index points to the text range', () => {
-      const index = new IndexBuilder().addBlockIndex(0)
-        .addDataKey('dataKey' as DataKey)
-        .addTextRange([0, 0])
-        .build();
-
-      expect(index.isDataIndex).toBe(false);
-    });
-
-    it('should return false if index points to the tune data', () => {
-      const index = new IndexBuilder().addBlockIndex(0)
-        .addTuneName('tuneName' as BlockTuneName)
-        .addTuneKey('tuneKey')
-        .build();
-
-      expect(index.isDataIndex).toBe(false);
+    it('BlockIndex kind is not Data', () => {
+      expect(Index.block(0).kind).not.toBe(IndexKind.Data);
     });
   });
 
   describe('.isTextIndex', () => {
-    it('should return true if index points to the text', () => {
-      const index = new IndexBuilder().addBlockIndex(0)
-        .addDataKey('dataKey' as DataKey)
-        .addTextRange([0, 0])
-        .build();
-
-      expect(index.isTextIndex).toBe(true);
+    it('is true for a single-segment TextIndex', () => {
+      expect(Index.text([{ blockIndex: 0,
+        dataKey: 'key' as DataKey,
+        textRange: [0, 1] }]).isTextIndex).toBe(true);
     });
 
-    it('should return false if index does not include text range', () => {
-      const index = new IndexBuilder().addBlockIndex(0)
-        .addDataKey('dataKey' as DataKey)
-        .build();
-
-      expect(index.isTextIndex).toBe(false);
-    });
-
-    it('should return false if index points to the tune data', () => {
-      const index = new IndexBuilder().addBlockIndex(0)
-        .addTuneName('tuneName' as BlockTuneName)
-        .addTuneKey('tuneKey')
-        .build();
-
-      expect(index.isTextIndex).toBe(false);
-    });
-  });
-
-  describe('.getTextSegments', () => {
-    it('should return [self] for a text index when compositeSegments is undefined', () => {
-      const index = new IndexBuilder().addBlockIndex(0)
-        .addDataKey('dataKey' as DataKey)
-        .addTextRange([0, 1])
-        .build();
-
-      expect(index.getTextSegments()).toEqual([index]);
-    });
-
-    it('should return empty array when index is neither composite nor text', () => {
-      const index = new IndexBuilder()
-        .addBlockIndex(0)
-        .build();
-
-      expect(index.getTextSegments()).toEqual([]);
-    });
-  });
-
-  describe('composite index', () => {
-    const compositeSecondSegmentEnd = 5;
-
-    it('should serialize and parse composite', () => {
-      const a = new IndexBuilder().addBlockIndex(0)
-        .addDataKey('a' as DataKey)
-        .addTextRange([1, 2])
-        .build();
-      const b = new IndexBuilder().addBlockIndex(1)
-        .addDataKey('a' as DataKey)
-        .addTextRange([0, compositeSecondSegmentEnd])
-        .build();
-      const composite = Index.fromCompositeSegments([a, b]);
-
-      expect(composite.validate()).toBe(true);
-
-      const round = Index.parse(composite.serialize());
-
-      expect(round.compositeSegments).toHaveLength(2);
-      expect(round.compositeSegments![0].blockIndex).toBe(0);
-      expect(round.compositeSegments![1].blockIndex).toBe(1);
-    });
-
-    it('should validate legacy rules when compositeSegments is empty (not a composite index)', () => {
-      const index = new Index();
-
-      index.compositeSegments = [];
-
-      expect(index.validate()).toBe(true);
-    });
-
-    it('should throw on validate when composite has only one segment', () => {
-      const a = new IndexBuilder().addBlockIndex(0)
-        .addDataKey('a' as DataKey)
-        .addTextRange([1, 2])
-        .build();
-      const index = new Index();
-
-      index.compositeSegments = [a];
-
-      expect(() => index.validate()).toThrow('Invalid index');
-    });
-
-    it('should throw on validate when composite segments are not text indices', () => {
-      const blockOnlyA = new IndexBuilder()
-        .addBlockIndex(0)
-        .build();
-      const blockOnlyB = new IndexBuilder()
-        .addBlockIndex(1)
-        .build();
-      const index = new Index();
-
-      index.compositeSegments = [blockOnlyA, blockOnlyB];
-
-      expect(() => index.validate()).toThrow('Invalid index');
-    });
-
-    /**
-     * Each case sets exactly one root field so `hasOtherFields` is true; LogicalOperator mutants
-     * that turn a specific `||` into `&&` would clear the whole chain and miss the throw.
-     */
-    describe('validate rejects any root-level field alongside composite segments', () => {
-      const validTextA = (): Index =>
-        new IndexBuilder().addBlockIndex(0)
-          .addDataKey('a' as DataKey)
-          .addTextRange([1, 2])
-          .build();
-      const validTextB = (): Index =>
-        new IndexBuilder().addBlockIndex(1)
-          .addDataKey('a' as DataKey)
-          .addTextRange([0, compositeSecondSegmentEnd])
-          .build();
-
-      const baseComposite = (): Index => {
-        const index = new Index();
-
-        index.compositeSegments = [validTextA(), validTextB()];
-
-        return index;
-      };
-
-      it('throws when root has only textRange set', () => {
-        const index = baseComposite();
-
-        index.textRange = [0, 1];
-
-        expect(() => index.validate()).toThrow('Invalid index');
-      });
-
-      it('throws when root has only dataKey set', () => {
-        const index = baseComposite();
-
-        index.dataKey = 'root' as DataKey;
-
-        expect(() => index.validate()).toThrow('Invalid index');
-      });
-
-      it('throws when root has only blockIndex set', () => {
-        const index = baseComposite();
-
-        index.blockIndex = 99;
-
-        expect(() => index.validate()).toThrow('Invalid index');
-      });
-
-      it('throws when root has only tuneName set', () => {
-        const index = baseComposite();
-
-        index.tuneName = 't' as BlockTuneName;
-
-        expect(() => index.validate()).toThrow('Invalid index');
-      });
-
-      it('throws when root has only tuneKey set', () => {
-        const index = baseComposite();
-
-        index.tuneKey = 'k';
-
-        expect(() => index.validate()).toThrow('Invalid index');
-      });
-
-      it('throws when root has only propertyName set', () => {
-        const index = baseComposite();
-
-        index.propertyName = 'p';
-
-        expect(() => index.validate()).toThrow('Invalid index');
-      });
-
-      it('throws when root has only documentId set', () => {
-        const index = baseComposite();
-
-        index.documentId = 'doc' as DocumentIndex;
-
-        expect(() => index.validate()).toThrow('Invalid index');
-      });
-    });
-
-    it('should return false for isTextIndex on composite', () => {
-      const a = new IndexBuilder().addBlockIndex(0)
-        .addDataKey('a' as DataKey)
-        .addTextRange([1, 2])
-        .build();
-      const b = new IndexBuilder().addBlockIndex(1)
-        .addDataKey('a' as DataKey)
-        .addTextRange([0, compositeSecondSegmentEnd])
-        .build();
-      const composite = Index.fromCompositeSegments([a, b]);
+    it('is false for a composite TextIndex', () => {
+      const composite = Index.text([
+        { blockIndex: 0,
+          dataKey: 'key' as DataKey,
+          textRange: [0, 1] },
+        { blockIndex: 1,
+          dataKey: 'key' as DataKey,
+          textRange: [0, 2] },
+      ]);
 
       expect(composite.isTextIndex).toBe(false);
     });
 
-    it('should return false for isTextIndex on composite even when root has block, data key, and text range', () => {
-      const a = new IndexBuilder().addBlockIndex(0)
-        .addDataKey('a' as DataKey)
-        .addTextRange([1, 2])
-        .build();
-      const b = new IndexBuilder().addBlockIndex(1)
-        .addDataKey('a' as DataKey)
-        .addTextRange([0, compositeSecondSegmentEnd])
-        .build();
-      const index = new Index();
-
-      index.compositeSegments = [a, b];
-      index.blockIndex = 0;
-      index.dataKey = 'a' as DataKey;
-      index.textRange = [0, 1];
-
-      expect(index.isTextIndex).toBe(false);
+    it('kind is not Text for DataIndex', () => {
+      expect(Index.data(0, 'key' as DataKey).kind).not.toBe(IndexKind.Text);
     });
 
-    it('should return segments from getTextSegments', () => {
-      const a = new IndexBuilder().addBlockIndex(0)
-        .addDataKey('a' as DataKey)
-        .addTextRange([1, 2])
-        .build();
-      const b = new IndexBuilder().addBlockIndex(1)
-        .addDataKey('a' as DataKey)
-        .addTextRange([0, compositeSecondSegmentEnd])
-        .build();
+    it('kind is not Text for BlockIndex', () => {
+      expect(Index.block(0).kind).not.toBe(IndexKind.Text);
+    });
+  });
+
+  describe('.isComposite', () => {
+    it('is true for a multi-segment TextIndex', () => {
+      const composite = Index.text([
+        { blockIndex: 0,
+          dataKey: 'key' as DataKey,
+          textRange: [0, 1] },
+        { blockIndex: 1,
+          dataKey: 'key' as DataKey,
+          textRange: [0, 2] },
+      ]);
+
+      expect(composite.isComposite).toBe(true);
+    });
+
+    it('is false for a single-segment TextIndex', () => {
+      expect(Index.text([{ blockIndex: 0,
+        dataKey: 'key' as DataKey,
+        textRange: [0, 1] }]).isComposite).toBe(false);
+    });
+  });
+
+  describe('.getTextSegments()', () => {
+    it('returns a single-element array for a text index', () => {
+      const idx = Index.text([{ blockIndex: 3,
+        dataKey: 'key' as DataKey,
+        textRange: [0, 5] }]);
+      const segs = idx.getTextSegments();
+
+      expect(segs).toHaveLength(1);
+      expect(segs[0].blockIndex).toBe(3);
+      expect(segs[0].textRange).toEqual([0, 5]);
+    });
+
+    it('returns individual single-segment TextIndex instances for a composite', () => {
+      const composite = Index.text([
+        { blockIndex: 0,
+          dataKey: 'key' as DataKey,
+          textRange: [0, 1] },
+        { blockIndex: 1,
+          dataKey: 'key' as DataKey,
+          textRange: [0, 2] },
+      ]);
+      const segs = composite.getTextSegments();
+
+      expect(segs).toHaveLength(2);
+      expect(segs[0].blockIndex).toBe(0);
+      expect(segs[1].blockIndex).toBe(1);
+      segs.forEach(s => expect(s.isTextIndex).toBe(true));
+    });
+  });
+
+  describe('Index.fromCompositeSegments()', () => {
+    it('builds a composite TextIndex from multiple single-segment text indices', () => {
+      const a = Index.text([{ blockIndex: 0,
+        dataKey: 'key' as DataKey,
+        textRange: [0, 1] }]);
+      const b = Index.text([{ blockIndex: 1,
+        dataKey: 'key' as DataKey,
+        textRange: [0, 2] }]);
       const composite = Index.fromCompositeSegments([a, b]);
 
+      expect(composite.isComposite).toBe(true);
       expect(composite.getTextSegments()).toHaveLength(2);
     });
 
-    it('should use text index path when compositeSegments is empty array (getTextSegments returns [self])', () => {
-      const index = new IndexBuilder().addBlockIndex(0)
-        .addDataKey('a' as DataKey)
-        .addTextRange([1, 2])
-        .build();
+    it('returns a single-segment TextIndex when given one segment', () => {
+      const a = Index.text([{ blockIndex: 0,
+        dataKey: 'key' as DataKey,
+        textRange: [0, 1] }]);
+      const result = Index.fromCompositeSegments([a]);
 
-      index.compositeSegments = [];
-
-      expect(index.validate()).toBe(true);
-      expect(index.getTextSegments()).toHaveLength(1);
-      expect(index.getTextSegments()[0]).toBe(index);
+      expect(result.isComposite).toBe(false);
+      expect(result.isTextIndex).toBe(true);
     });
 
-    it('should serialize as legacy when compositeSegments is empty array', () => {
-      const index = new IndexBuilder().addBlockIndex(0)
-        .addDataKey('a' as DataKey)
-        .addTextRange([1, 2])
-        .build();
-
-      index.compositeSegments = [];
-
-      expect(typeof JSON.parse(index.serialize())).toBe('string');
+    it('throws when given an empty array', () => {
+      expect(() => Index.fromCompositeSegments([])).toThrow();
     });
 
-    it('should throw if composite has less than two segments', () => {
-      const a = new IndexBuilder().addBlockIndex(0)
-        .addDataKey('a' as DataKey)
-        .addTextRange([1, 2])
-        .build();
+    it('throws when passed non-TextIndex instances', () => {
+      expect(() => Index.fromCompositeSegments([Index.block(0), Index.block(1)])).toThrow();
+    });
+  });
 
-      expect(() => Index.fromCompositeSegments([a])).toThrow('Invalid index');
+  describe('.clone()', () => {
+    it('produces a distinct but equal instance', () => {
+      const idx = Index.data(3, 'key' as DataKey, 'doc1' as DocumentId);
+      const cloned = idx.clone();
+
+      expect(cloned).not.toBe(idx);
+      expect(cloned.blockIndex).toBe(idx.blockIndex);
+      expect(cloned.dataKey).toBe(idx.dataKey);
+      expect(cloned.documentId).toBe(idx.documentId);
     });
 
-    it('should throw when parsing composite JSON with fewer than two string segments', () => {
-      const a = new IndexBuilder().addBlockIndex(0)
-        .addDataKey('a' as DataKey)
-        .addTextRange([1, 2])
-        .build();
-      const payload = JSON.stringify({ composite: [a.serialize()] });
-
-      expect(() => Index.parse(payload)).toThrow('Invalid index');
-    });
-
-    it('should throw when composite property is not an array', () => {
-      expect(() => Index.parse(JSON.stringify({ composite: null }))).toThrow('Invalid composite index');
-      expect(() => Index.parse(JSON.stringify({ composite: {} }))).toThrow('Invalid composite index');
-    });
-
-    it('should throw when composite array contains a non-string segment', () => {
-      const payload = JSON.stringify({ composite: [0, 1] });
-
-      expect(() => Index.parse(payload)).toThrow('Invalid composite index: each segment must be a serialized index string');
-    });
-
-    it('should clone composite segments', () => {
-      const a = new IndexBuilder().addBlockIndex(0)
-        .addDataKey('a' as DataKey)
-        .addTextRange([1, 2])
-        .build();
-      const b = new IndexBuilder().addBlockIndex(1)
-        .addDataKey('a' as DataKey)
-        .addTextRange([0, compositeSecondSegmentEnd])
-        .build();
-      const composite = Index.fromCompositeSegments([a, b]);
+    it('deep-copies segments of a composite TextIndex', () => {
+      const composite = Index.text([
+        { blockIndex: 0,
+          dataKey: 'key' as DataKey,
+          textRange: [0, 1] },
+        { blockIndex: 1,
+          dataKey: 'key' as DataKey,
+          textRange: [0, 2] },
+      ]);
       const cloned = composite.clone();
 
-      expect(cloned.compositeSegments).toEqual(composite.compositeSegments);
-      expect(cloned.compositeSegments![0]).not.toBe(composite.compositeSegments![0]);
+      expect(cloned.isComposite).toBe(true);
+      expect(cloned.getTextSegments()[0]).not.toBe(composite.getTextSegments()[0]);
+      expect(cloned.getTextSegments()[0].blockIndex).toBe(composite.getTextSegments()[0].blockIndex);
+    });
+  });
+
+  describe('.withBlockIndex()', () => {
+    it('returns a new index with the updated block number', () => {
+      const idx = Index.block(3);
+      const updated = idx.withBlockIndex(7);
+
+      expect(updated.blockIndex).toBe(7);
+      expect(idx.blockIndex).toBe(3);
+    });
+
+    it('updates blockIndex across all segments of a composite TextIndex', () => {
+      const composite = Index.text([
+        { blockIndex: 0,
+          dataKey: 'key' as DataKey,
+          textRange: [0, 1] },
+        { blockIndex: 0,
+          dataKey: 'key' as DataKey,
+          textRange: [2, 3] },
+      ]);
+      const updated = composite.withBlockIndex(5);
+
+      updated.getTextSegments().forEach(seg => expect(seg.blockIndex).toBe(5));
+    });
+  });
+
+  describe('.withTextRange()', () => {
+    it('returns a new TextIndex with the updated range', () => {
+      const idx = Index.text([{ blockIndex: 3,
+        dataKey: 'key' as DataKey,
+        textRange: [0, 5] }]);
+      const updated = idx.withTextRange([2, 8]);
+
+      expect(updated.textRange).toEqual([2, 8]);
+      expect(idx.textRange).toEqual([0, 5]);
+    });
+
+    it('throws when called on a composite TextIndex', () => {
+      const composite = Index.text([
+        { blockIndex: 0,
+          dataKey: 'key' as DataKey,
+          textRange: [0, 1] },
+        { blockIndex: 1,
+          dataKey: 'key' as DataKey,
+          textRange: [0, 2] },
+      ]);
+
+      expect(() => composite.withTextRange([0, 1])).toThrow();
+    });
+  });
+
+  describe('.withDocumentId()', () => {
+    it('attaches documentId while preserving other fields', () => {
+      const idx = Index.block(3);
+      const updated = idx.withDocumentId('doc1' as DocumentId);
+
+      expect(updated.documentId).toBe('doc1');
+      expect(updated.blockIndex).toBe(3);
+      expect(idx.documentId).toBeUndefined();
+    });
+  });
+
+  describe('.serialize() and Index.parse()', () => {
+    it('round-trips a DocumentIndex', () => {
+      const idx = Index.document('doc1' as DocumentId);
+      const parsed = Index.parse(idx.serialize()) as DocumentIndex;
+
+      expect(parsed.documentId).toBe('doc1');
+    });
+
+    it('round-trips a PropertyIndex without documentId', () => {
+      const idx = Index.property('time');
+      const parsed = Index.parse(idx.serialize()) as PropertyIndex;
+
+      expect(parsed.propertyName).toBe('time');
+      expect(parsed.documentId).toBeUndefined();
+    });
+
+    it('round-trips a PropertyIndex with documentId', () => {
+      const idx = Index.property('time', 'doc1' as DocumentId);
+      const parsed = Index.parse(idx.serialize()) as PropertyIndex;
+
+      expect(parsed.propertyName).toBe('time');
+      expect(parsed.documentId).toBe('doc1');
+    });
+
+    it('round-trips a BlockIndex', () => {
+      const idx = Index.block(7, 'doc1' as DocumentId);
+      const parsed = Index.parse(idx.serialize()) as BlockIndex;
+
+      expect(parsed.blockIndex).toBe(7);
+      expect(parsed.documentId).toBe('doc1');
+    });
+
+    it('round-trips a TuneIndex', () => {
+      const idx = Index.tune(3, 'header' as BlockTuneName, 'level');
+      const parsed = Index.parse(idx.serialize()) as TuneIndex;
+
+      expect(parsed.blockIndex).toBe(3);
+      expect(parsed.tuneName).toBe('header');
+      expect(parsed.tuneKey).toBe('level');
+    });
+
+    it('round-trips a DataIndex', () => {
+      const idx = Index.data(3, 'content' as DataKey);
+      const parsed = Index.parse(idx.serialize()) as DataIndex;
+
+      expect(parsed.blockIndex).toBe(3);
+      expect(parsed.dataKey).toBe('content');
+    });
+
+    it('round-trips a single-segment TextIndex', () => {
+      const idx = Index.text([{ blockIndex: 3,
+        dataKey: 'content' as DataKey,
+        textRange: [0, 5] }]);
+      const parsed = Index.parse(idx.serialize()) as TextIndex;
+
+      expect(parsed.blockIndex).toBe(3);
+      expect(parsed.dataKey).toBe('content');
+      expect(parsed.textRange).toEqual([0, 5]);
+      expect(parsed.isTextIndex).toBe(true);
+    });
+
+    it('round-trips a composite TextIndex', () => {
+      const composite = Index.fromCompositeSegments([
+        Index.text([{ blockIndex: 0,
+          dataKey: 'key' as DataKey,
+          textRange: [1, 2] }]),
+        Index.text([{ blockIndex: 1,
+          dataKey: 'key' as DataKey,
+          textRange: [0, 5] }]),
+      ]);
+      const parsed = Index.parse(composite.serialize()) as TextIndex;
+
+      expect(parsed.isComposite).toBe(true);
+      const segs = parsed.getTextSegments();
+
+      expect(segs).toHaveLength(2);
+      expect(segs[0].blockIndex).toBe(0);
+      expect(segs[1].blockIndex).toBe(1);
+    });
+
+    it('emits the expected wire object for BlockIndex', () => {
+      expect(JSON.parse(Index.block(3, 'doc1' as DocumentId).serialize())).toEqual({ k: 'block',
+        b: 3,
+        id: 'doc1' });
+    });
+
+    it('emits the expected wire object for TuneIndex', () => {
+      expect(JSON.parse(Index.tune(3, 'header' as BlockTuneName, 'level').serialize())).toEqual({ k: 'tune',
+        b: 3,
+        tune: 'header',
+        key: 'level' });
+    });
+
+    it('emits the expected wire object for DataIndex', () => {
+      expect(JSON.parse(Index.data(3, 'content' as DataKey).serialize())).toEqual({ k: 'data',
+        b: 3,
+        data: 'content' });
+    });
+
+    it('emits the expected wire object for single-segment TextIndex', () => {
+      expect(JSON.parse(Index.text([{ blockIndex: 3,
+        dataKey: 'key' as DataKey,
+        textRange: [0, 5] }]).serialize())).toEqual({ k: 'text',
+        b: 3,
+        data: 'key',
+        r: [0, 5] });
+    });
+
+    it('emits the expected wire object for composite TextIndex', () => {
+      const composite = Index.fromCompositeSegments([
+        Index.text([{ blockIndex: 0,
+          dataKey: 'key' as DataKey,
+          textRange: [1, 2] }]),
+        Index.text([{ blockIndex: 1,
+          dataKey: 'key' as DataKey,
+          textRange: [0, 5] }]),
+      ]);
+
+      expect(JSON.parse(composite.serialize())).toEqual({
+        k: 'composite',
+        segs: [
+          { b: 0,
+            data: 'key',
+            r: [1, 2] },
+          { b: 1,
+            data: 'key',
+            r: [0, 5] },
+        ],
+      });
+    });
+
+    it('omits documentId from wire format when undefined', () => {
+      expect(JSON.parse(Index.block(3).serialize())).not.toHaveProperty('id');
+      expect(JSON.parse(Index.data(3, 'key' as DataKey).serialize())).not.toHaveProperty('id');
+    });
+
+    it('throws when parsing input that is not a JSON object with a k field', () => {
+      expect(() => Index.parse('null')).toThrow();
+      expect(() => Index.parse('"string"')).toThrow();
+      expect(() => Index.parse('42')).toThrow();
+      expect(() => Index.parse('{}')).toThrow('Invalid serialized index');
+    });
+
+    it('throws when parsing an unknown kind', () => {
+      expect(() => Index.parse('{"k":"unknown"}')).toThrow('Unknown index kind');
     });
   });
 });

@@ -1,3 +1,4 @@
+import { TextIndex } from '@editorjs/sdk';
 import type { InvertedOperationType } from './Operation.js';
 import { Operation, OperationType, type SerializedOperation } from './Operation.js';
 
@@ -126,9 +127,12 @@ export class BatchedOperation<T extends OperationType = OperationType> extends O
     /**
      * @todo - implement other index types
      */
-    if (!op.index.isTextIndex || !lastOp.index.isTextIndex) {
+    if (!(op.index instanceof TextIndex) || !(lastOp.index instanceof TextIndex)) {
       return false;
     }
+
+    const opTextIndex = op.index;
+    const lastOpTextIndex = lastOp.index;
 
     if (op.type === OperationType.Modify || lastOp.type === OperationType.Modify) {
       return false;
@@ -138,7 +142,7 @@ export class BatchedOperation<T extends OperationType = OperationType> extends O
       return false;
     }
 
-    if (op.index.blockIndex !== lastOp.index.blockIndex || op.index.dataKey !== lastOp.index.dataKey) {
+    if (opTextIndex.blockIndex !== lastOpTextIndex.blockIndex || opTextIndex.dataKey !== lastOpTextIndex.dataKey) {
       return false;
     }
 
@@ -147,7 +151,7 @@ export class BatchedOperation<T extends OperationType = OperationType> extends O
        * For Insert operations, each character is appended sequentially:
        * [0,0], [1,1], [2,2] ...
        */
-      return op.index.textRange![0] === lastOp.index.textRange![1] + 1;
+      return opTextIndex.textRange![0] === lastOpTextIndex.textRange![1] + 1;
     }
 
     /**
@@ -155,7 +159,7 @@ export class BatchedOperation<T extends OperationType = OperationType> extends O
      * - Backspace: each deletion decrements the position: [3,3], [2,2], [1,1] ...
      * - Forward delete: the position stays the same after each deletion: [0,0], [0,0] ...
      */
-    return op.index.textRange![0] === lastOp.index.textRange![0] - 1
-      || op.index.textRange![0] === lastOp.index.textRange![0];
+    return opTextIndex.textRange![0] === lastOpTextIndex.textRange![0] - 1
+      || opTextIndex.textRange![0] === lastOpTextIndex.textRange![0];
   }
 }

@@ -10,6 +10,10 @@ import postcssApply from 'postcss-apply';
 export default defineConfig({
   plugins: [
     dts(),
+    // vite-plugin-css-injected-by-js caches injected CSS across rebuilds in a
+    // persistent `vite build --watch` process, so edits always show up one
+    // rebuild late. That's why `dev` uses chokidar to re-run a fresh `vite build`
+    // per change instead of `vite build --watch` (see package.json).
     cssInjectedByJsPlugin()
   ],
   build: {
@@ -20,12 +24,8 @@ export default defineConfig({
     },
     rollupOptions: {
       external: [
-        '@editorjs/core',
         '@editorjs/dom',
-        '@editorjs/dom-adapters',
-        '@editorjs/editorjs',
         '@editorjs/helpers',
-        '@editorjs/model',
         '@editorjs/sdk'
       ],
     },

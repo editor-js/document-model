@@ -6,6 +6,7 @@ import type { InlineNode } from '../InlineNode/index.js';
 import { ParentNode } from '../mixins/ParentNode/index.js';
 import { ChildNode } from '../mixins/ChildNode/index.js';
 import { ParentInlineNode } from '../ParentInlineNode/index.js';
+import { isSameInlineData } from '../../../utils/index.js';
 
 export type * from './types/index.js';
 
@@ -27,9 +28,17 @@ export class FormattingInlineNode extends ParentInlineNode implements InlineNode
   public readonly tool: InlineToolName;
 
   /**
+   * Any additional data associated with the formatting tool.
+   * Kept in a private field so it can be replaced on re-formatting while staying read-only to the outside.
+   */
+  #data?: InlineToolData;
+
+  /**
    * Any additional data associated with the formatting tool
    */
-  public readonly data?: InlineToolData;
+  public get data(): InlineToolData | undefined {
+    return this.#data;
+  }
 
   /**
    * Constructor for FormattingInlineNode class.
@@ -42,7 +51,7 @@ export class FormattingInlineNode extends ParentInlineNode implements InlineNode
     super();
 
     this.tool = tool;
-    this.data = data;
+    this.#data = data;
   }
 
   /**
@@ -128,15 +137,74 @@ export class FormattingInlineNode extends ParentInlineNode implements InlineNode
    * @param [data] - inline tool data if applicable
    */
   public format(tool: InlineToolName, start: number, end: number, data?: InlineToolData): InlineNode[] {
-    /**
-     * In case current tool is the same as new one, do nothing
-     * @todo Compare data as well
-     */
     if (tool === this.tool) {
-      return [];
+      /**
+       * Re-applying the same tool with the same data is a no-op
+       */
+      if (isSameInlineData(data, this.#data)) {
+        return [];
+      }
+
+      /**
+       * Re-applying the same tool with different data replaces the data over the passed range.
+       * Split the node so only the affected range gets the new data, then update that segment.
+       */
+      return this.#replaceData(start, end, data);
     }
 
     return super.format(tool, start, end, data);
+  }
+
+  /**
+   * Replaces this node's data over the specified range, splitting the node when the range does
+   * not cover it fully so the surrounding parts keep their original data.
+   * @param start - char start index of the range
+   * @param end - char end index of the range
+   * @param [data] - new inline tool data to apply
+   */
+  #replaceData(start: number, end: number, data?: InlineToolData): InlineNode[] {
+    /**
+     * Range covers the whole node — just swap the data in place
+     */
+    if (start === 0 && end === this.length) {
+      this.#data = data;
+
+      return [this];
+    }
+
+    const middleNode = this.split(start);
+    const result: FormattingInlineNode[] = [];
+
+    /**
+     * If start > 0, `split` produced a node covering [start, length). Split it again at `end`
+     * so `middleNode` is exactly the affected range, and the remainder keeps the old data.
+     */
+    if (middleNode) {
+      const endNode = middleNode.split(end - this.length);
+
+      middleNode.#data = data;
+
+      result.push(this, middleNode);
+
+      if (endNode) {
+        result.push(endNode);
+      }
+    /**
+     * If start === 0, split at `end` so `this` becomes the affected range and the tail keeps the old data.
+     */
+    } else {
+      const endNode = this.split(end);
+
+      this.#data = data;
+
+      result.push(this);
+
+      if (endNode) {
+        result.push(endNode);
+      }
+    }
+
+    return result;
   }
 
   /**
@@ -200,10 +268,9 @@ export class FormattingInlineNode extends ParentInlineNode implements InlineNode
     }
 
     /**
-     * @todo check data equality
+     * Fragments with different data must stay separate so normalization does not drop or resurrect stale data
      */
-
-    return true;
+    return isSameInlineData(this.#data, node.#data);
   }
 
   /**
@@ -216,7 +283,7 @@ export class FormattingInlineNode extends ParentInlineNode implements InlineNode
     }
 
     /**
-     * @todo merge data
+     * `isEqual` guarantees the data is equal, so there is nothing to reconcile — just move the children over
      */
     Array.from(node.children).forEach((child) => {
       this.append(child);

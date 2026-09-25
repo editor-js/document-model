@@ -1,6 +1,7 @@
 import { EventAction } from '../EventAction.js';
 import { BaseDocumentEvent } from '../BaseDocumentEvent.js';
-import type { Index } from '../Index/index.js';
+import type { TextIndex } from '../Index/TextIndex.js';
+import type { PartialIndex } from '../Index/PartialIndex.js';
 import type { InlineToolData, InlineToolName } from '../InlineTool.js';
 
 /**
@@ -21,14 +22,14 @@ export interface TextUnformattedEventData {
 /**
  * TextUnformatted Custom Event
  */
-export class TextUnformattedEvent extends BaseDocumentEvent<EventAction.Modified, TextUnformattedEventData> {
+export class TextUnformattedEvent extends BaseDocumentEvent<EventAction.Modified, TextUnformattedEventData, TextIndex> {
   /**
    * TextUnformattedEvent class constructor
    * @param index - index of the unformatted text in the document
    * @param data - formatting tool and its data
    * @param userId - identifier of the user making the change
    */
-  constructor(index: Index, data: TextUnformattedEventData, userId: string | number) {
+  constructor(index: TextIndex | PartialIndex, data: TextUnformattedEventData, userId: string | number) {
     super(index, EventAction.Modified, data, userId);
   }
 }

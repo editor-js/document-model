@@ -14,7 +14,7 @@ import {
   InlineToolOptionKey,
   UiComponentType
 } from '@editorjs/sdk';
-import type { Index, InlineFragment, TextRange } from '@editorjs/sdk';
+import type { InlineFragment, TextIndex, TextRange } from '@editorjs/sdk';
 import Style from './InlineToolbar.module.pcss';
 import type { PopoverItemDefaultBaseParams, PopoverItemParams } from '@editorjs/ui-kit';
 import { PopoverInline, PopoverItemType } from '@editorjs/ui-kit';
@@ -89,13 +89,13 @@ export class InlineToolbarUI implements EditorjsPlugin {
   async #handleSelectionChange(event: SelectionChangedCoreEvent): Promise<void> {
     const { availableInlineTools, index, fragments } = event.detail;
     const selection = window.getSelection();
-    const segments = index?.getTextSegments() ?? [];
+    const segments = (index as TextIndex | undefined)?.getTextSegments() ?? [];
     /**
      * For composite selection the first segment can be collapsed (e.g. range starts at end of block 1);
      * `isActive` should use a non-collapsed local range, not `segments[0]` unconditionally.
      */
     const firstNonCollapsedSegment = segments.find(
-      (segment: Index) =>
+      (segment: TextIndex) =>
         segment.textRange !== undefined
         && segment.textRange[0] !== segment.textRange[1]
     );

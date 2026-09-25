@@ -26,7 +26,9 @@ runs:
           package-name: ${{ inputs.package-name }}
 
       - name: Get changed files
-        uses: tj-actions/changed-files@v47
+        # Pinned to a full SHA (v47.0.6) — see mutation-tests-changed-files for why.
+        # Only the src_any_changed boolean is consumed below, so no separator is set.
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         id: changed-files
         with:
           files_yaml: |
@@ -34,13 +36,13 @@ runs:
               - 'src/**/*.ts'
               - '!src/**/*.spec.ts'
               - '!src/**/__mocks__/**'
-          separator: "','"
           path: ${{ inputs.working-directory }}
 
       - name: Run mutation tests
         if: steps.changed-files.outputs.src_any_changed == 'true'
         env:
           STRYKER_DASHBOARD_API_KEY: ${{ inputs.stryker_dashboard_api_key }}
+          PACKAGE_NAME: ${{ inputs.package-name }}
         shell: bash
         id: run-mutation-tests
-        run: yarn workspace ${{ inputs.package-name }} test:mutations --dashboard.version main --dashboard.module ${{ inputs.package-name }}
+        run: yarn workspace "$PACKAGE_NAME" test:mutations --dashboard.version main --dashboard.module "$PACKAGE_NAME"

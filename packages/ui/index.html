@@ -4,6 +4,8 @@
 
 <script type="module">
   import Core from '@editorjs/core';
+  import { DOMAdapters } from '@editorjs/dom-adapters';
+  import { Paragraph } from '@editorjs/paragraph';
   import { EditorjsUI, BlocksUI, InlineToolbarUI, ToolboxUI } from './src/index.ts';
 
   const core = new Core({
@@ -32,7 +34,13 @@
     },
   });
 
+  /**
+   * Core is headless: the rendering adapter and the `defaultBlock` tool have to be
+   * registered by the caller, otherwise `initialize()` throws.
+   */
   core
+    .use(DOMAdapters)
+    .use(Paragraph)
     .use(EditorjsUI)
     .use(BlocksUI)
     .use(InlineToolbarUI)

@@ -12,7 +12,8 @@ import {
   type ModelEvents,
   ModifiedEventData,
   RedoCoreEvent,
-  UndoCoreEvent
+  UndoCoreEvent,
+  TextIndex
 } from '@editorjs/sdk';
 import { TOKENS } from '../tokens.js';
 
@@ -305,7 +306,7 @@ export class UndoRedoManager {
     const index = payload.index;
     const prevIndex = lastEvent.index;
 
-    if (!index.isTextIndex || !prevIndex.isTextIndex) {
+    if (!(index instanceof TextIndex) || !(prevIndex instanceof TextIndex)) {
       return false;
     }
 

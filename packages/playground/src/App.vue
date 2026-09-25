@@ -1,10 +1,9 @@
 <script setup lang="ts">
 // import CaretIndex from '@/components/CaretIndex.vue';
 import { EditorDocument, EditorJSModel } from '@editorjs/model';
-import Core from '@editorjs/core';
+import EditorJS from '@editorjs/editorjs';
 import { ref, onMounted } from 'vue';
 import { Node } from './components';
-import { EditorjsUI, BlocksUI, InlineToolbarUI, ToolboxUI, ToolbarUI } from '@editorjs/ui';
 /**
  * Editor document for visualizing
  */
@@ -19,13 +18,12 @@ const model = ref<EditorJSModel | null>(null);
 
 const userId = crypto.randomUUID();
 
-
 /**
  * @todo display caret index somewhere
  */
 
 onMounted(() => {
-  const core = new Core({
+  const editor = new EditorJS({
     holder: document.getElementById('editorjs') as HTMLElement,
     userId: userId,
     documentId: 'test',
@@ -62,13 +60,7 @@ onMounted(() => {
 
   });
 
-  core
-    .use(EditorjsUI)
-    .use(BlocksUI)
-    .use(InlineToolbarUI)
-    .use(ToolbarUI)
-    .use(ToolboxUI)
-    .initialize();
+  editor.isReady.catch((error: unknown) => console.error('Editor.js failed to initialize', error));
 });
 
 /**
@@ -83,7 +75,7 @@ const collapsedSections = ref<{ [key: string]: boolean }>({
 /**
  * Toggles the collapsed state of a section
  *
- * @param section - section to toggle
+ * @param {string} section - section name to toggle
  */
 function toggleSection(section: string) {
   collapsedSections.value[section] = !collapsedSections.value[section];

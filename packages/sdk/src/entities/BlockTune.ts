@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type {
-  ToolConfig,
   BlockTune as BlockTuneV2
-} from '@editorjs/editorjs';
+} from 'editorjs-v2';
 import type { ToolType } from './EntityType.js';
-import type { BaseToolConstructor, BaseToolOptions } from './BaseTool';
+import type { BaseToolConstructor, BaseToolOptions, ToolConfig } from './BaseTool';
 
 /**
  * Options available on **Block Tunes** (`static options` or `use()` overrides).

@@ -14,7 +14,7 @@ describe('CaretManager', () => {
 
   it('should create new caret with passed index', () => {
     const manager = new CaretManager();
-    const index = new Index();
+    const index = Index.block(0);
 
     const caret = manager.createCaret('userId', index);
 
@@ -27,7 +27,7 @@ describe('CaretManager', () => {
 
     manager.addEventListener(EventType.CaretManagerUpdated, handler);
 
-    const index = new Index();
+    const index = Index.block(0);
     const caret = manager.createCaret('userId', index);
 
     expect(handler).toHaveBeenCalledWith(expect.any(CaretManagerCaretAddedEvent));
@@ -43,7 +43,7 @@ describe('CaretManager', () => {
     const manager = new CaretManager();
     const caret = manager.createCaret('userId');
 
-    const index = new Index();
+    const index = Index.block(0);
 
     caret.update(index);
 
@@ -57,7 +57,7 @@ describe('CaretManager', () => {
 
     manager.addEventListener(EventType.CaretManagerUpdated, handler);
 
-    const index = new Index();
+    const index = Index.block(0);
 
     caret.update(index);
 

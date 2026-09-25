@@ -1,7 +1,7 @@
 /* eslint-disable jsdoc/require-jsdoc, @stylistic/comma-dangle,@typescript-eslint/naming-convention */
 import { beforeEach, jest } from '@jest/globals';
 import type { BlockToolFacade, EditorJSAdapterPlugin } from '@editorjs/sdk';
-import type { BlockId, Index } from '@editorjs/sdk';
+import type { BlockId, BlockIndex, Index } from '@editorjs/sdk';
 
 const USER_ID = 'user';
 
@@ -110,7 +110,7 @@ describe('BlockRenderer (unit, mocked deps)', () => {
         } as unknown as BlockToolFacade);
 
         const event = new BlockAddedEvent(
-          { blockIndex: 0 } as Index,
+          { blockIndex: 0 } as unknown as BlockIndex,
           {
             name: 'tool',
             id: 'test-block-id' as BlockId,
@@ -131,7 +131,7 @@ describe('BlockRenderer (unit, mocked deps)', () => {
 
       it('should throw when blockIndex is undefined', async () => {
         const event = new BlockAddedEvent(
-          {} as Index,
+          {} as unknown as BlockIndex,
           {
             name: 'tool',
             id: 'test-block-id' as BlockId,
@@ -151,7 +151,7 @@ describe('BlockRenderer (unit, mocked deps)', () => {
         jest.spyOn(toolsManager.blockTools, 'get').mockReturnValue(undefined);
 
         const event = new BlockAddedEvent(
-          { blockIndex: 0 } as Index,
+          { blockIndex: 0 } as unknown as BlockIndex,
           {
             name: 'missing-tool',
             id: 'test-block-id' as BlockId,
@@ -179,7 +179,7 @@ describe('BlockRenderer (unit, mocked deps)', () => {
         } as unknown as BlockToolFacade);
 
         const event = new BlockAddedEvent(
-          { blockIndex: 0 } as Index,
+          { blockIndex: 0 } as unknown as BlockIndex,
           {
             name: 'tool',
             id: 'test-block-id' as BlockId,
@@ -202,7 +202,7 @@ describe('BlockRenderer (unit, mocked deps)', () => {
     describe('BlockRemovedEvent handling', () => {
       it('should dispatch BlockRemovedCoreEvent via EventBus', () => {
         const event = new BlockRemovedEvent(
-          { blockIndex: 1 } as Index,
+          { blockIndex: 1 } as unknown as BlockIndex,
           {
             name: 'tool',
             id: 'test-block-id' as BlockId,
@@ -219,7 +219,7 @@ describe('BlockRenderer (unit, mocked deps)', () => {
       it('should call destroyBlockToolAdapter with the block id', () => {
         const blockId = 'test-block-id' as unknown as BlockId;
         const event = new BlockRemovedEvent(
-          { blockIndex: 1 } as Index,
+          { blockIndex: 1 } as unknown as BlockIndex,
           {
             name: 'tool',
             id: blockId,
@@ -235,7 +235,7 @@ describe('BlockRenderer (unit, mocked deps)', () => {
 
       it('should throw when blockIndex is undefined', () => {
         const event = new BlockRemovedEvent(
-          {} as Index,
+          {} as unknown as BlockIndex,
           {
             name: 'tool',
             id: 'test-block-id' as BlockId,

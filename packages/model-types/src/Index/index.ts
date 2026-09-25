@@ -1,288 +1,224 @@
+export { IndexBase, IndexKind, type IndexFields, type TextSegment } from './IndexBase.js';
+export { DocumentIndex } from './DocumentIndex.js';
+export { PropertyIndex } from './PropertyIndex.js';
+export { BlockIndex } from './BlockIndex.js';
+export { TuneIndex } from './TuneIndex.js';
+export { DataIndex } from './DataIndex.js';
+export { TextIndex } from './TextIndex.js';
+export { PartialIndex } from './PartialIndex.js';
+
+import { IndexBase, IndexKind, type TextSegment } from './IndexBase.js';
+import type { DocumentId } from '../indexing.js';
 import type { BlockTuneName } from '../BlockTune.js';
 import type { DataKey } from '../DataKey.js';
-import type { DocumentId } from '../indexing.js';
 import type { TextRange } from '../Text.js';
+import { DocumentIndex } from './DocumentIndex.js';
+import { PropertyIndex } from './PropertyIndex.js';
+import { BlockIndex } from './BlockIndex.js';
+import { TuneIndex } from './TuneIndex.js';
+import { DataIndex } from './DataIndex.js';
+import { TextIndex } from './TextIndex.js';
 
 /**
- * Shape of the JSON root object produced for a composite serialized index (see {@link Index.serialize})
+ * Shape of the JSON object produced when serializing a single-segment TextIndex
  */
-interface CompositeIndexRoot {
-  /**
-   * Serialized form of each text index segment
-   */
-  composite: unknown;
+interface SerializedTextSegment {
+  /** Block index */
+  b: number;
+  /** Data key */
+  data: DataKey;
+  /** Text range */
+  r: TextRange;
+  /** Document identifier */
+  id?: DocumentId;
 }
 
 /**
- * Class representing index in the document model tree
+ * Parsed serialized index structure used in {@link Index.parse}
  */
-export class Index {
+interface ParsedIndex {
+  /** Kind discriminator */
+  k: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Parses a single serialized text segment into a {@link TextSegment}
+ * @param seg - serialized segment object
+ */
+function parseSegmentObject(seg: SerializedTextSegment): TextSegment {
+  return {
+    blockIndex: seg.b,
+    dataKey: seg.data,
+    textRange: seg.r,
+    documentId: seg.id,
+  };
+}
+
+/**
+ * Factory class for all document model index types.
+ * Extends IndexBase with static factory methods; concrete subclasses extend IndexBase directly.
+ *
+ * Symbol.hasInstance is overridden so that `value instanceof Index` returns true
+ * for any IndexBase instance, preserving the expected runtime behaviour even
+ * though concrete classes extend IndexBase rather than Index.
+ */
+export abstract class Index extends IndexBase {
   /**
-   * Text range in the text data property
+   * Returns true for any IndexBase instance, keeping `instanceof Index` consistent
+   * with the expected public API even though concrete classes extend IndexBase directly.
+   * @param instance - value to test
    */
-  public textRange?: TextRange;
-
-  /**
-   * Data key in the block node
-   */
-  public dataKey?: DataKey;
-
-  /**
-   * Tune name in the block node
-   */
-  public tuneName?: BlockTuneName;
-
-  /**
-   * Tune key of the tune node
-   */
-  public tuneKey?: string;
-
-  /**
-   * Index of the block node
-   */
-  public blockIndex?: number;
-
-  /**
-   * Document property name
-   */
-  public propertyName?: string;
-
-  /**
-   * Identifier of the document this index belongs to
-   */
-  public documentId?: DocumentId;
-
-  /**
-   * Cross-input selection: one text index per affected input, in document order
-   */
-  public compositeSegments?: Index[];
-
-  /**
-   * Parse serialized index
-   * @param serialized - JSON string produced by Index.serialize()
-   */
-  public static parse(serialized: string): Index {
-    const outer = JSON.parse(serialized) as unknown;
-
-    if (typeof outer === 'object' && outer !== null && 'composite' in outer) {
-      return Index.parseCompositeIndexFromObject(outer);
-    }
-
-    if (typeof outer !== 'string') {
-      throw new Error('Invalid serialized index: root must be a JSON string or a composite object');
-    }
-
-    const arrayIndex = outer.split(':');
-
-    const index = new Index();
-
-    for (const value of arrayIndex) {
-      const [type, data] = value.split('@');
-
-      switch (type) {
-        case 'doc':
-          index.documentId = data as DocumentId;
-          break;
-        case 'prop':
-          index.propertyName = data;
-          break;
-        case 'block':
-          index.blockIndex = Number(data);
-          break;
-        case 'tune':
-          index.tuneName = data as BlockTuneName;
-          break;
-        case 'tuneKey':
-          index.tuneKey = data;
-          break;
-        case 'data':
-          index.dataKey = data as DataKey;
-          break;
-        default:
-          index.textRange = JSON.parse(type) as TextRange;
-          break;
-      }
-    }
-
-    return index;
+  public static [Symbol.hasInstance](instance: unknown): boolean {
+    return instance instanceof IndexBase;
   }
 
   /**
-   * Builds a composite index from at least two text indices (cross-input selection).
-   * @param segments - text indices for each covered input, in document order
+   * Creates a DocumentIndex
+   * @param documentId - unique document identifier
    */
-  public static fromCompositeSegments(segments: Index[]): Index {
-    const index = new Index();
-
-    index.compositeSegments = segments.map(segment => segment.clone());
-    index.validate();
-
-    return index;
+  public static document(documentId: DocumentId): DocumentIndex {
+    return new DocumentIndex(documentId);
   }
 
   /**
-   * Parses a composite index from the JSON root object (see {@link Index.serialize}).
-   * @param outer - value returned by `JSON.parse` for a composite serialized index
+   * Creates a PropertyIndex
+   * @param propertyName - name of the document property
+   * @param documentId - optional document identifier
    */
-  private static parseCompositeIndexFromObject(outer: object): Index {
-    const composite = (outer as CompositeIndexRoot).composite;
-
-    if (!Array.isArray(composite)) {
-      throw new Error('Invalid composite index');
-    }
-
-    const index = new Index();
-
-    index.compositeSegments = composite.map((segment) => {
-      if (typeof segment !== 'string') {
-        throw new Error('Invalid composite index: each segment must be a serialized index string');
-      }
-
-      return Index.parse(segment);
-    });
-
-    index.validate();
-
-    return index;
+  public static property(
+    propertyName: string,
+    documentId?: DocumentId
+  ): PropertyIndex {
+    return new PropertyIndex(propertyName, documentId);
   }
 
   /**
-   * Returns text segments for this index: either composite segments or a single text index.
+   * Creates a BlockIndex
+   * @param blockIndex - zero-based block position
+   * @param documentId - optional document identifier
    */
-  public getTextSegments(): Index[] {
-    if (this.compositeSegments !== undefined && this.compositeSegments.length > 0) {
-      return this.compositeSegments;
-    }
-
-    if (this.isTextIndex) {
-      return [this];
-    }
-
-    return [];
+  public static block(
+    blockIndex: number,
+    documentId?: DocumentId
+  ): BlockIndex {
+    return new BlockIndex(blockIndex, documentId);
   }
 
   /**
-   * Creates new Index object with copied values
+   * Creates a TuneIndex
+   * @param blockIndex - zero-based block position
+   * @param tuneName - name of the block tune
+   * @param tuneKey - key within the block tune
+   * @param documentId - optional document identifier
    */
-  public clone(): Index {
-    const index = new Index();
-
-    index.textRange = this.textRange;
-    index.dataKey = this.dataKey;
-    index.tuneName = this.tuneName;
-    index.tuneKey = this.tuneKey;
-    index.blockIndex = this.blockIndex;
-    index.propertyName = this.propertyName;
-    index.documentId = this.documentId;
-    index.compositeSegments = this.compositeSegments?.map(segment => segment.clone());
-
-    return index;
+  public static tune(
+    blockIndex: number,
+    tuneName: BlockTuneName,
+    tuneKey: string,
+    documentId?: DocumentId
+  ): TuneIndex {
+    return new TuneIndex(blockIndex, tuneName, tuneKey, documentId);
   }
 
   /**
-   * Serialize index to string
+   * Creates a DataIndex
+   * @param blockIndex - zero-based block position
+   * @param dataKey - key identifying block data
+   * @param documentId - optional document identifier
    */
-  public serialize(): string {
-    if (this.compositeSegments !== undefined && this.compositeSegments.length > 0) {
-      return JSON.stringify({
-        composite: this.compositeSegments.map(segment => segment.serialize()),
-      });
-    }
-
-    const arrayIndex = [
-      this.documentId ? `doc@${this.documentId}` : undefined,
-      this.propertyName !== undefined ? `prop@${this.propertyName}` : undefined,
-      this.blockIndex !== undefined ? `block@${this.blockIndex}` : undefined,
-      this.tuneName ? `tune@${this.tuneName}` : undefined,
-      this.tuneKey !== undefined ? `tuneKey@${this.tuneKey}` : undefined,
-      this.dataKey ? `data@${this.dataKey}` : undefined,
-      this.textRange ? JSON.stringify(this.textRange) : undefined,
-    ] as const;
-
-    return JSON.stringify(arrayIndex.filter(value => value !== undefined).join(':'));
+  public static data(
+    blockIndex: number,
+    dataKey: DataKey,
+    documentId?: DocumentId
+  ): DataIndex {
+    return new DataIndex(blockIndex, dataKey, documentId);
   }
 
   /**
-   * Validates index
+   * Creates a TextIndex from one or more text segments
+   * @param segments - one or more text segments
    */
-  public validate(): boolean {
-    if (this.compositeSegments !== undefined && this.compositeSegments.length > 0) {
-      if (this.compositeSegments.length < 2) {
-        throw new Error('Invalid index');
-      }
+  public static text(segments: TextSegment[]): TextIndex {
+    return new TextIndex(segments);
+  }
 
-      const hasOtherFields
-        = this.textRange !== undefined
-          || this.dataKey !== undefined
-          || this.blockIndex !== undefined
-          || this.tuneName !== undefined
-          || this.tuneKey !== undefined
-          || this.propertyName !== undefined
-          || this.documentId !== undefined;
+  /**
+   * Deserializes a JSON string produced by {@link IndexBase.serialize} back into an Index instance
+   * @param serialized - JSON string produced by serialize()
+   */
+  public static parse(serialized: string): IndexBase {
+    const obj = JSON.parse(serialized) as ParsedIndex;
 
-      if (hasOtherFields) {
-        throw new Error('Invalid index');
-      }
-
-      for (const segment of this.compositeSegments) {
-        segment.validate();
-
-        if (!segment.isTextIndex) {
-          throw new Error('Invalid index');
-        }
-      }
-
-      return true;
+    if (typeof obj !== 'object' || obj === null || typeof obj.k !== 'string') {
+      throw new Error(
+        'Invalid serialized index: must be a JSON object with a "k" field'
+      );
     }
 
-    const includesTextRange = !!this.textRange;
-    const includesDataKey = !!this.dataKey;
-    const includesTuneName = !!this.tuneName;
-    const includesTuneKey = this.tuneKey !== undefined;
-    const includesBlockIndex = this.blockIndex !== undefined;
-    const includesPropertyName = this.propertyName !== undefined;
-    const includesDocumentId = !!this.documentId;
+    switch (obj.k) {
+      case 'doc':
+        return new DocumentIndex(obj.id as DocumentId);
 
-    const includesSomethingBlockRelated = includesBlockIndex || includesTuneName || includesTuneKey || includesDataKey || includesTextRange;
+      case 'prop':
+        return new PropertyIndex(
+          obj.name as string,
+          obj.id as DocumentId | undefined
+        );
 
-    switch (true) {
-      case includesTuneName && (includesDataKey || includesTextRange):
-      case includesTuneName && !includesTuneKey:
-      case includesPropertyName && includesSomethingBlockRelated:
-      case includesBlockIndex && includesTextRange && !includesDataKey:
-      case includesDocumentId && includesDataKey && !includesBlockIndex:
-      case includesDocumentId && includesTuneName && !includesBlockIndex:
-      case includesDocumentId && includesTextRange && !includesBlockIndex:
-      case includesDocumentId && includesTuneKey && !includesBlockIndex:
-        throw new Error('Invalid index');
+      case 'block':
+        return new BlockIndex(
+          obj.b as number,
+          obj.id as DocumentId | undefined
+        );
+
+      case 'tune':
+        return new TuneIndex(
+          obj.b as number,
+          obj.tune as BlockTuneName,
+          obj.key as string,
+          obj.id as DocumentId | undefined
+        );
+
+      case 'data':
+        return new DataIndex(
+          obj.b as number,
+          obj.data as DataKey,
+          obj.id as DocumentId | undefined
+        );
+
+      case 'text':
+        return new TextIndex([
+          parseSegmentObject(obj as unknown as SerializedTextSegment),
+        ]);
+
+      case 'composite':
+        return new TextIndex(
+          (obj.segs as SerializedTextSegment[]).map(parseSegmentObject)
+        );
 
       default:
-        return true;
+        throw new Error(`Unknown index kind: ${obj.k}`);
     }
   }
 
   /**
-   * Returns true if index points to the text data
+   * Merges one or more TextIndex instances into a single composite TextIndex
+   * @param segments - array of Index instances (must all be TextIndex)
    */
-  public get isTextIndex(): boolean {
-    if (this.compositeSegments !== undefined && this.compositeSegments.length > 0) {
-      return false;
+  public static fromCompositeSegments(segments: IndexBase[]): TextIndex {
+    if (segments.length === 0) {
+      throw new Error('fromCompositeSegments requires at least one segment');
     }
 
-    return this.blockIndex !== undefined && this.dataKey !== undefined && this.textRange !== undefined;
-  }
+    const textSegments = segments.flatMap((s) => {
+      if (s.kind !== IndexKind.Text) {
+        throw new Error('fromCompositeSegments requires text index instances');
+      }
 
-  /**
-   * Returns true if index points to the block node
-   */
-  public get isBlockIndex(): boolean {
-    return this.blockIndex !== undefined && this.tuneName === undefined && this.dataKey === undefined && this.textRange === undefined;
-  }
+      return (s as TextIndex).segments as TextSegment[];
+    });
 
-  /**
-   * Returns true if index points to the block node data key
-   */
-  public get isDataIndex(): boolean {
-    return this.blockIndex !== undefined && this.tuneName === undefined && this.dataKey !== undefined && this.textRange === undefined;
+    return new TextIndex(textSegments);
   }
 }

@@ -3,6 +3,9 @@ import type { EditorJSModel } from '@editorjs/model';
 import { CaretManagerCaretUpdatedEvent, EventType, Index } from '@editorjs/sdk';
 import { onUpdated, ref } from 'vue';
 
+/**
+ * Map of user ids to caret indexes
+ */
 const indexes = ref<Map<string | number, string>>(new Map());
 
 const props = defineProps<{
@@ -11,6 +14,9 @@ const props = defineProps<{
    */
   model: EditorJSModel;
 
+  /**
+   * Current user id
+   */
   userId: string;
 }>();
 

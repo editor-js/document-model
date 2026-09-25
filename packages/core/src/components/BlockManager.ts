@@ -9,13 +9,14 @@ import {
   type InlineTreeNodeSerialized,
   NODE_TYPE_HIDDEN_PROP,
   renumberKeys,
-  set
+  set,
+  TextIndex
 } from '@editorjs/sdk';
 import 'reflect-metadata';
 import { inject, injectable } from 'inversify';
 import { TOKENS } from '../tokens.js';
 import ToolsManager from '../tools/ToolsManager.js';
-import { BlockToolData } from '@editorjs/editorjs';
+import type { BlockToolData } from 'editorjs-v2';
 import { CoreConfigValidated, EventBus } from '@editorjs/sdk';
 
 /**
@@ -435,6 +436,6 @@ export class BlocksManager {
     const userCaret = this.#model.getCaret(this.#config.userId);
     const caretIndex = userCaret?.index;
 
-    return caretIndex?.blockIndex;
+    return caretIndex instanceof TextIndex ? caretIndex.blockIndex : undefined;
   }
 }

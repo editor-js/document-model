@@ -1,4 +1,4 @@
-import { IndexBuilder } from '@editorjs/sdk';
+import { BlockIndex, DataIndex, TextIndex } from '@editorjs/sdk';
 import { Operation, OperationType } from './Operation.js';
 import { getRangesIntersectionType, RangeIntersectionType } from './utils/getRangesIntersectionType.js';
 
@@ -52,13 +52,13 @@ export class OperationsTransformer {
     const againstIndex = againstOp.index;
 
     switch (true) {
-      case (againstIndex.isBlockIndex):
+      case (againstIndex instanceof BlockIndex):
         return this.#transformAgainstBlockOperation(operation, againstOp);
 
-      case (againstIndex.isTextIndex):
+      case (againstIndex instanceof TextIndex):
         return this.#transformAgainstTextOperation(operation, againstOp);
 
-      case (againstIndex.isDataIndex):
+      case (againstIndex instanceof DataIndex):
         return this.#transformAgainstDataOperation(operation, againstOp);
 
       default:
@@ -86,44 +86,49 @@ export class OperationsTransformer {
    * @returns new operation
    */
   #transformAgainstBlockOperation<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
-    const newIndexBuilder = new IndexBuilder().from(operation.index);
+    const opIndex = operation.index as { blockIndex?: number };
+    const againstBlockIndex = (againstOp.index as BlockIndex).blockIndex;
 
     /**
      * If current operation has no block index, return copy of the current operation
      */
-    if (operation.index.blockIndex === undefined) {
+    if (opIndex.blockIndex === undefined) {
       return Operation.from(operation);
     }
 
     /**
      * Check that againstOp affects current operation
      */
-    if (againstOp.index.blockIndex! > operation.index.blockIndex) {
+    if (againstBlockIndex > opIndex.blockIndex) {
       return Operation.from(operation);
     }
 
-    /**
-     * Update the index of the current operation
-     */
     switch (againstOp.type) {
       /**
        * Cover case 1
        */
-      case OperationType.Insert:
-        newIndexBuilder.addBlockIndex(operation.index.blockIndex + 1);
-        break;
+      case OperationType.Insert: {
+        const newOp = Operation.from(operation);
+
+        newOp.index = operation.index.withBlockIndex(opIndex.blockIndex + 1);
+
+        return newOp;
+      }
 
       /**
        * Cover case 2
        */
-      case OperationType.Delete:
-        if (againstOp.index.blockIndex! === operation.index.blockIndex) {
-          return new Operation(OperationType.Neutral, newIndexBuilder.build(), { payload: [] }, operation.userId, operation.rev);
+      case OperationType.Delete: {
+        if (againstBlockIndex === opIndex.blockIndex) {
+          return new Operation(OperationType.Neutral, operation.index.clone(), { payload: [] }, operation.userId, operation.rev);
         }
 
-        newIndexBuilder.addBlockIndex(operation.index.blockIndex - 1);
+        const newOp = Operation.from(operation);
 
-        break;
+        newOp.index = operation.index.withBlockIndex(opIndex.blockIndex - 1);
+
+        return newOp;
+      }
 
       /**
        * Cover case 3
@@ -131,15 +136,6 @@ export class OperationsTransformer {
       default:
         return Operation.from(operation);
     }
-
-    /**
-     * Return new operation with the updated index
-     */
-    const newOp = Operation.from(operation);
-
-    newOp.index = newIndexBuilder.build();
-
-    return newOp;
   }
 
   /**
@@ -162,17 +158,18 @@ export class OperationsTransformer {
    */
   #transformAgainstTextOperation<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
     const index = operation.index;
-    const againstIndex = againstOp.index;
+    const againstIndex = againstOp.index as TextIndex;
 
     /**
      * Cover case 1
      */
-    if (index.isBlockIndex || index.isDataIndex) {
+    if (index instanceof BlockIndex || index instanceof DataIndex) {
       return Operation.from(operation);
     }
 
-    const sameInput = index.dataKey === againstIndex.dataKey;
-    const sameBlock = index.blockIndex === againstIndex.blockIndex;
+    const textIndex = index as TextIndex;
+    const sameInput = textIndex.dataKey === againstIndex.dataKey;
+    const sameBlock = textIndex.blockIndex === againstIndex.blockIndex;
 
     /**
      * Check that againstOp affects current operation
@@ -217,7 +214,6 @@ export class OperationsTransformer {
    */
   #transformAgainstDataOperation<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
     const index = operation.index;
-    const againstIndex = againstOp.index;
 
     const revision = operation.rev!;
     /**
@@ -227,12 +223,14 @@ export class OperationsTransformer {
     const againstRevision = againstOp.rev === undefined ? Infinity : againstOp.rev;
 
     // Cover case 1
-    if (!index.isDataIndex) {
+    if (!(index instanceof DataIndex)) {
       return Operation.from(operation);
     }
 
+    const againstDataIndex = againstOp.index as DataIndex;
+
     // Cover case 2
-    if (index.blockIndex !== againstIndex.blockIndex || index.dataKey !== againstIndex.dataKey) {
+    if (index.blockIndex !== againstDataIndex.blockIndex || index.dataKey !== againstDataIndex.dataKey) {
       return Operation.from(operation);
     }
 
@@ -264,13 +262,12 @@ export class OperationsTransformer {
    * @returns new operation
    */
   #transformAgainstTextInsert<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
-    const newIndexBuilder = new IndexBuilder().from(operation.index);
     let newPayload = operation.data.payload as string;
 
     const insertedLength = againstOp.data.payload!.length;
 
-    const index = operation.index;
-    const againstIndex = againstOp.index;
+    const index = operation.index as TextIndex;
+    const againstIndex = againstOp.index as TextIndex;
 
     /**
      * Cover case 1
@@ -280,10 +277,12 @@ export class OperationsTransformer {
 
       const effectiveIntersectionType = getRangesIntersectionType(textRange, againstIndex.textRange!);
 
+      const newOp = Operation.from(operation);
+
       switch (effectiveIntersectionType) {
         case RangeIntersectionType.None:
         case RangeIntersectionType.Left:
-          newIndexBuilder.addTextRange([index.textRange![0] + insertedLength, index.textRange![1] + insertedLength]);
+          newOp.index = index.withTextRange([index.textRange![0] + insertedLength, index.textRange![1] + insertedLength]);
           break;
         case RangeIntersectionType.Includes:
           /**
@@ -295,12 +294,6 @@ export class OperationsTransformer {
           break;
       }
 
-      /**
-       * Return new operation with the updated index
-       */
-      const newOp = Operation.from(operation);
-
-      newOp.index = newIndexBuilder.build();
       newOp.data.payload = newPayload;
 
       return newOp;
@@ -312,25 +305,20 @@ export class OperationsTransformer {
      * - None - inserted text is on the left side of the current operation
      * - Includes - inserted text is inside of the current operation text range
      */
-    const intersectionType = getRangesIntersectionType(operation.index.textRange!, againstOp.index.textRange!);
+    const intersectionType = getRangesIntersectionType(index.textRange!, againstIndex.textRange!);
+
+    const newOp = Operation.from(operation);
 
     switch (intersectionType) {
       case (RangeIntersectionType.None):
       case (RangeIntersectionType.Left):
-        newIndexBuilder.addTextRange([index.textRange![0] + insertedLength, index.textRange![1] + insertedLength]);
+        newOp.index = index.withTextRange([index.textRange![0] + insertedLength, index.textRange![1] + insertedLength]);
         break;
 
       case (RangeIntersectionType.Includes):
-        newIndexBuilder.addTextRange([index.textRange![0], index.textRange![1] + insertedLength]);
+        newOp.index = index.withTextRange([index.textRange![0], index.textRange![1] + insertedLength]);
         break;
     }
-
-    /**
-     * Return new operation with the updated index
-     */
-    const newOp = Operation.from(operation);
-
-    newOp.index = newIndexBuilder.build();
 
     return newOp;
   }
@@ -363,31 +351,32 @@ export class OperationsTransformer {
    * @returns new operation
    */
   #transformAgainstTextDelete<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
-    const newIndexBuilder = new IndexBuilder().from(operation.index);
     let newPayload = operation.data.payload as string;
     const deletedAmount = againstOp.data.payload!.length;
 
     const textRange = operation.getEffectiveRange();
     const againstTextRange = againstOp.getEffectiveRange();
 
-    const index = operation.index;
-    const againstIndex = againstOp.index;
+    const index = operation.index as TextIndex;
+    const againstIndex = againstOp.index as TextIndex;
 
     const intersectionType = getRangesIntersectionType(textRange, againstTextRange);
+
+    const newOp = Operation.from(operation);
 
     switch (intersectionType) {
       /**
        * Cover case 1
        */
       case (RangeIntersectionType.None):
-        newIndexBuilder.addTextRange([index.textRange![0] - deletedAmount, index.textRange![1] - deletedAmount]);
+        newOp.index = index.withTextRange([index.textRange![0] - deletedAmount, index.textRange![1] - deletedAmount]);
         break;
 
       /**
        * Cover case 2.1
        */
       case (RangeIntersectionType.Left):
-        newIndexBuilder.addTextRange([againstIndex.textRange![0], index.textRange![1] - deletedAmount]);
+        newOp.index = index.withTextRange([againstIndex.textRange![0], index.textRange![1] - deletedAmount]);
         newPayload = typeof newPayload === 'string' ? newPayload.slice(againstTextRange[1] - textRange[0]) : newPayload;
         break;
 
@@ -395,7 +384,7 @@ export class OperationsTransformer {
        * Cover case 2.2
        */
       case (RangeIntersectionType.Right):
-        newIndexBuilder.addTextRange([index.textRange![0], againstIndex.textRange![0]]);
+        newOp.index = index.withTextRange([index.textRange![0], againstIndex.textRange![0]]);
         newPayload = typeof newPayload === 'string' ? newPayload.slice(0, againstTextRange[0] - textRange[0]) : newPayload;
         break;
 
@@ -403,7 +392,7 @@ export class OperationsTransformer {
        * Cover case 3
        */
       case (RangeIntersectionType.Includes):
-        newIndexBuilder.addTextRange([index.textRange![0], index.textRange![1] - deletedAmount]);
+        newOp.index = index.withTextRange([index.textRange![0], index.textRange![1] - deletedAmount]);
         newPayload = typeof newPayload === 'string'
           ? newPayload.slice(0, againstTextRange[0] - textRange[0]) + newPayload.slice(againstTextRange[1] - textRange[0])
           : newPayload;
@@ -413,15 +402,9 @@ export class OperationsTransformer {
        * Cover case 4
        */
       case (RangeIntersectionType.IncludedBy):
-        return new Operation(OperationType.Neutral, newIndexBuilder.build(), { payload: [] }, operation.userId, operation.rev);
+        return new Operation(OperationType.Neutral, index.clone(), { payload: [] }, operation.userId, operation.rev);
     }
 
-    /**
-     * Return new operation with updated index
-     */
-    const newOp = Operation.from(operation);
-
-    newOp.index = newIndexBuilder.build();
     newOp.data.payload = newPayload;
 
     return newOp;

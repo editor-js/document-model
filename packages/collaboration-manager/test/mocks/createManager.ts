@@ -59,6 +59,7 @@ export function createManager(config: CoreConfigValidated, model: EditorModel): 
     selection: {} as any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     text: {} as any,
+    plugins: {},
   };
 
   const manager = new CollaborationManager({

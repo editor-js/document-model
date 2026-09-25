@@ -12,7 +12,12 @@ The system SHALL provide `ClipboardPlugin`, which subscribes to the `ui:copy` ev
 #### Scenario: Populating clipboard data for a block selection
 - **GIVEN** one or more blocks are selected and the native copy event exposes `clipboardData`
 - **WHEN** the `ui:copy` event fires
-- **THEN** the plugin prevents the native event's default action and calls `clipboardData.setData` with the DOM selection's plain text (`text/plain`), the DOM selection's cloned range contents as HTML (`text/html`), and a JSON-serialized `{ blocks, meta: { version } }` object (`application/x-editor-js`) built from the selected blocks
+- **THEN** the plugin prevents the native event's default action and calls `clipboardData.setData` with the DOM selection's plain text (`text/plain`), the DOM selection's cloned range contents as HTML (`text/html`), and a JSON-serialized `{ blocks }` object (`application/x-editor-js`) built from the selected blocks
+
+#### Scenario: Omitting metadata from the EditorJS payload
+- **GIVEN** blocks are selected and the `application/x-editor-js` payload is being built
+- **WHEN** the plugin serializes the payload
+- **THEN** the resulting JSON contains `blocks` as its only key and carries no `meta` object or version field
 
 #### Scenario: Falling back to native copy when no blocks are selected
 - **GIVEN** `api.selection.selectedBlocks` is empty

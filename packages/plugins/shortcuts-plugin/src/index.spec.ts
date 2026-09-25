@@ -59,13 +59,18 @@ describe('ShortcutsPlugin', () => {
   }
 
   /**
-   * Emits a `core:tool:loaded` event carrying a tool facade with the given name and options.
+   * Emits a `core:tool:loaded` event carrying a tool facade with the given name, whose
+   * `pluginOptions('shortcuts')` resolves to the given slice.
    * @param name - tool name reported by the facade
-   * @param options - merged tool options (e.g. `{ shortcut: 'CMD+B' }`)
+   * @param pluginOptions - slice the tool addresses to this plugin (e.g. `{ shortcut: 'CMD+B' }`)
    */
-  function loadTool(name: string, options: Record<string, unknown>): void {
-    bus().__fire(TOOL_LOADED_EVENT, { detail: { tool: { name,
-      options } } } as unknown as Event);
+  function loadTool(name: string, pluginOptions: Record<string, unknown> | undefined): void {
+    const tool = {
+      name,
+      pluginOptions: jest.fn((pluginName: string) => (pluginName === 'shortcuts' ? pluginOptions : undefined)),
+    };
+
+    bus().__fire(TOOL_LOADED_EVENT, { detail: { tool } } as unknown as Event);
   }
 
   /**
@@ -97,7 +102,7 @@ describe('ShortcutsPlugin', () => {
   });
 
   describe('tool-loaded listener', () => {
-    it('should register a shortcut when the tool options provide a string shortcut', () => {
+    it('should register a shortcut when the plugin slice provides a string shortcut', () => {
       new ShortcutsPlugin(pluginParamsMock);
       loadTool('bold', { shortcut: 'CMD+B' });
       matchKeyboardShortcut.mockReturnValue(true);
@@ -122,6 +127,17 @@ describe('ShortcutsPlugin', () => {
     it('should ignore a tool with no shortcut option', () => {
       new ShortcutsPlugin(pluginParamsMock);
       loadTool('paragraph', {});
+      matchKeyboardShortcut.mockReturnValue(true);
+
+      pressKey();
+
+      expect(matchKeyboardShortcut).not.toHaveBeenCalled();
+      expect(applyInlineTool).not.toHaveBeenCalled();
+    });
+
+    it('should ignore a tool that addresses nothing to this plugin', () => {
+      new ShortcutsPlugin(pluginParamsMock);
+      loadTool('paragraph', undefined);
       matchKeyboardShortcut.mockReturnValue(true);
 
       pressKey();

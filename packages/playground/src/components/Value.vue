@@ -3,6 +3,9 @@ import { Node, Value } from '@/components';
 import { isObject } from '@/utils/isObject';
 
 defineProps<{
+  /**
+   * Value to render
+   */
   value: object | null | number | string | boolean | Array<unknown>;
 }>();
 </script>
