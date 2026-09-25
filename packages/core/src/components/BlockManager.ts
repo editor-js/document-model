@@ -8,6 +8,8 @@ import {
   type EditorDocumentSerialized,
   type InlineTreeNodeSerialized,
   NODE_TYPE_HIDDEN_PROP,
+  createPluginDataName,
+  type PluginDataSerialized,
   renumberKeys,
   set,
   TextIndex
@@ -36,6 +38,10 @@ interface InsertBlockParameters {
    */
   data?: BlockToolData;
   /**
+   * Initial per-plugin data for the block, keyed by plugin name
+   */
+  plugins?: Record<string, PluginDataSerialized>;
+  /**
    * Index to insert block at
    */
   index?: number;
@@ -49,7 +55,6 @@ interface InsertBlockParameters {
    * If true, moves caret to the new block
    */
   focus?: boolean;
-  // tunes?: {[name: string]: BlockTuneData};
   /**
    * User id to attribute the change to
    */
@@ -131,8 +136,8 @@ export class BlocksManager {
     index,
     focus = false,
     replace = false,
+    plugins,
     userId = this.#config.userId,
-    // tunes = {},
   }: InsertBlockParameters = {}): void {
     let newIndex = index;
 
@@ -145,9 +150,10 @@ export class BlocksManager {
     }
 
     this.#model.addBlock(userId, {
-      ...data,
       id,
       name: type,
+      data,
+      ...(plugins !== undefined && { plugins }),
     }, newIndex);
 
     if (focus) {
@@ -426,7 +432,35 @@ export class BlocksManager {
     this.#model.addBlock(userId, {
       name: newType,
       data: finalData,
+      ...(block.plugins !== undefined && { plugins: block.plugins }),
     }, blockIndex);
+  }
+
+  /**
+   * Returns the per-block data stored by the given plugin, or undefined when it stores none
+   * @param blockIndexOrId - position of the block in the document, or its id
+   * @param pluginName - key the data is stored under, by convention the owning plugin's `name`
+   */
+  public getPluginData(blockIndexOrId: number | BlockId, pluginName: string): PluginDataSerialized | undefined {
+    const blockIndex = this.#model.resolveBlockIndex(blockIndexOrId);
+
+    return this.#model.getBlockSerialized(blockIndex).plugins?.[pluginName];
+  }
+
+  /**
+   * Merges the passed keys into the per-block data of the given plugin
+   * @param blockIndexOrId - position of the block in the document, or its id
+   * @param pluginName - key the data is stored under, by convention the owning plugin's `name`
+   * @param data - keys to merge in; a key set to undefined is removed
+   * @param userId - person the change is attributed to
+   */
+  public updatePluginData(
+    blockIndexOrId: number | BlockId,
+    pluginName: string,
+    data: Record<string, unknown>,
+    userId: string | number = this.#config.userId
+  ): void {
+    this.#model.updatePluginData(userId, blockIndexOrId, createPluginDataName(pluginName), data);
   }
 
   /**

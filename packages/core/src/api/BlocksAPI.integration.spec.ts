@@ -63,10 +63,14 @@ describe('BlocksAPI integration (real model, mocked tools)', () => {
       config
     );
 
+    /**
+     * The same model instance the manager uses: methods that read the document directly
+     * (getIdByIndex, getData, getPluginData) would otherwise see an empty document.
+     */
     blocksAPI = new BlocksAPI(
       blocksManager,
       config,
-      new EditorJSModel('userId', { identifier: 'documentId' })
+      model
     );
   });
 
@@ -1172,6 +1176,100 @@ describe('BlocksAPI integration (real model, mocked tools)', () => {
 
       expect(model.length).toBe(1);
       expect(model.serialized.blocks[0]).toEqual(expect.objectContaining({ name: 'list' }));
+    });
+  });
+
+  describe('plugin data', () => {
+    it('should insert a block carrying both tool data and plugin data', () => {
+      blocksAPI.insert({
+        type: 'paragraph',
+        data: { text: 'Alpha' },
+        plugins: { anchors: { id: 'intro' } },
+      });
+
+      expect(model.serialized.blocks[0]).toEqual(expect.objectContaining({
+        name: 'paragraph',
+        data: expect.objectContaining({ text: 'Alpha' }),
+        plugins: { anchors: { id: 'intro' } },
+      }));
+    });
+
+    it('should return undefined for a plugin that stores nothing on the block', () => {
+      blocksAPI.insert({ type: 'paragraph' });
+
+      expect(blocksAPI.getPluginData({ block: 0,
+        plugin: 'anchors' })).toBeUndefined();
+    });
+
+    it('should write and read plugin data by block index', () => {
+      blocksAPI.insert({ type: 'paragraph' });
+
+      blocksAPI.updatePluginData({ block: 0,
+        plugin: 'anchors',
+        data: { id: 'intro' } });
+
+      expect(blocksAPI.getPluginData({ block: 0,
+        plugin: 'anchors' })).toEqual({ id: 'intro' });
+    });
+
+    it('should write and read plugin data by block id', () => {
+      blocksAPI.insert({ type: 'paragraph' });
+
+      const blockId = blocksAPI.getIdByIndex(0)!;
+
+      blocksAPI.updatePluginData({ block: blockId,
+        plugin: 'anchors',
+        data: { id: 'intro' } });
+
+      expect(blocksAPI.getPluginData({ block: blockId,
+        plugin: 'anchors' })).toEqual({ id: 'intro' });
+    });
+
+    it('should return undefined once the last key of an entry is removed', () => {
+      blocksAPI.insert({ type: 'paragraph' });
+
+      blocksAPI.updatePluginData({ block: 0,
+        plugin: 'anchors',
+        data: { id: 'intro' } });
+      blocksAPI.updatePluginData({ block: 0,
+        plugin: 'anchors',
+        data: { id: undefined } });
+
+      expect(blocksAPI.getPluginData({ block: 0,
+        plugin: 'anchors' })).toBeUndefined();
+    });
+
+    it('should attribute the change to the acting user', () => {
+      blocksAPI.insert({ type: 'paragraph' });
+
+      const events: unknown[] = [];
+
+      model.addEventListener(EventType.Changed, e => events.push(e));
+
+      blocksAPI.updatePluginData({ block: 0,
+        plugin: 'anchors',
+        data: { id: 'intro' },
+        userId: 'other-user' });
+
+      expect(events[0]).toHaveProperty('detail.userId', 'other-user');
+    });
+
+    it('should throw for a block id that does not exist', () => {
+      expect(() => blocksAPI.getPluginData({ block: 'missing',
+        plugin: 'anchors' })).toThrow('missing');
+    });
+
+    it('should preserve plugin data when a block is moved', () => {
+      blocksAPI.insert({ type: 'paragraph',
+        plugins: { anchors: { id: 'first' } } });
+      blocksAPI.insert({ type: 'paragraph' });
+
+      blocksAPI.move({ fromIndex: 0,
+        toIndex: 1 });
+
+      expect(model.serialized.blocks[1]).toEqual(expect.objectContaining({
+        plugins: { anchors: { id: 'first' } },
+      }));
     });
   });
 });

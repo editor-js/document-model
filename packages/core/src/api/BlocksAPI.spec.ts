@@ -191,6 +191,9 @@ describe('BlocksAPI', () => {
         data: {},
         index: undefined,
         replace: undefined,
+        focus: undefined,
+        plugins: undefined,
+        userId: undefined,
       });
     });
 
@@ -208,6 +211,7 @@ describe('BlocksAPI', () => {
         focus: true,
         replace: true,
         id: 'id-1',
+        plugins: undefined,
       });
 
       expect(blocksManager.insert).toHaveBeenCalledWith({
@@ -216,6 +220,8 @@ describe('BlocksAPI', () => {
         index: 2,
         replace: true,
         focus: true,
+        plugins: undefined,
+        userId: undefined,
       });
     });
   });
