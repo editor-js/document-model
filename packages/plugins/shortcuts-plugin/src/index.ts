@@ -1,6 +1,5 @@
 import type {
   BlockToolFacade,
-  BlockTuneFacade,
   EditorAPI,
   EditorjsPlugin,
   EditorjsPluginParams,
@@ -205,16 +204,6 @@ export class ShortcutsPlugin implements EditorjsPlugin<'shortcuts'> {
   #processBlockTool(_tool: BlockToolFacade): void {
     /*
      * @todo `shortcuts` map for block tools (e.g. list styles) — apply render/data overrides
-     */
-  }
-
-  /**
-   * Block tune shortcuts — reserved for future use.
-   * @param _tool - loaded block tune facade
-   */
-  #processBlockTune(_tool: BlockTuneFacade): void {
-    /*
-     * @todo block tune shortcuts if needed
      */
   }
 }
