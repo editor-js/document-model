@@ -1,6 +1,5 @@
 import { type BlockToolFacade } from './facades/BlockToolFacade.js';
 import { type InlineToolFacade } from './facades/InlineToolFacade.js';
-import { type BlockTuneFacade } from './facades/BlockTuneFacade.js';
 import type { ToolFacadeClass } from './facades/index.js';
 
 /**
@@ -27,16 +26,5 @@ export class ToolsCollection<V extends ToolFacadeClass = ToolFacadeClass> extend
       .filter(([, tool]) => tool.isInline()) as [string, InlineToolFacade][];
 
     return new ToolsCollection<InlineToolFacade>(tools);
-  }
-
-  /**
-   * Returns Block Tunes collection
-   */
-  public get blockTunes(): ToolsCollection<BlockTuneFacade> {
-    const tools = Array
-      .from(this.entries())
-      .filter(([, tool]) => tool.isTune()) as [string, BlockTuneFacade][];
-
-    return new ToolsCollection<BlockTuneFacade>(tools);
   }
 }

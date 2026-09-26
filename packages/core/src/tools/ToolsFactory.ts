@@ -4,14 +4,13 @@ import { ToolType } from '@editorjs/sdk';
 import type { ToolConstructable, ToolStaticOptions } from '@editorjs/sdk';
 import {
   InlineToolFacade,
-  BlockTuneFacade,
   BlockToolFacade
 } from '@editorjs/sdk';
 import type {
   EditorConfig
 } from 'editorjs-v2';
 
-type ToolConstructor = typeof InlineToolFacade | typeof BlockToolFacade | typeof BlockTuneFacade;
+type ToolConstructor = typeof InlineToolFacade | typeof BlockToolFacade;
 
 /**
  * Full tool registration entry: the constructor class plus its options.
@@ -81,7 +80,7 @@ export class ToolsFactory {
    * Returns Tool object based on it's type
    * @param name - tool name
    */
-  public get(name: string): InlineToolFacade | BlockToolFacade | BlockTuneFacade {
+  public get(name: string): InlineToolFacade | BlockToolFacade {
     const toolSettings = this.#toolsSettings.get(name);
 
     if (!toolSettings) {
@@ -91,7 +90,6 @@ export class ToolsFactory {
     const { class: constructable, ...useToolOptions } = toolSettings;
 
     const Constructor = this.#getConstructor(constructable);
-    // const isTune = constructable[InternalTuneSettings.IsTune];
 
     return new Constructor({
       name,
@@ -115,8 +113,6 @@ export class ToolsFactory {
     switch (constructable.type) {
       case ToolType.Inline:
         return InlineToolFacade;
-      case ToolType.Tune:
-        return BlockTuneFacade;
       default:
         return BlockToolFacade;
     }
