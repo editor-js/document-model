@@ -14,7 +14,6 @@ import {
   // isObject
 } from '@editorjs/helpers';
 import { type InlineToolFacade } from './InlineToolFacade.js';
-import { type BlockTuneFacade } from './BlockTuneFacade.js';
 import { ToolsCollection } from '../ToolsCollection.js';
 import type { BlockToolConstructor, BlockToolConstructorOptions, BlockTool, BlockToolData } from '../../entities';
 import { ToolType } from '../../entities';
@@ -35,11 +34,6 @@ export class BlockToolFacade extends BaseToolFacade<ToolType.Block, BlockTool> {
    * InlineTool collection for current Block Tool
    */
   public inlineTools: ToolsCollection<InlineToolFacade> = new ToolsCollection<InlineToolFacade>();
-
-  /**
-   * BlockTune collection for current Block Tool
-   */
-  public tunes: ToolsCollection<BlockTuneFacade> = new ToolsCollection<BlockTuneFacade>();
 
   /**
    * Tool's constructable blueprint — narrowed to BlockToolConstructor
@@ -224,13 +218,6 @@ export class BlockToolFacade extends BaseToolFacade<ToolType.Block, BlockTool> {
     return this.useToolOptions[UserToolOptions.EnabledInlineTools] ?? false;
   }
 
-  /**
-   * Returns enabled tunes for Tool
-   */
-  public get enabledBlockTunes(): boolean | string[] {
-    return this.useToolOptions[UserToolOptions.EnabledBlockTunes] ?? false;
-  }
-
   // /**
   //  * Returns Tool paste configuration
   //  */
@@ -239,7 +226,7 @@ export class BlockToolFacade extends BaseToolFacade<ToolType.Block, BlockTool> {
   // }
 
   /**
-   * Returns sanitize configuration for Block Tool including configs from related Inline Tools and Block Tunes
+   * Returns sanitize configuration for Block Tool including configs from related Inline Tools
    */
   // @cacheable
   // public get sanitizeConfig(): SanitizerConfig {

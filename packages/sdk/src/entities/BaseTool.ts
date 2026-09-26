@@ -1,6 +1,5 @@
 import type { BlockToolOptions } from './BlockTool.js';
 import type { InlineToolOptions } from './InlineTool.js';
-import type { BlockTuneOptions } from './BlockTune.js';
 import type { ToolType } from './EntityType.js';
 import type { ToolPluginOptions } from '../index.js';
 
@@ -75,13 +74,13 @@ export type ToolOptionsFactory<
 > = (config: Config) => Options;
 
 // Re-export so consumers can import all option types from this file
-export type { BlockToolOptions, InlineToolOptions, BlockTuneOptions };
+export type { BlockToolOptions, InlineToolOptions };
 
 /**
  * Union of all per-tool option shapes.
  * Used as the type of the second argument of `core.use(Tool, options)`.
  */
-export type ToolStaticOptions = BlockToolOptions | InlineToolOptions | BlockTuneOptions;
+export type ToolStaticOptions = BlockToolOptions | InlineToolOptions;
 
 /**
  * Maps a {@link ToolType} value to its corresponding tool options interface.
@@ -97,10 +96,6 @@ export type ToolTypeToOptions = {
    * InlineTool Options
    */
   [ToolType.Inline]: InlineToolOptions;
-  /**
-   * BlockTune Options
-   */
-  [ToolType.Tune]: BlockTuneOptions;
 };
 
 /**
