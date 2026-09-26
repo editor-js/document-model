@@ -16,7 +16,7 @@ import {
 } from '@editorjs/sdk';
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
 import ToolsManager from './tools/ToolsManager.js';
-import type { CoreConfigValidated, CoreConfig, EditorjsPluginConstructor, BlockTuneConstructor, ToolConstructable, EditorjsAdapterPluginConstructor } from '@editorjs/sdk';
+import type { CoreConfigValidated, CoreConfig, EditorjsPluginConstructor, ToolConstructable, EditorjsAdapterPluginConstructor } from '@editorjs/sdk';
 import { EditorAPI } from './api/index.js';
 import { generateId } from './utils/uid.js';
 import { BlocksManager } from './components/BlockManager.js';
@@ -134,7 +134,6 @@ export default class Core {
     switch (pluginType) {
       case ToolType.Block:
       case ToolType.Inline:
-      case ToolType.Tune:
         this.#plugins.bind<[ToolConstructable, ToolStaticOptions | undefined]>(pluginType).toConstantValue([pluginOrTool as ToolConstructable, options]);
         break;
       case PluginType.Adapter:
@@ -218,11 +217,10 @@ export default class Core {
   async #initializeTools(): Promise<void> {
     const blockTools = this.#plugins.getAll<[BlockToolConstructor, ToolStaticOptions | undefined]>(ToolType.Block);
     const inlineTools = this.#plugins.getAll<[InlineToolConstructor, ToolStaticOptions | undefined]>(ToolType.Inline);
-    const blockTunes = this.#plugins.getAll<[BlockTuneConstructor, ToolStaticOptions | undefined]>(ToolType.Tune);
 
     const toolsManager = this.#iocContainer.get(ToolsManager);
 
-    return toolsManager.prepareTools([...blockTools, ...inlineTools, ...blockTunes]);
+    return toolsManager.prepareTools([...blockTools, ...inlineTools]);
   }
 
   /**

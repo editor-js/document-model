@@ -41,8 +41,6 @@ export enum BlockToolOptionKey {
   Shortcut = 'shortcut',
   /** Inline tools enabled for blocks of this type. */
   InlineToolbar = 'inlineToolbar',
-  /** Block tunes enabled for blocks of this type. */
-  Tunes = 'tunes',
   /** Conversion configuration for this tool. */
   ConversionConfig = 'conversionConfig',
   /** Whether the block can be split into multiple blocks of its type. */
@@ -76,12 +74,6 @@ export interface BlockToolOptions<Config extends ToolConfig = ToolConfig, Data e
    * Pass `true` to enable all registered inline tools, or an array of names.
    */
   [BlockToolOptionKey.InlineToolbar]?: boolean | string[];
-
-  /**
-   * Block tunes to enable for this block tool.
-   * Pass `true` to enable all registered tunes, or an array of names.
-   */
-  [BlockToolOptionKey.Tunes]?: boolean | string[];
 
   /**
    * Configuration for converting to/from other tools. The `import` and `export` properties can be either:
