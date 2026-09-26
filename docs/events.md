@@ -4,7 +4,7 @@ The editor exposes two public event transports.
 
 | Transport | Dispatched on | Event types |
 |---|---|---|
-| `EditorJSModel` `EventType.Changed` | `EditorJSModel` instance | `BlockAddedEvent`, `BlockRemovedEvent`, `TextAddedEvent`, `TextRemovedEvent`, `TextFormattedEvent`, `TextUnformattedEvent`, `ValueModifiedEvent`, `TuneModifiedEvent`, `DataNodeAddedEvent`, `DataNodeRemovedEvent`, `PropertyModifiedEvent` |
+| `EditorJSModel` `EventType.Changed` | `EditorJSModel` instance | `BlockAddedEvent`, `BlockRemovedEvent`, `TextAddedEvent`, `TextRemovedEvent`, `TextFormattedEvent`, `TextUnformattedEvent`, `ValueModifiedEvent`, `PluginDataModifiedEvent`, `DataNodeAddedEvent`, `DataNodeRemovedEvent`, `PropertyModifiedEvent` |
 | `EditorJSModel` `EventType.CaretManagerUpdated` | `EditorJSModel` instance | `CaretManagerCaretUpdatedEvent`, `CaretManagerCaretAddedEvent`, `CaretManagerCaretRemovedEvent` |
 | Core `EventBus` (per editor instance) | `EventBus` held in the IoC container | `BlockAddedCoreEvent`, `BlockRemovedCoreEvent`, `ToolLoadedCoreEvent`, `SelectionChangedCoreEvent`, `UndoCoreEvent`, `RedoCoreEvent`, `BeforeInputUIEvent` |
 
@@ -27,7 +27,7 @@ All document mutation events extend `BaseDocumentEvent`:
 | `TextFormattedEvent` | `{ tool, data }` | An inline tool was applied to a text range |
 | `TextUnformattedEvent` | `{ tool, data }` | An inline tool was removed from a text range |
 | `ValueModifiedEvent` | `{ value, previous }` | A `ValueNode`'s value was changed |
-| `TuneModifiedEvent` | `{ value, previous }` | A `BlockTune`'s data was updated |
+| `PluginDataModifiedEvent` | `{ value, previous }` | One key of a plugin's per-block data was updated; `value` is `undefined` when the key was removed |
 | `DataNodeAddedEvent` | `BlockNodeDataSerializedValue` | A data node (text or value) was created on a block |
 | `DataNodeRemovedEvent` | `BlockNodeDataSerializedValue` | A data node was removed from a block |
 | `PropertyModifiedEvent` | `{ value, previous }` | A top-level document property was set |

@@ -10,7 +10,7 @@ Each `BlockNode` contains keyed data nodes:
 
 - `TextNode`: rich text with inline tree (`FormattingInlineNode` + `TextInlineNode`).
 - `ValueNode<T>`: non-text typed value for tools.
-- `BlockTune`: per-block tune configuration.
+- `PluginDataNode`: per-block data owned by a plugin, keyed by the plugin's `name`.
 
 ## Mutation and event invariant
 
@@ -41,7 +41,7 @@ IndexBase (abstract)
 ├── PropertyIndex   — top-level document property
 ├── BlockIndex      — a single block
 ├── DataIndex       — a data key inside a block
-├── TuneIndex       — a key inside a block tune
+├── PluginDataIndex — a key inside one plugin's per-block data
 └── TextIndex       — character range(s) inside a text node
 ```
 
@@ -68,7 +68,7 @@ Index.document(documentId)
 Index.property(name, documentId?)
 Index.block(blockIndex, documentId?)
 Index.data(blockIndex, dataKey, documentId?)
-Index.tune(blockIndex, tuneName, tuneKey, documentId?)
+Index.pluginData(blockIndex, pluginName, pluginKey, documentId?)
 Index.text(segments)
 Index.parse(serialized)        // deserialize from string
 ```
