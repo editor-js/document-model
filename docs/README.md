@@ -61,7 +61,7 @@ The system stays decoupled because each step communicates through interfaces and
 
 - `EditorjsPlugin`: general UI/behavior plugin registered via `core.use()` with `PluginType.Plugin`. UI components like `BlocksUI` typically declare a `static type` from `UiComponentType` but are bound to `PluginType.Plugin` internally.
 - `UiComponentType`: reserved string keys for UI component slots (`shell`, `blocks`, `inline-toolbar`, `toolbox`, `toolbar`). These name components in the UI layer but are **not** used as arguments to `core.use()` — plugins are registered by `PluginType` or `ToolType` values.
-- `BlockTool` / `InlineTool` / `BlockTune`: tool contracts registered via `core.use(ToolConstructor, options)` during setup. The `tools` config field provides tool settings that `ToolsManager` applies during `initialize()`.
+- `BlockTool` / `InlineTool`: tool contracts registered via `core.use(ToolConstructor, options)` during setup. The `tools` config field provides tool settings that `ToolsManager` applies during `initialize()`.
 - `Index`: serializable location in the document tree, independent of DOM nodes. Subclasses (e.g. `BlockIndex`, `TextIndex`, `DataIndex`) cover distinct target types. Built with immutable factory methods like `Index.block()` or `Index.text()`; serialized to a compact JSON string for caret storage and OT operations.
 - `DataKey`: branded string identifying a data slot inside a `BlockNode` (e.g. `"text"`, `"caption"`). Created via `createDataKey()`.
 - `BatchedOperation`: groups rapid single-character inserts or deletes on the same data key into one logical edit for undo/redo. Lives in `@editorjs/collaboration-manager`.

@@ -31,7 +31,7 @@ sequenceDiagram
   Core->>Plugins: bind PluginType.Plugin = SomePlugin
 
   Dev->>Core: use(SomeTool, settings)
-  Core->>Plugins: bind ToolType.Block / Inline / Tune = [SomeTool, settings]
+  Core->>Plugins: bind ToolType.Block / Inline = [SomeTool, settings]
 
   %% ── await initialize() ───────────────────────────
   Dev->>Core: await initialize()
@@ -47,9 +47,9 @@ sequenceDiagram
   Core->>CollabMgr: new CollaborationManager(config, api, eventBus)
   CollabMgr->>EventBus: wire event listeners
 
-  Core->>Plugins: getAll(ToolType.Block / Inline / Tune)
+  Core->>Plugins: getAll(ToolType.Block / Inline)
   Plugins-->>Core: [[SomeTool, settings], ...]
-  Core->>ToolsManager: prepareTools(blockTools, inlineTools, blockTunes)
+  Core->>ToolsManager: prepareTools(blockTools, inlineTools)
   loop for each tool
     ToolsManager->>Tool: Tool.prepare({ toolName, config })
     ToolsManager->>ToolsManager: wrap in BlockToolFacade or InlineToolFacade
