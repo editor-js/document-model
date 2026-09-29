@@ -18,14 +18,16 @@ runs:
     - name: Setup environment
       uses: ./.github/actions/setup
 
-    # Grants the accessibility and automation permissions VoiceOver scripting needs, and
-    # installs the screen reader assets Guidepup drives. Nothing else can do this: the
-    # permissions live in the OS TCC database, not in the workspace.
+    # Grants the accessibility and automation permissions VoiceOver scripting needs. Nothing
+    # else can do this: the permissions live in the OS TCC database, not in the workspace.
+    #
+    # `--ci` is what keeps the command from prompting for the manual steps a local machine
+    # would need. Without it the CLI waits for interaction that never comes.
     #
     # The CLI rather than guidepup/setup-action, which is archived upstream.
     - name: Configure the runner for screen reader automation
       shell: bash
-      run: npx --yes @guidepup/setup
+      run: npx --yes @guidepup/setup setup --ci
 
     # webkit only, matching playwright.voiceover.config.ts: VoiceOver's support for Safari is
     # what the suite's expectations are written against. No --with-deps, which is a Linux-only

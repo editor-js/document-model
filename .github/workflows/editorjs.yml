@@ -23,39 +23,9 @@ jobs:
     secrets:
       stryker_dashboard_api_key: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
 
-  # Deliberately a job condition rather than a `paths:` filter on the workflow. A workflow
-  # skipped by path filtering leaves its checks Pending forever, which blocks a PR that is
-  # required to pass it; a skipped *job* reports success and does not. So this workflow always
-  # runs and the expensive job below decides for itself whether it has anything to do.
-  voiceover-should-run:
-    name: Check if VoiceOver suite needs to run
-    runs-on: ubuntu-latest
-    outputs:
-      run: ${{ steps.check.outputs.run }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Determine if the VoiceOver suite should run
-        id: check
-        run: |
-          # The merge queue is the last gate before main, so it always runs the suite
-          if [ "${{ github.event_name }}" != "pull_request" ]; then
-            echo "run=true" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          if bash .github/scripts/should-run-voiceover.sh "${{ github.base_ref }}" --verbose; then
-            echo "run=true" >> $GITHUB_OUTPUT
-          else
-            echo "run=false" >> $GITHUB_OUTPUT
-          fi
-
+  # Temporarily on every PR, to prove the job green before it moves to a schedule.
   voiceover:
     name: VoiceOver
-    needs: voiceover-should-run
-    if: ${{ needs.voiceover-should-run.outputs.run == 'true' }}
     # A real screen reader needs a real macOS window server session. Standard runner, which is
     # what keeps this free on a public repository - the larger variants are billed regardless.
     runs-on: macos-15
