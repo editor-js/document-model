@@ -577,7 +577,7 @@ type — otherwise the check proves nothing).
     tasks.md 5a.3. The lockfile resolves the published 2.0.0 and the suite was re-run against it.
   - Per-block identity for `aria-label="Paragraph"` once more block types exist — design.md
     Open Questions. Not blocking.
-  - Inline toolbar not scoped per editor on chromium — tasks.md 10.5b. Pre-existing, pinned by a
+  - Inline toolbar not scoped per editor on chromium. Pre-existing, pinned by a
     per-engine `test.fail()`, wants its own change. Not blocking.
 - **Overall verdict: ☐ Needs follow-up work before archiving, ☑ Ship as-is.** Screen-reader
   verification is complete: every case is automated, run, and passing in a single run, with no
