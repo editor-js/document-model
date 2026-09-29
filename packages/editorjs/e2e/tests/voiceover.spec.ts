@@ -1117,23 +1117,6 @@ test('Case 17: announces applied links as links', async ({ page, voiceOver }) =>
   expect(insideBlock.join(' | ')).toContain('link');
 });
 
-/**
- * Puts VoiceOver's cursor inside the open toolbox after a page-driven change, ready to sweep.
- *
- * `resetCursor` on its own is not enough, and the way it fails is silent: it leaves the cursor at
- * the top of the web content, and a forward walk from there stops dead on the block actions
- * toolbar. VO+Right moves between siblings rather than into them, and the toolbar is the last
- * sibling, so `next()` returns that same item for the whole sweep without ever reaching the menu
- * inside it - twenty-five stops, all of them "block actions toolbar". Walking to the button that
- * opens the toolbox puts the cursor within that container first, which is the position Case 4
- * reaches the menu items from.
- * @param voiceOver - Guidepup VoiceOver controller
- */
-async function resetCursorToToolbox(voiceOver: VoiceOverPlaywright): Promise<void> {
-  await resetCursor(voiceOver);
-  await findItem(voiceOver, /add block/i);
-}
-
 /** What a sweep found, kept alongside everything it passed through. */
 interface ReachableItems {
   /** Distinct items matching the pattern, in the order the cursor met them. */
@@ -1182,11 +1165,16 @@ test('Case 18: does not let the cursor reach toolbox items filtered out by searc
 
   const menuItemPattern = /menu item/;
 
+  // Swept from where `act()` left the cursor, deliberately without resetting first. Once the
+  // menu is open VoiceOver will not enter the block actions toolbar from the web content root
+  // at all: a forward walk from there reports "block actions toolbar" at every one of its stops
+  // and never descends, and even the button that opened the menu stops being reachable. Staying
+  // inside the container is the only position the items can be swept from - it is how Case 4
+  // reaches them too.
+  //
   // Baseline. It also guards the real assertion below: if VoiceOver words menu items
   // differently than this expects, or the sweep never reaches them at all, the test fails here
   // instead of making "nothing reachable" pass for the wrong reason.
-  await resetCursorToToolbox(voiceOver);
-
   const beforeFiltering = await collectReachable(voiceOver, menuItemPattern);
 
   expect(
@@ -1199,11 +1187,13 @@ test('Case 18: does not let the cursor reach toolbox items filtered out by searc
 
   await expect(menu.getByRole('menuitem')).toHaveCount(0);
 
-  // Back to the toolbox rather than continuing from wherever the scan stopped - that item may be
-  // one of the ones just hidden, and VoiceOver would keep describing it from where it stands.
-  // The round trip inside resetCursor is what makes this reliable: `fill()` is a page-driven
-  // change, so without it VoiceOver can still be describing the unfiltered list.
-  await resetCursorToToolbox(voiceOver);
+  // Re-anchored rather than continuing from wherever the scan stopped - that item may be one of
+  // the ones just hidden, and VoiceOver would keep describing it from where it stands. Walking
+  // *backwards* to the search field rather than resetting to the top, for the reason above: the
+  // cursor has to stay inside the container. The walk is also the navigation command VoiceOver
+  // needs before it will see a page-driven change at all, so `fill()` becoming visible to it
+  // comes for free - without one it can still be describing the unfiltered list.
+  await findItem(voiceOver, /search/i, 'previous');
 
   // Filtered items are `display: none` (ui-kit's `--hidden` class, which wins over the item's
   // own `display: flex`), so nothing matching should remain reachable. If something does, the
