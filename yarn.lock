@@ -2261,7 +2261,7 @@ __metadata:
   resolution: "@editorjs/bold@workspace:packages/tools/bold"
   dependencies:
     "@codexteam/icons": "npm:^0.3.3"
-    "@editorjs/dom": "npm:^1.1.0"
+    "@editorjs/dom": "npm:^1.2.0"
     "@editorjs/sdk": "workspace:^"
     "@types/eslint": "npm:^9.6.1"
     "@types/node": "npm:^22.10.2"
@@ -2397,7 +2397,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@editorjs/dom-adapters@workspace:packages/dom-adapters"
   dependencies:
-    "@editorjs/dom": "npm:^1.1.0"
+    "@editorjs/dom": "npm:^1.2.0"
     "@editorjs/sdk": "workspace:^"
     "@jest/globals": "npm:^29.7.0"
     "@stryker-mutator/core": "npm:^7.0.2"
@@ -2418,12 +2418,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@editorjs/dom@npm:^1.1.0":
-  version: 1.1.0
-  resolution: "@editorjs/dom@npm:1.1.0"
+"@editorjs/dom@npm:^1.1.0, @editorjs/dom@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "@editorjs/dom@npm:1.2.0"
   dependencies:
-    "@editorjs/helpers": "npm:^1.2.0"
-  checksum: 0d468d99eede9d98e2fac518cf38528f9f427a8607c80631f12e0ae3eaaa19f77e86f5b01a1ff0c51f1e85bea84b3682f8634affc327edcc2409104da086188a
+    "@editorjs/helpers": "npm:^1.2.2"
+  checksum: 8dee6a76f3d211c7c37d0690d3714d44877b3f646c24aa3cfc82a449a18657179430624346f4ae42bd96f1d5d3b3fb712f900d534d1b13963e96670aee72dc98
   languageName: node
   linkType: hard
 
@@ -2472,15 +2472,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@editorjs/helpers@npm:^1.2.0":
-  version: 1.2.0
-  resolution: "@editorjs/helpers@npm:1.2.0"
-  dependencies:
-    codex-tooltip: "npm:^1.0.5"
-  checksum: 7a56163ea342f9e9ea111132900b19fe6672cd475276a5a85048b27faa0a5efd6f7cee90fd0c25d8bdf2838519de696492be90646b11d08d02daa9ee42105fa6
-  languageName: node
-  linkType: hard
-
 "@editorjs/helpers@npm:^1.2.2":
   version: 1.2.2
   resolution: "@editorjs/helpers@npm:1.2.2"
@@ -2495,7 +2486,7 @@ __metadata:
   resolution: "@editorjs/inline-link@workspace:packages/tools/inline-link"
   dependencies:
     "@codexteam/icons": "npm:^0.3.3"
-    "@editorjs/dom": "npm:^1.1.0"
+    "@editorjs/dom": "npm:^1.2.0"
     "@editorjs/sdk": "workspace:^"
     "@types/eslint": "npm:^9.6.1"
     "@types/node": "npm:^22.10.2"
@@ -2511,7 +2502,7 @@ __metadata:
   resolution: "@editorjs/italic@workspace:packages/tools/italic"
   dependencies:
     "@codexteam/icons": "npm:^0.3.3"
-    "@editorjs/dom": "npm:^1.1.0"
+    "@editorjs/dom": "npm:^1.2.0"
     "@editorjs/sdk": "workspace:^"
     "@types/eslint": "npm:^9.6.1"
     "@types/node": "npm:^22.10.2"
@@ -2657,6 +2648,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@editorjs/ui-kit@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "@editorjs/ui-kit@npm:2.0.0"
+  dependencies:
+    "@codexteam/icons": "npm:^0.3.3"
+    "@editorjs/caret": "npm:^1.1.0"
+    "@editorjs/dom": "npm:^1.2.0"
+    "@editorjs/helpers": "npm:^1.2.2"
+  checksum: 97110bd1d12fe22077cff40bf9d7df044d6cdc086cdb80c0bcd0b5a96b1363d7efa10cce62db67932f9daa0ebe782b44ed3f749d4f5781d703d2a75b0e7e8f74
+  languageName: node
+  linkType: hard
+
 "@editorjs/ui@workspace:^, @editorjs/ui@workspace:packages/ui":
   version: 0.0.0-use.local
   resolution: "@editorjs/ui@workspace:packages/ui"
@@ -2664,7 +2667,7 @@ __metadata:
     "@codexteam/icons": "npm:^0.3.3"
     "@codexteam/ui": "npm:^0.2.2"
     "@editorjs/core": "workspace:^"
-    "@editorjs/dom": "npm:^1.1.0"
+    "@editorjs/dom": "npm:^1.2.0"
     "@editorjs/dom-adapters": "workspace:^"
     "@editorjs/helpers": "npm:^1.2.2"
     "@editorjs/paragraph": "workspace:^"
@@ -5943,13 +5946,6 @@ __metadata:
   version: 4.6.0
   resolution: "co@npm:4.6.0"
   checksum: a5d9f37091c70398a269e625cedff5622f200ed0aa0cff22ee7b55ed74a123834b58711776eb0f1dc58eb6ebbc1185aa7567b57bd5979a948c6e4f85073e2c05
-  languageName: node
-  linkType: hard
-
-"codex-tooltip@npm:^1.0.5":
-  version: 1.0.5
-  resolution: "codex-tooltip@npm:1.0.5"
-  checksum: adb4cc8a9a26de3eb39d22b9a2c0ca57ef387d5d4a52c0a978a0a13ba0ea53dc6603604702f005fa42fd074db936742e1a1094d59debb7f987dc096849e818dd
   languageName: node
   linkType: hard
 
