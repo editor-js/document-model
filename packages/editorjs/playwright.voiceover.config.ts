@@ -24,6 +24,11 @@ export default defineConfig({
   testMatch: /voiceover\.spec\.ts/,
   reporter: 'list',
   timeout: TEST_TIMEOUT_MS,
+  // Matches playwright.config.ts. A real screen reader is driven by real keystrokes whose timing
+  // shifts under a loaded runner, and Case 18 is documented as having been non-deterministic
+  // before (see resetCursor). A retry distinguishes that from a genuine regression rather than
+  // hiding one: a case that fails twice in a row is not a timing artefact.
+  retries: isCI ? 2 : 0,
   use: {
     ...screenReaderConfig.use,
     baseURL: `http://localhost:${PORT}`,

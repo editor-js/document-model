@@ -1117,6 +1117,15 @@ test('Case 17: announces applied links as links', async ({ page, voiceOver }) =>
   expect(insideBlock.join(' | ')).toContain('link');
 });
 
+/** What a sweep found, kept alongside everything it passed through. */
+interface ReachableItems {
+  /** Distinct items matching the pattern, in the order the cursor met them. */
+  matches: string[];
+
+  /** Every stop the sweep made, matching or not. */
+  all: string[];
+}
+
 /**
  * Every distinct item matching `pattern` that VoiceOver's cursor reaches within `SCAN_STEPS`
  * forward steps.
@@ -1124,13 +1133,24 @@ test('Case 17: announces applied links as links', async ({ page, voiceOver }) =>
  * Returns the matches rather than a boolean so that asserting "nothing is reachable" fails with
  * the offending announcements in the message. A bare `toBe(false)` says only that something
  * matched, which leaves you guessing at whether the fault is the page or the pattern.
+ *
+ * `all` carries the whole sweep alongside them, because the *baseline* assertion fails the other
+ * way round - on an empty `matches` - and the matches alone say nothing at all in that case. The
+ * question it leaves open is whether the cursor never reached the menu or VoiceOver worded it
+ * differently than the pattern expects, and only the full sweep distinguishes the two.
  * @param voiceOver - Guidepup VoiceOver controller
  * @param pattern - matched against the current item's text at each stop
  */
-async function collectReachable(voiceOver: VoiceOverPlaywright, pattern: RegExp): Promise<string[]> {
+async function collectReachable(
+  voiceOver: VoiceOverPlaywright,
+  pattern: RegExp
+): Promise<ReachableItems> {
   const reachable = await sweep(voiceOver, SCAN_STEPS);
 
-  return [...new Set(reachable.filter(item => pattern.test(item)))];
+  return {
+    matches: [...new Set(reachable.filter(item => pattern.test(item)))],
+    all: reachable,
+  };
 }
 
 test('Case 18: does not let the cursor reach toolbox items filtered out by search', async ({ page, voiceOver }) => {
@@ -1152,7 +1172,10 @@ test('Case 18: does not let the cursor reach toolbox items filtered out by searc
 
   const beforeFiltering = await collectReachable(voiceOver, menuItemPattern);
 
-  expect(beforeFiltering.length).toBeGreaterThan(0);
+  expect(
+    beforeFiltering.matches.length,
+    `Nothing matched ${menuItemPattern}. VoiceOver announced: ${JSON.stringify(beforeFiltering.all)}`
+  ).toBeGreaterThan(0);
 
   // Opening the toolbox puts DOM focus in its search field; filling it filters the list.
   await page.getByRole('searchbox', { name: 'Search' }).fill('no such tool');
@@ -1169,5 +1192,5 @@ test('Case 18: does not let the cursor reach toolbox items filtered out by searc
   // own `display: flex`), so nothing matching should remain reachable. If something does, the
   // message below carries its announcement - the answer to "is this the hidden item, or is the
   // pattern matching something else entirely" is not worth guessing at.
-  expect(await collectReachable(voiceOver, menuItemPattern)).toEqual([]);
+  expect((await collectReachable(voiceOver, menuItemPattern)).matches).toEqual([]);
 });
