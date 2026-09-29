@@ -1,0 +1,68 @@
+name: "VoiceOver tests"
+description: Run a package's Guidepup VoiceOver suite against a real screen reader
+inputs:
+  package-name:
+    description: 'Name of the package'
+    required: true
+  working-directory:
+    description: 'Package working directory'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version-file: .nvmrc
+
+    - name: Setup environment
+      uses: ./.github/actions/setup
+
+    # Grants the accessibility and automation permissions VoiceOver scripting needs, and
+    # installs the screen reader assets Guidepup drives. Nothing else can do this: the
+    # permissions live in the OS TCC database, not in the workspace.
+    #
+    # The CLI rather than guidepup/setup-action, which is archived upstream.
+    - name: Configure the runner for screen reader automation
+      shell: bash
+      run: npx --yes @guidepup/setup
+
+    # webkit only, matching playwright.voiceover.config.ts: VoiceOver's support for Safari is
+    # what the suite's expectations are written against. No --with-deps, which is a Linux-only
+    # concern. Cached by Playwright version for the same reason as the headless e2e action.
+    - name: Resolve Playwright version
+      id: playwright-version
+      shell: bash
+      run: echo "version=$(yarn workspace ${{ inputs.package-name }} exec playwright --version | awk '{ print $2 }')" >> "$GITHUB_OUTPUT"
+
+    - name: Restore Playwright browsers
+      uses: actions/cache@v5
+      id: playwright-cache
+      with:
+        path: ~/Library/Caches/ms-playwright
+        key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}
+
+    - name: Install Playwright webkit
+      if: ${{ steps.playwright-cache.outputs.cache-hit != 'true' }}
+      shell: bash
+      run: yarn workspace ${{ inputs.package-name }} exec playwright install webkit
+
+    # The suite's own webServer command builds the workspace dependencies first - the fixture
+    # reaches @editorjs/ui and the tools through their `dist`, so an unbuilt change is invisible
+    # to it. Same reasoning as the headless e2e action.
+    - name: Run VoiceOver tests
+      shell: bash
+      run: yarn workspace ${{ inputs.package-name }} run test:e2e:voiceover
+
+    # Guidepup records what VoiceOver actually said. On a failure that transcript is the whole
+    # diagnosis - the assertion message alone only says the expected phrase never arrived.
+    - name: Upload VoiceOver transcripts
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: voiceover-recordings
+        path: |
+          ${{ inputs.working-directory }}/test-results/
+          ${{ inputs.working-directory }}/recordings/
+        if-no-files-found: ignore
+        retention-days: 7
