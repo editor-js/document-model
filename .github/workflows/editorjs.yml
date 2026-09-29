@@ -26,14 +26,11 @@ jobs:
   # Temporarily on every PR, to prove the job green before it moves to a schedule.
   voiceover:
     name: VoiceOver
-    # A real screen reader needs a real macOS window server session. Standard runner, which is
-    # what keeps this free on a public repository - the larger variants are billed regardless.
+    # A real screen reader needs a real macOS session; the standard runner is free on a public repo.
     runs-on: macos-15
-    # Seventeen tests at the config's five-minute per-test budget, run one at a time. The cap is
-    # well above the expected runtime and exists so a wedged VoiceOver fails rather than hangs.
+    # Well above the ~8 minute runtime, so a wedged VoiceOver fails rather than hangs.
     timeout-minutes: 60
-    # Only five macOS jobs can run at once across the whole account, so a superseded push must
-    # not keep one of them occupied for the rest of its run
+    # Only five macOS jobs run at once account-wide, so a superseded push must not hold one.
     concurrency:
       group: voiceover-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
