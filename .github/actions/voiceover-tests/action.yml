@@ -29,6 +29,14 @@ runs:
       shell: bash
       run: npx --yes @guidepup/setup setup --ci
 
+    # Separate from `setup`, and both are required: `setup` configures the OS, `install` puts
+    # the preferences disk image into the project. Without it VoiceOver.start() fails in
+    # resolveDmgPath with "Failed to mount Guidepup preferences". Runs after `yarn install`,
+    # since it installs into node_modules.
+    - name: Install screen reader assets
+      shell: bash
+      run: npx --yes @guidepup/setup install
+
     # webkit only, matching playwright.voiceover.config.ts: VoiceOver's support for Safari is
     # what the suite's expectations are written against. No --with-deps, which is a Linux-only
     # concern. Cached by Playwright version for the same reason as the headless e2e action.
