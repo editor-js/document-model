@@ -87,12 +87,6 @@ export class InlineToolbarUI implements EditorjsPlugin {
   #popover: PopoverInline | null = null;
 
   /**
-   * Root element of the current popover. Held separately from #nodes, which is for the parts
-   * built once in #render — this one is replaced on every rebuild and absent while hidden
-   */
-  #popoverElement: HTMLElement | null = null;
-
-  /**
    * Id this toolbar's popover element carries, so that aria-owns can name it across rebuilds
    */
   #popoverElementId = nextPopoverElementId();
@@ -454,12 +448,12 @@ export class InlineToolbarUI implements EditorjsPlugin {
      * Exactly one popover is in the holder at any point — the teardown above detached the
      * previous one — so its items cannot surface in the accessibility tree twice
      */
-    this.#popoverElement = this.#popover.getElement();
+    const popoverElement = this.#popover.getElement();
 
     /** Named so that the focused editable can claim it via aria-owns, see #setActiveDescendant */
-    this.#popoverElement.id = this.#popoverElementId;
+    popoverElement.id = this.#popoverElementId;
 
-    this.#nodes.holder.appendChild(this.#popoverElement);
+    this.#nodes.holder.appendChild(popoverElement);
 
     return true;
   }
@@ -490,7 +484,6 @@ export class InlineToolbarUI implements EditorjsPlugin {
     /** destroy() hides the popover on its way out, so hiding it here first would be a no-op */
     this.#popover.destroy();
     this.#popover = null;
-    this.#popoverElement = null;
   }
 
   /**

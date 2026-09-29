@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
+import { mountDocument, selectParagraphText } from '../support/editor.js';
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/');
-  await page.waitForSelector('body[data-editor-ready="true"]');
+  await mountDocument(page);
 });
 
 test('renders the initial paragraph block', async ({ page }) => {
@@ -28,9 +28,7 @@ test('types into a paragraph block', async ({ page }) => {
 test('bolds selected text via the inline toolbar', async ({ page }) => {
   const paragraph = page.getByRole('textbox', { name: 'Paragraph' });
 
-  // Triple-click to select the paragraph's text via native browser selection,
-  // same reasoning as above re: `locator.selectText` bypassing real caret tracking.
-  await paragraph.click({ clickCount: 3 });
+  await selectParagraphText(page);
 
   const boldButton = page.getByRole('button', { name: 'Bold' });
 
@@ -41,9 +39,7 @@ test('bolds selected text via the inline toolbar', async ({ page }) => {
 });
 
 test('keeps the inline toolbar open when its own control holds focus and the native selection drops', async ({ page }) => {
-  const paragraph = page.getByRole('textbox', { name: 'Paragraph' });
-
-  await paragraph.click({ clickCount: 3 });
+  await selectParagraphText(page);
 
   const boldButton = page.getByRole('button', { name: 'Bold' });
 
@@ -65,7 +61,7 @@ test('keeps the inline toolbar open when its own control holds focus and the nat
 test('opens the link tool\'s URL input instead of closing the toolbar', async ({ page }) => {
   const paragraph = page.getByRole('textbox', { name: 'Paragraph' });
 
-  await paragraph.click({ clickCount: 3 });
+  await selectParagraphText(page);
 
   const linkButton = page.getByRole('button', { name: 'Link' });
 
