@@ -573,14 +573,14 @@ type — otherwise the check proves nothing).
   each highlighted tool by name off `aria-activedescendant` alone, with the selection intact —
   see the case above for the measured output.
 - Follow-ups outstanding before archiving:
-  - **Publish `@editorjs/ui-kit` 2.0.0** and drop the local `link:` resolution — tasks.md 5a.2.
-    Blocking: the branch does not install anywhere else until this is done.
+  - ~~**Publish `@editorjs/ui-kit` 2.0.0** and drop the local `link:` resolution~~ — done, see
+    tasks.md 5a.3. The lockfile resolves the published 2.0.0 and the suite was re-run against it.
   - Per-block identity for `aria-label="Paragraph"` once more block types exist — design.md
     Open Questions. Not blocking.
   - Inline toolbar not scoped per editor on chromium — tasks.md 10.5b. Pre-existing, pinned by a
     per-engine `test.fail()`, wants its own change. Not blocking.
-- **Overall verdict: ☑ Needs follow-up work before archiving** (the dependency publish), ☐ Ship
-  as-is. Screen-reader verification is complete: every case is automated, run, and passing in a
-  single run, with no manual checklist left. What is outstanding is an npm publish, not an
-  accessibility question. The suite earned its keep twice over — beyond settling Case 8, it
-  caught a keyboard trap that no attribute-level assertion could have seen.
+- **Overall verdict: ☐ Needs follow-up work before archiving, ☑ Ship as-is.** Screen-reader
+  verification is complete: every case is automated, run, and passing in a single run, with no
+  manual checklist left. The dependency publish that was blocking has landed. The suite earned
+  its keep twice over — beyond settling Case 8, it caught a keyboard trap that no
+  attribute-level assertion could have seen.
