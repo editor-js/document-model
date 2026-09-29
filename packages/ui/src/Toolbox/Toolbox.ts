@@ -145,28 +145,34 @@ export class ToolboxUI implements EditorjsPlugin {
    * @param tool - Block tool to add to the toolbox
    */
   public addTool(tool: BlockToolFacade): void {
-    const toolbox = (tool.options.toolbox ?? {}) as ToolboxOptionsEntry;
+    const entries: ToolboxOptionsEntry[] | undefined = tool.toolbox;
 
-    this.#popover.addItem(
-      {
-        title: tool.name,
-        ...toolbox,
-        closeOnActivate: true,
+    if (entries === undefined) {
+      return;
+    }
 
-        /**
-         * @todo `focus: true` does not put the caret into the inserted block,
-         * so the user has to click it before typing
-         */
-        onActivate: () => {
-          void this.#api.blocks.insert({
-            type: tool.name,
-            data: toolbox.data ?? {},
-            index: this.#selectedBlockIndex === -1 ? undefined : this.#selectedBlockIndex + 1,
-            focus: true,
-          });
-        },
-      }
-    );
+    for (const entry of entries) {
+      this.#popover.addItem(
+        {
+          title: tool.name,
+          ...entry,
+          closeOnActivate: true,
+
+          /**
+           * @todo `focus: true` does not put the caret into the inserted block,
+           * so the user has to click it before typing
+           */
+          onActivate: () => {
+            void this.#api.blocks.insert({
+              type: tool.name,
+              data: entry.data ?? {},
+              index: this.#selectedBlockIndex === -1 ? undefined : this.#selectedBlockIndex + 1,
+              focus: true,
+            });
+          },
+        }
+      );
+    }
   }
 
   /**
