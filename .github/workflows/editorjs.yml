@@ -23,16 +23,18 @@ jobs:
     secrets:
       stryker_dashboard_api_key: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
 
-  # Temporarily on every PR, to prove the job green before it moves to a schedule.
+  # Merge queue only: ~8 minutes driving a real screen reader is too slow for every PR push.
+  # A skipped job reports success, so this never blocks a pull request.
   voiceover:
     name: VoiceOver
+    if: ${{ github.event_name == 'merge_group' }}
     # A real screen reader needs a real macOS session; the standard runner is free on a public repo.
     runs-on: macos-15
     # Well above the ~8 minute runtime, so a wedged VoiceOver fails rather than hangs.
     timeout-minutes: 60
-    # Only five macOS jobs run at once account-wide, so a superseded push must not hold one.
+    # Only five macOS jobs run at once account-wide, so a superseded entry must not hold one.
     concurrency:
-      group: voiceover-${{ github.event.pull_request.number || github.ref }}
+      group: voiceover-${{ github.ref }}
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v6
