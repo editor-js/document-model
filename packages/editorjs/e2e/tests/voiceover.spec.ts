@@ -1187,9 +1187,10 @@ test('Case 18: does not let the cursor reach toolbox items filtered out by searc
   // Back to the anchor; the sweep ends past the popover, and this is what shows VoiceOver the fill().
   await findItem(voiceOver, /add block/i, 'previous');
 
-  // Filtered items are `display: none` (ui-kit's `--hidden` class, which wins over the item's
-  // own `display: flex`), so nothing matching should remain reachable. If something does, the
-  // message below carries its announcement - the answer to "is this the hidden item, or is the
-  // pattern matching something else entirely" is not worth guessing at.
+  // ui-kit hides filtered items with a CSS class and sets the `hidden` attribute alongside it;
+  // the attribute is what takes them out of the accessibility tree, so nothing matching should
+  // remain reachable. If something does, the message below carries its announcement - the
+  // answer to "is this the hidden item, or is the pattern matching something else entirely"
+  // is not worth guessing at.
   expect((await collectReachable(voiceOver, menuItemPattern)).matches).toEqual([]);
 });
