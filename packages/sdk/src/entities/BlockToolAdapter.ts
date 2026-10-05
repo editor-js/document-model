@@ -38,9 +38,15 @@ export abstract class BlockToolAdapter extends EventTarget {
   protected eventBus: EventBus;
 
   /**
-   * Stored reference to the model change listener so it can be removed on destroy.
+   * Releases every listener registered by the adapter and its subclasses on destroy
    */
-  #modelChangeListenerCleanup: () => void;
+  readonly #controller = new AbortController();
+
+  /**
+   * Signal subclasses pass to their own listener registrations.
+   * It is aborted by {@link destroy}, so subclasses don't need to remove listeners themselves
+   */
+  protected readonly signal: AbortSignal = this.#controller.signal;
 
   /**
    * @param config - editor's configuration
@@ -54,19 +60,20 @@ export abstract class BlockToolAdapter extends EventTarget {
     this.config = config;
     this.eventBus = eventBus;
 
-    this.#modelChangeListenerCleanup = this.#api.document.onUpdate(
+    const unsubscribe = this.#api.document.onUpdate(
       ((event: ModelEvents) => this.#handleModelUpdate(event)) as EventListener
     );
+
+    this.signal.addEventListener('abort', unsubscribe, { once: true });
   }
 
   /**
    * Releases all resources held by this adapter.
-   * Removes the model change listener registered in the constructor.
-   * Subclasses that register additional listeners should override this method,
-   * call `super.destroy()`, and then remove their own listeners.
+   * Aborts {@link signal}, removing the model listener and every listener subclasses registered with it.
+   * Subclasses override this method only to release resources that aren't listeners, and call `super.destroy()`
    */
   public destroy(): void {
-    this.#modelChangeListenerCleanup();
+    this.#controller.abort();
   }
 
   /**

@@ -9,6 +9,7 @@ import { jest, describe, it, expect, beforeEach } from '@jest/globals';
  */
 const use = jest.fn();
 const initialize = jest.fn<() => Promise<void>>();
+const destroy = jest.fn();
 
 /**
  * Minimal Core stand-in recording `use()` calls and delegating `initialize()`.
@@ -16,6 +17,7 @@ const initialize = jest.fn<() => Promise<void>>();
 class MockCore {
   public use = use;
   public initialize = initialize;
+  public destroy = destroy;
 }
 
 jest.unstable_mockModule('@editorjs/core', () => ({ default: MockCore }));
@@ -40,6 +42,17 @@ describe('EditorJS bundle', () => {
   beforeEach(() => {
     use.mockClear();
     initialize.mockReset();
+    destroy.mockClear();
+  });
+
+  it('should delegate destroy to Core', () => {
+    initialize.mockResolvedValue(undefined);
+
+    const editor = new EditorJS({} as any);
+
+    editor.destroy();
+
+    expect(destroy).toHaveBeenCalledTimes(1);
   });
 
   it('exposes isReady that resolves when Core initialization completes', async () => {

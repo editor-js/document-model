@@ -163,42 +163,44 @@ describe('UndoRedoManager', () => {
     it('should register a listener for model Changed events', () => {
       expect(model.addEventListener).toHaveBeenCalledWith(
         EventType.Changed,
-        expect.any(Function)
+        expect.any(Function),
+        { signal: expect.any(AbortSignal) }
       );
     });
 
     it('should register an undo listener on the eventBus', () => {
       expect(eventBus.addEventListener).toHaveBeenCalledWith(
         'core:undo',
-        expect.any(Function)
+        expect.any(Function),
+        { signal: expect.any(AbortSignal) }
       );
     });
 
     it('should register a redo listener on the eventBus', () => {
       expect(eventBus.addEventListener).toHaveBeenCalledWith(
         'core:redo',
-        expect.any(Function)
+        expect.any(Function),
+        { signal: expect.any(AbortSignal) }
       );
     });
   });
 
   describe('.destroy()', () => {
-    it('should remove the undo listener from eventBus', () => {
+    /**
+     * Collects the signals passed to every listener registration
+     * @param mock - mocked addEventListener
+     */
+    const signalsOf = (mock: jest.Mock): (AbortSignal | undefined)[] => mock.mock.calls.map(
+      call => (call[2] as AddEventListenerOptions | undefined)?.signal
+    );
+
+    it('should abort the signal of the undo and redo listeners', () => {
       manager.destroy();
 
-      expect(eventBus.removeEventListener).toHaveBeenCalledWith(
-        'core:undo',
-        expect.any(Function)
-      );
-    });
+      const signals = signalsOf(eventBus.addEventListener);
 
-    it('should remove the redo listener from eventBus', () => {
-      manager.destroy();
-
-      expect(eventBus.removeEventListener).toHaveBeenCalledWith(
-        'core:redo',
-        expect.any(Function)
-      );
+      expect(signals).toHaveLength(2);
+      expect(signals.every(signal => signal?.aborted === true)).toBe(true);
     });
 
     it('should clear the debounce timer', () => {
@@ -211,13 +213,12 @@ describe('UndoRedoManager', () => {
       expect(clearTimeoutSpy).toHaveBeenCalled();
     });
 
-    it('should remove the model updates listener', () => {
+    it('should abort the signal of the model updates listener', () => {
       manager.destroy();
 
-      expect(model.removeEventListener).toHaveBeenCalledWith(
-        'model:changed',
-        expect.any(Function)
-      );
+      const [signal] = signalsOf(model.addEventListener);
+
+      expect(signal?.aborted).toBe(true);
     });
   });
 

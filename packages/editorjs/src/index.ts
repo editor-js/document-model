@@ -99,6 +99,14 @@ export default class EditorJS {
   public get isReady(): Promise<void> {
     return this.#readyPromise;
   }
+
+  /**
+   * Tears the editor down: removes its DOM, closes the collaboration connection, and releases plugins and tools.
+   * Safe to call more than once and before {@link isReady} settles
+   */
+  public destroy(): void {
+    this.#core.destroy();
+  }
 }
 
 export { Core };
