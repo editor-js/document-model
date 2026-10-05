@@ -4,7 +4,7 @@
 
 `@editorjs/ui` is the default rendering shell for Editor.js: a set of `EditorjsPlugin` implementations that subscribe to the core `EventBus` to render DOM and dispatch their own `ui:*` events so the pieces can wire themselves together. It owns no document state — it renders what `core` (`BlockManager`/`SelectionManager`, etc.) reports, and forwards user interaction back through `EditorAPI`.
 
-**Note**: this package has no automated test suite (`.spec.ts`/`.test.ts` files); the scenarios below are derived directly from the event-wiring logic in source rather than confirmed by tests.
+**Note**: apart from `src/Blocks/Blocks.spec.ts`, which covers `BlocksUI` teardown, this package has no automated tests; the remaining scenarios below are derived directly from the event-wiring logic in source rather than confirmed by tests.
 ## Requirements
 ### Requirement: Shell assembly
 The system SHALL provide `EditorjsUI` as the top-level shell that creates the editor wrapper in the holder element and reactively assembles the Toolbar, InlineToolbar, and Blocks elements into it as each announces its own `*:rendered` event, without holding direct references to those components.
@@ -59,7 +59,12 @@ The system SHALL provide `BlocksUI`, which renders the contenteditable blocks ho
 - **WHEN** `BlocksUI` intercepts it
 - **THEN** it dispatches a `CopyUIEvent` on the `EventBus` carrying the native event as `nativeEvent`, without calling `preventDefault` itself
 
-Implemented in `src/Blocks/Blocks.ts`, `src/Blocks/events/*`.
+#### Scenario: Destroying the blocks UI
+- **GIVEN** `BlocksUI` has rendered the blocks holder
+- **WHEN** `destroy()` is called
+- **THEN** the `beforeinput`, `keydown` and `copy` listeners are removed from the blocks holder, so native events on it no longer dispatch `BeforeInputUIEvent`, `KeydownUIEvent` or `CopyUIEvent`, and the blocks holder is detached from the DOM
+
+Implemented in `src/Blocks/Blocks.ts`, `src/Blocks/events/*`, validated by `src/Blocks/Blocks.spec.ts`.
 
 ### Requirement: Floating toolbar
 The system SHALL provide `ToolbarUI`, which renders a floating toolbar with a plus-button and actions area, repositions itself to the selected block's offset on `ui:blocks:block-selected` (unless the Toolbox is open), and opens the Toolbox on plus-button click.

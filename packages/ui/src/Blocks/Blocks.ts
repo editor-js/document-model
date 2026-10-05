@@ -161,7 +161,7 @@ export class BlocksUI implements EditorjsPlugin {
       };
 
       this.#eventBus.dispatchEvent(new CopyUIEvent(payload));
-    });
+    }, { signal: this.#listenersController.signal });
 
     return blocksHolder;
   }
@@ -250,7 +250,7 @@ export class BlocksUI implements EditorjsPlugin {
     this.#blocks = [];
 
     /**
-     * Removes the beforeinput/keydown listeners attached to the blocks holder
+     * Removes the beforeinput/keydown/copy listeners attached to the blocks holder
      */
     this.#listenersController.abort();
 
