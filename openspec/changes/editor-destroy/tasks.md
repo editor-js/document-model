@@ -39,12 +39,10 @@
 - [ ] 6.3 Write failing tests: `should not construct anything when destroyed before initialize`, `should reject initialize with an AbortError without dispatching ready when destroyed mid-initialization`, and `should throw from use and initialize after destroy`
 - [ ] 6.4 Implement the `#destroyed` checks after each `await` in `initialize()`, and the post-destroy guards in `use()` and `initialize()`
 
-## 7. UI teardown
+## 7. UI
 
-- [ ] 7.1 Leave `BlocksUI` to #174, which covers its teardown, so this change has no `BlocksUI` implementation. Reuse #174's UI Jest setup byte-for-byte so the two merge cleanly
-- [ ] 7.2 Give each UI plugin except `BlocksUI` (`EditorjsUI`, `ToolbarUI`, `ToolboxUI`, `InlineToolbarUI`) an `AbortController` and pass its `signal` to every EventBus and DOM `addEventListener`. Call `abort()` in `destroy()`
-- [ ] 7.3 `EditorjsUI.destroy()` removes the wrapper and leaves the holder in place. `ToolboxUI` and `InlineToolbarUI` destroy their popovers. `InlineToolbarUI` calls `destroy?.()` on the inline tool instances it created, both on rebuild and on destroy
-- [ ] 7.4 Add the first UI specs (`packages/ui`): `should remove the editor wrapper but keep the holder on destroy`, and `should not react to EventBus events after destroy` for each plugin
+- [ ] 7.1 UI plugin teardown is covered by #174: no UI plugin implementation in this change
+- [ ] 7.2 After #174 lands, make `InlineToolbarUI` call `destroy?.()` on the inline tool instances it creates, both when the popover is rebuilt and on destroy, with tests in #174's UI test setup
 
 ## 8. Bundle and integration
 
