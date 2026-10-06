@@ -128,18 +128,13 @@ export function splitAt(runs: Run[], offset: number): number {
  * @param offset - char offset, expected to be in [0, total length]
  */
 export function findRunForInsert(runs: Run[], offset: number): number {
-  const lastIndex = runs.length - 1;
   let runEnd = 0;
 
-  for (const [index, run] of runs.slice(0, lastIndex).entries()) {
+  return runs.findIndex((run) => {
     runEnd += run.text.length;
 
-    if (offset <= runEnd) {
-      return index;
-    }
-  }
-
-  return lastIndex;
+    return offset <= runEnd;
+  });
 }
 
 /**
