@@ -38,6 +38,11 @@ export class ToolboxUI implements EditorjsPlugin {
   #eventBus: EventBus;
 
   /**
+   * Controls this toolbox's EventBus subscriptions and teardown
+   */
+  #listenersController = new AbortController();
+
+  /**
    * Object with Toolbox HTML nodes
    */
   #nodes: Record<string, HTMLElement> = {};
@@ -85,6 +90,10 @@ export class ToolboxUI implements EditorjsPlugin {
     });
 
     this.#popover.on(PopoverEvent.Closed, () => {
+      if (this.#listenersController.signal.aborted) {
+        return;
+      }
+
       this.#isPopoverOpen = false;
 
       this.#eventBus.dispatchEvent(new ToolboxClosedUIEvent({}));
@@ -98,11 +107,11 @@ export class ToolboxUI implements EditorjsPlugin {
       if (tool?.isBlock?.() === true) {
         this.addTool(tool);
       }
-    });
+    }, { signal: this.#listenersController.signal });
 
     this.#eventBus.addEventListener('ui:toolbox:open', () => {
       this.open();
-    });
+    }, { signal: this.#listenersController.signal });
 
     this.#eventBus.addEventListener('ui:blocks:block-selected', (e: BlockSelectedUIEvent) => {
       if (this.#isPopoverOpen) {
@@ -110,7 +119,7 @@ export class ToolboxUI implements EditorjsPlugin {
       }
 
       this.#selectedBlockIndex = e.detail.index;
-    });
+    }, { signal: this.#listenersController.signal });
   }
 
   /**
@@ -128,6 +137,12 @@ export class ToolboxUI implements EditorjsPlugin {
    * Cleanup when plugin is destroyed
    */
   public destroy(): void {
+    if (this.#listenersController.signal.aborted) {
+      return;
+    }
+
+    this.#listenersController.abort();
+    this.#popover.destroy();
     this.#nodes.holder?.remove();
   }
 

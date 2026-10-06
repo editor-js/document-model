@@ -48,6 +48,11 @@ export class BlocksUI implements EditorjsPlugin {
   #api: EditorAPI;
 
   /**
+   * Controls the lifetime of this plugin's DOM and EventBus listeners
+   */
+  #listenersController = new AbortController();
+
+  /**
    * EditorUI constructor method
    * @param params - Plugin parameters
    */
@@ -60,13 +65,13 @@ export class BlocksUI implements EditorjsPlugin {
       const { ui, index } = event.detail;
 
       this.#addBlock(ui, index);
-    });
+    }, { signal: this.#listenersController.signal });
 
     this.#eventBus.addEventListener(`core:${CoreEventType.BlockRemoved}`, (event: BlockRemovedCoreEvent) => {
       const { index } = event.detail;
 
       this.#removeBlock(index);
-    });
+    }, { signal: this.#listenersController.signal });
 
     this.#eventBus.dispatchEvent(new BlocksHolderRenderedUIEvent({
       blocksHolder: this.#blocksHolder,
@@ -114,7 +119,7 @@ export class BlocksUI implements EditorjsPlugin {
         targetRanges: e.getTargetRanges(),
         isCrossInputSelection,
       }));
-    });
+    }, { signal: this.#listenersController.signal });
 
     blocksHolder.addEventListener('keydown', (e) => {
       /**
@@ -147,7 +152,7 @@ export class BlocksUI implements EditorjsPlugin {
       this.#api.document.undo();
 
       e.preventDefault();
-    });
+    }, { signal: this.#listenersController.signal });
 
     blocksHolder.addEventListener('copy', (e) => {
       const payload: CopyUIEventPayload = {
@@ -155,7 +160,7 @@ export class BlocksUI implements EditorjsPlugin {
       };
 
       this.#eventBus.dispatchEvent(new CopyUIEvent(payload));
-    });
+    }, { signal: this.#listenersController.signal });
 
     return blocksHolder;
   }
@@ -187,7 +192,7 @@ export class BlocksUI implements EditorjsPlugin {
 
     wrapper.addEventListener('mouseenter', (e) => {
       this.#updateSelectedBlock(e);
-    });
+    }, { signal: this.#listenersController.signal });
 
     wrapper.append(contents);
     contents.append(blockElement);
@@ -240,7 +245,14 @@ export class BlocksUI implements EditorjsPlugin {
    * Cleanup when plugin is destroyed
    */
   public destroy(): void {
+    this.#listenersController.abort();
+
     this.#blocks.forEach(block => block.remove());
     this.#blocks = [];
+
+    /**
+     * Detach the blocks holder itself so it doesn't linger in the DOM
+     */
+    this.#blocksHolder.remove();
   }
 }

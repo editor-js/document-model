@@ -1,20 +1,4 @@
-# UI
-
-## Purpose
-
-`@editorjs/ui` is the default rendering shell for Editor.js: a set of `EditorjsPlugin` implementations that subscribe to the core `EventBus` to render DOM and dispatch their own `ui:*` events so the pieces can wire themselves together. It owns no document state — it renders what `core` (`BlockManager`/`SelectionManager`, etc.) reports, and forwards user interaction back through `EditorAPI`.
-
-**Note**: `src/Blocks/Blocks.spec.ts` and `src/lifecycle.spec.ts` cover teardown and active/replacement-instance controls. The remaining scenarios below are derived from source and are not all covered by these tests.
-## Requirements
-### Requirement: Shell assembly
-The system SHALL provide `EditorjsUI` as the top-level shell that creates the editor wrapper in the holder element and reactively assembles the Toolbar, InlineToolbar, and Blocks elements into it as each announces its own `*:rendered` event, without holding direct references to those components.
-
-#### Scenario: Assembling the shell from render events
-- **GIVEN** `EditorjsUI` has created the wrapper element
-- **WHEN** `ui:toolbar:rendered`, `ui:inline-toolbar:rendered`, and `ui:blocks:rendered` events are received
-- **THEN** the corresponding rendered elements are appended to the wrapper in the order the events arrive
-
-Implemented in `src/index.ts`.
+## MODIFIED Requirements
 
 ### Requirement: Blocks holder rendering and input capture
 The system SHALL provide `BlocksUI`, which renders the contenteditable blocks holder, adds/removes block wrappers on `core:BlockAdded`/`core:BlockRemoved`, captures native `beforeinput` and remaps it into a normalized `BeforeInputUIEvent`, delegates native `keydown` as a `KeydownUIEvent` so plugins can claim keyboard shortcuts, handles undo/redo keyboard shortcuts for keys no plugin claimed, and dispatches block-hover selection events.
@@ -66,51 +50,7 @@ The system SHALL provide `BlocksUI`, which renders the contenteditable blocks ho
 
 Implemented in `src/Blocks/Blocks.ts`, `src/Blocks/events/*`, validated by `src/Blocks/Blocks.spec.ts`.
 
-### Requirement: Floating toolbar
-The system SHALL provide `ToolbarUI`, which renders a floating toolbar with a plus-button and actions area, repositions itself to the selected block's offset on `ui:blocks:block-selected` (unless the Toolbox is open), and opens the Toolbox on plus-button click.
-
-#### Scenario: Repositioning on block selection
-- **GIVEN** a `BlockSelectedUIEvent` is received and the Toolbox is not currently open
-- **WHEN** `ToolbarUI` handles the event
-- **THEN** the toolbar moves to the selected block's `offsetTop`
-
-#### Scenario: Opening the toolbox
-- **GIVEN** the user clicks the toolbar's plus button
-- **WHEN** the click is handled
-- **THEN** `ToolbarUI` dispatches a `ToolboxOpenUIEvent`
-
-Implemented in `src/Toolbar/Toolbar.ts`, `src/Toolbar/ToolbarRenderedUIEvent.ts`.
-
-### Requirement: Inline toolbar
-The system SHALL provide `InlineToolbarUI`, which builds a popover of available inline tools on `core:SelectionChanged`, shows/positions/hides itself based on whether the current selection has a non-collapsed text range, and wires tool activation to `api.selection.applyInlineTool`.
-
-#### Scenario: Hiding on collapsed or absent selection
-- **GIVEN** a `SelectionChangedCoreEvent` with no index, no text segments, only a collapsed range, or no browser selection range
-- **WHEN** `InlineToolbarUI` handles the event
-- **THEN** the popover is hidden
-
-#### Scenario: Showing on a non-collapsed selection
-- **GIVEN** a `SelectionChangedCoreEvent` with a non-collapsed text range
-- **WHEN** `InlineToolbarUI` handles the event
-- **THEN** it rebuilds the popover from the available inline tools and current fragments, positions it at the selection's bounding rect, and shows it
-
-Implemented in `src/InlineToolbar/InlineToolbar.ts`, `src/InlineToolbar/InlineToolbarRenderedUIEvent.ts`.
-
-### Requirement: Toolbox
-The system SHALL provide `ToolboxUI`, a searchable popover of block tools populated on `core:ToolLoaded` (only tools where `tool.isBlock()` is true), which opens on `ui:toolbox:open`, tracks the hovered block index to determine insert position, and inserts a new block via `api.blocks.insert` on tool activation.
-
-#### Scenario: Inserting a new block from the toolbox
-- **GIVEN** the toolbox is open and a block index is tracked from the last hover (or none)
-- **WHEN** the user activates a tool entry
-- **THEN** `api.blocks.insert({ type, data, index: trackedIndex + 1 (or undefined), focus: true })` is called, and the popover closes, dispatching `ToolboxClosedUIEvent`
-
-#### Scenario: Toolbox open/close events
-- **GIVEN** the toolbox popover's open state changes
-- **WHEN** it opens or closes
-- **THEN** `ToolboxOpenedUIEvent` or `ToolboxClosedUIEvent` is dispatched accordingly
-
-Implemented in `src/Toolbox/Toolbox.ts`, `src/Toolbox/events/*`, `src/Toolbox/ToolboxConfigEntry.ts`.
-
+## ADDED Requirements
 
 ### Requirement: UI plugin listener lifetime
 Each UI plugin SHALL unsubscribe its own EventBus and DOM listeners when destroyed, detach its owned holder, and dispose its owned popover. Destroying one instance SHALL leave other consumers on the shared EventBus active. Teardown SHALL be safe to repeat.

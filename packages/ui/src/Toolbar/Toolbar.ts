@@ -46,6 +46,11 @@ export class ToolbarUI implements EditorjsPlugin {
   #eventBus: EventBus;
 
   /**
+   * Controls this toolbar's DOM and EventBus listeners
+   */
+  #listenersController = new AbortController();
+
+  /**
    * Toolbar HTML nodes
    */
   #nodes: ToolbarNodes = {
@@ -84,7 +89,7 @@ export class ToolbarUI implements EditorjsPlugin {
       }
 
       this.moveTo(event.detail.block);
-    });
+    }, { signal: this.#listenersController.signal });
   }
 
   /**
@@ -100,6 +105,7 @@ export class ToolbarUI implements EditorjsPlugin {
    * Removes Toolbar's HTML nodes from DOM
    */
   public destroy(): void {
+    this.#listenersController.abort();
     this.#nodes.holder.remove();
   }
 
@@ -120,7 +126,7 @@ export class ToolbarUI implements EditorjsPlugin {
 
     this.#nodes.plusButton.addEventListener('click', () => {
       this.#openToolbox();
-    });
+    }, { signal: this.#listenersController.signal });
 
     this.#eventBus.dispatchEvent(new ToolbarRenderedUIEvent({
       toolbar: this.#nodes.holder,
@@ -133,15 +139,15 @@ export class ToolbarUI implements EditorjsPlugin {
   #subscribeToToolboxEvents(): void {
     this.#eventBus.addEventListener(`ui:toolbox:rendered`, (event: ToolboxRenderedUIEvent) => {
       this.#addToolbox(event.detail.toolbox);
-    });
+    }, { signal: this.#listenersController.signal });
 
     this.#eventBus.addEventListener(`ui:toolbox:opened`, () => {
       this.#isToolboxOpen = true;
-    });
+    }, { signal: this.#listenersController.signal });
 
     this.#eventBus.addEventListener(`ui:toolbox:closed`, () => {
       this.#isToolboxOpen = false;
-    });
+    }, { signal: this.#listenersController.signal });
   }
 
   /**
