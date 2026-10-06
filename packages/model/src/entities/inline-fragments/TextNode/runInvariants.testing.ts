@@ -1,4 +1,3 @@
-import { isSameMarkSet } from '../runs/index.js';
 import type { TextNode } from './index.js';
 import { getRunsForTesting } from './index.js';
 
@@ -19,7 +18,10 @@ export function expectRunInvariants(node: TextNode): void {
     expect([...tools].sort()).toEqual(tools);
 
     if (index > 0) {
-      expect(isSameMarkSet(runs[index - 1].marks, run.marks)).toBe(false);
+      const previous = runs[index - 1].marks;
+      const isSameMarkSet = previous.length === run.marks.length && previous.every((mark, markIndex) => mark.equals(run.marks[markIndex]));
+
+      expect(isSameMarkSet).toBe(false);
     }
   });
 }

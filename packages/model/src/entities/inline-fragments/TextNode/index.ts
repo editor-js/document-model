@@ -10,15 +10,9 @@ import {
   TextUnformattedEvent
 } from '@editorjs/model-types';
 import { getContext } from '../../../utils/Context.js';
-import type { Mark, Run } from '../runs/index.js';
-import {
-  findRunForInsert,
-  mergeRuns,
-  removeMark,
-  runsToFragments,
-  setMark,
-  splitAt
-} from '../runs/index.js';
+import { Mark } from '../Mark/index.js';
+import type { Run } from '../Run/index.js';
+import { RunList } from '../RunList/index.js';
 
 interface TextNodeConstructorOptions {
   value?: string;
@@ -39,12 +33,12 @@ let readRuns: (node: TextNode) => readonly Run[];
  */
 export class TextNode extends EventBus {
   /**
-   * Canonical runs, see Run for the invariants
+   * Text and formatting as canonical runs
    */
-  #runs: Run[] = [];
+  #runs = new RunList();
 
   static {
-    readRuns = node => node.#runs;
+    readRuns = node => node.#runs.runs;
   }
 
   /**
@@ -64,7 +58,7 @@ export class TextNode extends EventBus {
    * Returns text length
    */
   public get length(): number {
-    return this.#runs.reduce((length, run) => length + run.text.length, 0);
+    return this.#runs.length;
   }
 
   /**
@@ -87,21 +81,7 @@ export class TextNode extends EventBus {
   public insertText(text: string, index = this.length): void {
     this.#validateIndex(index);
 
-    if (this.#runs.length === 0) {
-      this.#runs = mergeRuns([{
-        text,
-        marks: [],
-      }]);
-    } else {
-      const runIndex = findRunForInsert(this.#runs, index);
-      const run = this.#runs[runIndex];
-      const offset = index - this.#getRunStart(runIndex);
-
-      this.#runs[runIndex] = {
-        text: run.text.slice(0, offset) + text + run.text.slice(offset),
-        marks: run.marks,
-      };
-    }
+    this.#runs.insert(text, index);
 
     this.dispatchEvent(new TextAddedEvent(new PartialIndex({ textRange: [index, index] }), text, getContext<string | number>()!));
   }
@@ -115,14 +95,7 @@ export class TextNode extends EventBus {
   public removeText(start = 0, end = this.length): string {
     this.#validateRange(start, end);
 
-    const startIndex = splitAt(this.#runs, start);
-    const endIndex = splitAt(this.#runs, end);
-    const removedText = this.#runs
-      .splice(startIndex, endIndex - startIndex)
-      .map(run => run.text)
-      .join('');
-
-    this.#runs = mergeRuns(this.#runs);
+    const removedText = this.#runs.remove(start, end);
 
     this.dispatchEvent(new TextRemovedEvent(new PartialIndex({ textRange: [start, end] }), removedText, getContext<string | number>()!));
 
@@ -137,10 +110,7 @@ export class TextNode extends EventBus {
   public getText(start = 0, end = this.length): string {
     this.#validateRange(start, end);
 
-    return this.#runs
-      .map(run => run.text)
-      .join('')
-      .slice(start, end);
+    return this.#runs.getText().slice(start, end);
   }
 
   /**
@@ -157,7 +127,7 @@ export class TextNode extends EventBus {
       return [];
     }
 
-    return runsToFragments(this.#runs)
+    return this.#runs.toFragments()
       .filter(fragment => fragment.range[0] < end && fragment.range[1] > start)
       .filter(fragment => tool === undefined || fragment.tool === tool);
   }
@@ -173,12 +143,7 @@ export class TextNode extends EventBus {
   public format(tool: InlineToolName, start: number, end: number, data?: InlineToolData): void {
     this.#validateRange(start, end);
 
-    const mark: Mark = {
-      tool,
-      data,
-    };
-
-    this.#updateMarks(start, end, marks => setMark(marks, mark));
+    this.#runs.setMark(start, end, new Mark(tool, data));
 
     this.dispatchEvent(
       new TextFormattedEvent(
@@ -201,41 +166,9 @@ export class TextNode extends EventBus {
   public unformat(tool: InlineToolName, start: number, end: number): void {
     this.#validateRange(start, end);
 
-    this.#updateMarks(start, end, marks => removeMark(marks, tool));
+    this.#runs.removeMark(start, end, tool);
 
     this.dispatchEvent(new TextUnformattedEvent(new PartialIndex({ textRange: [start, end] }), { tool }, getContext<string | number>()!));
-  }
-
-  /**
-   * Replaces marks of the runs in the range and restores canonical runs
-   * @param start - char start index of the range
-   * @param end - char end index of the range
-   * @param update - returns new marks for the passed ones
-   */
-  #updateMarks(start: number, end: number, update: (marks: Mark[]) => Mark[]): void {
-    const startIndex = splitAt(this.#runs, start);
-    const endIndex = splitAt(this.#runs, end);
-
-    for (let index = startIndex; index < endIndex; index++) {
-      const run = this.#runs[index];
-
-      this.#runs[index] = {
-        text: run.text,
-        marks: update(run.marks),
-      };
-    }
-
-    this.#runs = mergeRuns(this.#runs);
-  }
-
-  /**
-   * Returns char offset of the run start
-   * @param runIndex - index of the run
-   */
-  #getRunStart(runIndex: number): number {
-    return this.#runs
-      .slice(0, runIndex)
-      .reduce((offset, run) => offset + run.text.length, 0);
   }
 
   /**
