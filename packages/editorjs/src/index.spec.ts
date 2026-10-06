@@ -45,6 +45,29 @@ describe('EditorJS bundle', () => {
     destroy.mockClear();
   });
 
+  describe('isReady interrupted by destroy', () => {
+    /**
+     * Lets an unhandled rejection surface: Jest fails the test that leaves one behind
+     */
+    const flush = (): Promise<void> => new Promise(resolve => setTimeout(resolve, 0));
+
+    it('should not leave an AbortError from isReady unhandled', async () => {
+      initialize.mockRejectedValue(new DOMException('Editor was destroyed during initialization', 'AbortError'));
+
+      void new EditorJS({} as any);
+
+      await expect(flush()).resolves.toBeUndefined();
+    });
+
+    it('should still reject isReady with the AbortError', async () => {
+      initialize.mockRejectedValue(new DOMException('Editor was destroyed during initialization', 'AbortError'));
+
+      const editor = new EditorJS({} as any);
+
+      await expect(editor.isReady).rejects.toMatchObject({ name: 'AbortError' });
+    });
+  });
+
   it('should delegate destroy to Core', () => {
     initialize.mockResolvedValue(undefined);
 
@@ -65,11 +88,16 @@ describe('EditorJS bundle', () => {
   });
 
   it('rejects isReady when Core initialization fails', async () => {
+    const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
     initialize.mockRejectedValue(new Error('init failed'));
 
     const editor = new EditorJS({} as any);
 
     await expect(editor.isReady).rejects.toThrow('init failed');
+    expect(error).toHaveBeenCalledWith('[EditorJS] Initialization failed', expect.any(Error));
+
+    error.mockRestore();
   });
 
   it('registers a rendering adapter on the underlying Core', () => {

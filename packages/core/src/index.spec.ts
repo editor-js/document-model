@@ -393,7 +393,7 @@ describe('Core', () => {
       expect(log).toEqual([]);
     });
 
-    it('should resolve initialize without dispatching ready when destroyed mid-initialization', async () => {
+    it('should reject initialize with an AbortError without dispatching ready when destroyed mid-initialization', async () => {
       let resolvePrepare: () => void = () => undefined;
       const ready = jest.fn();
       const onModelUpdate = jest.fn();
@@ -422,7 +422,8 @@ describe('Core', () => {
       core.destroy();
       resolvePrepare();
 
-      await expect(initialization).resolves.toBeUndefined();
+      await expect(initialization).rejects.toMatchObject({ name: 'AbortError',
+        message: 'Editor was destroyed during initialization' });
       await flush();
 
       expect(ready).not.toHaveBeenCalled();

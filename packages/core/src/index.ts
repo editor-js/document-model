@@ -240,7 +240,7 @@ export default class Core {
      * destroy() was called while tools were being prepared: it already tore down what exists
      */
     if (this.#destroyed) {
-      return;
+      throw new DOMException('Editor was destroyed during initialization', 'AbortError');
     }
 
     /**

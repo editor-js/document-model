@@ -37,7 +37,7 @@
 
 - [x] 6.1 Write failing `Core` tests (`packages/core/src/index.spec.ts`): `should call plugin destroy in reverse construction order`, `should unregister plugin public APIs`, `should continue teardown and log when a plugin destroy throws`, `should destroy UndoRedoManager, SelectionManager, BlockRenderer and then the adapter`, `should not emit model events during destroy`, and `should be a no-op when called twice`
 - [x] 6.2 Keep plugin instances in `#initializePlugin`, track the initialization stage, and implement `destroy()` in the order from design D3
-- [ ] 6.3 Write failing tests: `should not construct anything when destroyed before initialize`, `should reject initialize with an AbortError without dispatching ready when destroyed mid-initialization`, and `should throw from use and initialize after destroy`
+- [x] 6.3 Write failing tests: `should not construct anything when destroyed before initialize`, `should reject initialize with an AbortError without dispatching ready when destroyed mid-initialization`, and `should throw from use and initialize after destroy`
 - [x] 6.4 Implement the `#destroyed` checks after each `await` in `initialize()`, and the post-destroy guards in `use()` and `initialize()`
 
 ## 7. UI teardown
@@ -49,7 +49,7 @@
 
 ## 8. Bundle and integration
 
-- [ ] 8.1 Write a failing `EditorJS` test, `should delegate destroy to Core`, and implement `EditorJS#destroy()`. Add tests that an `AbortError` from `isReady` isn't reported as an unhandled rejection while any other initialization error is logged, and handle that on the bundle's ready promise
+- [x] 8.1 Write a failing `EditorJS` test, `should delegate destroy to Core`, and implement `EditorJS#destroy()`. Add tests that an `AbortError` from `isReady` isn't reported as an unhandled rejection while any other initialization error is logged, and handle that on the bundle's ready promise
 - [ ] 8.2 Write the integration test in `packages/editorjs`, `should leave no DOM nodes or document/holder listeners after creating and destroying several editors on one page`, spying on `document`/holder `add/removeEventListener` and checking that the counts balance and the holders are empty
 - [ ] 8.3 Add an integration test that destroys the editor before `isReady` settles and checks that `isReady` rejects with an `AbortError` and nothing is rendered
 - [ ] 8.4 Check that `CollaborationManager.destroy()` closes the `OTClient` socket when it's reached through `EditorJS#destroy()` (mock WebSocket)
