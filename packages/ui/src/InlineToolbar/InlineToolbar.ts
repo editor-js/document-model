@@ -38,6 +38,11 @@ export class InlineToolbarUI implements EditorjsPlugin {
   #eventBus: EventBus;
 
   /**
+   * Controls this toolbar's subscriptions and asynchronous rendering lifetime
+   */
+  #listenersController = new AbortController();
+
+  /**
    * HTML nodes of the inline toolbar
    */
   #nodes: Record<string, HTMLElement> = {};
@@ -72,13 +77,17 @@ export class InlineToolbarUI implements EditorjsPlugin {
 
     this.#render();
 
-    this.#eventBus.addEventListener(`core:${CoreEventType.SelectionChanged}`, (event: SelectionChangedCoreEvent) => void this.#handleSelectionChange(event));
+    this.#eventBus.addEventListener(`core:${CoreEventType.SelectionChanged}`, (event: SelectionChangedCoreEvent) => void this.#handleSelectionChange(event), {
+      signal: this.#listenersController.signal,
+    });
   }
 
   /**
    * Cleanup when plugin is destroyed
    */
   public destroy(): void {
+    this.#listenersController.abort();
+    this.#hide();
     this.#nodes.holder?.remove();
   }
 
@@ -125,6 +134,11 @@ export class InlineToolbarUI implements EditorjsPlugin {
     }
 
     await this.#renderPopover(availableInlineTools, textRange, fragments);
+
+    if (this.#listenersController.signal.aborted) {
+      return;
+    }
+
     this.#move();
     this.#show();
   }
@@ -218,8 +232,14 @@ export class InlineToolbarUI implements EditorjsPlugin {
         .flat();
     });
 
+    const items = (await Promise.all(popoverItems)).flat();
+
+    if (this.#listenersController.signal.aborted) {
+      return;
+    }
+
     this.#popover = new PopoverInline({
-      items: (await Promise.all(popoverItems)).flat(),
+      items,
       scopeElement: this.#config.holder,
       closeOnOutsideClick: false,
     });
@@ -240,6 +260,7 @@ export class InlineToolbarUI implements EditorjsPlugin {
   #hide(): void {
     this.#popover?.hide();
     this.#popover?.destroy();
+    this.#popover = null;
   }
 
   /**

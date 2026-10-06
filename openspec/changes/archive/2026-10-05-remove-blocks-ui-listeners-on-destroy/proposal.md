@@ -21,3 +21,9 @@
 - `packages/ui/src/Blocks/Blocks.ts`, `packages/ui/src/index.ts`
 - `packages/ui/package.json`, `packages/ui/jest.config.ts`, `packages/ui/vite.config.ts` (declarations are built from `tsconfig.build.json` so spec files are not emitted to `dist`)
 - `docs/plugins.md` already notes that plugin instances may implement `destroy()`; nothing there is superseded.
+
+## Review follow-up: remaining UI listeners
+
+The follow-up extends the same teardown concern across `BlocksUI`, `EditorjsUI`, `ToolbarUI`, `ToolboxUI`, and `InlineToolbarUI`. Each instance owns an abort signal for its subscriptions and native handlers. Toolbox and inline-toolbar teardown dispose their popovers, and asynchronous inline-tool configuration is checked again after awaiting it so a destroyed toolbar cannot recreate UI.
+
+`src/lifecycle.spec.ts` verifies active behavior, repeated destruction, replacement instances, unrelated bus consumers, and pending inline configuration with real DOM/EventBus implementations. UI-kit popovers are substituted at the ownership boundary; this does not claim their internal window/document listeners are fixed. No direct `window.addEventListener` registration exists in the current UI package. `docs/plugins.md` continues to describe individual plugin destruction; no global Core teardown API is introduced.

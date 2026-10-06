@@ -31,6 +31,11 @@ export class EditorjsUI implements EditorjsPlugin {
   #eventBus: EventBus;
 
   /**
+   * Controls this shell's EventBus subscriptions
+   */
+  #listenersController = new AbortController();
+
+  /**
    * Element where the editor is initiated
    */
   #holder: HTMLElement;
@@ -57,21 +62,22 @@ export class EditorjsUI implements EditorjsPlugin {
 
     this.#eventBus.addEventListener(`ui:toolbar:rendered`, (event: ToolbarRenderedUIEvent) => {
       this.#addToolbar(event.detail.toolbar);
-    });
+    }, { signal: this.#listenersController.signal });
 
     this.#eventBus.addEventListener(`ui:inline-toolbar:rendered`, (event: InlineToolbarRenderedUIEvent) => {
       this.#addInlineToolbar(event.detail.toolbar);
-    });
+    }, { signal: this.#listenersController.signal });
 
     this.#eventBus.addEventListener(`ui:blocks:rendered`, (event: BlocksHolderRenderedUIEvent) => {
       this.#addBlocks(event.detail.blocksHolder);
-    });
+    }, { signal: this.#listenersController.signal });
   }
 
   /**
    * Method to destroy the plugin
    */
   public destroy(): void {
+    this.#listenersController.abort();
     this.#editorWrapper.remove();
   }
 

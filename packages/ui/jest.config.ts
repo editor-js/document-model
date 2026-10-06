@@ -7,6 +7,8 @@ export default {
   extensionsToTreatAsEsm: [ '.ts' ],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
+    '\\.pcss$': '<rootDir>/test/style.cjs',
+    '^@codexteam/ui/styles(?:/.*)?$': '<rootDir>/test/style.cjs',
   },
   coverageReporters: ['lcov', 'json-summary', 'text-summary'],
   transform: {

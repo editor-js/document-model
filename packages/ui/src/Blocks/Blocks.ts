@@ -48,8 +48,7 @@ export class BlocksUI implements EditorjsPlugin {
   #api: EditorAPI;
 
   /**
-   * Controls the lifetime of the DOM listeners attached to the blocks holder
-   * so they can all be removed at once on destroy()
+   * Controls the lifetime of this plugin's DOM and EventBus listeners
    */
   #listenersController = new AbortController();
 
@@ -66,13 +65,13 @@ export class BlocksUI implements EditorjsPlugin {
       const { ui, index } = event.detail;
 
       this.#addBlock(ui, index);
-    });
+    }, { signal: this.#listenersController.signal });
 
     this.#eventBus.addEventListener(`core:${CoreEventType.BlockRemoved}`, (event: BlockRemovedCoreEvent) => {
       const { index } = event.detail;
 
       this.#removeBlock(index);
-    });
+    }, { signal: this.#listenersController.signal });
 
     this.#eventBus.dispatchEvent(new BlocksHolderRenderedUIEvent({
       blocksHolder: this.#blocksHolder,
@@ -193,7 +192,7 @@ export class BlocksUI implements EditorjsPlugin {
 
     wrapper.addEventListener('mouseenter', (e) => {
       this.#updateSelectedBlock(e);
-    });
+    }, { signal: this.#listenersController.signal });
 
     wrapper.append(contents);
     contents.append(blockElement);
@@ -246,13 +245,10 @@ export class BlocksUI implements EditorjsPlugin {
    * Cleanup when plugin is destroyed
    */
   public destroy(): void {
+    this.#listenersController.abort();
+
     this.#blocks.forEach(block => block.remove());
     this.#blocks = [];
-
-    /**
-     * Removes the beforeinput/keydown/copy listeners attached to the blocks holder
-     */
-    this.#listenersController.abort();
 
     /**
      * Detach the blocks holder itself so it doesn't linger in the DOM

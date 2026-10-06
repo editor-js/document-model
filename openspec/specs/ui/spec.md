@@ -4,7 +4,7 @@
 
 `@editorjs/ui` is the default rendering shell for Editor.js: a set of `EditorjsPlugin` implementations that subscribe to the core `EventBus` to render DOM and dispatch their own `ui:*` events so the pieces can wire themselves together. It owns no document state — it renders what `core` (`BlockManager`/`SelectionManager`, etc.) reports, and forwards user interaction back through `EditorAPI`.
 
-**Note**: apart from `src/Blocks/Blocks.spec.ts`, which covers `BlocksUI` teardown, this package has no automated tests; the remaining scenarios below are derived directly from the event-wiring logic in source rather than confirmed by tests.
+**Note**: `src/Blocks/Blocks.spec.ts` and `src/lifecycle.spec.ts` cover teardown and active/replacement-instance controls. The remaining scenarios below are derived from source and are not all covered by these tests.
 ## Requirements
 ### Requirement: Shell assembly
 The system SHALL provide `EditorjsUI` as the top-level shell that creates the editor wrapper in the holder element and reactively assembles the Toolbar, InlineToolbar, and Blocks elements into it as each announces its own `*:rendered` event, without holding direct references to those components.
@@ -111,3 +111,19 @@ The system SHALL provide `ToolboxUI`, a searchable popover of block tools popula
 
 Implemented in `src/Toolbox/Toolbox.ts`, `src/Toolbox/events/*`, `src/Toolbox/ToolboxConfigEntry.ts`.
 
+
+### Requirement: UI plugin listener lifetime
+Each UI plugin SHALL unsubscribe its own EventBus and DOM listeners when destroyed, detach its owned holder, and dispose its owned popover. Destroying one instance SHALL leave other consumers on the shared EventBus active. Teardown SHALL be safe to repeat.
+
+#### Scenario: Events after teardown
+- **GIVEN** a UI plugin has been destroyed
+- **WHEN** the shared EventBus emits a previously subscribed event or a retained DOM element receives an event
+- **THEN** that instance no longer renders, moves elements, or dispatches UI actions
+- **AND** unrelated listeners and a replacement plugin still receive their events
+
+#### Scenario: Pending inline toolbar configuration
+- **GIVEN** inline tool configuration is still resolving when the toolbar is destroyed
+- **WHEN** the configuration finishes resolving
+- **THEN** no popover is created, shown, or positioned by the destroyed toolbar
+
+Validated by `src/lifecycle.spec.ts` using real DOM/EventBus listeners and a substituted popover boundary. Vendor-owned global listener internals are outside this requirement's verification scope.

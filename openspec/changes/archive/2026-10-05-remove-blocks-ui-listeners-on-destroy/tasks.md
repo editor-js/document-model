@@ -10,3 +10,9 @@
 ## 3. Verify
 
 - [x] 3.1 `yarn test`, `yarn lint:ci` and `yarn build` pass for `@editorjs/ui`; `openspec validate remove-blocks-ui-listeners-on-destroy --type change` passes
+
+## 4. Review follow-up: remaining UI listeners
+
+- [x] 4.1 Reproduce stale EventBus/DOM subscriptions and delayed inline-toolbar rendering with failing lifecycle tests
+- [x] 4.2 Abort instance-owned subscriptions, dispose owned popovers and guard asynchronous rendering after destruction
+- [x] 4.3 Verify the follow-up's complete UI tests, build, zero-warning lint and OpenSpec validation before publication

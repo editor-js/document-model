@@ -49,3 +49,21 @@ The system SHALL provide `BlocksUI`, which renders the contenteditable blocks ho
 - **THEN** the `beforeinput`, `keydown` and `copy` listeners are removed from the blocks holder, so native events on it no longer dispatch `BeforeInputUIEvent`, `KeydownUIEvent` or `CopyUIEvent`, and the blocks holder is detached from the DOM
 
 Implemented in `src/Blocks/Blocks.ts`, `src/Blocks/events/*`, validated by `src/Blocks/Blocks.spec.ts`.
+
+## ADDED Requirements
+
+### Requirement: UI plugin listener lifetime
+Each UI plugin SHALL unsubscribe its own EventBus and DOM listeners when destroyed, detach its owned holder, and dispose its owned popover. Destroying one instance SHALL leave other consumers on the shared EventBus active. Teardown SHALL be safe to repeat.
+
+#### Scenario: Events after teardown
+- **GIVEN** a UI plugin has been destroyed
+- **WHEN** the shared EventBus emits a previously subscribed event or a retained DOM element receives an event
+- **THEN** that instance no longer renders, moves elements, or dispatches UI actions
+- **AND** unrelated listeners and a replacement plugin still receive their events
+
+#### Scenario: Pending inline toolbar configuration
+- **GIVEN** inline tool configuration is still resolving when the toolbar is destroyed
+- **WHEN** the configuration finishes resolving
+- **THEN** no popover is created, shown, or positioned by the destroyed toolbar
+
+Validated by `src/lifecycle.spec.ts` using real DOM/EventBus listeners and a substituted popover boundary. Vendor-owned global listener internals are outside this requirement's verification scope.
