@@ -77,12 +77,12 @@ classDiagram
     +toFragments(): InlineFragment[]
   }
 
-  class Run {
+  class TextRun {
     +text: string
-    +marks: Mark[]
+    +marks: TextMark[]
   }
 
-  class Mark {
+  class TextMark {
     +tool: InlineToolName
     +data?: InlineToolData
     +equals(mark): boolean
@@ -132,8 +132,8 @@ classDiagram
 
   %% Inline formatting runs
   TextNode "1" *-- "1" RunList : runs
-  RunList "1" *-- "0..*" Run : runs
-  Run "1" o-- "0..*" Mark : marks
+  RunList "1" *-- "0..*" TextRun : runs
+  TextRun "1" o-- "0..*" TextMark : marks
 
   %% Caret management (declared last → placed right)
   EditorJSModel "1" *-- "1" CaretManager : caretManager

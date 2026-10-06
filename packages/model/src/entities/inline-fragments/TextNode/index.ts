@@ -10,8 +10,8 @@ import {
   TextUnformattedEvent
 } from '@editorjs/model-types';
 import { getContext } from '../../../utils/Context.js';
-import { Mark } from '../Mark/index.js';
-import type { Run } from '../Run/index.js';
+import { TextMark } from '../TextMark/index.js';
+import type { TextRun } from '../TextRun/index.js';
 import { RunList } from '../RunList/index.js';
 
 interface TextNodeConstructorOptions {
@@ -22,7 +22,7 @@ interface TextNodeConstructorOptions {
 /**
  * Reads runs of a TextNode, assigned in the class static block
  */
-let readRuns: (node: TextNode) => readonly Run[];
+let readRuns: (node: TextNode) => readonly TextRun[];
 
 /**
  * TextNode stores a text value with its inline formatting.
@@ -143,7 +143,7 @@ export class TextNode extends EventBus {
   public format(tool: InlineToolName, start: number, end: number, data?: InlineToolData): void {
     this.#validateRange(start, end);
 
-    this.#runs.setMark(start, end, new Mark(tool, data));
+    this.#runs.setMark(start, end, new TextMark(tool, data));
 
     this.dispatchEvent(
       new TextFormattedEvent(
@@ -220,6 +220,6 @@ export class TextNode extends EventBus {
  * Returns runs of the TextNode. For tests only, not exported from the package
  * @param node - TextNode to read runs of
  */
-export function getRunsForTesting(node: TextNode): readonly Run[] {
+export function getRunsForTesting(node: TextNode): readonly TextRun[] {
   return readRuns(node);
 }

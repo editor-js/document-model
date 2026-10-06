@@ -1,22 +1,22 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import { createInlineToolData, createInlineToolName } from '@editorjs/model-types';
-import { Mark } from '../Mark/index.js';
-import { Run } from '../Run/index.js';
+import { TextMark } from '../TextMark/index.js';
+import { TextRun } from '../TextRun/index.js';
 import { RunList } from './index.js';
 
 const bold = createInlineToolName('bold');
 const italic = createInlineToolName('italic');
 const link = createInlineToolName('link');
 
-const boldMark = new Mark(bold);
-const italicMark = new Mark(italic);
+const boldMark = new TextMark(bold);
+const italicMark = new TextMark(italic);
 
 /**
  * Creates link mark with passed href
  * @param href - link href
  */
-function linkMark(href: string): Mark {
-  return new Mark(link, createInlineToolData({ href }));
+function linkMark(href: string): TextMark {
+  return new TextMark(link, createInlineToolData({ href }));
 }
 
 /**
@@ -38,7 +38,7 @@ describe('RunList', () => {
 
       list.insert('abc', 0);
 
-      expect(list.runs).toEqual([new Run('abc')]);
+      expect(list.runs).toEqual([new TextRun('abc')]);
       expect(list.length).toBe(3);
       expect(list.getText()).toBe('abc');
     });
@@ -57,7 +57,7 @@ describe('RunList', () => {
       list.setMark(0, 2, boldMark);
       list.insert('X', 2);
 
-      expect(list.runs).toEqual([new Run('abX', [boldMark]), new Run('cd')]);
+      expect(list.runs).toEqual([new TextRun('abX', [boldMark]), new TextRun('cd')]);
     });
 
     it('should insert into the first run at the zero offset', () => {
@@ -66,7 +66,7 @@ describe('RunList', () => {
       list.setMark(0, 2, boldMark);
       list.insert('X', 0);
 
-      expect(list.runs).toEqual([new Run('Xab', [boldMark]), new Run('cd')]);
+      expect(list.runs).toEqual([new TextRun('Xab', [boldMark]), new TextRun('cd')]);
     });
 
     it('should insert into the middle of a later run', () => {
@@ -75,7 +75,7 @@ describe('RunList', () => {
       list.setMark(0, 2, boldMark);
       list.insert('X', 3);
 
-      expect(list.runs).toEqual([new Run('ab', [boldMark]), new Run('cXd')]);
+      expect(list.runs).toEqual([new TextRun('ab', [boldMark]), new TextRun('cXd')]);
     });
   });
 
@@ -86,7 +86,7 @@ describe('RunList', () => {
       list.setMark(1, 3, boldMark);
 
       expect(list.remove(2, 5)).toBe('cde');
-      expect(list.runs).toEqual([new Run('a'), new Run('b', [boldMark]), new Run('f')]);
+      expect(list.runs).toEqual([new TextRun('a'), new TextRun('b', [boldMark]), new TextRun('f')]);
     });
 
     it('should join runs with equal marks around the removed text', () => {
@@ -97,7 +97,7 @@ describe('RunList', () => {
       list.setMark(4, 6, boldMark);
       list.remove(2, 4);
 
-      expect(list.runs).toEqual([new Run('abef', [boldMark])]);
+      expect(list.runs).toEqual([new TextRun('abef', [boldMark])]);
     });
 
     it('should leave no runs when all text is removed', () => {
@@ -114,7 +114,7 @@ describe('RunList', () => {
       const list = createList('abcd');
 
       expect(list.remove(2, 2)).toBe('');
-      expect(list.runs).toEqual([new Run('abcd')]);
+      expect(list.runs).toEqual([new TextRun('abcd')]);
     });
   });
 
@@ -124,7 +124,7 @@ describe('RunList', () => {
 
       list.setMark(1, 3, boldMark);
 
-      expect(list.runs).toEqual([new Run('a'), new Run('bc', [boldMark]), new Run('d')]);
+      expect(list.runs).toEqual([new TextRun('a'), new TextRun('bc', [boldMark]), new TextRun('d')]);
     });
 
     it('should not cut runs when the range edges are on run boundaries', () => {
@@ -133,7 +133,7 @@ describe('RunList', () => {
       list.setMark(0, 2, boldMark);
       list.setMark(0, 2, italicMark);
 
-      expect(list.runs).toEqual([new Run('ab', [boldMark, italicMark]), new Run('cd')]);
+      expect(list.runs).toEqual([new TextRun('ab', [boldMark, italicMark]), new TextRun('cd')]);
     });
 
     it('should keep marks sorted by tool name', () => {
@@ -142,7 +142,7 @@ describe('RunList', () => {
       list.setMark(0, 4, italicMark);
       list.setMark(0, 4, boldMark);
 
-      expect(list.runs).toEqual([new Run('abcd', [boldMark, italicMark])]);
+      expect(list.runs).toEqual([new TextRun('abcd', [boldMark, italicMark])]);
     });
 
     it('should replace the mark of the same tool', () => {
@@ -152,9 +152,9 @@ describe('RunList', () => {
       list.setMark(1, 3, linkMark('b'));
 
       expect(list.runs).toEqual([
-        new Run('a', [linkMark('a')]),
-        new Run('bc', [linkMark('b')]),
-        new Run('d', [linkMark('a')]),
+        new TextRun('a', [linkMark('a')]),
+        new TextRun('bc', [linkMark('b')]),
+        new TextRun('d', [linkMark('a')]),
       ]);
     });
 
@@ -164,7 +164,7 @@ describe('RunList', () => {
       list.setMark(0, 4, linkMark('a'));
       list.setMark(1, 3, linkMark('a'));
 
-      expect(list.runs).toEqual([new Run('abcd', [linkMark('a')])]);
+      expect(list.runs).toEqual([new TextRun('abcd', [linkMark('a')])]);
     });
 
     it('should join adjacent runs with equal data', () => {
@@ -173,7 +173,7 @@ describe('RunList', () => {
       list.setMark(0, 2, linkMark('a'));
       list.setMark(2, 4, linkMark('a'));
 
-      expect(list.runs).toEqual([new Run('abcd', [linkMark('a')])]);
+      expect(list.runs).toEqual([new TextRun('abcd', [linkMark('a')])]);
     });
 
     it('should keep adjacent runs with different data apart', () => {
@@ -182,7 +182,7 @@ describe('RunList', () => {
       list.setMark(0, 2, linkMark('a'));
       list.setMark(2, 4, linkMark('b'));
 
-      expect(list.runs).toEqual([new Run('ab', [linkMark('a')]), new Run('cd', [linkMark('b')])]);
+      expect(list.runs).toEqual([new TextRun('ab', [linkMark('a')]), new TextRun('cd', [linkMark('b')])]);
     });
 
     it('should not change runs for an empty range', () => {
@@ -190,7 +190,7 @@ describe('RunList', () => {
 
       list.setMark(2, 2, boldMark);
 
-      expect(list.runs).toEqual([new Run('abcd')]);
+      expect(list.runs).toEqual([new TextRun('abcd')]);
     });
   });
 
@@ -201,7 +201,7 @@ describe('RunList', () => {
       list.setMark(0, 6, boldMark);
       list.removeMark(2, 4, bold);
 
-      expect(list.runs).toEqual([new Run('ab', [boldMark]), new Run('cd'), new Run('ef', [boldMark])]);
+      expect(list.runs).toEqual([new TextRun('ab', [boldMark]), new TextRun('cd'), new TextRun('ef', [boldMark])]);
     });
 
     it('should join runs that become equal', () => {
@@ -211,7 +211,7 @@ describe('RunList', () => {
       list.setMark(1, 3, italicMark);
       list.removeMark(1, 3, italic);
 
-      expect(list.runs).toEqual([new Run('abcd', [boldMark])]);
+      expect(list.runs).toEqual([new TextRun('abcd', [boldMark])]);
     });
 
     it('should keep marks of other tools', () => {
@@ -221,7 +221,7 @@ describe('RunList', () => {
       list.setMark(0, 4, italicMark);
       list.removeMark(0, 4, bold);
 
-      expect(list.runs).toEqual([new Run('abcd', [italicMark])]);
+      expect(list.runs).toEqual([new TextRun('abcd', [italicMark])]);
     });
   });
 
@@ -239,9 +239,9 @@ describe('RunList', () => {
     it('should not expose the internal array', () => {
       const list = createList('abcd');
 
-      (list.runs as Run[]).push(new Run('x'));
+      (list.runs as TextRun[]).push(new TextRun('x'));
 
-      expect(list.runs).toEqual([new Run('abcd')]);
+      expect(list.runs).toEqual([new TextRun('abcd')]);
     });
   });
 

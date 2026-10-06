@@ -1,6 +1,6 @@
 import type { InlineFragment, InlineToolName } from '@editorjs/model-types';
-import type { Mark } from '../Mark/index.js';
-import { Run } from '../Run/index.js';
+import type { TextMark } from '../TextMark/index.js';
+import { TextRun } from '../TextRun/index.js';
 
 /**
  * Fragment being built while sweeping the runs, with the mark it was opened for
@@ -9,7 +9,7 @@ interface OpenFragment {
   /**
    * Mark the fragment was opened for
    */
-  mark: Mark;
+  mark: TextMark;
 
   /**
    * Fragment with its end not set yet
@@ -31,7 +31,7 @@ export class RunList {
   /**
    * Canonical runs
    */
-  #runs: Run[] = [];
+  #runs: TextRun[] = [];
 
   /**
    * Returns text length
@@ -43,7 +43,7 @@ export class RunList {
   /**
    * Returns a copy of the runs
    */
-  public get runs(): readonly Run[] {
+  public get runs(): readonly TextRun[] {
     return [...this.#runs];
   }
 
@@ -62,7 +62,7 @@ export class RunList {
    */
   public insert(text: string, offset: number): void {
     if (this.#runs.length === 0) {
-      this.#runs = RunList.#merge([new Run(text)]);
+      this.#runs = RunList.#merge([new TextRun(text)]);
 
       return;
     }
@@ -71,7 +71,7 @@ export class RunList {
     const run = this.#runs[index];
     const cut = offset - runStart;
 
-    this.#runs[index] = new Run(run.text.slice(0, cut) + text + run.text.slice(cut), run.marks);
+    this.#runs[index] = new TextRun(run.text.slice(0, cut) + text + run.text.slice(cut), run.marks);
   }
 
   /**
@@ -99,7 +99,7 @@ export class RunList {
    * @param end - char end offset of the range
    * @param mark - mark to apply
    */
-  public setMark(start: number, end: number, mark: Mark): void {
+  public setMark(start: number, end: number, mark: TextMark): void {
     this.#updateMarks(start, end, marks => [...RunList.#withoutTool(marks, mark.tool), mark].sort((a, b) => RunList.#compareTools(a.tool, b.tool)));
   }
 
@@ -167,14 +167,14 @@ export class RunList {
    * @param end - char end offset of the range
    * @param update - returns new marks for the passed ones
    */
-  #updateMarks(start: number, end: number, update: (marks: readonly Mark[]) => readonly Mark[]): void {
+  #updateMarks(start: number, end: number, update: (marks: readonly TextMark[]) => readonly TextMark[]): void {
     const startIndex = this.#splitAt(start);
     const endIndex = this.#splitAt(end);
 
     for (let index = startIndex; index < endIndex; index++) {
       const run = this.#runs[index];
 
-      this.#runs[index] = new Run(run.text, update(run.marks));
+      this.#runs[index] = new TextRun(run.text, update(run.marks));
     }
 
     this.#runs = RunList.#merge(this.#runs);
@@ -198,7 +198,7 @@ export class RunList {
       if (offset < runEnd) {
         const cut = offset - runStart;
 
-        this.#runs.splice(index, 1, new Run(run.text.slice(0, cut), run.marks), new Run(run.text.slice(cut), run.marks));
+        this.#runs.splice(index, 1, new TextRun(run.text.slice(0, cut), run.marks), new TextRun(run.text.slice(cut), run.marks));
 
         return index + 1;
       }
@@ -234,8 +234,8 @@ export class RunList {
    * Returns canonical runs: empty runs are dropped and neighbours with equal mark sets are joined
    * @param runs - runs to merge
    */
-  static #merge(runs: Run[]): Run[] {
-    const result: Run[] = [];
+  static #merge(runs: TextRun[]): TextRun[] {
+    const result: TextRun[] = [];
 
     for (const run of runs) {
       if (run.text.length === 0) {
@@ -245,7 +245,7 @@ export class RunList {
       const previous = result[result.length - 1];
 
       if (previous !== undefined && RunList.#isSameMarkSet(previous.marks, run.marks)) {
-        result[result.length - 1] = new Run(previous.text + run.text, previous.marks);
+        result[result.length - 1] = new TextRun(previous.text + run.text, previous.marks);
 
         continue;
       }
@@ -261,7 +261,7 @@ export class RunList {
    * @param a - first mark set
    * @param b - second mark set
    */
-  static #isSameMarkSet(a: readonly Mark[], b: readonly Mark[]): boolean {
+  static #isSameMarkSet(a: readonly TextMark[], b: readonly TextMark[]): boolean {
     return a.length === b.length && a.every((mark, index) => mark.equals(b[index]));
   }
 
@@ -270,7 +270,7 @@ export class RunList {
    * @param marks - sorted marks
    * @param tool - tool to remove the mark of
    */
-  static #withoutTool(marks: readonly Mark[], tool: InlineToolName): Mark[] {
+  static #withoutTool(marks: readonly TextMark[], tool: InlineToolName): TextMark[] {
     return marks.filter(mark => mark.tool !== tool);
   }
 

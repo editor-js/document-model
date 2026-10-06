@@ -1,12 +1,12 @@
 import { createInlineToolData, createInlineToolName } from '@editorjs/model-types';
-import { Mark } from './index.js';
+import { TextMark } from './index.js';
 
-describe('Mark', () => {
+describe('TextMark', () => {
   const link = createInlineToolName('link');
 
   it('should store the tool and data', () => {
     const data = createInlineToolData({ href: 'a' });
-    const mark = new Mark(link, data);
+    const mark = new TextMark(link, data);
 
     expect(mark.tool).toBe(link);
     expect(mark.data).toBe(data);
@@ -14,21 +14,21 @@ describe('Mark', () => {
 
   describe('.equals()', () => {
     it('should return true for the same tool and equal data', () => {
-      expect(new Mark(link, createInlineToolData({ href: 'a' })).equals(new Mark(link, createInlineToolData({ href: 'a' })))).toBe(true);
+      expect(new TextMark(link, createInlineToolData({ href: 'a' })).equals(new TextMark(link, createInlineToolData({ href: 'a' })))).toBe(true);
     });
 
     it('should return true for the same tool without data', () => {
       const bold = createInlineToolName('bold');
 
-      expect(new Mark(bold).equals(new Mark(bold))).toBe(true);
+      expect(new TextMark(bold).equals(new TextMark(bold))).toBe(true);
     });
 
     it('should return false for different tools', () => {
-      expect(new Mark(createInlineToolName('bold')).equals(new Mark(createInlineToolName('italic')))).toBe(false);
+      expect(new TextMark(createInlineToolName('bold')).equals(new TextMark(createInlineToolName('italic')))).toBe(false);
     });
 
     it('should return false for the same tool with different data', () => {
-      expect(new Mark(link, createInlineToolData({ href: 'a' })).equals(new Mark(link, createInlineToolData({ href: 'b' })))).toBe(false);
+      expect(new TextMark(link, createInlineToolData({ href: 'a' })).equals(new TextMark(link, createInlineToolData({ href: 'b' })))).toBe(false);
     });
   });
 });
