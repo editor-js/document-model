@@ -173,11 +173,10 @@ export class TextNode extends EventBus {
   public format(tool: InlineToolName, start: number, end: number, data?: InlineToolData): void {
     this.#validateRange(start, end);
 
-    const mark: Mark = { tool };
-
-    if (data !== undefined) {
-      mark.data = data;
-    }
+    const mark: Mark = {
+      tool,
+      data,
+    };
 
     this.#updateMarks(start, end, marks => setMark(marks, mark));
 

@@ -39,15 +39,12 @@ export interface Run {
 }
 
 /**
- * Compares tool names by code units so the order is the same in every environment
+ * Compares tool names by code units so the order is the same in every environment.
+ * Never called with equal names: a run has one mark per tool, and fragments of one tool never share a range
  * @param a - first tool name
  * @param b - second tool name
  */
 function compareTools(a: InlineToolName, b: InlineToolName): number {
-  if (a === b) {
-    return 0;
-  }
-
   return a < b ? -1 : 1;
 }
 
@@ -96,12 +93,11 @@ export function setMark(marks: Mark[], mark: Mark): Mark[] {
 export function splitAt(runs: Run[], offset: number): number {
   let runStart = 0;
 
-  for (let index = 0; index < runs.length; index++) {
+  for (const [index, run] of runs.entries()) {
     if (runStart === offset) {
       return index;
     }
 
-    const run = runs[index];
     const runEnd = runStart + run.text.length;
 
     if (offset < runEnd) {
@@ -132,18 +128,18 @@ export function splitAt(runs: Run[], offset: number): number {
  * @param offset - char offset, expected to be in [0, total length]
  */
 export function findRunForInsert(runs: Run[], offset: number): number {
+  const lastIndex = runs.length - 1;
   let runEnd = 0;
 
-  for (let index = 0; index < runs.length; index++) {
-    runEnd += runs[index].text.length;
+  for (const [index, run] of runs.slice(0, lastIndex).entries()) {
+    runEnd += run.text.length;
 
     if (offset <= runEnd) {
       return index;
     }
   }
 
-  /* istanbul ignore next -- unreachable for offsets in range, kept for consistent types */
-  return runs.length - 1;
+  return lastIndex;
 }
 
 /**
