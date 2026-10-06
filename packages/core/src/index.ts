@@ -262,10 +262,9 @@ export default class Core {
    * Safe to call more than once and while {@link initialize} is pending. After it, `use()` and `initialize()` throw
    */
   public destroy(): void {
-    if (this.#destroyed) {
-      return;
-    }
-
+    /**
+     * Plugin instances and services are cleared below, so a second call finds nothing left to destroy
+     */
     this.#destroyed = true;
 
     const registry = this.#iocContainer.get(PluginRegistry);

@@ -253,6 +253,10 @@ describe('BlockRenderer (unit, mocked deps)', () => {
 });
 
 describe('BlockRenderer lifecycle', () => {
+  beforeEach(() => {
+    (console.error as jest.Mock).mockClear();
+  });
+
   interface Setup {
     renderer: InstanceType<typeof BlockRenderer>;
     emit: (event: unknown) => Promise<void>;
@@ -418,5 +422,24 @@ describe('BlockRenderer lifecycle', () => {
     expect(() => renderer.destroy()).not.toThrow();
     expect(calls).toBe(2);
     expect(adapter.destroyBlockToolAdapter).toHaveBeenCalledTimes(2);
+    expect(console.error).toHaveBeenCalledWith('[BlockRenderer] Block Tool failed to destroy block a', expect.any(Error));
+  });
+
+  it('should not log when a tool has no destroy', async () => {
+    const { renderer, emit } = setup(() => ({ render: () => Promise.resolve({}) }));
+
+    await emit(added('a'));
+    renderer.destroy();
+
+    expect(console.error).not.toHaveBeenCalled();
+  });
+
+  it('should destroy the adapter of a removed block that has no tracked tool instance', async () => {
+    const { emit, adapter } = setup(() => ({ render: () => Promise.resolve({}) }));
+
+    await emit(removed('unknown'));
+
+    expect(adapter.destroyBlockToolAdapter).toHaveBeenCalledWith('unknown');
+    expect(console.error).not.toHaveBeenCalled();
   });
 });

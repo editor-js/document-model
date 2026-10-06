@@ -3,6 +3,9 @@ import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { CoreEventType, PluginType, ToolType } from '@editorjs/sdk';
 import type { CoreConfig, EditorjsPluginParams } from '@editorjs/sdk';
 import Core from './index.js';
+import { UndoRedoManager } from './components/UndoRedoManager.js';
+import { SelectionManager } from './components/SelectionManager.js';
+import { BlockRenderer } from './components/BlockRenderer.js';
 
 /**
  * `Core` is headless: it registers nothing by default, so `initialize()` validates
@@ -246,7 +249,7 @@ describe('Core', () => {
       await flush();
 
       expect(() => core.destroy()).not.toThrow();
-      expect(error).toHaveBeenCalled();
+      expect(error).toHaveBeenCalledWith('[Core] Failed to destroy plugin "broken"', expect.any(Error));
       expect(log).toEqual(['plugin:a', 'tool', 'adapter:block', 'adapter']);
 
       error.mockRestore();
@@ -278,6 +281,7 @@ describe('Core', () => {
     });
 
     it('should be a no-op when called twice', async () => {
+      const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
       const core = createCore();
 
       core.use(createPlugin('a') as typeof StubPlugin);
@@ -288,6 +292,93 @@ describe('Core', () => {
       core.destroy();
 
       expect(log).toEqual(['plugin:a', 'tool', 'adapter:block', 'adapter']);
+      expect(error).not.toHaveBeenCalled();
+
+      error.mockRestore();
+    });
+
+    it.each([
+      ['UndoRedoManager', UndoRedoManager],
+      ['SelectionManager', SelectionManager],
+      ['BlockRenderer', BlockRenderer],
+    ])('should destroy %s', async (_label, Service) => {
+      const destroy = jest.spyOn(Service.prototype, 'destroy');
+      const core = createCore();
+
+      await core.initialize();
+      core.destroy();
+
+      expect(destroy).toHaveBeenCalledTimes(1);
+
+      destroy.mockRestore();
+    });
+
+    it.each([
+      ['UndoRedoManager', UndoRedoManager],
+      ['SelectionManager', SelectionManager],
+      ['BlockRenderer', BlockRenderer],
+    ])('should log and continue when %s fails to destroy', async (label, Service) => {
+      const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+      const destroy = jest.spyOn(Service.prototype, 'destroy').mockImplementation(() => {
+        throw new Error('broken service');
+      });
+      const core = createCore();
+
+      await core.initialize();
+      core.destroy();
+
+      expect(error).toHaveBeenCalledWith(`[Core] Failed to destroy ${label}`, expect.any(Error));
+      expect(log).toContain('adapter');
+
+      destroy.mockRestore();
+      error.mockRestore();
+    });
+
+    it('should log and continue when the adapter fails to destroy', async () => {
+      const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+      const core = new Core(createConfig());
+
+      core.use(class BrokenAdapter {
+        public static type = PluginType.Adapter as const;
+
+        public destroy(): void {
+          throw new Error('broken adapter');
+        }
+      } as unknown as typeof StubAdapter);
+      core.use(StubBlockTool);
+      await core.initialize();
+
+      core.destroy();
+
+      expect(error).toHaveBeenCalledWith('[Core] Failed to destroy adapter', expect.any(Error));
+
+      error.mockRestore();
+    });
+
+    it('should not log when the adapter has no destroy', async () => {
+      const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+      const core = new Core(createConfig());
+
+      core.use(StubAdapter);
+      core.use(StubBlockTool);
+      await core.initialize();
+
+      core.destroy();
+
+      expect(error).not.toHaveBeenCalled();
+
+      error.mockRestore();
+    });
+
+    it('should not log when destroyed before initialize', () => {
+      const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+      const core = createCore();
+
+      core.destroy();
+
+      expect(error).not.toHaveBeenCalled();
+
+      error.mockRestore();
     });
 
     it('should not construct anything when destroyed before initialize', () => {

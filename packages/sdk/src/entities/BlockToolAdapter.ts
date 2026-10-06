@@ -64,7 +64,7 @@ export abstract class BlockToolAdapter extends EventTarget {
       ((event: ModelEvents) => this.#handleModelUpdate(event)) as EventListener
     );
 
-    this.signal.addEventListener('abort', unsubscribe, { once: true });
+    this.signal.addEventListener('abort', unsubscribe);
   }
 
   /**
