@@ -497,6 +497,96 @@ describe('TextNode', () => {
     });
   });
 
+  describe('empty data', () => {
+    const empty = createInlineToolData({});
+
+    it('should return a fragment without data when a tool is applied with empty data', () => {
+      const node = new TextNode({ value: 'abcd' });
+
+      node.format(bold, 0, 4, empty);
+
+      expect(node.getFragments()).toStrictEqual([fragment(bold, 0, 4)]);
+    });
+
+    it('should return the same fragments whichever part was formatted with empty data', () => {
+      const first = new TextNode({ value: 'abcd' });
+      const second = new TextNode({ value: 'abcd' });
+
+      first.format(bold, 0, 2, empty);
+      first.format(bold, 2, 4);
+
+      second.format(bold, 0, 2);
+      second.format(bold, 2, 4, empty);
+
+      expect(first.getFragments()).toStrictEqual([fragment(bold, 0, 4)]);
+      expect(second.getFragments()).toStrictEqual(first.getFragments());
+    });
+
+    it('should leave formatting unchanged when a tool with empty data is re-applied without data', () => {
+      const node = new TextNode({ value: 'abcd' });
+
+      node.format(bold, 0, 4, empty);
+      node.format(bold, 1, 3);
+
+      expect(node.getFragments()).toStrictEqual([fragment(bold, 0, 4)]);
+    });
+  });
+
+  describe('data ownership', () => {
+    it('should not change formatting when the data passed to format() is mutated later', () => {
+      const node = new TextNode({ value: 'abcd' });
+      const data = { href: 'a' };
+
+      node.format(link, 0, 4, createInlineToolData(data));
+      data.href = 'b';
+
+      expect(node.getFragments()).toEqual([fragment(link, 0, 4, href('a'))]);
+    });
+
+    it('should not change formatting when data of a returned fragment is mutated', () => {
+      const node = new TextNode({ value: 'abcd' });
+
+      node.format(link, 0, 4, href('a'));
+      (node.getFragments()[0].data as unknown as { href: string }).href = 'b';
+
+      expect(node.getFragments()).toEqual([fragment(link, 0, 4, href('a'))]);
+    });
+  });
+
+  describe('loading conflicting fragments', () => {
+    it('should resolve overlapping fragments of the same tool the same way whatever their order', () => {
+      const fragments = [fragment(link, 0, 4, href('a')), fragment(link, 2, 6, href('b'))];
+
+      const first = new TextNode({
+        value: 'abcdef',
+        fragments,
+      });
+      const second = new TextNode({
+        value: 'abcdef',
+        fragments: [...fragments].reverse(),
+      });
+
+      expect(first.getFragments()).toEqual([fragment(link, 0, 2, href('a')), fragment(link, 2, 6, href('b'))]);
+      expect(second.getFragments()).toEqual(first.getFragments());
+    });
+
+    it('should resolve fragments of the same tool with equal ranges the same way whatever their order', () => {
+      const fragments = [fragment(link, 0, 4, href('b')), fragment(link, 0, 4, href('a'))];
+
+      const first = new TextNode({
+        value: 'abcd',
+        fragments,
+      });
+      const second = new TextNode({
+        value: 'abcd',
+        fragments: [...fragments].reverse(),
+      });
+
+      expect(first.getFragments()).toEqual([fragment(link, 0, 4, href('b'))]);
+      expect(second.getFragments()).toEqual(first.getFragments());
+    });
+  });
+
   describe('.serialized', () => {
     it('should return text value and merged fragments', () => {
       const node = new TextNode({ value: 'abcd' });

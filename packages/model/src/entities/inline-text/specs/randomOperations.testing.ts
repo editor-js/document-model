@@ -5,6 +5,27 @@ import { isSameInlineData } from '../../../utils/index.js';
 
 const tools = [createInlineToolName('bold'), createInlineToolName('italic'), createInlineToolName('link')];
 const linkData = [createInlineToolData({ href: 'a' }), createInlineToolData({ href: 'b' })];
+const emptyData = createInlineToolData({});
+
+/**
+ * Checks if inline tool data is missing or empty: the model stores both as no data
+ * @param data - inline tool data
+ */
+function isEmptyData(data?: InlineToolData): boolean {
+  return data === undefined || Object.keys(data).length === 0;
+}
+
+/**
+ * Returns a random range within the text
+ * @param random - random generator
+ * @param length - text length
+ */
+function randomRange(random: Random, length: number): [number, number] {
+  const a = random(length + 1);
+  const b = random(length + 1);
+
+  return [Math.min(a, b), Math.max(a, b)];
+}
 
 /**
  * Returns a random integer in [0, max)
@@ -116,9 +137,12 @@ export class ReferenceText {
       case 'remove':
         this.#chars.splice(operation.start, operation.end - operation.start);
         break;
-      case 'format':
-        this.#chars.slice(operation.start, operation.end).forEach(char => char.marks.set(operation.tool, operation.data));
+      case 'format': {
+        const data = isEmptyData(operation.data) ? undefined : operation.data;
+
+        this.#chars.slice(operation.start, operation.end).forEach(char => char.marks.set(operation.tool, data));
         break;
+      }
       case 'unformat':
         this.#chars.slice(operation.start, operation.end).forEach(char => char.marks.delete(operation.tool));
         break;
@@ -167,6 +191,67 @@ export class ReferenceText {
 }
 
 /**
+ * Returns random data for the tool: one of two hrefs for links, missing or empty data for other tools
+ * @param random - random generator
+ * @param tool - inline tool
+ */
+function randomData(random: Random, tool: InlineToolName): InlineToolData | undefined {
+  if (tool === tools[2]) {
+    return linkData[random(linkData.length)];
+  }
+
+  return random(2) === 0 ? undefined : emptyData;
+}
+
+/**
+ * Compares strings by code units
+ * @param a - first string
+ * @param b - second string
+ */
+function compareStrings(a: string, b: string): number {
+  if (a === b) {
+    return 0;
+  }
+
+  return a < b ? -1 : 1;
+}
+
+/**
+ * Order the model is expected to apply initial fragments in: by start, then by end descending, then by tool, then by data
+ * @param a - first fragment
+ * @param b - second fragment
+ */
+export function compareForLoading(a: InlineFragment, b: InlineFragment): number {
+  return a.range[0] - b.range[0]
+    || b.range[1] - a.range[1]
+    || compareStrings(a.tool, b.tool)
+    || compareStrings(JSON.stringify(a.data ?? {}), JSON.stringify(b.data ?? {}));
+}
+
+/**
+ * Returns random fragments for text of the passed length; they may overlap and conflict
+ * @param random - random generator
+ * @param length - text length
+ */
+export function randomFragments(random: Random, length: number): InlineFragment[] {
+  return Array.from({ length: random(6) }, () => {
+    const tool = tools[random(tools.length)];
+    const [start, end] = randomRange(random, length);
+    const data = randomData(random, tool);
+    const fragment: InlineFragment = {
+      tool,
+      range: [start, end],
+    };
+
+    if (data !== undefined) {
+      fragment.data = data;
+    }
+
+    return fragment;
+  });
+}
+
+/**
  * Seeded pseudo-random generator (mulberry32), so failures are reproducible
  * @param seed - generator seed
  */
@@ -182,18 +267,6 @@ export function createRandom(seed: number): Random {
 
     return Math.floor((((t ^ (t >>> 14)) >>> 0) / 4294967296) * max);
   };
-}
-
-/**
- * Returns a random range within the text
- * @param random - random generator
- * @param length - text length
- */
-function randomRange(random: Random, length: number): [number, number] {
-  const a = random(length + 1);
-  const b = random(length + 1);
-
-  return [Math.min(a, b), Math.max(a, b)];
 }
 
 /**
@@ -238,7 +311,7 @@ export function randomOperation(random: Random, length: number): TextOperation {
       tool,
       start,
       end,
-      data: tool === tools[2] ? linkData[random(linkData.length)] : undefined,
+      data: randomData(random, tool),
     };
   }
 

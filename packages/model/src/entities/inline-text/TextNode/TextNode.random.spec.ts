@@ -1,5 +1,5 @@
 import type { TextOperation } from '../specs/randomOperations.testing.js';
-import { createRandom, randomOperation, randomText, ReferenceText, shuffle } from '../specs/randomOperations.testing.js';
+import { compareForLoading, createRandom, randomFragments, randomOperation, randomText, ReferenceText, shuffle } from '../specs/randomOperations.testing.js';
 import { TextNode } from './index.js';
 
 const SEQUENCES = 200;
@@ -57,6 +57,39 @@ describe('TextNode random operation sequences', () => {
 
       expect(reloaded.getFragments()).toEqual(fragments);
       expect(shuffled.getFragments()).toEqual(fragments);
+    });
+  }
+});
+
+describe('TextNode loading random fragments', () => {
+  for (let seed = 1; seed <= SEQUENCES; seed++) {
+    it(`should give the same result for any fragment order and match the reference model (seed ${seed})`, () => {
+      const random = createRandom(seed);
+      const value = randomText(random) || 'a';
+      const fragments = randomFragments(random, value.length);
+      const reference = new ReferenceText(value);
+
+      [...fragments].sort(compareForLoading).forEach((fragment) => {
+        reference.apply({
+          type: 'format',
+          tool: fragment.tool,
+          start: fragment.range[0],
+          end: fragment.range[1],
+          data: fragment.data,
+        });
+      });
+
+      const node = new TextNode({
+        value,
+        fragments,
+      });
+      const shuffled = new TextNode({
+        value,
+        fragments: shuffle(random, fragments),
+      });
+
+      expect(node.getFragments()).toStrictEqual(reference.getFragments());
+      expect(shuffled.getFragments()).toStrictEqual(node.getFragments());
     });
   }
 });

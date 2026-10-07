@@ -1,4 +1,5 @@
 import type { InlineFragment, InlineToolName } from '@editorjs/model-types';
+import { cloneInlineData } from '../../../utils/index.js';
 import type { TextMark } from '../TextMark/index.js';
 import { TextRun } from '../TextRun/index.js';
 
@@ -34,10 +35,15 @@ export class RunList {
   #runs: TextRun[] = [];
 
   /**
+   * Text length, kept in sync by insert() and remove()
+   */
+  #length = 0;
+
+  /**
    * Returns text length
    */
   public get length(): number {
-    return this.#runs.reduce((length, run) => length + run.text.length, 0);
+    return this.#length;
   }
 
   /**
@@ -61,8 +67,14 @@ export class RunList {
    * @param offset - char offset to insert text at
    */
   public insert(text: string, offset: number): void {
+    if (text.length === 0) {
+      return;
+    }
+
+    this.#length += text.length;
+
     if (this.#runs.length === 0) {
-      this.#runs = RunList.#merge([new TextRun(text)]);
+      this.#runs = [new TextRun(text)];
 
       return;
     }
@@ -88,6 +100,7 @@ export class RunList {
       .map(run => run.text)
       .join('');
 
+    this.#length -= removedText.length;
     this.#runs = RunList.#merge(this.#runs);
 
     return removedText;
@@ -141,7 +154,7 @@ export class RunList {
         };
 
         if (mark.data !== undefined) {
-          fragment.data = mark.data;
+          fragment.data = cloneInlineData(mark.data);
         }
 
         open.set(mark.tool, {
@@ -231,17 +244,14 @@ export class RunList {
   }
 
   /**
-   * Returns canonical runs: empty runs are dropped and neighbours with equal mark sets are joined
+   * Returns canonical runs: neighbours with equal mark sets are joined.
+   * Runs are never empty here: splitting only cuts inside a run, and empty text is never inserted
    * @param runs - runs to merge
    */
   static #merge(runs: TextRun[]): TextRun[] {
     const result: TextRun[] = [];
 
     for (const run of runs) {
-      if (run.text.length === 0) {
-        continue;
-      }
-
       const previous = result[result.length - 1];
 
       if (previous !== undefined && RunList.#isSameMarkSet(previous.marks, run.marks)) {

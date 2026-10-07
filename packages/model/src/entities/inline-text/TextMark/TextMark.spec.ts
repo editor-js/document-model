@@ -9,7 +9,24 @@ describe('TextMark', () => {
     const mark = new TextMark(link, data);
 
     expect(mark.tool).toBe(link);
-    expect(mark.data).toBe(data);
+    expect(mark.data).toStrictEqual(data);
+  });
+
+  it('should keep its own copy of the data', () => {
+    const data = { href: 'a' };
+    const mark = new TextMark(link, createInlineToolData(data));
+
+    data.href = 'b';
+
+    expect(mark.data).toStrictEqual(createInlineToolData({ href: 'a' }));
+  });
+
+  it('should store empty data as no data', () => {
+    expect(new TextMark(link, createInlineToolData({})).data).toBeUndefined();
+  });
+
+  it('should store missing data as no data', () => {
+    expect(new TextMark(link).data).toBeUndefined();
   });
 
   describe('.equals()', () => {

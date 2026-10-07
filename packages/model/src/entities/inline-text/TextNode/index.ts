@@ -113,13 +113,10 @@ export class TextNode extends EventBus {
   public getFragments(start = 0, end = this.length, tool?: InlineToolName): InlineFragment[] {
     this.#validateRange(start, end);
 
-    if (start === end) {
-      return [];
-    }
-
-    return this.#runs.toFragments()
-      .filter(fragment => fragment.range[0] < end && fragment.range[1] > start)
-      .filter(fragment => tool === undefined || fragment.tool === tool);
+    return this.#runs.toFragments().filter(fragment => start < end
+      && fragment.range[0] < end
+      && fragment.range[1] > start
+      && (tool === undefined || fragment.tool === tool));
   }
 
   /**
@@ -162,7 +159,9 @@ export class TextNode extends EventBus {
   }
 
   /**
-   * Initializes the TextNode with passed initial data
+   * Initializes the TextNode with passed initial data.
+   * Fragments are applied in a fixed order, so conflicting fragments of the same tool
+   * (overlapping, with different data) give the same result whatever order they are passed in
    * @param value - initial text value to insert
    * @param fragments - initial inline fragments to apply
    */
@@ -173,9 +172,37 @@ export class TextNode extends EventBus {
 
     this.insertText(value);
 
-    fragments.forEach((fragment) => {
-      this.format(fragment.tool, ...fragment.range, fragment.data);
-    });
+    [...fragments]
+      .sort(TextNode.#compareForLoading)
+      .forEach((fragment) => {
+        this.format(fragment.tool, ...fragment.range, fragment.data);
+      });
+  }
+
+  /**
+   * Total order for applying initial fragments: by start, then by end descending, then by tool name, then by data.
+   * Fragments that sort later win where fragments of the same tool overlap
+   * @param a - first fragment
+   * @param b - second fragment
+   */
+  static #compareForLoading(a: InlineFragment, b: InlineFragment): number {
+    return a.range[0] - b.range[0]
+      || b.range[1] - a.range[1]
+      || TextNode.#compareStrings(a.tool, b.tool)
+      || TextNode.#compareStrings(JSON.stringify(a.data ?? {}), JSON.stringify(b.data ?? {}));
+  }
+
+  /**
+   * Compares strings by code units so the order is the same in every environment
+   * @param a - first string
+   * @param b - second string
+   */
+  static #compareStrings(a: string, b: string): number {
+    if (a === b) {
+      return 0;
+    }
+
+    return a < b ? -1 : 1;
   }
 
   /**
