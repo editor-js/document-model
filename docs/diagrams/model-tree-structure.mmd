@@ -68,30 +68,24 @@ classDiagram
     +update(value: T)
   }
 
-  class ParentInlineNode {
-    <<abstract>>
-    +children: InlineNode[]
-    +insertText(text, index?)
-    +removeText(start?, end?)
-    +format(tool, start, end, data?)
-    +unformat(tool, start, end)
-    +getFragments(start?, end?): InlineFragment[]
+  class RunList {
+    +length: number
+    +insert(text, offset)
+    +remove(start, end): string
+    +setMark(start, end, mark)
+    +removeMark(start, end, tool)
+    +toFragments(): InlineFragment[]
   }
 
-  class FormattingInlineNode {
+  class TextRun {
+    +text: string
+    +marks: TextMark[]
+  }
+
+  class TextMark {
     +tool: InlineToolName
     +data?: InlineToolData
-    +format(tool, start, end, data?)
-    +unformat(tool, start, end)
-    +split(index): FormattingInlineNode
-  }
-
-  class TextInlineNode {
-    +value: string
-    +length: number
-    +insertText(text, index?)
-    +removeText(start?, end?)
-    +format(tool, start, end, data?): InlineNode[]
+    +equals(mark): boolean
   }
 
   %% ── Caret management ─────────────────────────────
@@ -125,7 +119,7 @@ classDiagram
   BlockNode --|> EventBus
   BlockTune --|> EventBus
   ValueNode --|> EventBus
-  ParentInlineNode --|> EventBus
+  TextNode --|> EventBus
 
   %% Document composition
   EditorJSModel "1" *-- "1" EditorDocument : document
@@ -136,11 +130,10 @@ classDiagram
   BlockNode "1" *-- "0..*" ValueNode : data[key]
   BlockNode "1" *-- "0..*" BlockTune : tunes[name]
 
-  %% Inline tree
-  TextNode --|> ParentInlineNode
-  FormattingInlineNode --|> ParentInlineNode
-  ParentInlineNode "1" *-- "0..*" FormattingInlineNode : children
-  ParentInlineNode "1" *-- "0..*" TextInlineNode : children
+  %% Inline formatting runs
+  TextNode "1" *-- "1" RunList : runs
+  RunList "1" *-- "0..*" TextRun : runs
+  TextRun "1" o-- "0..*" TextMark : marks
 
   %% Caret management (declared last → placed right)
   EditorJSModel "1" *-- "1" CaretManager : caretManager

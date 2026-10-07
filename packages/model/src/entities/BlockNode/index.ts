@@ -10,7 +10,7 @@ import type {
   ChildNode
 } from './types/index.js';
 import { ValueNode } from '../ValueNode/index.js';
-import { TextNode } from '../inline-fragments/index.js';
+import { TextNode } from '../inline-text/index.js';
 import type { InlineFragment, TextNodeSerialized, ValueSerialized } from '@editorjs/model-types';
 import {
   PartialIndex,
