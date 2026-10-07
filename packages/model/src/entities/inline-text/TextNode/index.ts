@@ -132,6 +132,11 @@ export class TextNode extends EventBus {
 
     this.#runs.setMark(start, end, new TextMark(tool, data));
 
+    /**
+     * @todo When format replaces data of an existing mark (e.g. re-applying a link with a new href), the event carries only
+     *       the new data. Undo inverts it into unformat, which removes the link instead of restoring the previous href.
+     *       The event should carry the replaced fragments so undo can re-apply them
+     */
     this.dispatchEvent(
       new TextFormattedEvent(
         new PartialIndex({ textRange: [start, end] }),
