@@ -3,6 +3,7 @@ import { createInlineToolData, createInlineToolName } from '@editorjs/model-type
 import { TextMark } from '../TextMark/index.js';
 import { TextRun } from '../TextRun/index.js';
 import { RunList } from './index.js';
+import { expectRunInvariants } from './runInvariants.testing.js';
 
 const bold = createInlineToolName('bold');
 const italic = createInlineToolName('italic');
@@ -20,11 +21,27 @@ function linkMark(href: string): TextMark {
 }
 
 /**
- * Creates a run list with the passed text
+ * Lists created by the current test, checked for run invariants after each test
+ */
+let createdLists: RunList[] = [];
+
+/**
+ * Creates an empty run list and tracks it for the run invariants check
+ */
+function createEmptyList(): RunList {
+  const list = new RunList();
+
+  createdLists.push(list);
+
+  return list;
+}
+
+/**
+ * Creates a run list with the passed text and tracks it for the run invariants check
  * @param text - initial text
  */
 function createList(text: string): RunList {
-  const list = new RunList();
+  const list = createEmptyList();
 
   list.insert(text, 0);
 
@@ -32,9 +49,14 @@ function createList(text: string): RunList {
 }
 
 describe('RunList', () => {
+  afterEach(() => {
+    createdLists.forEach(list => expectRunInvariants(list));
+    createdLists = [];
+  });
+
   describe('.insert()', () => {
     it('should create a run without marks when inserting into an empty list', () => {
-      const list = new RunList();
+      const list = createEmptyList();
 
       list.insert('abc', 0);
 
@@ -44,7 +66,7 @@ describe('RunList', () => {
     });
 
     it('should not create a run when inserting an empty string into an empty list', () => {
-      const list = new RunList();
+      const list = createEmptyList();
 
       list.insert('', 0);
 

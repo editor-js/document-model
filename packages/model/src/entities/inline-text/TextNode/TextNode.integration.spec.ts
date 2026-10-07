@@ -11,7 +11,6 @@ import {
   TextUnformattedEvent
 } from '@editorjs/model-types';
 import { TextNode } from './index.js';
-import { expectRunInvariants } from './runInvariants.testing.js';
 
 const bold = createInlineToolName('bold');
 const italic = createInlineToolName('italic');
@@ -45,33 +44,11 @@ function href(value: string): InlineToolData {
   return createInlineToolData({ href: value });
 }
 
-/**
- * Nodes created by the current test, checked for run invariants after each test
- */
-let createdNodes: TextNode[] = [];
-
-/**
- * Creates a TextNode and tracks it for the run invariants check
- * @param [options] - TextNode constructor options
- */
-function createNode(options?: ConstructorParameters<typeof TextNode>[0]): TextNode {
-  const node = new TextNode(options);
-
-  createdNodes.push(node);
-
-  return node;
-}
-
 describe('TextNode', () => {
-  afterEach(() => {
-    createdNodes.forEach(node => expectRunInvariants(node));
-    createdNodes = [];
-  });
-
   describe('canonical formatting state', () => {
     it('should return the same fragments when equal formatting is applied in a different order', () => {
-      const first = createNode({ value: 'abcd' });
-      const second = createNode({ value: 'abcd' });
+      const first = new TextNode({ value: 'abcd' });
+      const second = new TextNode({ value: 'abcd' });
 
       first.format(bold, 0, 2);
       first.format(italic, 0, 4);
@@ -85,7 +62,7 @@ describe('TextNode', () => {
     });
 
     it('should merge fragments split by other formatting', () => {
-      const node = createNode({ value: 'abcdef' });
+      const node = new TextNode({ value: 'abcdef' });
 
       node.format(bold, 0, 3);
       node.format(italic, 1, 3);
@@ -96,7 +73,7 @@ describe('TextNode', () => {
     });
 
     it('should return a single fragment when a tool is applied over a shorter fragment of another tool', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
 
       node.format(italic, 1, 3);
       node.format(bold, 0, 4);
@@ -107,11 +84,11 @@ describe('TextNode', () => {
     it('should return the same fragments when constructed with fragments in a different order', () => {
       const fragments = [fragment(bold, 0, 3), fragment(italic, 1, 5)];
 
-      const first = createNode({
+      const first = new TextNode({
         value: 'abcdef',
         fragments,
       });
-      const second = createNode({
+      const second = new TextNode({
         value: 'abcdef',
         fragments: [...fragments].reverse(),
       });
@@ -121,7 +98,7 @@ describe('TextNode', () => {
     });
 
     it('should restore the previous state when formatting is applied and removed', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
 
       node.format(bold, 0, 4);
       node.format(italic, 1, 3);
@@ -133,7 +110,7 @@ describe('TextNode', () => {
 
   describe('fragment order', () => {
     it('should return a containing fragment before the contained one', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
 
       node.format(italic, 1, 3);
       node.format(bold, 0, 4);
@@ -142,7 +119,7 @@ describe('TextNode', () => {
     });
 
     it('should order fragments with equal ranges by tool name', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
 
       node.format(italic, 0, 4);
       node.format(bold, 0, 4);
@@ -151,7 +128,7 @@ describe('TextNode', () => {
     });
 
     it('should order fragments by start', () => {
-      const node = createNode({ value: 'abcdef' });
+      const node = new TextNode({ value: 'abcdef' });
 
       node.format(italic, 4, 6);
       node.format(bold, 0, 2);
@@ -162,7 +139,7 @@ describe('TextNode', () => {
 
   describe('maximal fragments', () => {
     it('should merge adjacent formatting with equal data', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
 
       node.format(link, 0, 2, href('a'));
       node.format(link, 2, 4, href('a'));
@@ -171,7 +148,7 @@ describe('TextNode', () => {
     });
 
     it('should keep adjacent formatting with different data separate', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
 
       node.format(link, 0, 2, href('a'));
       node.format(link, 2, 4, href('b'));
@@ -180,7 +157,7 @@ describe('TextNode', () => {
     });
 
     it('should join equal fragments when the text between them is removed', () => {
-      const node = createNode({ value: 'abcdef' });
+      const node = new TextNode({ value: 'abcdef' });
 
       node.format(bold, 0, 2);
       node.format(italic, 2, 4);
@@ -193,7 +170,7 @@ describe('TextNode', () => {
 
   describe('re-applying an inline tool', () => {
     it('should replace data only within the re-applied range', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
 
       node.format(link, 0, 4, href('a'));
       node.format(link, 1, 3, href('b'));
@@ -206,7 +183,7 @@ describe('TextNode', () => {
     });
 
     it('should leave formatting unchanged when re-applied with identical data', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
 
       node.format(link, 0, 4, href('a'));
       node.format(link, 1, 3, href('a'));
@@ -215,7 +192,7 @@ describe('TextNode', () => {
     });
 
     it('should dispatch TextFormattedEvent when re-applied with identical data', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
       let event: TextFormattedEvent | null = null;
 
       node.format(link, 0, 4, href('a'));
@@ -228,7 +205,7 @@ describe('TextNode', () => {
 
   describe('fragments in a range', () => {
     it('should return a partially covered fragment whole', () => {
-      const node = createNode({ value: 'abcdef' });
+      const node = new TextNode({ value: 'abcdef' });
 
       node.format(bold, 1, 5);
 
@@ -236,7 +213,7 @@ describe('TextNode', () => {
     });
 
     it('should not return fragments touching the range boundaries', () => {
-      const node = createNode({ value: 'abcdef' });
+      const node = new TextNode({ value: 'abcdef' });
 
       node.format(bold, 0, 2);
       node.format(italic, 4, 6);
@@ -245,7 +222,7 @@ describe('TextNode', () => {
     });
 
     it('should return no fragments for an empty range', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
 
       node.format(bold, 0, 4);
 
@@ -253,7 +230,7 @@ describe('TextNode', () => {
     });
 
     it('should filter fragments by tool', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
 
       node.format(bold, 0, 4);
       node.format(italic, 1, 3);
@@ -262,7 +239,7 @@ describe('TextNode', () => {
     });
 
     it('should return the whole merged fragment for a range covering one of its parts', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
 
       node.format(bold, 0, 2);
       node.format(italic, 0, 4);
@@ -272,7 +249,7 @@ describe('TextNode', () => {
     });
 
     it('should not expose internal state through returned fragments', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
 
       node.format(bold, 0, 2);
       node.getFragments()[0].range[1] = 4;
@@ -283,7 +260,7 @@ describe('TextNode', () => {
 
   describe('inserted text formatting', () => {
     it('should extend formatting when text is inserted at the end of a formatted stretch', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
 
       node.format(bold, 0, 2);
       node.insertText('X', 2);
@@ -293,7 +270,7 @@ describe('TextNode', () => {
     });
 
     it('should take formatting of the first character when text is inserted at the start', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
 
       node.format(bold, 0, 2);
       node.insertText('X', 0);
@@ -303,7 +280,7 @@ describe('TextNode', () => {
     });
 
     it('should not format text inserted after unformatted text', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
 
       node.format(bold, 2, 4);
       node.insertText('X', 2);
@@ -312,7 +289,7 @@ describe('TextNode', () => {
     });
 
     it('should append text to the end by default', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
 
       node.format(bold, 2, 4);
       node.insertText('X');
@@ -322,7 +299,7 @@ describe('TextNode', () => {
     });
 
     it('should not format text inserted into empty text', () => {
-      const node = createNode();
+      const node = new TextNode();
 
       node.insertText('abc');
 
@@ -334,7 +311,7 @@ describe('TextNode', () => {
 
   describe('text removal', () => {
     it('should return removed text and shrink formatting around it', () => {
-      const node = createNode({ value: 'abcdef' });
+      const node = new TextNode({ value: 'abcdef' });
 
       node.format(bold, 1, 5);
 
@@ -344,7 +321,7 @@ describe('TextNode', () => {
     });
 
     it('should drop a fragment when all of its text is removed', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
 
       node.format(bold, 1, 3);
       node.removeText(1, 3);
@@ -354,7 +331,7 @@ describe('TextNode', () => {
     });
 
     it('should remove all text by default', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
 
       node.format(bold, 1, 3);
 
@@ -364,7 +341,7 @@ describe('TextNode', () => {
     });
 
     it('should allow inserting text after all text was removed', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
 
       node.format(bold, 0, 4);
       node.removeText();
@@ -377,7 +354,7 @@ describe('TextNode', () => {
 
   describe('unformatting', () => {
     it('should remove formatting only within the range', () => {
-      const node = createNode({ value: 'abcdef' });
+      const node = new TextNode({ value: 'abcdef' });
 
       node.format(bold, 0, 6);
       node.unformat(bold, 2, 4);
@@ -386,7 +363,7 @@ describe('TextNode', () => {
     });
 
     it('should remove formatting when the range is wider than the fragment', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
 
       node.format(bold, 1, 2);
       node.unformat(bold, 0, 4);
@@ -395,7 +372,7 @@ describe('TextNode', () => {
     });
 
     it('should not touch formatting of other tools', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
 
       node.format(bold, 0, 4);
       node.format(italic, 0, 4);
@@ -407,7 +384,7 @@ describe('TextNode', () => {
 
   describe('zero-length ranges', () => {
     it('should not add formatting for an empty range', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
 
       node.format(bold, 2, 2);
 
@@ -415,7 +392,7 @@ describe('TextNode', () => {
     });
 
     it('should not remove text for an empty range', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
 
       expect(node.removeText(2, 2)).toBe('');
       expect(node.getText()).toBe('abcd');
@@ -424,7 +401,7 @@ describe('TextNode', () => {
 
   describe('text reading', () => {
     it('should return text from the range across formatting', () => {
-      const node = createNode({ value: 'abcdef' });
+      const node = new TextNode({ value: 'abcdef' });
 
       node.format(bold, 1, 3);
       node.format(italic, 2, 5);
@@ -435,20 +412,20 @@ describe('TextNode', () => {
 
   describe('validation', () => {
     it('should throw when an index is out of range', () => {
-      const node = createNode({ value: 'abc' });
+      const node = new TextNode({ value: 'abc' });
 
       expect(() => node.removeText(0, 5)).toThrow('Index 5 is not in valid range [0, 3]');
       expect(node.getText()).toBe('abc');
     });
 
     it('should throw when a negative index is passed', () => {
-      const node = createNode({ value: 'abc' });
+      const node = new TextNode({ value: 'abc' });
 
       expect(() => node.insertText('X', -1)).toThrow('Index -1 is not in valid range [0, 3]');
     });
 
     it('should throw when the range end is lower than its start', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
 
       expect(() => node.format(bold, 3, 1)).toThrow('The end of range must be greater or equal than the start: [3, 1]');
     });
@@ -456,7 +433,7 @@ describe('TextNode', () => {
 
   describe('events', () => {
     it('should dispatch TextAddedEvent with the inserted text and range', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
       let event: TextAddedEvent | null = null;
 
       node.addEventListener(EventType.Changed, e => event = e as TextAddedEvent);
@@ -471,7 +448,7 @@ describe('TextNode', () => {
     });
 
     it('should dispatch TextRemovedEvent with the removed text and range', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
       let event: TextRemovedEvent | null = null;
 
       node.addEventListener(EventType.Changed, e => event = e as TextRemovedEvent);
@@ -486,7 +463,7 @@ describe('TextNode', () => {
     });
 
     it('should dispatch TextFormattedEvent with the tool, data and range', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
       let event: TextFormattedEvent | null = null;
 
       node.addEventListener(EventType.Changed, e => event = e as TextFormattedEvent);
@@ -504,7 +481,7 @@ describe('TextNode', () => {
     });
 
     it('should dispatch TextUnformattedEvent with the tool and range', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
       let event: TextUnformattedEvent | null = null;
 
       node.format(bold, 0, 4);
@@ -522,7 +499,7 @@ describe('TextNode', () => {
 
   describe('.serialized', () => {
     it('should return text value and merged fragments', () => {
-      const node = createNode({ value: 'abcd' });
+      const node = new TextNode({ value: 'abcd' });
 
       node.format(bold, 0, 2);
       node.format(italic, 0, 4);

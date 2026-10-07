@@ -1,13 +1,12 @@
-import type { TextNode } from './index.js';
-import { getRunsForTesting } from './index.js';
+import type { RunList } from './index.js';
 
 /**
- * Asserts the canonical run invariants of the TextNode:
+ * Asserts the canonical run invariants of the RunList:
  * no empty runs, no neighbours with equal mark sets, at most one mark per tool, marks sorted by tool name
- * @param node - TextNode to check
+ * @param list - RunList to check
  */
-export function expectRunInvariants(node: TextNode): void {
-  const runs = getRunsForTesting(node);
+export function expectRunInvariants(list: RunList): void {
+  const runs = list.runs;
 
   runs.forEach((run, index) => {
     expect(run.text).not.toBe('');

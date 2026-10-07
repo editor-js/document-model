@@ -11,18 +11,12 @@ import {
 } from '@editorjs/model-types';
 import { getContext } from '../../../utils/Context.js';
 import { TextMark } from '../TextMark/index.js';
-import type { TextRun } from '../TextRun/index.js';
 import { RunList } from '../RunList/index.js';
 
 interface TextNodeConstructorOptions {
   value?: string;
   fragments?: InlineFragment[];
 }
-
-/**
- * Reads runs of a TextNode, assigned in the class static block
- */
-let readRuns: (node: TextNode) => readonly TextRun[];
 
 /**
  * TextNode stores a text value with its inline formatting.
@@ -36,10 +30,6 @@ export class TextNode extends EventBus {
    * Text and formatting as canonical runs
    */
   #runs = new RunList();
-
-  static {
-    readRuns = node => node.#runs.runs;
-  }
 
   /**
    * TextNode constructor
@@ -214,12 +204,4 @@ export class TextNode extends EventBus {
       throw new Error(`Index ${index} is not in valid range [0, ${this.length}]`);
     }
   }
-}
-
-/**
- * Returns runs of the TextNode. For tests only, not exported from the package
- * @param node - TextNode to read runs of
- */
-export function getRunsForTesting(node: TextNode): readonly TextRun[] {
-  return readRuns(node);
 }
