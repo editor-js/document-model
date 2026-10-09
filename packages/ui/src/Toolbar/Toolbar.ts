@@ -5,6 +5,7 @@ import { css } from './Toolbar.const.js';
 import type { ToolboxRenderedUIEvent } from '../Toolbox/events/index.js';
 import { IconPlus } from '@codexteam/icons';
 import Style from './Toolbar.module.pcss';
+import ControlStyle from '../controls.module.pcss';
 import { ToolbarRenderedUIEvent } from './ToolbarRenderedUIEvent.js';
 import type { BlockSelectedUIEvent } from '../Blocks/events/index.js';
 import { ToolboxOpenUIEvent } from '../Toolbox/events/index.js';
@@ -63,7 +64,7 @@ export class ToolbarUI implements EditorjsPlugin {
   #nodes: ToolbarNodes = {
     holder: make('div', Style[css.toolbar]) as HTMLDivElement,
     actions: make('div', Style[css.actions]) as HTMLDivElement,
-    plusButton: make('button', Style[css.plusButton], {
+    plusButton: make('button', ControlStyle['toolbar-button'], {
       innerHTML: IconPlus,
     }) as HTMLButtonElement,
   };
