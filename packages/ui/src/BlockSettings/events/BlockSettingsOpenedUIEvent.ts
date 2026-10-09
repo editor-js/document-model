@@ -1,15 +1,10 @@
-import type { BlockId } from '@editorjs/sdk';
 import { BlockSettingsBaseEvent } from './BlockSettingsBaseEvent.js';
 
 /**
- * Reports which block the menu that just opened was built for
+ * Payload of the BlockSettingsOpenedUIEvent - empty for now
  */
-export interface BlockSettingsOpenedUIEventPayload {
-  /**
-   * Id of the block the opened menu was built for
-   */
-  readonly blockId: BlockId;
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface BlockSettingsOpenedUIEventPayload {}
 
 /**
  * Class for event that is being fired after block settings have been opened
