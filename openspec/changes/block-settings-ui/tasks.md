@@ -72,14 +72,15 @@
   - actions should do nothing when the target block no longer exists
   - delete should use `confirmation` and call `api.blocks.delete` by block id only on confirm
 - [x] 4.5 Implement `DefaultBlockSettingsPlugin`, porting behavior and test cases from PR #157's internal delete/move-up/move-down tunes (keeping their `getIndexById`-at-activation approach) and adding the delete confirmation they lack. Credit with the `Co-authored-by` line from 2.1
-- [ ] 4.6 Register `BlockSettingsUI` and `DefaultBlockSettingsPlugin` in `@editorjs/editorjs`: add `"@editorjs/default-block-settings-plugin": "workspace:^"` to its `package.json`, update the lockfile, extend the `@editorjs/ui` mock factory in `editorjs/src/index.spec.ts` with `BlockSettingsUI`, add a `jest.unstable_mockModule` for the new package, and note that its assertions read `ctor.name` — which for `static name = 'default-block-settings'` is `'default-block-settings'`, not the class name
-- [ ] 4.7 Hand-edit `openspec/specs/editorjs-bundle/spec.md`'s Purpose preamble, which enumerates the default plugins — outside any requirement block, so the fold will not rewrite it
-- [ ] 4.8 Add `packages/editorjs/e2e/tests/block-settings.spec.ts` using the harness's `mountDocument(page, '?text=Alpha&text=Beta')` fixture: open settings on the second block, move it up, then delete it with confirmation. Confirm `include-e2e: true` is set for the bundle workflow
+- [x] 4.6 Register `BlockSettingsUI` and `DefaultBlockSettingsPlugin` in `@editorjs/editorjs`: add `"@editorjs/default-block-settings-plugin": "workspace:^"` to its `package.json`, update the lockfile, extend the `@editorjs/ui` mock factory in `editorjs/src/index.spec.ts` with `BlockSettingsUI`, add a `jest.unstable_mockModule` for the new package, and note that its assertions read `ctor.name` — which for `static name = 'default-block-settings'` is `'default-block-settings'`, not the class name
+- [x] 4.7 Hand-edit `openspec/specs/editorjs-bundle/spec.md`'s Purpose preamble, which enumerates the default plugins — outside any requirement block, so the fold will not rewrite it
+- [x] 4.8 Add `packages/editorjs/e2e/tests/block-settings.spec.ts` using the harness's `mountDocument(page, '?text=Alpha&text=Beta')` fixture: open settings on the second block, move it up, then delete it with confirmation. Confirm `include-e2e: true` is set for the bundle workflow
 
 ## 5. Docs and wrap-up
 
-- [ ] 5.1 Update `docs/plugins.md` (the block settings API and default-block-settings as the reference "tune") and `docs/events.md` (the `ui:block-settings:*` events)
-- [ ] 5.2 Run `yarn lint`, `yarn test`, and the e2e suite. Fix any regressions
+- [x] 5.1 Update `docs/plugins.md` (the block settings API and default-block-settings as the reference "tune") and `docs/events.md` (the `ui:block-settings:*` events)
+- [x] 5.2 Run `yarn lint`, `yarn test`, and the e2e suite. Fix any regressions
+  - Clean: lint and build workspace-wide, 1,099 unit tests, and 92 e2e across Chromium and WebKit. The one `✘` in the e2e run is `aria.spec.ts`'s `test.fail()` case for the unfixed `focus: true` caret todo, which Playwright counts as passing
 - [ ] 5.3 Run `openspec validate block-settings-ui --type change` and confirm it passes. After archiving, fill the `## Purpose` of the new `block-settings` and `default-block-settings-plugin` specs from the proposal's intended-Purpose text
 
 ## 6. Review follow-ups
