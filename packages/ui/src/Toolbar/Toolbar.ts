@@ -3,13 +3,12 @@ import { UiComponentType } from '@editorjs/sdk';
 import { make } from '@editorjs/dom';
 import { css } from './Toolbar.const.js';
 import type { ToolboxRenderedUIEvent } from '../Toolbox/events/index.js';
-import { IconMenuSmall, IconPlus } from '@codexteam/icons';
+import { IconPlus } from '@codexteam/icons';
 import Style from './Toolbar.module.pcss';
 import { ToolbarRenderedUIEvent } from './ToolbarRenderedUIEvent.js';
 import type { BlockSelectedUIEvent } from '../Blocks/events/index.js';
 import { ToolboxOpenUIEvent } from '../Toolbox/events/index.js';
 import type { BlockSettingsRenderedUIEvent } from '../BlockSettings/events/index.js';
-import { BlockSettingsOpenUIEvent } from '../BlockSettings/events/index.js';
 import { messages } from '../messages.js';
 
 /**
@@ -40,11 +39,6 @@ interface ToolbarNodes {
    * Plus button to open Toolbox popover
    */
   plusButton: HTMLButtonElement;
-
-  /**
-   * Settings button to open the Block Settings popover
-   */
-  settingsButton: HTMLButtonElement;
 }
 
 /**
@@ -72,9 +66,6 @@ export class ToolbarUI implements EditorjsPlugin {
     plusButton: make('button', Style[css.plusButton], {
       innerHTML: IconPlus,
     }) as HTMLButtonElement,
-    settingsButton: make('button', Style[css.settingsButton], {
-      innerHTML: IconMenuSmall,
-    }) as HTMLButtonElement,
   };
 
   /**
@@ -87,14 +78,6 @@ export class ToolbarUI implements EditorjsPlugin {
    * so the toolbar has to stay on it until the menu closes
    */
   #isBlockSettingsOpen = false;
-
-  /**
-   * Position of the block the toolbar is currently following.
-   *
-   * `-1` until a block is reported, which is what the settings request carries in that case:
-   * it resolves to no block, and `BlockSettingsUI` drops the request
-   */
-  #selectedBlockIndex = -1;
 
   /**
    * Constructor function
@@ -119,8 +102,6 @@ export class ToolbarUI implements EditorjsPlugin {
       if (this.#isToolboxOpen || this.#isBlockSettingsOpen) {
         return;
       }
-
-      this.#selectedBlockIndex = event.detail.index;
 
       this.moveTo(event.detail.block);
     });
@@ -151,11 +132,22 @@ export class ToolbarUI implements EditorjsPlugin {
   }
 
   /**
-   * Adds the Block Settings popover to the editor UI
-   * @param blockSettingsElement - block settings HTML element to add to the page
+   * Mounts the Block Settings widget: its button among the toolbar's own controls, and its
+   * menu alongside the toolbox popover.
+   *
+   * The button has to be a child of the actions container in its own right, not wrapped in
+   * the menu's element -- that is what puts it in `#controls` and so into the toolbar's
+   * roving tabindex. The tab stop is reassigned afterwards because this arrives after the
+   * toolbar has already rendered, and a button carrying no `tabindex` would be a second
+   * stop next to the plus button
+   * @param button - the control that opens the menu
+   * @param blockSettingsElement - the element the menu renders into
    */
-  #addBlockSettings(blockSettingsElement: HTMLElement): void {
+  #addBlockSettings(button: HTMLElement, blockSettingsElement: HTMLElement): void {
+    this.#nodes.actions.appendChild(button);
     this.#nodes.actions.appendChild(blockSettingsElement);
+
+    this.#updateRovingTabindex(this.#nodes.plusButton);
   }
 
   /**
@@ -166,12 +158,6 @@ export class ToolbarUI implements EditorjsPlugin {
     this.#nodes.actions.appendChild(this.#nodes.plusButton);
 
     /**
-     * Appended before the roving tabindex is initialized below, so that both buttons are
-     * already in the container when the single tab stop is assigned
-     */
-    this.#nodes.actions.appendChild(this.#nodes.settingsButton);
-
-    /**
      * The actions container groups related controls. It is named because the inline toolbar
      * is a toolbar too, and the plus button is icon-only, so it needs a name of its own
      */
@@ -179,7 +165,6 @@ export class ToolbarUI implements EditorjsPlugin {
     this.#nodes.actions.setAttribute('aria-label', messages.blockActionsToolbar);
     this.#nodes.actions.setAttribute('aria-orientation', 'horizontal');
     this.#nodes.plusButton.setAttribute('aria-label', messages.addBlockButton);
-    this.#nodes.settingsButton.setAttribute('aria-label', messages.blockSettingsButton);
 
     /**
      * role="toolbar" is a promise that the group is a single tab stop navigated with the arrow
@@ -197,23 +182,6 @@ export class ToolbarUI implements EditorjsPlugin {
      */
     this.#nodes.plusButton.setAttribute('aria-haspopup', 'menu');
     this.#nodes.plusButton.setAttribute('aria-expanded', 'false');
-
-    /**
-     * Same menu-button contract as the plus button: it owns the settings menu and reports
-     * whether that menu is currently open
-     */
-    this.#nodes.settingsButton.setAttribute('aria-haspopup', 'menu');
-    this.#nodes.settingsButton.setAttribute('aria-expanded', 'false');
-
-    this.#nodes.settingsButton.addEventListener('click', () => {
-      /**
-       * Focused for the same reason the plus button is: Safari leaves a clicked button
-       * unfocused, and the popover would then restore focus to `document.body` on close
-       */
-      this.#nodes.settingsButton.focus();
-
-      this.#openBlockSettings();
-    });
 
     this.#nodes.plusButton.addEventListener('click', () => {
       /**
@@ -269,25 +237,20 @@ export class ToolbarUI implements EditorjsPlugin {
    */
   #subscribeToBlockSettingsEvents(): void {
     this.#eventBus.addEventListener(`ui:block-settings:rendered`, (event: BlockSettingsRenderedUIEvent) => {
-      this.#addBlockSettings(event.detail.blockSettings);
+      this.#addBlockSettings(event.detail.button, event.detail.blockSettings);
     });
 
+    /**
+     * The menu was built for one block, so the toolbar holds its position until it closes.
+     * The button's own `aria-expanded` belongs to the plugin that owns the button
+     */
     this.#eventBus.addEventListener(`ui:block-settings:opened`, () => {
       this.#isBlockSettingsOpen = true;
-      this.#nodes.settingsButton.setAttribute('aria-expanded', 'true');
     });
 
     this.#eventBus.addEventListener(`ui:block-settings:closed`, () => {
       this.#isBlockSettingsOpen = false;
-      this.#nodes.settingsButton.setAttribute('aria-expanded', 'false');
     });
-  }
-
-  /**
-   * Asks the Block Settings plugin to open the menu for the block the toolbar is following
-   */
-  #openBlockSettings(): void {
-    this.#eventBus.dispatchEvent(new BlockSettingsOpenUIEvent({ index: this.#selectedBlockIndex }));
   }
 
   /**

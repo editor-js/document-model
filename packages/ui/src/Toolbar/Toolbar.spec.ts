@@ -60,19 +60,31 @@ function actionButtons(holder: HTMLElement): HTMLButtonElement[] {
 }
 
 /**
- * The button that opens block settings
- * @param holder - the toolbar element
+ * Announces a block settings widget the way `BlockSettingsUI` does, so the toolbar mounts it
+ * @param eventBus - bus to dispatch on
+ * @returns the button and menu element that were announced
  */
-function settingsButton(holder: HTMLElement): HTMLButtonElement {
-  const button = actionButtons(holder).find(
-    candidate => candidate.getAttribute('aria-label') === messages.blockSettingsButton
-  );
+function announceBlockSettings(eventBus: EventBus): {
+  /** The control that opens the menu */
+  button: HTMLButtonElement;
+  /** The element the menu renders into */
+  menu: HTMLElement;
+} {
+  const button = document.createElement('button');
+  const menu = document.createElement('div');
 
-  if (button === undefined) {
-    throw new Error('the toolbar rendered no settings button');
-  }
+  button.setAttribute('aria-label', messages.blockSettingsButton);
+  menu.dataset.testid = 'block-settings-menu';
 
-  return button;
+  eventBus.dispatchEvent(new BlockSettingsRenderedUIEvent({
+    button,
+    blockSettings: menu,
+  }));
+
+  return {
+    button,
+    menu,
+  };
 }
 
 /**
@@ -108,61 +120,42 @@ describe('ToolbarUI', () => {
     });
   });
 
-  describe('settings button', () => {
-    it('should request settings for the block the toolbar is following', () => {
-      const onOpen = jest.fn();
+  describe('mounting an announced widget', () => {
+    it('should mount the announced menu element into its actions area', () => {
+      const { menu } = announceBlockSettings(instance.eventBus);
 
-      instance.eventBus.addEventListener('ui:block-settings:open', onOpen);
-
-      selectBlock(instance.eventBus, 2);
-      settingsButton(instance.holder).click();
-
-      expect(onOpen).toHaveBeenCalledTimes(1);
-      expect((onOpen.mock.calls[0][0] as CustomEvent).detail).toEqual({ index: 2 });
+      expect(instance.holder.querySelector('[role="toolbar"] [data-testid="block-settings-menu"]')).toBe(menu);
     });
 
-    it('should carry an accessible name and advertise the menu it controls', () => {
-      const button = settingsButton(instance.holder);
+    it('should mount the announced button as a control of its own', () => {
+      const { button } = announceBlockSettings(instance.eventBus);
 
-      expect(button.getAttribute('aria-label')).toBe(messages.blockSettingsButton);
-      expect(button.getAttribute('aria-haspopup')).toBe('menu');
-      expect(button.getAttribute('aria-expanded')).toBe('false');
+      // A child of the actions container in its own right, which is what puts it in the
+      // roving tabindex -- nested inside the menu element it would be invisible to it.
+      expect(actionButtons(instance.holder)).toContain(button);
     });
 
-    it('should follow the menu state with aria-expanded', () => {
-      const button = settingsButton(instance.holder);
+    it('should keep one tab stop after an announced button joins', () => {
+      announceBlockSettings(instance.eventBus);
 
-      instance.eventBus.dispatchEvent(new BlockSettingsOpenedUIEvent({ blockId: 'block-2' as never }));
-      expect(button.getAttribute('aria-expanded')).toBe('true');
+      const buttons = actionButtons(instance.holder);
 
-      instance.eventBus.dispatchEvent(new BlockSettingsClosedUIEvent({}));
-      expect(button.getAttribute('aria-expanded')).toBe('false');
+      expect(buttons).toHaveLength(2);
+      expect(buttons.filter(button => button.tabIndex === 0)).toHaveLength(1);
     });
 
-    it('should hold focus before the menu is asked to open', () => {
-      const button = settingsButton(instance.holder);
-      let focusedAtDispatch: Element | null = null;
+    it('should let the arrow keys reach an announced button', () => {
+      const { button } = announceBlockSettings(instance.eventBus);
+      const [plusButton] = actionButtons(instance.holder);
 
-      instance.eventBus.addEventListener('ui:block-settings:open', () => {
-        focusedAtDispatch = document.activeElement;
-      });
+      plusButton.focus();
+      plusButton.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'ArrowRight',
+        bubbles: true,
+      }));
 
-      selectBlock(instance.eventBus, 0);
-      button.click();
-
-      expect(focusedAtDispatch).toBe(button);
-    });
-  });
-
-  describe('mounting the menu', () => {
-    it('should mount the announced popover element into its actions area', () => {
-      const popover = document.createElement('div');
-
-      popover.dataset.testid = 'block-settings-popover';
-
-      instance.eventBus.dispatchEvent(new BlockSettingsRenderedUIEvent({ blockSettings: popover }));
-
-      expect(instance.holder.querySelector('[role="toolbar"] [data-testid="block-settings-popover"]')).toBe(popover);
+      expect(button.tabIndex).toBe(0);
+      expect(plusButton.tabIndex).toBe(-1);
     });
   });
 
@@ -170,7 +163,7 @@ describe('ToolbarUI', () => {
     it('should not move while block settings are open', () => {
       const moveTo = jest.spyOn(instance.plugin, 'moveTo');
 
-      instance.eventBus.dispatchEvent(new BlockSettingsOpenedUIEvent({ blockId: 'block-0' as never }));
+      instance.eventBus.dispatchEvent(new BlockSettingsOpenedUIEvent({}));
       selectBlock(instance.eventBus, 1);
 
       expect(moveTo).not.toHaveBeenCalled();
@@ -184,6 +177,8 @@ describe('ToolbarUI', () => {
 
   describe('roving tabindex', () => {
     it('should keep exactly one action button in the tab order', () => {
+      announceBlockSettings(instance.eventBus);
+
       const buttons = actionButtons(instance.holder);
 
       expect(buttons.length).toBeGreaterThan(1);
@@ -191,17 +186,18 @@ describe('ToolbarUI', () => {
       expect(buttons.filter(button => button.tabIndex === -1)).toHaveLength(buttons.length - 1);
     });
 
-    it('should move the tab stop with the arrow keys', () => {
-      const buttons = actionButtons(instance.holder);
+    it('should wrap around a single control', () => {
+      const [plusButton] = actionButtons(instance.holder);
 
-      buttons[0].focus();
-      buttons[0].dispatchEvent(new KeyboardEvent('keydown', {
+      plusButton.focus();
+      plusButton.dispatchEvent(new KeyboardEvent('keydown', {
         key: 'ArrowRight',
         bubbles: true,
       }));
 
-      expect(buttons[1].tabIndex).toBe(0);
-      expect(buttons[0].tabIndex).toBe(-1);
+      // With nothing else in the container the move lands back on the same control, which is
+      // what keeps a one-control toolbar a no-op rather than an error.
+      expect(plusButton.tabIndex).toBe(0);
     });
   });
 });

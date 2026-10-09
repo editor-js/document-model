@@ -6,5 +6,4 @@ export const css = {
   toolbar: className(),
   actions: className('actions'),
   plusButton: className('plus-button'),
-  settingsButton: className('settings-button'),
 };

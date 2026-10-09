@@ -1,4 +1,5 @@
 import { make } from '@editorjs/dom';
+import { IconMenuSmall } from '@codexteam/icons';
 import type {
   BlockId,
   CoreConfigValidated,
@@ -11,6 +12,8 @@ import { UiComponentType } from '@editorjs/sdk';
 import type { PopoverItemParams } from '@editorjs/ui-kit';
 import { PopoverDesktop, PopoverEvent, PopoverItemType } from '@editorjs/ui-kit';
 import { messages } from '../messages.js';
+import Style from './BlockSettings.module.pcss';
+import type { BlockSelectedUIEvent } from '../Blocks/events/index.js';
 import {
   BlockSettingsClosedUIEvent,
   BlockSettingsOpenedUIEvent,
@@ -157,10 +160,26 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
   #editorConfig: CoreConfigValidated;
 
   /**
-   * Stable element handed to `ToolbarUI`. The popover inside it is replaced per open,
+   * Stable element handed to the host. The popover inside it is replaced per open,
    * so this is what stays mounted
    */
   #holder: HTMLElement;
+
+  /**
+   * The control that opens the menu. Owned here rather than by the toolbar: the button and
+   * the menu are one widget, and every piece of its menu-button contract -- the accessible
+   * name, `aria-haspopup`, the `aria-expanded` that has to track the menu's real state --
+   * depends on state only this plugin has
+   */
+  #button: HTMLButtonElement;
+
+  /**
+   * Position of the block the menu will be built for, as last reported by block selection.
+   *
+   * Frozen while the menu is open: the menu belongs to one block, and re-targeting under it
+   * would leave the button and the open menu pointing at different blocks
+   */
+  #selectedBlockIndex = -1;
 
   /**
    * Popover rendering the current menu, absent until the menu is first built
@@ -198,10 +217,24 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
     };
 
     this.#holder = make('div');
+    this.#button = make('button', Style['settings-button'], {
+      innerHTML: IconMenuSmall,
+    }) as HTMLButtonElement;
+
+    this.#renderButton();
 
     this.#eventBus.dispatchEvent(new BlockSettingsRenderedUIEvent({
+      button: this.#button,
       blockSettings: this.#holder,
     }));
+
+    this.#eventBus.addEventListener('ui:blocks:block-selected', (event: BlockSelectedUIEvent) => {
+      if (this.#popover?.isShown === true) {
+        return;
+      }
+
+      this.#selectedBlockIndex = event.detail.index;
+    });
 
     this.#eventBus.addEventListener('ui:block-settings:open', (event: BlockSettingsOpenUIEvent) => {
       void this.#open(event.detail.index);
@@ -215,6 +248,27 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
     this.#popover?.destroy();
     this.#popover = undefined;
     this.#holder.remove();
+    this.#button.remove();
+  }
+
+  /**
+   * Gives the button its menu-button semantics and wires it to the menu
+   */
+  #renderButton(): void {
+    this.#button.setAttribute('aria-label', messages.blockSettingsButton);
+    this.#button.setAttribute('aria-haspopup', 'menu');
+    this.#button.setAttribute('aria-expanded', 'false');
+
+    this.#button.addEventListener('click', () => {
+      /**
+       * Safari leaves a clicked button unfocused, and the popover would then capture
+       * `document.body` as the element to restore focus to when it closes. Focusing the
+       * button that owns the menu is also what the WAI-ARIA menu button pattern asks for
+       */
+      this.#button.focus();
+
+      void this.#open(this.#selectedBlockIndex);
+    });
   }
 
   /**
@@ -292,8 +346,9 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
     this.#renderPopover(items);
 
     this.#popover?.show();
+    this.#button.setAttribute('aria-expanded', 'true');
 
-    this.#eventBus.dispatchEvent(new BlockSettingsOpenedUIEvent({ blockId }));
+    this.#eventBus.dispatchEvent(new BlockSettingsOpenedUIEvent({}));
   }
 
   /**
@@ -376,6 +431,8 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
     });
 
     this.#popover.on(PopoverEvent.Closed, () => {
+      this.#button.setAttribute('aria-expanded', 'false');
+
       this.#eventBus.dispatchEvent(new BlockSettingsClosedUIEvent({}));
     });
 
