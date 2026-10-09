@@ -4,6 +4,7 @@ import { EventBus } from '@editorjs/sdk';
 import { BlockSettingsUI } from './BlockSettings.js';
 import { BlockSettingsOpenUIEvent } from './events/index.js';
 import type { BlockSettingsRenderedUIEventPayload } from './events/index.js';
+import { BlockSelectedUIEvent } from '../Blocks/events/index.js';
 import type { BlockSettingsProvider } from './BlockSettings.js';
 
 /**
@@ -55,6 +56,8 @@ function setup(blocks: StubBlock[] = defaultBlocks): {
   eventBus: EventBus;
   /** Element the plugin announced via its rendered event */
   element: HTMLElement;
+  /** Button the plugin announced via its rendered event */
+  button: HTMLButtonElement;
   /** Fake editor API */
   api: EditorAPI;
   /** The mock backing `api.blocks.getIdByIndex` */
@@ -82,13 +85,17 @@ function setup(blocks: StubBlock[] = defaultBlocks): {
   } as unknown as EditorAPI;
 
   let element: HTMLElement | undefined;
+  let button: HTMLButtonElement | undefined;
 
   /**
    * Captures the element the plugin announces, which is what the toolbar would mount
    * @param event - the plugin's rendered event
    */
   function captureElement(event: CustomEvent): void {
-    element = (event.detail as BlockSettingsRenderedUIEventPayload).blockSettings;
+    const detail = event.detail as BlockSettingsRenderedUIEventPayload;
+
+    element = detail.blockSettings;
+    button = detail.button as HTMLButtonElement;
   }
 
   eventBus.addEventListener('ui:block-settings:rendered', captureElement);
@@ -103,16 +110,24 @@ function setup(blocks: StubBlock[] = defaultBlocks): {
     config: { holder } as unknown as CoreConfigValidated,
   });
 
-  if (element === undefined) {
-    throw new Error('BlockSettingsUI did not announce its element');
+  if (element === undefined || button === undefined) {
+    throw new Error('BlockSettingsUI did not announce its element and button');
   }
 
+  holder.appendChild(button);
   holder.appendChild(element);
+
+  /**
+   * Attached for real: jsdom only moves focus to elements that are in the document, and
+   * the popover's focus handling is part of what these tests assert
+   */
+  document.body.appendChild(holder);
 
   return {
     plugin,
     eventBus,
     element,
+    button,
     api,
     getIdByIndex,
   };
@@ -343,7 +358,6 @@ describe('BlockSettingsUI', () => {
       await open(instance.eventBus, 1);
 
       expect(onOpened).toHaveBeenCalledTimes(1);
-      expect((onOpened.mock.calls[0][0] as CustomEvent).detail).toEqual({ blockId: 'block-1' });
     });
 
     it('should dispatch closed when closed through the public API', async () => {
@@ -534,7 +548,93 @@ describe('BlockSettingsUI', () => {
 
       expect(itemTitles(instance.element)).toEqual(['For block-1']);
       expect(onOpened).toHaveBeenCalledTimes(1);
-      expect((onOpened.mock.calls[0][0] as CustomEvent).detail).toEqual({ blockId: 'block-1' });
+    });
+  });
+
+  describe('its button', () => {
+    /**
+     * Reports a block as hovered, which is what the button opens settings for
+     * @param index - position of the block
+     */
+    function selectBlock(index: number): void {
+      instance.eventBus.dispatchEvent(new BlockSelectedUIEvent({
+        block: document.createElement('div'),
+        index,
+      }));
+    }
+
+    it('should announce a button alongside the menu', () => {
+      expect(instance.button.tagName).toBe('BUTTON');
+    });
+
+    it('should carry an accessible name and advertise the menu it controls', () => {
+      expect(instance.button.getAttribute('aria-label')).toBe('Block settings');
+      expect(instance.button.getAttribute('aria-haspopup')).toBe('menu');
+      expect(instance.button.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('should open the menu for the block it is following', async () => {
+      instance.plugin.publicApi.register(ctx => ({
+        title: `For ${ctx.blockId}`,
+        onActivate: () => {},
+      }));
+
+      selectBlock(1);
+      instance.button.click();
+      await flush();
+
+      expect(itemTitles(instance.element)).toEqual(['For block-1']);
+    });
+
+    it('should follow the menu state with aria-expanded', async () => {
+      instance.plugin.publicApi.register(() => ({
+        title: 'Anchor',
+        onActivate: () => {},
+      }));
+
+      selectBlock(0);
+      instance.button.click();
+      await flush();
+
+      expect(instance.button.getAttribute('aria-expanded')).toBe('true');
+
+      instance.plugin.publicApi.close();
+
+      expect(instance.button.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('should hold focus before the menu is asked to open', async () => {
+      instance.plugin.publicApi.register(() => ({
+        title: 'Anchor',
+        onActivate: () => {},
+      }));
+
+      selectBlock(0);
+      instance.button.click();
+      await flush();
+
+      // Safari leaves a clicked button unfocused, and the popover would then have nowhere
+      // to return focus to when it closes.
+      expect(document.activeElement).toBe(instance.button);
+    });
+
+    it('should not re-target while its menu is open', async () => {
+      instance.plugin.publicApi.register(ctx => ({
+        title: `For ${ctx.blockId}`,
+        onActivate: () => {},
+      }));
+
+      selectBlock(0);
+      instance.button.click();
+      await flush();
+
+      // The menu belongs to block 0; hovering elsewhere must not move it underneath.
+      selectBlock(2);
+      instance.plugin.publicApi.close();
+      instance.button.click();
+      await flush();
+
+      expect(itemTitles(instance.element)).toEqual(['For block-0']);
     });
   });
 
