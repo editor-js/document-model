@@ -9,7 +9,7 @@
     "build": "yarn build:dependencies && vue-tsc && vite build",
     "build:declaration": "",
     "preview": "yarn build:dependencies && vite preview",
-    "build:dependencies": "yarn workspaces foreach -Rpt --from $npm_package_name --exclude $npm_package_name run build",
+    "build:dependencies": "yarn workspaces foreach -Rp --topological-dev --from $npm_package_name --exclude $npm_package_name run build",
     "dev:dependencies": "yarn workspaces foreach -Rp --from $npm_package_name --exclude $npm_package_name run dev",
     "lint": "eslint",
     "lint:ci": "yarn lint --max-warnings 0",
