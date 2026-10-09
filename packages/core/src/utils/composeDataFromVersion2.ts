@@ -92,11 +92,9 @@ function extractFragments(html: string): InlineFragment[] {
 const SCALAR_TUNE_KEY = 'value';
 
 /**
- * Maps a v2 block's tunes onto v3 per-plugin data.
- *
- * Names are kept verbatim: a v3 plugin that replaces a v2 tune is expected to adopt that tune's
- * name, which is also what makes the stored data match. Object data is copied key by key; anything
- * else (a primitive, an array, null) goes under `value`, because a plugin entry is a key/value map.
+ * Maps a v2 block's tunes onto v3 per-plugin data, keeping names verbatim so a v3 plugin that
+ * adopts a v2 tune's name finds its data. Object data is copied key by key; anything else goes
+ * under `value`, since a plugin entry is a key/value map.
  * @param tunes - `tunes` map of a v2 block
  */
 function composePluginsFromTunes(tunes: NonNullable<OutputBlockData['tunes']>): Record<string, PluginDataSerialized> {
