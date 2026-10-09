@@ -94,6 +94,42 @@ test('disables moving further at the document boundaries', async ({ page }) => {
   await expect(menu.getByRole('menuitem', { name: 'Move down' })).toBeEnabled();
 });
 
+test('is operable from the keyboard alone', async ({ page }) => {
+  const blocks = page.getByRole('textbox', { name: 'Paragraph' });
+
+  await blocks.first().hover();
+  await page.getByRole('button', { name: 'Block settings' }).click();
+
+  const menu = page.getByRole('menu', { name: 'Block settings' });
+
+  await expect(menu).toBeVisible();
+
+  // The items are divs with role="menuitem", as the ARIA menu pattern calls for -- so nothing
+  // here is inherited from a native control. Arrow-key navigation, the roving tabindex and
+  // Enter activation are all ui-kit's, and this is what says they still hold for this menu.
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowDown');
+
+  await expect(menu.getByRole('menuitem', { name: 'Move down' })).toBeFocused();
+
+  await page.keyboard.press('Enter');
+
+  await expect(blocks).toHaveText(['Beta', 'Alpha']);
+  await expect(menu).toBeHidden();
+});
+
+test('marks an unavailable action as disabled rather than hiding it', async ({ page }) => {
+  await page.getByRole('textbox', { name: 'Paragraph' }).first()
+    .hover();
+  await page.getByRole('button', { name: 'Block settings' }).click();
+
+  // Exposed through aria-disabled, and still reachable by the arrow keys: the APG keeps
+  // disabled menu items focusable so they can be discovered rather than silently missing.
+  const moveUp = page.getByRole('menu', { name: 'Block settings' }).getByRole('menuitem', { name: 'Move up' });
+
+  await expect(moveUp).toHaveAttribute('aria-disabled', 'true');
+});
+
 test('moves a block up from the settings menu', async ({ page }) => {
   const blocks = page.getByRole('textbox', { name: 'Paragraph' });
 
