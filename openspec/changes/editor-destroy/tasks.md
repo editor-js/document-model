@@ -48,9 +48,9 @@
 ## 8. Bundle and integration
 
 - [x] 8.1 Write a failing `EditorJS` test, `should delegate destroy to Core`, and implement `EditorJS#destroy()`. Add tests that an `AbortError` from `isReady` isn't reported as an unhandled rejection while any other initialization error is logged, and handle that on the bundle's ready promise
-- [ ] 8.2 Write the integration test in `packages/editorjs`, `should leave no DOM nodes or document/holder listeners after creating and destroying several editors on one page`, spying on `document`/holder `add/removeEventListener` and checking that the counts balance and the holders are empty
-- [ ] 8.3 Add an integration test that destroys the editor before `isReady` settles and checks that `isReady` rejects with an `AbortError` and nothing is rendered
-- [ ] 8.4 Check that `CollaborationManager.destroy()` closes the `OTClient` socket when it's reached through `EditorJS#destroy()` (mock WebSocket)
+- [x] 8.2 Write the integration test in `packages/editorjs`, `should leave no DOM nodes or document/holder listeners after creating and destroying several editors on one page`, spying on `document`/holder `add/removeEventListener` and checking that the counts balance and the holders are empty
+- [x] 8.3 Add an integration test that destroys the editor before `isReady` settles and checks that `isReady` rejects with an `AbortError` and nothing is rendered
+- [x] 8.4 Check that `CollaborationManager.destroy()` closes the `OTClient` socket when it's reached through `EditorJS#destroy()` (mock WebSocket)
 
 ## 9. Docs and wrap-up
 
