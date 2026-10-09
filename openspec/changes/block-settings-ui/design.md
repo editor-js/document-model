@@ -52,7 +52,7 @@ Wiring follows the Toolbox pattern:
 The provider context carries both `blockId` and `blockIndex`, but only `blockId` is durable: a menu can stay open while a collaborator inserts or removes blocks above the target, or while an undo does. Item handlers therefore resolve the position from `blockId` at activation time. This is how the tunes in PR #157 behave (`getIndexById` inside `activate()`), and it is worth keeping.
 
 ### D2. Built-in actions are a plugin package in `packages/plugins/`
-`@editorjs/block-actions-plugin` (`static name = 'block-actions'`) registers one provider with `order: 1000` so it sits last. Each handler starts from `api.blocks.getIndexById(ctx.blockId)` and bails out when the block is gone:
+`@editorjs/default-block-settings-plugin` (`static name = 'default-block-settings'`) registers one provider with `order: 1000` so it sits last. Each handler starts from `api.blocks.getIndexById(ctx.blockId)` and bails out when the block is gone:
 - **Move up:** `isDisabled` when the block is first at build time, then `api.blocks.move({ fromIndex: i, toIndex: i - 1 })` with `i` resolved at activation.
 - **Move down:** the same, against the last index.
 - **Delete:** a `confirmation` item that calls `api.blocks.delete({ block: ctx.blockId })`.
@@ -66,7 +66,7 @@ It depends only on `@editorjs/sdk`, looks up `api.plugins['block-settings']` laz
 - The toolbar settings button and styles.
 - The `BlockTunes*UIEvent` classes, renamed to `BlockSettings{Open,Opened,Closed,Rendered}UIEvent`.
 - The popover wiring in `BlockTunesUI` → `BlockSettingsUI`.
-- The behavior and tests of the internal delete, move-up and move-down tunes → `block-actions-plugin`.
+- The behavior and tests of the internal delete, move-up and move-down tunes → `default-block-settings-plugin`.
 
 Details worth keeping from those files: `PopoverDesktop` configured with `scopeElement: config.holder`, `searchable: false` and `{ [PopoverItemType.Default]: { wrapperTag: 'button' } }`; dispatching the closed event from `PopoverEvent.Closed`; handing the popover element to `ToolbarUI` through a rendered event; and `display: flex; align-items: center` on the toolbar's `__actions` so two buttons sit side by side. PR #157 also fixes a real bug on `main` — `new ToolboxOpenUIEvent('ui:toolbox:open')` passes a string where a payload object belongs ([Toolbar.ts:151](packages/ui/src/Toolbar/Toolbar.ts:151)) — and that fix comes along with the port.
 
@@ -77,7 +77,7 @@ Details worth keeping from those files: `PopoverDesktop` configured with `scopeE
 ### D4. Block Tool settings items are a separate, later change
 A block tool contributing its own settings items (v2 `renderSettings`) is deferred, and the shape it will take is fixed now so this change doesn't foreclose it: a tool declares something like `getSettingsConfig(ctx)` returning the same `MenuConfig`, and a thin core-side provider registered by `BlockSettingsUI` collects it from the tool facade for the target block.
 - *Why not now:* the UI has no route to tool instances, so it needs either a core component that owns "settings items of the current block's tool" or a `ToolsManager` accessor on the API. That is its own design, and none of it changes the provider contract.
-- *Why the provider shape is enough:* tool-contributed items are just another provider, with an `order` between plugin items and `block-actions`. No change to `register` or to `MenuConfig` is needed when it lands.
+- *Why the provider shape is enough:* tool-contributed items are just another provider, with an `order` between plugin items and `default-block-settings`. No change to `register` or to `MenuConfig` is needed when it lands.
 
 ### D5. The settings button meets the toolbar's existing accessibility contract
 The settings button is the second control in an already-accessible toolbar, so it adopts that contract rather than inventing one:
@@ -89,7 +89,7 @@ The settings button is the second control in an already-accessible toolbar, so i
 
 ### D6. The block settings API types live in `@editorjs/ui`
 `BlockSettingsAPI` and `BlockSettingsProvider` are exported from `@editorjs/ui`, which also augments `EditorjsPluginApiMap` under `'block-settings'`. `@editorjs/sdk` stays unaware of individual plugins; it owns only the augmentable map and `MenuConfig`, which the provider signature reuses.
-- Consequence: `block-actions-plugin` needs `@editorjs/ui` in its compilation for `api.plugins['block-settings']` to typecheck. It takes `@editorjs/ui` as a **devDependency** and imports from it with `import type` only, so there is no runtime coupling and no cycle.
+- Consequence: `default-block-settings-plugin` needs `@editorjs/ui` in its compilation for `api.plugins['block-settings']` to typecheck. It takes `@editorjs/ui` as a **devDependency** and imports from it with `import type` only, so there is no runtime coupling and no cycle.
 - This is the pattern `plugin-public-api` already describes ("a consumer whose compilation includes that package's types"), and the architecture rule it must respect forbids depending on `@editorjs/model`/`@editorjs/core`, not on a sibling UI package.
 - *Alternative:* move the types into `sdk`. Rejected: `sdk` would then carry knowledge of a specific plugin's API.
 
@@ -99,12 +99,12 @@ The settings button is the second control in an already-accessible toolbar, so i
 
 ## Risks / Trade-offs
 
-- **[`api.plugins['block-settings']` may be absent in a headless setup]** → consumers must tolerate it. `block-actions-plugin` guards for it, and the spec requires the no-op.
+- **[`api.plugins['block-settings']` may be absent in a headless setup]** → consumers must tolerate it. `default-block-settings-plugin` guards for it, and the spec requires the no-op.
 - **[Losing per-tool tune allow-listing from v2 config]** → providers receive `tool` and decide for themselves. Integrator-level include/exclude can follow via `tool-plugin-options`.
 - **[`packages/ui` has no test setup today]** → add Jest with jsdom to the package as part of this change. No package in the monorepo uses jsdom yet, so this is new infrastructure: an explicit `jest-environment-jsdom` dependency, a `moduleNameMapper` for `*.pcss`, `transformIgnorePatterns` covering `@codexteam/*`, the `jest.unstable_mockModule` + dynamic-import convention the other packages use, an ESLint override allowing `@jest/globals` in specs, and `dts()` pointed at `tsconfig.build.json` so declarations stop at source.
 - **[Adding CI for `packages/ui` in the same PR]** → there is no `ui.yml` workflow today. `base-coverage` runs `test:coverage` against the base ref for any package whose `package.json` exists there, and `packages/ui` has no such script on the base, so the new workflow must handle that first run.
 - **[The `ui` delta will be written against a spec the baseline branch rewrites]** → `Floating toolbar` gains ARIA scenarios on that branch. The delta in this change must be refreshed from the merged spec text before archiving, or the fold will silently revert those scenarios.
-- **[Name collision]** → the baseline branch labels the toolbar container "Block actions" for screen readers, while this change introduces a package called `block-actions`. Worth renaming one of them, or at least not being surprised that a screen reader announces "Block actions toolbar" for a menu whose items come from several plugins.
+- **[Name collision — resolved]** → `main` labels the toolbar container "Block actions" for screen readers (`messages.blockActionsToolbar`) and names a requirement after it. Calling the move/delete package `block-actions` too would have made one phrase mean both the container and a plugin rendering inside a menu within it. The package is therefore `@editorjs/default-block-settings-plugin` (`name: 'default-block-settings'`): the shipped, e2e-asserted accessible name stays as it is, and the new name says what the plugin actually is — the default entries of the block settings menu. A screen reader still announces "Block actions toolbar" on entering the container, which is correct: that is the container, not the menu.
 
 ## Deferred: per-block appearance and attachments
 

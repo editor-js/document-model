@@ -6,7 +6,7 @@ The system SHALL provide `@editorjs/editorjs`, a package whose default export is
 #### Scenario: Default composition
 - **GIVEN** a caller constructs `new EditorJS(config)`
 - **WHEN** the instance is created
-- **THEN** it registers the DOM adapter (`DOMAdapters`), collaboration (`CollaborationManager`), default block tool (paragraph), default inline tools (bold, italic, link), default plugins (clipboard, shortcuts, block actions), and the default UI packages (including `BlockSettingsUI`) on the underlying `Core` before initialization
+- **THEN** it registers the DOM adapter (`DOMAdapters`), collaboration (`CollaborationManager`), default block tool (paragraph), default inline tools (bold, italic, link), default plugins (clipboard, shortcuts, default block settings), and the default UI packages (including `BlockSettingsUI`) on the underlying `Core` before initialization
 
 #### Scenario: Delegates the engine to Core
 - **GIVEN** `EditorJS` composes the editor

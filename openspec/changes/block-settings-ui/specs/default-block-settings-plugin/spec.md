@@ -1,15 +1,15 @@
 ## ADDED Requirements
 
-### Requirement: Default block actions plugin
-The system SHALL provide `@editorjs/block-actions-plugin`, an `EditorjsPlugin` with static `name` `block-actions` that depends only on `@editorjs/sdk`. Once the editor is ready, it SHALL register a settings provider with `block-settings` at `order: 1000`, contributing "Move up", "Move down" and "Delete" items for every block. When no `block-settings` plugin is registered, it SHALL do nothing and SHALL NOT throw.
+### Requirement: Default block settings plugin
+The system SHALL provide `@editorjs/default-block-settings-plugin`, an `EditorjsPlugin` with static `name` `default-block-settings` that depends only on `@editorjs/sdk`. Once the editor is ready, it SHALL register a settings provider with `block-settings` at `order: 1000`, contributing "Move up", "Move down" and "Delete" items for every block. When no `block-settings` plugin is registered, it SHALL do nothing and SHALL NOT throw.
 
 #### Scenario: Items are contributed
-- **GIVEN** `BlockSettingsUI` and `BlockActionsPlugin` are both registered
+- **GIVEN** `BlockSettingsUI` and `DefaultBlockSettingsPlugin` are both registered
 - **WHEN** block settings open for a block in the middle of the document
 - **THEN** "Move up", "Move down" and "Delete" items are shown after the items of providers with a lower order
 
 #### Scenario: Block settings absent
-- **GIVEN** `BlockActionsPlugin` is registered on a `Core` without `BlockSettingsUI`
+- **GIVEN** `DefaultBlockSettingsPlugin` is registered on a `Core` without `BlockSettingsUI`
 - **WHEN** the editor becomes ready
 - **THEN** no error is thrown and the plugin stays inert
 
