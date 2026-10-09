@@ -48,15 +48,11 @@ export interface ToolPluginOptionsMap {}
 export interface EditorjsPluginDataMap {}
 
 /**
- * Shape of the per-block data stored by the plugin with the given id.
- *
- * Falls back to a plain record for an id absent from {@link EditorjsPluginDataMap}: unlike a
- * plugin's public API, per-block data is often written by a plugin that has no reason to publish
- * its shape, so an undeclared id stays usable instead of resolving to `never`.
- *
- * The check is deliberately non-distributive (`[Id] extends [...]`), because the default
- * {@link PluginId} is a union including `string & {}` and a distributive conditional would
- * collapse a declared id onto the fallback.
+ * Shape of the per-block data stored by the plugin with the given id, falling back to a plain
+ * record for an id absent from {@link EditorjsPluginDataMap} — per-block data is often written by
+ * a plugin with no reason to publish its shape. The check is non-distributive
+ * (`[Id] extends [...]`) because the default {@link PluginId} includes `string & {}`, and a
+ * distributive conditional would collapse a declared id onto the fallback.
  */
 export type PluginDataFor<Id extends PluginId> = [Id] extends [keyof EditorjsPluginDataMap]
   ? EditorjsPluginDataMap[Id]

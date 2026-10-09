@@ -54,8 +54,8 @@ import { AlreadyExistingKeyError } from './errors/AlreadyExistingKeyError.js';
 
 /**
  * BlockNode class represents a node in a tree-like structure used to store and manipulate Blocks in an editor document.
- * A BlockNode can contain one or more child nodes of type TextNode or ValueNode.
- * It can also carry per-plugin data, which plugins use to store their own state for the block.
+ * A BlockNode can contain one or more child nodes of type TextNode or ValueNode, and carries the
+ * per-plugin data plugins use to store their own state for the block.
  */
 export class BlockNode extends EventBus {
   /**
@@ -79,11 +79,9 @@ export class BlockNode extends EventBus {
   #parent: EditorDocument | null;
 
   /**
-   * Per-plugin data of this block, keyed by plugin name.
-   *
-   * The record has a null prototype: names come from documents, and a plain assignment of a
-   * `__proto__` key to an ordinary object creates no own property at all, which would silently
-   * lose that plugin's data. With no prototype every name is stored as plain data.
+   * Per-plugin data of this block, keyed by plugin name. The record has a null prototype because
+   * names come from documents: assigning a `__proto__` key to an ordinary object creates no own
+   * property, silently losing that plugin's data.
    */
   #plugins: Record<PluginDataName, PluginDataNode> = Object.create(null) as Record<PluginDataName, PluginDataNode>;
 

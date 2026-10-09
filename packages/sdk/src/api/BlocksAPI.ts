@@ -238,11 +238,9 @@ export interface BlocksAPI {
   }): PluginDataFor<Id> | undefined;
 
   /**
-   * Merges the passed keys into the per-block data of the given plugin, creating the plugin's
-   * entry when the block has none yet. A key set to `undefined` is removed.
-   *
-   * Each key is recorded as its own modification, so a call that writes several keys is not a
-   * single undo step.
+   * Merges the passed keys into the per-block data of the given plugin, creating the entry when
+   * the block has none yet; a key set to `undefined` is removed. Each key is recorded as its own
+   * modification, so writing several keys is not a single undo step.
    * @param params - updatePluginData parameters
    * @param params.block - index or id of the block
    * @param params.plugin - name the data is stored under, by convention the plugin's `name`
