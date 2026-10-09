@@ -513,7 +513,9 @@ export class EditorDocument extends EventBus {
      */
     if (index instanceof TextIndex) {
       if (data.value !== null) {
-        this.format(index.blockIndex!, index.dataKey!, (data.value as TextFormattedEventData).tool, index.textRange![0], index.textRange![1]);
+        const { tool, data: toolData } = data.value as TextFormattedEventData;
+
+        this.format(index.blockIndex!, index.dataKey!, tool, index.textRange![0], index.textRange![1], toolData);
       } else if (data.previous !== null) {
         this.unformat(index.blockIndex!, index.dataKey!, (data.previous as TextUnformattedEventData).tool, index.textRange![0], index.textRange![1]);
       }
