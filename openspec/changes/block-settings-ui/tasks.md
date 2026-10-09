@@ -60,17 +60,18 @@
 
 ## 4. Default block settings plugin
 
-- [ ] 4.1 Scaffold `packages/plugins/default-block-settings-plugin` as a full copy of `shortcuts-plugin`'s layout: `package.json` (the same `build`/`build:declaration`/`lint`/`lint:ci`/`lint:fix`/`test`/`test:coverage`/`test:mutations`/`clear` scripts), `tsconfig.json`, `tsconfig.build.json`, `tsconfig.eslint.json`, `eslint.config.mjs`, `jest.config.ts`, `stryker.conf.mjs`, `.gitignore`, `README.md`, `src/index.ts`, `src/index.spec.ts`
-- [ ] 4.2 Add `.github/workflows/default-block-settings-plugin.yml` following `shortcuts-plugin.yml` — without it the package is never linted, tested or built in CI
-- [ ] 4.3 Depend on `@editorjs/sdk` at runtime and on `@editorjs/ui` as a devDependency for `import type` only, so `api.plugins['block-settings']` typechecks without runtime coupling
-- [ ] 4.4 Write failing tests:
+- [x] 4.1 Scaffold `packages/plugins/default-block-settings-plugin` as a full copy of `shortcuts-plugin`'s layout: `package.json` (the same `build`/`build:declaration`/`lint`/`lint:ci`/`lint:fix`/`test`/`test:coverage`/`test:mutations`/`clear` scripts), `tsconfig.json`, `tsconfig.build.json`, `tsconfig.eslint.json`, `eslint.config.mjs`, `jest.config.ts`, `stryker.conf.mjs`, `.gitignore`, `README.md`, `src/index.ts`, `src/index.spec.ts`
+- [x] 4.2 Add `.github/workflows/default-block-settings-plugin.yml` following `shortcuts-plugin.yml` — without it the package is never linted, tested or built in CI
+- [x] 4.3 Depend on `@editorjs/sdk` at runtime and on `@editorjs/ui` as a devDependency for `import type` only, so `api.plugins['block-settings']` typechecks without runtime coupling
+  - `@codexteam/icons` turned out to be a second runtime dependency: the items carry icons, and the package was resolving it through workspace hoisting alone, which would break a standalone install. Declared it, and widened the capability's requirement text, which had said `@editorjs/sdk` was the only one
+- [x] 4.4 Write failing tests:
   - should register at `order: 1000` on `core:ready`
   - should stay inert without `block-settings`
   - move up/down should call `api.blocks.move` and be disabled at the boundaries
   - handlers should resolve the block's index from `ctx.blockId` at activation, so an insertion above the block while the menu is open still moves the intended block
   - actions should do nothing when the target block no longer exists
   - delete should use `confirmation` and call `api.blocks.delete` by block id only on confirm
-- [ ] 4.5 Implement `DefaultBlockSettingsPlugin`, porting behavior and test cases from PR #157's internal delete/move-up/move-down tunes (keeping their `getIndexById`-at-activation approach) and adding the delete confirmation they lack. Credit with the `Co-authored-by` line from 2.1
+- [x] 4.5 Implement `DefaultBlockSettingsPlugin`, porting behavior and test cases from PR #157's internal delete/move-up/move-down tunes (keeping their `getIndexById`-at-activation approach) and adding the delete confirmation they lack. Credit with the `Co-authored-by` line from 2.1
 - [ ] 4.6 Register `BlockSettingsUI` and `DefaultBlockSettingsPlugin` in `@editorjs/editorjs`: add `"@editorjs/default-block-settings-plugin": "workspace:^"` to its `package.json`, update the lockfile, extend the `@editorjs/ui` mock factory in `editorjs/src/index.spec.ts` with `BlockSettingsUI`, add a `jest.unstable_mockModule` for the new package, and note that its assertions read `ctor.name` — which for `static name = 'default-block-settings'` is `'default-block-settings'`, not the class name
 - [ ] 4.7 Hand-edit `openspec/specs/editorjs-bundle/spec.md`'s Purpose preamble, which enumerates the default plugins — outside any requirement block, so the fold will not rewrite it
 - [ ] 4.8 Add `packages/editorjs/e2e/tests/block-settings.spec.ts` using the harness's `mountDocument(page, '?text=Alpha&text=Beta')` fixture: open settings on the second block, move it up, then delete it with confirmation. Confirm `include-e2e: true` is set for the bundle workflow
