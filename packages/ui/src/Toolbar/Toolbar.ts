@@ -133,14 +133,10 @@ export class ToolbarUI implements EditorjsPlugin {
   }
 
   /**
-   * Mounts the Block Settings widget: its button among the toolbar's own controls, and its
-   * menu alongside the toolbox popover.
-   *
-   * The button has to be a child of the actions container in its own right, not wrapped in
-   * the menu's element -- that is what puts it in `#controls` and so into the toolbar's
-   * roving tabindex. The tab stop is reassigned afterwards because this arrives after the
-   * toolbar has already rendered, and a button carrying no `tabindex` would be a second
-   * stop next to the plus button
+   * Mounts the Block Settings widget: its button among the toolbar's own controls, where being
+   * a direct child is what puts it in `#controls` and so in the roving tabindex, and its menu
+   * alongside the toolbox popover. The tab stop is reassigned afterwards, since this arrives
+   * after the toolbar rendered and a button carrying no `tabindex` would be a second stop
    * @param button - the control that opens the menu
    * @param blockSettingsElement - the element the menu renders into
    */
