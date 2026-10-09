@@ -24,7 +24,7 @@ The system SHALL provide `BlockSettingsUI`, an `EditorjsPlugin` with static `nam
 - **THEN** no provider is invoked, the popover is not opened, and no error is thrown
 
 ### Requirement: Block settings button
-The button `BlockSettingsUI` announces SHALL carry the whole menu-button contract, because the state it reports is the plugin's own: an accessible name from the UI package's message catalogue, `aria-haspopup="menu"`, and an `aria-expanded` kept in sync with whether the menu is open. Activating it SHALL focus it before opening the menu, so the popover has a control to return focus to when it closes. The plugin SHALL follow block selection to know which block the button acts on, and SHALL stop following it while the menu is open, so the open menu and the button cannot come to mean different blocks.
+The button `BlockSettingsUI` announces SHALL carry the whole menu-button contract, because the state it reports is the plugin's own: an accessible name from the UI package's message catalogue, `aria-haspopup="menu"`, and an `aria-expanded` kept in sync with whether the menu is open. Activating it SHALL focus it before opening the menu, so the popover has a control to return focus to when it closes. Activating it while the menu is already open SHALL close the menu instead of rebuilding it, as the menu button pattern requires: the control that opens a menu is also the control that dismisses it. The plugin SHALL follow block selection to know which block the button acts on, and SHALL stop following it while the menu is open, so the open menu and the button cannot come to mean different blocks.
 
 #### Scenario: The button is announced with the menu
 - **WHEN** `BlockSettingsUI` is constructed
@@ -39,6 +39,11 @@ The button `BlockSettingsUI` announces SHALL carry the whole menu-button contrac
 - **THEN** its `aria-expanded` is `"true"`, and it holds focus
 - **WHEN** the menu closes, by any route
 - **THEN** its `aria-expanded` returns to `"false"`
+
+#### Scenario: The button closes the menu it opened
+- **GIVEN** the button has opened the menu
+- **WHEN** the button is activated again
+- **THEN** the menu closes, `aria-expanded` returns to `"false"`, and no second menu is built
 
 #### Scenario: The target does not move under an open menu
 - **GIVEN** the menu is open for the block at index 0
@@ -58,7 +63,7 @@ The settings popover SHALL carry an accessible name drawn from the UI package's 
 - **THEN** they are no longer reachable in the accessibility tree
 
 ### Requirement: Settings provider registration
-`BlockSettingsUI` SHALL expose a `publicApi` with `register(provider, options?)` that returns an unregister function. A provider SHALL be a function receiving `{ blockId, blockIndex, tool }` for the target block and returning a `MenuConfig`, a promise of one, or `undefined`. In that context `blockId` identifies the block for as long as it exists, while `blockIndex` is only its position at the moment the menu was built, so an item's handler SHALL resolve the block's current position from `blockId` rather than reusing `blockIndex`. Providers SHALL be invoked each time the popover opens, and their results SHALL be concatenated in ascending `options.order` (default `0`, ties broken by registration order), with a separator between the contributions of different providers. Item behavior SHALL be taken entirely from the returned `MenuConfig` (`onActivate`, `isActive`, `isDisabled`, `closeOnActivate`, `children`, or a `confirmation` object whose own handler runs on the second activation — a confirmation item carries no top-level `onActivate`).
+`BlockSettingsUI` SHALL expose a `publicApi` with `register(provider, options?)` that returns an unregister function. A provider SHALL be a function receiving `{ blockId, blockIndex, tool }` for the target block and returning a `BlockSettingsMenuConfig`, a promise of one, or `undefined`. In that context `blockId` identifies the block for as long as it exists, while `blockIndex` is only its position at the moment the menu was built, so an item's handler SHALL resolve the block's current position from `blockId` rather than reusing `blockIndex`. Providers SHALL be invoked each time the popover opens, and their results SHALL be concatenated in ascending `options.order` (default `0`, ties broken by registration order), with a separator between the contributions of different providers. Item behavior SHALL be taken entirely from the returned `BlockSettingsMenuConfig` (`onActivate`, `isActive`, `isDisabled`, `closeOnActivate`, `children`, or a `confirmation` object whose own handler runs on the second activation — a confirmation item carries no top-level `onActivate`).
 
 #### Scenario: Plugin contributes an item
 - **GIVEN** a plugin calls `api.plugins['block-settings'].register(ctx => ({ title: 'Anchor', icon, onActivate: () => ... }))`

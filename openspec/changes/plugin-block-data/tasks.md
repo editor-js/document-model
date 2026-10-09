@@ -52,3 +52,8 @@
 - [ ] 6.2 Update the diagrams `model-tree-structure.mmd`, `events-catalog.mmd` and `architecture-overview.mmd`
 - [ ] 6.3 Run `yarn lint`, `yarn test`, and the mutation tests for the touched packages that have them. Fix any regressions
 - [ ] 6.4 Run `openspec validate plugin-block-data --type change` and confirm it passes. After archiving, fill the `## Purpose` of the new `plugin-block-data` spec from the proposal's intended-Purpose text
+
+## 7. Review follow-ups
+
+- [ ] 7.1 Write a failing `PluginDataNode.spec.ts` case for each no-op write — the value a key already holds, and the removal of a key that is not there — then make `update` return before dispatching in both. Add a `UndoRedoManager.integration.spec.ts` case asserting a repeated write leaves the undo stack alone
+- [ ] 7.2 Add an `Operation.spec.ts` case round-tripping a key removal on a `PluginDataIndex` through `serialize()` and `JSON.parse`: the payload is `undefined`, which `JSON.stringify` drops, so what proves the removal survives is reading it back

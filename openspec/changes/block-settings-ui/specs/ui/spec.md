@@ -78,3 +78,65 @@ The pattern covers the **unmodified** arrow keys only. `ToolbarUI` SHALL ignore 
 - **GIVEN** a plugin has announced a button through `ui:block-settings:rendered`
 - **WHEN** the toolbar's controls are inspected
 - **THEN** that button is one of them, reachable by the arrow keys, and exactly one control carries `tabindex="0"`
+
+### Requirement: Blocks holder rendering and input capture
+The system SHALL provide `BlocksUI`, which renders the contenteditable blocks holder, adds/removes block wrappers on `core:BlockAdded`/`core:BlockRemoved`, captures native `beforeinput` and remaps it into a normalized `BeforeInputUIEvent`, delegates native `keydown` as a `KeydownUIEvent` so plugins can claim keyboard shortcuts, handles undo/redo keyboard shortcuts for keys no plugin claimed, and dispatches block selection events.
+
+Selection SHALL be dispatched both when the pointer enters a block and when the caret moves into one. Pointer entry alone leaves every control that acts on "the selected block" inert for a user who never moves a mouse, and the toolbar carries such controls. The caret is read from the document selection rather than from the editor's own caret state, which is cleared as soon as focus leaves the editable -- which is what reaching for a toolbar control does.
+
+#### Scenario: Inserting a block wrapper at an index
+- **GIVEN** a `BlockAddedCoreEvent` with a valid index
+- **WHEN** `BlocksUI` processes it
+- **THEN** the block element is wrapped and inserted at that position in the blocks holder, or appended if the index is beyond the current list
+
+#### Scenario: Rejecting an invalid block index
+- **GIVEN** a `BlockAddedCoreEvent`/`BlockRemovedCoreEvent` with an out-of-bounds index
+- **WHEN** `BlocksUI` processes it
+- **THEN** it throws an "Index out of bounds" error
+
+#### Scenario: Hovering a block dispatches selection
+- **GIVEN** the pointer enters a rendered block element
+- **WHEN** the `mouseenter` event fires
+- **THEN** `BlocksUI` dispatches a `BlockSelectedUIEvent` carrying the block and its index
+
+#### Scenario: The caret moving into a block dispatches selection
+- **GIVEN** the caret is placed in a rendered block, by click or by keyboard
+- **WHEN** the document selection changes to a position inside that block
+- **THEN** `BlocksUI` dispatches a `BlockSelectedUIEvent` carrying the block and its index, so a keyboard-only user has a selected block without ever moving the pointer
+
+#### Scenario: The caret staying in one block dispatches nothing
+- **GIVEN** the caret is already in a block
+- **WHEN** it moves within that same block, as it does on every keystroke
+- **THEN** no further `BlockSelectedUIEvent` is dispatched
+
+#### Scenario: A selection outside every block dispatches nothing
+- **GIVEN** the document selection moves to a node that is in no block
+- **WHEN** the selection change is handled
+- **THEN** no `BlockSelectedUIEvent` is dispatched, and the last reported selection stands
+
+#### Scenario: Normalizing beforeinput
+- **GIVEN** a native `beforeinput` event fires on the blocks holder
+- **WHEN** `BlocksUI` intercepts it
+- **THEN** the default action is prevented and a `BeforeInputUIEvent` is dispatched carrying `data`, `inputType`, `isComposing`, and `targetRanges`, distinguishing native-input vs. contenteditable sources and cross-input selections
+
+#### Scenario: Delegating native keydown events
+- **GIVEN** a native `keydown` event fires on the blocks holder
+- **WHEN** `BlocksUI` intercepts it
+- **THEN** it dispatches a `KeydownUIEvent` on the `EventBus` carrying the native event as `nativeEvent`, before any of its own key handling
+
+#### Scenario: A plugin claims a keyboard shortcut
+- **GIVEN** a plugin listening for `KeydownUIEvent` calls `preventDefault()` on the native event
+- **WHEN** the dispatch returns
+- **THEN** `BlocksUI` performs no further handling for that key, so a plugin-registered shortcut takes precedence over the built-in handling
+
+#### Scenario: Undo/redo keyboard shortcuts
+- **GIVEN** the blocks holder has focus and no plugin claimed the key
+- **WHEN** Cmd/Ctrl+Z is pressed
+- **THEN** `api.document.undo()` is called with the default action prevented; if Shift is also held, `api.document.redo()` is called instead
+
+#### Scenario: Delegating native copy events
+- **GIVEN** a native `copy` event fires on the blocks holder
+- **WHEN** `BlocksUI` intercepts it
+- **THEN** it dispatches a `CopyUIEvent` on the `EventBus` carrying the native event as `nativeEvent`, without calling `preventDefault` itself
+
+Implemented in `src/Blocks/Blocks.ts`, `src/Blocks/events/*`.

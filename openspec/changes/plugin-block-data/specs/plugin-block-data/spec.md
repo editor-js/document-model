@@ -3,6 +3,8 @@
 ### Requirement: Per-block plugin data store
 Each block SHALL be able to hold data owned by plugins, stored as a map from a plugin data name (by convention the owning plugin's static `name`) to a flat record of string keys and JSON-serializable values. The store SHALL be serialized under the block's `plugins` key, and a block without plugin data SHALL serialize without a `plugins` entry for that plugin.
 
+A write that would leave the stored data as it is — the value a key already holds, or the removal of a key that is not present — SHALL emit no event, and so SHALL produce neither an operation for collaborators nor an undo step. Plugins re-apply their current state routinely, and an entry that undoes nothing is worse than no entry at all.
+
 #### Scenario: A block with no plugin data
 - **GIVEN** a block that has no plugin data at all
 - **WHEN** it is serialized
@@ -27,6 +29,16 @@ Each block SHALL be able to hold data owned by plugins, stored as a map from a p
 - **GIVEN** a block with `plugins.anchors` equal to `{ id: "intro" }`
 - **WHEN** `{ id: undefined }` is written for `anchors`
 - **THEN** the key is removed, and the serialized block no longer contains an `anchors` entry under `plugins`
+
+#### Scenario: Writing the value a key already holds
+- **GIVEN** a block with `plugins.anchors` equal to `{ visible: true }`
+- **WHEN** `{ visible: true }` is written for `anchors` again
+- **THEN** the data is unchanged and no `PluginDataModifiedEvent` is emitted
+
+#### Scenario: Removing a key that is not there
+- **GIVEN** a block whose `anchors` entry has no `visible` key
+- **WHEN** `{ visible: undefined }` is written for `anchors`
+- **THEN** the data is unchanged and no `PluginDataModifiedEvent` is emitted
 
 #### Scenario: Reading an entry whose keys were all removed
 - **GIVEN** a block whose `anchors` entry existed and then had every key removed
@@ -102,6 +114,11 @@ A plugin data change SHALL be recorded by local undo/redo like any other documen
 - **WHEN** undo is performed
 - **THEN** `visible` is `true` again
 
+#### Scenario: A write that changes nothing adds no undo step
+- **GIVEN** `plugins.anchors.visible` is `true` and a plugin writes `{ visible: true }` again
+- **WHEN** undo is performed
+- **THEN** it reverts whatever the user did before that write, because the no-op write recorded nothing of its own
+
 ### Requirement: Plugin data changes are collaborative
 A local plugin data change SHALL be sent to collaborators as a `Modify` operation on a `PluginDataIndex`, and a received one SHALL be applied to the local model. Plugin data operations SHALL be transformed against concurrent block insertions and removals so they keep targeting the same block.
 
@@ -114,6 +131,11 @@ A local plugin data change SHALL be sent to collaborators as a `Modify` operatio
 - **GIVEN** client A writes plugin data for the block at index 2 while client B concurrently inserts a block at index 0
 - **WHEN** both operations are applied on both clients
 - **THEN** the plugin data change lands on the same logical block (index 3 after B's insertion) on both clients
+
+#### Scenario: Removing a key reaches collaborators
+- **GIVEN** client A removes the `visible` key of a block's `anchors` data
+- **WHEN** the operation is serialized, sent, and applied on client B
+- **THEN** B's block no longer has that key — a removal carries no value, so it SHALL survive a round trip through JSON, where a key holding `undefined` does not
 
 #### Scenario: Target block removed concurrently
 - **GIVEN** client A writes plugin data for a block that client B concurrently removes
