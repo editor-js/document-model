@@ -120,8 +120,9 @@ const { shortcut } = toolFacade.pluginOptions('shortcuts') ?? {};
 ## Block settings
 
 The per-block settings menu — the thing v2 called "block tunes" — is no longer a kind of entity.
-`BlockSettingsUI` renders the popover and owns no items of its own; a plugin contributes to it by
-registering a *provider*:
+`BlockSettingsUI` renders the popover and the button that opens it, announcing both through
+`ui:block-settings:rendered` for the toolbar to place, and owns no items of its own; a plugin
+contributes to it by registering a *provider*:
 
 ```ts
 const unregister = api.plugins['block-settings']?.register(ctx => ({

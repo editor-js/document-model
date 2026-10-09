@@ -1,0 +1,28 @@
+/**
+ * The button is rendered by this plugin but lives among the toolbar's controls, so it
+ * matches them. The declarations are repeated rather than shared because `@apply` of the
+ * toolbar's `--toolbar-button` property set resolves per file, and there is no shared
+ * partial for the two to draw on yet.
+ */
+.settings-button {
+  background: none;
+  border: none;
+  padding: 0;
+
+  color: var(--base--text);
+  cursor: pointer;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-m);
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  user-select: none;
+  flex-shrink: 0;
+
+  @media (hover: hover) {
+    &:hover {
+      background-color: var(--accent--bg-primary);
+    }
+  }
+}
