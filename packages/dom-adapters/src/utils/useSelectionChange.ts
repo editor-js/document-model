@@ -126,6 +126,13 @@ export const useSelectionChange = createSingleton(() => {
     inputsWatched.push(input);
 
     /**
+     * The document listener is shared, so it is added with the first subscriber only
+     */
+    if (inputsWatched.length === 1) {
+      document.addEventListener('selectionchange', onDocumentSelectionChanged);
+    }
+
+    /**
      * Store subscription
      */
     subscribers.set(input, {
@@ -139,8 +146,19 @@ export const useSelectionChange = createSingleton(() => {
    * @param input - input to remove subscription
    */
   function off(input: InputWithCaret): void {
+    if (!subscribers.has(input)) {
+      return;
+    }
+
     subscribers.delete(input);
     inputsWatched.splice(inputsWatched.indexOf(input), 1);
+
+    /**
+     * Editors on the page share the document listener, so it is removed with the last subscriber only
+     */
+    if (inputsWatched.length === 0) {
+      document.removeEventListener('selectionchange', onDocumentSelectionChanged);
+    }
   }
 
   /**
@@ -154,21 +172,11 @@ export const useSelectionChange = createSingleton(() => {
   }
 
   /**
-   * Destroy document selection change watcher.
+   * Destroy document selection change watcher: unsubscribes every input, which removes the document listener
    */
   function destroy(): void {
-    document.removeEventListener('selectionchange', onDocumentSelectionChanged);
-
-    inputsWatched.forEach((input) => {
-      const subscriber = subscribers.get(input);
-
-      if (subscriber) {
-        off(input);
-      }
-    });
+    [...inputsWatched].forEach(input => off(input));
   }
-
-  init();
 
   return {
     on,

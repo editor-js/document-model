@@ -355,21 +355,6 @@ describe('Core', () => {
       error.mockRestore();
     });
 
-    it('should not log when the adapter has no destroy', async () => {
-      const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
-      const core = new Core(createConfig());
-
-      core.use(StubAdapter);
-      core.use(StubBlockTool);
-      await core.initialize();
-
-      core.destroy();
-
-      expect(error).not.toHaveBeenCalled();
-
-      error.mockRestore();
-    });
-
     it('should not log when destroyed before initialize', () => {
       const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
       const core = createCore();

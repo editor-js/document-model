@@ -1,30 +1,30 @@
 ## 1. SDK contracts
 
 - [x] 1.1 Add optional `destroy?(): void` to `InlineTool` and declare it explicitly on `BlockTool` in `packages/sdk/src/entities/{InlineTool,BlockTool}.ts`, with type tests that tools with and without `destroy()` both satisfy their constructor types
-- [ ] 1.2 Narrow `EditorJSAdapterPlugin` to a required `destroy(): void` in `packages/sdk/src/entities/EditorjsAdapterPlugin.ts`, and update the test adapter mocks in `packages/core` to implement it
+- [x] 1.2 Narrow `EditorJSAdapterPlugin` to a required `destroy(): void` in `packages/sdk/src/entities/EditorjsAdapterPlugin.ts`, and update the test adapter mocks in `packages/core` to implement it
 
 ## 2. Signal plumbing (AbortController rule, design D8/D8a)
 
 - [x] 2.1 Add an `options?: AddEventListenerOptions` argument to `EditorJSModel`'s typed `addEventListener` overloads and forward it
 - [x] 2.2 Keep the core `DocumentAPI.onUpdate` and `SelectionAPI.onCaretUpdate` tests green (`should stop calling the callback after the returned function is called`) while switching the implementation to a controller per subscription that returns `() => controller.abort()`
 - [x] 2.3 Write failing `BlockToolAdapter` tests: `should stop dispatching translated events after destroy`, and `should remove a subclass listener registered with the inherited signal on destroy`. Give the base class its own controller and a `protected readonly signal`, and abort it in `destroy()`
-- [ ] 2.4 Make `DOMBlockToolAdapter` pass `this.signal` to its `ui:beforeinput` registration, and remove its `destroy()` override and `#beforeInputListener` field
+- [x] 2.4 Make `DOMBlockToolAdapter` pass `this.signal` to its `ui:beforeinput` registration, and remove its `destroy()` override and `#beforeInputListener` field
 - [x] 2.5 Move `UndoRedoManager` listener cleanup to one controller, keeping explicit cleanup only for its debounce timer
-- [ ] 2.6 Move `ClipboardPlugin`, `ShortcutsPlugin`, and `CollaborationManager` listener cleanup to one controller each. Keep their existing destroy tests green, and keep explicit cleanup only for timers and the socket
+- [x] 2.6 Move `ClipboardPlugin`, `ShortcutsPlugin`, and `CollaborationManager` listener cleanup to one controller each. Keep their existing destroy tests green, and keep explicit cleanup only for timers and the socket
 
 ## 3. Selection watcher reference counting (dom-adapters)
 
-- [ ] 3.1 Write failing tests in `useSelectionChange.spec.ts`: `should remove the document listener when the last subscriber unsubscribes`, and `should re-add the document listener when a subscriber is added after all were removed`
-- [ ] 3.2 Make `off()` detach the `document` listener when the subscriber map empties, and `on()` attach it when the first subscriber is added
+- [x] 3.1 Write failing tests in `useSelectionChange.spec.ts`: `should remove the document listener when the last subscriber unsubscribes`, and `should re-add the document listener when a subscriber is added after all were removed`
+- [x] 3.2 Make `off()` detach the `document` listener when the subscriber map empties, and `on()` attach it when the first subscriber is added
 
 ## 4. DOMAdapters teardown
 
-- [ ] 4.1 Write failing `CaretAdapter` tests: `should stop updating the model caret on selectionchange after destroy`, and `should not touch the DOM selection on model caret updates after destroy`
-- [ ] 4.2 Implement `CaretAdapter.destroy()` by aborting its controller, whose `abort` event is tied to `off(holder)` and the `onCaretUpdate` unsubscribe function. Remove the `@todo`
-- [ ] 4.3 Write failing `FormattingAdapter` tests: `should call destroy on attached inline tools`, `should ignore core:ToolLoaded after destroy`, and `should ignore model updates after destroy`
-- [ ] 4.4 Implement `FormattingAdapter.destroy()`: abort its controller, then destroy the inline tool instances
-- [ ] 4.5 Write failing `DOMAdapters` tests: `should destroy every remaining block adapter on destroy`, `should leave the inputs registry empty after destroy`, and `should destroy caret and formatting adapters on destroy`
-- [ ] 4.6 Implement `DOMAdapters.destroy()`
+- [x] 4.1 Write failing `CaretAdapter` tests: `should stop updating the model caret on selectionchange after destroy`, and `should not touch the DOM selection on model caret updates after destroy`
+- [x] 4.2 Implement `CaretAdapter.destroy()` by aborting its controller, whose `abort` event is tied to `off(holder)` and the `onCaretUpdate` unsubscribe function. Remove the `@todo`
+- [x] 4.3 Write failing `FormattingAdapter` tests: `should call destroy on attached inline tools`, `should ignore core:ToolLoaded after destroy`, and `should ignore model updates after destroy`
+- [x] 4.4 Implement `FormattingAdapter.destroy()`: abort its controller, then destroy the inline tool instances
+- [x] 4.5 Write failing `DOMAdapters` tests: `should destroy every remaining block adapter on destroy`, `should leave the inputs registry empty after destroy`, and `should destroy caret and formatting adapters on destroy`
+- [x] 4.6 Implement `DOMAdapters.destroy()`
 
 ## 5. Core services teardown
 
@@ -42,7 +42,7 @@
 
 ## 7. UI
 
-- [ ] 7.1 UI plugin teardown is covered by #174: no UI plugin implementation in this change
+- [x] 7.1 UI plugin teardown is covered by #174: no UI plugin implementation in this change
 - [ ] 7.2 After #174 lands, make `InlineToolbarUI` call `destroy?.()` on the inline tool instances it creates, both when the popover is rebuilt and on destroy, with tests in #174's UI test setup
 
 ## 8. Bundle and integration
@@ -54,6 +54,6 @@
 
 ## 9. Docs and wrap-up
 
-- [ ] 9.1 Replace the "`Core` currently does not expose a global `destroy()`" line in `docs/plugins.md` with the teardown contract (order, idempotency, tools' `destroy()`), and add a teardown step to the lifecycle in `docs/README.md`. Update `docs/diagrams/plugin-lifecycle-flow.mmd`
-- [ ] 9.2 Run `yarn lint` and the test suites for every touched package
+- [x] 9.1 Replace the "`Core` currently does not expose a global `destroy()`" line in `docs/plugins.md` with the teardown contract (order, idempotency, tools' `destroy()`), and add a teardown step to the lifecycle in `docs/README.md`. Update `docs/diagrams/plugin-lifecycle-flow.mmd`
+- [x] 9.2 Run `yarn lint` and the test suites for every touched package
 - [ ] 9.3 Run `openspec validate editor-destroy --type change` and make sure it passes
