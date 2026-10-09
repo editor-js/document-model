@@ -72,7 +72,7 @@ export type BlockSettingsProvider = (
  */
 export interface BlockSettingsRegisterOptions {
   /**
-   * Ascending sort key for this provider's contribution. Defaults to `0`, ties are broken by
+   * Ascending sort key for this provider's contribution, defaulting to `0` with ties broken by
    * registration order. The built-in settings sit last, at `1000`
    */
   order?: number;
@@ -121,12 +121,9 @@ interface Registration {
 }
 
 /**
- * UI plugin that renders the per-block settings menu.
- *
- * Mirrors {@link ToolboxUI}: it announces its element once so `ToolbarUI` can mount it, then
- * builds and opens the menu whenever it receives `ui:block-settings:open`. It owns no items of
- * its own -- everything in the menu comes from registered providers, the built-in Move/Delete
- * entries included.
+ * UI plugin that renders the per-block settings menu and the button that opens it, announcing
+ * both once for a host to mount. It owns no items of its own -- everything in the menu comes
+ * from registered providers, the built-in Move/Delete entries included.
  */
 export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
   /**
@@ -309,9 +306,9 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
     const blockId = this.#api.blocks.getIdByIndex(index);
 
     /**
-     * Nothing is selected, or the index is stale. Providers are not asked about a block that
-     * is not there. Any menu still on screen was built for a different block, so leaving it
-     * open would show one block's settings while claiming to be another's
+     * Nothing is selected, or the index is stale, so no provider is asked. Any menu still on
+     * screen was built for a different block, and leaving it open would present one block's
+     * settings as another's
      */
     if (blockId === undefined) {
       this.#close();
@@ -373,10 +370,9 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
           return Array.isArray(result) ? result : [result];
         } catch (error) {
           /**
-           * Providers are third-party code, and this is the one place all of it runs. Without
-           * isolation a single plugin throwing takes the whole menu down for every block --
-           * including the entries of the plugins that did nothing wrong. It contributes
-           * nothing instead, and the stack identifies which one it was.
+           * Providers are third-party code and this is the one place all of it runs, so without
+           * isolation a single plugin throwing takes the whole menu down for every block. It
+           * contributes nothing instead, and the stack identifies which one it was
            */
           console.error('[BlockSettingsUI] A block settings provider failed and was skipped', error);
 
@@ -397,25 +393,20 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
   }
 
   /**
-   * Replaces the popover inside the holder with one built for the given items.
-   *
-   * The menu is rebuilt rather than edited in place: `removeItemByName` is the only removal
-   * `@editorjs/ui-kit` offers, and a separator is constructed without params, so it has no name
-   * to be removed by. Handing a fresh popover the complete item list is what guarantees that
-   * the items of the previous block leave the accessibility tree.
+   * Replaces the popover inside the holder with one built for the given items. Rebuilt rather
+   * than edited in place because `removeItemByName` is ui-kit's only removal and a separator
+   * carries no name, so a fresh popover is what keeps the previous block's items out of the
+   * accessibility tree
    * @param items - items the menu should consist of
    */
   #renderPopover(items: PopoverItemParams[]): void {
     this.#popover?.destroy();
 
     /**
-     * The item wrapper is left at ui-kit's default. `wrapperTag: 'button'` -- which the port
-     * from PR #157 carried over -- is what ui-kit uses for its *inline* popover, where items
-     * are horizontal toolbar buttons and shrink-to-fit is the right width. A vertical menu's
-     * styles assume a block-level wrapper, and a form control does not stretch to its
-     * container the way a div does, so each row ended up as wide as its own label: the hover
-     * highlight covered part of the row, and the UA button font replaced the editor's.
-     * Items are still exposed as `menuitem` and activated from the keyboard by ui-kit itself.
+     * The item wrapper is left at ui-kit's default: `wrapperTag: 'button'`, carried over from
+     * PR #157, is what ui-kit uses for its *inline* popover, where shrink-to-fit is the right
+     * width. In a vertical menu a form control does not stretch to its container, so each row
+     * came out as wide as its own label -- a partial hover highlight and the UA button font
      */
     this.#popover = new PopoverDesktop({
       scopeElement: this.#editorConfig.holder,
