@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { CoreConfigValidated, EditorAPI } from '@editorjs/sdk';
 import { EventBus } from '@editorjs/sdk';
 import { BlockSettingsUI } from './BlockSettings.js';
@@ -29,6 +29,12 @@ const defaultBlocks: StubBlock[] = [
  * A position no block occupies, so `getIdByIndex` resolves to nothing
  */
 const MISSING_BLOCK_INDEX = 99;
+
+/** How long the deliberately slow provider takes, so a stale build would land last. */
+const SLOW_PROVIDER_MS = 20;
+
+/** Long enough for both overlapping requests to have settled. */
+const BOTH_REQUESTS_SETTLED_MS = 50;
 
 /**
  * Lets the queued provider promises settle. Opening is asynchronous because a provider may
@@ -394,6 +400,141 @@ describe('BlockSettingsUI', () => {
       expect(provider).not.toHaveBeenCalled();
       expect(onOpened).not.toHaveBeenCalled();
       expect(itemTitles(instance.element)).toEqual([]);
+    });
+  });
+
+  describe('a failing provider', () => {
+    let reportedErrors: jest.SpiedFunction<typeof console.error>;
+
+    beforeEach(() => {
+      reportedErrors = jest.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      reportedErrors.mockRestore();
+    });
+
+    it('should skip a provider that throws and keep the rest of the menu', async () => {
+      instance.plugin.publicApi.register(() => {
+        throw new Error('third-party provider blew up');
+      });
+      instance.plugin.publicApi.register(() => ({
+        title: 'Healthy',
+        onActivate: () => {},
+      }));
+
+      await open(instance.eventBus, 0);
+
+      expect(itemTitles(instance.element)).toEqual(['Healthy']);
+    });
+
+    it('should skip a provider whose promise rejects', async () => {
+      instance.plugin.publicApi.register(() => Promise.reject(new Error('async blow-up')));
+      instance.plugin.publicApi.register(() => ({
+        title: 'Healthy',
+        onActivate: () => {},
+      }));
+
+      await open(instance.eventBus, 0);
+
+      expect(itemTitles(instance.element)).toEqual(['Healthy']);
+    });
+
+    it('should report the failure rather than swallowing it', async () => {
+      const failure = new Error('third-party provider blew up');
+
+      instance.plugin.publicApi.register(() => {
+        throw failure;
+      });
+
+      await open(instance.eventBus, 0);
+
+      expect(reportedErrors).toHaveBeenCalledWith(expect.stringContaining('provider failed'), failure);
+    });
+
+    it('should not emit a separator for the provider it skipped', async () => {
+      instance.plugin.publicApi.register(() => {
+        throw new Error('blew up');
+      });
+      instance.plugin.publicApi.register(() => ({
+        title: 'Healthy',
+        onActivate: () => {},
+      }));
+
+      await open(instance.eventBus, 0);
+
+      expect(separatorCount(instance.element)).toBe(0);
+    });
+  });
+
+  describe('superseded and empty requests', () => {
+    it('should close an open menu when the next request resolves to no block', async () => {
+      const onClosed = jest.fn();
+
+      instance.plugin.publicApi.register(() => ({
+        title: 'Anchor',
+        onActivate: () => {},
+      }));
+
+      await open(instance.eventBus, 0);
+      expect(itemTitles(instance.element)).toEqual(['Anchor']);
+
+      instance.eventBus.addEventListener('ui:block-settings:closed', onClosed);
+
+      await open(instance.eventBus, MISSING_BLOCK_INDEX);
+
+      expect(onClosed).toHaveBeenCalledTimes(1);
+    });
+
+    it('should close an open menu when every provider opts out of the next block', async () => {
+      const onClosed = jest.fn();
+
+      instance.plugin.publicApi.register(ctx => (ctx.tool === 'image'
+        ? undefined
+        : {
+            title: 'Only text',
+            onActivate: () => {},
+          }));
+
+      await open(instance.eventBus, 0);
+      expect(itemTitles(instance.element)).toEqual(['Only text']);
+
+      instance.eventBus.addEventListener('ui:block-settings:closed', onClosed);
+
+      await open(instance.eventBus, 2);
+
+      // Left open, it would be showing block 0's settings while claiming to be block 2's.
+      expect(onClosed).toHaveBeenCalledTimes(1);
+    });
+
+    it('should let the newest request win when two overlap', async () => {
+      const onOpened = jest.fn();
+
+      instance.eventBus.addEventListener('ui:block-settings:opened', onOpened);
+
+      /**
+       * Block 0's provider resolves a tick later than block 1's, so without a guard the
+       * stale build would land last and render the wrong block's menu
+       */
+      instance.plugin.publicApi.register(async (ctx) => {
+        if (ctx.blockIndex === 0) {
+          await new Promise(resolve => setTimeout(resolve, SLOW_PROVIDER_MS));
+        }
+
+        return {
+          title: `For ${ctx.blockId}`,
+          onActivate: () => {},
+        };
+      });
+
+      instance.eventBus.dispatchEvent(new BlockSettingsOpenUIEvent({ index: 0 }));
+      instance.eventBus.dispatchEvent(new BlockSettingsOpenUIEvent({ index: 1 }));
+
+      await new Promise(resolve => setTimeout(resolve, BOTH_REQUESTS_SETTLED_MS));
+
+      expect(itemTitles(instance.element)).toEqual(['For block-1']);
+      expect(onOpened).toHaveBeenCalledTimes(1);
+      expect((onOpened.mock.calls[0][0] as CustomEvent).detail).toEqual({ blockId: 'block-1' });
     });
   });
 
