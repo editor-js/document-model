@@ -5,11 +5,9 @@ import { BlockSettingsBaseEvent } from './BlockSettingsBaseEvent.js';
  */
 export interface BlockSettingsOpenUIEventPayload {
   /**
-   * Position of the block to show settings for.
-   *
-   * An index rather than an id because the dispatcher is the toolbar, which follows block
-   * selection by position. `BlockSettingsUI` resolves it to an id once, when the menu opens,
-   * and the providers' items work from that id afterwards
+   * Position of the block to show settings for, named by index because callers follow block
+   * selection by position. `BlockSettingsUI` resolves it to an id once the menu opens, and the
+   * providers' items work from that id afterwards
    */
   readonly index: number;
 }

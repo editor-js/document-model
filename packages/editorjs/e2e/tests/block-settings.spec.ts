@@ -59,15 +59,11 @@ test.describe('presentation', () => {
 
     await expect(page.getByRole('menu', { name: 'Block settings' })).toBeVisible();
 
-    // Regression test for the item wrapper. ui-kit renders menu items as block-level elements
-    // whose width fills the menu; configuring them as `button` instead — correct for its inline
-    // toolbar, where items sit in a row — made each one shrink to its own label, so the hover
-    // highlight covered a ragged part of the row. Only a real layout engine catches this, which
-    // is why it is asserted here rather than in the jsdom suite.
-    //
-    // Measured in one pass in the page, after the webfont has settled: taken one locator at a
-    // time, the rows are measured at different moments and a font still loading changes the
-    // menu's width between them, which WebKit reports as several pixels of drift.
+    // Regression test for the item wrapper: rendering menu items as `button` — right for
+    // ui-kit's inline toolbar, wrong for a vertical menu — made each row shrink to its own
+    // label, so the hover highlight covered a ragged part of it. Measured in one pass in the
+    // page and after the webfont has settled, because one locator at a time reads the rows at
+    // different moments and a loading font moves the menu's width between them.
     const widths = await page.evaluate(async () => {
       await document.fonts.ready;
 
