@@ -12,7 +12,7 @@ import { UiComponentType } from '@editorjs/sdk';
 import type { PopoverItemParams } from '@editorjs/ui-kit';
 import { PopoverDesktop, PopoverEvent, PopoverItemType } from '@editorjs/ui-kit';
 import { messages } from '../messages.js';
-import Style from './BlockSettings.module.pcss';
+import ControlStyle from '../controls.module.pcss';
 import type { BlockSelectedUIEvent } from '../Blocks/events/index.js';
 import {
   BlockSettingsClosedUIEvent,
@@ -217,7 +217,7 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
     };
 
     this.#holder = make('div');
-    this.#button = make('button', Style['settings-button'], {
+    this.#button = make('button', ControlStyle['toolbar-button'], {
       innerHTML: IconMenuSmall,
     }) as HTMLButtonElement;
 
