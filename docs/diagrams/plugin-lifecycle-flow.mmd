@@ -68,6 +68,18 @@ sequenceDiagram
   CollabMgr->>CollabMgr: connect() (if server config provided)
 
   %% ── Destroy ──────────────────────────────────────
-  Dev->>Plugin: plugin.destroy()
-  Plugin->>EventBus: removeEventListener (cleanup)
-  Note over Registry: the registry lives for the lifetime of the Core<br/>instance — Core does not retain plugin instances,<br/>so nothing calls unregister() on teardown today
+  Dev->>Core: destroy()
+  loop plugins, in reverse construction order
+    Core->>Plugin: plugin.destroy?.()
+    Plugin->>EventBus: abort() its listeners' signal
+    Core->>Registry: unregister(plugin.name)
+  end
+  Core->>CollabMgr: destroy() (as a plugin: aborts listeners, closes OTClient socket)
+  Core->>IoC: UndoRedoManager.destroy(), SelectionManager.destroy()
+  Core->>BlockRenderer: destroy()
+  loop each rendered block
+    BlockRenderer->>Tool: instance.destroy?.()
+    BlockRenderer->>Adapter: destroyBlockToolAdapter(blockId)
+  end
+  Core->>Adapter: destroy()
+  Note over EditorJSModel: never mutated during teardown,<br/>so no removals reach undo history or collaboration

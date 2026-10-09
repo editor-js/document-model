@@ -39,6 +39,7 @@ Two event transports (never mixed):
    - Resolves core services (`SelectionManager`, `BlocksManager`, `BlockRenderer`, `UndoRedoManager`).
    - Inserts initial document into `EditorJSModel`; `BlockRenderer` reacts to each `BlockAddedEvent` to create a `BlockToolAdapter`, render the tool, and emit `BlockAddedCoreEvent`.
    - Dispatches `CoreEventType.Ready`; collaboration manager connects if server config is provided.
+4. `core.destroy()` tears it down: plugins in reverse construction order (UI removes its DOM, collaboration closes its socket), then `UndoRedoManager`, `SelectionManager`, `BlockRenderer` (destroying each block's tool instance and adapter), and the adapter plugin. The model is left untouched; the holder element stays in place.
 
 ---
 
