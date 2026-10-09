@@ -2364,6 +2364,34 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@editorjs/default-block-settings-plugin@workspace:^, @editorjs/default-block-settings-plugin@workspace:packages/plugins/default-block-settings-plugin":
+  version: 0.0.0-use.local
+  resolution: "@editorjs/default-block-settings-plugin@workspace:packages/plugins/default-block-settings-plugin"
+  dependencies:
+    "@babel/core": "npm:^7.29.0"
+    "@babel/preset-env": "npm:^7.29.2"
+    "@codexteam/icons": "npm:^0.3.3"
+    "@editorjs/sdk": "workspace:^"
+    "@editorjs/ui": "workspace:^"
+    "@jest/globals": "npm:^29.7.0"
+    "@stryker-mutator/core": "npm:^7.0.2"
+    "@stryker-mutator/jest-runner": "npm:^7.0.2"
+    "@stryker-mutator/typescript-checker": "npm:^7.0.2"
+    "@types/eslint": "npm:^9.6.1"
+    "@types/jest": "npm:^29.5.12"
+    "@types/node": "npm:^22.10.2"
+    babel-jest: "npm:^29.7.0"
+    eslint: "npm:^9.24.0"
+    eslint-config-codex: "npm:^2.0.3"
+    eslint-plugin-import: "npm:^2.31.0"
+    jest: "npm:^29.7.0"
+    stryker-cli: "npm:^1.0.2"
+    ts-jest: "npm:^29.2.5"
+    ts-node: "npm:^10.9.2"
+    typescript: "npm:^5.5.4"
+  languageName: unknown
+  linkType: soft
+
 "@editorjs/document-playground@workspace:packages/playground":
   version: 0.0.0-use.local
   resolution: "@editorjs/document-playground@workspace:packages/playground"
@@ -2445,6 +2473,7 @@ __metadata:
     "@editorjs/clipboard-plugin": "workspace:^"
     "@editorjs/collaboration-manager": "workspace:^"
     "@editorjs/core": "workspace:^"
+    "@editorjs/default-block-settings-plugin": "workspace:^"
     "@editorjs/dom-adapters": "workspace:^"
     "@editorjs/inline-link": "workspace:^"
     "@editorjs/italic": "workspace:^"
