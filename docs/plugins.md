@@ -28,7 +28,8 @@ Tools are registered via `core.use(ToolConstructor, options)` during setup. The 
 | Inline Tool | `InlineTool` (from config `tools`) | Selection formatting actions |
 
 There is no Block Tune tool kind. What v2 called a tune is a UI plugin: it puts an item in the
-block settings menu and stores its state as [per-block plugin data](#per-block-plugin-data).
+[block settings menu](#block-settings) and stores its state as
+[per-block plugin data](#per-block-plugin-data).
 
 ## Initialization sequence
 
@@ -115,6 +116,59 @@ Merging is shallow **at the plugin-id level**: a slice supplied through `use()` 
 ```ts
 const { shortcut } = toolFacade.pluginOptions('shortcuts') ?? {};
 ```
+
+## Block settings
+
+The per-block settings menu — the thing v2 called "block tunes" — is no longer a kind of entity.
+`BlockSettingsUI` renders the popover and owns no items of its own; a plugin contributes to it by
+registering a *provider*:
+
+```ts
+const unregister = api.plugins['block-settings']?.register(ctx => ({
+  title: 'Anchor',
+  icon: IconLink,
+  isActive: Boolean(api.blocks.getPluginData({ block: ctx.blockId, plugin: 'anchors' })),
+  onActivate: () => setAnchor(ctx.blockId),
+}));
+```
+
+A provider is asked again every time the menu opens, so an item's `isActive`, `isDisabled` and
+`title` can be derived from current state rather than cached. Return `undefined` (or an empty
+array) to contribute nothing for a given block — a provider that opts out adds no separator
+either. Item behaviour comes entirely from the returned config, which is ui-kit's popover-item
+shape: `onActivate`, `closeOnActivate`, `children` for a submenu, or a `confirmation` whose own
+handler runs on the second activation.
+
+Contributions are concatenated in ascending `order` (default `0`, ties broken by registration
+order), separated from one another. `@editorjs/default-block-settings-plugin` registers at
+`order: 1000` so the built-in Move up / Move down / Delete sit last; it is the reference example
+of a former "tune" written as a plain plugin, with no privileged path into the menu.
+
+### Resolve positions from `blockId`, not `blockIndex`
+
+The provider context carries both, but only `blockId` is durable:
+
+```ts
+onActivate: () => {
+  const index = api.blocks.getIndexById(ctx.blockId);
+
+  // The block may be gone — removed by a collaborator, or by an undo — while the menu was open.
+  if (index === -1) {
+    return;
+  }
+
+  api.blocks.move({ fromIndex: index, toIndex: index - 1 });
+}
+```
+
+`ctx.blockIndex` is only true at the moment the menu was built. A menu can stay open while a
+collaborator inserts a block above the target, or while an undo runs, and a handler acting on the
+stale index then moves the wrong block. Deriving a *disabled state* from the index is fine, since
+going stale only greys an item out — deriving an *action* from it is not.
+
+The menu is absent in a headless setup, which is why the lookup above is optional: a plugin
+registered on a `Core` without `BlockSettingsUI` finds nothing under `api.plugins['block-settings']`
+and should simply contribute nothing rather than fail.
 
 ## Per-block plugin data
 
