@@ -18,8 +18,9 @@
     "dist"
   ],
   "scripts": {
-    "build": "vite build",
-    "build:declaration": "",
+    "build:dependencies": "yarn workspaces foreach -Rp --topological-dev --from $npm_package_name --exclude $npm_package_name run build",
+    "build": "yarn build:dependencies && vite build",
+    "build:declaration": "yarn build:dependencies",
     "dev": "chokidar 'src/**/*' -c 'yarn build' --initial",
     "prebuild": "yarn clear",
     "lint": "eslint ./src",
