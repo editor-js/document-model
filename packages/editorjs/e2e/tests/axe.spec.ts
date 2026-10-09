@@ -54,6 +54,19 @@ test('has no automatically detectable accessibility violations with the toolbox 
   expect(await auditEditor(page)).toEqual([]);
 });
 
+test('has no automatically detectable accessibility violations with block settings open', async ({ page }) => {
+  // The settings menu is the one popover whose items are *not* native controls -- they are
+  // divs carrying role="menuitem", which is what the ARIA menu pattern calls for and what the
+  // toolbox does too. That makes every accessible name, state and role on them authored rather
+  // than inherited, so it is worth auditing the menu in its open state.
+  await page.getByRole('textbox', { name: 'Paragraph' }).first()
+    .hover();
+  await page.getByRole('button', { name: 'Block settings' }).click();
+  await expect(page.getByRole('menu', { name: 'Block settings' })).toBeVisible();
+
+  expect(await auditEditor(page)).toEqual([]);
+});
+
 test('has no automatically detectable accessibility violations with the inline toolbar open', async ({ page }) => {
   await selectParagraphText(page);
   await expect(page.getByRole('toolbar', { name: 'Text formatting' })).toBeVisible();
