@@ -178,6 +178,12 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
   #sequence = 0;
 
   /**
+   * Incremented on every open request. Building a menu is asynchronous, so a request that
+   * finishes after a newer one started has been superseded and must not render
+   */
+  #openToken = 0;
+
+  /**
    * BlockSettingsUI class constructor
    * @param params - Plugin parameters
    */
@@ -245,13 +251,17 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
    * @param index - position the opening request named
    */
   async #open(index: number): Promise<void> {
+    const token = ++this.#openToken;
     const blockId = this.#api.blocks.getIdByIndex(index);
 
     /**
      * Nothing is selected, or the index is stale. Providers are not asked about a block that
-     * is not there, and an opening request for one is simply dropped
+     * is not there. Any menu still on screen was built for a different block, so leaving it
+     * open would show one block's settings while claiming to be another's
      */
     if (blockId === undefined) {
+      this.#close();
+
       return;
     }
 
@@ -261,7 +271,21 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
       tool: this.#api.document.data.blocks[index]?.name ?? '',
     });
 
+    /**
+     * A newer request started while this one was waiting on its providers. That one owns the
+     * menu now, and rendering this result would replace it with a stale block's items
+     */
+    if (token !== this.#openToken) {
+      return;
+    }
+
+    /**
+     * Every provider opted out of this block. Same reasoning as the missing block above: the
+     * menu does not open, and whatever was open closes rather than misrepresenting this block
+     */
     if (items.length === 0) {
+      this.#close();
+
       return;
     }
 
@@ -284,13 +308,25 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
 
     const contributions = await Promise.all(
       ordered.map(async ({ provider }) => {
-        const result = await provider(context);
+        try {
+          const result = await provider(context);
 
-        if (result === undefined) {
+          if (result === undefined) {
+            return [];
+          }
+
+          return Array.isArray(result) ? result : [result];
+        } catch (error) {
+          /**
+           * Providers are third-party code, and this is the one place all of it runs. Without
+           * isolation a single plugin throwing takes the whole menu down for every block --
+           * including the entries of the plugins that did nothing wrong. It contributes
+           * nothing instead, and the stack identifies which one it was.
+           */
+          console.error('[BlockSettingsUI] A block settings provider failed and was skipped', error);
+
           return [];
         }
-
-        return Array.isArray(result) ? result : [result];
       })
     );
 
