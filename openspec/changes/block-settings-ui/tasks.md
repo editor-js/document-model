@@ -15,12 +15,13 @@
 
 ## 1. UI test setup
 
-- [ ] 1.1 Add Jest to `packages/ui`: `jest.config.ts` with `testEnvironment: 'jsdom'`, a `moduleNameMapper` for `\.pcss$` and the `@codexteam/ui/styles*` side-effect imports, `transformIgnorePatterns` covering `@codexteam/*` as well as `@editorjs/*`, and the `test`/`test:coverage` scripts using `node --experimental-vm-modules`
-- [ ] 1.2 Add the dev dependencies: `jest`, `jest-environment-jsdom` (no package uses jsdom yet, so it must be explicit), `ts-jest`, `babel-jest`, `@babel/core`, `@babel/preset-env`, `@jest/globals`, `@types/jest`, `ts-node`
-- [ ] 1.3 Add a `files: ['**/*.spec.ts']` override to `packages/ui/eslint.config.mjs` allowing `@jest/globals`, mirroring `packages/core/eslint.config.mjs`, or `yarn lint` fails on the new specs
-- [ ] 1.4 Point `vite.config.ts`'s `dts()` at `tsconfig.build.json` so declaration emit keeps excluding `*.spec.ts`
-- [ ] 1.5 Add `.github/workflows/ui.yml` following `.github/workflows/core.yml`, and handle the first-run `base-coverage` step, which checks out the base ref and runs `test:coverage` for a package that has no such script there
-- [ ] 1.6 Hand-edit the note in `openspec/specs/ui/spec.md`'s preamble that says the package has no automated test suite — it sits outside any `### Requirement:` block, so the archive fold will not rewrite it
+- [x] 1.1 Add Jest to `packages/ui`: `jest.config.ts` with `testEnvironment: 'jsdom'`, a `moduleNameMapper` for `\.pcss$` and the `@codexteam/ui/styles*` side-effect imports, `transformIgnorePatterns` covering `@codexteam/*` as well as `@editorjs/*`, and the `test`/`test:coverage` scripts using `node --experimental-vm-modules`
+- [x] 1.2 Add the dev dependencies: `jest`, `jest-environment-jsdom` (no package uses jsdom yet, so it must be explicit), `ts-jest`, `babel-jest`, `@babel/core`, `@babel/preset-env`, `@jest/globals`, `@types/jest`, `ts-node`
+- [x] 1.3 Add a `files: ['**/*.spec.ts']` override to `packages/ui/eslint.config.mjs` allowing `@jest/globals`, mirroring `packages/core/eslint.config.mjs`, or `yarn lint` fails on the new specs
+- [x] 1.4 Point `vite.config.ts`'s `dts()` at `tsconfig.build.json` so declaration emit keeps excluding `*.spec.ts`
+- [x] 1.5 Add `.github/workflows/ui.yml` following `.github/workflows/core.yml`, and handle the first-run `base-coverage` step, which checks out the base ref and runs `test:coverage` for a package that has no such script there
+  - `base-coverage` already skipped a package absent from the base ref, but `packages/ui/package.json` *is* there — only the script is missing, so the file test passed and `yarn workspace @editorjs/ui test:coverage` would have failed with "couldn't find a script". Its guard now also checks that the base ref declares `test:coverage`, which covers every future package that adds its first suite
+- [x] 1.6 Hand-edit the note in `openspec/specs/ui/spec.md`'s preamble that says the package has no automated test suite — it sits outside any `### Requirement:` block, so the archive fold will not rewrite it
 
 ## 2. Block settings plugin
 

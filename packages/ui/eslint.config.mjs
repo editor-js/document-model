@@ -18,6 +18,7 @@ export default [
       'n/no-unpublished-import': ['error', {
         allowModules: [
           'eslint-config-codex',
+          '@jest/globals',
         ],
         ignoreTypeImport: true,
       }],
@@ -29,6 +30,17 @@ export default [
       'n/no-unsupported-features/node-builtins': ['error', {
         version: '>=24.0.0',
         ignores: [],
+      }],
+    },
+  },
+  {
+    files: ['**/*.spec.ts'],
+    rules: {
+      /**
+       * For test files allow dev dependencies imports
+       */
+      'n/no-unpublished-import': ['error', {
+        allowModules: ['@jest/globals'],
       }],
     },
   },
