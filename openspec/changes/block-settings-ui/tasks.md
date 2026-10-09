@@ -44,10 +44,11 @@
 
 ## 3. Toolbar settings button
 
-- [ ] 3.1 Port the settings button styles from PR #157 (`IconMenuSmall`, the `__settings-button` rule, and `display: flex; align-items: center` on `__actions`). The button itself is rendered by `BlockSettingsUI` and announced with the menu, so `ToolbarUI` mounts it **before** the roving-tabindex initialization and reassigns its single tab stop once it joins
-- [ ] 3.2 Take PR #157's fix for `new ToolboxOpenUIEvent('ui:toolbox:open')` passing a string instead of a payload object (`packages/ui/src/Toolbar/Toolbar.ts:151`), with a test that the dispatched event carries an object payload
-- [ ] 3.3 Track the selected block index in `BlockSettingsUI` from `ui:blocks:block-selected` (the toolbar's handler reads only `event.detail.block`), following `ToolboxUI`'s `#selectedBlockIndex`. It belongs to the plugin that owns the button, so the button and the menu cannot come to mean different blocks
-- [ ] 3.4 Write failing cases, in `Toolbar.spec.ts` for what the toolbar owns and in `BlockSettings.spec.ts` for what the plugin owns:
+- [x] 3.1 Port the settings button styles from PR #157 (`IconMenuSmall`, the `__settings-button` rule, and `display: flex; align-items: center` on `__actions`). The button itself is rendered by `BlockSettingsUI` and announced with the menu, so `ToolbarUI` mounts it **before** the roving-tabindex initialization and reassigns its single tab stop once it joins
+- [x] 3.2 Take PR #157's fix for `new ToolboxOpenUIEvent('ui:toolbox:open')` passing a string instead of a payload object (`packages/ui/src/Toolbar/Toolbar.ts:151`), with a test that the dispatched event carries an object payload
+  - The string type-checked because the payload interface is empty, so every listener had been receiving `detail: 'ui:toolbox:open'`. The event name was never affected -- it comes from the class -- so nothing downstream had to change with it
+- [x] 3.3 Track the selected block index in `BlockSettingsUI` from `ui:blocks:block-selected` (the toolbar's handler reads only `event.detail.block`), following `ToolboxUI`'s `#selectedBlockIndex`. It belongs to the plugin that owns the button, so the button and the menu cannot come to mean different blocks
+- [x] 3.4 Write failing cases, in `Toolbar.spec.ts` for what the toolbar owns and in `BlockSettings.spec.ts` for what the plugin owns:
   - both announced elements should be mounted on `ui:block-settings:rendered`, the button as a direct child of the actions container
   - the toolbar should not reposition while settings are open
   - exactly one control of the actions container should have `tabindex="0"` after the button joins
@@ -55,7 +56,7 @@
   - `aria-expanded` should follow the plugin's own open state
   - the button should be focused before the popover opens
   - activating the button again should close the menu rather than rebuild it
-- [ ] 3.5 Implement the behavior, splitting it as above: mounting, positioning and the tab stop in `ToolbarUI`, the button and its state in `BlockSettingsUI`
+- [x] 3.5 Implement the behavior, splitting it as above: mounting, positioning and the tab stop in `ToolbarUI`, the button and its state in `BlockSettingsUI`
 
 ## 4. Default block settings plugin
 
