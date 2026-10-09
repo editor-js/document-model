@@ -44,10 +44,11 @@
 
 ## 3. Toolbar settings button
 
-- [ ] 3.1 Port the settings button and styles from PR #157 into `ToolbarUI` (`IconMenuSmall`, the `__settings-button` rule, and `display: flex; align-items: center` on `__actions`), appending it **before** the roving-tabindex initialization so the toolbar keeps exactly one tab stop
-- [ ] 3.2 Take PR #157's fix for `new ToolboxOpenUIEvent('ui:toolbox:open')` passing a string instead of a payload object (`packages/ui/src/Toolbar/Toolbar.ts:151`), with a test that the dispatched event carries an object payload
-- [ ] 3.3 Track the hovered block index in `ToolbarUI` from `ui:blocks:block-selected` (today the handler reads only `event.detail.block`), following `ToolboxUI`'s `#selectedBlockIndex`
-- [ ] 3.4 Write failing `Toolbar.spec.ts` cases:
+- [x] 3.1 Port the settings button and styles from PR #157 into `ToolbarUI` (`IconMenuSmall`, the `__settings-button` rule, and `display: flex; align-items: center` on `__actions`), appending it **before** the roving-tabindex initialization so the toolbar keeps exactly one tab stop
+- [x] 3.2 Take PR #157's fix for `new ToolboxOpenUIEvent('ui:toolbox:open')` passing a string instead of a payload object (`packages/ui/src/Toolbar/Toolbar.ts:151`), with a test that the dispatched event carries an object payload
+  - The string type-checked because the payload interface is empty, so every listener had been receiving `detail: 'ui:toolbox:open'`. The event name was never affected -- it comes from the class -- so nothing downstream had to change with it
+- [x] 3.3 Track the hovered block index in `ToolbarUI` from `ui:blocks:block-selected` (today the handler reads only `event.detail.block`), following `ToolboxUI`'s `#selectedBlockIndex`
+- [x] 3.4 Write failing `Toolbar.spec.ts` cases:
   - clicking settings should dispatch `ui:block-settings:open` for the tracked block
   - the popover should be mounted on `ui:block-settings:rendered`
   - the toolbar should not reposition while settings are open
@@ -55,7 +56,7 @@
   - `aria-expanded` should follow `ui:block-settings:opened`/`closed`
   - the button should be focused before the popover opens
   - exactly one action button should have `tabindex="0"` after render
-- [ ] 3.5 Implement the behavior in `ToolbarUI`
+- [x] 3.5 Implement the behavior in `ToolbarUI`
 
 ## 4. Default block settings plugin
 

@@ -42,9 +42,17 @@
   &__actions {
     position: absolute;
     right: 100%;
+    display: flex;
+    align-items: center;
   }
 
   &__plus-button {
+    @apply --toolbar-button;
+
+    flex-shrink: 0;
+  }
+
+  &__settings-button {
     @apply --toolbar-button;
 
     flex-shrink: 0;
