@@ -26,7 +26,8 @@ export const PLACEHOLDER = DEFAULT_PLACEHOLDER;
  */
 export async function mountDocument(page: Page, search = ''): Promise<void> {
   await page.goto(`/${search}`);
-  await page.waitForSelector('body[data-editor-ready="true"]');
+  // `attached`, not the default `visible`: with `?editors=0` the body is empty and has no size
+  await page.waitForSelector('body[data-editor-ready="true"]', { state: 'attached' });
 }
 
 /**
