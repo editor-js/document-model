@@ -25,8 +25,8 @@
 
 ## 2. Block settings plugin
 
-- [ ] 2.1 Port the `BlockTunes*UIEvent` classes from PR #157 as `BlockSettings{Open,Opened,Closed,Rendered}UIEvent` under `ui/src/BlockSettings/events`, using `ui:block-settings:*` names. Credit ported work with `Co-authored-by: Betty Steger <244475+bettysteger@users.noreply.github.com>`
-- [ ] 2.2 Write failing `BlockSettings.spec.ts` cases:
+- [x] 2.1 Port the `BlockTunes*UIEvent` classes from PR #157 as `BlockSettings{Open,Opened,Closed,Rendered}UIEvent` under `ui/src/BlockSettings/events`, using `ui:block-settings:*` names. Credit ported work with `Co-authored-by: Betty Steger <244475+bettysteger@users.noreply.github.com>`
+- [x] 2.2 Write failing `BlockSettings.spec.ts` cases:
   - the target block's id should be resolved from the reported index via `api.blocks.getIdByIndex`
   - providers should be called with `{ blockId, blockIndex, tool }` on each open
   - results should be ordered by `order` then registration, with separators between providers
@@ -35,11 +35,12 @@
   - no popover should open when there are no items
   - `close()` should dispatch closed
   - the context handed to providers should carry `blockId`, and the spec's rule that handlers resolve positions from it should be covered by the default-block-settings tests
-- [ ] 2.3 Add a `UiComponentType.BlockSettings` member in `sdk` and declare it as `BlockSettingsUI`'s `static type` (`EditorjsPluginConstructor` requires an `EntityType` value)
-- [ ] 2.4 Implement `BlockSettingsUI` (`static name = 'block-settings'`, `publicApi: { register, close }`) on a ui-kit popover, porting its setup from PR #157's `BlockTunesUI` (`scopeElement: config.holder`, `searchable: false`, `wrapperTag: 'button'`, closed event from `PopoverEvent.Closed`, element handed over via the rendered event)
-- [ ] 2.5 Write failing tests, then give the popover an accessible name from a new `messages.ts` entry, and make removed items leave the accessibility tree
-- [ ] 2.6 Write a failing test, then make a request with no resolvable block id a no-op (no providers invoked, no popover, no throw)
-- [ ] 2.7 Export `BlockSettingsUI` plus the `BlockSettingsAPI`/`BlockSettingsProvider` types from `@editorjs/ui`, and augment `EditorjsPluginApiMap` under `'block-settings'` there — `sdk` stays unaware of individual plugins
+- [x] 2.3 Add a `UiComponentType.BlockSettings` member in `sdk` and declare it as `BlockSettingsUI`'s `static type` (`EditorjsPluginConstructor` requires an `EntityType` value)
+- [x] 2.4 Implement `BlockSettingsUI` (`static name = 'block-settings'`, `publicApi: { register, close }`) on a ui-kit popover, porting its setup from PR #157's `BlockTunesUI` (`scopeElement: config.holder`, `searchable: false`, `wrapperTag: 'button'`, closed event from `PopoverEvent.Closed`, element handed over via the rendered event)
+- [x] 2.5 Write failing tests, then give the popover an accessible name from a new `messages.ts` entry, and make removed items leave the accessibility tree
+  - The menu is rebuilt from scratch on each open rather than edited in place. `removeItemByName` is ui-kit's only removal and a separator is constructed without params, so it has no name to be removed by; handing a fresh popover the whole item list is what guarantees the previous block's items leave the tree. The swap happens inside the plugin's own holder, so ui-kit's rendered DOM is never touched
+- [x] 2.6 Write a failing test, then make a request with no resolvable block id a no-op (no providers invoked, no popover, no throw)
+- [x] 2.7 Export `BlockSettingsUI` plus the `BlockSettingsAPI`/`BlockSettingsProvider` types from `@editorjs/ui`, and augment `EditorjsPluginApiMap` under `'block-settings'` there — `sdk` stays unaware of individual plugins
 
 ## 3. Toolbar settings button
 
