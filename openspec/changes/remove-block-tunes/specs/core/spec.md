@@ -13,4 +13,4 @@ The system SHALL validate configured tools via `ToolsManager`, calling each tool
 - **WHEN** it is registered via `core.use()`
 - **THEN** it is instantiated with the other plugins and never appears in `ToolsManager`'s collections
 
-Implemented in `src/tools/ToolsManager.ts`, `src/tools/ToolsFactory.ts`, validated by co-located `.spec.ts` files.
+Implemented in `src/tools/ToolsManager.ts`, `src/tools/ToolsFactory.ts`, validated by `src/index.spec.ts` and co-located `.spec.ts` files.

@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Default block settings plugin
-The system SHALL provide `@editorjs/default-block-settings-plugin`, an `EditorjsPlugin` with static `name` `default-block-settings` that depends only on `@editorjs/sdk`. Once the editor is ready, it SHALL register a settings provider with `block-settings` at `order: 1000`, contributing "Move up", "Move down" and "Delete" items for every block. When no `block-settings` plugin is registered, it SHALL do nothing and SHALL NOT throw.
+The system SHALL provide `@editorjs/default-block-settings-plugin`, an `EditorjsPlugin` with static `name` `default-block-settings` whose only runtime dependencies are `@editorjs/sdk` and `@codexteam/icons` (it takes `@editorjs/ui` as a devDependency, for `import type` alone, so that `api.plugins['block-settings']` typechecks without a runtime coupling). Once the editor is ready, it SHALL register a settings provider with `block-settings` at `order: 1000`, contributing "Move up", "Move down" and "Delete" items for every block. When no `block-settings` plugin is registered, it SHALL do nothing and SHALL NOT throw.
 
 #### Scenario: Items are contributed
 - **GIVEN** `BlockSettingsUI` and `DefaultBlockSettingsPlugin` are both registered

@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Floating toolbar
-The system SHALL provide `ToolbarUI`, which renders a floating toolbar with a plus-button, a settings button, and an actions area, repositions itself to the selected block's offset on `ui:blocks:block-selected` (unless the Toolbox or block settings are open), opens the Toolbox on plus-button click, opens block settings for the selected block on settings-button click, and mounts the block settings popover element announced via `ui:block-settings:rendered` into its actions area.
+The system SHALL provide `ToolbarUI`, which renders a floating toolbar with a plus-button and an actions area, repositions itself to the selected block's offset on `ui:blocks:block-selected` (unless the Toolbox or block settings are open), and opens the Toolbox on plus-button click. It SHALL mount both elements announced via `ui:block-settings:rendered` into its actions area -- the menu, and the button that opens it as a control of the container in its own right -- and SHALL reassign its single tab stop once that button joins.
 
 #### Scenario: Repositioning on block selection
 - **GIVEN** a `BlockSelectedUIEvent` is received and neither the Toolbox nor block settings are currently open
@@ -13,10 +13,10 @@ The system SHALL provide `ToolbarUI`, which renders a floating toolbar with a pl
 - **WHEN** the click is handled
 - **THEN** `ToolbarUI` dispatches a `ToolboxOpenUIEvent`
 
-#### Scenario: Opening block settings
-- **GIVEN** the toolbar is positioned at the block at index 2
-- **WHEN** the user clicks the settings button
-- **THEN** `ToolbarUI` dispatches a `ui:block-settings:open` event targeting block index 2
+#### Scenario: Mounting an announced widget
+- **GIVEN** a plugin announces a button and a menu element through `ui:block-settings:rendered`
+- **WHEN** `ToolbarUI` handles the event
+- **THEN** both are placed in its actions container, the button as a direct child of it, and exactly one control of the container carries `tabindex="0"`
 
 #### Scenario: Toolbar stays put while settings are open
 - **GIVEN** block settings are open
@@ -26,7 +26,7 @@ The system SHALL provide `ToolbarUI`, which renders a floating toolbar with a pl
 Implemented in `src/Toolbar/Toolbar.ts`, `src/Toolbar/ToolbarRenderedUIEvent.ts`.
 
 ### Requirement: Accessible floating toolbar
-`ToolbarUI` SHALL expose its actions container with `role="toolbar"` and an accessible name distinguishing it from the inline toolbar. Its plus-button and settings-button controls SHALL each have an accessible name (`aria-label`) describing their action, sourced from the message catalogue, and SHALL each advertise the menu they control via `aria-haspopup="menu"`.
+`ToolbarUI` SHALL expose its actions container with `role="toolbar"` and an accessible name distinguishing it from the inline toolbar. Its plus-button SHALL have an accessible name (`aria-label`) describing its action, sourced from the message catalogue, and SHALL advertise the menu it controls via `aria-haspopup="menu"`. A control contributed by another plugin SHALL carry its own name and state, set by the plugin that owns it.
 
 #### Scenario: Toolbar actions container has toolbar role
 - **GIVEN** `ToolbarUI` has rendered its actions container
@@ -37,11 +37,6 @@ Implemented in `src/Toolbar/Toolbar.ts`, `src/Toolbar/ToolbarRenderedUIEvent.ts`
 - **GIVEN** `ToolbarUI` has rendered the plus-button
 - **WHEN** the element is inspected
 - **THEN** it has a non-empty `aria-label`
-
-#### Scenario: Settings-button has an accessible name
-- **GIVEN** `ToolbarUI` has rendered the settings button
-- **WHEN** the element is inspected
-- **THEN** it has a non-empty `aria-label` taken from the message catalogue, and `aria-haspopup="menu"`
 
 ### Requirement: The block actions toolbar is a single tab stop
 `role="toolbar"` declares that the group is reached once by `Tab` and navigated internally with the arrow keys; a browser does not provide that on its own. `ToolbarUI` SHALL therefore maintain a roving tabindex over its own controls — exactly one in the tab order at a time, moved by the horizontal arrow keys — and SHALL declare its `aria-orientation`. Only the container's own controls take part: the toolbox and block settings popovers render *inside* the actions container, and their menu items are navigated by `@editorjs/ui-kit`, so keys arriving from within them are left alone.
@@ -79,9 +74,7 @@ The pattern covers the **unmodified** arrow keys only. `ToolbarUI` SHALL ignore 
 - **WHEN** the toolbox is dismissed
 - **THEN** its `aria-expanded` returns to `"false"`
 
-#### Scenario: Settings-button reports the block settings state
-- **GIVEN** block settings are closed
-- **WHEN** the settings button is inspected
-- **THEN** its `aria-expanded` is `"false"`
-- **WHEN** block settings open and later close
-- **THEN** its `aria-expanded` follows that state, and the button is focused before the popover opens so focus returns to it when the popover closes
+#### Scenario: A contributed control joins the tab order
+- **GIVEN** a plugin has announced a button through `ui:block-settings:rendered`
+- **WHEN** the toolbar's controls are inspected
+- **THEN** that button is one of them, reachable by the arrow keys, and exactly one control carries `tabindex="0"`

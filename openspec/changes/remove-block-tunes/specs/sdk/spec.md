@@ -52,4 +52,4 @@ The system SHALL provide a `ToolsCollection` (a `Map<string, ToolFacadeClass>` s
 - **WHEN** `blockTools` or `inlineTools` is accessed
 - **THEN** each getter returns only the facades matching that kind
 
-Implemented in `src/tools/ToolsCollection.ts`.
+Implemented in `src/tools/ToolsCollection.ts`, validated by its co-located `.spec.ts`.

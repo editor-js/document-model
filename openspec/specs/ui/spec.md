@@ -4,7 +4,10 @@
 
 `@editorjs/ui` is the default rendering shell for Editor.js: a set of `EditorjsPlugin` implementations that subscribe to the core `EventBus` to render DOM and dispatch their own `ui:*` events so the pieces can wire themselves together. It owns no document state — it renders what `core` (`BlockManager`/`SelectionManager`, etc.) reports, and forwards user interaction back through `EditorAPI`.
 
-**Note**: this package has no automated test suite (`.spec.ts`/`.test.ts` files); the scenarios below are derived directly from the event-wiring logic in source rather than confirmed by tests.
+**Note**: this package's automated test suite covers the block settings menu and the toolbar
+wiring that opens it. The scenarios for the components it does not reach yet are still derived
+from the event-wiring logic in source rather than confirmed by unit tests, though the toolbar's
+accessibility behaviour is additionally asserted end to end by `packages/editorjs/e2e`.
 ## Requirements
 ### Requirement: Shell assembly
 The system SHALL provide `EditorjsUI` as the top-level shell that creates the editor wrapper in the holder element and reactively assembles the Toolbar, InlineToolbar, and Blocks elements into it as each announces its own `*:rendered` event, without holding direct references to those components.

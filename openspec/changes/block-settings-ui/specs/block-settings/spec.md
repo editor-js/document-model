@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Block settings plugin
-The system SHALL provide `BlockSettingsUI`, an `EditorjsPlugin` with static `name` `block-settings`, that renders a per-block settings popover. The popover SHALL open on a `ui:block-settings:open` event targeting a block, SHALL announce its element via `ui:block-settings:rendered`, and SHALL dispatch `ui:block-settings:opened` and `ui:block-settings:closed` when its open state changes.
+The system SHALL provide `BlockSettingsUI`, an `EditorjsPlugin` with static `name` `block-settings`, that renders a per-block settings popover **and the button that opens it**. Both SHALL be announced together via `ui:block-settings:rendered` for a host to mount; the plugin SHALL NOT place them itself. The popover SHALL open when that button is activated, or on a `ui:block-settings:open` event targeting a block, and SHALL dispatch `ui:block-settings:opened` and `ui:block-settings:closed` when its open state changes.
 
 #### Scenario: Opening settings for a block
 - **GIVEN** at least one settings provider is registered
@@ -22,6 +22,28 @@ The system SHALL provide `BlockSettingsUI`, an `EditorjsPlugin` with static `nam
 - **GIVEN** no block has been selected, so the requested index resolves to no block id
 - **WHEN** block settings are requested
 - **THEN** no provider is invoked, the popover is not opened, and no error is thrown
+
+### Requirement: Block settings button
+The button `BlockSettingsUI` announces SHALL carry the whole menu-button contract, because the state it reports is the plugin's own: an accessible name from the UI package's message catalogue, `aria-haspopup="menu"`, and an `aria-expanded` kept in sync with whether the menu is open. Activating it SHALL focus it before opening the menu, so the popover has a control to return focus to when it closes. The plugin SHALL follow block selection to know which block the button acts on, and SHALL stop following it while the menu is open, so the open menu and the button cannot come to mean different blocks.
+
+#### Scenario: The button is announced with the menu
+- **WHEN** `BlockSettingsUI` is constructed
+- **THEN** `ui:block-settings:rendered` carries both the button and the element the menu renders into
+
+#### Scenario: The button names the menu it controls
+- **WHEN** the button is inspected
+- **THEN** it has an accessible name from the message catalogue, `aria-haspopup="menu"`, and `aria-expanded="false"`
+
+#### Scenario: The button reports the menu state
+- **GIVEN** the button has opened the menu
+- **THEN** its `aria-expanded` is `"true"`, and it holds focus
+- **WHEN** the menu closes, by any route
+- **THEN** its `aria-expanded` returns to `"false"`
+
+#### Scenario: The target does not move under an open menu
+- **GIVEN** the menu is open for the block at index 0
+- **WHEN** another block is reported as selected and the menu is then closed and opened again
+- **THEN** the menu built the second time is for the block selected after it closed, not one chosen while it was open
 
 ### Requirement: Block settings menu is accessible
 The settings popover SHALL carry an accessible name drawn from the UI package's message catalogue, in the same way the toolbox menu is named. Items removed from the menu SHALL leave the accessibility tree rather than remaining hidden but present.
