@@ -26,14 +26,18 @@
     "lint:ci": "yarn lint --max-warnings 0",
     "lint:fix": "yarn lint --fix",
     "test": "node --experimental-vm-modules $(yarn bin jest)",
+    "test:coverage": "yarn test --coverage=true",
     "clear": "rm -rf ./dist && rm -f tsconfig.tsbuildinfo && rm -f tsconfig.tsbuildinfo.json"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.2",
     "@editorjs/core": "workspace:^",
     "@editorjs/dom-adapters": "workspace:^",
     "@editorjs/paragraph": "workspace:^",
     "@jest/globals": "^29.7.0",
     "@types/jest": "^29.5.12",
+    "babel-jest": "^29.7.0",
     "chokidar-cli": "^3.0.0",
     "eslint": "^9.9.1",
     "eslint-config-codex": "^2.0.3",
