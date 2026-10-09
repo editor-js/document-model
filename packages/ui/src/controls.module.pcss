@@ -1,11 +1,8 @@
 /**
- * Styling shared by the icon buttons that sit in the floating toolbar's actions container.
- *
- * A plain class rather than a `--toolbar-button` property set applied with `@apply`: that
- * resolves within one file's PostCSS pass, so every component rendering one of these buttons
- * had to repeat the declarations. The buttons are not all rendered by the same component --
- * `ToolbarUI` owns the plus button, `BlockSettingsUI` owns the settings button -- so the one
- * thing they genuinely share is this appearance.
+ * Styling shared by the icon buttons in the floating toolbar's actions container, which are not
+ * all rendered by the same component: `ToolbarUI` owns the plus button, `BlockSettingsUI` the
+ * settings button. A plain class rather than an `@apply` property set, because that resolves
+ * within one file's PostCSS pass and every component would have to repeat the declarations
  */
 .toolbar-button {
   background: none;
