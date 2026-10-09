@@ -317,23 +317,27 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
   #renderPopover(items: PopoverItemParams[]): void {
     this.#popover?.destroy();
 
-    this.#popover = new PopoverDesktop(
-      {
-        scopeElement: this.#editorConfig.holder,
-        searchable: false,
-        items,
+    /**
+     * The item wrapper is left at ui-kit's default. `wrapperTag: 'button'` -- which the port
+     * from PR #157 carried over -- is what ui-kit uses for its *inline* popover, where items
+     * are horizontal toolbar buttons and shrink-to-fit is the right width. A vertical menu's
+     * styles assume a block-level wrapper, and a form control does not stretch to its
+     * container the way a div does, so each row ended up as wide as its own label: the hover
+     * highlight covered part of the row, and the UA button font replaced the editor's.
+     * Items are still exposed as `menuitem` and activated from the keyboard by ui-kit itself.
+     */
+    this.#popover = new PopoverDesktop({
+      scopeElement: this.#editorConfig.holder,
+      searchable: false,
+      items,
 
-        /**
-         * Names the menu for assistive technologies, matching the button that opens it
-         */
-        messages: {
-          label: messages.blockSettingsMenu,
-        },
+      /**
+       * Names the menu for assistive technologies, matching the button that opens it
+       */
+      messages: {
+        label: messages.blockSettingsMenu,
       },
-      {
-        [PopoverItemType.Default]: { wrapperTag: 'button' },
-      }
-    );
+    });
 
     this.#popover.on(PopoverEvent.Closed, () => {
       this.#eventBus.dispatchEvent(new BlockSettingsClosedUIEvent({}));
