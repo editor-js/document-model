@@ -52,6 +52,11 @@ export class CaretAdapter {
   #config: Required<CoreConfig>;
 
   /**
+   * Releases the selection watcher subscription and the caret updates subscription on destroy
+   */
+  readonly #controller = new AbortController();
+
+  /**
    * @param config - Editor's config
    * @param api - Editor's API
    * @param registry - shared inputs registry
@@ -67,14 +72,20 @@ export class CaretAdapter {
     this.#container = config.holder;
     this.#currentUserCaret = this.#api.selection.createCaret(this.#config.userId);
 
-    const { on } = useSelectionChange();
+    const { signal } = this.#controller;
+    const { on, off } = useSelectionChange();
 
-    /**
-     * @todo Unsubscribe on adapter destruction
-     */
     on(this.#container, selection => this.#onSelectionChange(selection), this);
+    signal.addEventListener('abort', () => off(this.#container));
 
-    this.#api.selection.onCaretUpdate(event => this.#onModelCaretUpdate(event));
+    signal.addEventListener('abort', this.#api.selection.onCaretUpdate(event => this.#onModelCaretUpdate(event)));
+  }
+
+  /**
+   * Stops watching DOM selection changes and model caret updates
+   */
+  public destroy(): void {
+    this.#controller.abort();
   }
 
   /**

@@ -41,6 +41,11 @@ export class FormattingAdapter {
   #caretAdapter: CaretAdapter;
 
   /**
+   * Releases the ToolLoaded and model update listeners on destroy
+   */
+  readonly #controller = new AbortController();
+
+  /**
    * @param api - Editor's API
    * @param caretAdapter - caret adapter instance
    * @param eventBus - Editor's EventBus instance
@@ -67,12 +72,15 @@ export class FormattingAdapter {
       const name = createInlineToolName(tool.name);
 
       this.attachTool(name, toolInstance);
-    });
+    }, { signal: this.#controller.signal });
 
     /**
      * Add event listener for model changes
      */
-    this.#api.document.onUpdate((event: ModelEvents) => this.#handleModelUpdates(event));
+    this.#controller.signal.addEventListener(
+      'abort',
+      this.#api.document.onUpdate((event: ModelEvents) => this.#handleModelUpdates(event))
+    );
   }
 
   /**
@@ -110,7 +118,23 @@ export class FormattingAdapter {
    * @param tool - inline tool instance
    */
   public attachTool(toolName: InlineToolName, tool: InlineTool): void {
+    const replaced = this.#tools.get(toolName);
+
+    if (replaced !== undefined && replaced !== tool) {
+      replaced.destroy?.();
+    }
+
     this.#tools.set(toolName, tool);
+  }
+
+  /**
+   * Stops listening to tool and model events and destroys the attached inline tool instances
+   */
+  public destroy(): void {
+    this.#controller.abort();
+
+    this.#tools.forEach(tool => tool.destroy?.());
+    this.#tools.clear();
   }
 
   /**

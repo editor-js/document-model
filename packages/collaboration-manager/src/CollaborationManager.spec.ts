@@ -1364,18 +1364,50 @@ describe('CollaborationManager', () => {
   });
 
   describe('destroy', () => {
-    it('should unsubscribe model and core event listeners', () => {
+    it('should unsubscribe from model updates', () => {
       const model = new EditorJSModel(userId, { identifier: documentId });
       const removeModelListenerSpy = jest.spyOn(model, 'removeEventListener');
-      const { manager, eventBus } = createManager(config as Required<CoreConfig>, model);
-      const removeEventBusListenerSpy = jest.spyOn(eventBus, 'removeEventListener');
+      const { manager } = createManager(config as Required<CoreConfig>, model);
 
       manager.destroy();
 
       expect(removeModelListenerSpy).toHaveBeenCalledWith(EventType.Changed, expect.any(Function));
-      expect(removeEventBusListenerSpy).toHaveBeenCalledWith(`core:${CoreEventType.Undo}`, expect.any(Function));
-      expect(removeEventBusListenerSpy).toHaveBeenCalledWith(`core:${CoreEventType.Redo}`, expect.any(Function));
-      expect(removeEventBusListenerSpy).toHaveBeenCalledWith(`core:${CoreEventType.Ready}`, expect.any(Function));
+    });
+
+    it('should stop handling core undo and redo events', () => {
+      const model = new EditorJSModel(userId, { identifier: documentId });
+      const { manager, eventBus } = createManager(config as Required<CoreConfig>, model);
+      const undo = jest.spyOn(manager, 'undo');
+      const redo = jest.spyOn(manager, 'redo');
+
+      manager.destroy();
+
+      const undoEvent = new CustomEvent(`core:${CoreEventType.Undo}`, { cancelable: true });
+      const redoEvent = new CustomEvent(`core:${CoreEventType.Redo}`, { cancelable: true });
+
+      eventBus.dispatchEvent(undoEvent);
+      eventBus.dispatchEvent(redoEvent);
+
+      expect(undo).not.toHaveBeenCalled();
+      expect(redo).not.toHaveBeenCalled();
+      expect(undoEvent.defaultPrevented).toBe(false);
+      expect(redoEvent.defaultPrevented).toBe(false);
+    });
+
+    it('should not connect when the editor becomes ready after destroy', async () => {
+      const model = new EditorJSModel(userId, { identifier: documentId });
+      const { manager, eventBus } = createManager({
+        ...config,
+        collaborationServer: 'ws://test-collab.invalid/document',
+      } as Required<CoreConfig>, model);
+      const connectSpy = jest.spyOn(OTClient.prototype, 'connectDocument');
+
+      manager.destroy();
+      eventBus.dispatchEvent(new CustomEvent(`core:${CoreEventType.Ready}`));
+      await Promise.resolve();
+
+      expect(connectSpy).not.toHaveBeenCalled();
+      connectSpy.mockRestore();
     });
 
     it('should close ot client connection', async () => {

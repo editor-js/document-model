@@ -293,7 +293,7 @@ export default class Core {
     this.#safely('UndoRedoManager', () => undoRedoManager?.destroy());
     this.#safely('SelectionManager', () => selectionManager?.destroy());
     this.#safely('BlockRenderer', () => blockRenderer?.destroy());
-    this.#safely('adapter', () => adapter?.destroy?.());
+    this.#safely('adapter', () => adapter?.destroy());
 
     /**
      * Last: the shared inline tool instances are used by the adapter and the UI until they're gone

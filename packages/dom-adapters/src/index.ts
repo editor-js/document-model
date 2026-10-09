@@ -85,6 +85,19 @@ export class DOMAdapters implements EditorJSAdapterPlugin {
   }
 
   /**
+   * Destroys every block adapter still alive, then stops the caret and formatting adapters.
+   * Called by Core after every rendered block has been released
+   */
+  public destroy(): void {
+    for (const blockId of [...this.#adapters.keys()]) {
+      this.destroyBlockToolAdapter(blockId);
+    }
+
+    this.#iocContainer.get(CaretAdapter).destroy();
+    this.#iocContainer.get(FormattingAdapter).destroy();
+  }
+
+  /**
    * Destroys the BlockToolAdapter for the given block.
    * Cleans up all inputs registered for the block and removes the adapter instance.
    * Called by BlockRenderer when a block is removed from the model.
