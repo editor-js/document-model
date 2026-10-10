@@ -58,6 +58,8 @@ There are two undo/redo systems:
 
 `UndoRedoManager` in Core listens to document model events directly, groups consecutive changes by a 500ms debounce window, and stores logical steps on stacks.
 
+Events are first buffered per browser task. When the task ends, a single event (e.g. a keystroke) is batched by the rule above: consecutive text inserts or removals in the same input within the debounce window. Several events from one task (e.g. a block split on Enter, or a paste) are one user action, so they close the open batch and start a new one together. Block-level events carry a single serialized block, which the manager wraps in a list when it re-applies them, because the model inserts and removes blocks as lists.
+
 Undo/redo inverts and re-applies the stored events while suppressing re-record to avoid stack pollution.
 
 This manager respects `UndoCoreEvent` and `RedoCoreEvent` — if either event's `defaultPrevented` is true, the manager skips the operation, allowing other handlers (like `CollaborationManager`) to take precedence.
@@ -65,6 +67,8 @@ This manager respects `UndoCoreEvent` and `RedoCoreEvent` — if either event's 
 ### Collaborative undo/redo (`@editorjs/collaboration-manager`)
 
 `UndoRedoManager` in Collaboration stores `Operation` instances and inverts them for the OT pipeline.
+
+It batches operations with its own debounce rule and does not group by browser task yet, so an action that makes several changes at once (Enter split, paste) can undo in several steps when collaboration is enabled.
 
 `BatchedOperation` groups rapid single-character inserts or deletes on the same data key into one logical edit for better history granularity. Insert operations are batched when each character is appended sequentially (`[0,0]`, `[1,1]`, `[2,2]`...). Delete operations are batched in two patterns: **backspace** where position decrements after each deletion (`[3,3]`, `[2,2]`, `[1,1]`...), or **forward delete** where position stays the same (`[0,0]`, `[0,0]`...).
 
