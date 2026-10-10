@@ -175,6 +175,34 @@ describe('ToolbarUI', () => {
     });
   });
 
+  describe('destroy', () => {
+    it('should stop reacting to block selection', () => {
+      const moveTo = jest.spyOn(instance.plugin, 'moveTo');
+
+      instance.plugin.destroy();
+
+      selectBlock(instance.eventBus, 1);
+
+      // The bus outlives the toolbar, so a listener left on it would keep this instance alive
+      // and still moving an element that is no longer on the page.
+      expect(moveTo).not.toHaveBeenCalled();
+    });
+
+    it('should stop mounting widgets announced afterwards', () => {
+      instance.plugin.destroy();
+
+      const { button } = announceBlockSettings(instance.eventBus);
+
+      expect(button.isConnected).toBe(false);
+    });
+
+    it('should take its holder off the page', () => {
+      instance.plugin.destroy();
+
+      expect(instance.holder.isConnected).toBe(false);
+    });
+  });
+
   describe('roving tabindex', () => {
     it('should keep exactly one action button in the tab order', () => {
       announceBlockSettings(instance.eventBus);

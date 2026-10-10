@@ -252,9 +252,11 @@ export class ToolbarUI implements EditorjsPlugin {
    * Subscribes to the Block Settings plugin's events
    */
   #subscribeToBlockSettingsEvents(): void {
+    const { signal } = this.#listenersController;
+
     this.#eventBus.addEventListener(`ui:block-settings:rendered`, (event: BlockSettingsRenderedUIEvent) => {
       this.#addBlockSettings(event.detail.button, event.detail.blockSettings);
-    });
+    }, { signal });
 
     /**
      * The menu was built for one block, so the toolbar holds its position until it closes.
@@ -262,11 +264,11 @@ export class ToolbarUI implements EditorjsPlugin {
      */
     this.#eventBus.addEventListener(`ui:block-settings:opened`, () => {
       this.#isBlockSettingsOpen = true;
-    });
+    }, { signal });
 
     this.#eventBus.addEventListener(`ui:block-settings:closed`, () => {
       this.#isBlockSettingsOpen = false;
-    });
+    }, { signal });
   }
 
   /**

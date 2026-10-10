@@ -20,7 +20,7 @@
   "scripts": {
     "build:dependencies": "yarn workspaces foreach -Rp --topological-dev --from $npm_package_name --exclude $npm_package_name run build",
     "build": "yarn build:dependencies && vite build",
-    "build:declaration": "yarn build:dependencies",
+    "build:declaration": "yarn build",
     "dev": "chokidar 'src/**/*' -c 'yarn build' --initial",
     "prebuild": "yarn clear",
     "lint": "eslint ./src",
