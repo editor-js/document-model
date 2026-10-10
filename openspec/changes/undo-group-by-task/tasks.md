@@ -30,5 +30,5 @@
 
 - [x] 4.1 Update `docs/diagrams/undo-redo-flow.mmd` with the task buffering step in core's undo manager
 - [x] 4.2 Note in `docs/collaboration.md` that `collaboration-manager` undo does not group by task yet
-- [ ] 4.3 Run `yarn lint` and `yarn test` from the repo root
-- [ ] 4.4 Run `openspec validate undo-group-by-task --type change` and fix any issues
+- [x] 4.3 Run `yarn lint` and `yarn test` from the repo root
+- [x] 4.4 Run `openspec validate undo-group-by-task --type change` and fix any issues
