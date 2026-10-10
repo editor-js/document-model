@@ -1,6 +1,6 @@
 ## 0. Prerequisite
 
-- [ ] 0.1 Confirm that `undo-grouping` is merged and `api.document.group` is available in `@editorjs/sdk`
+- [ ] 0.1 Confirm that `undo-group-by-task` is merged, so core groups the changes of one task into one undo step
 
 ## 1. sdk: PasteUIEvent
 
@@ -61,7 +61,7 @@
   - should not preventDefault when clipboardData is missing
   - should not preventDefault when classify returns null
   - should not preventDefault for a multi-segment text selection
-  - should preventDefault and run apply inside api.document.group
+  - should preventDefault and run apply synchronously in the ui:paste handler
   - should update the caret in requestAnimationFrame
   - should remove all listeners on destroy
 - [ ] 6.2 Collect block tool facades from `core:tool:loaded` (`tool.isBlock()`), and wire `#onPaste` as in design D1–D2

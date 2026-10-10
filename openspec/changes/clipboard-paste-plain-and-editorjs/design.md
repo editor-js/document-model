@@ -13,7 +13,7 @@
   - `api.text.insert/remove/get`
   - `api.blocks.split/insertMany/delete/getIdByIndex`
   - `api.selection.getCaret()`
-  - `api.document.group`, added by the `undo-grouping` change
+  - Core's undo manager records all local changes made in one browser task as one undo step, once `undo-group-by-task` lands
 - `blocks.insert({ focus })` is an unimplemented `@todo`.
 - `BlockToolFacade.importTextContent(value, fragments)` turns plain text into a tool's data using `conversionConfig.import`. `BlockManager.splitBlock` already relies on the default tool providing it.
 - Plugins learn about tools from `core:tool:loaded` (`ToolLoadedCoreEvent`), as `shortcuts-plugin` does.
@@ -47,7 +47,7 @@ ui:paste ─▶ #onPaste(e)
              │     → { kind: 'inline', text } | { kind: 'blocks', blocks: BlockNodeInit[] } | null
              ├─ content === null ──▶ return (native path)
              ├─ nativeEvent.preventDefault()
-             ├─ api.document.group(() => apply(content, caretIndex))  → returns caret target
+             ├─ apply(content, caretIndex)  (synchronous)                → returns caret target
              └─ requestAnimationFrame(() => caret.update(target))
 ```
 
@@ -68,7 +68,7 @@ The plugin collects the block tool facades it sees on `core:tool:loaded` into a 
 
 ### D4. Placement follows `splitBlock`'s own edge cases
 
-With a single-segment `TextIndex` `[s, e]` in block `b`, key `k`, the steps inside `group` are:
+With a single-segment `TextIndex` `[s, e]` in block `b`, key `k`, the steps are as follows. They all run synchronously in the paste handler's task, so `undo-group-by-task` records them as one undo step:
 
 1. If `s !== e`, call `api.text.remove({ block: b, key: k, start: s, end: e })`. Then `o = s`, `len = text.get(b, k).length`.
 2. Inline: `text.insert` at `o`. The caret goes to `o + text.length` in `(b, k)`.
@@ -108,12 +108,12 @@ Paste code uses `JSON.parse` in `try/catch`. It keeps only entries where `typeof
 - **[R3] Caret placement in `requestAnimationFrame` may run before an async tool render.** → It matches the adapter's existing approach. If a tool renders asynchronously, the caret simply isn't placed; the paste itself is unaffected.
 - **[R4] Blank lines are dropped.** Some users may expect empty paragraphs. → This matches V2's behaviour and avoids pasting runs of empty blocks. Easy to change later in `classify`.
 - **[R5] A `core:tool:loaded` event missed before the plugin was constructed.** → Plugins are initialized before tools (`core` spec, composition root), the same assumption `shortcuts-plugin` makes. A test pins it.
-- **[R6] Under collaboration, a paste undoes in several steps.** → Inherited from `undo-grouping`'s non-goal.
+- **[R6] Under collaboration, a paste undoes in several steps.** → Inherited from `undo-group-by-task`'s non-goal.
 - **[R7] Breaking change to the clipboard format (no ids).** → Nothing in the repository read ids from the payload. Paste accepts payloads with ids.
 
 ## Migration Plan
 
-`undo-grouping` must land first. The copy format change and the new paste behaviour ship together in this change. Rollback is reverting the change. No stored data depends on the clipboard format.
+`undo-group-by-task` should land first; without it, a paste still works but undoes in several steps. The copy format change and the new paste behaviour ship together in this change. Rollback is reverting the change. No stored data depends on the clipboard format.
 
 ## Open Questions
 

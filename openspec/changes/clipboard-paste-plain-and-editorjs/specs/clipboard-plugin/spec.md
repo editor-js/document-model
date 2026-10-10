@@ -119,7 +119,7 @@ The plugin SHALL insert the content relative to the current caret (`api.selectio
 - **THEN** for inline text the caret is collapsed right after the inserted text, and for blocks it is collapsed at the end of the last text input of the last pasted block. If that block has no text input, the caret is left unchanged
 
 ### Requirement: Paste is a single undo step
-The plugin SHALL perform every model change of one paste (removing selected text, splitting, deleting a replaced block, inserting text or blocks) inside a single `api.document.group(...)` call.
+The plugin SHALL perform every model change of one paste (removing selected text, splitting, deleting a replaced block, inserting text or blocks) synchronously within the `ui:paste` handler, so that core's per-task undo grouping records the paste as one undo step. Only the caret update may be deferred, because caret updates are not undoable changes.
 
 #### Scenario: Undoing a multi-block paste
 - **GIVEN** the local user pasted three lines of plain text into the middle of a paragraph

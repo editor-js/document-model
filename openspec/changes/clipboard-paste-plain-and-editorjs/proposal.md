@@ -10,7 +10,7 @@ Copy also has two problems that would break paste once the payload is read:
 
 - **Paste handling in `ClipboardPlugin`.**
   - The plugin subscribes to a new `ui:paste` event and reads `application/x-editor-js`, falling back to `text/plain`.
-  - It calls `preventDefault()` on the native event and applies the result through `EditorAPI` inside one `api.document.group(...)`, so a paste is one undo step.
+  - It calls `preventDefault()` on the native event and applies the result through `EditorAPI` synchronously, inside the `ui:paste` handler. Core's per-task undo grouping (`undo-group-by-task`) then records the whole paste as one undo step.
   - Multi-line plain text becomes one default-tool block per line.
   - EditorJS payload blocks are inserted after validation. Entries whose tool isn't registered are dropped, and any `id` is removed so the model generates new ones.
   - Where the content goes depends on the caret position (start, middle or end of a block, or an empty default block, which is replaced).
@@ -34,13 +34,13 @@ Copy also has two problems that would break paste once the payload is read:
 
 ## Impact
 
-- **Depends on** the `undo-grouping` change (`api.document.group`), which must land first.
+- **Depends on** the `undo-group-by-task` change for "a paste is one undo step". It uses no API from that change, but should land after it.
 - **Packages**:
   - `sdk`: new `PasteUIEvent` in `entities/EventBus/events/ui`.
   - `ui`: `Blocks.ts` handles the `paste` listener.
   - `plugins/clipboard-plugin`: copy rules, paste pipeline, tests, README.
 - **Unchanged**: `dom-adapters`. Its `insertFromPaste` handling remains the fallback for when the plugin is absent or skips a paste.
 - **Clipboard format**: third-party readers of `application/x-editor-js` must not expect `id`. Payloads that still contain ids, for example copied before this change, are accepted on paste and the ids are discarded.
-- **Collaboration**: when `collaboration-manager` is registered, its undo manager does not honour groups yet (see `undo-grouping`), so a paste undoes in several steps there.
+- **Collaboration**: when `collaboration-manager` is registered, its undo manager does not group by task yet (see `undo-group-by-task`), so a paste undoes in several steps there.
 - **Docs**: `docs/events.md` (add `CopyUIEvent`, which is currently missing, and `PasteUIEvent` to the UI events table), `docs/input-handling.md` (the paste path and the native fallback), and the plugin's `README.md`. No existing document is superseded.
 - **Deferred to later changes** (#137): HTML parsing and sanitizing (R5, R6, R8–R10), files (R4, R17), patterns (R11–R13, R18), merging a pasted block into the current block of the same tool (R15), tool-level `pasteConfig` opt-out (R1), read-only mode (R2), deleting a selection across blocks, cut, and drop.
