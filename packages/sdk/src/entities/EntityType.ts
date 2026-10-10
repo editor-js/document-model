@@ -40,12 +40,7 @@ export enum ToolType {
   /**
    * Inline Tool
    */
-  Inline = 'inline',
-
-  /**
-   * Block Tune
-   */
-  Tune = 'tune'
+  Inline = 'inline'
 }
 
 /**

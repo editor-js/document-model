@@ -9,7 +9,7 @@ import type {
 import {
   InlineTool,
   ToolLoadedCoreEvent,
-  BlockToolFacade, BlockTuneFacade,
+  BlockToolFacade,
   InlineToolFacade,
   ToolFacadeClass,
   ToolsCollection,
@@ -82,14 +82,6 @@ export default class ToolsManager {
    */
   public get blockTools(): ToolsCollection<BlockToolFacade> {
     return this.available.blockTools;
-  }
-
-  /**
-   * Return available Block Tunes
-   * @returns - object of Inline Tool's classes
-   */
-  public get blockTunes(): ToolsCollection<BlockTuneFacade> {
-    return this.available.blockTunes;
   }
 
   /**
