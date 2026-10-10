@@ -24,12 +24,14 @@ import type { BlockSettingsOpenUIEvent } from './events/index.js';
 /**
  * Items a provider contributes to the block settings menu.
  *
- * A single item or a list of them, in the vocabulary `@editorjs/ui-kit` popovers already use:
+ * A single item or a list of them, in the vocabulary `@editorjs/ui-kit` popovers already use.
+ * Named apart from `@editorjs/sdk`'s `MenuConfig`, which is a different, narrower shape for
+ * inline tools' toolbar config:
  * an item's behaviour comes entirely from its own params (`onActivate`, `isActive`,
  * `isDisabled`, `closeOnActivate`, `children`, or a `confirmation` whose handler runs on the
  * second activation), so the menu itself interprets nothing.
  */
-export type MenuConfig = PopoverItemParams | PopoverItemParams[];
+export type BlockSettingsMenuConfig = PopoverItemParams | PopoverItemParams[];
 
 /**
  * The block a provider is being asked about
@@ -65,7 +67,7 @@ export interface BlockSettingsContext {
  */
 export type BlockSettingsProvider = (
   context: BlockSettingsContext
-) => MenuConfig | undefined | Promise<MenuConfig | undefined>;
+) => BlockSettingsMenuConfig | undefined | Promise<BlockSettingsMenuConfig | undefined>;
 
 /**
  * Options a provider is registered with
@@ -184,6 +186,25 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
   #popover: PopoverDesktop | undefined;
 
   /**
+   * Whether the menu is open, as this plugin understands it.
+   *
+   * Tracked here rather than read back off the popover, whose own shown state is its business
+   * and does not reliably survive the click that opened the menu. This is the state the
+   * button's `aria-expanded` and the `opened`/`closed` events promise
+   */
+  #isOpen = false;
+
+  /**
+   * Whether the menu was open when the pointer went down on the button.
+   *
+   * The popover closes itself from the click that follows, and it gets there before this
+   * button's own handler -- so by `click` the menu is already gone and a toggle reading the
+   * state then would see every second click as a fresh open. `mousedown` is the last moment
+   * the answer is still true
+   */
+  #wasOpenOnPointerDown = false;
+
+  /**
    * Registered providers
    */
   readonly #registrations = new Set<Registration>();
@@ -225,28 +246,47 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
       blockSettings: this.#holder,
     }));
 
-    this.#eventBus.addEventListener('ui:blocks:block-selected', (event: BlockSelectedUIEvent) => {
-      if (this.#popover?.isShown === true) {
-        return;
-      }
-
-      this.#selectedBlockIndex = event.detail.index;
-    });
-
-    this.#eventBus.addEventListener('ui:block-settings:open', (event: BlockSettingsOpenUIEvent) => {
-      void this.#open(event.detail.index);
-    });
+    this.#eventBus.addEventListener('ui:blocks:block-selected', this.#handleBlockSelected);
+    this.#eventBus.addEventListener('ui:block-settings:open', this.#handleOpenRequest);
   }
 
   /**
    * Cleanup when plugin is destroyed
    */
   public destroy(): void {
+    /**
+     * The bus outlives the plugin, so a listener left on it keeps this instance alive and
+     * answering: an open request after destroy would build a menu into a detached holder
+     */
+    this.#eventBus.removeEventListener('ui:blocks:block-selected', this.#handleBlockSelected);
+    this.#eventBus.removeEventListener('ui:block-settings:open', this.#handleOpenRequest);
+
     this.#popover?.destroy();
     this.#popover = undefined;
     this.#holder.remove();
     this.#button.remove();
   }
+
+  /**
+   * Follows block selection, except while the menu is open -- re-targeting under an open menu
+   * would leave the button and the menu pointing at different blocks
+   * @param event - the selection event
+   */
+  #handleBlockSelected = (event: BlockSelectedUIEvent): void => {
+    if (this.#isOpen) {
+      return;
+    }
+
+    this.#selectedBlockIndex = event.detail.index;
+  };
+
+  /**
+   * Opens the menu for the block another component asked about
+   * @param event - the open request
+   */
+  #handleOpenRequest = (event: BlockSettingsOpenUIEvent): void => {
+    void this.#open(event.detail.index);
+  };
 
   /**
    * Gives the button its menu-button semantics and wires it to the menu
@@ -256,13 +296,32 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
     this.#button.setAttribute('aria-haspopup', 'menu');
     this.#button.setAttribute('aria-expanded', 'false');
 
+    this.#button.addEventListener('mousedown', () => {
+      this.#wasOpenOnPointerDown = this.#isOpen;
+    });
+
     this.#button.addEventListener('click', () => {
+      const wasOpen = this.#wasOpenOnPointerDown;
+
+      this.#wasOpenOnPointerDown = false;
+
       /**
        * Safari leaves a clicked button unfocused, and the popover would then capture
        * `document.body` as the element to restore focus to when it closes. Focusing the
        * button that owns the menu is also what the WAI-ARIA menu button pattern asks for
        */
       this.#button.focus();
+
+      /**
+       * A menu button dismisses the menu it opened. The popover has already closed itself by
+       * now, so there is usually nothing left to close -- what matters is not re-opening it,
+       * which is what made the button look inert on every second click
+       */
+      if (wasOpen) {
+        this.#close();
+
+        return;
+      }
 
       void this.#open(this.#selectedBlockIndex);
     });
@@ -288,14 +347,36 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
   }
 
   /**
-   * Closes the menu if it is open. `hide()` emits the popover's own closed event,
-   * which is what dispatches `ui:block-settings:closed`
+   * Closes the menu if it is open.
+   *
+   * `hide()` is asked first, so the popover tears down its own focus handling, and the
+   * bookkeeping is then run directly: a popover that has already dropped its shown state hides
+   * without emitting anything, which would leave the button advertising a menu that is gone
    */
   #close(): void {
-    if (this.#popover?.isShown === true) {
-      this.#popover.hide();
+    if (!this.#isOpen) {
+      return;
     }
+
+    this.#popover?.hide();
+
+    this.#handleClosed();
   }
+
+  /**
+   * Records the menu as closed, once, whichever route closed it
+   */
+  #handleClosed = (): void => {
+    if (!this.#isOpen) {
+      return;
+    }
+
+    this.#isOpen = false;
+
+    this.#button.setAttribute('aria-expanded', 'false');
+
+    this.#eventBus.dispatchEvent(new BlockSettingsClosedUIEvent({}));
+  };
 
   /**
    * Builds the menu for a block and opens it, unless there is nothing to show
@@ -319,7 +400,7 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
     const items = await this.#collectItems({
       blockId,
       blockIndex: index,
-      tool: this.#api.document.data.blocks[index]?.name ?? '',
+      tool: this.#api.blocks.getToolByIndex(index) ?? '',
     });
 
     /**
@@ -343,6 +424,8 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
     this.#renderPopover(items);
 
     this.#popover?.show();
+
+    this.#isOpen = true;
     this.#button.setAttribute('aria-expanded', 'true');
 
     this.#eventBus.dispatchEvent(new BlockSettingsOpenedUIEvent({}));
@@ -421,11 +504,7 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
       },
     });
 
-    this.#popover.on(PopoverEvent.Closed, () => {
-      this.#button.setAttribute('aria-expanded', 'false');
-
-      this.#eventBus.dispatchEvent(new BlockSettingsClosedUIEvent({}));
-    });
+    this.#popover.on(PopoverEvent.Closed, this.#handleClosed);
 
     this.#holder.innerHTML = '';
     this.#holder.appendChild(this.#popover.getElement());
