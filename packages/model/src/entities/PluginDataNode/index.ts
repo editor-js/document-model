@@ -60,6 +60,19 @@ export class PluginDataNode extends EventBus {
   public update(key: string, value: unknown): void {
     const previousValue = this.#data[key];
 
+    /**
+     * Storing what is already stored changes nothing, and every event here becomes an operation
+     * for collaborators and a step on the undo stack. Plugins re-apply their current state
+     * routinely, and an undo step that undoes nothing is worse than no step at all.
+     *
+     * The second clause is the removal case: both sides are `undefined` when a key holding
+     * `undefined` is removed, which is a real change, and when an absent key is removed, which
+     * is not.
+     */
+    if (Object.is(previousValue, value) && (value !== undefined || !(key in this.#data))) {
+      return;
+    }
+
     if (value === undefined) {
       delete this.#data[key];
     } else {
