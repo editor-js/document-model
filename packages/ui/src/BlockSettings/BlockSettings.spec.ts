@@ -72,14 +72,10 @@ function setup(blocks: StubBlock[] = defaultBlocks): {
     blocks: {
       getIdByIndex,
       getIndexById: jest.fn((id: string) => blocks.findIndex(block => block.id === id)),
-    },
-    document: {
       /**
        * Read fresh each time, so a test can mutate the block list between opens
        */
-      get data() {
-        return { blocks };
-      },
+      getToolByIndex: jest.fn((index: number) => blocks[index]?.name),
     },
     plugins: {},
   } as unknown as EditorAPI;
@@ -147,6 +143,16 @@ function itemTitles(element: HTMLElement): string[] {
  */
 function separatorCount(element: HTMLElement): number {
   return element.querySelectorAll('.ce-popover-item-separator').length;
+}
+
+/**
+ * Clicks a button the way a pointer does -- `HTMLElement.click()` dispatches only the click,
+ * and the menu button reads its state on `mousedown`, which a real click always sends first
+ * @param button - the menu button under test
+ */
+function clickButton(button: HTMLButtonElement): void {
+  button.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+  button.click();
 }
 
 /**
@@ -580,7 +586,7 @@ describe('BlockSettingsUI', () => {
       }));
 
       selectBlock(1);
-      instance.button.click();
+      clickButton(instance.button);
       await flush();
 
       expect(itemTitles(instance.element)).toEqual(['For block-1']);
@@ -593,7 +599,7 @@ describe('BlockSettingsUI', () => {
       }));
 
       selectBlock(0);
-      instance.button.click();
+      clickButton(instance.button);
       await flush();
 
       expect(instance.button.getAttribute('aria-expanded')).toBe('true');
@@ -610,12 +616,70 @@ describe('BlockSettingsUI', () => {
       }));
 
       selectBlock(0);
-      instance.button.click();
+      clickButton(instance.button);
       await flush();
 
       // Safari leaves a clicked button unfocused, and the popover would then have nowhere
       // to return focus to when it closes.
       expect(document.activeElement).toBe(instance.button);
+    });
+
+    it('should close the menu it opened when activated again', async () => {
+      instance.plugin.publicApi.register(() => ({
+        title: 'Anchor',
+        onActivate: () => {},
+      }));
+
+      selectBlock(0);
+      clickButton(instance.button);
+      await flush();
+
+      expect(instance.button.getAttribute('aria-expanded')).toBe('true');
+
+      // A menu button dismisses the menu it opened; without this the second click rebuilt it
+      // in place and left no way to close it from the control that advertises it.
+      clickButton(instance.button);
+      await flush();
+
+      expect(instance.button.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('should not rebuild the menu when it is being closed', async () => {
+      const provider = jest.fn(() => ({
+        title: 'Anchor',
+        onActivate: () => {},
+      }));
+
+      instance.plugin.publicApi.register(provider);
+
+      selectBlock(0);
+      clickButton(instance.button);
+      await flush();
+
+      expect(provider).toHaveBeenCalledTimes(1);
+
+      clickButton(instance.button);
+      await flush();
+
+      expect(provider).toHaveBeenCalledTimes(1);
+    });
+
+    it('should open again after it was toggled closed', async () => {
+      instance.plugin.publicApi.register(() => ({
+        title: 'Anchor',
+        onActivate: () => {},
+      }));
+
+      selectBlock(0);
+      clickButton(instance.button);
+      await flush();
+      clickButton(instance.button);
+      await flush();
+      clickButton(instance.button);
+      await flush();
+
+      expect(instance.button.getAttribute('aria-expanded')).toBe('true');
+      expect(itemTitles(instance.element)).toEqual(['Anchor']);
     });
 
     it('should not re-target while its menu is open', async () => {
@@ -625,16 +689,54 @@ describe('BlockSettingsUI', () => {
       }));
 
       selectBlock(0);
-      instance.button.click();
+      clickButton(instance.button);
       await flush();
 
       // The menu belongs to block 0; hovering elsewhere must not move it underneath.
       selectBlock(2);
       instance.plugin.publicApi.close();
-      instance.button.click();
+      clickButton(instance.button);
       await flush();
 
       expect(itemTitles(instance.element)).toEqual(['For block-0']);
+    });
+  });
+
+  describe('destroy', () => {
+    it('should stop answering open requests', async () => {
+      const destroyed = setup();
+      const provider = jest.fn(() => ({ title: 'Anchor',
+        onActivate: () => {} }));
+
+      destroyed.plugin.publicApi.register(provider);
+
+      destroyed.plugin.destroy();
+
+      await open(destroyed.eventBus, 0);
+
+      // The bus outlives the plugin, so a listener left on it would keep building menus into
+      // a holder that is no longer on the page.
+      expect(provider).not.toHaveBeenCalled();
+    });
+
+    it('should stop following block selection', () => {
+      const destroyed = setup();
+
+      destroyed.plugin.destroy();
+
+      expect(() => destroyed.eventBus.dispatchEvent(new BlockSelectedUIEvent({
+        block: document.createElement('div'),
+        index: 1,
+      }))).not.toThrow();
+    });
+
+    it('should take its button and menu off the page', () => {
+      const destroyed = setup();
+
+      destroyed.plugin.destroy();
+
+      expect(destroyed.button.isConnected).toBe(false);
+      expect(destroyed.element.isConnected).toBe(false);
     });
   });
 

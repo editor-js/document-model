@@ -301,6 +301,37 @@ describe('BlocksAPI integration (real model, mocked tools)', () => {
     });
   });
 
+  describe('getToolByIndex()', () => {
+    it('should return the tool name of the block at that index', () => {
+      blocksAPI.insert({ type: 'paragraph' });
+      blocksAPI.insert({ type: 'header' });
+
+      expect(blocksAPI.getToolByIndex(1)).toBe('header');
+    });
+
+    it('should return undefined past the end of the document', () => {
+      blocksAPI.insert({ type: 'paragraph' });
+
+      expect(blocksAPI.getToolByIndex(1)).toBeUndefined();
+    });
+
+    it('should return undefined for a negative index', () => {
+      blocksAPI.insert({ type: 'paragraph' });
+
+      expect(blocksAPI.getToolByIndex(-1)).toBeUndefined();
+    });
+
+    it('should follow the block when it moves', () => {
+      blocksAPI.insert({ type: 'paragraph' });
+      blocksAPI.insert({ type: 'header' });
+
+      blocksAPI.move({ toIndex: 0,
+        fromIndex: 1 });
+
+      expect(blocksAPI.getToolByIndex(0)).toBe('header');
+    });
+  });
+
   describe('render()', () => {
     it('should replace document content with the provided serialized data', () => {
       blocksAPI.insert({ type: 'paragraph' });

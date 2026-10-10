@@ -70,6 +70,11 @@ export class ToolbarUI implements EditorjsPlugin {
   };
 
   /**
+   * Undoes every event bus subscription this toolbar made
+   */
+  readonly #unsubscribes: (() => void)[] = [];
+
+  /**
    * True if Toolbox open. We shouldn't move Toolbar while it's open
    */
   #isToolboxOpen = false;
@@ -99,13 +104,27 @@ export class ToolbarUI implements EditorjsPlugin {
 
     this.#subscribeToBlockSettingsEvents();
 
-    this.#eventBus.addEventListener(`ui:blocks:block-selected`, (event: BlockSelectedUIEvent) => {
+    this.#listen(`ui:blocks:block-selected`, (event: BlockSelectedUIEvent) => {
       if (this.#isToolboxOpen || this.#isBlockSettingsOpen) {
         return;
       }
 
       this.moveTo(event.detail.block);
     });
+  }
+
+  /**
+   * Subscribes to a bus event and remembers how to undo it, so `destroy` can leave the bus as
+   * it found it. The bus outlives the toolbar, and a listener left behind keeps this instance
+   * alive and still moving an element that is no longer on the page
+   * @param type - event name to listen for
+   * @param listener - handler to attach
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the bus types each name to its own payload, which a generic helper cannot name
+  #listen(type: any, listener: any): void {
+    this.#eventBus.addEventListener(type, listener);
+
+    this.#unsubscribes.push(() => this.#eventBus.removeEventListener(type, listener));
   }
 
   /**
@@ -121,6 +140,9 @@ export class ToolbarUI implements EditorjsPlugin {
    * Removes Toolbar's HTML nodes from DOM
    */
   public destroy(): void {
+    this.#unsubscribes.forEach(unsubscribe => unsubscribe());
+    this.#unsubscribes.length = 0;
+
     this.#nodes.holder.remove();
   }
 
@@ -202,16 +224,16 @@ export class ToolbarUI implements EditorjsPlugin {
    * Subscribes to Toolbox event
    */
   #subscribeToToolboxEvents(): void {
-    this.#eventBus.addEventListener(`ui:toolbox:rendered`, (event: ToolboxRenderedUIEvent) => {
+    this.#listen(`ui:toolbox:rendered`, (event: ToolboxRenderedUIEvent) => {
       this.#addToolbox(event.detail.toolbox);
     });
 
-    this.#eventBus.addEventListener(`ui:toolbox:opened`, () => {
+    this.#listen(`ui:toolbox:opened`, () => {
       this.#isToolboxOpen = true;
       this.#nodes.plusButton.setAttribute('aria-expanded', 'true');
     });
 
-    this.#eventBus.addEventListener(`ui:toolbox:closed`, () => {
+    this.#listen(`ui:toolbox:closed`, () => {
       this.#isToolboxOpen = false;
       this.#nodes.plusButton.setAttribute('aria-expanded', 'false');
     });
@@ -233,7 +255,7 @@ export class ToolbarUI implements EditorjsPlugin {
    * Subscribes to the Block Settings plugin's events
    */
   #subscribeToBlockSettingsEvents(): void {
-    this.#eventBus.addEventListener(`ui:block-settings:rendered`, (event: BlockSettingsRenderedUIEvent) => {
+    this.#listen(`ui:block-settings:rendered`, (event: BlockSettingsRenderedUIEvent) => {
       this.#addBlockSettings(event.detail.button, event.detail.blockSettings);
     });
 
@@ -241,11 +263,11 @@ export class ToolbarUI implements EditorjsPlugin {
      * The menu was built for one block, so the toolbar holds its position until it closes.
      * The button's own `aria-expanded` belongs to the plugin that owns the button
      */
-    this.#eventBus.addEventListener(`ui:block-settings:opened`, () => {
+    this.#listen(`ui:block-settings:opened`, () => {
       this.#isBlockSettingsOpen = true;
     });
 
-    this.#eventBus.addEventListener(`ui:block-settings:closed`, () => {
+    this.#listen(`ui:block-settings:closed`, () => {
       this.#isBlockSettingsOpen = false;
     });
   }
