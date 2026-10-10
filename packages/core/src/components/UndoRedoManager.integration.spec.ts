@@ -64,6 +64,21 @@ describe('UndoRedoManager integration with plugin data (real model)', () => {
     expect(pluginData(model)).toEqual({ visible: true });
   });
 
+  it('should record nothing for a write that stores what is already stored', () => {
+    model.updatePluginData(USER_ID, 0, PLUGIN, { id: 'intro' });
+    model.updatePluginData(USER_ID, 0, PLUGIN, { visible: true });
+
+    /**
+     * A provider re-applying the state it just read, which is what happens every time a menu
+     * item derives `isActive` from plugin data and the user activates it twice
+     */
+    model.updatePluginData(USER_ID, 0, PLUGIN, { visible: true });
+
+    manager.undo();
+
+    expect(pluginData(model)).toEqual({ id: 'intro' });
+  });
+
   it('should leave other keys of the same plugin untouched when undoing one key', () => {
     model.updatePluginData(USER_ID, 0, PLUGIN, { id: 'intro' });
     model.updatePluginData(USER_ID, 0, PLUGIN, { visible: true });

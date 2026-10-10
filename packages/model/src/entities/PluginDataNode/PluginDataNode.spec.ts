@@ -115,6 +115,78 @@ describe('PluginDataNode', () => {
     });
   });
 
+  describe('a write that changes nothing', () => {
+    /**
+     * Every dispatch here becomes an OT operation and an undo step. Plugins re-apply their
+     * current state routinely -- on every menu open, for an item deriving `isActive` from it --
+     * so a write that stores what is already stored must stay silent.
+     */
+    it('should not emit when the key already holds that value', () => {
+      const pluginData = new PluginDataNode({
+        name: pluginName,
+        data: { align: 'left' },
+      });
+      const listener = jest.fn();
+
+      pluginData.addEventListener(EventType.Changed, listener);
+
+      pluginData.update('align', 'left');
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    it('should not emit when removing a key that is not there', () => {
+      const pluginData = new PluginDataNode({
+        name: pluginName,
+        data: { align: 'left' },
+      });
+      const listener = jest.fn();
+
+      pluginData.addEventListener(EventType.Changed, listener);
+
+      pluginData.update('visible', undefined);
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    it('should still emit when the value actually differs', () => {
+      const pluginData = new PluginDataNode({
+        name: pluginName,
+        data: { align: 'left' },
+      });
+      const listener = jest.fn();
+
+      pluginData.addEventListener(EventType.Changed, listener);
+
+      pluginData.update('align', 'right');
+
+      expect(listener).toHaveBeenCalledTimes(1);
+    });
+
+    it('should still emit when a key is written for the first time with an undefined-free value', () => {
+      const pluginData = new PluginDataNode({ name: pluginName });
+      const listener = jest.fn();
+
+      pluginData.addEventListener(EventType.Changed, listener);
+
+      pluginData.update('align', 'left');
+
+      expect(listener).toHaveBeenCalledTimes(1);
+    });
+
+    it('should leave the stored data untouched', () => {
+      const pluginData = new PluginDataNode({
+        name: pluginName,
+        data: { align: 'left' },
+      });
+
+      pluginData.update('align', 'left');
+      pluginData.update('visible', undefined);
+
+      expect(pluginData.serialized).toEqual({ align: 'left' });
+    });
+  });
+
   describe('.isEmpty', () => {
     it('should be true when the node holds no keys', () => {
       expect(new PluginDataNode({ name: pluginName }).isEmpty).toBe(true);

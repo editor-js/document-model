@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import type { BlockIndex, BlockNodeSerialized, DataKey, DocumentId, TextIndex } from '@editorjs/sdk';
-import { Index } from '@editorjs/sdk';
+import { createPluginDataName, Index, PluginDataIndex } from '@editorjs/sdk';
 import { describe } from '@jest/globals';
 import { type InsertOrDeleteOperationData, type ModifyOperationData, Operation, OperationType } from './Operation.js';
 
@@ -322,6 +322,46 @@ describe('Operation', () => {
       const op = createOperation('unsupported', 0, 'def');
 
       expect(() => op.inverse()).toThrow('Unsupported operation type');
+    });
+  });
+  describe('.serialize()', () => {
+    /**
+     * A key removal is a Modify whose payload is `undefined`, and `JSON.stringify` drops a key
+     * holding `undefined` entirely. It survives only because reading a key that is not there
+     * gives `undefined` back -- which is worth an assertion, since nothing in the types says so.
+     */
+    it('should carry a plugin data removal through the wire', () => {
+      const index = Index.pluginData(2, createPluginDataName('anchors'), 'visible');
+      const op = new Operation(OperationType.Modify, index, {
+        payload: undefined,
+        prevPayload: 'intro',
+      }, 'user-1');
+
+      op.rev = 7;
+
+      const received = JSON.parse(JSON.stringify(op.serialize())) as ReturnType<Operation['serialize']>;
+
+      expect((received.data as ModifyOperationData).payload).toBeUndefined();
+      expect('payload' in received.data).toBe(false);
+      expect((received.data as ModifyOperationData).prevPayload).toBe('intro');
+    });
+
+    it('should carry the plugin data index itself through the wire', () => {
+      const index = Index.pluginData(2, createPluginDataName('anchors'), 'visible');
+      const op = new Operation(OperationType.Modify, index, {
+        payload: undefined,
+        prevPayload: 'intro',
+      }, 'user-1');
+
+      op.rev = 7;
+
+      const received = JSON.parse(JSON.stringify(op.serialize())) as ReturnType<Operation['serialize']>;
+      const parsed = Index.parse(received.index) as PluginDataIndex;
+
+      expect(parsed).toBeInstanceOf(PluginDataIndex);
+      expect(parsed.blockIndex).toBe(2);
+      expect(parsed.pluginName).toBe('anchors');
+      expect(parsed.pluginKey).toBe('visible');
     });
   });
 });
