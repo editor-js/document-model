@@ -85,10 +85,10 @@
 
 ## 6. Review follow-ups
 
-- [ ] 6.1 Write a failing `Blocks.spec.ts` case, then dispatch `BlockSelectedUIEvent` for the caret moving into a block as well as for `mouseenter`. Without it `#selectedBlockIndex` stays `-1` for anyone who never moves a pointer, and the settings button is a control that silently does nothing. Read the caret from the document selection: the editor's own caret state is cleared when focus leaves the editable, which is what reaching for the button does
-- [ ] 6.2 Write a failing case, then make the settings button close an open menu instead of rebuilding it, per the menu button pattern. ui-kit closes the popover before the button's own handler runs, so the state has to be read on `mousedown` and tracked by the plugin. Cover it in the e2e suite too, since what is being asserted is a second real click
-- [ ] 6.3 Add `getToolByIndex` to `BlocksAPI` (core + sdk) and read the provider context's `tool` through it. `api.document.data` serializes the whole document, and the menu was paying that on every open
-- [ ] 6.4 Replace the two `api.document.data.blocks.length` reads in `DefaultBlockSettingsPlugin` with `api.blocks.getBlocksCount()`, for the same reason
-- [ ] 6.5 Rename the UI package's `MenuConfig` to `BlockSettingsMenuConfig`: `@editorjs/sdk` already exports an unrelated `MenuConfig`, and the two are not interchangeable
-- [ ] 6.6 Make `BlockSettingsUI`, `DefaultBlockSettingsPlugin` and `ToolbarUI` drop their event bus listeners in `destroy()`, and stop the plugin registering a provider after it has been destroyed
-- [ ] 6.7 Restore `packages/ui`'s `build:declaration` to a script that emits declarations, now that it has dependencies to build first
+- [x] 6.1 Write a failing `Blocks.spec.ts` case, then dispatch `BlockSelectedUIEvent` for the caret moving into a block as well as for `mouseenter`. Without it `#selectedBlockIndex` stays `-1` for anyone who never moves a pointer, and the settings button is a control that silently does nothing. Read the caret from the document selection: the editor's own caret state is cleared when focus leaves the editable, which is what reaching for the button does
+- [x] 6.2 Write a failing case, then make the settings button close an open menu instead of rebuilding it, per the menu button pattern. ui-kit closes the popover before the button's own handler runs, so the state has to be read on `mousedown` and tracked by the plugin. Cover it in the e2e suite too, since what is being asserted is a second real click
+- [x] 6.3 Add `getToolByIndex` to `BlocksAPI` (core + sdk) and read the provider context's `tool` through it. `api.document.data` serializes the whole document, and the menu was paying that on every open
+- [x] 6.4 Replace the two `api.document.data.blocks.length` reads in `DefaultBlockSettingsPlugin` with `api.blocks.getBlocksCount()`, for the same reason
+- [x] 6.5 Rename the UI package's `MenuConfig` to `BlockSettingsMenuConfig`: `@editorjs/sdk` already exports an unrelated `MenuConfig`, and the two are not interchangeable
+- [x] 6.6 Make `BlockSettingsUI`, `DefaultBlockSettingsPlugin` and `ToolbarUI` drop their event bus listeners in `destroy()`, and stop the plugin registering a provider after it has been destroyed
+- [x] 6.7 Restore `packages/ui`'s `build:declaration` to a script that emits declarations, now that it has dependencies to build first
