@@ -3,6 +3,8 @@ import 'reflect-metadata';
 import { inject, injectable } from 'inversify';
 import { EditorJSModel } from '@editorjs/model';
 import {
+  BlockIndex,
+  type BlockNodeSerialized,
   CoreConfigValidated,
   CoreEventType,
   EventAction,
@@ -30,6 +32,10 @@ const DEBOUNCE_TIMEOUT = 500;
  * It listens to document model events directly, groups consecutive changes into
  * debounced steps, and re-applies or inverts them through the Editor API when
  * undo/redo is requested.
+ *
+ * Events are first buffered per browser task: all changes a single user action makes
+ * synchronously (e.g. a block split on Enter, or a paste) end up in one undo step,
+ * while single changes per task (typing) keep the consecutive-text batching.
  *
  * This component is intentionally designed for single-user scenarios only and
  * has no dependency on Operational-Transformation (OT) infrastructure.
@@ -72,6 +78,16 @@ export class UndoRedoManager {
    * Timer handle for the debounce flush.
    */
   #debounceTimer?: ReturnType<typeof setTimeout>;
+
+  /**
+   * Local events dispatched during the current browser task, not yet added to a batch
+   */
+  #taskEvents: EventPayloadBase<EventAction>[] = [];
+
+  /**
+   * Timer handle that fires once the current browser task (and its microtasks) is over
+   */
+  #taskTimer?: ReturnType<typeof setTimeout>;
 
   /**
    * Flag to properly handling events that are triggered by undo/redo operations
@@ -134,9 +150,10 @@ export class UndoRedoManager {
 
   /**
    * Undoes the last recorded group of events.
-   * Flushes the current debounce group first so it is included in the step.
+   * Flushes the current task and debounce group first so they are included in the step.
    */
   public undo(): void {
+    this.#closeTask();
     this.#putBatchToUndo();
 
     const events = this.#undoStack.pop();
@@ -160,6 +177,7 @@ export class UndoRedoManager {
    * Redoes the last undone group of events.
    */
   public redo(): void {
+    this.#closeTask();
     this.#putBatchToUndo();
 
     const events = this.#redoStack.pop();
@@ -184,6 +202,8 @@ export class UndoRedoManager {
    */
   public destroy(): void {
     clearTimeout(this.#debounceTimer);
+    clearTimeout(this.#taskTimer);
+    this.#taskEvents = [];
     this.#eventBus.removeEventListener(`core:${CoreEventType.Undo}`, this.#undoListener);
     this.#eventBus.removeEventListener(`core:${CoreEventType.Redo}`, this.#redoListener);
     this.#model.removeEventListener(EventType.Changed, this.#modelUpdatesListener);
@@ -196,16 +216,24 @@ export class UndoRedoManager {
   #apply(event: EventPayloadBase<EventAction>): void {
     switch (event.action) {
       case EventAction.Added:
-      case EventAction.Removed:
+      case EventAction.Removed: {
+        /**
+         * Block events carry a single serialized block, while the model inserts and removes blocks as a list
+         */
+        const data = event.index instanceof BlockIndex
+          ? [event.data as BlockNodeSerialized]
+          : event.data as string;
+
         /**
          * @todo currently undo of deleting forward sets the caret in the wrong place
          */
         this.#model[event.action === EventAction.Removed ? 'insertData' : 'removeData'](
           event.userId,
           event.index,
-          event.data as string
+          data
         );
         break;
+      }
       case EventAction.Modified:
         this.#model.modifyData(
           event.userId,
@@ -251,8 +279,8 @@ export class UndoRedoManager {
   }
 
   /**
-   * Receives a raw model event, converts it to a RecordedEvent, and adds it
-   * to the current debounce group if it belongs to the current user.
+   * Receives a raw model event and buffers it for the current browser task
+   * if it belongs to the current user.
    * @param e - model event emitted by EditorJSModel
    */
   #handleEvent(e: ModelEvents): void {
@@ -271,11 +299,38 @@ export class UndoRedoManager {
 
     this.#redoStack = [];
 
-    if (this.#canAddToBatch(detail)) {
-      this.#batch!.push(detail);
+    this.#taskEvents.push(detail);
+
+    /**
+     * The first event of a task schedules the task's end.
+     * Zero-delay timeout runs after the current task and all its microtasks
+     */
+    if (this.#taskEvents.length === 1) {
+      this.#taskTimer = setTimeout(() => this.#closeTask(), 0);
+    }
+  }
+
+  /**
+   * Adds events of the finished browser task to the batch.
+   * A single event is batched by the consecutive-text rule (typing).
+   * Several events are a single user action, so they always start a new batch
+   */
+  #closeTask(): void {
+    clearTimeout(this.#taskTimer);
+
+    const events = this.#taskEvents;
+
+    if (events.length === 0) {
+      return;
+    }
+
+    this.#taskEvents = [];
+
+    if (events.length === 1 && this.#canAddToBatch(events[0])) {
+      this.#batch!.push(events[0]);
     } else {
       this.#putBatchToUndo();
-      this.#batch = [detail];
+      this.#batch = events;
     }
 
     this.#debounce();

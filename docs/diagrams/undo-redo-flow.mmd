@@ -45,3 +45,10 @@ sequenceDiagram
 
   Note over CollaborationManager: Debounce timeout fires → batch moves to undo stack
 
+  %% ── Core: one user action = one step (grouping by task) ──
+  User->>EditorJSModel: presses Enter mid-paragraph (one browser task)
+  EditorJSModel-->>CoreUndoRedoManager: TextRemovedEvent (buffered for the task)
+  EditorJSModel-->>CoreUndoRedoManager: BlockAddedEvent (buffered for the task)
+  Note over CoreUndoRedoManager: Task ends (setTimeout 0) → several events → close the open batch, start a new one with both
+  Note over CoreUndoRedoManager: A task with a single event (a keystroke) follows the consecutive-text batching above
+  Note over CollaborationManager: Does not group by task yet — the same Enter is two undo steps here
