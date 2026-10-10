@@ -2,11 +2,12 @@ import type {
   BlockId,
   EditorAPI,
   EditorjsPlugin,
-  EditorjsPluginParams
+  EditorjsPluginParams,
+  EventBus
 } from '@editorjs/sdk';
 import { CoreEventType, PluginType } from '@editorjs/sdk';
 import { IconChevronDown, IconChevronUp, IconCross, IconTrash } from '@codexteam/icons';
-import type { BlockSettingsContext, MenuConfig } from '@editorjs/ui';
+import type { BlockSettingsContext, BlockSettingsMenuConfig } from '@editorjs/ui';
 
 /**
  * Order the provider registers at, which puts its items after every other provider's.
@@ -38,6 +39,11 @@ export class DefaultBlockSettingsPlugin implements EditorjsPlugin {
   readonly #api: EditorAPI;
 
   /**
+   * Event bus the ready listener is attached to
+   */
+  readonly #eventBus: EventBus;
+
+  /**
    * Removes the provider again, once it has been registered
    */
   #unregister: (() => void) | undefined;
@@ -48,19 +54,31 @@ export class DefaultBlockSettingsPlugin implements EditorjsPlugin {
    */
   constructor({ api, eventBus }: EditorjsPluginParams) {
     this.#api = api;
+    this.#eventBus = eventBus;
 
-    eventBus.addEventListener(`core:${CoreEventType.Ready}`, () => {
-      this.#register();
-    });
+    this.#eventBus.addEventListener(`core:${CoreEventType.Ready}`, this.#handleReady);
   }
 
   /**
-   * Takes the provider back out of the menu
+   * Takes the provider back out of the menu.
+   *
+   * The ready listener goes too: the bus outlives the plugin, and a plugin destroyed before
+   * the editor finished starting would otherwise register a provider afterwards -- one nothing
+   * holds the unregister function for
    */
   public destroy(): void {
+    this.#eventBus.removeEventListener(`core:${CoreEventType.Ready}`, this.#handleReady);
+
     this.#unregister?.();
     this.#unregister = undefined;
   }
+
+  /**
+   * Registers once the editor is ready
+   */
+  #handleReady = (): void => {
+    this.#register();
+  };
 
   /**
    * Registers the provider, unless the editor runs without a block settings menu.
@@ -86,8 +104,8 @@ export class DefaultBlockSettingsPlugin implements EditorjsPlugin {
    * Builds the items for one block
    * @param context - the block the menu is being built for
    */
-  #items({ blockId, blockIndex }: BlockSettingsContext): MenuConfig {
-    const lastIndex = this.#api.document.data.blocks.length - 1;
+  #items({ blockId, blockIndex }: BlockSettingsContext): BlockSettingsMenuConfig {
+    const lastIndex = this.#api.blocks.getBlocksCount() - 1;
 
     return [
       {
@@ -152,7 +170,7 @@ export class DefaultBlockSettingsPlugin implements EditorjsPlugin {
 
     const toIndex = fromIndex + offset;
 
-    if (toIndex < 0 || toIndex > this.#api.document.data.blocks.length - 1) {
+    if (toIndex < 0 || toIndex > this.#api.blocks.getBlocksCount() - 1) {
       return;
     }
 

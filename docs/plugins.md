@@ -136,9 +136,15 @@ const unregister = api.plugins['block-settings']?.register(ctx => ({
 A provider is asked again every time the menu opens, so an item's `isActive`, `isDisabled` and
 `title` can be derived from current state rather than cached. Return `undefined` (or an empty
 array) to contribute nothing for a given block — a provider that opts out adds no separator
-either. Item behaviour comes entirely from the returned config, which is ui-kit's popover-item
-shape: `onActivate`, `closeOnActivate`, `children` for a submenu, or a `confirmation` whose own
-handler runs on the second activation.
+either. Item behaviour comes entirely from the returned config — a `BlockSettingsMenuConfig`, which is
+ui-kit's popover-item shape: `onActivate`, `closeOnActivate`, `children` for a submenu, or a
+`confirmation` whose own handler runs on the second activation. It is deliberately not
+`@editorjs/sdk`'s `MenuConfig`, which is the narrower shape inline tools return from
+`getToolbarConfig`.
+
+The button that opens the menu is a toggle: activating it while the menu is open dismisses it.
+It acts on the block the pointer is over, or — with no pointer involved — the one the caret is
+in, so the menu is reachable from the keyboard alone.
 
 Contributions are concatenated in ascending `order` (default `0`, ties broken by registration
 order), separated from one another. `@editorjs/default-block-settings-plugin` registers at
@@ -365,6 +371,9 @@ Programmatic block management — delegates to `BlocksManager`.
 | `render(document)` | Re-initialize the document from serialised data |
 | `clear()` | Remove all blocks |
 | `getBlocksCount()` | Return the total number of blocks |
+| `getIdByIndex(index)` | Id of the block at that index, or `undefined` |
+| `getIndexById(id)` | Position of the block with that id, or `-1` |
+| `getToolByIndex(index)` | Tool name of the block at that index, or `undefined` |
 | `getPluginData({ block, plugin })` | Read a plugin's per-block data, or `undefined` |
 | `updatePluginData({ block, plugin, data, userId? })` | Merge keys into a plugin's per-block data |
 

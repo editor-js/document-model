@@ -38,6 +38,12 @@ export class BlocksUI implements EditorjsPlugin {
   #blocks: HTMLElement[] = [];
 
   /**
+   * Position of the block last announced as selected, so the same one is not announced twice.
+   * `selectionchange` fires on every keystroke, and only a move to another block is news
+   */
+  #selectedBlockIndex = -1;
+
+  /**
    * EventBus instance to exchange events between components
    */
   #eventBus: EventBus;
@@ -74,6 +80,8 @@ export class BlocksUI implements EditorjsPlugin {
 
       this.#removeBlock(index);
     }, { signal });
+
+    document.addEventListener('selectionchange', this.#handleSelectionChange, { signal });
 
     this.#eventBus.dispatchEvent(new BlocksHolderRenderedUIEvent({
       blocksHolder: this.#blocksHolder,
@@ -253,7 +261,47 @@ export class BlocksUI implements EditorjsPlugin {
    */
   #updateSelectedBlock(event: MouseEvent): void {
     const block = event.target as HTMLElement;
-    const index = this.#blocks.indexOf(block);
+
+    this.#selectBlock(block, this.#blocks.indexOf(block));
+  }
+
+  /**
+   * Reports the block the caret is in, so that "the selected block" means something to a user
+   * who never moves a pointer.
+   *
+   * Hover was the only source of selection, which left every control acting on the selected
+   * block -- the toolbar's settings button among them -- doing nothing at all from the
+   * keyboard. Read here rather than from the editor's own caret state because that is cleared
+   * the moment focus leaves the editable, which is exactly what reaching for a toolbar does
+   */
+  #handleSelectionChange = (): void => {
+    const selection = document.getSelection();
+    const anchor = selection?.anchorNode ?? null;
+
+    if (anchor === null) {
+      return;
+    }
+
+    const index = this.#blocks.findIndex(block => block.contains(anchor));
+
+    if (index === -1) {
+      return;
+    }
+
+    this.#selectBlock(this.#blocks[index], index);
+  };
+
+  /**
+   * Announces the block to work on, unless it is the one already announced
+   * @param block - the block's wrapper element
+   * @param index - its position in the document
+   */
+  #selectBlock(block: HTMLElement, index: number): void {
+    if (index === this.#selectedBlockIndex) {
+      return;
+    }
+
+    this.#selectedBlockIndex = index;
 
     this.#eventBus.dispatchEvent(new BlockSelectedUIEvent({
       block,
@@ -278,6 +326,8 @@ export class BlocksUI implements EditorjsPlugin {
      * Detaching the holder takes the block wrappers inside it along
      */
     this.#blocksHolder.remove();
+
     this.#blocks = [];
+    this.#selectedBlockIndex = -1;
   }
 }

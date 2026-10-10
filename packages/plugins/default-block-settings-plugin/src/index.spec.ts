@@ -103,14 +103,9 @@ function setup({ blockIds = ['b0', 'b1', 'b2'], withBlockSettings = true }: {
   const api = {
     blocks: {
       getIndexById: (id: string) => blocks.indexOf(id),
+      getBlocksCount: () => blocks.length,
       move,
       delete: remove,
-    },
-    document: {
-      get data() {
-        return { blocks: blocks.map(id => ({ id,
-          name: 'paragraph' })) };
-      },
     },
     // eslint-disable-next-line @typescript-eslint/naming-convention -- the key is the plugin's `name`, which is kebab-case
     plugins: withBlockSettings ? { 'block-settings': blockSettings } : {},
@@ -120,6 +115,11 @@ function setup({ blockIds = ['b0', 'b1', 'b2'], withBlockSettings = true }: {
   const eventBus = {
     addEventListener: (name: string, listener: () => void) => {
       listeners.set(name, listener);
+    },
+    removeEventListener: (name: string, listener: () => void) => {
+      if (listeners.get(name) === listener) {
+        listeners.delete(name);
+      }
     },
     dispatchEvent: () => true,
   } as unknown as EventBus;
@@ -238,6 +238,16 @@ describe('DefaultBlockSettingsPlugin', () => {
     it('should take its provider back out of the menu when destroyed', async () => {
       instance.ready();
       instance.plugin.destroy();
+
+      await expect(instance.itemsFor('b1')).rejects.toThrow('no provider was registered');
+    });
+
+    it('should not register after it has been destroyed', async () => {
+      instance.plugin.destroy();
+
+      // The bus outlives the plugin. A plugin destroyed before the editor finished starting
+      // would otherwise register a provider nothing holds the unregister function for.
+      instance.ready();
 
       await expect(instance.itemsFor('b1')).rejects.toThrow('no provider was registered');
     });
