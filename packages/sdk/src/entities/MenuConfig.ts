@@ -11,7 +11,7 @@ export { PopoverItemType };
 
 /**
  * Menu configuration format.
- * Is used for defining Block Tunes Menu items via Block Tool's renderSettings(), Block Tune's render() and Inline Tool's render().
+ * Is used for defining menu items via Block Tool's renderSettings() and Inline Tool's render().
  */
 export type MenuConfig = MenuConfigItem | MenuConfigItem[];
 
