@@ -67,6 +67,12 @@ When a multi-change task ends, it always closes the open batch: earlier typing i
 
 `undo()` is normally triggered from a later keydown task, so in practice the buffer is already empty. Recording it first covers programmatic `api.document.undo()` called in the same task as the changes.
 
+### D5. Re-applying block events passes a list of blocks
+
+`BlockAddedEvent` and `BlockRemovedEvent` carry one serialized block in `detail.data`. `EditorDocument.insertData`/`removeData` take `BlockNodeInit[]` for a `BlockIndex` and iterate over it. When `#apply` handles an event whose index is a `BlockIndex`, it passes `[event.data]`. Text, data-node and property events are passed through unchanged.
+
+*Alternative considered: let the model accept a single block.* Rejected for this change: it would touch the `model` package and its spec, whereas only the undo manager hands event data back to these methods. If another caller ever needs it, it can move into the model then.
+
 ## Alternatives (whole-approach)
 
 - **Explicit `api.document.group(fn)` with a `groupId` on model events.** This was the first draft of this change. Rejected for now:

@@ -18,9 +18,10 @@
 - [ ] 2.1 Add `#taskEvents`, `#taskTimer` and `#closeTask()` to `UndoRedoManager`, and route local events through the buffer (design D1, D3). Keep clearing `#redoStack` when each event arrives
 - [ ] 2.2 Apply the one-event and several-event rules in `#closeTask()` (design D2)
 - [ ] 2.3 Call `#closeTask()` from `undo()` and `redo()` before `#putBatchToUndo()`, and clear `#taskTimer` in `destroy()` (design D4)
-- [ ] 2.4 Run `yarn test`, `yarn lint` and `yarn test:mutations` (if configured) in `packages/core`
+- [ ] 2.4 Write failing tests for re-applying block events (undo of Added and Removed, redo), then wrap a block event's data in a one-item list in `#apply` (design D5)
+- [ ] 2.5 Run `yarn test`, `yarn lint` and `yarn test:mutations` (if configured) in `packages/core`
 
-## 3. Integration tests through Core
+## 3. Integration tests (real model and BlocksManager)
 
 - [ ] 3.1 should undo a mid-paragraph Enter split in one step
 - [ ] 3.2 should undo and redo a multi-change task that adds a block with text without AlreadyExistingKeyError. Its comment should explain why block-construction `DataNodeAddedEvent`s must stay out of undo (design R2)

@@ -58,6 +58,11 @@ The system SHALL provide `UndoRedoManager`, which batches consecutive model even
 - **WHEN** that task is undone and then redone
 - **THEN** the block is removed and re-added with its data exactly once, with no `AlreadyExistingKeyError`, because the microtask-dispatched `DataNodeAddedEvent`s from block construction are not recorded as undoable changes
 
+#### Scenario: Undoing and redoing a block change
+- **GIVEN** a recorded step contains a `BlockAddedEvent` or `BlockRemovedEvent`, whose `data` is a single serialized block
+- **WHEN** the step is undone or redone
+- **THEN** the manager calls the model's `insertData`/`removeData` with that block wrapped in a one-item list, as the model expects for a `BlockIndex`, and the block is removed or restored without errors
+
 #### Scenario: Remote events do not join a local task
 - **GIVEN** a remote user's event arrives while local events of the current task are buffered
 - **WHEN** the manager handles it
