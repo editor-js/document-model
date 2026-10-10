@@ -3,9 +3,11 @@ import type {
   BlockId,
   BlockNodeInit,
   DocumentData,
+  PluginDataSerialized,
   TextNodeSerialized,
   ValueSerialized
 } from '@editorjs/model-types';
+import type { PluginDataFor, PluginId } from '../index.js';
 
 /**
  * Blocks API interface
@@ -22,6 +24,7 @@ export interface BlocksAPI {
    * @param [params.focus] - flag indicates if new block should be focused @todo implement
    * @param [params.replace] - flag indicates if block at index should be replaced @todo implement
    * @param [params.id] - id of the inserted block @todo implement
+   * @param [params.plugins] - initial per-plugin data for the block, keyed by plugin name
    */
   insert(params?: {
     /** Block tool name to insert */
@@ -36,6 +39,8 @@ export interface BlocksAPI {
     replace?: boolean;
     /** Id of the inserted block */
     id?: string;
+    /** Initial per-plugin data for the block, keyed by plugin name */
+    plugins?: Record<string, PluginDataSerialized>;
     /** User id. Defaults to the current user id from the config */
     userId?: string | number;
   }): void;
@@ -212,6 +217,43 @@ export interface BlocksAPI {
     key: string;
     /** New value */
     value: V;
+    /** User id. Defaults to the current user id from the config */
+    userId?: string | number;
+  }): void;
+
+  /**
+   * Returns the per-block data stored by the given plugin, or undefined when it stores none.
+   *
+   * The data type is resolved from `EditorjsPluginDataMap` for a plugin that declares its shape,
+   * and falls back to a plain record otherwise.
+   * @param params - getPluginData parameters
+   * @param params.block - index or id of the block
+   * @param params.plugin - name the data is stored under, by convention the plugin's `name`
+   */
+  getPluginData<Id extends PluginId>(params: {
+    /** Index or id of the block */
+    block: number | string;
+    /** Name the data is stored under */
+    plugin: Id;
+  }): PluginDataFor<Id> | undefined;
+
+  /**
+   * Merges the passed keys into the per-block data of the given plugin, creating the entry when
+   * the block has none yet; a key set to `undefined` is removed. Each key is recorded as its own
+   * modification, so writing several keys is not a single undo step.
+   * @param params - updatePluginData parameters
+   * @param params.block - index or id of the block
+   * @param params.plugin - name the data is stored under, by convention the plugin's `name`
+   * @param params.data - keys to merge into the plugin's data
+   * @param [params.userId] - user id. Defaults to the current user id from the config
+   */
+  updatePluginData<Id extends PluginId>(params: {
+    /** Index or id of the block */
+    block: number | string;
+    /** Name the data is stored under */
+    plugin: Id;
+    /** Keys to merge into the plugin's data */
+    data: Partial<PluginDataFor<Id>>;
     /** User id. Defaults to the current user id from the config */
     userId?: string | number;
   }): void;

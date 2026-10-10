@@ -27,7 +27,7 @@ Follow this sequence for every run:
 | Changed area | Primary doc(s) | Diagram(s) |
 |---|---|---|
 | Package list, dependencies, overall structure | `docs/architecture.md`, root `README.md` | `diagrams/architecture-overview.mmd` |
-| `EditorJSModel`, `EditorDocument`, `BlockNode`, `TextNode`, `ValueNode`, `BlockTune`, `Index`, `CaretManager` | `docs/model.md` | `diagrams/model-tree-structure.mmd` |
+| `EditorJSModel`, `EditorDocument`, `BlockNode`, `TextNode`, `ValueNode`, `PluginDataNode`, `Index`, `CaretManager` | `docs/model.md` | `diagrams/model-tree-structure.mmd` |
 | Event classes, `EventType`, `EventBus` | `docs/events.md` | `diagrams/events-catalog.mmd` |
 | `Core`, `BlocksManager`, `BlockRenderer`, `SelectionManager`, `ToolsManager`, `EditorAPI`, plugin/tool lifecycle | `docs/plugins.md` | `diagrams/plugin-lifecycle-flow.mmd` |
 | `DOMBlockToolAdapter`, `CaretAdapter`, `FormattingAdapter`, `InputsRegistry`, `BeforeInputUIEvent` | `docs/input-handling.md` | `diagrams/block-adapter-input-flow.mmd`, `diagrams/caret-selection-flow.mmd`, `diagrams/inline-formatting-flow.mmd` |

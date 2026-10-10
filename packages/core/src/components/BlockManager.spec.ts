@@ -12,6 +12,7 @@ jest.unstable_mockModule('@editorjs/sdk', () => ({
   BlockChildType: { Text: 't' },
   NODE_TYPE_HIDDEN_PROP: '$t',
   createBlockId: jest.fn((id: string) => id as never),
+  createPluginDataName: jest.fn((name: string) => name as never),
   set: jest.fn(() => undefined),
   renumberKeys: jest.fn(() => new Map()),
   TextIndex: class TextIndex {},
@@ -98,6 +99,44 @@ describe('BlocksManager (unit, mocked deps)', () => {
         BLOCKS_COUNT
       );
       expect(model.removeBlock).not.toHaveBeenCalled();
+    });
+
+    it('should nest the block data under a `data` key rather than spreading it', () => {
+      blocksManager.insert({ type: 'paragraph',
+        data: { text: 'Alpha' } });
+
+      expect(model.addBlock).toHaveBeenCalledWith(
+        USER_ID,
+        expect.objectContaining({
+          name: 'paragraph',
+          data: { text: 'Alpha' },
+        }),
+        BLOCKS_COUNT
+      );
+      expect(model.addBlock).not.toHaveBeenCalledWith(
+        USER_ID,
+        expect.objectContaining({ text: 'Alpha' }),
+        BLOCKS_COUNT
+      );
+    });
+
+    it('should forward the plugins map when one is passed', () => {
+      blocksManager.insert({ type: 'paragraph',
+        plugins: { anchors: { id: 'intro' } } });
+
+      expect(model.addBlock).toHaveBeenCalledWith(
+        USER_ID,
+        expect.objectContaining({ plugins: { anchors: { id: 'intro' } } }),
+        BLOCKS_COUNT
+      );
+    });
+
+    it('should omit the plugins key entirely when no plugin data is passed', () => {
+      blocksManager.insert({ type: 'paragraph' });
+
+      const blockInit = (model.addBlock as jest.Mock).mock.calls[0][1] as Record<string, unknown>;
+
+      expect('plugins' in blockInit).toBe(false);
     });
 
     it('should use explicit index when provided', () => {
@@ -724,6 +763,66 @@ describe('BlocksManager (unit, mocked deps)', () => {
         },
         0
       );
+    });
+
+    it('should carry the block plugin data over to the converted block', () => {
+      model.getBlockSerialized = jest.fn(() => ({
+        name: 'header',
+        id: 'b1',
+        data: {
+          text: {
+            value: 'Hello',
+            fragments: []
+          }
+        },
+        plugins: { anchors: { id: 'intro' } }
+      }));
+
+      const sourceTool = { exportTextContent: jest.fn(() => 'Hello') };
+      const targetTool = {
+        importTextContent: jest.fn(() => ({
+          text: {
+            value: 'Hello',
+            fragments: []
+          }
+        }))
+      };
+
+      // @ts-expect-error — mock
+      toolsManager.blockTools.get = jest.fn((name: string) =>
+        name === 'header' ? sourceTool : targetTool
+      );
+
+      blocksManager.convertBlock(0, 'text' as DataKey, 'paragraph');
+
+      expect(model.addBlock).toHaveBeenCalledWith(
+        USER_ID,
+        expect.objectContaining({ plugins: { anchors: { id: 'intro' } } }),
+        0
+      );
+    });
+
+    it('should omit the plugins key when the source block has no plugin data', () => {
+      const sourceTool = { exportTextContent: jest.fn(() => 'Hello') };
+      const targetTool = {
+        importTextContent: jest.fn(() => ({
+          text: {
+            value: 'Hello',
+            fragments: []
+          }
+        }))
+      };
+
+      // @ts-expect-error — mock
+      toolsManager.blockTools.get = jest.fn((name: string) =>
+        name === 'header' ? sourceTool : targetTool
+      );
+
+      blocksManager.convertBlock(0, 'text' as DataKey, 'paragraph');
+
+      const blockInit = (model.addBlock as jest.Mock).mock.calls[0][1] as Record<string, unknown>;
+
+      expect('plugins' in blockInit).toBe(false);
     });
 
     it('should merge dataOverrides on top of the imported data', () => {

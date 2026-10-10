@@ -1,13 +1,13 @@
 import { Index, PartialIndex } from '@editorjs/model-types';
 import { EditorDocument } from './index.js';
-import { createBlockId, type DataKey, type InlineToolData, type InlineToolName, type BlockToolName, type BlockTuneName } from '@editorjs/model-types';
+import { createBlockId, type DataKey, type InlineToolData, type InlineToolName, type BlockToolName, type PluginDataName } from '@editorjs/model-types';
 import { BlockNode } from '../BlockNode/index.js';
 import { EventType } from '@editorjs/model-types';
 import {
   BlockAddedEvent,
   BlockRemovedEvent,
   PropertyModifiedEvent,
-  TuneModifiedEvent
+  PluginDataModifiedEvent
 } from '@editorjs/model-types';
 import { EventAction } from '@editorjs/model-types';
 import { describe, jest } from '@jest/globals';
@@ -68,7 +68,7 @@ describe('EditorDocument', () => {
             fragments: [],
           },
         },
-        tunes: {},
+        plugins: {},
       }];
 
       doc.initialize({ blocks });
@@ -127,7 +127,7 @@ describe('EditorDocument', () => {
             fragments: [],
           },
         },
-        tunes: {},
+        plugins: {},
       }];
 
       doc.initialize({ blocks });
@@ -1097,12 +1097,12 @@ describe('EditorDocument', () => {
     });
   });
 
-  describe('.updateTuneData()', () => {
+  describe('.updatePluginData()', () => {
     beforeEach(() => {
       jest.clearAllMocks();
     });
 
-    it('should call .updateTuneData() method of the BlockNode at the specific index', () => {
+    it('should call .updatePluginData() method of the BlockNode at the specific index', () => {
       const blocksData = [
         {
           name: 'header' as BlockToolName,
@@ -1127,25 +1127,25 @@ describe('EditorDocument', () => {
         const blockNode = document.getBlock(i);
 
         jest
-          .spyOn(blockNode, 'updateTuneData')
+          .spyOn(blockNode, 'updatePluginData')
           // eslint-disable-next-line @typescript-eslint/no-empty-function -- mock of the method
           .mockImplementation(() => {
           });
       });
 
       const blockIndexToUpdate = 1;
-      const tuneName = 'blockFormatting' as BlockTuneName;
+      const pluginName = 'blockFormatting' as PluginDataName;
       const updateData = {
         align: 'right',
       };
 
-      document.updateTuneData(blockIndexToUpdate, tuneName, updateData);
+      document.updatePluginData(blockIndexToUpdate, pluginName, updateData);
 
-      expect(document.getBlock(blockIndexToUpdate).updateTuneData)
-        .toHaveBeenCalledWith(tuneName, updateData);
+      expect(document.getBlock(blockIndexToUpdate).updatePluginData)
+        .toHaveBeenCalledWith(pluginName, updateData);
     });
 
-    it('should not call .updateTuneData() method of other BlockNodes', () => {
+    it('should not call .updatePluginData() method of other BlockNodes', () => {
       const blocksData = [
         {
           name: 'header' as BlockToolName,
@@ -1170,7 +1170,7 @@ describe('EditorDocument', () => {
         const blockNode = document.getBlock(i);
 
         jest
-          .spyOn(blockNode, 'updateTuneData')
+          .spyOn(blockNode, 'updatePluginData')
           // eslint-disable-next-line @typescript-eslint/no-empty-function -- mock of the method
           .mockImplementation(() => {
           });
@@ -1179,19 +1179,19 @@ describe('EditorDocument', () => {
       });
 
       const blockIndexToUpdate = 1;
-      const tuneName = 'blockFormatting' as BlockTuneName;
+      const pluginName = 'blockFormatting' as PluginDataName;
       const updateData = {
         align: 'right',
       };
 
-      document.updateTuneData(blockIndexToUpdate, tuneName, updateData);
+      document.updatePluginData(blockIndexToUpdate, pluginName, updateData);
 
       blockNodes.forEach((blockNode, index) => {
         if (index === blockIndexToUpdate) {
           return;
         }
 
-        expect(blockNode.updateTuneData)
+        expect(blockNode.updatePluginData)
           .not
           .toHaveBeenCalled();
       });
@@ -1202,12 +1202,12 @@ describe('EditorDocument', () => {
         identifier: 'document',
       });
       const blockIndexOutOfBound = document.length + 1;
-      const tuneName = 'blockFormatting' as BlockTuneName;
+      const pluginName = 'blockFormatting' as PluginDataName;
       const updateData = {
         align: 'right',
       };
 
-      const action = (): void => document.updateTuneData(blockIndexOutOfBound, tuneName, updateData);
+      const action = (): void => document.updatePluginData(blockIndexOutOfBound, pluginName, updateData);
 
       expect(action)
         .toThrow('Index out of bounds');
@@ -1500,6 +1500,34 @@ describe('EditorDocument', () => {
       expect(spy)
         .toHaveBeenCalledWith(blockIndex, dataKey, 'bold', 0, rangeEnd);
     });
+
+    it('should call .updatePluginData() when a plugin data index is provided', () => {
+      const spy = jest.spyOn(document, 'updatePluginData');
+      const pluginName = 'anchors' as PluginDataName;
+      const index = Index.pluginData(blockIndex, pluginName, 'id');
+
+      document.modifyData(index, {
+        value: 'intro',
+        previous: undefined,
+      });
+
+      expect(spy)
+        .toHaveBeenCalledWith(blockIndex, pluginName, { id: 'intro' });
+    });
+
+    it('should apply the removal of a plugin data key when the new value is undefined', () => {
+      const spy = jest.spyOn(document, 'updatePluginData');
+      const pluginName = 'anchors' as PluginDataName;
+      const index = Index.pluginData(blockIndex, pluginName, 'id');
+
+      document.modifyData(index, {
+        value: undefined,
+        previous: 'intro',
+      });
+
+      expect(spy)
+        .toHaveBeenCalledWith(blockIndex, pluginName, { id: undefined });
+    });
   });
 
   describe('.removeText()', () => {
@@ -1707,11 +1735,11 @@ describe('EditorDocument', () => {
 
       document.addEventListener(EventType.Changed, handler);
 
-      const partial = new PartialIndex({ tuneKey: 'value',
-        tuneName: 'tune' as BlockTuneName });
+      const partial = new PartialIndex({ pluginKey: 'value',
+        pluginName: 'anchors' as PluginDataName });
 
       blockNode.dispatchEvent(
-        new TuneModifiedEvent(
+        new PluginDataModifiedEvent(
           partial,
           {
             value: 'value',
@@ -1722,22 +1750,22 @@ describe('EditorDocument', () => {
       );
 
       expect(handler)
-        .toHaveBeenCalledWith(expect.any(TuneModifiedEvent));
+        .toHaveBeenCalledWith(expect.any(PluginDataModifiedEvent));
     });
 
     it('should re-emit events from the BlockNode with updated index', () => {
-      let event: TuneModifiedEvent | null = null;
+      let event: PluginDataModifiedEvent | null = null;
       const handler = (e: Event): void => {
-        event = e as TuneModifiedEvent;
+        event = e as PluginDataModifiedEvent;
       };
 
       document.addEventListener(EventType.Changed, handler);
 
-      const partial = new PartialIndex({ tuneKey: 'value',
-        tuneName: 'tune' as BlockTuneName });
+      const partial = new PartialIndex({ pluginKey: 'value',
+        pluginName: 'anchors' as PluginDataName });
 
       blockNode.dispatchEvent(
-        new TuneModifiedEvent(
+        new PluginDataModifiedEvent(
           partial,
           {
             value: 'value',
@@ -1749,8 +1777,8 @@ describe('EditorDocument', () => {
 
       expect(event)
         .toHaveProperty('detail.index', expect.objectContaining({
-          tuneKey: 'value',
-          tuneName: 'tune',
+          pluginKey: 'value',
+          pluginName: 'anchors',
           blockIndex: index,
         }));
     });

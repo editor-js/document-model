@@ -18,7 +18,7 @@ describe('EditorJSModel', () => {
       'insertData',
       'removeData',
       'modifyData',
-      'updateTuneData',
+      'updatePluginData',
       'updateValue',
       'removeBlock',
       'clearBlocks',

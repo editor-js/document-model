@@ -1,4 +1,4 @@
-import type { BlockTuneName } from '../BlockTune.js';
+import type { PluginDataName } from '../PluginData.js';
 import type { DataKey } from '../DataKey.js';
 import type { DocumentId } from '../indexing.js';
 import type { TextRange } from '../Text.js';
@@ -8,7 +8,7 @@ import { DataIndex } from './DataIndex.js';
 import { DocumentIndex } from './DocumentIndex.js';
 import { PropertyIndex } from './PropertyIndex.js';
 import { TextIndex } from './TextIndex.js';
-import { TuneIndex } from './TuneIndex.js';
+import { PluginDataIndex } from './PluginDataIndex.js';
 
 /**
  * Internal placeholder used during event bubbling.
@@ -41,17 +41,17 @@ export class PartialIndex extends IndexBase {
   }
 
   /**
-   * Tune name if set
+   * Plugin data name if set
    */
-  public get tuneName(): BlockTuneName | undefined {
-    return this.#fields.tuneName;
+  public get pluginName(): PluginDataName | undefined {
+    return this.#fields.pluginName;
   }
 
   /**
-   * Tune key if set
+   * Plugin data key if set
    */
-  public get tuneKey(): string | undefined {
-    return this.#fields.tuneKey;
+  public get pluginKey(): string | undefined {
+    return this.#fields.pluginKey;
   }
 
   /**
@@ -89,7 +89,7 @@ export class PartialIndex extends IndexBase {
    */
   public get isBlockIndex(): boolean {
     return this.#fields.blockIndex !== undefined
-      && this.#fields.tuneName === undefined
+      && this.#fields.pluginName === undefined
       && this.#fields.dataKey === undefined
       && this.#fields.textRange === undefined;
   }
@@ -99,7 +99,7 @@ export class PartialIndex extends IndexBase {
    */
   public get isDataIndex(): boolean {
     return this.#fields.blockIndex !== undefined
-      && this.#fields.tuneName === undefined
+      && this.#fields.pluginName === undefined
       && this.#fields.dataKey !== undefined
       && this.#fields.textRange === undefined;
   }
@@ -142,8 +142,8 @@ export class PartialIndex extends IndexBase {
     const {
       textRange,
       dataKey,
-      tuneName,
-      tuneKey,
+      pluginName,
+      pluginKey,
       blockIndex,
       propertyName,
       documentId,
@@ -158,7 +158,7 @@ export class PartialIndex extends IndexBase {
       if (
         blockIndex !== undefined
         || dataKey !== undefined
-        || tuneName !== undefined
+        || pluginName !== undefined
         || textRange !== undefined
       ) {
         throw new Error(
@@ -188,8 +188,8 @@ export class PartialIndex extends IndexBase {
     }
 
     if (dataKey !== undefined) {
-      if (tuneName !== undefined) {
-        throw new Error('DataIndex cannot be combined with tuneName');
+      if (pluginName !== undefined) {
+        throw new Error('DataIndex cannot be combined with pluginName');
       }
       if (blockIndex === undefined) {
         throw new Error('DataIndex requires blockIndex');
@@ -198,18 +198,18 @@ export class PartialIndex extends IndexBase {
       return new DataIndex(blockIndex, dataKey, documentId);
     }
 
-    if (tuneName !== undefined || tuneKey !== undefined) {
+    if (pluginName !== undefined || pluginKey !== undefined) {
       if (blockIndex === undefined) {
-        throw new Error('TuneIndex requires blockIndex');
+        throw new Error('PluginDataIndex requires blockIndex');
       }
-      if (tuneName === undefined || tuneName.length === 0) {
-        throw new Error('TuneIndex requires tuneName');
+      if (pluginName === undefined || pluginName.length === 0) {
+        throw new Error('PluginDataIndex requires pluginName');
       }
-      if (tuneKey === undefined) {
-        throw new Error('TuneIndex requires tuneKey');
+      if (pluginKey === undefined) {
+        throw new Error('PluginDataIndex requires pluginKey');
       }
 
-      return new TuneIndex(blockIndex, tuneName, tuneKey, documentId);
+      return new PluginDataIndex(blockIndex, pluginName, pluginKey, documentId);
     }
 
     if (blockIndex !== undefined) {
