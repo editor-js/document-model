@@ -1,0 +1,783 @@
+import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
+import type { CoreConfigValidated, EditorAPI } from '@editorjs/sdk';
+import { EventBus } from '@editorjs/sdk';
+import { BlockSettingsUI } from './BlockSettings.js';
+import { BlockSettingsOpenUIEvent } from './events/index.js';
+import type { BlockSettingsRenderedUIEventPayload } from './events/index.js';
+import { BlockSelectedUIEvent } from '../Blocks/events/index.js';
+import type { BlockSettingsProvider } from './BlockSettings.js';
+
+/**
+ * Blocks the fake document is made of
+ */
+interface StubBlock {
+  /** Block id */
+  id: string;
+  /** Tool name */
+  name: string;
+}
+
+const defaultBlocks: StubBlock[] = [
+  { id: 'block-0',
+    name: 'paragraph' },
+  { id: 'block-1',
+    name: 'paragraph' },
+  { id: 'block-2',
+    name: 'image' },
+];
+
+/**
+ * A position no block occupies, so `getIdByIndex` resolves to nothing
+ */
+const MISSING_BLOCK_INDEX = 99;
+
+/** How long the deliberately slow provider takes, so a stale build would land last. */
+const SLOW_PROVIDER_MS = 20;
+
+/** Long enough for both overlapping requests to have settled. */
+const BOTH_REQUESTS_SETTLED_MS = 50;
+
+/**
+ * Lets the queued provider promises settle. Opening is asynchronous because a provider may
+ * return a promise, so nothing about the rendered menu can be asserted synchronously
+ */
+async function flush(): Promise<void> {
+  await new Promise(resolve => setTimeout(resolve, 0));
+}
+
+/**
+ * Builds a plugin instance over a fake editor
+ * @param blocks - blocks the fake document consists of
+ */
+function setup(blocks: StubBlock[] = defaultBlocks): {
+  /** Instance under test */
+  plugin: BlockSettingsUI;
+  /** Event bus the instance is wired to */
+  eventBus: EventBus;
+  /** Element the plugin announced via its rendered event */
+  element: HTMLElement;
+  /** Button the plugin announced via its rendered event */
+  button: HTMLButtonElement;
+  /** Fake editor API */
+  api: EditorAPI;
+  /** The mock backing `api.blocks.getIdByIndex` */
+  getIdByIndex: jest.Mock<(index: number) => string | undefined>;
+} {
+  const eventBus = new EventBus();
+  const holder = document.createElement('div');
+
+  const getIdByIndex = jest.fn((index: number) => blocks[index]?.id);
+
+  const api = {
+    blocks: {
+      getIdByIndex,
+      getIndexById: jest.fn((id: string) => blocks.findIndex(block => block.id === id)),
+      /**
+       * Read fresh each time, so a test can mutate the block list between opens
+       */
+      getToolByIndex: jest.fn((index: number) => blocks[index]?.name),
+    },
+    plugins: {},
+  } as unknown as EditorAPI;
+
+  let element: HTMLElement | undefined;
+  let button: HTMLButtonElement | undefined;
+
+  /**
+   * Captures the element the plugin announces, which is what the toolbar would mount
+   * @param event - the plugin's rendered event
+   */
+  function captureElement(event: CustomEvent): void {
+    const detail = event.detail as BlockSettingsRenderedUIEventPayload;
+
+    element = detail.blockSettings;
+    button = detail.button as HTMLButtonElement;
+  }
+
+  eventBus.addEventListener('ui:block-settings:rendered', captureElement);
+
+  const plugin = new BlockSettingsUI({
+    api,
+    eventBus,
+    /**
+     * The plugin reads a single field off the config, so the rest of the validated
+     * shape is not worth standing up here
+     */
+    config: { holder } as unknown as CoreConfigValidated,
+  });
+
+  if (element === undefined || button === undefined) {
+    throw new Error('BlockSettingsUI did not announce its element and button');
+  }
+
+  holder.appendChild(button);
+  holder.appendChild(element);
+
+  /**
+   * Attached for real: jsdom only moves focus to elements that are in the document, and
+   * the popover's focus handling is part of what these tests assert
+   */
+  document.body.appendChild(holder);
+
+  return {
+    plugin,
+    eventBus,
+    element,
+    button,
+    api,
+    getIdByIndex,
+  };
+}
+
+/**
+ * Titles of the menu items currently rendered, in document order
+ * @param element - the plugin's root element
+ */
+function itemTitles(element: HTMLElement): string[] {
+  return [...element.querySelectorAll('[role="menuitem"]')].map(item => item.textContent?.trim() ?? '');
+}
+
+/**
+ * Number of separators currently rendered
+ * @param element - the plugin's root element
+ */
+function separatorCount(element: HTMLElement): number {
+  return element.querySelectorAll('.ce-popover-item-separator').length;
+}
+
+/**
+ * Clicks a button the way a pointer does -- `HTMLElement.click()` dispatches only the click,
+ * and the menu button reads its state on `mousedown`, which a real click always sends first
+ * @param button - the menu button under test
+ */
+function clickButton(button: HTMLButtonElement): void {
+  button.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+  button.click();
+}
+
+/**
+ * Asks the plugin to open settings for a block, then lets the providers settle
+ * @param eventBus - bus to dispatch on
+ * @param index - block position to open settings for
+ */
+async function open(eventBus: EventBus, index: number): Promise<void> {
+  eventBus.dispatchEvent(new BlockSettingsOpenUIEvent({ index }));
+
+  await flush();
+}
+
+describe('BlockSettingsUI', () => {
+  let instance: ReturnType<typeof setup>;
+
+  beforeEach(() => {
+    document.body.innerHTML = '';
+    instance = setup();
+  });
+
+  describe('plugin contract', () => {
+    it('should be named block-settings', () => {
+      expect(BlockSettingsUI.name).toBe('block-settings');
+    });
+
+    it('should expose register and close as its public API', () => {
+      expect(typeof instance.plugin.publicApi.register).toBe('function');
+      expect(typeof instance.plugin.publicApi.close).toBe('function');
+    });
+  });
+
+  describe('opening', () => {
+    it('should resolve the target block id from the reported index', async () => {
+      const provider = jest.fn<BlockSettingsProvider>(() => undefined);
+
+      instance.plugin.publicApi.register(provider);
+
+      await open(instance.eventBus, 1);
+
+      expect(instance.getIdByIndex).toHaveBeenCalledWith(1);
+      expect(provider).toHaveBeenCalledWith(expect.objectContaining({ blockId: 'block-1' }));
+    });
+
+    it('should hand providers the block index and tool alongside its id', async () => {
+      const provider = jest.fn<BlockSettingsProvider>(() => undefined);
+
+      instance.plugin.publicApi.register(provider);
+
+      await open(instance.eventBus, 2);
+
+      expect(provider).toHaveBeenCalledWith({
+        blockId: 'block-2',
+        blockIndex: 2,
+        tool: 'image',
+      });
+    });
+
+    it('should call providers again on every open, so items reflect current state', async () => {
+      let isActive = false;
+      const provider = jest.fn<BlockSettingsProvider>(() => ({
+        title: 'Anchor',
+        isActive,
+        onActivate: () => {},
+      }));
+
+      instance.plugin.publicApi.register(provider);
+
+      await open(instance.eventBus, 0);
+      expect(provider).toHaveBeenCalledTimes(1);
+
+      instance.plugin.publicApi.close();
+      isActive = true;
+
+      await open(instance.eventBus, 0);
+      expect(provider).toHaveBeenCalledTimes(2);
+      expect(provider.mock.results[1].value).toMatchObject({ isActive: true });
+    });
+
+    it('should render the items a provider returns', async () => {
+      instance.plugin.publicApi.register(() => ({
+        title: 'Anchor',
+        onActivate: () => {},
+      }));
+
+      await open(instance.eventBus, 0);
+
+      expect(itemTitles(instance.element)).toEqual(['Anchor']);
+    });
+
+    it('should invoke the handler of an activated item', async () => {
+      const onActivate = jest.fn();
+
+      instance.plugin.publicApi.register(() => ({
+        title: 'Anchor',
+        onActivate,
+      }));
+
+      await open(instance.eventBus, 0);
+      instance.element.querySelector<HTMLElement>('[role="menuitem"]')?.click();
+
+      expect(onActivate).toHaveBeenCalled();
+    });
+
+    it('should accept a provider that returns a promise', async () => {
+      instance.plugin.publicApi.register(() => Promise.resolve({
+        title: 'Async',
+        onActivate: () => {},
+      }));
+
+      await open(instance.eventBus, 0);
+
+      expect(itemTitles(instance.element)).toEqual(['Async']);
+    });
+  });
+
+  describe('ordering', () => {
+    it('should order contributions by order then registration, separating providers', async () => {
+      instance.plugin.publicApi.register(() => ({
+        title: 'Last',
+        onActivate: () => {},
+      }), { order: 1000 });
+      instance.plugin.publicApi.register(() => ({
+        title: 'First',
+        onActivate: () => {},
+      }));
+
+      await open(instance.eventBus, 0);
+
+      expect(itemTitles(instance.element)).toEqual(['First', 'Last']);
+      expect(separatorCount(instance.element)).toBe(1);
+    });
+
+    it('should break ties by registration order', async () => {
+      instance.plugin.publicApi.register(() => ({
+        title: 'Registered first',
+        onActivate: () => {},
+      }));
+      instance.plugin.publicApi.register(() => ({
+        title: 'Registered second',
+        onActivate: () => {},
+      }));
+
+      await open(instance.eventBus, 0);
+
+      expect(itemTitles(instance.element)).toEqual(['Registered first', 'Registered second']);
+    });
+
+    it('should not emit a separator for a provider that contributes nothing', async () => {
+      instance.plugin.publicApi.register(ctx => (ctx.tool === 'image'
+        ? undefined
+        : {
+            title: 'Only for text',
+            onActivate: () => {},
+          }));
+      instance.plugin.publicApi.register(() => ({
+        title: 'Always',
+        onActivate: () => {},
+      }));
+
+      await open(instance.eventBus, 2);
+
+      expect(itemTitles(instance.element)).toEqual(['Always']);
+      expect(separatorCount(instance.element)).toBe(0);
+    });
+
+    it('should treat an empty array as no contribution', async () => {
+      instance.plugin.publicApi.register(() => []);
+      instance.plugin.publicApi.register(() => ({
+        title: 'Always',
+        onActivate: () => {},
+      }));
+
+      await open(instance.eventBus, 0);
+
+      expect(itemTitles(instance.element)).toEqual(['Always']);
+      expect(separatorCount(instance.element)).toBe(0);
+    });
+  });
+
+  describe('unregistering', () => {
+    it('should stop invoking a provider once it is unregistered', async () => {
+      const provider = jest.fn<BlockSettingsProvider>(() => ({
+        title: 'Anchor',
+        onActivate: () => {},
+      }));
+
+      const unregister = instance.plugin.publicApi.register(provider);
+
+      unregister();
+
+      await open(instance.eventBus, 0);
+
+      expect(provider).not.toHaveBeenCalled();
+      expect(itemTitles(instance.element)).toEqual([]);
+    });
+  });
+
+  describe('events', () => {
+    it('should dispatch opened once the menu is populated', async () => {
+      const onOpened = jest.fn();
+
+      instance.eventBus.addEventListener('ui:block-settings:opened', onOpened);
+      instance.plugin.publicApi.register(() => ({
+        title: 'Anchor',
+        onActivate: () => {},
+      }));
+
+      await open(instance.eventBus, 1);
+
+      expect(onOpened).toHaveBeenCalledTimes(1);
+    });
+
+    it('should dispatch closed when closed through the public API', async () => {
+      const onClosed = jest.fn();
+
+      instance.eventBus.addEventListener('ui:block-settings:closed', onClosed);
+      instance.plugin.publicApi.register(() => ({
+        title: 'Anchor',
+        onActivate: () => {},
+      }));
+
+      await open(instance.eventBus, 0);
+      instance.plugin.publicApi.close();
+
+      expect(onClosed).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('nothing to show', () => {
+    it('should not open when every provider contributes nothing', async () => {
+      const onOpened = jest.fn();
+
+      instance.eventBus.addEventListener('ui:block-settings:opened', onOpened);
+      instance.plugin.publicApi.register(() => undefined);
+
+      await open(instance.eventBus, 0);
+
+      expect(onOpened).not.toHaveBeenCalled();
+      expect(itemTitles(instance.element)).toEqual([]);
+    });
+
+    it('should not open when no provider is registered', async () => {
+      const onOpened = jest.fn();
+
+      instance.eventBus.addEventListener('ui:block-settings:opened', onOpened);
+
+      await open(instance.eventBus, 0);
+
+      expect(onOpened).not.toHaveBeenCalled();
+    });
+
+    it('should do nothing when the index resolves to no block', async () => {
+      const provider = jest.fn<BlockSettingsProvider>(() => ({
+        title: 'Anchor',
+        onActivate: () => {},
+      }));
+      const onOpened = jest.fn();
+
+      instance.eventBus.addEventListener('ui:block-settings:opened', onOpened);
+      instance.plugin.publicApi.register(provider);
+
+      await open(instance.eventBus, MISSING_BLOCK_INDEX);
+
+      expect(provider).not.toHaveBeenCalled();
+      expect(onOpened).not.toHaveBeenCalled();
+      expect(itemTitles(instance.element)).toEqual([]);
+    });
+  });
+
+  describe('a failing provider', () => {
+    let reportedErrors: jest.SpiedFunction<typeof console.error>;
+
+    beforeEach(() => {
+      reportedErrors = jest.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      reportedErrors.mockRestore();
+    });
+
+    it('should skip a provider that throws and keep the rest of the menu', async () => {
+      instance.plugin.publicApi.register(() => {
+        throw new Error('third-party provider blew up');
+      });
+      instance.plugin.publicApi.register(() => ({
+        title: 'Healthy',
+        onActivate: () => {},
+      }));
+
+      await open(instance.eventBus, 0);
+
+      expect(itemTitles(instance.element)).toEqual(['Healthy']);
+    });
+
+    it('should skip a provider whose promise rejects', async () => {
+      instance.plugin.publicApi.register(() => Promise.reject(new Error('async blow-up')));
+      instance.plugin.publicApi.register(() => ({
+        title: 'Healthy',
+        onActivate: () => {},
+      }));
+
+      await open(instance.eventBus, 0);
+
+      expect(itemTitles(instance.element)).toEqual(['Healthy']);
+    });
+
+    it('should report the failure rather than swallowing it', async () => {
+      const failure = new Error('third-party provider blew up');
+
+      instance.plugin.publicApi.register(() => {
+        throw failure;
+      });
+
+      await open(instance.eventBus, 0);
+
+      expect(reportedErrors).toHaveBeenCalledWith(expect.stringContaining('provider failed'), failure);
+    });
+
+    it('should not emit a separator for the provider it skipped', async () => {
+      instance.plugin.publicApi.register(() => {
+        throw new Error('blew up');
+      });
+      instance.plugin.publicApi.register(() => ({
+        title: 'Healthy',
+        onActivate: () => {},
+      }));
+
+      await open(instance.eventBus, 0);
+
+      expect(separatorCount(instance.element)).toBe(0);
+    });
+  });
+
+  describe('superseded and empty requests', () => {
+    it('should close an open menu when the next request resolves to no block', async () => {
+      const onClosed = jest.fn();
+
+      instance.plugin.publicApi.register(() => ({
+        title: 'Anchor',
+        onActivate: () => {},
+      }));
+
+      await open(instance.eventBus, 0);
+      expect(itemTitles(instance.element)).toEqual(['Anchor']);
+
+      instance.eventBus.addEventListener('ui:block-settings:closed', onClosed);
+
+      await open(instance.eventBus, MISSING_BLOCK_INDEX);
+
+      expect(onClosed).toHaveBeenCalledTimes(1);
+    });
+
+    it('should close an open menu when every provider opts out of the next block', async () => {
+      const onClosed = jest.fn();
+
+      instance.plugin.publicApi.register(ctx => (ctx.tool === 'image'
+        ? undefined
+        : {
+            title: 'Only text',
+            onActivate: () => {},
+          }));
+
+      await open(instance.eventBus, 0);
+      expect(itemTitles(instance.element)).toEqual(['Only text']);
+
+      instance.eventBus.addEventListener('ui:block-settings:closed', onClosed);
+
+      await open(instance.eventBus, 2);
+
+      // Left open, it would be showing block 0's settings while claiming to be block 2's.
+      expect(onClosed).toHaveBeenCalledTimes(1);
+    });
+
+    it('should let the newest request win when two overlap', async () => {
+      const onOpened = jest.fn();
+
+      instance.eventBus.addEventListener('ui:block-settings:opened', onOpened);
+
+      /**
+       * Block 0's provider resolves a tick later than block 1's, so without a guard the
+       * stale build would land last and render the wrong block's menu
+       */
+      instance.plugin.publicApi.register(async (ctx) => {
+        if (ctx.blockIndex === 0) {
+          await new Promise(resolve => setTimeout(resolve, SLOW_PROVIDER_MS));
+        }
+
+        return {
+          title: `For ${ctx.blockId}`,
+          onActivate: () => {},
+        };
+      });
+
+      instance.eventBus.dispatchEvent(new BlockSettingsOpenUIEvent({ index: 0 }));
+      instance.eventBus.dispatchEvent(new BlockSettingsOpenUIEvent({ index: 1 }));
+
+      await new Promise(resolve => setTimeout(resolve, BOTH_REQUESTS_SETTLED_MS));
+
+      expect(itemTitles(instance.element)).toEqual(['For block-1']);
+      expect(onOpened).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('its button', () => {
+    /**
+     * Reports a block as hovered, which is what the button opens settings for
+     * @param index - position of the block
+     */
+    function selectBlock(index: number): void {
+      instance.eventBus.dispatchEvent(new BlockSelectedUIEvent({
+        block: document.createElement('div'),
+        index,
+      }));
+    }
+
+    it('should announce a button alongside the menu', () => {
+      expect(instance.button.tagName).toBe('BUTTON');
+    });
+
+    it('should carry an accessible name and advertise the menu it controls', () => {
+      expect(instance.button.getAttribute('aria-label')).toBe('Block settings');
+      expect(instance.button.getAttribute('aria-haspopup')).toBe('menu');
+      expect(instance.button.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('should open the menu for the block it is following', async () => {
+      instance.plugin.publicApi.register(ctx => ({
+        title: `For ${ctx.blockId}`,
+        onActivate: () => {},
+      }));
+
+      selectBlock(1);
+      clickButton(instance.button);
+      await flush();
+
+      expect(itemTitles(instance.element)).toEqual(['For block-1']);
+    });
+
+    it('should follow the menu state with aria-expanded', async () => {
+      instance.plugin.publicApi.register(() => ({
+        title: 'Anchor',
+        onActivate: () => {},
+      }));
+
+      selectBlock(0);
+      clickButton(instance.button);
+      await flush();
+
+      expect(instance.button.getAttribute('aria-expanded')).toBe('true');
+
+      instance.plugin.publicApi.close();
+
+      expect(instance.button.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('should hold focus before the menu is asked to open', async () => {
+      instance.plugin.publicApi.register(() => ({
+        title: 'Anchor',
+        onActivate: () => {},
+      }));
+
+      selectBlock(0);
+      clickButton(instance.button);
+      await flush();
+
+      // Safari leaves a clicked button unfocused, and the popover would then have nowhere
+      // to return focus to when it closes.
+      expect(document.activeElement).toBe(instance.button);
+    });
+
+    it('should close the menu it opened when activated again', async () => {
+      instance.plugin.publicApi.register(() => ({
+        title: 'Anchor',
+        onActivate: () => {},
+      }));
+
+      selectBlock(0);
+      clickButton(instance.button);
+      await flush();
+
+      expect(instance.button.getAttribute('aria-expanded')).toBe('true');
+
+      // A menu button dismisses the menu it opened; without this the second click rebuilt it
+      // in place and left no way to close it from the control that advertises it.
+      clickButton(instance.button);
+      await flush();
+
+      expect(instance.button.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('should not rebuild the menu when it is being closed', async () => {
+      const provider = jest.fn(() => ({
+        title: 'Anchor',
+        onActivate: () => {},
+      }));
+
+      instance.plugin.publicApi.register(provider);
+
+      selectBlock(0);
+      clickButton(instance.button);
+      await flush();
+
+      expect(provider).toHaveBeenCalledTimes(1);
+
+      clickButton(instance.button);
+      await flush();
+
+      expect(provider).toHaveBeenCalledTimes(1);
+    });
+
+    it('should open again after it was toggled closed', async () => {
+      instance.plugin.publicApi.register(() => ({
+        title: 'Anchor',
+        onActivate: () => {},
+      }));
+
+      selectBlock(0);
+      clickButton(instance.button);
+      await flush();
+      clickButton(instance.button);
+      await flush();
+      clickButton(instance.button);
+      await flush();
+
+      expect(instance.button.getAttribute('aria-expanded')).toBe('true');
+      expect(itemTitles(instance.element)).toEqual(['Anchor']);
+    });
+
+    it('should not re-target while its menu is open', async () => {
+      instance.plugin.publicApi.register(ctx => ({
+        title: `For ${ctx.blockId}`,
+        onActivate: () => {},
+      }));
+
+      selectBlock(0);
+      clickButton(instance.button);
+      await flush();
+
+      // The menu belongs to block 0; hovering elsewhere must not move it underneath.
+      selectBlock(2);
+      instance.plugin.publicApi.close();
+      clickButton(instance.button);
+      await flush();
+
+      expect(itemTitles(instance.element)).toEqual(['For block-0']);
+    });
+  });
+
+  describe('destroy', () => {
+    it('should stop answering open requests', async () => {
+      const destroyed = setup();
+      const provider = jest.fn(() => ({ title: 'Anchor',
+        onActivate: () => {} }));
+
+      destroyed.plugin.publicApi.register(provider);
+
+      destroyed.plugin.destroy();
+
+      await open(destroyed.eventBus, 0);
+
+      // The bus outlives the plugin, so a listener left on it would keep building menus into
+      // a holder that is no longer on the page.
+      expect(provider).not.toHaveBeenCalled();
+    });
+
+    it('should stop following block selection', () => {
+      const destroyed = setup();
+
+      destroyed.plugin.destroy();
+
+      expect(() => destroyed.eventBus.dispatchEvent(new BlockSelectedUIEvent({
+        block: document.createElement('div'),
+        index: 1,
+      }))).not.toThrow();
+    });
+
+    it('should take its button and menu off the page', () => {
+      const destroyed = setup();
+
+      destroyed.plugin.destroy();
+
+      expect(destroyed.button.isConnected).toBe(false);
+      expect(destroyed.element.isConnected).toBe(false);
+    });
+  });
+
+  describe('accessibility', () => {
+    it('should name the menu from the message catalogue', async () => {
+      instance.plugin.publicApi.register(() => ({
+        title: 'Anchor',
+        onActivate: () => {},
+      }));
+
+      await open(instance.eventBus, 0);
+
+      const menu = instance.element.querySelector('[role="menu"]');
+
+      expect(menu?.getAttribute('aria-label')).toBe('Block settings');
+    });
+
+    it('should leave no stale items in the accessibility tree when rebuilt smaller', async () => {
+      instance.plugin.publicApi.register(ctx => (ctx.tool === 'image'
+        ? {
+            title: 'Only one',
+            onActivate: () => {},
+          }
+        : [
+            {
+              title: 'One',
+              onActivate: () => {},
+            },
+            {
+              title: 'Two',
+              onActivate: () => {},
+            },
+          ]));
+
+      await open(instance.eventBus, 0);
+      expect(itemTitles(instance.element)).toEqual(['One', 'Two']);
+
+      instance.plugin.publicApi.close();
+      await open(instance.eventBus, 2);
+
+      expect(itemTitles(instance.element)).toEqual(['Only one']);
+    });
+  });
+});

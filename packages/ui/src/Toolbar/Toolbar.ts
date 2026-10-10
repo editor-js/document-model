@@ -5,9 +5,11 @@ import { css } from './Toolbar.const.js';
 import type { ToolboxRenderedUIEvent } from '../Toolbox/events/index.js';
 import { IconPlus } from '@codexteam/icons';
 import Style from './Toolbar.module.pcss';
+import ControlStyle from '../controls.module.pcss';
 import { ToolbarRenderedUIEvent } from './ToolbarRenderedUIEvent.js';
 import type { BlockSelectedUIEvent } from '../Blocks/events/index.js';
 import { ToolboxOpenUIEvent } from '../Toolbox/events/index.js';
+import type { BlockSettingsRenderedUIEvent } from '../BlockSettings/events/index.js';
 import { messages } from '../messages.js';
 
 /**
@@ -62,15 +64,26 @@ export class ToolbarUI implements EditorjsPlugin {
   #nodes: ToolbarNodes = {
     holder: make('div', Style[css.toolbar]) as HTMLDivElement,
     actions: make('div', Style[css.actions]) as HTMLDivElement,
-    plusButton: make('button', Style[css.plusButton], {
+    plusButton: make('button', ControlStyle['toolbar-button'], {
       innerHTML: IconPlus,
     }) as HTMLButtonElement,
   };
 
   /**
+   * Undoes every event bus subscription this toolbar made
+   */
+  readonly #unsubscribes: (() => void)[] = [];
+
+  /**
    * True if Toolbox open. We shouldn't move Toolbar while it's open
    */
   #isToolboxOpen = false;
+
+  /**
+   * True while the Block Settings menu is open. The menu was built for one particular block,
+   * so the toolbar has to stay on it until the menu closes
+   */
+  #isBlockSettingsOpen = false;
 
   /**
    * Constructor function
@@ -89,13 +102,29 @@ export class ToolbarUI implements EditorjsPlugin {
 
     this.#subscribeToToolboxEvents();
 
-    this.#eventBus.addEventListener(`ui:blocks:block-selected`, (event: BlockSelectedUIEvent) => {
-      if (this.#isToolboxOpen) {
+    this.#subscribeToBlockSettingsEvents();
+
+    this.#listen(`ui:blocks:block-selected`, (event: BlockSelectedUIEvent) => {
+      if (this.#isToolboxOpen || this.#isBlockSettingsOpen) {
         return;
       }
 
       this.moveTo(event.detail.block);
     });
+  }
+
+  /**
+   * Subscribes to a bus event and remembers how to undo it, so `destroy` can leave the bus as
+   * it found it. The bus outlives the toolbar, and a listener left behind keeps this instance
+   * alive and still moving an element that is no longer on the page
+   * @param type - event name to listen for
+   * @param listener - handler to attach
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the bus types each name to its own payload, which a generic helper cannot name
+  #listen(type: any, listener: any): void {
+    this.#eventBus.addEventListener(type, listener);
+
+    this.#unsubscribes.push(() => this.#eventBus.removeEventListener(type, listener));
   }
 
   /**
@@ -111,6 +140,9 @@ export class ToolbarUI implements EditorjsPlugin {
    * Removes Toolbar's HTML nodes from DOM
    */
   public destroy(): void {
+    this.#unsubscribes.forEach(unsubscribe => unsubscribe());
+    this.#unsubscribes.length = 0;
+
     this.#nodes.holder.remove();
   }
 
@@ -120,6 +152,21 @@ export class ToolbarUI implements EditorjsPlugin {
    */
   #addToolbox(toolboxElement: HTMLElement): void {
     this.#nodes.actions.appendChild(toolboxElement);
+  }
+
+  /**
+   * Mounts the Block Settings widget: its button among the toolbar's own controls, where being
+   * a direct child is what puts it in `#controls` and so in the roving tabindex, and its menu
+   * alongside the toolbox popover. The tab stop is reassigned afterwards, since this arrives
+   * after the toolbar rendered and a button carrying no `tabindex` would be a second stop
+   * @param button - the control that opens the menu
+   * @param blockSettingsElement - the element the menu renders into
+   */
+  #addBlockSettings(button: HTMLElement, blockSettingsElement: HTMLElement): void {
+    this.#nodes.actions.appendChild(button);
+    this.#nodes.actions.appendChild(blockSettingsElement);
+
+    this.#updateRovingTabindex(this.#nodes.plusButton);
   }
 
   /**
@@ -177,16 +224,16 @@ export class ToolbarUI implements EditorjsPlugin {
    * Subscribes to Toolbox event
    */
   #subscribeToToolboxEvents(): void {
-    this.#eventBus.addEventListener(`ui:toolbox:rendered`, (event: ToolboxRenderedUIEvent) => {
+    this.#listen(`ui:toolbox:rendered`, (event: ToolboxRenderedUIEvent) => {
       this.#addToolbox(event.detail.toolbox);
     });
 
-    this.#eventBus.addEventListener(`ui:toolbox:opened`, () => {
+    this.#listen(`ui:toolbox:opened`, () => {
       this.#isToolboxOpen = true;
       this.#nodes.plusButton.setAttribute('aria-expanded', 'true');
     });
 
-    this.#eventBus.addEventListener(`ui:toolbox:closed`, () => {
+    this.#listen(`ui:toolbox:closed`, () => {
       this.#isToolboxOpen = false;
       this.#nodes.plusButton.setAttribute('aria-expanded', 'false');
     });
@@ -196,7 +243,33 @@ export class ToolbarUI implements EditorjsPlugin {
    * Dispatches an event to Toolbox plugin to open the toolbox
    */
   #openToolbox(): void {
-    this.#eventBus.dispatchEvent(new ToolboxOpenUIEvent('ui:toolbox:open'));
+    /**
+     * The constructor takes a payload, not an event name -- the name is the class's own
+     * business. A string satisfied the empty payload type, so this went unnoticed and
+     * shipped `detail: 'ui:toolbox:open'` to every listener
+     */
+    this.#eventBus.dispatchEvent(new ToolboxOpenUIEvent({}));
+  }
+
+  /**
+   * Subscribes to the Block Settings plugin's events
+   */
+  #subscribeToBlockSettingsEvents(): void {
+    this.#listen(`ui:block-settings:rendered`, (event: BlockSettingsRenderedUIEvent) => {
+      this.#addBlockSettings(event.detail.button, event.detail.blockSettings);
+    });
+
+    /**
+     * The menu was built for one block, so the toolbar holds its position until it closes.
+     * The button's own `aria-expanded` belongs to the plugin that owns the button
+     */
+    this.#listen(`ui:block-settings:opened`, () => {
+      this.#isBlockSettingsOpen = true;
+    });
+
+    this.#listen(`ui:block-settings:closed`, () => {
+      this.#isBlockSettingsOpen = false;
+    });
   }
 
   /**

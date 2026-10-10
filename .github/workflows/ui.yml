@@ -1,0 +1,10 @@
+name: UI check
+on:
+  pull_request:
+
+jobs:
+  package-check:
+    uses: ./.github/workflows/package-check.yml
+    with:
+      package-name: '@editorjs/ui'
+      working-directory: './packages/ui'

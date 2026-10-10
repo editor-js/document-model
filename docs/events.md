@@ -47,8 +47,23 @@ Dispatched on the IoC-managed `EventBus` (one instance per editor) with prefixed
 | `UndoCoreEvent` | `core:undo` | — | `DocumentAPI.undo()` or `BlocksUI` (Cmd/Ctrl+Z) |
 | `RedoCoreEvent` | `core:redo` | — | `DocumentAPI.redo()` or `BlocksUI` (Cmd/Ctrl+Shift+Z) |
 | `BeforeInputUIEvent` | `ui:before-input` | `{ data, inputType, targetRanges, isCrossInputSelection, isComposing }` | `BlocksUI` |
+| `BlockSelectedUIEvent` | `ui:blocks:block-selected` | `{ block: HTMLElement, index }` | `BlocksUI`, on pointer enter and on the caret moving into another block |
+| `BlockSettingsOpenUIEvent` | `ui:block-settings:open` | `{ index }` | anyone opening the menu programmatically |
+| `BlockSettingsRenderedUIEvent` | `ui:block-settings:rendered` | `{ button: HTMLElement, blockSettings: HTMLElement }` | `BlockSettingsUI` |
+| `BlockSettingsOpenedUIEvent` | `ui:block-settings:opened` | — | `BlockSettingsUI` |
+| `BlockSettingsClosedUIEvent` | `ui:block-settings:closed` | — | `BlockSettingsUI` |
 
 `BlockAddedCoreEvent` carries the rendered `HTMLElement` in `detail.ui`, while the model-level `BlockAddedEvent` carries serialised data — they are complementary.
+
+`BlockSettingsUI` owns both its menu and the button that opens it, and announces the two
+together so a host can place them: `ToolbarUI` puts the button among its own controls and the
+menu beside the toolbox popover. `ui:block-settings:open` is therefore not how the button works
+— it is the way anything *else* opens the menu, naming the target block by index.
+
+`BlockSelectedUIEvent` is what "the selected block" means to the toolbar and to anything
+mounted in it. It is dispatched for the pointer entering a block *and* for the caret moving
+into one, so a control acting on the selected block still works for someone who never touches
+a mouse. Repeats for the same block are not dispatched.
 
 Use core/UI events for UI workflows and extension coordination.
 

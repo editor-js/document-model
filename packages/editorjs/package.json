@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "build": "yarn build:dependencies && yarn clear && tsc --build tsconfig.build.json",
-    "build:dependencies": "yarn workspaces foreach -Rpt --from $npm_package_name --exclude $npm_package_name run build",
+    "build:dependencies": "yarn workspaces foreach -Rp --topological-dev --from $npm_package_name --exclude $npm_package_name run build",
     "build:declaration": "yarn build --emitDeclarationOnly",
     "lint": "eslint ./src ./e2e playwright.config.ts playwright.voiceover.config.ts",
     "lint:ci": "yarn lint --max-warnings 0",
@@ -46,6 +46,7 @@
     "@editorjs/clipboard-plugin": "workspace:^",
     "@editorjs/collaboration-manager": "workspace:^",
     "@editorjs/core": "workspace:^",
+    "@editorjs/default-block-settings-plugin": "workspace:^",
     "@editorjs/dom-adapters": "workspace:^",
     "@editorjs/inline-link": "workspace:^",
     "@editorjs/italic": "workspace:^",

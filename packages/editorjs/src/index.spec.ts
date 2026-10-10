@@ -27,12 +27,23 @@ jest.unstable_mockModule('@editorjs/italic', () => ({ ItalicInlineTool: class It
 jest.unstable_mockModule('@editorjs/inline-link', () => ({ LinkInlineTool: class LinkInlineTool {} }));
 jest.unstable_mockModule('@editorjs/clipboard-plugin', () => ({ ClipboardPlugin: class ClipboardPlugin {} }));
 jest.unstable_mockModule('@editorjs/shortcuts-plugin', () => ({ ShortcutsPlugin: class ShortcutsPlugin {} }));
+jest.unstable_mockModule('@editorjs/default-block-settings-plugin', () => ({
+  /**
+   * The assertions below read `ctor.name`, and this plugin declares a static `name`, so
+   * what they see is its plugin id rather than the class name. The mock declares it too,
+   * otherwise the test would assert a name the real module never reports
+   */
+  DefaultBlockSettingsPlugin: class DefaultBlockSettingsPlugin {
+    public static readonly name = 'default-block-settings';
+  },
+}));
 jest.unstable_mockModule('@editorjs/ui', () => ({
   EditorjsUI: class EditorjsUI {},
   BlocksUI: class BlocksUI {},
   InlineToolbarUI: class InlineToolbarUI {},
   ToolbarUI: class ToolbarUI {},
   ToolboxUI: class ToolboxUI {},
+  BlockSettingsUI: class BlockSettingsUI {},
 }));
 const { default: EditorJS } = await import('./index.js');
 
@@ -78,5 +89,19 @@ describe('EditorJS bundle', () => {
 
     expect(registered).toContain('ClipboardPlugin');
     expect(registered).toContain('ShortcutsPlugin');
+    expect(registered).toContain('default-block-settings');
+  });
+
+  it('registers the default UI packages on the underlying Core', () => {
+    initialize.mockResolvedValue(undefined);
+
+    void new EditorJS({} as any);
+
+    const registered = use.mock.calls.map(([ctor]) => (ctor as { name: string }).name);
+
+    expect(registered).toContain('EditorjsUI');
+    expect(registered).toContain('ToolbarUI');
+    expect(registered).toContain('ToolboxUI');
+    expect(registered).toContain('BlockSettingsUI');
   });
 });

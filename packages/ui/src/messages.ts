@@ -18,6 +18,15 @@ export const messages = {
   /** Accessible name of the toolbox menu. Deliberately matches the button that opens it */
   addBlockMenu: 'Add block',
 
+  /**
+   * Accessible name of the block settings menu. Deliberately matches the button that opens it,
+   * the same way the toolbox menu matches the add-block button
+   */
+  blockSettingsMenu: 'Block settings',
+
+  /** Accessible name of the icon-only button that opens the block settings menu */
+  blockSettingsButton: 'Block settings',
+
   /** Accessible name of the inline formatting toolbar, distinguishing it from the block one */
   inlineToolbar: 'Text formatting',
 

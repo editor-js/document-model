@@ -2,11 +2,7 @@ import CodeX from 'eslint-config-codex';
 
 export default [
   ...CodeX,
-
   {
-    /**
-     * Override path to the tsconfig.json file.
-     */
     languageOptions: {
       parserOptions: {
         project: './tsconfig.eslint.json',
@@ -18,15 +14,11 @@ export default [
       'n/no-unpublished-import': ['error', {
         allowModules: [
           'eslint-config-codex',
-          '@jest/globals',
         ],
         ignoreTypeImport: true,
       }],
-      // @todo: remove when we setup eslint to correctly handle the types
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-argument': 'off',
+      'n/no-missing-import': 'off',
+      '@typescript-eslint/unbound-method': 'off',
       'n/no-unsupported-features/node-builtins': ['error', {
         version: '>=24.0.0',
         ignores: [],
@@ -40,7 +32,7 @@ export default [
        * For test files allow dev dependencies imports
        */
       'n/no-unpublished-import': ['error', {
-        allowModules: ['@jest/globals'],
+        allowModules: ['@jest/globals', '@editorjs/ui'],
       }],
     },
   },

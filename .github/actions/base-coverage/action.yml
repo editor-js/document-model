@@ -17,15 +17,27 @@ runs:
         ref: ${{ github.event.pull_request.base.ref }}
         fetch-depth: 0
 
-    - name: Check package exists on base ref
+    # A base-ref comparison only means something when the base ref can actually produce
+    # a coverage report. Two cases cannot: the package may not exist there yet, or it may
+    # exist without a test suite, which is the case for the PR that first adds one. The
+    # second needs its own check -- package.json is present, so the file test passes, and
+    # `yarn workspace ... test:coverage` then fails with "couldn't find a script".
+    - name: Check base ref can report coverage
       id: check
       shell: bash
       run: |
-        if [ -f "${{ inputs.working-directory }}/package.json" ]; then
-          echo "exists=true" >> "$GITHUB_OUTPUT"
-        else
+        if [ ! -f "${{ inputs.working-directory }}/package.json" ]; then
           echo "Package not present on base ref (new package), skipping base coverage"
           echo "exists=false" >> "$GITHUB_OUTPUT"
+        elif ! node -e "
+          const fs = require('fs');
+          const pkg = JSON.parse(fs.readFileSync(process.argv[1] + '/package.json', 'utf8'));
+          process.exit(pkg.scripts && pkg.scripts['test:coverage'] ? 0 : 1);
+        " "${{ inputs.working-directory }}"; then
+          echo "Package has no test:coverage script on base ref (suite added in this PR), skipping base coverage"
+          echo "exists=false" >> "$GITHUB_OUTPUT"
+        else
+          echo "exists=true" >> "$GITHUB_OUTPUT"
         fi
 
     - name: Setup Node
