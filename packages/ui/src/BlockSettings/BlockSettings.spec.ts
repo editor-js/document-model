@@ -37,6 +37,9 @@ const SLOW_PROVIDER_MS = 20;
 /** Long enough for both overlapping requests to have settled. */
 const BOTH_REQUESTS_SETTLED_MS = 50;
 
+/** Well past whatever the provider timeout is set to, advanced over on fake timers. */
+const PAST_PROVIDER_TIMEOUT_MS = 10_000;
+
 /**
  * Lets the queued provider promises settle. Opening is asynchronous because a provider may
  * return a promise, so nothing about the rendered menu can be asserted synchronously
@@ -472,6 +475,34 @@ describe('BlockSettingsUI', () => {
       expect(reportedErrors).toHaveBeenCalledWith(expect.stringContaining('provider failed'), failure);
     });
 
+    it('should skip a provider that never settles rather than never opening', async () => {
+      jest.useFakeTimers();
+
+      try {
+        instance.plugin.publicApi.register(() => new Promise<never>(() => {}));
+        instance.plugin.publicApi.register(() => ({
+          title: 'Healthy',
+          onActivate: () => {},
+        }));
+
+        instance.eventBus.dispatchEvent(new BlockSettingsOpenUIEvent({ index: 0 }));
+
+        await jest.advanceTimersByTimeAsync(PAST_PROVIDER_TIMEOUT_MS);
+
+        /**
+         * `Promise.all` has no floor of its own, so before the timeout this menu did not open
+         * at all -- and no later attempt could, because each one waited on the same provider
+         */
+        expect(itemTitles(instance.element)).toEqual(['Healthy']);
+        expect(reportedErrors).toHaveBeenCalledWith(
+          expect.stringContaining('provider failed'),
+          expect.objectContaining({ message: expect.stringContaining('did not return') })
+        );
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
     it('should not emit a separator for the provider it skipped', async () => {
       instance.plugin.publicApi.register(() => {
         throw new Error('blew up');
@@ -525,6 +556,35 @@ describe('BlockSettingsUI', () => {
 
       // Left open, it would be showing block 0's settings while claiming to be block 2's.
       expect(onClosed).toHaveBeenCalledTimes(1);
+    });
+
+    it('should abandon a build in flight when the menu is closed', async () => {
+      const onOpened = jest.fn();
+
+      instance.eventBus.addEventListener('ui:block-settings:opened', onOpened);
+
+      instance.plugin.publicApi.register(async () => {
+        await new Promise(resolve => setTimeout(resolve, SLOW_PROVIDER_MS));
+
+        return {
+          title: 'Anchor',
+          onActivate: () => {},
+        };
+      });
+
+      instance.eventBus.dispatchEvent(new BlockSettingsOpenUIEvent({ index: 0 }));
+
+      /**
+       * Closing lands inside the build window, where `#isOpen` is still false because the
+       * provider has not returned. A close that only looked at `#isOpen` did nothing here, and
+       * the menu then opened a moment after the caller had asked for it to be gone
+       */
+      instance.plugin.publicApi.close();
+
+      await new Promise(resolve => setTimeout(resolve, BOTH_REQUESTS_SETTLED_MS));
+
+      expect(onOpened).not.toHaveBeenCalled();
+      expect(itemTitles(instance.element)).toEqual([]);
     });
 
     it('should let the newest request win when two overlap', async () => {
@@ -717,6 +777,32 @@ describe('BlockSettingsUI', () => {
       // The bus outlives the plugin, so a listener left on it would keep building menus into
       // a holder that is no longer on the page.
       expect(provider).not.toHaveBeenCalled();
+    });
+
+    it('should abandon a build in flight', async () => {
+      const destroyed = setup();
+      const onOpened = jest.fn();
+
+      destroyed.eventBus.addEventListener('ui:block-settings:opened', onOpened);
+
+      destroyed.plugin.publicApi.register(async () => {
+        await new Promise(resolve => setTimeout(resolve, SLOW_PROVIDER_MS));
+
+        return {
+          title: 'Anchor',
+          onActivate: () => {},
+        };
+      });
+
+      destroyed.eventBus.dispatchEvent(new BlockSettingsOpenUIEvent({ index: 0 }));
+
+      // Dropping the listeners stops the next request, not the one already waiting.
+      destroyed.plugin.destroy();
+
+      await new Promise(resolve => setTimeout(resolve, BOTH_REQUESTS_SETTLED_MS));
+
+      expect(onOpened).not.toHaveBeenCalled();
+      expect(itemTitles(destroyed.element)).toEqual([]);
     });
 
     it('should stop following block selection', () => {

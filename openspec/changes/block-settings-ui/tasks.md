@@ -95,9 +95,9 @@
 
 ## 7. Review follow-ups (second round)
 
-- [ ] 7.1 Write a failing `BlockSettings.spec.ts` case for a provider whose promise never settles, then race each provider against a timeout and route the expiry into the existing skip-and-log path. `#collectItems` awaits `Promise.all`, so one hanging provider means the menu never opens — and never opens again, because every later attempt waits on the same provider
-- [ ] 7.2 Write a failing case, then make `#close()` abandon a build in flight by bumping `#openToken` before its open-state guard. A `close()` during the build window is currently ignored, because `#isOpen` is only set once the providers have returned, and the menu then opens after the close
-- [ ] 7.3 Reconcile `design.md` with the specs on who owns the settings button: the specs and the code give the button, its ARIA state and the block it acts on to `BlockSettingsUI`, while the design doc still has `ToolbarUI` owning them and dispatching `ui:block-settings:open`. Rename its remaining `MenuConfig` references to `BlockSettingsMenuConfig`
+- [x] 7.1 Write a failing `BlockSettings.spec.ts` case for a provider whose promise never settles, then race each provider against a timeout and route the expiry into the existing skip-and-log path. `#collectItems` awaits `Promise.all`, so one hanging provider means the menu never opens — and never opens again, because every later attempt waits on the same provider
+- [x] 7.2 Write a failing case, then make `#close()` abandon a build in flight by bumping `#openToken` before its open-state guard. A `close()` during the build window is currently ignored, because `#isOpen` is only set once the providers have returned, and the menu then opens after the close
+- [x] 7.3 Reconcile `design.md` with the specs on who owns the settings button: the specs and the code give the button, its ARIA state and the block it acts on to `BlockSettingsUI`, while the design doc still has `ToolbarUI` owning them and dispatching `ui:block-settings:open`. Rename its remaining `MenuConfig` references to `BlockSettingsMenuConfig`
 
 ## 8. Review follow-ups (third round)
 

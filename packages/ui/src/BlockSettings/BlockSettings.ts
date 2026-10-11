@@ -111,6 +111,14 @@ declare module '@editorjs/sdk' {
 }
 
 /**
+ * How long one provider may take before the menu is built without it.
+ *
+ * Long enough that a provider reading something off the network still makes it, short enough
+ * that the menu is not simply unresponsive while one waits
+ */
+const PROVIDER_TIMEOUT_MS = 2000;
+
+/**
  * A registered provider together with what it was registered with
  */
 interface Registration {
@@ -261,6 +269,12 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
     this.#eventBus.removeEventListener('ui:blocks:block-selected', this.#handleBlockSelected);
     this.#eventBus.removeEventListener('ui:block-settings:open', this.#handleOpenRequest);
 
+    /**
+     * Dropping the listeners stops new requests, but not one already waiting on its providers.
+     * That one would render into the holder removed just below
+     */
+    this.#openToken++;
+
     this.#popover?.destroy();
     this.#popover = undefined;
     this.#holder.remove();
@@ -354,6 +368,13 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
    * without emitting anything, which would leave the button advertising a menu that is gone
    */
   #close(): void {
+    /**
+     * A menu can be mid-build rather than open, since `#isOpen` is only set once the providers
+     * have returned. Abandoning the request here is what keeps a menu from appearing moments
+     * after it was closed, and is why this runs before the open-state guard below
+     */
+    this.#openToken++;
+
     if (!this.#isOpen) {
       return;
     }
@@ -444,7 +465,7 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
     const contributions = await Promise.all(
       ordered.map(async ({ provider }) => {
         try {
-          const result = await provider(context);
+          const result = await this.#withTimeout(provider(context));
 
           if (result === undefined) {
             return [];
@@ -473,6 +494,36 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
 
         return items.concat(contribution);
       }, []);
+  }
+
+  /**
+   * Rejects if a provider has not settled in time, so that the one waiting on it is skipped
+   * rather than holding up the menu.
+   *
+   * Without this the `Promise.all` over providers has no floor: a provider that never settles
+   * means the menu never opens, and never opens again either, because every later attempt waits
+   * on the same provider. A rejection instead lands in the same skip-and-log path as one that
+   * threw, which is the behaviour a plugin author already has to expect
+   * @param result - what the provider returned
+   */
+  async #withTimeout(
+    result: BlockSettingsMenuConfig | undefined | Promise<BlockSettingsMenuConfig | undefined>
+  ): Promise<BlockSettingsMenuConfig | undefined> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    try {
+      return await Promise.race([
+        result,
+        new Promise<never>((_resolve, reject) => {
+          timer = setTimeout(
+            () => reject(new Error(`A block settings provider did not return within ${PROVIDER_TIMEOUT_MS}ms`)),
+            PROVIDER_TIMEOUT_MS
+          );
+        }),
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   /**
