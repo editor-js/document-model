@@ -99,3 +99,31 @@ The settings popover SHALL carry an accessible name drawn from the UI package's 
 - **GIVEN** a provider returns an item with a `confirmation` config and no top-level `onActivate`
 - **WHEN** the user activates the item
 - **THEN** the item switches to its confirmation state, and only activating the confirmation runs the handler declared inside `confirmation`
+
+### Requirement: A failing provider costs only its own items
+Providers are third-party code, and the open menu is the one place all of it runs, so no single provider SHALL be able to stop the menu from opening. A provider that throws, whose promise rejects, or that has not settled within a fixed timeout SHALL contribute nothing, SHALL be reported to the console so the plugin behind it can be identified, and SHALL leave no separator behind; every other provider's contribution is still built and shown. A contribution SHALL be discarded rather than rendered when a newer open request has started since it was asked for, or when the menu it was being built for has been closed in the meantime.
+
+#### Scenario: A provider throws
+- **GIVEN** two providers are registered and the first throws when invoked
+- **WHEN** block settings open
+- **THEN** the menu opens with the second provider's items alone, with no separator for the first, and the failure is reported to the console
+
+#### Scenario: A provider's promise rejects
+- **GIVEN** a provider returns a promise that rejects
+- **WHEN** block settings open
+- **THEN** it is skipped on the same terms as one that threw synchronously
+
+#### Scenario: A provider never settles
+- **GIVEN** a provider returns a promise that never settles
+- **WHEN** block settings open and the timeout elapses
+- **THEN** the menu opens without that provider's items rather than never opening, and the timeout is reported to the console
+
+#### Scenario: A result arrives after a newer request
+- **GIVEN** a provider is still working on the menu for one block when settings are requested for another
+- **WHEN** the first request's providers finally return
+- **THEN** their items are discarded, because the newer request owns the menu
+
+#### Scenario: The menu is closed while it is being built
+- **GIVEN** settings were requested and a provider has not yet returned
+- **WHEN** `api.plugins['block-settings'].close()` is called before it does
+- **THEN** the menu does not open when the provider finally returns, because a close abandons a build in flight as well as an open menu

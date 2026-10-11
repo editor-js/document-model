@@ -3,15 +3,15 @@
 ### Requirement: Augmentable plugin type maps
 The system SHALL declare three empty, augmentable interfaces — `EditorjsPluginApiMap` (plugin id → public API type), `ToolPluginOptionsMap` (plugin id → tool-directed options type), and `EditorjsPluginDataMap` (plugin id → the shape of the per-block data that plugin stores) — that plugin packages extend via module augmentation of `@editorjs/sdk`. `PluginId` SHALL include the keys of all three maps. `BlocksAPI.getPluginData`/`updatePluginData` SHALL resolve their data type from `EditorjsPluginDataMap` for a declared id, and SHALL fall back to `Record<string, unknown>` for an id absent from it, using a non-distributive conditional so the `string & {}` member of `PluginId` does not widen a declared id's type.
 
-#### Scenario: Plugin package augments both maps
-- **GIVEN** a plugin package declares `declare module '@editorjs/sdk'` augmenting both interfaces under its `name`
+#### Scenario: Plugin package augments the api and options maps
+- **GIVEN** a plugin package declares `declare module '@editorjs/sdk'` augmenting `EditorjsPluginApiMap` and `ToolPluginOptionsMap` under its `name`
 - **WHEN** a consumer's compilation includes that package's types
 - **THEN** `api.plugins.<name>` and `options.plugins.<name>` are both fully typed with no cast
 
 #### Scenario: No augmentation present
-- **GIVEN** no plugin package has augmented either interface
+- **GIVEN** no plugin package has augmented any of the three interfaces
 - **WHEN** `@editorjs/sdk` is compiled on its own
-- **THEN** both interfaces are empty and `Partial<...>` of them permits no keys, so the base package remains self-consistent
+- **THEN** all three are empty and `Partial<...>` of them permits no keys, so the base package remains self-consistent
 
 #### Scenario: Plugin package declares its block data shape
 - **GIVEN** a plugin package augments `EditorjsPluginDataMap` with `{ anchors: { id: string } }`

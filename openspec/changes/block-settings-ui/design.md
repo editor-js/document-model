@@ -8,7 +8,7 @@ PR #157 adds a settings button and a `BlockTunesUI` popover fed by a core `Block
 
 Constraints:
 - `@editorjs/ui-kit` popover items already support `confirmation`, `isDisabled`, `isActive` and `closeOnActivate` in the pinned 1.1.5, so no upstream change is needed for behavior. Accessibility of the menu comes from ui-kit 2.x via the baseline branch.
-- `ToolbarUI` knows the hovered block's index (from `ui:blocks:block-selected`), and `api.blocks.getIdByIndex` turns that into a block id, so no new core event or payload field is needed.
+- `ui:blocks:block-selected` already carries the target block's index, and `api.blocks.getIdByIndex` turns that into a block id, so no new core event or payload field is needed.
 
 ## Goals / Non-Goals
 
@@ -33,21 +33,23 @@ interface BlockSettingsAPI {
   close(): void;
 }
 type BlockSettingsProvider = (ctx: { blockId: BlockId; blockIndex: number; tool: string })
-  => MenuConfig | Promise<MenuConfig> | undefined;
+  => BlockSettingsMenuConfig | Promise<BlockSettingsMenuConfig> | undefined;
 ```
 - On open, every provider is called for the target block. Results are concatenated in ascending `order` (ties are broken by registration order, default `0`) with a separator between providers, then rendered in a ui-kit popover.
-- Activation, confirmation, disabled and active state are all expressed in the returned `MenuConfig`. This answers the question on PR #157: the item declares `onActivate` in its config, the same as `InlineTool#getToolbarConfig`, rather than the core calling an instance method.
+- Activation, confirmation, disabled and active state are all expressed in the returned `BlockSettingsMenuConfig`. This answers the question on PR #157: the item declares `onActivate` in its config, the same as `InlineTool#getToolbarConfig`, rather than the core calling an instance method.
 - Returning `undefined` or an empty array contributes nothing. This is how a plugin opts out for specific tools, replacing `BlockTool#tunes`.
 - Providers are called on every open, so items reflect current state without cache invalidation.
-- *Why a separate plugin rather than a `ToolbarUI` API:* the popover has its own lifecycle and events (open, opened, closed), mirroring `ToolboxUI`. `ToolbarUI` owns only the button and positioning.
+- *Why a separate plugin rather than a `ToolbarUI` API:* the popover has its own lifecycle and events (open, opened, closed), mirroring `ToolboxUI`. `ToolbarUI` owns only where the control sits, not what it means.
 - *Alternative:* plugins push static item lists at registration. Rejected, because items depend on the block and its state.
 
-Wiring follows the Toolbox pattern:
-1. `ToolbarUI`'s settings button dispatches `ui:block-settings:open` with the hovered block index.
-2. `BlockSettingsUI` renders the popover and announces it via `ui:block-settings:rendered`, and `ToolbarUI` mounts it in its actions area.
+Wiring follows the Toolbox pattern, with one departure from it:
+1. `BlockSettingsUI` renders both the popover **and the button that opens it**, and announces the two together via `ui:block-settings:rendered`. `ToolbarUI` mounts them in its actions area and reassigns its single tab stop once the button joins.
+2. The plugin follows `ui:blocks:block-selected` itself to know which block the button acts on, and stops following it while the menu is open. It also opens on a `ui:block-settings:open` event, so a host can request the menu for a block without the button.
 3. `ToolbarUI` doesn't reposition while settings are open.
 
-`BlockSettingsUI` resolves the target block's id with `api.blocks.getIdByIndex(index)` from the index the toolbar reports, so this change needs no new event or payload field from `core`.
+*Why the button belongs to the plugin rather than the toolbar:* a menu button's `aria-expanded` has to track the menu, and the menu's open state is the plugin's. Split across the two, every open and close would need a round trip through the event bus to keep an attribute honest, and the button would report a block the menu was not built for. `ToolbarUI` treats it as a control of the container like its own plus button -- named, stated and operated by its owner, positioned and tab-managed by the toolbar.
+
+`BlockSettingsUI` resolves the target block's id with `api.blocks.getIdByIndex(index)` from the index it last saw selected, so this change needs no new event or payload field from `core`.
 
 The provider context carries both `blockId` and `blockIndex`, but only `blockId` is durable: a menu can stay open while a collaborator inserts or removes blocks above the target, or while an undo does. Item handlers therefore resolve the position from `blockId` at activation time. This is how the tunes in PR #157 behave (`getIndexById` inside `activate()`), and it is worth keeping.
 
@@ -75,9 +77,9 @@ Details worth keeping from those files: `PopoverDesktop` configured with `scopeE
 **Attribution:** the ported code is Betty Steger's work from PR #157. Commits that bring it over carry `Co-authored-by: Betty Steger <244475+bettysteger@users.noreply.github.com>`.
 
 ### D4. Block Tool settings items are a separate, later change
-A block tool contributing its own settings items (v2 `renderSettings`) is deferred, and the shape it will take is fixed now so this change doesn't foreclose it: a tool declares something like `getSettingsConfig(ctx)` returning the same `MenuConfig`, and a thin core-side provider registered by `BlockSettingsUI` collects it from the tool facade for the target block.
+A block tool contributing its own settings items (v2 `renderSettings`) is deferred, and the shape it will take is fixed now so this change doesn't foreclose it: a tool declares something like `getSettingsConfig(ctx)` returning the same `BlockSettingsMenuConfig`, and a thin core-side provider registered by `BlockSettingsUI` collects it from the tool facade for the target block.
 - *Why not now:* the UI has no route to tool instances, so it needs either a core component that owns "settings items of the current block's tool" or a `ToolsManager` accessor on the API. That is its own design, and none of it changes the provider contract.
-- *Why the provider shape is enough:* tool-contributed items are just another provider, with an `order` between plugin items and `default-block-settings`. No change to `register` or to `MenuConfig` is needed when it lands.
+- *Why the provider shape is enough:* tool-contributed items are just another provider, with an `order` between plugin items and `default-block-settings`. No change to `register` or to `BlockSettingsMenuConfig` is needed when it lands.
 
 ### D5. The settings button meets the toolbar's existing accessibility contract
 The settings button is the second control in an already-accessible toolbar, so it adopts that contract rather than inventing one:
@@ -88,7 +90,7 @@ The settings button is the second control in an already-accessible toolbar, so i
 - The popover itself carries an accessible name, the way the toolbox is named through `messages`, and items removed from it leave the accessibility tree.
 
 ### D6. The block settings API types live in `@editorjs/ui`
-`BlockSettingsAPI` and `BlockSettingsProvider` are exported from `@editorjs/ui`, which also augments `EditorjsPluginApiMap` under `'block-settings'`. `@editorjs/sdk` stays unaware of individual plugins; it owns only the augmentable map and `MenuConfig`, which the provider signature reuses.
+`BlockSettingsAPI` and `BlockSettingsProvider` are exported from `@editorjs/ui`, which also augments `EditorjsPluginApiMap` under `'block-settings'`. `@editorjs/sdk` stays unaware of individual plugins; it owns only the augmentable map. The item shape is `@editorjs/ui`'s own `BlockSettingsMenuConfig`, named apart from the unrelated `MenuConfig` the SDK already exports for inline tools.
 - Consequence: `default-block-settings-plugin` needs `@editorjs/ui` in its compilation for `api.plugins['block-settings']` to typecheck. It takes `@editorjs/ui` as a **devDependency** and imports from it with `import type` only, so there is no runtime coupling and no cycle.
 - This is the pattern `plugin-public-api` already describes ("a consumer whose compilation includes that package's types"), and the architecture rule it must respect forbids depending on `@editorjs/model`/`@editorjs/core`, not on a sibling UI package.
 - *Alternative:* move the types into `sdk`. Rejected: `sdk` would then carry knowledge of a specific plugin's API.
