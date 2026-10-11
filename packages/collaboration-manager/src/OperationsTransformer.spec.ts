@@ -595,7 +595,26 @@ describe('OperationsTransformer', () => {
       expect(transformer.transform(operation, againstOp).type).toBe(OperationType.Neutral);
     });
 
-    it('should not be transformed against another plugin data operation', () => {
+    /**
+     * The divergence this guards against: the client holding the unsent write applies the
+     * remote value, and its own operation is never echoed back to it, so nothing restores the
+     * value the server ends up holding. The same rule covers data values already
+     */
+    it('should become Neutral against an unsent write to the same key', () => {
+      const incoming = pluginOp(2);
+      const unsentLocal = new Operation(
+        OperationType.Modify,
+        pluginIndex(2),
+        { payload: true,
+          prevPayload: false },
+        'user2'
+      );
+
+      expect(unsentLocal.rev).toBeUndefined();
+      expect(transformer.transform(incoming, unsentLocal).type).toBe(OperationType.Neutral);
+    });
+
+    it('should be applied over a write the server took before it', () => {
       const operation = pluginOp(2);
       const againstOp = pluginOp(2);
 
@@ -603,6 +622,45 @@ describe('OperationsTransformer', () => {
 
       expect(result.type).toBe(OperationType.Modify);
       expect((result.index as PluginDataIndex).blockIndex).toBe(2);
+    });
+
+    it('should not be transformed against an unsent write to another key of the same plugin', () => {
+      const incoming = pluginOp(2, 'visible');
+      const unsentLocal = new Operation(
+        OperationType.Modify,
+        pluginIndex(2, 'id'),
+        { payload: true,
+          prevPayload: false },
+        'user2'
+      );
+
+      expect(transformer.transform(incoming, unsentLocal).type).toBe(OperationType.Modify);
+    });
+
+    it('should not be transformed against an unsent write to another plugin', () => {
+      const incoming = pluginOp(2);
+      const unsentLocal = new Operation(
+        OperationType.Modify,
+        Index.pluginData(2, createPluginDataName('spoiler'), 'id', 'doc1' as DocumentId),
+        { payload: true,
+          prevPayload: false },
+        'user2'
+      );
+
+      expect(transformer.transform(incoming, unsentLocal).type).toBe(OperationType.Modify);
+    });
+
+    it('should not be transformed against an unsent write to the same key of another block', () => {
+      const incoming = pluginOp(2);
+      const unsentLocal = new Operation(
+        OperationType.Modify,
+        pluginIndex(3),
+        { payload: true,
+          prevPayload: false },
+        'user2'
+      );
+
+      expect(transformer.transform(incoming, unsentLocal).type).toBe(OperationType.Modify);
     });
 
     it('should transform a text operation against a plugin data operation without throwing', () => {

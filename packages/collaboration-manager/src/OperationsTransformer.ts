@@ -201,15 +201,50 @@ export class OperationsTransformer {
   /**
    * Method that transforms operation against a plugin data operation
    *
-   * Plugin data operations only ever modify one key of one plugin's per-block data, so they
-   * cannot shift another operation's position. Two concurrent writes to the same key are left
-   * untransformed on purpose: the server's order decides, and the last applied one wins.
+   * Cases, mirroring #transformAgainstDataOperation: a plugin data operation modifies one key of
+   * one plugin's per-block data, so it can only ever conflict with another write to that same
+   * key, and can never shift an operation's position.
+   * 1. Operation is not a plugin data operation
+   * - Return copy of the current operation
+   * 2. Operation describes a different block, plugin or key
+   * - Return copy of the current operation, the two values are independent
+   * 3. Operation describes the same value
+   * - Only the later write should survive, so compare revisions as data values do
    * @param operation - Operation to be transformed
    * @param againstOp - Operation against which the current operation should be transformed
-   * @returns copy of the current operation
+   * @returns new transformed operation
    */
-  #transformAgainstPluginDataOperation<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> {
-    void againstOp;
+  #transformAgainstPluginDataOperation<T extends OperationType>(operation: Operation<T>, againstOp: Operation<OperationType>): Operation<T> | Operation<OperationType.Neutral> {
+    const index = operation.index;
+
+    // Cover case 1
+    if (!(index instanceof PluginDataIndex)) {
+      return Operation.from(operation);
+    }
+
+    const againstIndex = againstOp.index as PluginDataIndex;
+
+    // Cover case 2
+    if (
+      index.blockIndex !== againstIndex.blockIndex
+      || index.pluginName !== againstIndex.pluginName
+      || index.pluginKey !== againstIndex.pluginKey
+    ) {
+      return Operation.from(operation);
+    }
+
+    /**
+     * An againstOp with no revision has not reached the OT server yet, so there is no telling
+     * when it will be applied there. Treating it as a future operation is what keeps a client
+     * that holds an unsent write from applying the remote value over it: its own operation is
+     * never echoed back to it, so nothing would restore the value the server ends up holding
+     */
+    const againstRevision = againstOp.rev === undefined ? Infinity : againstOp.rev;
+
+    // Cover case 3
+    if (againstRevision > operation.rev!) {
+      return new Operation(OperationType.Neutral, index, { payload: [] }, operation.userId, operation.rev);
+    }
 
     return Operation.from(operation);
   }
