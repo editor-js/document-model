@@ -60,8 +60,8 @@
 
 ## 8. Review follow-ups (second round)
 
-- [ ] 8.1 Write a failing `OperationsTransformer.spec.ts` case for two clients writing the same plugin data key concurrently, then give `#transformAgainstPluginDataOperation` the revision rule `#transformAgainstDataOperation` already uses: `Neutral` when the against-operation is the later of the two, an unsent one counting as later than any revision, and only for the same block, plugin and key. Without it the client holding an unsent write applies the remote value and never re-applies its own, so it ends on a value the server does not hold
-- [ ] 8.2 Reword the `sdk` delta's scenarios, which still say "both" and "either" of what is now three augmentable maps
+- [x] 8.1 Write a failing `OperationsTransformer.spec.ts` case for two clients writing the same plugin data key concurrently, then give `#transformAgainstPluginDataOperation` the revision rule `#transformAgainstDataOperation` already uses: `Neutral` when the against-operation is the later of the two, an unsent one counting as later than any revision, and only for the same block, plugin and key. Without it the client holding an unsent write applies the remote value and never re-applies its own, so it ends on a value the server does not hold
+- [x] 8.2 Reword the `sdk` delta's scenarios, which still say "both" and "either" of what is now three augmentable maps
 
 ## 9. Review follow-ups (third round)
 
