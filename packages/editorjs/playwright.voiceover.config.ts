@@ -24,6 +24,8 @@ export default defineConfig({
   testMatch: /voiceover\.spec\.ts/,
   reporter: 'list',
   timeout: TEST_TIMEOUT_MS,
+  // Matches playwright.config.ts: screen reader timing shifts under a loaded runner.
+  retries: isCI ? 2 : 0,
   use: {
     ...screenReaderConfig.use,
     baseURL: `http://localhost:${PORT}`,

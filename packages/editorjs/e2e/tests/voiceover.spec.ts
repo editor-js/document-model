@@ -209,7 +209,11 @@ async function walkTo(
     }
   }
 
-  throw new Error(`VoiceOver did not reach an item matching ${pattern.toString()} within ${maxSteps} ${direction} steps`);
+  /** The route separates a cursor that swept past the target from one stalled against a wall. */
+  throw new Error(
+    `VoiceOver did not reach an item matching ${pattern.toString()} within ${maxSteps} ${direction} steps. `
+    + `It passed through: ${JSON.stringify(descriptions)}`
+  );
 }
 
 /**
@@ -1117,6 +1121,15 @@ test('Case 17: announces applied links as links', async ({ page, voiceOver }) =>
   expect(insideBlock.join(' | ')).toContain('link');
 });
 
+/** What a sweep found, kept alongside everything it passed through. */
+interface ReachableItems {
+  /** Distinct items matching the pattern, in the order the cursor met them. */
+  matches: string[];
+
+  /** Every stop the sweep made, matching or not. */
+  all: string[];
+}
+
 /**
  * Every distinct item matching `pattern` that VoiceOver's cursor reaches within `SCAN_STEPS`
  * forward steps.
@@ -1124,13 +1137,21 @@ test('Case 17: announces applied links as links', async ({ page, voiceOver }) =>
  * Returns the matches rather than a boolean so that asserting "nothing is reachable" fails with
  * the offending announcements in the message. A bare `toBe(false)` says only that something
  * matched, which leaves you guessing at whether the fault is the page or the pattern.
+ *
+ * `all` comes too: the baseline fails on an empty `matches`, which on its own says nothing.
  * @param voiceOver - Guidepup VoiceOver controller
  * @param pattern - matched against the current item's text at each stop
  */
-async function collectReachable(voiceOver: VoiceOverPlaywright, pattern: RegExp): Promise<string[]> {
+async function collectReachable(
+  voiceOver: VoiceOverPlaywright,
+  pattern: RegExp
+): Promise<ReachableItems> {
   const reachable = await sweep(voiceOver, SCAN_STEPS);
 
-  return [...new Set(reachable.filter(item => pattern.test(item)))];
+  return {
+    matches: [...new Set(reachable.filter(item => pattern.test(item)))],
+    all: reachable,
+  };
 }
 
 test('Case 18: does not let the cursor reach toolbox items filtered out by search', async ({ page, voiceOver }) => {
@@ -1145,30 +1166,31 @@ test('Case 18: does not let the cursor reach toolbox items filtered out by searc
 
   const menuItemPattern = /menu item/;
 
+  // Both sweeps anchor here: with the menu open, only the button reaches the items.
+  await findItem(voiceOver, /add block/i, 'previous');
+
   // Baseline. It also guards the real assertion below: if VoiceOver words menu items
   // differently than this expects, the test fails here instead of making "nothing reachable"
   // pass for the wrong reason.
-  await resetCursor(voiceOver);
-
   const beforeFiltering = await collectReachable(voiceOver, menuItemPattern);
 
-  expect(beforeFiltering.length).toBeGreaterThan(0);
+  expect(
+    beforeFiltering.matches.length,
+    `Nothing matched ${menuItemPattern}. VoiceOver announced: ${JSON.stringify(beforeFiltering.all)}`
+  ).toBeGreaterThan(0);
 
   // Opening the toolbox puts DOM focus in its search field; filling it filters the list.
   await page.getByRole('searchbox', { name: 'Search' }).fill('no such tool');
 
   await expect(menu.getByRole('menuitem')).toHaveCount(0);
 
-  // Back to the top rather than continuing from wherever the scan stopped - that item may be
-  // one of the ones just hidden, and VoiceOver would keep describing it from where it stands.
-  // The round trip inside resetCursor is what makes this reliable: `fill()` is a page-driven
-  // change, so without it VoiceOver can still be describing the unfiltered list.
-  await resetCursor(voiceOver);
+  // Back to the anchor; the sweep ends past the popover, and this is what shows VoiceOver the fill().
+  await findItem(voiceOver, /add block/i, 'previous');
 
   // ui-kit hides filtered items with a CSS class and sets the `hidden` attribute alongside it;
   // the attribute is what takes them out of the accessibility tree, so nothing matching should
   // remain reachable. If something does, the message below carries its announcement - the
   // answer to "is this the hidden item, or is the pattern matching something else entirely"
   // is not worth guessing at.
-  expect(await collectReachable(voiceOver, menuItemPattern)).toEqual([]);
+  expect((await collectReachable(voiceOver, menuItemPattern)).matches).toEqual([]);
 });
