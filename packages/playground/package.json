@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@editorjs/editorjs": "workspace:^",
+    "@editorjs/header": "workspace:^",
     "@editorjs/model": "workspace:^",
     "@editorjs/sdk": "workspace:^",
     "vue": "^3.3.4"
