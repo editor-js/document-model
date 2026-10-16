@@ -94,13 +94,15 @@ describe('CaretAdapter', () => {
   });
 
   it('should stop updating the model caret on selectionchange after destroy', () => {
-    fakeDocument.removeEventListener.mockClear();
+    fakeDocument.addEventListener.mockClear();
 
     const { adapter } = createAdapter();
 
     adapter.destroy();
 
-    expect(fakeDocument.removeEventListener).toHaveBeenCalledWith('selectionchange', expect.any(Function));
+    const [call] = fakeDocument.addEventListener.mock.calls.filter(([type]) => type === 'selectionchange');
+
+    expect((call[2] as AddEventListenerOptions | undefined)?.signal?.aborted).toBe(true);
   });
 
   it('should not touch the DOM selection on model caret updates after destroy', () => {
