@@ -118,11 +118,12 @@ export class InlineToolbarUI implements EditorjsPlugin {
   #renderGeneration = 0;
 
   /**
-   * Subscription to the core's selection changes.
-   *
-   * Held as a field rather than passed inline, so that `destroy()` has something to unsubscribe:
-   * an inline arrow cannot be handed back to `removeEventListener`, which would leave the
-   * toolbar reacting to selection changes for as long as the event bus outlives it
+   * Controls this toolbar's EventBus subscriptions; aborted by `destroy()`
+   */
+  #listenersController = new AbortController();
+
+  /**
+   * Subscription to the core's selection changes, registered with {@link #listenersController}'s signal
    * @todo Handle a rejected build instead of discarding it. `#renderPopover` awaits a
    * `getToolbarConfig` per tool, so a throwing tool rejects the whole chain — and `void` drops
    * it, leaving the user without formatting controls and nothing logged. The render generation
@@ -146,13 +147,17 @@ export class InlineToolbarUI implements EditorjsPlugin {
     eventBus,
     config,
   }: EditorjsPluginParams) {
+    const { signal } = this.#listenersController;
+
     this.#eventBus = eventBus;
     this.#api = api;
     this.#config = config;
 
     this.#render();
 
-    this.#eventBus.addEventListener(`core:${CoreEventType.SelectionChanged}`, this.#onSelectionChanged);
+    this.#eventBus.addEventListener(`core:${CoreEventType.SelectionChanged}`, this.#onSelectionChanged, {
+      signal,
+    });
   }
 
   /**
@@ -160,10 +165,17 @@ export class InlineToolbarUI implements EditorjsPlugin {
    */
   public destroy(): void {
     /**
+     * Already destroyed: a second call has nothing left to release
+     */
+    if (this.#listenersController.signal.aborted) {
+      return;
+    }
+
+    /**
      * Unsubscribed first, so that a selection change arriving mid-teardown cannot put a new
      * popover up in the holder that is about to be detached
      */
-    this.#eventBus.removeEventListener(`core:${CoreEventType.SelectionChanged}`, this.#onSelectionChanged);
+    this.#listenersController.abort();
 
     /**
      * Removing the holder detaches the popover with it but leaves the document-level listeners
