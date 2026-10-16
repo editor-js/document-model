@@ -1480,7 +1480,27 @@ describe('EditorDocument', () => {
       });
 
       expect(spy)
-        .toHaveBeenCalledWith(blockIndex, dataKey, 'bold', 0, rangeEnd);
+        .toHaveBeenCalledWith(blockIndex, dataKey, 'bold', 0, rangeEnd, undefined);
+    });
+
+    it('should pass the modified value data to .format() method', () => {
+      const spy = jest.spyOn(document, 'format');
+      const rangeEnd = 5;
+      const index = Index.text([{ blockIndex,
+        dataKey,
+        textRange: [0, rangeEnd] }]);
+      const data = { href: 'https://example.com' } as unknown as InlineToolData;
+
+      document.modifyData(index, {
+        value: {
+          tool: 'link',
+          data,
+        },
+        previous: null,
+      });
+
+      expect(spy)
+        .toHaveBeenCalledWith(blockIndex, dataKey, 'link', 0, rangeEnd, data);
     });
 
     it('should call .unformat() method if text index and previous modified value provided', () => {
