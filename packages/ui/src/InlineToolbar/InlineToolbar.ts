@@ -6,6 +6,7 @@ import type {
   EditorjsPlugin,
   EditorjsPluginParams,
   EventBus,
+  InlineTool,
   InlineToolFacade,
   SelectionChangedCoreEvent
 } from '@editorjs/sdk';
@@ -87,6 +88,11 @@ export class InlineToolbarUI implements EditorjsPlugin {
   #popover: PopoverInline | null = null;
 
   /**
+   * Inline tool instances behind the current popover's items, destroyed together with it
+   */
+  #toolInstances = new Set<InlineTool>();
+
+  /**
    * Id this toolbar's popover element carries, so that aria-owns can name it across rebuilds
    */
   #popoverElementId = nextPopoverElementId();
@@ -131,7 +137,8 @@ export class InlineToolbarUI implements EditorjsPlugin {
    * that would once have completed and put *something* up now bails on the generation check,
    * so a failing newest build is the whole outcome. Deciding between hiding the toolbar,
    * retrying, and rendering the tools that did resolve is a call about tool-failure semantics
-   * across the editor, not one to make here
+   * across the editor, not one to make here. Whatever is decided also has to release the inline
+   * tool instances the failed build created, which nothing destroys today
    * @param event - SelectionChangedCoreEvent dispatched by the core
    */
   #onSelectionChanged = (event: SelectionChangedCoreEvent): void => {
@@ -333,10 +340,18 @@ export class InlineToolbarUI implements EditorjsPlugin {
 
     const generation = this.#renderGeneration;
 
+    /**
+     * Instances this render creates. They become the current popover's on success, and are
+     * destroyed here when the render is superseded, since nothing else will reach them
+     */
+    const instances = new Set<InlineTool>();
+
     const popoverItems = Array.from(availableInlineTools).map(async (tool, i) => {
       const toolFragments = fragments.filter((fragment: InlineFragment) => fragment.tool === tool.name);
       const shortcut = tool.options.shortcut;
       const instance = tool.create();
+
+      instances.add(instance);
       const toolbarConfig = await instance.getToolbarConfig(textRange, toolFragments);
 
       const shortcutBeautified = shortcut !== undefined ? beautifyShortcut(shortcut) : undefined;
@@ -406,6 +421,8 @@ export class InlineToolbarUI implements EditorjsPlugin {
      * not build, and from replacing it with one built for a selection that is already gone
      */
     if (generation !== this.#renderGeneration) {
+      instances.forEach(instance => instance.destroy?.());
+
       return false;
     }
 
@@ -421,6 +438,7 @@ export class InlineToolbarUI implements EditorjsPlugin {
      * for the duration of the await
      */
     this.#destroyPopover();
+    this.#toolInstances = instances;
 
     this.#popover = new PopoverInline({
       items,
@@ -481,6 +499,9 @@ export class InlineToolbarUI implements EditorjsPlugin {
   #destroyPopover(): void {
     /** Unconditional, so that no reference to a gone popover can outlive it by any route */
     this.#setActiveDescendant(null);
+
+    this.#toolInstances.forEach(instance => instance.destroy?.());
+    this.#toolInstances.clear();
 
     if (this.#popover === null) {
       return;
