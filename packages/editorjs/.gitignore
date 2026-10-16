@@ -20,5 +20,11 @@ dist/*
 coverage/
 reports/
 
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
 # stryker temp files
 .stryker-tmp
