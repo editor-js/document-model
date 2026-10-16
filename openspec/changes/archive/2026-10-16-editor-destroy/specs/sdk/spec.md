@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Tool instance teardown hook
-The `BlockTool` and `InlineTool` instance contracts SHALL each declare an optional `destroy(): void`. The editor SHALL call `destroy()` exactly once on every tool instance it creates, when it stops using that instance: for long-lived instances, when the owning block is removed, the owning component is rebuilt, or the editor is destroyed; for instances created for a single operation, right after that operation completes. A tool that doesn't implement `destroy()` SHALL keep working unchanged.
+The `BlockTool` and `InlineTool` instance contracts SHALL each declare an optional `destroy(): void`. The editor SHALL call `destroy()` exactly once on every tool instance it creates, when it stops using that instance: for long-lived instances, when the owning block is removed, the owning component is rebuilt, or the editor is destroyed; for instances created for a single operation, right after that operation completes. The one exception is an inline toolbar build that fails because a tool's `getToolbarConfig` rejects: the instances it created are not released, since how a failed build behaves is still undecided. A tool that doesn't implement `destroy()` SHALL keep working unchanged.
 
 #### Scenario: Inline tool declares destroy
 - **GIVEN** an inline tool class implements `destroy()`
