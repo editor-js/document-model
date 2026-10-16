@@ -16,3 +16,9 @@
 - [x] 4.1 Reproduce stale EventBus/DOM subscriptions and delayed inline-toolbar rendering with failing lifecycle tests
 - [x] 4.2 Abort instance-owned subscriptions, dispose owned popovers and guard asynchronous rendering after destruction
 - [x] 4.3 Verify the follow-up's complete UI tests, build, zero-warning lint and OpenSpec validation before publication
+
+## 5. Review follow-up: teardown edge cases
+
+- [x] 5.1 Merge `main` (ARIA semantics, #187) and keep the listener-lifetime behavior on top of it
+- [x] 5.2 Make `ToolboxUI.open()` a no-op once destroyed, and every UI plugin's `destroy()` safe to repeat, with tests
+- [x] 5.3 Cover `beforeinput` teardown on the blocks holder, and declare `ts-node` for the `@editorjs/ui` Jest config
