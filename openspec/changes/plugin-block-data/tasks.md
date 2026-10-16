@@ -62,3 +62,9 @@
 
 - [ ] 8.1 Write a failing `OperationsTransformer.spec.ts` case for two clients writing the same plugin data key concurrently, then give `#transformAgainstPluginDataOperation` the revision rule `#transformAgainstDataOperation` already uses: `Neutral` when the against-operation is the later of the two, an unsent one counting as later than any revision, and only for the same block, plugin and key. Without it the client holding an unsent write applies the remote value and never re-applies its own, so it ends on a value the server does not hold
 - [ ] 8.2 Reword the `sdk` delta's scenarios, which still say "both" and "either" of what is now three augmentable maps
+
+## 9. Review follow-ups (third round)
+
+- [ ] 9.1 Write failing `PluginDataNode.spec.ts` cases for a `__proto__` key arriving from a loaded document and for a first write to a key named `toString`, then copy the node's record onto a null prototype as the block's own plugin store already is. The outer store's comment explains the hazard; the inner record never got the same treatment, so the key was dropped on load and the inherited function went onto the undo stack as a previous value
+- [ ] 9.2 Write a failing case, then return a detached copy from `PluginDataNode.serialized`. Handing out the live record makes read-modify-write silent loss: `getPluginData` → edit → `updatePluginData` has already changed the Model, so the no-op guard finds nothing to announce and the edit reaches neither collaborators nor the undo stack
+- [ ] 9.3 Write a failing case, then have `BlocksManager.getPluginData` check for an own entry. The serialized map is an ordinary object, so a plugin named `toString` or `constructor` read back as the inherited function instead of `undefined`

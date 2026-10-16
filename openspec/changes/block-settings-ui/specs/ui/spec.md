@@ -84,6 +84,8 @@ The system SHALL provide `BlocksUI`, which renders the contenteditable blocks ho
 
 Selection SHALL be dispatched both when the pointer enters a block and when the caret moves into one. Pointer entry alone leaves every control that acts on "the selected block" inert for a user who never moves a mouse, and the toolbar carries such controls. The caret is read from the document selection rather than from the editor's own caret state, which is cleared as soon as focus leaves the editable -- which is what reaching for a toolbar control does.
 
+Only caret movement SHALL be filtered for repeats, because `selectionchange` fires for every keystroke and most of those stay inside one block. Pointer entry SHALL always be dispatched: `mouseenter` only fires on actually crossing into a block, so there is nothing repeated to suppress, and a listener that ignored the previous announcement -- as the toolbar and the settings menu both do while the menu is open -- must still be told when the pointer comes back to a block it was last told about.
+
 #### Scenario: Inserting a block wrapper at an index
 - **GIVEN** a `BlockAddedCoreEvent` with a valid index
 - **WHEN** `BlocksUI` processes it
@@ -103,6 +105,11 @@ Selection SHALL be dispatched both when the pointer enters a block and when the 
 - **GIVEN** the caret is placed in a rendered block, by click or by keyboard
 - **WHEN** the document selection changes to a position inside that block
 - **THEN** `BlocksUI` dispatches a `BlockSelectedUIEvent` carrying the block and its index, so a keyboard-only user has a selected block without ever moving the pointer
+
+#### Scenario: Re-entering the block that was last reported
+- **GIVEN** the pointer was last reported as entering a block, and the menu that was open at the time has since been dismissed
+- **WHEN** the pointer enters that same block again
+- **THEN** `BlockSelectedUIEvent` is dispatched again, because anything that ignored the first announcement would otherwise keep acting on an older block
 
 #### Scenario: The caret staying in one block dispatches nothing
 - **GIVEN** the caret is already in a block

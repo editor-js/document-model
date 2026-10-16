@@ -5,6 +5,10 @@ Each block SHALL be able to hold data owned by plugins, stored as a map from a p
 
 A write that would leave the stored data as it is — the value a key already holds, or the removal of a key that is not present — SHALL emit no event, and so SHALL produce neither an operation for collaborators nor an undo step. Plugins re-apply their current state routinely, and an entry that undoes nothing is worse than no entry at all.
 
+Plugin names and the keys within an entry are document data, not identifiers the editor chooses, so neither SHALL be able to collide with `Object.prototype`. A key arriving from a stored document SHALL be held as data whatever it is called, `__proto__` included; a key the entry does not hold SHALL read as absent rather than as an inherited member, both when asking for a plugin's entry and when reading a key within one.
+
+What `getPluginData` and the serialized document hand back SHALL be detached from the store, so that changing it does not change the document. Reading an entry, editing it and passing it back to `updatePluginData` is the obvious way to use the two together, and over a live record the no-op rule above turns it into silent loss: the document has already changed, so the write that should have announced it emits nothing.
+
 #### Scenario: A block with no plugin data
 - **GIVEN** a block that has no plugin data at all
 - **WHEN** it is serialized
@@ -70,6 +74,26 @@ The system SHALL expose `BlocksAPI.getPluginData({ block, plugin })` and `Blocks
 #### Scenario: Reading absent plugin data
 - **WHEN** `getPluginData` is called for a plugin that has no entry on the block
 - **THEN** it returns `undefined`
+
+#### Scenario: A plugin named after a member of Object.prototype
+- **GIVEN** a block that has no entry for a plugin named `toString`
+- **WHEN** `getPluginData({ block: 0, plugin: "toString" })` is called
+- **THEN** it returns `undefined`, rather than the function the prototype would answer with
+
+#### Scenario: A key named __proto__ in a stored document
+- **GIVEN** a document whose `plugins.anchors` holds a `__proto__` key
+- **WHEN** it is loaded and serialized again
+- **THEN** the key is still there, because it was held as data rather than reaching a prototype setter
+
+#### Scenario: The first write to a key named after a member of Object.prototype
+- **GIVEN** an entry that holds no `toString` key
+- **WHEN** `toString` is written for the first time
+- **THEN** the change records no previous value, so undoing it removes the key rather than restoring an inherited function
+
+#### Scenario: Editing what was read
+- **GIVEN** `getPluginData` returned a plugin's entry
+- **WHEN** the caller changes a key on it and passes it to `updatePluginData`
+- **THEN** the document is unchanged until that call, which records the change as its own modification
 
 #### Scenario: Writing plugin data
 - **WHEN** `api.blocks.updatePluginData({ block: 0, plugin: "anchors", data: { id: "intro" } })` is called

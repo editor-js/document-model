@@ -24,7 +24,7 @@ The system SHALL provide `BlockSettingsUI`, an `EditorjsPlugin` with static `nam
 - **THEN** no provider is invoked, the popover is not opened, and no error is thrown
 
 ### Requirement: Block settings button
-The button `BlockSettingsUI` announces SHALL carry the whole menu-button contract, because the state it reports is the plugin's own: an accessible name from the UI package's message catalogue, `aria-haspopup="menu"`, and an `aria-expanded` kept in sync with whether the menu is open. Activating it SHALL focus it before opening the menu, so the popover has a control to return focus to when it closes. Activating it while the menu is already open SHALL close the menu instead of rebuilding it, as the menu button pattern requires: the control that opens a menu is also the control that dismisses it. The plugin SHALL follow block selection to know which block the button acts on, and SHALL stop following it while the menu is open, so the open menu and the button cannot come to mean different blocks.
+The button `BlockSettingsUI` announces SHALL carry the whole menu-button contract, because the state it reports is the plugin's own: an accessible name from the UI package's message catalogue, `aria-haspopup="menu"`, and an `aria-expanded` kept in sync with whether the menu is open. Activating it SHALL focus it before opening the menu, so the popover has a control to return focus to when it closes. Activating it while the menu is already open SHALL close the menu instead of rebuilding it, as the menu button pattern requires: the control that opens a menu is also the control that dismisses it. This SHALL hold however the button is activated, pointer or keyboard, which means the state it reads cannot be captured from pointer events alone. The button SHALL also declare itself a non-submitting control, so that an editor mounted inside a form does not post it when the menu is opened. The plugin SHALL follow block selection to know which block the button acts on, and SHALL stop following it while the menu is open, so the open menu and the button cannot come to mean different blocks.
 
 #### Scenario: The button is announced with the menu
 - **WHEN** `BlockSettingsUI` is constructed
@@ -44,6 +44,16 @@ The button `BlockSettingsUI` announces SHALL carry the whole menu-button contrac
 - **GIVEN** the button has opened the menu
 - **WHEN** the button is activated again
 - **THEN** the menu closes, `aria-expanded` returns to `"false"`, and no second menu is built
+
+#### Scenario: The menu is dismissed while a replacement is being built
+- **GIVEN** the menu is open and another block's menu has been requested, whose providers have not returned
+- **WHEN** the open menu is dismissed, by Escape or by a click outside
+- **THEN** the requested menu does not open when its providers return, because a dismissal abandons a build in flight exactly as a programmatic close does
+
+#### Scenario: Selection moves while a menu is being built
+- **GIVEN** a menu is being built for one block and its providers have not returned
+- **WHEN** another block is reported as selected
+- **THEN** that build is abandoned, rather than opening one block's actions beside another
 
 #### Scenario: The target does not move under an open menu
 - **GIVEN** the menu is open for the block at index 0
