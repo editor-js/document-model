@@ -40,4 +40,4 @@ jobs:
       - name: Publish changed packages
         env:
           YARN_NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: yarn workspaces foreach -At --no-private npm publish --access public --tolerate-republish
+        run: yarn workspaces foreach -At --no-private npm publish --access public --tag v3 --tolerate-republish
