@@ -56,4 +56,4 @@
 
 - [x] 9.1 Replace the "`Core` currently does not expose a global `destroy()`" line in `docs/plugins.md` with the teardown contract (order, idempotency, tools' `destroy()`), and add a teardown step to the lifecycle in `docs/README.md`. Update `docs/diagrams/plugin-lifecycle-flow.mmd`
 - [x] 9.2 Run `yarn lint` and the test suites for every touched package
-- [ ] 9.3 Run `openspec validate editor-destroy --type change` and make sure it passes
+- [x] 9.3 Run `openspec validate editor-destroy --type change` and make sure it passes
