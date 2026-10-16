@@ -42,8 +42,8 @@
 
 ## 7. UI
 
-- [x] 7.1 UI plugin teardown is covered by #174: no UI plugin implementation in this change
-- [ ] 7.2 After #174 lands, make `InlineToolbarUI` call `destroy?.()` on the inline tool instances it creates, both when the popover is rebuilt and on destroy, with tests in #174's UI test setup
+- [x] 7.1 UI plugin teardown is covered by #174 (merged): no UI plugin teardown in this change
+- [x] 7.2 Make `InlineToolbarUI` call `destroy?.()` on the inline tool instances it creates when the popover is rebuilt, hidden or destroyed, and on those of a render that is superseded, with tests in `lifecycle.spec.ts`
 
 ## 8. Bundle and integration
 
