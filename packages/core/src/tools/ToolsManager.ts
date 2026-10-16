@@ -150,7 +150,13 @@ export default class ToolsManager {
                * Some Tools validation
                */
               const inlineToolRequiredMethods = ['render'];
-              const notImplementedMethods = inlineToolRequiredMethods.filter(method => tool.create()[method as keyof InlineTool] !== undefined);
+              const instance = tool.create();
+              const notImplementedMethods = inlineToolRequiredMethods.filter(method => instance[method as keyof InlineTool] !== undefined);
+
+              /**
+               * The instance is only used for validation
+               */
+              instance.destroy?.();
 
               if (notImplementedMethods.length > 0) {
                 /**

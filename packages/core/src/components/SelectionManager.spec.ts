@@ -542,4 +542,72 @@ describe('SelectionManager', () => {
       expect(selectionManager.selectedBlocks()).toEqual([{ id: 'b0' }]);
     });
   });
+
+  describe('tool and listener teardown', () => {
+    /**
+     * Sets up a caret with one valid text segment
+     * @param segment - segment returned by the caret index
+     */
+    const mockCaret = (segment: Record<string, unknown>): void => {
+      jest.spyOn(model, 'getCaret')
+        .mockReturnValue({
+          index: { getTextSegments: jest.fn(() => [segment]) },
+          update: jest.fn(),
+        } as unknown as ReturnType<typeof model.getCaret>);
+      jest.spyOn(model, 'getFragments').mockReturnValue([]);
+      jest.spyOn(model, 'format').mockImplementation(() => undefined);
+    };
+
+    it('should destroy the throwaway inline tool instance after applying it', () => {
+      const destroy = jest.fn();
+      const toolMock = {
+        getFormattingOptions: jest.fn(() => ({ action: 'format',
+          range: [0, 3] })),
+        destroy,
+      };
+
+      (toolsManager as unknown as { inlineTools: Map<unknown, unknown> }).inlineTools = new Map([['bold', { create: () => toolMock }]]);
+      mockCaret({ blockIndex: 0,
+        dataKey: 'text',
+        textRange: [0, 3] });
+
+      selectionManager.applyInlineTool({ toolName: 'bold' as InlineToolName });
+
+      expect(destroy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should destroy the throwaway inline tool instance when applying it throws', () => {
+      const destroy = jest.fn();
+      const toolMock = { getFormattingOptions: jest.fn(),
+        destroy };
+
+      (toolsManager as unknown as { inlineTools: Map<unknown, unknown> }).inlineTools = new Map([['bold', { create: () => toolMock }]]);
+      mockCaret({ blockIndex: 0,
+        dataKey: 'text' });
+
+      expect(() => selectionManager.applyInlineTool({ toolName: 'bold' as InlineToolName })).toThrow();
+      expect(destroy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should stop handling caret updates after destroy', () => {
+      // @ts-expect-error - Mocked instance
+      const ownModel = new EditorJSModel();
+      let signal: AbortSignal | undefined;
+
+      ownModel.addEventListener = (_type: EventType, _callback: (e: Event) => void, options?: AddEventListenerOptions) => {
+        signal = options?.signal;
+      };
+
+      const manager = new SelectionManager(
+        { userId: 'user' } as unknown as CoreConfigValidated,
+        ownModel,
+        eventBus,
+        toolsManager
+      );
+
+      manager.destroy();
+
+      expect(signal?.aborted).toBe(true);
+    });
+  });
 });

@@ -12,7 +12,9 @@ import {
   PluginType,
   ToolType,
   type ToolStaticOptions,
-  type PluginId
+  type PluginId,
+  type EditorjsPlugin,
+  type EditorJSAdapterPlugin
 } from '@editorjs/sdk';
 import { composeDataFromVersion2 } from './utils/composeDataFromVersion2.js';
 import ToolsManager from './tools/ToolsManager.js';
@@ -30,6 +32,46 @@ import { PluginRegistry } from './components/PluginRegistry.js';
  * If no holder is provided via config, the editor will be appended to the element with this id
  */
 const DEFAULT_HOLDER_ID = 'editorjs';
+
+/**
+ * Plugin instance created by Core, with the name its public API is registered under
+ */
+interface PluginInstance {
+  /**
+   * Plugin's static name
+   */
+  name: PluginId;
+
+  /**
+   * Plugin instance
+   */
+  instance: EditorjsPlugin;
+}
+
+/**
+ * Core services that hold listeners or resources and need teardown
+ */
+interface CoreServices {
+  /**
+   * Tracks the caret and applies inline tools
+   */
+  selectionManager?: SelectionManager;
+
+  /**
+   * Renders blocks and owns their tool instances
+   */
+  blockRenderer?: BlockRenderer;
+
+  /**
+   * Local undo/redo history
+   */
+  undoRedoManager?: UndoRedoManager;
+
+  /**
+   * Rendering adapter plugin
+   */
+  adapter?: EditorJSAdapterPlugin;
+}
 
 /**
  * Editor entry point
@@ -58,6 +100,22 @@ export default class Core {
    * Inversion of Control container for loaded plugins
    */
   #plugins: Container;
+
+  /**
+   * Plugin instances in construction order, destroyed in reverse order
+   */
+  #pluginInstances: PluginInstance[] = [];
+
+  /**
+   * Core services resolved during initialization, destroyed by {@link destroy}.
+   * Kept here so teardown never resolves a service that initialization didn't reach
+   */
+  #services: CoreServices = {};
+
+  /**
+   * Set by {@link destroy}. A destroyed core can't be used or initialized again
+   */
+  #destroyed = false;
 
   /**
    * @param config - Editor configuration
@@ -129,6 +187,8 @@ export default class Core {
     pluginOrTool: ToolConstructable | EditorjsPluginConstructor | EditorjsAdapterPluginConstructor,
     options?: ToolStaticOptions
   ): Core {
+    this.#assertNotDestroyed();
+
     const pluginType = pluginOrTool.type;
 
     switch (pluginType) {
@@ -155,6 +215,7 @@ export default class Core {
    * Initializes the core
    */
   public async initialize(): Promise<void> {
+    this.#assertNotDestroyed();
     this.#validatePreconditions();
 
     const { blocks } = composeDataFromVersion2(this.#config.data ?? { blocks: [] });
@@ -167,24 +228,84 @@ export default class Core {
      * @todo add e2e initialization tests
      * Currently only BlockRenderer would be enough, but that would be hard to debug. Easier just add every module here
      */
-    this.#iocContainer.get(SelectionManager);
+    this.#services.selectionManager = this.#iocContainer.get(SelectionManager);
     this.#iocContainer.get(BlocksManager);
-    this.#iocContainer.get(BlockRenderer);
+    this.#services.blockRenderer = this.#iocContainer.get(BlockRenderer);
+    this.#services.adapter = this.#iocContainer.get<EditorJSAdapterPlugin>(TOKENS.Adapter);
 
     this.#initializePlugins();
     await this.#initializeTools();
 
     /**
+     * destroy() was called while tools were being prepared: it already tore down what exists
+     */
+    if (this.#destroyed) {
+      throw new DOMException('Editor was destroyed during initialization', 'AbortError');
+    }
+
+    /**
      * UndoRedoManager should go after plugins as it uses defaultPrevented on undo/redo events which can be set by plugins
      * @todo Figure out how to make initialization less complex
      */
-    this.#iocContainer.get(UndoRedoManager);
+    this.#services.undoRedoManager = this.#iocContainer.get(UndoRedoManager);
 
     this.#model.initializeDocument({ blocks });
 
     const eventBus = this.#iocContainer.get(EventBus);
 
     eventBus.dispatchEvent(new CoreEventBase(CoreEventType.Ready, undefined));
+  }
+
+  /**
+   * Tears the editor down: plugins in reverse construction order, core services, rendered blocks, and the adapter.
+   * The document model is left untouched, so no removal reaches undo history or collaboration.
+   * Safe to call more than once and while {@link initialize} is pending. After it, `use()` and `initialize()` throw
+   */
+  public destroy(): void {
+    /**
+     * Plugin instances and services are cleared below, so a second call finds nothing left to destroy
+     */
+    this.#destroyed = true;
+
+    const registry = this.#iocContainer.get(PluginRegistry);
+
+    for (const { name, instance } of this.#pluginInstances.reverse()) {
+      this.#safely(`plugin "${name}"`, () => instance.destroy?.());
+      registry.unregister(name);
+    }
+
+    this.#pluginInstances = [];
+
+    const { undoRedoManager, selectionManager, blockRenderer, adapter } = this.#services;
+
+    this.#safely('UndoRedoManager', () => undoRedoManager?.destroy());
+    this.#safely('SelectionManager', () => selectionManager?.destroy());
+    this.#safely('BlockRenderer', () => blockRenderer?.destroy());
+    this.#safely('adapter', () => adapter?.destroy?.());
+
+    this.#services = {};
+  }
+
+  /**
+   * Runs one teardown step, logging its error so the remaining steps still run
+   * @param label - what is being destroyed, for the log
+   * @param step - teardown step
+   */
+  #safely(label: string, step: () => void): void {
+    try {
+      step();
+    } catch (error) {
+      console.error(`[Core] Failed to destroy ${label}`, error);
+    }
+  }
+
+  /**
+   * Throws if {@link destroy} has been called
+   */
+  #assertNotDestroyed(): void {
+    if (this.#destroyed) {
+      throw new Error('Editor has been destroyed. Create a new instance instead');
+    }
   }
 
   /**
@@ -251,6 +372,9 @@ export default class Core {
       api: apiFactory(),
       eventBus,
     });
+
+    this.#pluginInstances.push({ name: plugin.name,
+      instance });
 
     if (instance.publicApi !== undefined) {
       this.#iocContainer.get(PluginRegistry).register(plugin.name, instance.publicApi);

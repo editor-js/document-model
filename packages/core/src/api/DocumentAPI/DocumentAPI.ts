@@ -64,11 +64,11 @@ export class DocumentAPI implements DocumentApiInterface {
    * @param callback - callback called on model update
    */
   public onUpdate(callback: (event: ModelEvents) => void): () => void {
-    this.#model.addEventListener(EventType.Changed, callback);
+    const controller = new AbortController();
 
-    return () => {
-      this.#model.removeEventListener(EventType.Changed, callback);
-    };
+    this.#model.addEventListener(EventType.Changed, callback, { signal: controller.signal });
+
+    return () => controller.abort();
   }
 
   /**

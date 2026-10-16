@@ -163,7 +163,13 @@ export type BlockTool<
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
   Config extends ToolConfig = any
-> = Omit<BlockToolVersion2, 'save'>;
+> = Omit<BlockToolVersion2, 'save' | 'destroy'> & {
+  /**
+   * Releases resources held by the instance.
+   * Called once, when the block is removed or the editor is destroyed
+   */
+  destroy?(): void;
+};
 
 /**
  * Block Tool constructor class
