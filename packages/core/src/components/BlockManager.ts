@@ -443,8 +443,18 @@ export class BlocksManager {
    */
   public getPluginData(blockIndexOrId: number | BlockId, pluginName: string): PluginDataSerialized | undefined {
     const blockIndex = this.#model.resolveBlockIndex(blockIndexOrId);
+    const plugins = this.#model.getBlockSerialized(blockIndex).plugins;
 
-    return this.#model.getBlockSerialized(blockIndex).plugins?.[pluginName];
+    /**
+     * Checked for an own entry rather than indexed directly: the serialized map is an ordinary
+     * object, so a plugin named `toString` or `constructor` that stores nothing here would
+     * otherwise read back as the inherited function instead of `undefined`
+     */
+    if (plugins === undefined || !Object.prototype.hasOwnProperty.call(plugins, pluginName)) {
+      return undefined;
+    }
+
+    return plugins[pluginName];
   }
 
   /**

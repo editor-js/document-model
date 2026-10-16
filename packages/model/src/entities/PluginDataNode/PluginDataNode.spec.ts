@@ -207,7 +207,86 @@ describe('PluginDataNode', () => {
     });
   });
 
+  describe('keys that collide with Object.prototype', () => {
+    it('should keep a __proto__ key as data', () => {
+      const pluginData = new PluginDataNode({ name: pluginName });
+
+      /**
+       * Parsed rather than written as a literal: an object literal's `__proto__` is the
+       * prototype setter, while JSON.parse creates an own property -- and a document loaded
+       * from storage arrives the second way
+       */
+      const loaded = JSON.parse('{"__proto__": "evil", "ok": 1}') as Record<string, unknown>;
+
+      Object.entries(loaded).forEach(([key, value]) => pluginData.update(key, value));
+
+      // A computed key, for the same reason: `{ '__proto__': x }` is still the setter.
+      expect(pluginData.serialized).toEqual({
+        ['__proto__']: 'evil',
+        ok: 1,
+      });
+    });
+
+    it('should treat a key named toString as absent before it is written', () => {
+      const pluginData = new PluginDataNode({ name: pluginName });
+      const events: PluginDataModifiedEvent[] = [];
+
+      pluginData.addEventListener(EventType.Changed, (event) => {
+        events.push(event as PluginDataModifiedEvent);
+      });
+
+      pluginData.update('toString', 'x');
+
+      // Read off the prototype, the previous value would be a function -- onto the undo stack.
+      expect(events).toHaveLength(1);
+      expect(events[0].detail.data.previous).toBeUndefined();
+    });
+
+    it('should not report inherited data for a key it was never given', () => {
+      const pluginData = new PluginDataNode({ name: pluginName,
+        data: { id: 'one' } });
+
+      expect(pluginData.serialized.toString).toBeUndefined();
+    });
+  });
+
   describe('.serialized', () => {
+    it('should hand back a copy rather than the record it keeps', () => {
+      const pluginData = new PluginDataNode({ name: pluginName,
+        data: { id: 'one',
+          nested: { depth: 1 } } });
+
+      const snapshot = pluginData.serialized as Record<string, unknown>;
+
+      snapshot.id = 'two';
+      (snapshot.nested as Record<string, unknown>).depth = 2;
+
+      /**
+       * Handing out the live record makes read-modify-write silent data loss: the write-back
+       * finds the value already changed and the no-op guard emits nothing
+       */
+      expect(pluginData.serialized).toEqual({ id: 'one',
+        nested: { depth: 1 } });
+    });
+
+    it('should still emit when a value read from it is written back changed', () => {
+      const pluginData = new PluginDataNode({ name: pluginName,
+        data: { id: 'one' } });
+      const events: PluginDataModifiedEvent[] = [];
+
+      pluginData.addEventListener(EventType.Changed, (event) => {
+        events.push(event as PluginDataModifiedEvent);
+      });
+
+      const snapshot = pluginData.serialized as Record<string, unknown>;
+
+      snapshot.id = 'two';
+      pluginData.update('id', snapshot.id);
+
+      expect(events).toHaveLength(1);
+      expect(pluginData.serialized).toEqual({ id: 'two' });
+    });
+
     it('should return serialized version of the plugin data', () => {
       // Arrange
       const pluginData = new PluginDataNode({

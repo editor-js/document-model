@@ -1250,6 +1250,69 @@ describe('BlocksAPI integration (real model, mocked tools)', () => {
         plugin: 'anchors' })).toBeUndefined();
     });
 
+    it('should return undefined for a plugin name that Object.prototype also answers to', () => {
+      blocksAPI.insert({ type: 'paragraph' });
+
+      blocksAPI.updatePluginData({ block: 0,
+        plugin: 'anchors',
+        data: { id: 'intro' } });
+
+      /**
+       * The serialized plugins map is an ordinary object, so indexing it directly hands back
+       * the inherited member for a plugin that stores nothing -- a function, where the caller
+       * is told to expect data or undefined
+       */
+      expect(blocksAPI.getPluginData({ block: 0,
+        plugin: 'toString' })).toBeUndefined();
+      expect(blocksAPI.getPluginData({ block: 0,
+        plugin: 'constructor' })).toBeUndefined();
+    });
+
+    it('should hand back plugin data the caller can change without touching the document', () => {
+      blocksAPI.insert({ type: 'paragraph' });
+
+      blocksAPI.updatePluginData({ block: 0,
+        plugin: 'anchors',
+        data: { id: 'intro' } });
+
+      const data = blocksAPI.getPluginData({ block: 0,
+        plugin: 'anchors' }) as Record<string, unknown>;
+
+      data.id = 'changed';
+
+      expect(blocksAPI.getPluginData({ block: 0,
+        plugin: 'anchors' })).toEqual({ id: 'intro' });
+    });
+
+    it('should record a read-modify-write as a change', () => {
+      blocksAPI.insert({ type: 'paragraph' });
+
+      blocksAPI.updatePluginData({ block: 0,
+        plugin: 'anchors',
+        data: { id: 'intro' } });
+
+      const data = blocksAPI.getPluginData({ block: 0,
+        plugin: 'anchors' }) as Record<string, unknown>;
+
+      const events: unknown[] = [];
+
+      model.addEventListener(EventType.Changed, e => events.push(e));
+
+      data.id = 'changed';
+      blocksAPI.updatePluginData({ block: 0,
+        plugin: 'anchors',
+        data });
+
+      /**
+       * Reading, changing and writing back is the obvious way to use these two methods
+       * together. Over a live record it changed the document and emitted nothing, so the edit
+       * reached neither collaborators nor the undo stack
+       */
+      expect(events).toHaveLength(1);
+      expect(blocksAPI.getPluginData({ block: 0,
+        plugin: 'anchors' })).toEqual({ id: 'changed' });
+    });
+
     it('should attribute the change to the acting user', () => {
       blocksAPI.insert({ type: 'paragraph' });
 
