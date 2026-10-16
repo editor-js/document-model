@@ -147,6 +147,8 @@ export class InlineToolbarUI implements EditorjsPlugin {
     eventBus,
     config,
   }: EditorjsPluginParams) {
+    const { signal } = this.#listenersController;
+
     this.#eventBus = eventBus;
     this.#api = api;
     this.#config = config;
@@ -154,7 +156,7 @@ export class InlineToolbarUI implements EditorjsPlugin {
     this.#render();
 
     this.#eventBus.addEventListener(`core:${CoreEventType.SelectionChanged}`, this.#onSelectionChanged, {
-      signal: this.#listenersController.signal,
+      signal,
     });
   }
 
@@ -162,6 +164,13 @@ export class InlineToolbarUI implements EditorjsPlugin {
    * Cleanup when plugin is destroyed
    */
   public destroy(): void {
+    /**
+     * Already destroyed: a second call has nothing left to release
+     */
+    if (this.#listenersController.signal.aborted) {
+      return;
+    }
+
     /**
      * Unsubscribed first, so that a selection change arriving mid-teardown cannot put a new
      * popover up in the holder that is about to be detached

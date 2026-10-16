@@ -57,6 +57,8 @@ export class BlocksUI implements EditorjsPlugin {
    * @param params - Plugin parameters
    */
   constructor(params: EditorjsPluginParams) {
+    const { signal } = this.#listenersController;
+
     this.#eventBus = params.eventBus;
     this.#api = params.api;
     this.#blocksHolder = this.#prepareBlocksHolder();
@@ -65,13 +67,13 @@ export class BlocksUI implements EditorjsPlugin {
       const { ui, index } = event.detail;
 
       this.#addBlock(ui, index);
-    }, { signal: this.#listenersController.signal });
+    }, { signal });
 
     this.#eventBus.addEventListener(`core:${CoreEventType.BlockRemoved}`, (event: BlockRemovedCoreEvent) => {
       const { index } = event.detail;
 
       this.#removeBlock(index);
-    }, { signal: this.#listenersController.signal });
+    }, { signal });
 
     this.#eventBus.dispatchEvent(new BlocksHolderRenderedUIEvent({
       blocksHolder: this.#blocksHolder,
@@ -82,6 +84,8 @@ export class BlocksUI implements EditorjsPlugin {
    * Prepares blocks holder element
    */
   #prepareBlocksHolder(): HTMLElement {
+    const { signal } = this.#listenersController;
+
     const blocksHolder = make('div', Style[blocksCss.blocks], {
       contentEditable: true,
     });
@@ -127,7 +131,7 @@ export class BlocksUI implements EditorjsPlugin {
         targetRanges: e.getTargetRanges(),
         isCrossInputSelection,
       }));
-    }, { signal: this.#listenersController.signal });
+    }, { signal });
 
     blocksHolder.addEventListener('keydown', (e) => {
       /**
@@ -160,7 +164,7 @@ export class BlocksUI implements EditorjsPlugin {
       this.#api.document.undo();
 
       e.preventDefault();
-    }, { signal: this.#listenersController.signal });
+    }, { signal });
 
     blocksHolder.addEventListener('copy', (e) => {
       const payload: CopyUIEventPayload = {
@@ -168,7 +172,7 @@ export class BlocksUI implements EditorjsPlugin {
       };
 
       this.#eventBus.dispatchEvent(new CopyUIEvent(payload));
-    }, { signal: this.#listenersController.signal });
+    }, { signal });
 
     return blocksHolder;
   }
@@ -199,6 +203,8 @@ export class BlocksUI implements EditorjsPlugin {
    * @param index - index where to add a block at
    */
   #addBlock(blockElement: HTMLElement, index: number): void {
+    const { signal } = this.#listenersController;
+
     this.#validateIndex(index);
 
     const wrapper = make('div', Style[blockCss.block]);
@@ -206,7 +212,7 @@ export class BlocksUI implements EditorjsPlugin {
 
     wrapper.addEventListener('mouseenter', (e) => {
       this.#updateSelectedBlock(e);
-    }, { signal: this.#listenersController.signal });
+    }, { signal });
 
     wrapper.append(contents);
     contents.append(blockElement);
@@ -259,14 +265,19 @@ export class BlocksUI implements EditorjsPlugin {
    * Cleanup when plugin is destroyed
    */
   public destroy(): void {
+    /**
+     * Already destroyed: a second call has nothing left to release
+     */
+    if (this.#listenersController.signal.aborted) {
+      return;
+    }
+
     this.#listenersController.abort();
 
-    this.#blocks.forEach(block => block.remove());
-    this.#blocks = [];
-
     /**
-     * Detach the blocks holder itself so it doesn't linger in the DOM
+     * Detaching the holder takes the block wrappers inside it along
      */
     this.#blocksHolder.remove();
+    this.#blocks = [];
   }
 }

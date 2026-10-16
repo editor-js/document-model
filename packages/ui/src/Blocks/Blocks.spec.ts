@@ -24,6 +24,8 @@ class FakeUIEvent {
   constructor(public readonly detail: unknown) {}
 }
 
+class BeforeInputUIEvent extends FakeUIEvent {}
+
 class KeydownUIEvent extends FakeUIEvent {}
 
 class CopyUIEvent extends FakeUIEvent {}
@@ -34,7 +36,7 @@ jest.unstable_mockModule('@editorjs/sdk', () => ({
     BlockRemoved: 'block-removed',
   },
   UiComponentType: { Blocks: 'Blocks' },
-  BeforeInputUIEvent: class extends FakeUIEvent {},
+  BeforeInputUIEvent,
   KeydownUIEvent,
   CopyUIEvent,
 }));
@@ -108,6 +110,28 @@ describe('BlocksUI', () => {
       holder.dispatchEvent(new Event('keydown'));
 
       expect(dispatchedOfType(dispatchEvent, KeydownUIEvent)).toHaveLength(1);
+    });
+
+    it('should stop delegating beforeinput events from the blocks holder', () => {
+      const { params, dispatchEvent } = createParams();
+      const blocksUI = new BlocksUI(params);
+      const holder = getBlocksHolder(dispatchEvent);
+      const beforeInput = (): Event => Object.assign(new Event('beforeinput', { cancelable: true }), {
+        data: 'a',
+        inputType: 'insertText',
+        isComposing: false,
+        dataTransfer: null,
+        getTargetRanges: () => [],
+      });
+
+      holder.dispatchEvent(beforeInput());
+
+      expect(dispatchedOfType(dispatchEvent, BeforeInputUIEvent)).toHaveLength(1);
+
+      blocksUI.destroy();
+      holder.dispatchEvent(beforeInput());
+
+      expect(dispatchedOfType(dispatchEvent, BeforeInputUIEvent)).toHaveLength(1);
     });
 
     it('should stop delegating copy events from the blocks holder', () => {

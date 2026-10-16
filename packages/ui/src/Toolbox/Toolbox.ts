@@ -77,6 +77,8 @@ export class ToolboxUI implements EditorjsPlugin {
     eventBus,
     config,
   }: EditorjsPluginParams) {
+    const { signal } = this.#listenersController;
+
     this.#api = api;
     this.#eventBus = eventBus;
     this.#editorConfig = config;
@@ -116,11 +118,11 @@ export class ToolboxUI implements EditorjsPlugin {
       if (tool?.isBlock?.() === true) {
         this.addTool(tool);
       }
-    }, { signal: this.#listenersController.signal });
+    }, { signal });
 
     this.#eventBus.addEventListener('ui:toolbox:open', () => {
       this.open();
-    }, { signal: this.#listenersController.signal });
+    }, { signal });
 
     this.#eventBus.addEventListener('ui:blocks:block-selected', (e: BlockSelectedUIEvent) => {
       if (this.#isPopoverOpen) {
@@ -128,13 +130,21 @@ export class ToolboxUI implements EditorjsPlugin {
       }
 
       this.#selectedBlockIndex = e.detail.index;
-    }, { signal: this.#listenersController.signal });
+    }, { signal });
   }
 
   /**
    * Open's Toolbox popover
    */
   public open(): void {
+    /**
+     * A destroyed toolbox has no popover to show, and announcing it as opened would mislead
+     * other plugins on the shared bus
+     */
+    if (this.#listenersController.signal.aborted) {
+      return;
+    }
+
     this.#popover.show();
 
     this.#isPopoverOpen = true;
@@ -146,6 +156,9 @@ export class ToolboxUI implements EditorjsPlugin {
    * Cleanup when plugin is destroyed
    */
   public destroy(): void {
+    /**
+     * Already destroyed: a second call has nothing left to release
+     */
     if (this.#listenersController.signal.aborted) {
       return;
     }

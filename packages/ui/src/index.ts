@@ -54,6 +54,8 @@ export class EditorjsUI implements EditorjsPlugin {
    * @param params - Plugin parameters
    */
   constructor(params: EditorjsPluginParams) {
+    const { signal } = this.#listenersController;
+
     this.#config = params.config;
     this.#eventBus = params.eventBus;
     this.#holder = params.config.holder;
@@ -62,21 +64,28 @@ export class EditorjsUI implements EditorjsPlugin {
 
     this.#eventBus.addEventListener(`ui:toolbar:rendered`, (event: ToolbarRenderedUIEvent) => {
       this.#addToolbar(event.detail.toolbar);
-    }, { signal: this.#listenersController.signal });
+    }, { signal });
 
     this.#eventBus.addEventListener(`ui:inline-toolbar:rendered`, (event: InlineToolbarRenderedUIEvent) => {
       this.#addInlineToolbar(event.detail.toolbar);
-    }, { signal: this.#listenersController.signal });
+    }, { signal });
 
     this.#eventBus.addEventListener(`ui:blocks:rendered`, (event: BlocksHolderRenderedUIEvent) => {
       this.#addBlocks(event.detail.blocksHolder);
-    }, { signal: this.#listenersController.signal });
+    }, { signal });
   }
 
   /**
    * Method to destroy the plugin
    */
   public destroy(): void {
+    /**
+     * Already destroyed: a second call has nothing left to release
+     */
+    if (this.#listenersController.signal.aborted) {
+      return;
+    }
+
     this.#listenersController.abort();
     this.#editorWrapper.remove();
   }

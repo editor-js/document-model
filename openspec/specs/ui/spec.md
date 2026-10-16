@@ -126,6 +126,16 @@ Each UI plugin SHALL unsubscribe its own EventBus and DOM listeners when destroy
 - **WHEN** the configuration finishes resolving
 - **THEN** no popover is created, shown, or positioned by the destroyed toolbar
 
+#### Scenario: Opening a destroyed toolbox
+- **GIVEN** `ToolboxUI` has been destroyed
+- **WHEN** its `open()` is called
+- **THEN** no popover is shown and no `ToolboxOpenedUIEvent` is dispatched
+
+#### Scenario: Repeated teardown
+- **GIVEN** a UI plugin has been destroyed
+- **WHEN** `destroy()` is called again
+- **THEN** it returns without releasing anything a second time
+
 Validated by `src/lifecycle.spec.ts` using real DOM/EventBus listeners and a substituted popover boundary. Vendor-owned global listener internals are outside this requirement's verification scope.
 
 ### Requirement: Accessible blocks holder

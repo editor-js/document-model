@@ -386,4 +386,33 @@ describe('UI plugin listener lifetime', () => {
     expect(holder.style.top).toBe('');
     expect(holder.isConnected).toBe(false);
   });
+
+  it('should ignore open() on a destroyed toolbox', () => {
+    const toolbox = retain(new ToolboxUI(params));
+    const popover = TestPopover.instances[0];
+    const opened = jest.fn();
+
+    eventBus.addEventListener('ui:toolbox:opened', opened);
+    toolbox.destroy();
+    toolbox.open();
+
+    expect(popover.show).not.toHaveBeenCalled();
+    expect(opened).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['EditorjsUI', (): { destroy: () => void } => new EditorjsUI(params)],
+    ['BlocksUI', (): { destroy: () => void } => new BlocksUI(params)],
+    ['ToolbarUI', (): { destroy: () => void } => new ToolbarUI(params)],
+    ['ToolboxUI', (): { destroy: () => void } => new ToolboxUI(params)],
+    ['InlineToolbarUI', (): { destroy: () => void } => new InlineToolbarUI(params)],
+  ])('should make a second destroy() of %s a no-op', (_name, create) => {
+    const plugin = create();
+
+    plugin.destroy();
+    const popoverDestroys = TestPopover.instances.map(popover => popover.destroy.mock.calls.length);
+
+    expect(() => plugin.destroy()).not.toThrow();
+    expect(TestPopover.instances.map(popover => popover.destroy.mock.calls.length)).toEqual(popoverDestroys);
+  });
 });
