@@ -43,8 +43,8 @@
 
 ## 7. UI
 
-- [x] 7.1 UI plugin teardown is covered by #174: no UI plugin implementation in this change
-- [ ] 7.2 After #174 lands, test that `InlineToolbarUI` never destroys the shared inline tool instance, through a real `InlineToolFacade`, across rebuild, hide, a superseded render and destroy
+- [x] 7.1 UI plugin teardown is covered by #174 (merged): no UI plugin teardown in this change
+- [x] 7.2 Test that `InlineToolbarUI` never destroys the shared inline tool instance, through a real `InlineToolFacade`, across rebuild, hide, a superseded render and destroy, in `lifecycle.spec.ts`
 
 ## 8. Bundle and integration
 
