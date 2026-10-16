@@ -111,11 +111,6 @@ test('keeps the other editors on the page working after one is destroyed', async
 });
 
 test('leaves destroyed editors\' holders empty, with no listeners inside', async ({ page }) => {
-  // Expected to fail until #174 lands: the UI plugins (BlocksUI and the shell) don't yet remove
-  // their DOM or their listeners on destroy. Written as the behavior that should hold, so
-  // merging #174 turns this into an unexpected pass that forces removing the marker.
-  test.fail();
-
   await mountExtraEditors(page, 2);
   await destroyExtraEditors(page);
 
@@ -166,9 +161,6 @@ test('does not report an unhandled rejection when destroyed before it is ready',
 });
 
 test('leaves the holder empty when destroyed before it is ready', async ({ page }) => {
-  // Expected to fail until #174 lands: EditorjsUI doesn't yet remove its wrapper on destroy.
-  test.fail();
-
   await page.evaluate(() => {
     const holder = document.createElement('div');
 
