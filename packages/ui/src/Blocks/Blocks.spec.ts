@@ -14,6 +14,10 @@ class FakeElement extends EventTarget {
   });
 
   public remove = jest.fn();
+
+  public setAttribute = jest.fn();
+
+  public removeAttribute = jest.fn();
 }
 
 class FakeUIEvent {

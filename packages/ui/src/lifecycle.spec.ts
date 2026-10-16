@@ -36,6 +36,12 @@ class TestPopover {
   public on(event: string, callback: () => void): void {
     this.callbacks.set(event, callback);
   }
+
+  public off(event: string, callback: () => void): void {
+    if (this.callbacks.get(event) === callback) {
+      this.callbacks.delete(event);
+    }
+  }
 }
 
 jest.unstable_mockModule('@editorjs/ui-kit', () => ({
@@ -295,7 +301,7 @@ describe('UI plugin listener lifetime', () => {
     const popover = TestPopover.instances[0];
     const closed = jest.fn();
     const tool = { name: 'paragraph',
-      options: {},
+      toolbox: [{}],
       isBlock: () => true };
 
     eventBus.addEventListener('ui:toolbox:closed', closed);
@@ -374,7 +380,9 @@ describe('UI plugin listener lifetime', () => {
       icon: 'B' });
     await flushRender();
     expect(TestPopover.instances).toHaveLength(0);
-    expect(holder.childElementCount).toBe(0);
+    // Only the toolbar's own live region remains, with nothing announced
+    expect(Array.from(holder.children, child => child.getAttribute('data-testid'))).toEqual(['inline-toolbar-announcer']);
+    expect(holder.textContent).toBe('');
     expect(holder.style.top).toBe('');
     expect(holder.isConnected).toBe(false);
   });
