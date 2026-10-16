@@ -230,5 +230,72 @@ describe('OTClient', () => {
       expect(closeSpy).toHaveBeenCalledTimes(1);
       closeSpy.mockRestore();
     });
+
+    it('should close a socket that is still connecting', async () => {
+      const client = new OTClient('ws://test-collab.invalid/document', userId, jest.fn(), jest.fn());
+      const closeSpy = jest.spyOn(MockWebSocket.lastInstance!, 'close');
+
+      client.close();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(closeSpy).toHaveBeenCalledTimes(1);
+      closeSpy.mockRestore();
+    });
+
+    it('should release its socket listeners on close', async () => {
+      const client = new OTClient('ws://test-collab.invalid/document', userId, jest.fn(), jest.fn());
+
+      await client.connectDocument(stubDocument);
+
+      const socket = MockWebSocket.lastInstance!;
+
+      client.close();
+      await Promise.resolve();
+
+      expect(socket.listenerCount('open')).toBe(0);
+      expect(socket.listenerCount('message')).toBe(0);
+    });
+
+    it('should release a pending handshake listener on close', async () => {
+      const client = new OTClient('ws://test-collab.invalid/document', userId, jest.fn(), jest.fn());
+
+      await Promise.resolve();
+
+      const socket = MockWebSocket.lastInstance!;
+      const send = jest.spyOn(socket, 'send').mockImplementation(() => undefined);
+
+      await client.connectDocument(stubDocument);
+
+      expect(socket.listenerCount('message')).toBe(2);
+
+      client.close();
+
+      expect(socket.listenerCount('message')).toBe(0);
+      send.mockRestore();
+    });
+
+    it('should release a pending acknowledgement listener on close', async () => {
+      const client = new OTClient('ws://test-collab.invalid/document', userId, jest.fn(), jest.fn());
+
+      await client.connectDocument(stubDocument);
+
+      const socket = MockWebSocket.lastInstance!;
+      const send = jest.spyOn(socket, 'send').mockImplementation(() => undefined);
+      const index = Index.text([{ blockIndex: 0,
+        dataKey: createDataKey('text'),
+        textRange: [0, 0],
+        documentId }]);
+
+      await client.send(new Operation(OperationType.Insert, index, { payload: 'a' }, userId, 0));
+
+      expect(socket.listenerCount('message')).toBe(2);
+
+      client.close();
+      await Promise.resolve();
+
+      expect(socket.listenerCount('message')).toBe(0);
+      send.mockRestore();
+    });
   });
 });
