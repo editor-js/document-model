@@ -203,14 +203,15 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
   #isOpen = false;
 
   /**
-   * Whether the menu was open when the pointer went down on the button.
+   * Whether the menu was open when the activation that is now in progress began.
    *
-   * The popover closes itself from the click that follows, and it gets there before this
-   * button's own handler -- so by `click` the menu is already gone and a toggle reading the
-   * state then would see every second click as a fresh open. `mousedown` is the last moment
-   * the answer is still true
+   * The popover closes itself from the click, and it gets there before this button's own
+   * handler -- so by `click` the menu is already gone, and a toggle reading the state then
+   * would see every second activation as a fresh open. The last moment the answer is still
+   * true is `mousedown` for a pointer, and the `keydown` of Enter or Space for a keyboard,
+   * which is why both are recorded here rather than only the first
    */
-  #wasOpenOnPointerDown = false;
+  #wasOpenOnActivationStart = false;
 
   /**
    * Registered providers
@@ -229,6 +230,14 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
   #openToken = 0;
 
   /**
+   * Index the request currently being built is for, or `null` when nothing is in flight.
+   *
+   * Providers may be asynchronous, so the block a menu is being built for can stop being the
+   * selected one before the menu exists
+   */
+  #buildingFor: number | null = null;
+
+  /**
    * BlockSettingsUI class constructor
    * @param params - Plugin parameters
    */
@@ -245,6 +254,11 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
     this.#holder = make('div');
     this.#button = make('button', ControlStyle['toolbar-button'], {
       innerHTML: IconMenuSmall,
+      /**
+       * A button defaults to `submit`, and the editor's holder may sit inside a form, where
+       * opening the settings menu would submit it
+       */
+      type: 'button',
     }) as HTMLButtonElement;
 
     this.#renderButton();
@@ -273,7 +287,7 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
      * Dropping the listeners stops new requests, but not one already waiting on its providers.
      * That one would render into the holder removed just below
      */
-    this.#openToken++;
+    this.#abandonPendingBuild();
 
     this.#popover?.destroy();
     this.#popover = undefined;
@@ -291,7 +305,18 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
       return;
     }
 
-    this.#selectedBlockIndex = event.detail.index;
+    const { index } = event.detail;
+
+    /**
+     * A build in flight was started for whichever block was selected at the time. Letting it
+     * finish after the selection has moved would open that block's actions beside this one,
+     * which is a menu that acts on a block the user is no longer pointing at
+     */
+    if (this.#buildingFor !== null && this.#buildingFor !== index) {
+      this.#abandonPendingBuild();
+    }
+
+    this.#selectedBlockIndex = index;
   };
 
   /**
@@ -311,13 +336,30 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
     this.#button.setAttribute('aria-expanded', 'false');
 
     this.#button.addEventListener('mousedown', () => {
-      this.#wasOpenOnPointerDown = this.#isOpen;
+      this.#wasOpenOnActivationStart = this.#isOpen;
+    });
+
+    /**
+     * Enter and Space send a `click` of their own, with no pointer events before it. Their
+     * `keydown` is where that activation starts, so it is the keyboard's `mousedown`
+     */
+    this.#button.addEventListener('keydown', (event: KeyboardEvent) => {
+      if (event.key !== 'Enter' && event.key !== ' ') {
+        return;
+      }
+
+      this.#wasOpenOnActivationStart = this.#isOpen;
     });
 
     this.#button.addEventListener('click', () => {
-      const wasOpen = this.#wasOpenOnPointerDown;
+      /**
+       * The snapshot is the answer whenever the popover has already dismissed itself over this
+       * activation, which is the usual order. The live state covers the case where it has not
+       * got there yet, so the toggle does not depend on which of the two runs first
+       */
+      const wasOpen = this.#wasOpenOnActivationStart || this.#isOpen;
 
-      this.#wasOpenOnPointerDown = false;
+      this.#wasOpenOnActivationStart = false;
 
       /**
        * Safari leaves a clicked button unfocused, and the popover would then capture
@@ -368,12 +410,7 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
    * without emitting anything, which would leave the button advertising a menu that is gone
    */
   #close(): void {
-    /**
-     * A menu can be mid-build rather than open, since `#isOpen` is only set once the providers
-     * have returned. Abandoning the request here is what keeps a menu from appearing moments
-     * after it was closed, and is why this runs before the open-state guard below
-     */
-    this.#openToken++;
+    this.#abandonPendingBuild();
 
     if (!this.#isOpen) {
       return;
@@ -388,6 +425,14 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
    * Records the menu as closed, once, whichever route closed it
    */
   #handleClosed = (): void => {
+    /**
+     * Escape and a click outside reach this directly from the popover, without passing through
+     * `#close()`, so the two close paths have to abandon a build in flight alike. A menu can be
+     * mid-build rather than open -- `#isOpen` is only set once the providers have returned --
+     * which is why this runs before the open-state guard below
+     */
+    this.#abandonPendingBuild();
+
     if (!this.#isOpen) {
       return;
     }
@@ -400,11 +445,25 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
   };
 
   /**
+   * Discards whichever menu is still being built, so that it never reaches the screen.
+   *
+   * Bumping the token is what the build checks before rendering; `#buildingFor` goes with it,
+   * since there is no longer a block being built for
+   */
+  #abandonPendingBuild(): void {
+    this.#openToken++;
+    this.#buildingFor = null;
+  }
+
+  /**
    * Builds the menu for a block and opens it, unless there is nothing to show
    * @param index - position the opening request named
    */
   async #open(index: number): Promise<void> {
     const token = ++this.#openToken;
+
+    this.#buildingFor = index;
+
     const blockId = this.#api.blocks.getIdByIndex(index);
 
     /**
@@ -431,6 +490,8 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
     if (token !== this.#openToken) {
       return;
     }
+
+    this.#buildingFor = null;
 
     /**
      * Every provider opted out of this block. Same reasoning as the missing block above: the
