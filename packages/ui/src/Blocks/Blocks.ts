@@ -262,7 +262,14 @@ export class BlocksUI implements EditorjsPlugin {
   #updateSelectedBlock(event: MouseEvent): void {
     const block = event.target as HTMLElement;
 
-    this.#selectBlock(block, this.#blocks.indexOf(block));
+    /**
+     * Announced without deduplication, unlike a caret move. `mouseenter` only fires when the
+     * pointer actually crosses into a block, so there is no repetition here to suppress -- and
+     * suppressing it is wrong: a listener that ignored the last announcement, as the toolbar
+     * and the settings menu both do while the menu is open, would otherwise never hear that
+     * the pointer came back
+     */
+    this.#announceSelectedBlock(block, this.#blocks.indexOf(block));
   }
 
   /**
@@ -297,10 +304,23 @@ export class BlocksUI implements EditorjsPlugin {
    * @param index - its position in the document
    */
   #selectBlock(block: HTMLElement, index: number): void {
+    /**
+     * `selectionchange` fires for every caret move, most of which stay inside one block, so
+     * announcing each one would be noise. Pointer entry is announced unconditionally instead
+     */
     if (index === this.#selectedBlockIndex) {
       return;
     }
 
+    this.#announceSelectedBlock(block, index);
+  }
+
+  /**
+   * Reports the selected block to everything that follows it
+   * @param block - element of the selected block
+   * @param index - position of the block in the document
+   */
+  #announceSelectedBlock(block: HTMLElement, index: number): void {
     this.#selectedBlockIndex = index;
 
     this.#eventBus.dispatchEvent(new BlockSelectedUIEvent({

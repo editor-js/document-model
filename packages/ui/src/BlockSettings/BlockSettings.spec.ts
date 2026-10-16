@@ -159,6 +159,17 @@ function clickButton(button: HTMLButtonElement): void {
 }
 
 /**
+ * Activates the button the way Enter and Space do: a `keydown`, then a `click`, with no
+ * pointer events anywhere in between
+ * @param button - control to activate
+ */
+function activateFromKeyboard(button: HTMLButtonElement): void {
+  button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter',
+    bubbles: true }));
+  button.click();
+}
+
+/**
  * Asks the plugin to open settings for a block, then lets the providers settle
  * @param eventBus - bus to dispatch on
  * @param index - block position to open settings for
@@ -587,6 +598,72 @@ describe('BlockSettingsUI', () => {
       expect(itemTitles(instance.element)).toEqual([]);
     });
 
+    it('should abandon a build in flight when the open menu is dismissed', async () => {
+      const onOpened = jest.fn();
+
+      instance.plugin.publicApi.register(async (ctx) => {
+        if (ctx.blockIndex === 1) {
+          await new Promise(resolve => setTimeout(resolve, SLOW_PROVIDER_MS));
+        }
+
+        return {
+          title: `For ${ctx.blockId}`,
+          onActivate: () => {},
+        };
+      });
+
+      await open(instance.eventBus, 0);
+      expect(itemTitles(instance.element)).toEqual(['For block-0']);
+
+      instance.eventBus.addEventListener('ui:block-settings:opened', onOpened);
+
+      // A replacement menu is requested, and its provider has not returned yet.
+      instance.eventBus.dispatchEvent(new BlockSettingsOpenUIEvent({ index: 1 }));
+
+      /**
+       * Escape and a click outside reach `#handleClosed` straight from the popover, without
+       * passing through `#close()`. Only that path invalidated a pending build, so a dismissed
+       * menu came back as soon as the replacement's provider returned
+       */
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape',
+        bubbles: true }));
+
+      await new Promise(resolve => setTimeout(resolve, BOTH_REQUESTS_SETTLED_MS));
+
+      expect(onOpened).not.toHaveBeenCalled();
+    });
+
+    it('should abandon a build in flight when the selection moves to another block', async () => {
+      const onOpened = jest.fn();
+
+      instance.eventBus.addEventListener('ui:block-settings:opened', onOpened);
+
+      instance.plugin.publicApi.register(async (ctx) => {
+        await new Promise(resolve => setTimeout(resolve, SLOW_PROVIDER_MS));
+
+        return {
+          title: `For ${ctx.blockId}`,
+          onActivate: () => {},
+        };
+      });
+
+      instance.eventBus.dispatchEvent(new BlockSettingsOpenUIEvent({ index: 0 }));
+
+      /**
+       * `#isOpen` is still false while the providers run, so selection is still being followed.
+       * The build for block 0 would otherwise finish and put block 0's actions beside block 1
+       */
+      instance.eventBus.dispatchEvent(new BlockSelectedUIEvent({
+        block: document.createElement('div'),
+        index: 1,
+      }));
+
+      await new Promise(resolve => setTimeout(resolve, BOTH_REQUESTS_SETTLED_MS));
+
+      expect(onOpened).not.toHaveBeenCalled();
+      expect(itemTitles(instance.element)).toEqual([]);
+    });
+
     it('should let the newest request win when two overlap', async () => {
       const onOpened = jest.fn();
 
@@ -631,6 +708,59 @@ describe('BlockSettingsUI', () => {
 
     it('should announce a button alongside the menu', () => {
       expect(instance.button.tagName).toBe('BUTTON');
+    });
+
+    it('should not submit a form it happens to sit inside', () => {
+      /**
+       * A button defaults to `submit`, and an editor mounted inside a form would then post it
+       * on every click of this control
+       */
+      expect(instance.button.type).toBe('button');
+    });
+
+    it('should close the menu when activated again from the keyboard', async () => {
+      const onClosed = jest.fn();
+      const provider = jest.fn(() => ({ title: 'Anchor',
+        onActivate: () => {} }));
+
+      instance.plugin.publicApi.register(provider);
+      instance.eventBus.addEventListener('ui:block-settings:closed', onClosed);
+
+      selectBlock(0);
+
+      clickButton(instance.button);
+      await flush();
+
+      expect(instance.button.getAttribute('aria-expanded')).toBe('true');
+      expect(provider).toHaveBeenCalledTimes(1);
+
+      /**
+       * Enter and Space send a `click` with no `mousedown`, so the snapshot taken on pointer
+       * down says "closed" however long the menu has been open. Read only from that, the
+       * button built the menu a second time instead of dismissing it -- the toggle worked for
+       * a mouse and not for a keyboard
+       */
+      activateFromKeyboard(instance.button);
+      await flush();
+
+      expect(instance.button.getAttribute('aria-expanded')).toBe('false');
+      expect(onClosed).toHaveBeenCalledTimes(1);
+      expect(provider).toHaveBeenCalledTimes(1);
+    });
+
+    it('should open from the keyboard when the menu is closed', async () => {
+      instance.plugin.publicApi.register(() => ({
+        title: 'Anchor',
+        onActivate: () => {},
+      }));
+
+      selectBlock(0);
+
+      activateFromKeyboard(instance.button);
+      await flush();
+
+      expect(itemTitles(instance.element)).toEqual(['Anchor']);
+      expect(instance.button.getAttribute('aria-expanded')).toBe('true');
     });
 
     it('should carry an accessible name and advertise the menu it controls', () => {
