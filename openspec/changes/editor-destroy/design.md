@@ -6,9 +6,9 @@ Resources that outlive an editor if nobody releases them:
 
 | Owner | Resource | Today |
 |---|---|---|
-| `EditorjsUI` | wrapper `div` appended to the integrator's holder | `destroy()` is a no-op |
-| `BlocksUI` | blocks holder DOM listeners (`beforeinput`, `keydown`, `copy`), block wrappers | fixed in #174 (open), out of scope here |
-| `ToolbarUI` / `ToolboxUI` / `InlineToolbarUI` | EventBus listeners, popovers | `destroy()` removes the holder but keeps the listeners |
+| `EditorjsUI` | wrapper `div` appended to the integrator's holder | covered by #174, out of scope here |
+| `BlocksUI` | blocks holder DOM listeners (`beforeinput`, `keydown`, `copy`), block wrappers | covered by #174, out of scope here |
+| `ToolbarUI` / `ToolboxUI` / `InlineToolbarUI` | EventBus listeners, popovers | covered by #174, out of scope here; `InlineToolbarUI`'s inline tool instances are handled here after #174 lands (D7) |
 | `CaretAdapter` | subscription to the singleton `useSelectionChange` watcher (`document` `selectionchange`) and `api.selection.onCaretUpdate` | `@todo Unsubscribe on adapter destruction` |
 | `FormattingAdapter` | `core:ToolLoaded` and `api.document.onUpdate` listeners, inline tool instances | never released |
 | `DOMAdapters` | `DOMBlockToolAdapter` per block (model and `ui:beforeinput` listeners) | released only on block removal |
@@ -114,7 +114,7 @@ Plugins and tools are interfaces, not base classes, so they own their own contro
 - [An async `render()` settles after teardown and dispatches `BlockAddedCoreEvent` into a dead EventBus] → `BlockRenderer` checks a `#destroyed` flag after the `await`, then destroys the late instance and its adapter instead of dispatching.
 - [Ops not yet sent in `CollaborationManager`'s debounced batch are lost on destroy] → This already happens when a tab closes. Flushing would need async teardown (Non-Goal) and is listed in Open Questions.
 - [The adapter contract narrows `destroy?()` to `destroy()`, which is a type-level break for third-party adapters] → No third-party adapters exist yet, and the package is pre-1.0.
-- [#174 overlaps with the UI teardown] → This change doesn't touch `BlocksUI`. It shares two pieces with #174: the UI package's Jest setup (kept byte-identical, so either merge order folds cleanly) and the `EditorjsUI.destroy()` wrapper removal (same line, plus the controller abort here). Whichever lands second resolves that one hunk.
+- [#174 overlaps with UI teardown] → #174 covers every UI plugin's teardown, so this change has no UI plugin implementation. The only UI code here is `InlineToolbarUI` destroying its inline tool instances, which is done after #174 lands because #174 rewrites that file. Both changes edit the same `docs/plugins.md` lifecycle line, so whichever lands second merges that one line.
 
 ## Migration Plan
 

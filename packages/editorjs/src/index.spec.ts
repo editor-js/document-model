@@ -120,4 +120,34 @@ describe('EditorJS bundle', () => {
     expect(registered).toContain('ClipboardPlugin');
     expect(registered).toContain('ShortcutsPlugin');
   });
+
+  it('configures a user tool with the options it was registered with', () => {
+    initialize.mockResolvedValue(undefined);
+    class Header {
+      public static name = 'header';
+    }
+    const options = { config: { levels: [1, 2] } };
+
+    void new EditorJS({
+      tools: {
+        header: {
+          class: Header,
+          ...options,
+        },
+      },
+    } as any);
+
+    expect(use).toHaveBeenCalledWith(Header, options);
+  });
+
+  it('leaves a user tool unconfigured when no options are given', () => {
+    initialize.mockResolvedValue(undefined);
+    class Header {
+      public static name = 'header';
+    }
+
+    void new EditorJS({ tools: { header: Header } } as any);
+
+    expect(use).toHaveBeenCalledWith(Header, undefined);
+  });
 });
