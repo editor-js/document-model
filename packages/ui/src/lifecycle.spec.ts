@@ -93,7 +93,7 @@ describe('UI plugin listener lifetime', () => {
     return block;
   }
 
-  function selection(getToolbarConfig: () => unknown): void {
+  function selection(getToolbarConfig: () => unknown, destroy?: () => void): void {
     const text = document.createTextNode('hello');
     const range = document.createRange();
 
@@ -118,7 +118,8 @@ describe('UI plugin listener lifetime', () => {
         name: 'bold',
         options: {},
         create: () => ({ getToolbarConfig,
-          isActive: () => false }),
+          isActive: () => false,
+          destroy }),
       }],
     });
   }
@@ -414,5 +415,64 @@ describe('UI plugin listener lifetime', () => {
 
     expect(() => plugin.destroy()).not.toThrow();
     expect(TestPopover.instances.map(popover => popover.destroy.mock.calls.length)).toEqual(popoverDestroys);
+  });
+
+  it('should destroy inline tool instances when the popover is rebuilt and on destruction', async () => {
+    const toolbar = retain(new InlineToolbarUI(params));
+    const destroyFirst = jest.fn();
+    const destroySecond = jest.fn();
+    const config = (): { type: string;
+      icon: string; } => ({ type: 'default',
+      icon: 'B' });
+
+    selection(config, destroyFirst);
+    await flushRender();
+    expect(destroyFirst).not.toHaveBeenCalled();
+
+    selection(config, destroySecond);
+    await flushRender();
+    expect(destroyFirst).toHaveBeenCalledTimes(1);
+    expect(destroySecond).not.toHaveBeenCalled();
+
+    toolbar.destroy();
+    expect(destroySecond).toHaveBeenCalledTimes(1);
+  });
+
+  it('should destroy inline tool instances when the toolbar is hidden', async () => {
+    retain(new InlineToolbarUI(params));
+    const destroy = jest.fn();
+
+    selection(() => ({ type: 'default',
+      icon: 'B' }), destroy);
+    await flushRender();
+
+    emit(`core:${CoreEventType.SelectionChanged}`, { index: undefined,
+      fragments: [],
+      availableInlineTools: [] });
+
+    expect(destroy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should destroy the inline tool instances of a render superseded before it finished', async () => {
+    retain(new InlineToolbarUI(params));
+    const destroySuperseded = jest.fn();
+    const destroyCurrent = jest.fn();
+    let resolveConfig!: (value: { type: string;
+      icon: string; }) => void;
+    const pending = new Promise<{ type: string;
+      icon: string; }>((resolve) => {
+      resolveConfig = resolve;
+    });
+
+    selection(() => pending, destroySuperseded);
+    selection(() => ({ type: 'default',
+      icon: 'B' }), destroyCurrent);
+    await flushRender();
+    resolveConfig({ type: 'default',
+      icon: 'B' });
+    await flushRender();
+
+    expect(destroySuperseded).toHaveBeenCalledTimes(1);
+    expect(destroyCurrent).not.toHaveBeenCalled();
   });
 });

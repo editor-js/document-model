@@ -110,6 +110,35 @@ export const useSelectionChange = createSingleton(() => {
   }
 
   /**
+   * Controls the single document listener; null while no input is subscribed
+   */
+  let documentListener: AbortController | null = null;
+
+  /**
+   * Registers the shared document listener, unless it is already registered
+   */
+  function listen(): void {
+    if (documentListener !== null) {
+      return;
+    }
+
+    documentListener = new AbortController();
+
+    /**
+     * We use single for document "selection change" event and delegate the provided callbacks to subscribers.
+     */
+    document.addEventListener('selectionchange', onDocumentSelectionChanged, { signal: documentListener.signal });
+  }
+
+  /**
+   * Releases the shared document listener
+   */
+  function stopListening(): void {
+    documentListener?.abort();
+    documentListener = null;
+  }
+
+  /**
    * Subscribe on "selection change" event.
    * @param input - input to watch caret change
    * @param callback - callback that will be called on "selection change" event
@@ -126,6 +155,13 @@ export const useSelectionChange = createSingleton(() => {
     inputsWatched.push(input);
 
     /**
+     * The document listener is shared, so it is added with the first subscriber only
+     */
+    if (inputsWatched.length === 1) {
+      listen();
+    }
+
+    /**
      * Store subscription
      */
     subscribers.set(input, {
@@ -139,36 +175,34 @@ export const useSelectionChange = createSingleton(() => {
    * @param input - input to remove subscription
    */
   function off(input: InputWithCaret): void {
+    if (!subscribers.has(input)) {
+      return;
+    }
+
     subscribers.delete(input);
     inputsWatched.splice(inputsWatched.indexOf(input), 1);
+
+    /**
+     * Editors on the page share the document listener, so it is removed with the last subscriber only
+     */
+    if (inputsWatched.length === 0) {
+      stopListening();
+    }
   }
 
   /**
    * Initialize document selection change watcher.
    */
   function init(): void {
-    /**
-     * We use single for document "selection change" event and delegate the provided callbacks to subscribers.
-     */
-    document.addEventListener('selectionchange', onDocumentSelectionChanged);
+    listen();
   }
 
   /**
-   * Destroy document selection change watcher.
+   * Destroy document selection change watcher: unsubscribes every input, which removes the document listener
    */
   function destroy(): void {
-    document.removeEventListener('selectionchange', onDocumentSelectionChanged);
-
-    inputsWatched.forEach((input) => {
-      const subscriber = subscribers.get(input);
-
-      if (subscriber) {
-        off(input);
-      }
-    });
+    [...inputsWatched].forEach(input => off(input));
   }
-
-  init();
 
   return {
     on,

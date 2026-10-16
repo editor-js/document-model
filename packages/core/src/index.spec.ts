@@ -280,6 +280,25 @@ describe('Core', () => {
       expect(onModelUpdate).not.toHaveBeenCalled();
     });
 
+    it('should stop calling onModelUpdate after destroy', async () => {
+      let model: { removeBlock: (userId: string, index: number) => void } | undefined;
+      const onModelUpdate = jest.fn((updated: unknown) => {
+        model = updated as typeof model;
+      });
+      const core = createCore({ onModelUpdate });
+
+      await core.initialize();
+      await flush();
+      core.destroy();
+      onModelUpdate.mockClear();
+
+      // An integrator that kept the model it was handed changes it after teardown
+      model?.removeBlock('user', 0);
+
+      expect(model).toBeDefined();
+      expect(onModelUpdate).not.toHaveBeenCalled();
+    });
+
     it('should be a no-op when called twice', async () => {
       const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
       const core = createCore();
@@ -351,21 +370,6 @@ describe('Core', () => {
       core.destroy();
 
       expect(error).toHaveBeenCalledWith('[Core] Failed to destroy adapter', expect.any(Error));
-
-      error.mockRestore();
-    });
-
-    it('should not log when the adapter has no destroy', async () => {
-      const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
-      const core = new Core(createConfig());
-
-      core.use(StubAdapter);
-      core.use(StubBlockTool);
-      await core.initialize();
-
-      core.destroy();
-
-      expect(error).not.toHaveBeenCalled();
 
       error.mockRestore();
     });

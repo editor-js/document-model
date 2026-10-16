@@ -42,6 +42,7 @@ document other than the default remounts with one:
 | `/?text=` | a single empty block — how the placeholder tests get one |
 | `/?text=&placeholder=` | an empty block with **no** `placeholder` option set at all |
 | `/?editors=2` | two editors on one page, for anything that has to stay unique per instance |
+| `/?editors=0` | no editor at all, for a baseline from a page that never had one (tests mount their own through `window.EditorJS`) |
 
 The fixture also configures the editor's `placeholder`, which reaches the
 paragraph tool as `config.placeholder` and is exposed as `aria-placeholder`.

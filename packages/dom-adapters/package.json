@@ -12,9 +12,9 @@
     "lint": "eslint ./src",
     "lint:ci": "yarn lint --max-warnings 0",
     "lint:fix": "yarn lint --fix",
-    "test": "jest",
+    "test": "node --experimental-vm-modules $(yarn bin jest)",
     "test:coverage": "yarn test --coverage=true",
-    "test:mutations": "stryker run",
+    "test:mutations": "NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" stryker run",
     "clear": "rm -rf ./dist && rm -rf ./tsconfig.build.tsbuildinfo"
   },
   "devDependencies": {
