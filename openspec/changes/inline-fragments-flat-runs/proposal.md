@@ -27,6 +27,7 @@ None.
 ### Modified Capabilities
 
 - `model`: the "Inline text tree" requirement is replaced by requirements for run-based inline text: canonical formatting state, maximal fragments, deterministic fragment order, range queries and insertion inheritance.
+- `dom-adapters`: "Inline formatting rendering" re-renders with every fragment overlapping the widened range, since fragments now come back whole and can reach outside the queried range.
 
 ## Impact
 
