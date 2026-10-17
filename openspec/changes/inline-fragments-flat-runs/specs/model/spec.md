@@ -7,7 +7,7 @@
 ## ADDED Requirements
 
 ### Requirement: Inline formatted text
-The system SHALL provide `TextNode` as the container of a text data node's value and inline formatting. It SHALL support inserting and removing text, reading text, applying (`format`) and removing (`unformat`) an inline tool over a character range, and listing inline fragments. Indices and ranges SHALL be validated against the current text length, and a range's end SHALL NOT be lower than its start. `insertText`, `removeText`, `format` and `unformat` SHALL dispatch `TextAddedEvent`, `TextRemovedEvent`, `TextFormattedEvent` and `TextUnformattedEvent` respectively, with the affected text range and the current context user. `serialized` SHALL return the text value and the fragments as returned by `getFragments()`. `TextNode` SHALL keep its own copy of the data passed to `format` and SHALL return copies of it in fragments, so changes to those objects don't change its state.
+The system SHALL provide `TextNode` as the container of a text data node's value and inline formatting. It SHALL support inserting and removing text, reading text, applying (`format`) and removing (`unformat`) an inline tool over a character range, and listing inline fragments. Indices and ranges SHALL be validated against the current text length, and a range's end SHALL NOT be lower than its start. `insertText`, `removeText`, `format` and `unformat` SHALL dispatch `TextAddedEvent`, `TextRemovedEvent`, `TextFormattedEvent` and `TextUnformattedEvent` respectively, with the affected text range and the current context user. `serialized` SHALL return the text value and the fragments as returned by `getFragments()`. `TextNode` SHALL keep its own copy of the data passed to `format` and SHALL return copies of it in fragments and in the dispatched `TextFormattedEvent`, so changes to those objects don't change its state or the events (and the collaboration operations and undo history built from them).
 
 Implemented in `src/entities/inline-text/TextNode/index.ts`, validated by its co-located `.spec.ts`.
 
@@ -34,7 +34,7 @@ Implemented in `src/entities/inline-text/TextNode/index.ts`, validated by its co
 #### Scenario: Mutating data after formatting
 - **GIVEN** a `TextNode` with text `abcd` formatted with link over `[0, 4]` using a data object `{ href: 'a' }`
 - **WHEN** that object's `href` is changed to `b`, or the `data` of a fragment returned by `getFragments()` is changed
-- **THEN** `getFragments()` still returns link `[0, 4]` with `{ href: 'a' }`
+- **THEN** `getFragments()` still returns link `[0, 4]` with `{ href: 'a' }`, and the dispatched `TextFormattedEvent` still carries `{ href: 'a' }`
 
 #### Scenario: Removing all formatted text drops the fragment
 - **GIVEN** a `TextNode` with text `abcd` formatted with bold over `[1, 3]`
