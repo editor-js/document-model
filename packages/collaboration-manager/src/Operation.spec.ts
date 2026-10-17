@@ -326,11 +326,12 @@ describe('Operation', () => {
   });
   describe('.serialize()', () => {
     /**
-     * A key removal is a Modify whose payload is `undefined`, and `JSON.stringify` drops a key
-     * holding `undefined` entirely. It survives only because reading a key that is not there
-     * gives `undefined` back -- which is worth an assertion, since nothing in the types says so.
+     * An operation reaches the OT server as JSON, and a key removal is a Modify whose payload
+     * is `undefined` -- which `JSON.stringify` drops entirely. The removal survives only
+     * because reading a key that is not there gives `undefined` back, which is worth asserting
+     * since nothing in the types says so.
      */
-    it('should carry a plugin data removal through the wire', () => {
+    it('should keep a plugin data removal through JSON serialization', () => {
       const index = Index.pluginData(2, createPluginDataName('anchors'), 'visible');
       const op = new Operation(OperationType.Modify, index, {
         payload: undefined,
@@ -346,7 +347,7 @@ describe('Operation', () => {
       expect((received.data as ModifyOperationData).prevPayload).toBe('intro');
     });
 
-    it('should carry the plugin data index itself through the wire', () => {
+    it('should keep the plugin data index itself through JSON serialization', () => {
       const index = Index.pluginData(2, createPluginDataName('anchors'), 'visible');
       const op = new Operation(OperationType.Modify, index, {
         payload: undefined,
