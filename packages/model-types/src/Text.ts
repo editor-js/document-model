@@ -14,7 +14,11 @@ export interface InlineFragment {
   range: [start: number, end: number];
 }
 
-/** Serialized inline tree node containing text value and formatting fragments */
+/**
+ * Serialized text value with its formatting fragments
+ * @todo Rename: the model no longer stores inline formatting as a tree (TextNode keeps runs), so "InlineTree" is misleading.
+ *       It is a public type, so the rename is breaking and needs a major release
+ */
 export interface InlineTreeNodeSerialized {
   /** Text content */
   value: string;

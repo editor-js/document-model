@@ -16,6 +16,7 @@ import { CoreEventType, EventBus } from '@editorjs/sdk';
 import { surround } from '../utils/surround.js';
 import { getBoundaryPointByAbsoluteOffset } from '../utils/getRelativeIndex.js';
 import { expandRangeNodeBoundary } from '../utils/expandRangeNodeBoundary.js';
+import { collectFragmentsToRender } from '../utils/collectFragmentsToRender.js';
 import { inject, injectable } from 'inversify';
 import { TOKENS } from '../tokens.js';
 
@@ -146,19 +147,18 @@ export class FormattingAdapter {
     const inputContent = input.textContent;
     const rangeStart = Math.max(0, textRange[0] - 1);
     const rangeEnd = inputContent !== null ? Math.min(inputContent.length, textRange[1] + 1) : 0;
-    const affectedFragments = this.#api.text.getFragments({
-      block: blockIndex,
-      key: dataKey as string,
-      start: rangeStart,
-      end: rangeEnd,
-    });
-    const leftBoundary = affectedFragments[0]?.range[0] ?? textRange[0];
-    let rightBoundary = textRange[1];
+    const { start, end, fragments } = collectFragmentsToRender(
+      (queryStart, queryEnd) => this.#api.text.getFragments({
+        block: blockIndex,
+        key: dataKey as string,
+        start: queryStart,
+        end: queryEnd,
+      }),
+      rangeStart,
+      rangeEnd
+    );
 
-    for (const fragment of affectedFragments) {
-      rightBoundary = Math.max(rightBoundary, fragment.range[1]);
-    }
-    this.#rerenderRange(input, leftBoundary, rightBoundary, affectedFragments);
+    this.#rerenderRange(input, start, end, fragments);
   }
 
   /**

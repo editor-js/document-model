@@ -8,7 +8,7 @@ Internally it owns an `EditorDocument` (ordered `BlockNode[]`) and a `CaretManag
 
 Each `BlockNode` contains keyed data nodes:
 
-- `TextNode`: rich text with inline tree (`FormattingInlineNode` + `TextInlineNode`).
+- `TextNode`: rich text. Inline formatting is stored as runs: pieces of text with the set of marks (inline tool + data) applied to every character. Runs are canonical (no empty runs, neighbours never have equal mark sets, at most one mark per tool), so the same formatting always gives the same state. `getFragments()` derives maximal fragments from the runs, sorted by start, then end descending, then tool name.
 - `ValueNode<T>`: non-text typed value for tools.
 - `BlockTune`: per-block tune configuration.
 

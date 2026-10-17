@@ -14,7 +14,7 @@ import type { ValueNodeConstructorParameters } from '../ValueNode/index.js';
 import type { InlineToolData, InlineToolName } from '@editorjs/model-types';
 import { BlockChildType } from '@editorjs/model-types';
 import type { InlineFragment, TextNodeSerialized, BlockNodeDataSerialized } from '@editorjs/model-types';
-import { TextNode } from '../inline-fragments/index.js';
+import { TextNode } from '../inline-text/index.js';
 import type { BlockNodeData } from './types/index.js';
 import { NODE_TYPE_HIDDEN_PROP } from '@editorjs/model-types';
 import { TextAddedEvent, TuneModifiedEvent, ValueModifiedEvent } from '@editorjs/model-types';
@@ -31,7 +31,7 @@ const ValueNodeProto = ValueNode.prototype as unknown as {
 
 jest.mock('../BlockTune');
 
-jest.mock('../inline-fragments/TextNode');
+jest.mock('../inline-text/TextNode');
 
 jest.mock('../ValueNode');
 
