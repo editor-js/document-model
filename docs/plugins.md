@@ -42,7 +42,7 @@ Canonical startup order:
 ## Lifecycle boundary
 
 - Plugins receive dependencies via constructor params (`config`, `api`, `eventBus`).
-- Plugin instances may implement `destroy()`, but `Core` currently does not expose a global `destroy()` lifecycle hook.
+- Plugin instances may implement `destroy()`, but `Core` currently does not expose a global `destroy()` lifecycle hook. UI plugins abort their own EventBus/DOM subscriptions before removing their holders and disposing their popovers. Pending inline-toolbar configuration cannot recreate UI after destruction; other instances sharing the bus remain active.
 - Plugins are constructed in registration order, and `api.plugins` is populated as each one is constructed. **Reading another plugin's API inside your constructor returns `undefined`** — do it after `core:ready`, or lazily inside an event handler. `api.plugins` resolves entries at access time, so a plugin constructed first still sees one registered later.
 
 ## Keyboard input

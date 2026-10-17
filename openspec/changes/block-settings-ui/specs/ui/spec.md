@@ -146,4 +146,9 @@ Only caret movement SHALL be filtered for repeats, because `selectionchange` fir
 - **WHEN** `BlocksUI` intercepts it
 - **THEN** it dispatches a `CopyUIEvent` on the `EventBus` carrying the native event as `nativeEvent`, without calling `preventDefault` itself
 
-Implemented in `src/Blocks/Blocks.ts`, `src/Blocks/events/*`.
+#### Scenario: Destroying the blocks UI
+- **GIVEN** `BlocksUI` has rendered the blocks holder
+- **WHEN** `destroy()` is called
+- **THEN** the `beforeinput`, `keydown` and `copy` listeners are removed from the blocks holder, so native events on it no longer dispatch `BeforeInputUIEvent`, `KeydownUIEvent` or `CopyUIEvent`, the `selectionchange` listener is removed from the document, and the blocks holder is detached from the DOM
+
+Implemented in `src/Blocks/Blocks.ts`, `src/Blocks/events/*`, validated by `src/Blocks/Blocks.spec.ts`.
