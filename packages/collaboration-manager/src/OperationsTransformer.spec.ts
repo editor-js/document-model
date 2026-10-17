@@ -1,5 +1,5 @@
-import type { BlockIndex, DocumentId, TextIndex } from '@editorjs/sdk';
-import { createDataKey, Index } from '@editorjs/sdk';
+import type { BlockIndex, DocumentId, PluginDataIndex, TextIndex } from '@editorjs/sdk';
+import { createDataKey, createPluginDataName, Index } from '@editorjs/sdk';
 import { Operation, OperationType } from './Operation.js';
 import { OperationsTransformer } from './OperationsTransformer.js';
 
@@ -550,6 +550,175 @@ describe('OperationsTransformer', () => {
           expect(result).toEqual(operation);
         });
       });
+    });
+  });
+
+  describe('Plugin data operations transformation', () => {
+    const pluginIndex = (blockIndex: number, key = 'id'): Index =>
+      Index.pluginData(blockIndex, createPluginDataName('anchors'), key, 'doc1' as DocumentId);
+
+    const pluginOp = (blockIndex: number, key = 'id'): Operation<OperationType.Modify> => new Operation(
+      OperationType.Modify,
+      pluginIndex(blockIndex, key),
+      { payload: false,
+        prevPayload: true },
+      'user1',
+      1
+    );
+
+    it('should shift the block index when a block is inserted above', () => {
+      const operation = pluginOp(2);
+      const againstOp = new Operation(
+        OperationType.Insert,
+        Index.block(0, 'doc1' as DocumentId),
+        { payload: [] },
+        'user2',
+        1
+      );
+
+      const result = transformer.transform(operation, againstOp);
+
+      expect((result.index as PluginDataIndex).blockIndex).toBe(3);
+      expect((result.index as PluginDataIndex).pluginName).toBe('anchors');
+    });
+
+    it('should become Neutral when its own block is removed', () => {
+      const operation = pluginOp(2);
+      const againstOp = new Operation(
+        OperationType.Delete,
+        Index.block(2, 'doc1' as DocumentId),
+        { payload: [] },
+        'user2',
+        1
+      );
+
+      expect(transformer.transform(operation, againstOp).type).toBe(OperationType.Neutral);
+    });
+
+    /**
+     * The divergence this guards against: the client holding the unsent write applies the
+     * remote value, and its own operation is never echoed back to it, so nothing restores the
+     * value the server ends up holding. The same rule covers data values already
+     */
+    it('should become Neutral against an unsent write to the same key', () => {
+      const incoming = pluginOp(2);
+      const unsentLocal = new Operation(
+        OperationType.Modify,
+        pluginIndex(2),
+        { payload: true,
+          prevPayload: false },
+        'user2'
+      );
+
+      expect(unsentLocal.rev).toBeUndefined();
+      expect(transformer.transform(incoming, unsentLocal).type).toBe(OperationType.Neutral);
+    });
+
+    it('should be applied over a write the server took before it', () => {
+      const operation = pluginOp(2);
+      const againstOp = pluginOp(2);
+
+      const result = transformer.transform(operation, againstOp);
+
+      expect(result.serialize()).toEqual(operation.serialize());
+    });
+
+    it('should not be transformed against an unsent write to another key of the same plugin', () => {
+      const incoming = pluginOp(2, 'visible');
+      const unsentLocal = new Operation(
+        OperationType.Modify,
+        pluginIndex(2, 'id'),
+        { payload: true,
+          prevPayload: false },
+        'user2'
+      );
+
+      const result = transformer.transform(incoming, unsentLocal);
+
+      /**
+       * Compared serialized, so this covers the index, the payloads, the user and the
+       * revision. Asserting the type alone says only that the operation was not neutralised,
+       * which is not what "not transformed" means
+       */
+      expect(result.serialize()).toEqual(incoming.serialize());
+    });
+
+    it('should not be transformed against an unsent write to another plugin', () => {
+      const incoming = pluginOp(2);
+      const unsentLocal = new Operation(
+        OperationType.Modify,
+        Index.pluginData(2, createPluginDataName('spoiler'), 'id', 'doc1' as DocumentId),
+        { payload: true,
+          prevPayload: false },
+        'user2'
+      );
+
+      const result = transformer.transform(incoming, unsentLocal);
+
+      /**
+       * Compared serialized, so this covers the index, the payloads, the user and the
+       * revision. Asserting the type alone says only that the operation was not neutralised,
+       * which is not what "not transformed" means
+       */
+      expect(result.serialize()).toEqual(incoming.serialize());
+    });
+
+    it('should not be transformed against an unsent write to the same key of another block', () => {
+      const incoming = pluginOp(2);
+      const unsentLocal = new Operation(
+        OperationType.Modify,
+        pluginIndex(3),
+        { payload: true,
+          prevPayload: false },
+        'user2'
+      );
+
+      const result = transformer.transform(incoming, unsentLocal);
+
+      /**
+       * Compared serialized, so this covers the index, the payloads, the user and the
+       * revision. Asserting the type alone says only that the operation was not neutralised,
+       * which is not what "not transformed" means
+       */
+      expect(result.serialize()).toEqual(incoming.serialize());
+    });
+
+    it('should transform a text operation against a plugin data operation without throwing', () => {
+      const operation = new Operation(
+        OperationType.Insert,
+        Index.text([{ blockIndex: 1,
+          dataKey: createDataKey('text'),
+          textRange: [0, 0],
+          documentId: 'doc1' as DocumentId }]),
+        { payload: 'abc' },
+        'user1',
+        1
+      );
+
+      const result = transformer.transform(operation, pluginOp(1));
+
+      expect(result.type).toBe(OperationType.Insert);
+    });
+
+    it('should transform a block operation against a plugin data operation without throwing', () => {
+      const operation = new Operation(
+        OperationType.Insert,
+        Index.block(0, 'doc1' as DocumentId),
+        { payload: [] },
+        'user1',
+        1
+      );
+
+      const result = transformer.transform(operation, pluginOp(0));
+
+      expect(result.type).toBe(OperationType.Insert);
+    });
+
+    it('should invert a plugin data operation by swapping the payloads', () => {
+      const inverted = pluginOp(2).inverse();
+
+      expect(inverted.data).toEqual({ payload: true,
+        prevPayload: false });
     });
   });
 });

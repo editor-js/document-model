@@ -6,6 +6,7 @@ import {
   BlockIndex,
   DataIndex,
   TextIndex,
+  PluginDataIndex,
   type PartialIndex,
   EventBus,
   EventType,
@@ -16,11 +17,11 @@ import {
   type Properties,
   type InlineToolData,
   type InlineToolName,
-  type BlockTuneEvents,
+  type PluginDataEvents,
   type TextNodeEvents,
   type ValueNodeEvents,
   type EditorDocumentSerialized,
-  type BlockTuneName,
+  type PluginDataName,
   type BlockNodeDataSerializedValue,
   type BlockNodeSerialized,
   type BlockNodeInit
@@ -330,18 +331,18 @@ export class EditorDocument extends EventBus {
   }
 
   /**
-   * Updates BlockTune data associated with the BlockNode at the specified index or id.
+   * Updates one plugin's per-block data on the BlockNode at the specified index or id.
    * @param blockIndexOrId - The index or block id of the BlockNode to update
-   * @param tuneName - The name of the BlockTune to update
-   * @param data - The data to update the BlockTune with
+   * @param pluginName - Name the data is stored under, by convention the plugin's `name`
+   * @param data - Keys to merge into the plugin's data
    * @throws Error if the index is out of bounds
    */
-  public updateTuneData(blockIndexOrId: BlockIndexOrId, tuneName: BlockTuneName, data: Record<string, unknown>): void {
+  public updatePluginData(blockIndexOrId: BlockIndexOrId, pluginName: PluginDataName, data: Record<string, unknown>): void {
     const resolvedIndex = this.resolveBlockIndex(blockIndexOrId);
 
     this.#checkIndexOutOfBounds(resolvedIndex, this.length - 1);
 
-    this.#children[resolvedIndex].updateTuneData(tuneName, data);
+    this.#children[resolvedIndex].updatePluginData(pluginName, data);
   }
 
   /**
@@ -518,6 +519,10 @@ export class EditorDocument extends EventBus {
         this.unformat(index.blockIndex!, index.dataKey!, (data.previous as TextUnformattedEventData).tool, index.textRange![0], index.textRange![1]);
       }
     }
+    if (index instanceof PluginDataIndex) {
+      this.updatePluginData(index.blockIndex, index.pluginName, { [index.pluginKey]: data.value });
+    }
+
     /**
      * @todo implement other actions
      */
@@ -571,7 +576,7 @@ export class EditorDocument extends EventBus {
         .resolve();
 
       this.dispatchEvent(
-        new (event.constructor as Constructor<TextNodeEvents | ValueNodeEvents | BlockTuneEvents>)(
+        new (event.constructor as Constructor<TextNodeEvents | ValueNodeEvents | PluginDataEvents>)(
           completeIndex,
           event.detail.data
         )
