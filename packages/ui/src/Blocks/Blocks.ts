@@ -38,6 +38,12 @@ export class BlocksUI implements EditorjsPlugin {
   #blocks: HTMLElement[] = [];
 
   /**
+   * Position of the block last announced as selected, so the same one is not announced twice.
+   * `selectionchange` fires on every keystroke, and only a move to another block is news
+   */
+  #selectedBlockIndex = -1;
+
+  /**
    * EventBus instance to exchange events between components
    */
   #eventBus: EventBus;
@@ -74,6 +80,8 @@ export class BlocksUI implements EditorjsPlugin {
 
       this.#removeBlock(index);
     }, { signal });
+
+    document.addEventListener('selectionchange', this.#handleSelectionChange, { signal });
 
     this.#eventBus.dispatchEvent(new BlocksHolderRenderedUIEvent({
       blocksHolder: this.#blocksHolder,
@@ -253,7 +261,67 @@ export class BlocksUI implements EditorjsPlugin {
    */
   #updateSelectedBlock(event: MouseEvent): void {
     const block = event.target as HTMLElement;
-    const index = this.#blocks.indexOf(block);
+
+    /**
+     * Announced without deduplication, unlike a caret move. `mouseenter` only fires when the
+     * pointer actually crosses into a block, so there is no repetition here to suppress -- and
+     * suppressing it is wrong: a listener that ignored the last announcement, as the toolbar
+     * and the settings menu both do while the menu is open, would otherwise never hear that
+     * the pointer came back
+     */
+    this.#announceSelectedBlock(block, this.#blocks.indexOf(block));
+  }
+
+  /**
+   * Reports the block the caret is in, so that "the selected block" means something to a user
+   * who never moves a pointer.
+   *
+   * Hover was the only source of selection, which left every control acting on the selected
+   * block -- the toolbar's settings button among them -- doing nothing at all from the
+   * keyboard. Read here rather than from the editor's own caret state because that is cleared
+   * the moment focus leaves the editable, which is exactly what reaching for a toolbar does
+   */
+  #handleSelectionChange = (): void => {
+    const selection = document.getSelection();
+    const anchor = selection?.anchorNode ?? null;
+
+    if (anchor === null) {
+      return;
+    }
+
+    const index = this.#blocks.findIndex(block => block.contains(anchor));
+
+    if (index === -1) {
+      return;
+    }
+
+    this.#selectBlock(this.#blocks[index], index);
+  };
+
+  /**
+   * Announces the block to work on, unless it is the one already announced
+   * @param block - the block's wrapper element
+   * @param index - its position in the document
+   */
+  #selectBlock(block: HTMLElement, index: number): void {
+    /**
+     * `selectionchange` fires for every caret move, most of which stay inside one block, so
+     * announcing each one would be noise. Pointer entry is announced unconditionally instead
+     */
+    if (index === this.#selectedBlockIndex) {
+      return;
+    }
+
+    this.#announceSelectedBlock(block, index);
+  }
+
+  /**
+   * Reports the selected block to everything that follows it
+   * @param block - element of the selected block
+   * @param index - position of the block in the document
+   */
+  #announceSelectedBlock(block: HTMLElement, index: number): void {
+    this.#selectedBlockIndex = index;
 
     this.#eventBus.dispatchEvent(new BlockSelectedUIEvent({
       block,
@@ -278,6 +346,8 @@ export class BlocksUI implements EditorjsPlugin {
      * Detaching the holder takes the block wrappers inside it along
      */
     this.#blocksHolder.remove();
+
     this.#blocks = [];
+    this.#selectedBlockIndex = -1;
   }
 }

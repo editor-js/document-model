@@ -437,6 +437,19 @@ export class BlocksManager {
   }
 
   /**
+   * Returns the name of the tool rendering the block at the given index, or undefined when the
+   * index names no block. Out of bounds reports rather than throws, matching `getIdByIndex`
+   * @param index - position of the block in the document
+   */
+  public getToolByIndex(index: number): string | undefined {
+    if (index < 0 || index >= this.blocksCount) {
+      return undefined;
+    }
+
+    return this.#model.getBlockSerialized(index).name;
+  }
+
+  /**
    * Returns the per-block data stored by the given plugin, or undefined when it stores none
    * @param blockIndexOrId - position of the block in the document, or its id
    * @param pluginName - key the data is stored under, by convention the owning plugin's `name`

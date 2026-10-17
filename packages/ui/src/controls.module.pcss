@@ -1,0 +1,28 @@
+/**
+ * Styling shared by the icon buttons in the floating toolbar's actions container, which are not
+ * all rendered by the same component: `ToolbarUI` owns the plus button, `BlockSettingsUI` the
+ * settings button. A plain class rather than an `@apply` property set, because that resolves
+ * within one file's PostCSS pass and every component would have to repeat the declarations
+ */
+.toolbar-button {
+  background: none;
+  border: none;
+  padding: 0;
+
+  color: var(--base--text);
+  cursor: pointer;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-m);
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  user-select: none;
+  flex-shrink: 0;
+
+  @media (hover: hover) {
+    &:hover {
+      background-color: var(--accent--bg-primary);
+    }
+  }
+}
