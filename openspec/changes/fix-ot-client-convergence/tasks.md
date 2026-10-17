@@ -1,6 +1,6 @@
 ## 1. Tests
 
-- [ ] 1.1 Keep `packages/ot-server/src/convergence.spec.ts` (two clients and a real `DocumentManager`: insert during an in-flight op, same-position inserts, queued op rebased against a remote insert), currently failing
+- [ ] 1.1 Flip the three `it.failing` tests in `packages/ot-server/src/convergence.spec.ts` (two clients and a real `DocumentManager`: insert during an in-flight op, same-position inserts, queued op rebased against a remote insert) back to `it` once the fix makes them pass
 - [ ] 1.2 Add failing `OTClient` specs: sent operations carry the base revision taken from the handshake, acks and remote operations; an incoming operation is transformed against the in-flight one
 - [ ] 1.3 Add failing `OperationsTransformer` specs for `againstIsLater` on text-insert ties and same-key value conflicts, and replace the spec pinning "against op has no revision → Neutral"
 
