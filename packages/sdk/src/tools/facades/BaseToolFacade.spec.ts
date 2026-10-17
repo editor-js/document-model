@@ -1,11 +1,33 @@
 /* eslint-disable jsdoc/require-jsdoc,@typescript-eslint/no-magic-numbers */
 
 import { describe, expect, it } from '@jest/globals';
-import type { BlockToolConstructor, BlockToolData } from '../../entities/index.js';
+import type {
+  BlockToolConstructor,
+  BlockToolData,
+  /*
+   * Everything below is asserted absent: under `ts-jest` a stale `@ts-expect-error` is
+   * itself a diagnostic, so each directive fails this suite while its name still exists.
+   * Only tool-kind names are enumerated — the model layer keeps its own per-block data
+   * vocabulary, renamed separately by `plugin-block-data`.
+   */
+  // @ts-expect-error -- the `BlockTune` contract went with the tune tool kind
+  BlockTune,
+  // @ts-expect-error -- the `BlockTuneConstructor` contract went with the tune tool kind
+  BlockTuneConstructor,
+  // @ts-expect-error -- the `BlockTuneConstructorOptions` contract went with the tune tool kind
+  BlockTuneConstructorOptions,
+  // @ts-expect-error -- the `BlockTuneOptions` contract went with the tune tool kind
+  BlockTuneOptions,
+  // @ts-expect-error -- the `BlockTuneData` contract went with the tune tool kind
+  BlockTuneData
+} from '../../entities/index.js';
 import { BlockToolOptionKey, ToolType } from '../../entities/index.js';
 import type { ToolOptions } from './BaseToolFacade.js';
 import { UserToolOptions } from './BaseToolFacade.js';
 import { BlockToolFacade } from './BlockToolFacade.js';
+// @ts-expect-error -- the `BlockTuneFacade` class went with the tune tool kind
+import type { BlockTuneFacade } from './index.js';
+import type { BaseToolFacade } from './BaseToolFacade.js';
 import type { InlineFragment } from '@editorjs/model-types';
 import { BlockChildType, NODE_TYPE_HIDDEN_PROP } from '@editorjs/model-types';
 import type { EditorAPI } from '../../api';
@@ -505,5 +527,61 @@ describe('BaseToolFacade (via BlockToolFacade)', () => {
         ],
       });
     });
+  });
+});
+
+describe('Tune tool kind removal', () => {
+  it('should no longer export the tune tool contracts', () => {
+    /**
+     * References the absent names so the import directives above are the assertion,
+     * rather than unused imports the linter would strip.
+     */
+    type ToolContracts = {
+      tune: BlockTune;
+      constructor: BlockTuneConstructor;
+      constructorOptions: BlockTuneConstructorOptions;
+      options: BlockTuneOptions;
+      data: BlockTuneData;
+      facade: BlockTuneFacade;
+    };
+
+    const probe: ToolContracts | undefined = undefined;
+
+    expect(probe).toBeUndefined();
+  });
+
+  it('should no longer define a Tune member on ToolType', () => {
+    // @ts-expect-error -- `Tune` was removed from the ToolType enum
+    expect(ToolType.Tune).toBeUndefined();
+  });
+
+  it('should no longer define a Tunes member on BlockToolOptionKey', () => {
+    /*
+     * `BlockToolOptions['tunes']` itself cannot be asserted: the interface carries an
+     * open `[key: string]: unknown` index signature for tool-author options, so every
+     * key resolves. The enum member is the removable surface.
+     */
+    // @ts-expect-error -- `Tunes` was removed from the BlockToolOptionKey enum
+    expect(BlockToolOptionKey.Tunes).toBeUndefined();
+  });
+
+  it('should no longer define an EnabledBlockTunes member on UserToolOptions', () => {
+    // @ts-expect-error -- `EnabledBlockTunes` was removed from the UserToolOptions enum
+    expect(UserToolOptions.EnabledBlockTunes).toBeUndefined();
+  });
+
+  it('should no longer expose tune members on the facades', () => {
+    type FacadeMembers = {
+      // @ts-expect-error -- `isTune()` went with the tune tool kind
+      isTune: BaseToolFacade['isTune'];
+      // @ts-expect-error -- `enabledBlockTunes` went with the tune tool option
+      enabledBlockTunes: BlockToolFacade['enabledBlockTunes'];
+      // @ts-expect-error -- the per-tool `tunes` collection went with the tune tool kind
+      tunes: BlockToolFacade['tunes'];
+    };
+
+    const probe: FacadeMembers | undefined = undefined;
+
+    expect(probe).toBeUndefined();
   });
 });
