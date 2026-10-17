@@ -620,8 +620,7 @@ describe('OperationsTransformer', () => {
 
       const result = transformer.transform(operation, againstOp);
 
-      expect(result.type).toBe(OperationType.Modify);
-      expect((result.index as PluginDataIndex).blockIndex).toBe(2);
+      expect(result.serialize()).toEqual(operation.serialize());
     });
 
     it('should not be transformed against an unsent write to another key of the same plugin', () => {
@@ -634,7 +633,14 @@ describe('OperationsTransformer', () => {
         'user2'
       );
 
-      expect(transformer.transform(incoming, unsentLocal).type).toBe(OperationType.Modify);
+      const result = transformer.transform(incoming, unsentLocal);
+
+      /**
+       * Compared serialized, so this covers the index, the payloads, the user and the
+       * revision. Asserting the type alone says only that the operation was not neutralised,
+       * which is not what "not transformed" means
+       */
+      expect(result.serialize()).toEqual(incoming.serialize());
     });
 
     it('should not be transformed against an unsent write to another plugin', () => {
@@ -647,7 +653,14 @@ describe('OperationsTransformer', () => {
         'user2'
       );
 
-      expect(transformer.transform(incoming, unsentLocal).type).toBe(OperationType.Modify);
+      const result = transformer.transform(incoming, unsentLocal);
+
+      /**
+       * Compared serialized, so this covers the index, the payloads, the user and the
+       * revision. Asserting the type alone says only that the operation was not neutralised,
+       * which is not what "not transformed" means
+       */
+      expect(result.serialize()).toEqual(incoming.serialize());
     });
 
     it('should not be transformed against an unsent write to the same key of another block', () => {
@@ -660,7 +673,14 @@ describe('OperationsTransformer', () => {
         'user2'
       );
 
-      expect(transformer.transform(incoming, unsentLocal).type).toBe(OperationType.Modify);
+      const result = transformer.transform(incoming, unsentLocal);
+
+      /**
+       * Compared serialized, so this covers the index, the payloads, the user and the
+       * revision. Asserting the type alone says only that the operation was not neutralised,
+       * which is not what "not transformed" means
+       */
+      expect(result.serialize()).toEqual(incoming.serialize());
     });
 
     it('should transform a text operation against a plugin data operation without throwing', () => {
