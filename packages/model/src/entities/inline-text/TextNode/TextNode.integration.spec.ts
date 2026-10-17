@@ -543,6 +543,38 @@ describe('TextNode', () => {
       expect(node.getFragments()).toEqual([fragment(link, 0, 4, href('a'))]);
     });
 
+    it('should not change the dispatched event when the data passed to format() is mutated later', () => {
+      const node = new TextNode({ value: 'abcd' });
+      const data = { href: 'a' };
+      let event: TextFormattedEvent | null = null;
+
+      node.addEventListener(EventType.Changed, e => event = e as TextFormattedEvent);
+      node.format(link, 0, 4, createInlineToolData(data));
+      data.href = 'b';
+
+      expect(event).toHaveProperty('detail', expect.objectContaining({
+        data: {
+          tool: link,
+          data: href('a'),
+        },
+      }));
+    });
+
+    it('should keep empty data in the dispatched event', () => {
+      const node = new TextNode({ value: 'abcd' });
+      let event: TextFormattedEvent | null = null;
+
+      node.addEventListener(EventType.Changed, e => event = e as TextFormattedEvent);
+      node.format(bold, 0, 4, createInlineToolData({}));
+
+      expect(event).toHaveProperty('detail', expect.objectContaining({
+        data: {
+          tool: bold,
+          data: createInlineToolData({}),
+        },
+      }));
+    });
+
     it('should not change formatting when data of a returned fragment is mutated', () => {
       const node = new TextNode({ value: 'abcd' });
 

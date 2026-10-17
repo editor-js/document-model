@@ -10,6 +10,7 @@ import {
   TextUnformattedEvent
 } from '@editorjs/model-types';
 import { getContext } from '../../../utils/Context.js';
+import { cloneInlineData } from '../../../utils/index.js';
 import { TextMark } from '../TextMark/index.js';
 import { RunList } from '../RunList/index.js';
 
@@ -142,7 +143,10 @@ export class TextNode extends EventBus {
         new PartialIndex({ textRange: [start, end] }),
         {
           tool,
-          data,
+          /**
+           * A separate copy, so changes to the caller's object reach neither the event nor collaboration operations built from it
+           */
+          data: data === undefined ? undefined : cloneInlineData(data),
         },
         getContext<string | number>()!
       )
