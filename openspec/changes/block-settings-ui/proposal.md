@@ -15,8 +15,8 @@ It **does** assume `test/editorjs-e2e-and-aria-openspec` has merged, since it bu
 
 ## What Changes
 
-- **Block settings plugin.** The new `BlockSettingsUI` (`name: 'block-settings'`) renders a per-block settings popover. Its `publicApi` lets any plugin register a settings provider: a function called with the target block's context each time the menu opens, returning a `MenuConfig` with `onActivate`/`confirmation` declared inside it (the same model as `InlineTool#getToolbarConfig`).
-- **Toolbar settings button.** `ToolbarUI` renders a settings button next to the plus button, opens block settings for the hovered block, mounts the popover, and doesn't reposition while settings are open.
+- **Block settings plugin.** The new `BlockSettingsUI` (`name: 'block-settings'`) renders a per-block settings popover. Its `publicApi` lets any plugin register a settings provider: a function called with the target block's context each time the menu opens, returning a `BlockSettingsMenuConfig` with `onActivate`/`confirmation` declared inside it (the same model as `InlineTool#getToolbarConfig`).
+- **Toolbar settings button.** `BlockSettingsUI` renders the button that opens its menu and announces it together with the menu; `ToolbarUI` mounts both next to the plus button, treats the button as a control of its roving tabindex, and doesn't reposition while settings are open. The button's own name and state belong to the plugin, because `aria-expanded` has to track a menu whose open state only the plugin knows.
 - **Built-in block settings items as a plugin.** The new package `@editorjs/default-block-settings-plugin` (`name: 'default-block-settings'`) provides Move up, Move down, and Delete with a confirmation state (as in v2) through the block-settings API and `BlocksAPI.move`/`delete`.
 - **Bundle.** `@editorjs/editorjs` registers `BlockSettingsUI` and `DefaultBlockSettingsPlugin` by default.
 - **Types.** `@editorjs/ui` exports the settings API types and augments `EditorjsPluginApiMap`; `sdk` gains only a `UiComponentType.BlockSettings` member for the new plugin's static `type`.
@@ -28,13 +28,13 @@ It **does** assume `test/editorjs-e2e-and-aria-openspec` has merged, since it bu
 ### New Capabilities
 
 - `block-settings`: the per-block settings popover and the plugin-facing registration API for its items.
-  - *Intended Purpose (paste into the folded spec, since archive writes a `TBD` placeholder):* "The block settings menu (the \"tunes\" menu in v2) is a UI surface that any plugin can add items to; it is not tied to a special entity type. This capability owns the `BlockSettingsUI` plugin, the toolbar button that opens it for the hovered block, and the `publicApi` through which plugins register settings providers that return `MenuConfig` items for a given block. The toolbar and block rendering it builds on live in [[ui]], the `MenuConfig` contract in [[sdk]], and cross-plugin access in [[plugin-public-api]]."
+  - *Intended Purpose (paste into the folded spec, since archive writes a `TBD` placeholder):* "The block settings menu (the \"tunes\" menu in v2) is a UI surface that any plugin can add items to; it is not tied to a special entity type. This capability owns the `BlockSettingsUI` plugin, the button that opens it for the selected block, and the `publicApi` through which plugins register settings providers that return `BlockSettingsMenuConfig` items for a given block. The toolbar that hosts the button and the block rendering it builds on live in [[ui]], and cross-plugin access in [[plugin-public-api]]."
 - `default-block-settings-plugin`: the built-in Move up / Move down / Delete settings, implemented as a plugin.
   - *Intended Purpose:* "`@editorjs/default-block-settings-plugin` supplies the default block settings entries — moving a block up or down and deleting it after confirmation — by registering a provider with [[block-settings]] and calling `BlocksAPI.move`/`delete` from [[core]]. It is the reference example of a \"tune\" built as a plain plugin, and is registered by the [[editorjs-bundle]]."
 
 ### Modified Capabilities
 
-- `ui`: `ToolbarUI` renders an accessible settings button, keeps it in the toolbar's roving tabindex, and mounts the block settings popover.
+- `ui`: `ToolbarUI` mounts the settings button and the menu that `BlockSettingsUI` announces, keeps that button in its roving tabindex, and reassigns its single tab stop once the button joins. `BlocksUI` also reports the selected block for a caret move, not only for pointer entry.
 - `editorjs-bundle`: the default composition includes `BlockSettingsUI` and `DefaultBlockSettingsPlugin`.
 
 ## Impact
