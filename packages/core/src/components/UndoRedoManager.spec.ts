@@ -39,10 +39,11 @@ jest.unstable_mockModule('@editorjs/sdk', () => ({
     Modified: 'modified',
   },
   TextIndex: class TextIndex {},
+  BlockIndex: class BlockIndex {},
 }));
 
 const { EditorJSModel } = await import('@editorjs/model');
-const { EventType, EventAction, EventBus, TextIndex } = await import('@editorjs/sdk');
+const { EventType, EventAction, EventBus, TextIndex, BlockIndex } = await import('@editorjs/sdk');
 const { UndoRedoManager } = await import('./UndoRedoManager.js');
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -112,6 +113,14 @@ function createPayload(
 
 function fireModelEvent(listener: (e: unknown) => void, payload: ReturnType<typeof createPayload>): void {
   listener({ detail: payload });
+}
+
+/**
+ * Ends the current browser task: runs the zero-delay timer UndoRedoManager uses to
+ * detect the task boundary, without letting the 500 ms debounce fire
+ */
+function endTask(): void {
+  jest.advanceTimersByTime(0);
 }
 
 describe('UndoRedoManager', () => {
@@ -209,6 +218,16 @@ describe('UndoRedoManager', () => {
       manager.destroy();
 
       expect(clearTimeoutSpy).toHaveBeenCalled();
+    });
+
+    it('should not record events buffered for an unfinished task after destroy', () => {
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Added));
+
+      manager.destroy();
+      jest.runAllTimers();
+      manager.undo();
+
+      expect(model.removeData).not.toHaveBeenCalled();
     });
 
     it('should remove the model updates listener', () => {
@@ -416,6 +435,7 @@ describe('UndoRedoManager', () => {
           }
         )
       );
+      endTask();
       fireModelEvent(
         modelChangedListener,
         createPayload(
@@ -426,6 +446,7 @@ describe('UndoRedoManager', () => {
           }
         )
       );
+      endTask();
       jest.runAllTimers();
 
       manager.undo();
@@ -669,6 +690,7 @@ describe('UndoRedoManager', () => {
           }
         )
       );
+      endTask();
       fireModelEvent(
         modelChangedListener,
         createPayload(
@@ -679,6 +701,7 @@ describe('UndoRedoManager', () => {
           }
         )
       );
+      endTask();
       jest.runAllTimers();
 
       manager.undo(); // both events should be undone in a single step
@@ -700,6 +723,7 @@ describe('UndoRedoManager', () => {
           }
         )
       );
+      endTask();
       fireModelEvent(
         modelChangedListener,
         createPayload(
@@ -710,6 +734,7 @@ describe('UndoRedoManager', () => {
           }
         )
       );
+      endTask();
       jest.runAllTimers();
 
       manager.undo(); // only the second event
@@ -739,6 +764,7 @@ describe('UndoRedoManager', () => {
           }
         )
       );
+      endTask();
       fireModelEvent(
         modelChangedListener,
         createPayload(
@@ -752,6 +778,7 @@ describe('UndoRedoManager', () => {
           }
         )
       );
+      endTask();
       jest.runAllTimers();
 
       // First undo targets the Modified event (on top of the stack)
@@ -775,6 +802,7 @@ describe('UndoRedoManager', () => {
           }
         )
       );
+      endTask();
       fireModelEvent(
         modelChangedListener,
         createPayload(
@@ -785,6 +813,7 @@ describe('UndoRedoManager', () => {
           }
         )
       );
+      endTask();
       jest.runAllTimers();
 
       // First undo should only undo the Removed event (top of stack)
@@ -814,6 +843,7 @@ describe('UndoRedoManager', () => {
           }
         )
       );
+      endTask();
       fireModelEvent(
         modelChangedListener,
         createPayload(
@@ -824,6 +854,7 @@ describe('UndoRedoManager', () => {
           }
         )
       );
+      endTask();
       jest.runAllTimers();
 
       manager.undo();
@@ -851,6 +882,7 @@ describe('UndoRedoManager', () => {
           }
         )
       );
+      endTask();
       fireModelEvent(
         modelChangedListener,
         createPayload(
@@ -861,6 +893,7 @@ describe('UndoRedoManager', () => {
           }
         )
       );
+      endTask();
       jest.runAllTimers();
 
       manager.undo();
@@ -888,6 +921,7 @@ describe('UndoRedoManager', () => {
           }
         )
       );
+      endTask();
       fireModelEvent(
         modelChangedListener,
         createPayload(
@@ -898,6 +932,7 @@ describe('UndoRedoManager', () => {
           }
         )
       );
+      endTask();
       jest.runAllTimers();
 
       manager.undo();
@@ -920,6 +955,7 @@ describe('UndoRedoManager', () => {
           }
         )
       );
+      endTask();
       fireModelEvent(
         modelChangedListener,
         createPayload(
@@ -930,6 +966,7 @@ describe('UndoRedoManager', () => {
           }
         )
       );
+      endTask();
       jest.runAllTimers();
 
       manager.undo();
@@ -952,6 +989,7 @@ describe('UndoRedoManager', () => {
           }
         )
       );
+      endTask();
       fireModelEvent(
         modelChangedListener,
         createPayload(
@@ -962,6 +1000,7 @@ describe('UndoRedoManager', () => {
           }
         )
       );
+      endTask();
       jest.runAllTimers();
 
       manager.undo();
@@ -982,6 +1021,7 @@ describe('UndoRedoManager', () => {
           }
         )
       );
+      endTask();
 
       jest.runAllTimers(); // debounce fires → batch pushed to undoStack
 
@@ -1004,6 +1044,7 @@ describe('UndoRedoManager', () => {
           }
         )
       );
+      endTask();
 
       // Advance to 400 ms – timer has not fired yet (fires at 500 ms)
       jest.advanceTimersByTime(400);
@@ -1019,6 +1060,7 @@ describe('UndoRedoManager', () => {
           }
         )
       );
+      endTask();
 
       // Advance another 400 ms – total 800 ms but timer was reset at 400 ms, fires at 900 ms
       jest.advanceTimersByTime(400);
@@ -1028,6 +1070,267 @@ describe('UndoRedoManager', () => {
 
       // Both events must be undone in one step (same batch)
       expect(model.removeData).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('block events', () => {
+    const blockIndex = (): object => Object.assign(new (BlockIndex as unknown as new () => object)(), { blockIndex: 1 });
+    const block = {
+      id: 'block-1',
+      name: 'paragraph',
+      data: {},
+    };
+
+    it('should pass a block-level Added event\'s block as a one-item array when undoing', () => {
+      const index = blockIndex();
+
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Added, { index: index as ReturnType<typeof createIndex>,
+        data: block }));
+
+      manager.undo();
+
+      expect(model.removeData).toHaveBeenCalledWith(USER_ID, index, [block]);
+    });
+
+    it('should pass a block-level Removed event\'s block as a one-item array when undoing', () => {
+      const index = blockIndex();
+
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Removed, { index: index as ReturnType<typeof createIndex>,
+        data: block }));
+
+      manager.undo();
+
+      expect(model.insertData).toHaveBeenCalledWith(USER_ID, index, [block]);
+    });
+
+    it('should pass a block-level event\'s block as a one-item array when redoing', () => {
+      const index = blockIndex();
+
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Added, { index: index as ReturnType<typeof createIndex>,
+        data: block }));
+
+      manager.undo();
+      manager.redo();
+
+      expect(model.insertData).toHaveBeenCalledWith(USER_ID, index, [block]);
+    });
+
+    it('should pass text event data unchanged', () => {
+      const index = createIndex({ textRange: [0, 0] });
+
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Added, { index,
+        data: 'a' }));
+
+      manager.undo();
+
+      expect(model.removeData).toHaveBeenCalledWith(USER_ID, index, 'a');
+    });
+  });
+
+  describe('grouping by task', () => {
+    const textAt = (start: number, end = start): ReturnType<typeof createIndex> => createIndex({ textRange: [start, end] });
+    const blockAt = (blockIndex: number): ReturnType<typeof createIndex> => createIndex({
+      isTextIndex: false,
+      blockIndex,
+      textRange: undefined,
+    });
+
+    it('should undo several changes made in one task in a single step', () => {
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Removed, { index: textAt(2, 5),
+        data: 'llo' }));
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Added, { index: blockAt(1),
+        data: [] }));
+      endTask();
+      jest.runAllTimers();
+
+      manager.undo();
+
+      expect(model.removeData).toHaveBeenCalledTimes(1);
+      expect(model.insertData).toHaveBeenCalledTimes(1);
+
+      manager.undo();
+
+      expect(model.removeData).toHaveBeenCalledTimes(1);
+      expect(model.insertData).toHaveBeenCalledTimes(1);
+    });
+
+    it('should undo the events of one task in reverse order', () => {
+      const removed = createPayload(EventAction.Removed, { index: textAt(2, 5),
+        data: 'llo' });
+      const added = createPayload(EventAction.Added, { index: blockAt(1),
+        data: [] });
+      const calls: string[] = [];
+
+      model.removeData = jest.fn(() => calls.push('removeData'));
+      model.insertData = jest.fn(() => calls.push('insertData'));
+
+      fireModelEvent(modelChangedListener, removed);
+      fireModelEvent(modelChangedListener, added);
+      endTask();
+
+      manager.undo();
+
+      expect(calls).toEqual(['removeData', 'insertData']);
+    });
+
+    it('should redo a whole task in a single step', () => {
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Removed, { index: textAt(2, 5),
+        data: 'llo' }));
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Added, { index: blockAt(1),
+        data: [] }));
+      endTask();
+      jest.runAllTimers();
+
+      manager.undo();
+      manager.redo();
+
+      expect(model.removeData).toHaveBeenCalledTimes(2);
+      expect(model.insertData).toHaveBeenCalledTimes(2);
+    });
+
+    it('should keep single keystrokes batched as before', () => {
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Added, { index: textAt(0),
+        data: 'a' }));
+      endTask();
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Added, { index: textAt(1),
+        data: 'b' }));
+      endTask();
+      jest.runAllTimers();
+
+      manager.undo();
+
+      expect(model.removeData).toHaveBeenCalledTimes(2);
+    });
+
+    it('should keep typing before a multi-change task as a separate step', () => {
+      const typed = createPayload(EventAction.Added, { index: textAt(0),
+        data: 'a' });
+
+      fireModelEvent(modelChangedListener, typed);
+      endTask();
+
+      /**
+       * The first event of the task would continue the typed text on its own
+       */
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Added, { index: textAt(1),
+        data: 'b' }));
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Added, { index: blockAt(1),
+        data: [] }));
+      endTask();
+      jest.runAllTimers();
+
+      manager.undo();
+
+      expect(model.removeData).toHaveBeenCalledTimes(2);
+      expect(model.removeData).not.toHaveBeenCalledWith(USER_ID, typed.index, 'a');
+
+      manager.undo();
+
+      expect(model.removeData).toHaveBeenLastCalledWith(USER_ID, typed.index, 'a');
+    });
+
+    it('should start a new step for typing after a task that ended with a block change', () => {
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Removed, { index: textAt(2, 5),
+        data: 'llo' }));
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Added, { index: blockAt(1),
+        data: [] }));
+      endTask();
+
+      const typed = createPayload(EventAction.Added, { index: textAt(0),
+        data: 'x' });
+
+      fireModelEvent(modelChangedListener, typed);
+      endTask();
+      jest.runAllTimers();
+
+      manager.undo();
+
+      expect(model.removeData).toHaveBeenCalledTimes(1);
+      expect(model.removeData).toHaveBeenCalledWith(USER_ID, typed.index, 'x');
+      expect(model.insertData).not.toHaveBeenCalled();
+    });
+
+    it('should merge typing that continues a replace-selection task into its step', () => {
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Removed, { index: textAt(0, 3),
+        data: 'abc' }));
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Added, { index: textAt(0),
+        data: 'x' }));
+      endTask();
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Added, { index: textAt(1),
+        data: 'y' }));
+      endTask();
+      jest.runAllTimers();
+
+      manager.undo();
+
+      expect(model.removeData).toHaveBeenCalledTimes(2);
+      expect(model.insertData).toHaveBeenCalledTimes(1);
+    });
+
+    it('should keep consecutive multi-change tasks as separate steps', () => {
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Added, { index: blockAt(1),
+        data: [] }));
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Added, { index: blockAt(2),
+        data: [] }));
+      endTask();
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Added, { index: blockAt(3),
+        data: [] }));
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Added, { index: blockAt(4),
+        data: [] }));
+      endTask();
+      jest.runAllTimers();
+
+      manager.undo();
+
+      expect(model.removeData).toHaveBeenCalledTimes(2);
+    });
+
+    it('should record buffered events before undo when the task has not ended', () => {
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Removed, { index: textAt(2, 5),
+        data: 'llo' }));
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Added, { index: blockAt(1),
+        data: [] }));
+
+      manager.undo();
+
+      expect(model.removeData).toHaveBeenCalledTimes(1);
+      expect(model.insertData).toHaveBeenCalledTimes(1);
+    });
+
+    it('should record buffered events before redo when the task has not ended', () => {
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Added, { index: blockAt(1),
+        data: [] }));
+      endTask();
+      jest.runAllTimers();
+      manager.undo();
+
+      /**
+       * A new local change clears the redo stack, even if its task has not ended yet
+       */
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Added, { index: blockAt(2),
+        data: [] }));
+
+      manager.redo();
+      manager.undo();
+
+      expect(model.insertData).not.toHaveBeenCalled();
+      expect(model.removeData).toHaveBeenCalledTimes(2);
+    });
+
+    it('should ignore remote events while a task is buffered', () => {
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Added, { index: blockAt(1),
+        data: ['local-1'] }));
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Added, { index: blockAt(2),
+        data: ['remote'],
+        userId: OTHER_USER_ID }));
+      fireModelEvent(modelChangedListener, createPayload(EventAction.Added, { index: blockAt(3),
+        data: ['local-2'] }));
+      endTask();
+
+      manager.undo();
+
+      expect(model.removeData).toHaveBeenCalledTimes(2);
+      expect(model.removeData).not.toHaveBeenCalledWith(USER_ID, expect.anything(), ['remote']);
     });
   });
 });
