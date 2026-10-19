@@ -127,7 +127,7 @@ Plugins and tools are interfaces, not base classes, so they own their own contro
 - [Ops not yet sent in `CollaborationManager`'s debounced batch are lost on destroy] → This already happens when a tab closes. Flushing would need async teardown (Non-Goal) and is listed in Open Questions.
 - [The adapter contract narrows `destroy?()` to `destroy()`, which is a type-level break for third-party adapters] → No third-party adapters exist yet, and the package is pre-1.0.
 - [#174 overlapped with UI teardown] → #174 (merged) covers every UI plugin's teardown, so this change has no UI plugin teardown of its own. `InlineToolbarUI` doesn't destroy inline tool instances either, because they're shared (D7).
-- [ui-kit's tooltip singleton keeps a `window` `scroll` listener] → ui-kit creates it lazily and nothing destroys it, so a page that showed (or, before editor-js/utils#43, merely tore down) a hint keeps the listener after every editor is gone. Fixed upstream in ui-kit, not here.
+- [ui-kit's tooltip singleton kept a `window` `scroll` listener and its element] → it was created lazily and never destroyed, so a page that showed (or merely tore down) a hint kept both after every editor was gone. Fixed upstream: `codex-tooltip` 1.1.0 (codex-team/codex.tooltips#32) only holds them while a hint is shown, and `@editorjs/ui-kit` 2.0.1 (editor-js/utils#43) bundles it and no longer creates the tooltip just to hide it. This change depends on `@editorjs/ui-kit` `^2.0.1`.
 
 ## Migration Plan
 

@@ -97,6 +97,27 @@ test('removes the document and window listeners of destroyed editors', async ({ 
   expect(await activeListeners(page, { global: true })).toEqual(before);
 });
 
+test('leaves no hint tooltip or its listeners behind once a hint has been shown', async ({ page }) => {
+  // Same baseline as above. Showing a hint creates ui-kit's page-wide tooltip, which used to keep
+  // its element in <body> and a window scroll listener for the life of the page
+  await mountDocument(page, '?editors=0');
+
+  const before = await activeListeners(page, { global: true });
+
+  await mountExtraEditors(page, 1);
+  await page.locator('#extra-0').getByRole('textbox', { name: 'Paragraph' })
+    .click({ clickCount: 3 });
+  await page.locator('#extra-0').getByRole('button', { name: /bold/i })
+    .hover();
+  await expect(page.locator('.ct--shown')).toHaveCount(1);
+
+  await destroyExtraEditors(page);
+
+  // The tooltip lets its hiding transition play before it releases the element
+  await expect(page.locator('.ct')).toHaveCount(0);
+  expect(await activeListeners(page, { global: true })).toEqual(before);
+});
+
 test('keeps the other editors on the page working after one is destroyed', async ({ page }) => {
   await mountExtraEditors(page, 2);
   await destroyExtraEditors(page);
