@@ -1,7 +1,7 @@
 # editorjs-bundle Specification
 
 ## Purpose
-`@editorjs/editorjs` is the batteries-included entry point for Editor.js: its default export `EditorJS` composes the headless `@editorjs/core` engine with `DOMAdapters`, `CollaborationManager`, a default set of tools (paragraph, bold, italic, link) and plugins (clipboard, shortcuts), and the default UI, so a caller can get a fully functional editor from configuration alone. It auto-initializes from the constructor, exposes an `isReady` promise, and accepts a v2-style `config.tools` map merged over the defaults with override-by-name.
+`@editorjs/editorjs` is the batteries-included entry point for Editor.js: its default export `EditorJS` composes the headless `@editorjs/core` engine with `DOMAdapters`, `CollaborationManager`, a default set of tools (paragraph, bold, italic, link) and plugins (clipboard, shortcuts, default block settings), and the default UI, so a caller can get a fully functional editor from configuration alone. It auto-initializes from the constructor, exposes an `isReady` promise, and accepts a v2-style `config.tools` map merged over the defaults with override-by-name.
 ## Requirements
 ### Requirement: Batteries-included editor entry point
 The system SHALL provide `@editorjs/editorjs`, a package whose default export is an `EditorJS` class that composes `@editorjs/core` with a default set of tools, plugins, infrastructure, and UI so that a caller can construct a fully functional editor from configuration alone.
