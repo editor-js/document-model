@@ -111,7 +111,6 @@ The system SHALL provide `ToolboxUI`, a searchable popover of block tools popula
 
 Implemented in `src/Toolbox/Toolbox.ts`, `src/Toolbox/events/*`, `src/Toolbox/ToolboxConfigEntry.ts`.
 
-
 ### Requirement: UI plugin listener lifetime
 Each UI plugin SHALL unsubscribe its own EventBus and DOM listeners when destroyed, detach its owned holder, and dispose its owned popover. Destroying one instance SHALL leave other consumers on the shared EventBus active. Teardown SHALL be safe to repeat.
 
@@ -135,6 +134,11 @@ Each UI plugin SHALL unsubscribe its own EventBus and DOM listeners when destroy
 - **GIVEN** a UI plugin has been destroyed
 - **WHEN** `destroy()` is called again
 - **THEN** it returns without releasing anything a second time
+
+#### Scenario: Inline tool instances are released with their popover
+- **GIVEN** the inline toolbar created inline tool instances to build its popover
+- **WHEN** the popover is rebuilt for a new selection, the toolbar is hidden, a render is superseded before it finishes, or the toolbar is destroyed
+- **THEN** each instance created for that popover has its optional `destroy()` called once, and the instances behind the popover still shown are not destroyed
 
 Validated by `src/lifecycle.spec.ts` using real DOM/EventBus listeners and a substituted popover boundary. Vendor-owned global listener internals are outside this requirement's verification scope.
 

@@ -71,24 +71,9 @@ export class CollaborationManager implements EditorjsPlugin {
   #debounceTimer?: ReturnType<typeof setTimeout>;
 
   /**
-   * Cleanup callback for document updates listener
+   * Releases the document, undo, redo and ready listeners on destroy
    */
-  #unsubscribeDocumentUpdates?: () => void;
-
-  /**
-   * Cleanup callback for undo event listener
-   */
-  #unsubscribeUndo?: () => void;
-
-  /**
-   * Cleanup callback for redo event listener
-   */
-  #unsubscribeRedo?: () => void;
-
-  /**
-   * Cleanup callback for ready event listener
-   */
-  #unsubscribeReady?: () => void;
+  readonly #controller = new AbortController();
 
   /**
    * Editor's config
@@ -106,30 +91,23 @@ export class CollaborationManager implements EditorjsPlugin {
     this.#config = config;
     this.#undoRedoManager = new UndoRedoManager();
 
-    const onUndo = (e: UndoCoreEvent): void => {
+    const { signal } = this.#controller;
+
+    signal.addEventListener('abort', api.document.onUpdate(this.#handleEvent.bind(this)));
+
+    eventBus.addEventListener(`core:${CoreEventType.Undo}`, (e: UndoCoreEvent) => {
       e.preventDefault();
 
       this.undo();
-    };
-    const onRedo = (e: RedoCoreEvent): void => {
+    }, { signal });
+
+    eventBus.addEventListener(`core:${CoreEventType.Redo}`, (e: RedoCoreEvent) => {
       e.preventDefault();
 
       this.redo();
-    };
-    const onReady = (): void => {
-      this.#connect();
-    };
+    }, { signal });
 
-    this.#unsubscribeDocumentUpdates = api.document.onUpdate(this.#handleEvent.bind(this));
-
-    eventBus.addEventListener(`core:${CoreEventType.Undo}`, onUndo);
-    this.#unsubscribeUndo = () => void eventBus.removeEventListener(`core:${CoreEventType.Undo}`, onUndo);
-
-    eventBus.addEventListener(`core:${CoreEventType.Redo}`, onRedo);
-    this.#unsubscribeRedo = () => void eventBus.removeEventListener(`core:${CoreEventType.Redo}`, onRedo);
-
-    eventBus.addEventListener(`core:${CoreEventType.Ready}`, onReady);
-    this.#unsubscribeReady = () => void eventBus.removeEventListener(`core:${CoreEventType.Ready}`, onReady);
+    eventBus.addEventListener(`core:${CoreEventType.Ready}`, () => this.#connect(), { signal });
   }
 
   /**
@@ -370,14 +348,11 @@ export class CollaborationManager implements EditorjsPlugin {
   }
 
   /**
-   * Destroys the plugin instance: clears the debounce timer
+   * Destroys the plugin instance: clears the debounce timer, removes its listeners and closes the connection
    */
   public destroy(): void {
     clearTimeout(this.#debounceTimer);
-    this.#unsubscribeDocumentUpdates?.();
-    this.#unsubscribeUndo?.();
-    this.#unsubscribeRedo?.();
-    this.#unsubscribeReady?.();
+    this.#controller.abort();
     this.#client?.close();
     this.#client = null;
   }

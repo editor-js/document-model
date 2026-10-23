@@ -28,6 +28,16 @@ export class OTClient {
   #resolvedOperations: Operation[] = [];
 
   /**
+   * Releases every socket listener on close, including one-shot handlers still awaiting a reply
+   */
+  readonly #controller = new AbortController();
+
+  /**
+   * The socket itself, so close() can close it even before it opens
+   */
+  #socket: WebSocket;
+
+  /**
    * Promise resolving the WebSocket client
    */
   #ws: Promise<WebSocket>;
@@ -66,12 +76,16 @@ export class OTClient {
     this.#userId = userId;
     this.#onRemoteOperation = onRemoteOperation;
     this.#onHandshake = onHandshake;
+    const ws = new WebSocket(serverAddr);
+
+    this.#socket = ws;
+
     this.#ws = new Promise((resolve) => {
-      const ws = new WebSocket(serverAddr);
+      const { signal } = this.#controller;
 
       ws.addEventListener('open', () => {
         resolve(ws);
-      });
+      }, { signal });
 
       ws.addEventListener('message', (message) => {
         try {
@@ -79,7 +93,7 @@ export class OTClient {
         } catch (e) {
           console.error('[OTClient] Couldn\'t process a message', message.data);
         }
-      });
+      }, { signal });
     });
   }
 
@@ -113,7 +127,7 @@ export class OTClient {
         }
       };
 
-      ws.addEventListener('message', onMessage);
+      ws.addEventListener('message', onMessage, { signal: this.#controller.signal });
     });
 
     ws.send(JSON.stringify({
@@ -143,9 +157,8 @@ export class OTClient {
    * Closes websocket connection
    */
   public close(): void {
-    void this.#ws.then((ws) => {
-      ws.close();
-    });
+    this.#controller.abort();
+    this.#socket.close();
   }
 
   /**
@@ -197,7 +210,7 @@ export class OTClient {
       }
     };
 
-    ws.addEventListener('message', onMessage);
+    ws.addEventListener('message', onMessage, { signal: this.#controller.signal });
 
     ws.send(JSON.stringify({
       type: MessageType.Operation,

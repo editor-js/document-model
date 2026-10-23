@@ -57,6 +57,6 @@
     "@editorjs/dom": "^1.2.0",
     "@editorjs/helpers": "^1.2.2",
     "@editorjs/sdk": "workspace:^",
-    "@editorjs/ui-kit": "^2.0.0"
+    "@editorjs/ui-kit": "^2.0.1"
   }
 }

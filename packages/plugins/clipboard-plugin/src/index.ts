@@ -1,4 +1,4 @@
-import type { BlockData, CopyUIEvent, EditorAPI, EditorjsPlugin, EditorjsPluginParams, EventBus } from '@editorjs/sdk';
+import type { BlockData, CopyUIEvent, EditorAPI, EditorjsPlugin, EditorjsPluginParams } from '@editorjs/sdk';
 import { CopyUIEventName } from '@editorjs/sdk';
 import { PluginType } from '@editorjs/sdk';
 
@@ -31,8 +31,11 @@ export class ClipboardPlugin implements EditorjsPlugin {
   public static readonly name = 'clipboard';
 
   readonly #api: EditorAPI;
-  readonly #eventBus: EventBus;
-  #copyEventListener: ((e: CopyUIEvent) => void) | undefined;
+
+  /**
+   * Releases the plugin's listeners on destroy
+   */
+  readonly #controller = new AbortController();
 
   /**
    * @param params - plugin configuration and dependencies
@@ -44,9 +47,8 @@ export class ClipboardPlugin implements EditorjsPlugin {
     const { api, eventBus } = params;
 
     this.#api = api;
-    this.#eventBus = eventBus;
 
-    this.#copyEventListener = (e: CopyUIEvent) => {
+    eventBus.addEventListener(`ui:${CopyUIEventName}`, (e: CopyUIEvent) => {
       const { nativeEvent } = e.detail;
 
       const selectedBlocks = this.#api.selection.selectedBlocks;
@@ -82,27 +84,14 @@ export class ClipboardPlugin implements EditorjsPlugin {
       clipboardData.setData('text/plain', selectionAsPlainText);
       clipboardData.setData('text/html', selectionAsHTML);
       clipboardData.setData(EDITOR_JS_CLIPBOARD_MIME_TYPE, JSON.stringify(clipboardEditorJSObject));
-    };
-
-    eventBus.addEventListener(`ui:${CopyUIEventName}`, this.#copyEventListener);
+    }, { signal: this.#controller.signal });
   }
 
   /**
    * Destroys the plugin and removes all event listeners
    */
   public destroy(): void {
-    this.#removeEventListener();
-  }
-
-  /**
-   * Removes the event listener for copy events
-   * @internal
-   */
-  #removeEventListener(): void {
-    if (this.#copyEventListener !== undefined) {
-      this.#eventBus.removeEventListener(`ui:${CopyUIEventName}`, this.#copyEventListener);
-    }
-    this.#copyEventListener = undefined;
+    this.#controller.abort();
   }
 
   /**
