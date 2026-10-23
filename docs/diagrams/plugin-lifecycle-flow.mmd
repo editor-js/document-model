@@ -43,7 +43,7 @@ sequenceDiagram
   Core->>Plugin: new SomePlugin(config, api, eventBus)
   Plugin->>EventBus: wire event listeners
   Core->>Registry: register(SomePlugin.name, plugin.publicApi) (if exposed)
-  Note over Registry: shared record behind api.plugins;<br/>read at access time, so plugins constructed<br/>earlier still see later registrations
+  Note over Registry: shared record behind api.plugins,<br/>read at access time, so plugins constructed<br/>earlier still see later registrations
   Core->>CollabMgr: new CollaborationManager(config, api, eventBus)
   CollabMgr->>EventBus: wire event listeners
 
