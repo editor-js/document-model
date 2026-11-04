@@ -87,14 +87,14 @@ describe('FormattingAdapter', () => {
     warn.mockRestore();
   });
 
-  it('should call destroy on attached inline tools', () => {
+  it('should not destroy the shared inline tool instances it uses', () => {
     const destroy = jest.fn();
     const { adapter, eventBus } = createAdapter();
 
     loadInlineTool(eventBus, () => ({ destroy }));
     adapter.destroy();
 
-    expect(destroy).toHaveBeenCalledTimes(1);
+    expect(destroy).not.toHaveBeenCalled();
   });
 
   it('should ignore core:ToolLoaded after destroy', () => {
@@ -115,36 +115,13 @@ describe('FormattingAdapter', () => {
     expect(unsubscribeUpdates).toHaveBeenCalledTimes(1);
   });
 
-  it('should destroy a tool instance replaced by a re-attached one', () => {
+  it('should not destroy a tool instance it replaces', () => {
     const destroy = jest.fn();
-    const { adapter, eventBus } = createAdapter();
+    const { eventBus } = createAdapter();
 
     loadInlineTool(eventBus, () => ({ destroy }));
     loadInlineTool(eventBus, () => ({}));
 
-    expect(destroy).toHaveBeenCalledTimes(1);
-
-    adapter.destroy();
-
-    expect(destroy).toHaveBeenCalledTimes(1);
-  });
-
-  it('should not destroy a tool instance attached again', () => {
-    const destroy = jest.fn();
-    const { adapter } = createAdapter();
-    const tool = { destroy } as unknown as InlineTool;
-
-    adapter.attachTool('bold' as InlineToolName, tool);
-    adapter.attachTool('bold' as InlineToolName, tool);
-
     expect(destroy).not.toHaveBeenCalled();
-  });
-
-  it('should replace a tool instance that has no destroy', () => {
-    const { adapter } = createAdapter();
-
-    adapter.attachTool('bold' as InlineToolName, {} as InlineTool);
-
-    expect(() => adapter.attachTool('bold' as InlineToolName, {} as InlineTool)).not.toThrow();
   });
 });
