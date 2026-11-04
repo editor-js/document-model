@@ -118,6 +118,11 @@ export default class Core {
   #services: CoreServices = {};
 
   /**
+   * Releases Core's own listeners on destroy
+   */
+  readonly #controller = new AbortController();
+
+  /**
    * Set by {@link destroy}. A destroyed core can't be used or initialized again
    */
   #destroyed = false;
@@ -164,7 +169,7 @@ export default class Core {
     if (config.onModelUpdate !== undefined) {
       this.#model.addEventListener(EventType.Changed, () => {
         config.onModelUpdate?.(this.#model);
-      });
+      }, { signal: this.#controller.signal });
     }
   }
 
@@ -272,6 +277,7 @@ export default class Core {
      * Plugin instances and services are cleared below, so a second call finds nothing left to destroy
      */
     this.#destroyed = true;
+    this.#controller.abort();
 
     const registry = this.#iocContainer.get(PluginRegistry);
 
