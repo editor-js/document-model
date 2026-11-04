@@ -192,7 +192,7 @@ Implemented in `src/components/UndoRedoManager.ts`, validated by its co-located 
 #### Scenario: Destroying while initialization is pending
 - **GIVEN** `initialize()` has been called and its promise has not settled
 - **WHEN** `destroy()` is called
-- **THEN** whatever was constructed so far is torn down, the pending `initialize()` rejects with a `DOMException` named `AbortError` without initializing the document or dispatching `CoreEventType.Ready`, and any tool or plugin it would have constructed afterwards is not constructed
+- **THEN** whatever was constructed so far is torn down, the pending `initialize()` rejects with a `DOMException` named `AbortError` without initializing the document or dispatching `CoreEventType.Ready`, any tool or plugin it would have constructed afterwards is not constructed, tools still queued for preparation are not prepared, and a tool whose `prepare()` settles after `destroy()` is neither created nor registered and dispatches no `CoreEventType.ToolLoaded`
 
 #### Scenario: Using a destroyed editor
 - **GIVEN** `destroy()` has been called
