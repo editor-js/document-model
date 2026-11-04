@@ -4,6 +4,26 @@ import { EventBus, ToolType } from '@editorjs/sdk';
 import ToolsManager from './ToolsManager.js';
 import type { EditorAPI } from '../api/index.js';
 
+/**
+ * Inline tool whose static prepare() settles only when the test calls finish()
+ */
+interface PendingTool {
+  /**
+   * The tool class
+   */
+  tool: InlineToolConstructor;
+
+  /**
+   * Its static prepare()
+   */
+  prepare: jest.Mock;
+
+  /**
+   * Settles the pending prepare()
+   */
+  finish: () => void;
+}
+
 describe('ToolsManager', () => {
   describe('.prepareTools()', () => {
     it('should not destroy the shared inline tool instance it validates', async () => {
@@ -87,6 +107,94 @@ describe('ToolsManager', () => {
       expect(manager.unavailable.get('probe')).toBeDefined();
 
       log.mockRestore();
+    });
+  });
+
+  describe('.prepareTools() interrupted by .destroy()', () => {
+    /**
+     * Inline tool class with a static prepare() that settles when the test says so
+     * @param name - static name the tool is registered under
+     * @param constructed - called by the tool's constructor
+     */
+    const pendingTool = (name: string, constructed: () => void = jest.fn()): PendingTool => {
+      let finish: () => void = () => undefined;
+      const prepare = jest.fn(() => new Promise<void>((resolve) => {
+        finish = resolve;
+      }));
+
+      /**
+       * Inline tool whose preparation the test controls
+       */
+      class PendingInlineTool {
+        public static type = ToolType.Inline;
+
+        public static name = name;
+
+        public static prepare = prepare;
+
+        /**
+         * Reports its construction
+         */
+        constructor() {
+          constructed();
+        }
+      }
+
+      return {
+        tool: PendingInlineTool as unknown as InlineToolConstructor,
+        prepare,
+        finish: () => finish(),
+      };
+    };
+
+    /**
+     * Lets queued promise jobs run
+     */
+    const flush = (): Promise<void> => new Promise(resolve => setTimeout(resolve, 0));
+
+    it('should not prepare the tools still queued', async () => {
+      const first = pendingTool('first');
+      const second = pendingTool('second');
+      const manager = new ToolsManager(
+        { tools: {} } as unknown as CoreConfigValidated,
+        () => ({}) as EditorAPI,
+        new EventBus()
+      );
+
+      const preparing = manager.prepareTools([[first.tool, undefined], [second.tool, undefined]]);
+
+      await flush();
+      manager.destroy();
+      first.finish();
+      await preparing;
+
+      expect(first.prepare).toHaveBeenCalledTimes(1);
+      expect(second.prepare).not.toHaveBeenCalled();
+    });
+
+    it('should neither create nor announce a tool whose prepare() settles after destroy', async () => {
+      const constructed = jest.fn();
+      const pending = pendingTool('late', constructed);
+      const eventBus = new EventBus();
+      const dispatch = jest.spyOn(eventBus, 'dispatchEvent');
+      const manager = new ToolsManager(
+        { tools: {} } as unknown as CoreConfigValidated,
+        () => ({}) as EditorAPI,
+        eventBus
+      );
+
+      const preparing = manager.prepareTools([[pending.tool, undefined]]);
+
+      await flush();
+      manager.destroy();
+      pending.finish();
+      await preparing;
+
+      expect(pending.prepare).toHaveBeenCalledTimes(1);
+      expect(constructed).not.toHaveBeenCalled();
+      expect(dispatch).not.toHaveBeenCalled();
+      expect(manager.available.get('late')).toBeUndefined();
+      expect(manager.unavailable.get('late')).toBeUndefined();
     });
   });
 
