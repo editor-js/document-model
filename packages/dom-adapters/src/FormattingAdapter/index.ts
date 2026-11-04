@@ -118,22 +118,18 @@ export class FormattingAdapter {
    * @param tool - inline tool instance
    */
   public attachTool(toolName: InlineToolName, tool: InlineTool): void {
-    const replaced = this.#tools.get(toolName);
-
-    if (replaced !== undefined && replaced !== tool) {
-      replaced.destroy?.();
-    }
-
     this.#tools.set(toolName, tool);
   }
 
   /**
-   * Stops listening to tool and model events and destroys the attached inline tool instances
+   * Stops listening to tool and model events and drops the attached inline tool instances
    */
   public destroy(): void {
     this.#controller.abort();
 
-    this.#tools.forEach(tool => tool.destroy?.());
+    /**
+     * The attached instances are the tool facades' shared ones: their facades destroy them on editor teardown
+     */
     this.#tools.clear();
   }
 
