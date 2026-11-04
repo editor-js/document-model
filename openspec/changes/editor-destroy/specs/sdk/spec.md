@@ -1,12 +1,17 @@
 ## ADDED Requirements
 
 ### Requirement: Tool instance teardown hook
-The `BlockTool` and `InlineTool` instance contracts SHALL each declare an optional `destroy(): void`. The editor SHALL call `destroy()` exactly once on every tool instance it creates, when it stops using that instance: for long-lived instances, when the owning block is removed, the owning component is rebuilt, or the editor is destroyed; for instances created for a single operation, right after that operation completes. A tool that doesn't implement `destroy()` SHALL keep working unchanged.
+The `BlockTool` and `InlineTool` instance contracts SHALL each declare an optional `destroy(): void`. The editor SHALL call `destroy()` exactly once on every tool instance it creates, when it stops using that instance. A block tool instance belongs to one block and SHALL be destroyed when that block is removed or the editor is destroyed. An inline tool facade SHALL hand the same instance to every consumer. Consumers SHALL NOT destroy it. `InlineToolFacade.destroy()` SHALL destroy it once, and only if it was created. A tool that doesn't implement `destroy()` SHALL keep working unchanged.
 
 #### Scenario: Inline tool declares destroy
 - **GIVEN** an inline tool class implements `destroy()`
 - **WHEN** it is type-checked against `InlineToolConstructor`
 - **THEN** it compiles, and an inline tool without `destroy()` also compiles
+
+#### Scenario: The inline tool facade destroys its shared instance once
+- **GIVEN** an inline tool facade whose `create()` has been called several times
+- **WHEN** `destroy()` is called on the facade, once or more
+- **THEN** every `create()` returned the same instance, its `destroy()` is called once, and a facade whose `create()` was never called constructs nothing
 
 #### Scenario: Block tool declares destroy
 - **GIVEN** a block tool class implements `destroy()`

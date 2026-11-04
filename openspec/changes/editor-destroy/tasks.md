@@ -20,8 +20,8 @@
 
 - [ ] 4.1 Write failing `CaretAdapter` tests: `should stop updating the model caret on selectionchange after destroy`, and `should not touch the DOM selection on model caret updates after destroy`
 - [ ] 4.2 Implement `CaretAdapter.destroy()` by aborting its controller, whose `abort` event is tied to `off(holder)` and the `onCaretUpdate` unsubscribe function. Remove the `@todo`
-- [ ] 4.3 Write failing `FormattingAdapter` tests: `should call destroy on attached inline tools`, `should ignore core:ToolLoaded after destroy`, and `should ignore model updates after destroy`
-- [ ] 4.4 Implement `FormattingAdapter.destroy()`: abort its controller, then destroy the inline tool instances
+- [ ] 4.3 Write failing `FormattingAdapter` tests: `should not destroy the shared inline tool instances it uses`, `should ignore core:ToolLoaded after destroy`, and `should ignore model updates after destroy`
+- [ ] 4.4 Implement `FormattingAdapter.destroy()`: abort its controller, then drop the inline tools without destroying them (design D7)
 - [ ] 4.5 Write failing `DOMAdapters` tests: `should destroy every remaining block adapter on destroy`, `should leave the inputs registry empty after destroy`, and `should destroy caret and formatting adapters on destroy`
 - [ ] 4.6 Implement `DOMAdapters.destroy()`
 
@@ -30,7 +30,7 @@
 - [ ] 5.1 Write failing `BlockRenderer` tests: `should call tool destroy when its block is removed`, `should destroy every remaining tool and block adapter on destroy without dispatching BlockRemovedCoreEvent`, `should stop handling model events after destroy`, and `should not dispatch BlockAddedCoreEvent for a render that settles after destroy`
 - [ ] 5.2 Track tool instances per block id in `BlockRenderer`, subscribe to the model with a controller's signal, add `destroy()`, and remove the `@todo clear block tool adapter memory`
 - [ ] 5.3 Write a failing `SelectionManager` test, `should stop handling caret updates after destroy`. Implement `SelectionManager.destroy()` by aborting its controller
-- [ ] 5.4 Write a failing test, `should destroy the throwaway inline tool instance after applying it`, for `SelectionManager.applyInlineTool`, and do the same for the instance created during `ToolsManager` validation. Call `destroy?.()` in a `finally`
+- [ ] 5.4 Give `InlineToolFacade` a `destroy()` that destroys its shared instance once, and `ToolsManager` a `destroy()` that calls it for every inline tool, logging a throwing hook; `Core.destroy()` calls it last (design D3, D7). Test that `SelectionManager.applyInlineTool` and `ToolsManager` validation don't destroy the shared instance
 
 ## 6. Core.destroy()
 
@@ -43,7 +43,7 @@
 ## 7. UI
 
 - [ ] 7.1 UI plugin teardown is covered by #174: no UI plugin implementation in this change
-- [ ] 7.2 After #174 lands, make `InlineToolbarUI` call `destroy?.()` on the inline tool instances it creates, both when the popover is rebuilt and on destroy, with tests in #174's UI test setup
+- [ ] 7.2 After #174 lands, test that `InlineToolbarUI` never destroys the shared inline tool instance, through a real `InlineToolFacade`, across rebuild, hide, a superseded render and destroy
 
 ## 8. Bundle and integration
 
