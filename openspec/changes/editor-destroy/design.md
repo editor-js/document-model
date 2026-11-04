@@ -55,7 +55,13 @@ Every existing `destroy()` in the repo is synchronous, and `EditorjsPlugin.destr
 The model is never mutated. If `destroy()` cleared blocks through the model, `CollaborationManager` would broadcast the removals to other clients and `UndoRedoManager` would record them.
 
 ### D4. Destroy during a pending `initialize()`
-`initialize()` awaits `#initializeTools()`, which awaits each tool's `prepare()`. After that `await`, `initialize()` checks `#destroyed` and stops before tools are constructed, the document is initialized, or `core:ready` is dispatched. `destroy()` tears down whatever stage was reached.
+`initialize()` awaits `#initializeTools()`, which runs each tool's static `prepare()` one after another through a queue. `destroy()` can land while one of them is pending.
+
+`ToolsManager` owns an `AbortController` that its `destroy()` aborts. Each queued job checks the signal before calling `prepare()`, so tools still waiting are never prepared. It checks again once `prepare()` settles, so a tool whose preparation finishes after destroy is not created, validated or registered, and no `ToolLoaded` is dispatched for it. An inline instance created then would never be destroyed, because `ToolsManager.destroy()` has already run.
+
+A `prepare()` that is already running can't be interrupted, because it takes no signal, and passing one would change the tool API. Its result is discarded instead. `initialize()` therefore settles once that `prepare()` settles, not immediately. Racing the queue against the signal would end the wait sooner without stopping the tool's work, so it isn't worth the extra code.
+
+After the queue settles, `initialize()` checks `#destroyed` and stops before the document is initialized or `core:ready` is dispatched. `destroy()` tears down whatever stage was reached.
 
 `initialize()` then **rejects** with a `DOMException` named `AbortError`, following the platform convention (`fetch` rejects the same way when its signal aborts). Code awaiting readiness (loading data, focusing, subscribing) must not run against a destroyed editor, and resolving would let it run. Callers that unmount during boot ignore the error by name: `if (error.name === 'AbortError') return`. This matters in practice: React StrictMode mounts, unmounts and remounts every component in development, so every React integration hits this path.
 

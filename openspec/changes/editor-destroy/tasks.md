@@ -38,6 +38,7 @@
 - [ ] 6.2 Keep plugin instances in `#initializePlugin`, track the initialization stage, and implement `destroy()` in the order from design D3
 - [ ] 6.3 Write failing tests: `should not construct anything when destroyed before initialize`, `should reject initialize with an AbortError without dispatching ready when destroyed mid-initialization`, and `should throw from use and initialize after destroy`
 - [ ] 6.4 Implement the `#destroyed` checks after each `await` in `initialize()`, and the post-destroy guards in `use()` and `initialize()`
+- [ ] 6.5 Write failing `ToolsManager` tests, `should not prepare the tools still queued` and `should neither create nor announce a tool whose prepare() settles after destroy`. Give `ToolsManager` an `AbortController` that `destroy()` aborts, and check its signal before and after each `prepare()` (design D4)
 
 ## 7. UI
 
