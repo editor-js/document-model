@@ -38,7 +38,8 @@ export class InlineToolFacade extends BaseToolFacade<ToolType.Inline, InlineTool
   }
 
   /**
-   * Returns the singleton InlineTool instance, creating it on the first call
+   * Returns the singleton InlineTool instance, creating it on the first call.
+   * Callers share it and must not destroy it themselves; see {@link destroy}
    */
   public create(): InlineTool {
     if (this.#instance === undefined) {
@@ -54,5 +55,20 @@ export class InlineToolFacade extends BaseToolFacade<ToolType.Inline, InlineTool
     }
 
     return this.#instance;
+  }
+
+  /**
+   * Destroys the shared instance, once.
+   *
+   * The facade is the instance's only owner: every consumer gets the same object from {@link create},
+   * so none of them destroys it. The editor calls this on teardown. The instance is dropped before its
+   * `destroy()` runs, so a throwing hook can't leave it alive or make a later call run the hook again
+   */
+  public destroy(): void {
+    const instance = this.#instance;
+
+    this.#instance = undefined;
+
+    instance?.destroy?.();
   }
 }

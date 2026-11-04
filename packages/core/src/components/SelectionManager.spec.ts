@@ -558,7 +558,7 @@ describe('SelectionManager', () => {
       jest.spyOn(model, 'format').mockImplementation(() => undefined);
     };
 
-    it('should destroy the throwaway inline tool instance after applying it', () => {
+    it('should not destroy the shared inline tool instance after applying it', () => {
       const destroy = jest.fn();
       const toolMock = {
         getFormattingOptions: jest.fn(() => ({ action: 'format',
@@ -573,10 +573,10 @@ describe('SelectionManager', () => {
 
       selectionManager.applyInlineTool({ toolName: 'bold' as InlineToolName });
 
-      expect(destroy).toHaveBeenCalledTimes(1);
+      expect(destroy).not.toHaveBeenCalled();
     });
 
-    it('should destroy the throwaway inline tool instance when applying it throws', () => {
+    it('should not destroy the shared inline tool instance when applying it throws', () => {
       const destroy = jest.fn();
       const toolMock = { getFormattingOptions: jest.fn(),
         destroy };
@@ -586,7 +586,7 @@ describe('SelectionManager', () => {
         dataKey: 'text' });
 
       expect(() => selectionManager.applyInlineTool({ toolName: 'bold' as InlineToolName })).toThrow();
-      expect(destroy).toHaveBeenCalledTimes(1);
+      expect(destroy).not.toHaveBeenCalled();
     });
 
     it('should stop handling caret updates after destroy', () => {

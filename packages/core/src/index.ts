@@ -71,6 +71,11 @@ interface CoreServices {
    * Rendering adapter plugin
    */
   adapter?: EditorJSAdapterPlugin;
+
+  /**
+   * Owns the tool facades, and through them the shared inline tool instances
+   */
+  toolsManager?: ToolsManager;
 }
 
 /**
@@ -232,6 +237,7 @@ export default class Core {
     this.#iocContainer.get(BlocksManager);
     this.#services.blockRenderer = this.#iocContainer.get(BlockRenderer);
     this.#services.adapter = this.#iocContainer.get<EditorJSAdapterPlugin>(TOKENS.Adapter);
+    this.#services.toolsManager = this.#iocContainer.get(ToolsManager);
 
     this.#initializePlugins();
     await this.#initializeTools();
@@ -276,12 +282,17 @@ export default class Core {
 
     this.#pluginInstances = [];
 
-    const { undoRedoManager, selectionManager, blockRenderer, adapter } = this.#services;
+    const { undoRedoManager, selectionManager, blockRenderer, adapter, toolsManager } = this.#services;
 
     this.#safely('UndoRedoManager', () => undoRedoManager?.destroy());
     this.#safely('SelectionManager', () => selectionManager?.destroy());
     this.#safely('BlockRenderer', () => blockRenderer?.destroy());
     this.#safely('adapter', () => adapter?.destroy?.());
+
+    /**
+     * Last: the shared inline tool instances are used by the adapter and the UI until they're gone
+     */
+    this.#safely('ToolsManager', () => toolsManager?.destroy());
 
     this.#services = {};
   }

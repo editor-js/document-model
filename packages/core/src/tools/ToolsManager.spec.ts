@@ -6,7 +6,7 @@ import type { EditorAPI } from '../api/index.js';
 
 describe('ToolsManager', () => {
   describe('.prepareTools()', () => {
-    it('should destroy the inline tool instance created for validation', async () => {
+    it('should not destroy the shared inline tool instance it validates', async () => {
       const destroy = jest.fn();
 
       /**
@@ -30,7 +30,7 @@ describe('ToolsManager', () => {
 
       await manager.prepareTools([[ProbeInlineTool as unknown as InlineToolConstructor, undefined]]);
 
-      expect(destroy).toHaveBeenCalledTimes(1);
+      expect(destroy).not.toHaveBeenCalled();
     });
 
     /**
@@ -87,6 +87,94 @@ describe('ToolsManager', () => {
       expect(manager.unavailable.get('probe')).toBeDefined();
 
       log.mockRestore();
+    });
+  });
+
+  describe('.destroy()', () => {
+    /**
+     * Inline tool class whose instances call `onDestroy` from their destroy() hook
+     * @param name - static name the tool is registered under
+     * @param onDestroy - called by the instance's destroy()
+     * @param withPrepare - give the tool a static prepare(), so prepareTools validates it
+     */
+    const inlineTool = (name: string, onDestroy: () => void, withPrepare = false): InlineToolConstructor => {
+      /**
+       * Inline tool that reports when its instance is destroyed
+       */
+      class ProbeInlineTool {
+        public static type = ToolType.Inline;
+
+        public static name = name;
+
+        /**
+         * Destroy hook under test
+         */
+        public destroy(): void {
+          onDestroy();
+        }
+      }
+
+      if (withPrepare) {
+        Object.assign(ProbeInlineTool, { prepare: (): Promise<void> => Promise.resolve() });
+      }
+
+      return ProbeInlineTool as unknown as InlineToolConstructor;
+    };
+
+    /**
+     * Creates a manager with the given tools prepared
+     * @param tools - inline tool classes to prepare
+     */
+    const prepared = async (...tools: InlineToolConstructor[]): Promise<ToolsManager> => {
+      const manager = new ToolsManager(
+        { tools: {} } as unknown as CoreConfigValidated,
+        () => ({}) as EditorAPI,
+        new EventBus()
+      );
+
+      await manager.prepareTools(tools.map(tool => [tool, undefined]));
+
+      return manager;
+    };
+
+    it('should destroy each inline tool instance once', async () => {
+      const destroyA = jest.fn();
+      const destroyB = jest.fn();
+      const manager = await prepared(inlineTool('a', destroyA), inlineTool('b', destroyB, true));
+
+      manager.inlineTools.get('a')?.create();
+
+      manager.destroy();
+      manager.destroy();
+
+      expect(destroyA).toHaveBeenCalledTimes(1);
+      expect(destroyB).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not create an instance for a tool that was never used', async () => {
+      const destroy = jest.fn();
+      const manager = await prepared(inlineTool('unused', destroy));
+
+      manager.destroy();
+
+      expect(destroy).not.toHaveBeenCalled();
+    });
+
+    it('should log a throwing destroy() and still destroy the other tools', async () => {
+      const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+      const destroyB = jest.fn();
+      const manager = await prepared(
+        inlineTool('a', () => {
+          throw new Error('broken tool');
+        }, true),
+        inlineTool('b', destroyB, true)
+      );
+
+      expect(() => manager.destroy()).not.toThrow();
+      expect(destroyB).toHaveBeenCalledTimes(1);
+      expect(error).toHaveBeenCalledWith('[ToolsManager] Inline tool a failed to destroy', expect.any(Error));
+
+      error.mockRestore();
     });
   });
 });

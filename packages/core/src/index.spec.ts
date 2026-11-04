@@ -6,6 +6,7 @@ import Core from './index.js';
 import { UndoRedoManager } from './components/UndoRedoManager.js';
 import { SelectionManager } from './components/SelectionManager.js';
 import { BlockRenderer } from './components/BlockRenderer.js';
+import ToolsManager from './tools/ToolsManager.js';
 
 /**
  * `Core` is headless: it registers nothing by default, so `initialize()` validates
@@ -267,6 +268,33 @@ describe('Core', () => {
       expect(log).toEqual(['plugin:a', 'tool', 'adapter:block', 'adapter']);
     });
 
+    it('should destroy each shared inline tool instance once, after the adapter', async () => {
+      const core = createCore();
+
+      core.use(class SharedInlineTool {
+        public static type = ToolType.Inline as const;
+        public static name = 'shared';
+
+        /**
+         * Gives the tool a validation pass, which creates its shared instance
+         */
+        public static prepare(): Promise<void> {
+          return Promise.resolve();
+        }
+
+        public destroy(): void {
+          log.push('inline');
+        }
+      } as unknown as typeof StubBlockTool);
+      await core.initialize();
+      await flush();
+
+      core.destroy();
+      core.destroy();
+
+      expect(log).toEqual(['tool', 'adapter:block', 'adapter', 'inline']);
+    });
+
     it('should not emit model events during destroy', async () => {
       const onModelUpdate = jest.fn();
       const core = createCore({ onModelUpdate });
@@ -301,6 +329,7 @@ describe('Core', () => {
       ['UndoRedoManager', UndoRedoManager],
       ['SelectionManager', SelectionManager],
       ['BlockRenderer', BlockRenderer],
+      ['ToolsManager', ToolsManager],
     ])('should destroy %s', async (_label, Service) => {
       const destroy = jest.spyOn(Service.prototype, 'destroy');
       const core = createCore();
@@ -317,6 +346,7 @@ describe('Core', () => {
       ['UndoRedoManager', UndoRedoManager],
       ['SelectionManager', SelectionManager],
       ['BlockRenderer', BlockRenderer],
+      ['ToolsManager', ToolsManager],
     ])('should log and continue when %s fails to destroy', async (label, Service) => {
       const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
       const destroy = jest.spyOn(Service.prototype, 'destroy').mockImplementation(() => {

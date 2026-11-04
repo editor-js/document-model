@@ -111,6 +111,29 @@ export default class ToolsManager {
   }
 
   /**
+   * Destroys the shared inline tool instances, once each.
+   *
+   * Every inline tool facade hands the same instance to all its consumers (formatting, selection,
+   * the inline toolbar), so none of them destroys it: the facade owns it and is destroyed here, on
+   * editor teardown. A throwing hook is logged and the remaining tools are still destroyed
+   */
+  public destroy(): void {
+    const facades = new Set([...this.#availableTools.values(), ...this.#unavailableTools.values()]);
+
+    for (const facade of facades) {
+      if (!facade.isInline()) {
+        continue;
+      }
+
+      try {
+        facade.destroy();
+      } catch (error) {
+        console.error(`[ToolsManager] Inline tool ${facade.name} failed to destroy`, error);
+      }
+    }
+  }
+
+  /**
    * Calls tools prepare method if it exists and adds tools to relevant collection (available or unavailable tools)
    * @param tools - tools to prepare and their settings
    */
@@ -150,13 +173,11 @@ export default class ToolsManager {
                * Some Tools validation
                */
               const inlineToolRequiredMethods = ['render'];
+              /**
+               * The facade's shared instance: it stays alive for the other consumers and is destroyed on teardown
+               */
               const instance = tool.create();
               const notImplementedMethods = inlineToolRequiredMethods.filter(method => instance[method as keyof InlineTool] !== undefined);
-
-              /**
-               * The instance is only used for validation
-               */
-              instance.destroy?.();
 
               if (notImplementedMethods.length > 0) {
                 /**
