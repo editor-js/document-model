@@ -80,7 +80,7 @@ The system SHALL provide `FormattingAdapter`, which registers `InlineTool` insta
 Implemented in `src/FormattingAdapter/index.ts`, `src/utils/surround.ts`, `src/utils/expandRangeNodeBoundary.ts`.
 
 ### Requirement: Adapter teardown
-`DOMAdapters` SHALL implement `destroy()`. It SHALL destroy every `DOMBlockToolAdapter` still alive and clear the `InputsRegistry`, stop `CaretAdapter` watching DOM selection changes and model caret updates, stop `FormattingAdapter` listening to `core:ToolLoaded` and model updates, and call `destroy()` on the inline tool instances `FormattingAdapter` holds. The shared `selectionchange` watcher SHALL remove its `document` listener once its last subscriber unsubscribes, and add it back on the next subscription.
+`DOMAdapters` SHALL implement `destroy()`. It SHALL destroy every `DOMBlockToolAdapter` still alive and clear the `InputsRegistry`, stop `CaretAdapter` watching DOM selection changes and model caret updates, and stop `FormattingAdapter` listening to `core:ToolLoaded` and model updates. `FormattingAdapter` SHALL drop its inline tools without destroying them, because their instances are shared and their facades destroy them. The shared `selectionchange` watcher SHALL remove its `document` listener once its last subscriber unsubscribes, and add it back on the next subscription.
 
 #### Scenario: Caret adapter stops tracking the holder
 - **GIVEN** an initialized `DOMAdapters`
@@ -95,7 +95,7 @@ Implemented in `src/FormattingAdapter/index.ts`, `src/utils/surround.ts`, `src/u
 #### Scenario: Formatting adapter releases inline tools
 - **GIVEN** inline tools attached to `FormattingAdapter` through `core:ToolLoaded`
 - **WHEN** `destroy()` is called
-- **THEN** each attached inline tool instance's `destroy()` is called, and later model formatting events don't touch the DOM
+- **THEN** no inline tool instance's `destroy()` is called, the adapter holds none of them anymore, and later model formatting events don't touch the DOM
 
 #### Scenario: Two editors on one page
 - **GIVEN** two editors are initialized on the same page and share the `selectionchange` watcher

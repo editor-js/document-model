@@ -179,6 +179,11 @@ Implemented in `src/components/UndoRedoManager.ts`, validated by its co-located 
 - **WHEN** `destroy()` is called
 - **THEN** each rendered block tool's `destroy()` is called, each block's adapter is destroyed, the adapter plugin's `destroy()` is called, and the model emits no events
 
+#### Scenario: Shared inline tool instances are destroyed last, once each
+- **GIVEN** an initialized editor whose inline tools have been used by the formatting adapter, the selection manager and the inline toolbar
+- **WHEN** `destroy()` is called
+- **THEN** each inline tool instance's `destroy()` is called once, after the adapter plugin's `destroy()`; a throwing hook is logged with `console.error` and the other inline tools are still destroyed; inline tools that were never instantiated are not constructed
+
 #### Scenario: Destroying twice is a no-op
 - **GIVEN** `destroy()` has already been called
 - **WHEN** `destroy()` is called again

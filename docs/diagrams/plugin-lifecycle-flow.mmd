@@ -82,4 +82,8 @@ sequenceDiagram
     BlockRenderer->>Adapter: destroyBlockToolAdapter(blockId)
   end
   Core->>Adapter: destroy()
+  Core->>ToolsManager: destroy()
+  loop each inline tool facade
+    ToolsManager->>Tool: facade.destroy(), the shared instance's destroy?.() once
+  end
   Note over EditorJSModel: never mutated during teardown,<br/>so no removals reach undo history or collaboration

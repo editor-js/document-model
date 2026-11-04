@@ -135,10 +135,10 @@ Each UI plugin SHALL unsubscribe its own EventBus and DOM listeners when destroy
 - **WHEN** `destroy()` is called again
 - **THEN** it returns without releasing anything a second time
 
-#### Scenario: Inline tool instances are released with their popover
-- **GIVEN** the inline toolbar created inline tool instances to build its popover
+#### Scenario: Inline tool instances are not destroyed with their popover
+- **GIVEN** the inline toolbar builds its popover from inline tool instances, which their facades share with every other consumer
 - **WHEN** the popover is rebuilt for a new selection, the toolbar is hidden, a render is superseded before it finishes, or the toolbar is destroyed
-- **THEN** each instance created for that popover has its optional `destroy()` called once, and the instances behind the popover still shown are not destroyed
+- **THEN** no inline tool instance's `destroy()` is called by the toolbar; each tool's facade destroys its instance once, on editor teardown
 
 Validated by `src/lifecycle.spec.ts` using real DOM/EventBus listeners and a substituted popover boundary. Vendor-owned global listener internals are outside this requirement's verification scope.
 
