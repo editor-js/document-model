@@ -2,7 +2,7 @@
 
 ## Package boundary
 
-Tools and plugins should only depend on `@editorjs/sdk` — never on `@editorjs/model` or `@editorjs/model-types` directly. `sdk` re-exports every type a tool/plugin author needs (`Index`, event classes, `BlockTool`/`InlineTool`/`BlockTune` contracts, etc.); `model` is the engine implementation that `core` and `ot-server` orchestrate, and `model-types` is an internal foundation shared only by `model` and `sdk`. Neither is part of the stable, tool-facing API.
+Tools and plugins should only depend on `@editorjs/sdk` — never on `@editorjs/model` or `@editorjs/model-types` directly. `sdk` re-exports every type a tool/plugin author needs (`Index`, event classes, `BlockTool`/`InlineTool` contracts, etc.); `model` is the engine implementation that `core` and `ot-server` orchestrate, and `model-types` is an internal foundation shared only by `model` and `sdk`. Neither is part of the stable, tool-facing API.
 
 ## Registration
 
@@ -26,7 +26,9 @@ Tools are registered via `core.use(ToolConstructor, options)` during setup. The 
 | UI Plugin | `EditorjsPlugin` | UI component/behavior registered via `core.use(...)` |
 | Block Tool | `BlockTool` (from config `tools`) | Block rendering and block-specific behavior |
 | Inline Tool | `InlineTool` (from config `tools`) | Selection formatting actions |
-| Block Tune | `BlockTune` (from config `tools`) | Per-block tune behavior |
+
+There is no Block Tune tool kind. What v2 called a tune is a UI plugin: it puts an item in the
+block settings menu and stores its state as [per-block plugin data](#per-block-plugin-data).
 
 ## Initialization sequence
 
