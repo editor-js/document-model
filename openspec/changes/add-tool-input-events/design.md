@@ -5,7 +5,9 @@
 - listens to `beforeinput`, always calls `preventDefault()`, and re-dispatches a `BeforeInputUIEvent` on the `EventBus`, which each `DOMBlockToolAdapter` turns into model operations with a fixed default per `inputType` (`insertParagraph` → `api.blocks.split`);
 - listens to `keydown`, dispatches `KeydownUIEvent { nativeEvent }` on the bus first, and stops its own handling (undo/redo) when a listener called `preventDefault()` on the native event. The shortcuts plugin uses this to claim keys.
 
-Because the holder is the editing host, the browser targets `keydown` at the holder. A tool's elements are *below* the target, so they are not on the propagation path at all — neither capture nor bubble listeners on them fire. This was confirmed in Chromium with a nested `contenteditable` inside an editable holder: only the holder's listener ran, with `eventPhase === AT_TARGET`. Pointer events (`click`, `pointerdown`) are unaffected: they target the element under the pointer, so tools can already listen for those on their own nodes.
+Because the holder is the editing host, the browser targets `keydown` at the holder. A tool's elements are *below* the target, so they are not on the propagation path at all — neither capture nor bubble listeners on them fire. This was confirmed in Chromium with a nested `contenteditable` inside an editable holder: only the holder's listener ran, with `eventPhase === AT_TARGET`. Keys pressed on a focusable control inside a block (a Table's "Add row" button, a tool's own `<input>`) also bubble through the holder and reach `ui:key-down`, with the control as the event target. Chromium keeps the document selection where it was when focus moves to such a control, so the selection can still point into an input of a different block (confirmed: caret in block A, focus on a button in block B, Enter → holder `keydown` with `target === button` and the selection anchor still in A). Editor chrome (toolbar, inline toolbar) is attached beside the holder, so its keys never reach `ui:key-down`.
+
+Pointer events (`click`, `pointerdown`) are unaffected: they target the element under the pointer, so tools can already listen for those on their own nodes.
 
 Tools receive `adapter`, `api`, `data`, `config`; they do not receive the `EventBus`. Their only event channel today is `adapter.addEventListener('adapter:updated', …)`.
 
@@ -77,8 +79,9 @@ The adapter dispatches on the input element registered for `key` (`bubbles: true
 
 ### 3. Routing follows the document selection
 
-At `keydown` time the adapter reads the document selection:
+At `keydown` time the adapter first checks the native event's target, then reads the document selection:
 
+- the target is not editable content (`(nativeEvent.target as HTMLElement).isContentEditable` is `false`) → nothing is forwarded. Focus is on a control inside a block (button, link, checkbox, a tool's native `<input>`/`<textarea>`), and the selection may be left over in another block; forwarding would let that block's tool cancel Enter and edit it while the control's own activation never runs. A tool that renders a control gets the control's keys the ordinary way, since the control is the focused element and the event target;
 - a collapsed caret, or a selection whose start and end are both in inputs of the same block → that block's adapter dispatches, on the input holding the selection start;
 - a selection spanning blocks, or one outside any registered input → nothing is forwarded.
 

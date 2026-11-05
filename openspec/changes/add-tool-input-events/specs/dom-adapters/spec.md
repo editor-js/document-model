@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Tool-facing keyboard events
-The system SHALL forward native `keydown` events to the block tool owning the selection as a cancelable, bubbling DOM `CustomEvent` named `editor:keydown`, dispatched on the input element registered for the data key holding the selection start. The event's `detail` SHALL carry the native `KeyboardEvent` as `nativeEvent`, the data `key` and the `range` of the selection inside that input, and `inputs`, every input of the block the selection touches in document order with its range. The event SHALL be forwarded only when the selection lies within registered inputs of a single block. Cancelling `editor:keydown` SHALL call `preventDefault()` on the native `KeyboardEvent`. `editor:keydown` SHALL be dispatched before any plugin other than the rendering adapter receives the `KeydownUIEvent`.
+The system SHALL forward native `keydown` events to the block tool owning the selection as a cancelable, bubbling DOM `CustomEvent` named `editor:keydown`, dispatched on the input element registered for the data key holding the selection start. The event's `detail` SHALL carry the native `KeyboardEvent` as `nativeEvent`, the data `key` and the `range` of the selection inside that input, and `inputs`, every input of the block the selection touches in document order with its range. The event SHALL be forwarded only when the native event's target is editable content and the selection lies within registered inputs of a single block. Cancelling `editor:keydown` SHALL call `preventDefault()` on the native `KeyboardEvent`. `editor:keydown` SHALL be dispatched before any plugin other than the rendering adapter receives the `KeydownUIEvent`.
 
 #### Scenario: A tool listens on its wrapper
 - **GIVEN** a block tool added an `editor:keydown` listener to the wrapper element containing its inputs
@@ -37,6 +37,11 @@ The system SHALL forward native `keydown` events to the block tool owning the se
 - **GIVEN** a selection that starts in one block and ends in another
 - **WHEN** a key is pressed
 - **THEN** no `editor:keydown` event is dispatched and the key is handled as it is today
+
+#### Scenario: Key pressed on a control inside a block
+- **GIVEN** the caret was placed in an input of block A and focus then moved to a button inside block B, leaving the document selection in block A
+- **WHEN** the user presses Enter
+- **THEN** no `editor:keydown` event is dispatched, block A is not edited, and the button activates
 
 #### Scenario: Keys during IME composition
 - **GIVEN** an IME composition is in progress inside a tool's input
