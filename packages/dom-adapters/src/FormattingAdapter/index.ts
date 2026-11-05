@@ -186,11 +186,13 @@ export class FormattingAdapter {
     }
 
     /**
-     * Create temporary container to allow formatting of the extracted content
+     * Rebuild the range from its plain text, then wrap the fragments in it.
+     * The text goes in as a text node so it's never parsed as markup: literal `<b>` or `&lt;` in the text
+     * would otherwise turn into elements or other characters, shifting offsets and injecting live HTML
      */
-    const template = document.createElement('template');
+    const content = document.createDocumentFragment();
 
-    template.innerHTML = range.toString()!;
+    content.append(document.createTextNode(range.toString()));
 
     for (const fragment of affectedFragments) {
       const tool = this.#tools.get(fragment.tool);
@@ -207,10 +209,10 @@ export class FormattingAdapter {
        */
       const wrapper = tool.createWrapper(fragment.data);
 
-      surround(wrapper, template.content, [relativeStart, relativeEnd]);
+      surround(wrapper, content, [relativeStart, relativeEnd]);
     }
 
     range.extractContents();
-    range.insertNode(template.content);
+    range.insertNode(content);
   }
 }
