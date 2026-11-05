@@ -9,7 +9,7 @@ import type {
   EventBus
 } from '@editorjs/sdk';
 import { UiComponentType } from '@editorjs/sdk';
-import type { PopoverItemParams } from '@editorjs/ui-kit';
+import type { PopoverItemChildren, PopoverItemParams } from '@editorjs/ui-kit';
 import { PopoverDesktop, PopoverEvent, PopoverItemType } from '@editorjs/ui-kit';
 import { messages } from '../messages.js';
 import ControlStyle from '../controls.module.pcss';
@@ -128,6 +128,42 @@ interface Registration {
   order: number;
   /** Registration counter, used to keep equal orders in registration sequence */
   sequence: number;
+}
+
+/**
+ * Replaces every `isActive` callback in an item tree with the boolean it returns: ui-kit calls them as it renders,
+ * long after the provider's own `try` has returned, and a throw there aborts the popover and every provider's items
+ * @param item - item as the provider returned it
+ */
+function withResolvedActiveState(item: PopoverItemParams): PopoverItemParams {
+  const resolved: Record<string, unknown> = { ...item };
+
+  if (typeof resolved.isActive === 'function') {
+    resolved.isActive = (resolved.isActive as () => boolean)();
+  }
+
+  const children = resolved.children as PopoverItemChildren | undefined;
+
+  /**
+   * Nested items render with their parent, so their callbacks are called just as early
+   */
+  if (children?.items !== undefined) {
+    resolved.children = {
+      ...children,
+      items: children.items.map(withResolvedActiveState),
+    };
+  }
+
+  const confirmation = resolved.confirmation as PopoverItemParams | undefined;
+
+  /**
+   * The confirmation state replaces the item's own params on activation and renders from them the same way
+   */
+  if (confirmation !== undefined) {
+    resolved.confirmation = withResolvedActiveState(confirmation);
+  }
+
+  return resolved as PopoverItemParams;
 }
 
 /**
@@ -556,7 +592,13 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
             return [];
           }
 
-          return Array.isArray(result) ? result : [result];
+          const items = Array.isArray(result) ? result : [result];
+
+          /**
+           * Inside the `try` on purpose: an `isActive` that throws is this provider failing, so it costs this
+           * provider's items rather than the whole menu
+           */
+          return items.map(withResolvedActiveState);
         } catch (error) {
           /**
            * Providers are third-party code and this is the one place all of it runs, so without

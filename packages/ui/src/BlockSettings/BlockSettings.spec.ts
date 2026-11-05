@@ -463,6 +463,92 @@ describe('BlockSettingsUI', () => {
       expect(itemTitles(instance.element)).toEqual(['Healthy']);
     });
 
+    /**
+     * `isActive` is called not by this plugin but by ui-kit, as it renders the item -- long after the provider's own
+     * error handling has returned. Left there, a throwing callback aborts the popover and no menu opens at all
+     */
+    it('should keep the rest of the menu when an isActive callback throws', async () => {
+      instance.plugin.publicApi.register(() => ({
+        title: 'Faulty',
+        isActive: () => {
+          throw new Error('isActive blew up');
+        },
+        onActivate: () => {},
+      }));
+      instance.plugin.publicApi.register(() => ({
+        title: 'Healthy',
+        onActivate: () => {},
+      }));
+
+      await open(instance.eventBus, 0);
+
+      expect(itemTitles(instance.element)).toEqual(['Healthy']);
+      expect(instance.button.getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it('should report an isActive failure as the provider failing', async () => {
+      instance.plugin.publicApi.register(() => ({
+        title: 'Faulty',
+        isActive: () => {
+          throw new Error('isActive blew up');
+        },
+        onActivate: () => {},
+      }));
+      instance.plugin.publicApi.register(() => ({
+        title: 'Healthy',
+        onActivate: () => {},
+      }));
+
+      await open(instance.eventBus, 0);
+
+      expect(reportedErrors).toHaveBeenCalledWith(
+        expect.stringContaining('provider failed'),
+        expect.any(Error)
+      );
+    });
+
+    it('should keep the rest of the menu when a nested isActive callback throws', async () => {
+      instance.plugin.publicApi.register(() => ({
+        title: 'Faulty parent',
+        children: {
+          items: [{
+            title: 'Faulty child',
+            isActive: () => {
+              throw new Error('isActive blew up');
+            },
+            onActivate: () => {},
+          }],
+        },
+      }));
+      instance.plugin.publicApi.register(() => ({
+        title: 'Healthy',
+        onActivate: () => {},
+      }));
+
+      await open(instance.eventBus, 0);
+
+      expect(itemTitles(instance.element)).toEqual(['Healthy']);
+    });
+
+    it('should still honour an isActive callback that works', async () => {
+      instance.plugin.publicApi.register(() => [
+        { title: 'Active',
+          isActive: () => true,
+          onActivate: () => {} },
+        { title: 'Inactive',
+          isActive: () => false,
+          onActivate: () => {} },
+      ]);
+
+      await open(instance.eventBus, 0);
+
+      const active = [...instance.element.querySelectorAll('[role="menuitem"]')]
+        .filter(item => item.classList.toString().includes('active'))
+        .map(item => item.textContent?.trim());
+
+      expect(active).toEqual(['Active']);
+    });
+
     it('should skip a provider whose promise rejects', async () => {
       instance.plugin.publicApi.register(() => Promise.reject(new Error('async blow-up')));
       instance.plugin.publicApi.register(() => ({
