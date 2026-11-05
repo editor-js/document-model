@@ -23,7 +23,13 @@ jest.unstable_mockModule('@editorjs/sdk', () => {
       const listeners = new Map<string, Listener>();
 
       return {
-        addEventListener: jest.fn((event: string, fn: Listener) => listeners.set(event, fn)),
+        /**
+         * Honours `signal` like a real EventTarget, so aborting it removes the listener
+         */
+        addEventListener: jest.fn((event: string, fn: Listener, options?: AddEventListenerOptions) => {
+          listeners.set(event, fn);
+          options?.signal?.addEventListener('abort', () => listeners.delete(event), { once: true });
+        }),
         removeEventListener: jest.fn((event: string) => listeners.delete(event)),
         __fire: (event: string, evt: Event) => listeners.get(event)?.(evt),
       };
@@ -91,13 +97,13 @@ describe('ShortcutsPlugin', () => {
     it('should add tool-loaded listener', () => {
       new ShortcutsPlugin(pluginParamsMock);
 
-      expect(pluginParamsMock.eventBus.addEventListener).toHaveBeenCalledWith(TOOL_LOADED_EVENT, expect.any(Function));
+      expect(pluginParamsMock.eventBus.addEventListener).toHaveBeenCalledWith(TOOL_LOADED_EVENT, expect.any(Function), { signal: expect.any(AbortSignal) as unknown });
     });
 
     it('should add keydown listener', () => {
       new ShortcutsPlugin(pluginParamsMock);
 
-      expect(pluginParamsMock.eventBus.addEventListener).toHaveBeenCalledWith(KEYDOWN_EVENT, expect.any(Function));
+      expect(pluginParamsMock.eventBus.addEventListener).toHaveBeenCalledWith(KEYDOWN_EVENT, expect.any(Function), { signal: expect.any(AbortSignal) as unknown });
     });
   });
 
@@ -211,6 +217,32 @@ describe('ShortcutsPlugin', () => {
   });
 
   describe('.destroy()', () => {
+    it('should stop registering shortcuts of tools loaded after destroy', () => {
+      const plugin = new ShortcutsPlugin(pluginParamsMock);
+
+      plugin.destroy();
+      loadTool('bold', { shortcut: 'CMD+B' });
+      matchKeyboardShortcut.mockReturnValue(true);
+
+      pressKey();
+
+      expect(applyInlineTool).not.toHaveBeenCalled();
+    });
+
+    it('should stop handling keydown after destroy', () => {
+      const plugin = new ShortcutsPlugin(pluginParamsMock);
+      const handler = jest.fn();
+
+      plugin.publicApi.register('CMD+K', handler);
+      plugin.destroy();
+      plugin.publicApi.register('CMD+K', handler);
+      matchKeyboardShortcut.mockReturnValue(true);
+
+      pressKey();
+
+      expect(handler).not.toHaveBeenCalled();
+    });
+
     it('should clear registered shortcuts so later keydowns dispatch nothing', () => {
       const plugin = new ShortcutsPlugin(pluginParamsMock);
 

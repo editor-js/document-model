@@ -62,22 +62,32 @@ The system SHALL provide a `ToolsCollection` (a `Map<string, ToolFacadeClass>` s
 Implemented in `src/tools/ToolsCollection.ts`.
 
 ### Requirement: BlockToolAdapter bridges model events to per-block DOM state
-The system SHALL provide an abstract `BlockToolAdapter` (extending `EventTarget`) that subscribes to `api.document.onUpdate`, translates model-level `DataNodeAddedEvent`/`DataNodeRemovedEvent`/`ValueModifiedEvent` into adapter-level `KeyAddedEvent`/`KeyRemovedEvent`/`ValueNodeChangedEvent` dispatched on itself, and exposes `registerTextInputKey`, `registerValueKey`, `removeKey`, and `destroy()`.
+The system SHALL provide an abstract `BlockToolAdapter` (extending `EventTarget`) that subscribes to `api.document.onUpdate`, translates model-level `DataNodeAddedEvent`/`DataNodeRemovedEvent`/`ValueModifiedEvent` into adapter-level `KeyAddedEvent`/`KeyRemovedEvent`/`ValueNodeChangedEvent` dispatched on itself, and exposes `registerTextInputKey`, `registerValueKey`, `removeKey`, and `destroy()`. `BlockToolAdapter` SHALL own an `AbortController`, tie its `api.document.onUpdate` unsubscribe function to that controller's `abort` event, expose its `signal` to subclasses as a protected member, and abort it in `destroy()`.
 
 #### Scenario: Cleaning up an adapter
 - **GIVEN** a `BlockToolAdapter` instance is subscribed to model updates
 - **WHEN** `destroy()` is called
-- **THEN** it unsubscribes its model listener so no further translated events are dispatched
+- **THEN** its controller aborts, so its model listener is removed and no further translated events are dispatched
+
+#### Scenario: Subclass listeners are removed by the base class
+- **GIVEN** a `BlockToolAdapter` subclass registered a listener with the inherited `signal`
+- **WHEN** `destroy()` is called on the subclass instance
+- **THEN** that listener is removed too, even though the subclass doesn't override `destroy()`
 
 Implemented in `src/entities/BlockToolAdapter.ts`.
 
 ### Requirement: Plugin contracts
-The system SHALL define `EditorjsPlugin`/`EditorjsPluginConstructor` (generic UI-plugin contract with optional `destroy()`, an optional `publicApi` member, a static `type`, and a static `name`) and `EditorJSAdapterPlugin`/`EditorjsAdapterPluginConstructor` (singleton adapter plugin contract with `createBlockToolAdapter`/`destroyBlockToolAdapter`).
+The system SHALL define `EditorjsPlugin`/`EditorjsPluginConstructor` (generic UI-plugin contract with optional `destroy()`, an optional `publicApi` member, a static `type`, and a static `name`) and `EditorJSAdapterPlugin`/`EditorjsAdapterPluginConstructor` (singleton adapter plugin contract with `createBlockToolAdapter`/`destroyBlockToolAdapter` and a required `destroy()` that releases every block adapter not destroyed yet, along with the adapter's own subscriptions).
 
 #### Scenario: Destroying a plugin
 - **GIVEN** a registered `EditorjsPlugin` implements an optional `destroy()` method
 - **WHEN** the editor tears down
 - **THEN** `destroy()` is called on the plugin instance to release its resources
+
+#### Scenario: Destroying the adapter plugin
+- **GIVEN** an adapter plugin with block adapters created through `createBlockToolAdapter`
+- **WHEN** the editor tears down
+- **THEN** the adapter plugin's `destroy()` is called after every rendered block has been released, and it destroys any block adapter still alive
 
 #### Scenario: Plugin declares an id and a public API
 - **GIVEN** a plugin class declares a static `name` and an instance `publicApi` member
@@ -133,4 +143,22 @@ The system SHALL declare two empty, augmentable interfaces — `EditorjsPluginAp
 - **THEN** it returns that id's configuration with `use()` values taking precedence over the static ones
 
 Implemented in `src/entities/BaseTool.ts`, `src/tools/facades/BaseToolFacade.ts`.
+
+### Requirement: Tool instance teardown hook
+The `BlockTool` and `InlineTool` instance contracts SHALL each declare an optional `destroy(): void`. The editor SHALL call `destroy()` exactly once on every tool instance it creates, when it stops using that instance. A block tool instance belongs to one block and SHALL be destroyed when that block is removed or the editor is destroyed. An inline tool facade SHALL hand the same instance to every consumer. Consumers SHALL NOT destroy it. `InlineToolFacade.destroy()` SHALL destroy it once, and only if it was created. A tool that doesn't implement `destroy()` SHALL keep working unchanged.
+
+#### Scenario: Inline tool declares destroy
+- **GIVEN** an inline tool class implements `destroy()`
+- **WHEN** it is type-checked against `InlineToolConstructor`
+- **THEN** it compiles, and an inline tool without `destroy()` also compiles
+
+#### Scenario: The inline tool facade destroys its shared instance once
+- **GIVEN** an inline tool facade whose `create()` has been called several times
+- **WHEN** `destroy()` is called on the facade, once or more
+- **THEN** every `create()` returned the same instance, its `destroy()` is called once, and a facade whose `create()` was never called constructs nothing
+
+#### Scenario: Block tool declares destroy
+- **GIVEN** a block tool class implements `destroy()`
+- **WHEN** it is type-checked against `BlockToolConstructor`
+- **THEN** it compiles, and a block tool without `destroy()` also compiles
 

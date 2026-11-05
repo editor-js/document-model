@@ -2506,6 +2506,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@editorjs/helpers@npm:^1.2.3":
+  version: 1.2.3
+  resolution: "@editorjs/helpers@npm:1.2.3"
+  dependencies:
+    codex-tooltip: "npm:^1.1.0"
+  checksum: 9e7d875fbfe120b5a9c20b7075b35f128e7edf35b5875e8bad4e825b3521d9a91b66330c29d36f193f8c6ad489daed05f4be8855cab86435d462c8db7f59d586
+  languageName: node
+  linkType: hard
+
 "@editorjs/inline-link@workspace:^, @editorjs/inline-link@workspace:packages/tools/inline-link":
   version: 0.0.0-use.local
   resolution: "@editorjs/inline-link@workspace:packages/tools/inline-link"
@@ -2630,7 +2639,7 @@ __metadata:
     "@babel/preset-env": "npm:^7.29.2"
     "@editorjs/helpers": "npm:^1.2.2"
     "@editorjs/model-types": "workspace:^"
-    "@editorjs/ui-kit": "npm:^2.0.0"
+    "@editorjs/ui-kit": "npm:^2.0.1"
     "@jest/globals": "npm:^29.7.0"
     "@types/eslint": "npm:^9.6.1"
     "@types/jest": "npm:^29.5.12"
@@ -2673,15 +2682,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@editorjs/ui-kit@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "@editorjs/ui-kit@npm:2.0.0"
+"@editorjs/ui-kit@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "@editorjs/ui-kit@npm:2.0.1"
   dependencies:
     "@codexteam/icons": "npm:^0.3.3"
     "@editorjs/caret": "npm:^1.1.0"
     "@editorjs/dom": "npm:^1.2.0"
-    "@editorjs/helpers": "npm:^1.2.2"
-  checksum: 97110bd1d12fe22077cff40bf9d7df044d6cdc086cdb80c0bcd0b5a96b1363d7efa10cce62db67932f9daa0ebe782b44ed3f749d4f5781d703d2a75b0e7e8f74
+    "@editorjs/helpers": "npm:^1.2.3"
+  checksum: 67938dbe86b811a32dd10660664c18277f94f6769a692335bfb4a0721da9298992f596686540bd8f5641d74ca56c615c413eb2da4239a4af74f4955e50cbc6b4
   languageName: node
   linkType: hard
 
@@ -2697,7 +2706,7 @@ __metadata:
     "@editorjs/helpers": "npm:^1.2.2"
     "@editorjs/paragraph": "workspace:^"
     "@editorjs/sdk": "workspace:^"
-    "@editorjs/ui-kit": "npm:^2.0.0"
+    "@editorjs/ui-kit": "npm:^2.0.1"
     "@jest/globals": "npm:^29.7.0"
     "@types/jest": "npm:^29.5.12"
     chokidar-cli: "npm:^3.0.0"
@@ -6179,6 +6188,13 @@ __metadata:
   version: 1.0.6
   resolution: "codex-tooltip@npm:1.0.6"
   checksum: 167dd431fb9801528947e5a0cae154b11131ef6d2cfb638a4bf005a9175c2f7a175648cac24b5ff6abbb98398f2fcb1408461d3def85575008adb30aefa4ff65
+  languageName: node
+  linkType: hard
+
+"codex-tooltip@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "codex-tooltip@npm:1.1.0"
+  checksum: c66da318e18e103daf163803ca4080ce2e3218c0939df255fe241ab3100c5d4212070825d145db652eff7cd1839ba5b8f9970f08c2718caf5005a7a9595ec62e
   languageName: node
   linkType: hard
 

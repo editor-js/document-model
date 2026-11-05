@@ -1,8 +1,8 @@
 /** @jest-environment jsdom */ // eslint-disable-line jsdoc/check-tag-names -- Jest directive, not an API comment.
 /* eslint-disable jsdoc/require-jsdoc, @typescript-eslint/naming-convention */
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { BlockAddedCoreEvent, BlockRemovedCoreEvent, CoreEventType, createDataKey, EventBus, TextIndex } from '@editorjs/sdk';
-import type { EditorjsPluginParams } from '@editorjs/sdk';
+import { BlockAddedCoreEvent, BlockRemovedCoreEvent, CoreEventType, createDataKey, EventBus, InlineToolFacade, TextIndex, ToolType } from '@editorjs/sdk';
+import type { EditorAPI, EditorjsPluginParams, InlineToolConstructor } from '@editorjs/sdk';
 
 interface Item {
   onActivate?: () => void;
@@ -93,7 +93,7 @@ describe('UI plugin listener lifetime', () => {
     return block;
   }
 
-  function selection(getToolbarConfig: () => unknown): void {
+  function selection(getToolbarConfig: () => unknown, availableInlineTools?: unknown[]): void {
     const text = document.createTextNode('hello');
     const range = document.createRange();
 
@@ -114,7 +114,7 @@ describe('UI plugin listener lifetime', () => {
         dataKey: createDataKey('text'),
         textRange: [0, 2] }]),
       fragments: [],
-      availableInlineTools: [{
+      availableInlineTools: availableInlineTools ?? [{
         name: 'bold',
         options: {},
         create: () => ({ getToolbarConfig,
@@ -414,5 +414,73 @@ describe('UI plugin listener lifetime', () => {
 
     expect(() => plugin.destroy()).not.toThrow();
     expect(TestPopover.instances.map(popover => popover.destroy.mock.calls.length)).toEqual(popoverDestroys);
+  });
+
+  it('should never destroy the shared inline tool instance it renders, through the real facade', async () => {
+    const destroy = jest.fn();
+    const constructed = jest.fn();
+    const config = (): { type: string;
+      icon: string; } => ({ type: 'default',
+      icon: 'B' });
+
+    /**
+     * Inline tool built by the real facade, which hands the same instance to every consumer
+     */
+    class SharedInlineTool {
+      public static type = ToolType.Inline;
+
+      constructor() {
+        constructed();
+      }
+
+      public getToolbarConfig(): { type: string;
+        icon: string; } {
+        return config();
+      }
+
+      public isActive(): boolean {
+        return false;
+      }
+
+      public destroy(): void {
+        destroy();
+      }
+    }
+
+    const facade = new InlineToolFacade({
+      api: {} as EditorAPI,
+      constructable: SharedInlineTool as unknown as InlineToolConstructor,
+      isDefault: false,
+      name: 'bold',
+      useToolOptions: {},
+    });
+    const toolbar = retain(new InlineToolbarUI(params));
+    let resolveConfig!: () => void;
+    const pending = new Promise<void>((resolve) => {
+      resolveConfig = resolve;
+    });
+
+    // Rebuild for a new selection
+    selection(config, [facade]);
+    await flushRender();
+    selection(config, [facade]);
+    await flushRender();
+
+    // Hide
+    emit(`core:${CoreEventType.SelectionChanged}`, { index: undefined,
+      fragments: [],
+      availableInlineTools: [] });
+
+    // A render superseded before it finishes
+    jest.spyOn(SharedInlineTool.prototype, 'getToolbarConfig').mockImplementationOnce(() => pending.then(config) as never);
+    selection(config, [facade]);
+    selection(config, [facade]);
+    resolveConfig();
+    await flushRender();
+
+    toolbar.destroy();
+
+    expect(constructed).toHaveBeenCalledTimes(1);
+    expect(destroy).not.toHaveBeenCalled();
   });
 });
