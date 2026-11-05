@@ -189,6 +189,12 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
   #selectedBlockIndex = -1;
 
   /**
+   * Whether the toolbox popover is open. The toolbar holds its position while it is, since that popover renders inside
+   * the toolbar -- so the button stays beside one block, and the block the menu acts on has to stay there with it
+   */
+  #isToolboxOpen = false;
+
+  /**
    * Popover rendering the current menu, absent until the menu is first built
    */
   #popover: PopoverDesktop | undefined;
@@ -270,6 +276,8 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
 
     this.#eventBus.addEventListener('ui:blocks:block-selected', this.#handleBlockSelected);
     this.#eventBus.addEventListener('ui:block-settings:open', this.#handleOpenRequest);
+    this.#eventBus.addEventListener('ui:toolbox:opened', this.#handleToolboxOpened);
+    this.#eventBus.addEventListener('ui:toolbox:closed', this.#handleToolboxClosed);
   }
 
   /**
@@ -282,6 +290,8 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
      */
     this.#eventBus.removeEventListener('ui:blocks:block-selected', this.#handleBlockSelected);
     this.#eventBus.removeEventListener('ui:block-settings:open', this.#handleOpenRequest);
+    this.#eventBus.removeEventListener('ui:toolbox:opened', this.#handleToolboxOpened);
+    this.#eventBus.removeEventListener('ui:toolbox:closed', this.#handleToolboxClosed);
 
     /**
      * Dropping the listeners stops new requests, but not one already waiting on its providers.
@@ -296,12 +306,12 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
   }
 
   /**
-   * Follows block selection, except while the menu is open -- re-targeting under an open menu
-   * would leave the button and the menu pointing at different blocks
+   * Follows block selection, except while the menu or the toolbox is open: whenever the toolbar holds its position,
+   * re-targeting here would leave the button and this target on different blocks
    * @param event - the selection event
    */
   #handleBlockSelected = (event: BlockSelectedUIEvent): void => {
-    if (this.#isOpen) {
+    if (this.#isOpen || this.#isToolboxOpen) {
       return;
     }
 
@@ -325,6 +335,20 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
    */
   #handleOpenRequest = (event: BlockSettingsOpenUIEvent): void => {
     void this.#open(event.detail.index);
+  };
+
+  /**
+   * Freezes the target for as long as the toolbox holds the toolbar in place
+   */
+  #handleToolboxOpened = (): void => {
+    this.#isToolboxOpen = true;
+  };
+
+  /**
+   * Lets the target follow the selection again, from the next block reported
+   */
+  #handleToolboxClosed = (): void => {
+    this.#isToolboxOpen = false;
   };
 
   /**
