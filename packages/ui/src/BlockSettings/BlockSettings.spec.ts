@@ -5,6 +5,7 @@ import { BlockSettingsUI } from './BlockSettings.js';
 import { BlockSettingsOpenUIEvent } from './events/index.js';
 import type { BlockSettingsRenderedUIEventPayload } from './events/index.js';
 import { BlockSelectedUIEvent } from '../Blocks/events/index.js';
+import { ToolboxClosedUIEvent, ToolboxOpenedUIEvent } from '../Toolbox/events/index.js';
 import type { BlockSettingsProvider } from './BlockSettings.js';
 
 /**
@@ -706,6 +707,20 @@ describe('BlockSettingsUI', () => {
       }));
     }
 
+    /**
+     * Announces the toolbox as open, which is when the toolbar stops following the selection
+     */
+    function openToolbox(): void {
+      instance.eventBus.dispatchEvent(new ToolboxOpenedUIEvent({}));
+    }
+
+    /**
+     * Announces the toolbox as closed, releasing the toolbar
+     */
+    function closeToolbox(): void {
+      instance.eventBus.dispatchEvent(new ToolboxClosedUIEvent({}));
+    }
+
     it('should announce a button alongside the menu', () => {
       expect(instance.button.tagName).toBe('BUTTON');
     });
@@ -889,6 +904,44 @@ describe('BlockSettingsUI', () => {
       await flush();
 
       expect(itemTitles(instance.element)).toEqual(['For block-0']);
+    });
+
+    /**
+     * The toolbar holds its position while the toolbox is open, so the button stays beside one block: a target that
+     * moved out from under it would open one block's actions next to another's, `Delete` among them
+     */
+    it('should not re-target while the toolbox is open', async () => {
+      instance.plugin.publicApi.register(ctx => ({
+        title: `For ${ctx.blockId}`,
+        onActivate: () => {},
+      }));
+
+      selectBlock(0);
+      openToolbox();
+      selectBlock(2);
+      closeToolbox();
+
+      clickButton(instance.button);
+      await flush();
+
+      expect(itemTitles(instance.element)).toEqual(['For block-0']);
+    });
+
+    it('should follow the selection again once the toolbox closes', async () => {
+      instance.plugin.publicApi.register(ctx => ({
+        title: `For ${ctx.blockId}`,
+        onActivate: () => {},
+      }));
+
+      selectBlock(0);
+      openToolbox();
+      closeToolbox();
+      selectBlock(2);
+
+      clickButton(instance.button);
+      await flush();
+
+      expect(itemTitles(instance.element)).toEqual(['For block-2']);
     });
   });
 
