@@ -8,9 +8,10 @@ Resources that outlive an editor if nobody releases them:
 |---|---|---|
 | `EditorjsUI` | wrapper `div` appended to the integrator's holder | covered by #174, out of scope here |
 | `BlocksUI` | blocks holder DOM listeners (`beforeinput`, `keydown`, `copy`), block wrappers | covered by #174, out of scope here |
-| `ToolbarUI` / `ToolboxUI` / `InlineToolbarUI` | EventBus listeners, popovers | covered by #174, out of scope here; `InlineToolbarUI`'s inline tool instances are handled here after #174 lands (D7) |
+| `ToolbarUI` / `ToolboxUI` / `InlineToolbarUI` | EventBus listeners, popovers | covered by #174, out of scope here |
 | `CaretAdapter` | subscription to the singleton `useSelectionChange` watcher (`document` `selectionchange`) and `api.selection.onCaretUpdate` | `@todo Unsubscribe on adapter destruction` |
-| `FormattingAdapter` | `core:ToolLoaded` and `api.document.onUpdate` listeners, inline tool instances | never released |
+| `FormattingAdapter` | `core:ToolLoaded` and `api.document.onUpdate` listeners | never released |
+| `ToolsManager` | inline tool facades, each holding the one instance its consumers share | never destroyed |
 | `DOMAdapters` | `DOMBlockToolAdapter` per block (model and `ui:beforeinput` listeners) | released only on block removal |
 | `BlockRenderer` | model listener, block tool instances | instances aren't tracked (`@todo clear block tool adapter memory`) |
 | `SelectionManager` | model `CaretManagerUpdated` listener | never released |
@@ -49,13 +50,20 @@ Every existing `destroy()` in the repo is synchronous, and `EditorjsPlugin.destr
 3. `UndoRedoManager.destroy()`, then `SelectionManager.destroy()`.
 4. `BlockRenderer.destroy()`: for each tracked block, call the tool instance's `destroy?.()`, then `adapter.destroyBlockToolAdapter(id)`. Remove the model listener. No `BlockRemovedCoreEvent` is dispatched, because the UI is already gone.
 5. `adapter.destroy()` (D5).
+6. `ToolsManager.destroy()`: destroy each inline tool's shared instance once (D7), and stop any tool preparation still running (D4). It runs last because the adapter, the selection manager and the inline toolbar all use those instances until they're gone.
 
-`destroy()` never resolves a service from the container, because that could construct it. `initialize()` stores each service it resolves (`SelectionManager`, `BlockRenderer`, `UndoRedoManager`, the adapter) in a `#services` record, and teardown only destroys what that record holds. Each step runs through a helper that logs a throwing step and continues.
+`destroy()` never resolves a service from the container, because that could construct it. `initialize()` stores each service it resolves (`SelectionManager`, `BlockRenderer`, `UndoRedoManager`, the adapter, `ToolsManager`) in a `#services` record, and teardown only destroys what that record holds. Each step runs through a helper that logs a throwing step and continues.
 
 The model is never mutated. If `destroy()` cleared blocks through the model, `CollaborationManager` would broadcast the removals to other clients and `UndoRedoManager` would record them.
 
 ### D4. Destroy during a pending `initialize()`
-`initialize()` awaits `#initializeTools()`, which awaits each tool's `prepare()`. After that `await`, `initialize()` checks `#destroyed` and stops before tools are constructed, the document is initialized, or `core:ready` is dispatched. `destroy()` tears down whatever stage was reached.
+`initialize()` awaits `#initializeTools()`, which runs each tool's static `prepare()` one after another through a queue. `destroy()` can land while one of them is pending.
+
+`ToolsManager` owns an `AbortController` that its `destroy()` aborts. Each queued job checks the signal before calling `prepare()`, so tools still waiting are never prepared. It checks again once `prepare()` settles, so a tool whose preparation finishes after destroy is not created, validated or registered, and no `ToolLoaded` is dispatched for it. An inline instance created then would never be destroyed, because `ToolsManager.destroy()` has already run.
+
+A `prepare()` that is already running can't be interrupted, because it takes no signal, and passing one would change the tool API. Its result is discarded instead. `initialize()` therefore settles once that `prepare()` settles, not immediately. Racing the queue against the signal would end the wait sooner without stopping the tool's work, so it isn't worth the extra code.
+
+After the queue settles, `initialize()` checks `#destroyed` and stops before the document is initialized or `core:ready` is dispatched. `destroy()` tears down whatever stage was reached.
 
 `initialize()` then **rejects** with a `DOMException` named `AbortError`, following the platform convention (`fetch` rejects the same way when its signal aborts). Code awaiting readiness (loading data, focusing, subscribing) must not run against a destroyed editor, and resolving would let it run. Callers that unmount during boot ignore the error by name: `if (error.name === 'AbortError') return`. This matters in practice: React StrictMode mounts, unmounts and remounts every component in development, so every React integration hits this path.
 
@@ -69,7 +77,7 @@ The model is never mutated. If `destroy()` cleared blocks through the model, `Co
 `EditorJSAdapterPlugin` narrows `destroy?()` to `destroy()`. Core can't release the rendering layer without it, and `DOMAdapters` is the only implementation. `DOMAdapters.destroy()`:
 - destroys each remaining entry in `#adapters` through the existing `destroyBlockToolAdapter` path
 - calls `CaretAdapter.destroy()`, which aborts its controller. That controller's `abort` event is tied to `off(holder)` on the selection watcher and to the `api.selection.onCaretUpdate` unsubscribe function
-- calls `FormattingAdapter.destroy()`, which aborts its controller (covering the `core:ToolLoaded` and `onUpdate` listeners) and calls `destroy?.()` on each attached inline tool
+- calls `FormattingAdapter.destroy()`, which aborts its controller (covering the `core:ToolLoaded` and `onUpdate` listeners) and drops its references to the inline tools. It doesn't destroy them: they're shared (D7)
 
 Singletons are fetched from its private container, where they already exist, so nothing new gets constructed.
 
@@ -77,13 +85,17 @@ Singletons are fetched from its private container, where they already exist, so 
 `useSelectionChange` is a module-level singleton shared by every editor on the page, so its `destroy()` would break the other editors. Instead, `off()` removes the `document` listener when the subscriber map becomes empty, and `on()` adds it back when it adds the first subscriber. This lets "no `document` listener left after every editor is destroyed" pass, and it is safe when several editors run at once.
 
 ### D7. Tool instance lifetime rule
-Add `destroy?(): void` to `InlineTool`. `BlockTool` already gets it from the v2 type, and we spell it out in the SDK spec. The rule is that every instance the editor creates gets `destroy()` called once, when the editor stops using it:
-- `BlockRenderer`: the per-block instance, on block removal or teardown.
-- `FormattingAdapter`: the long-lived inline instance, on teardown.
-- `InlineToolbarUI`: instances created when building the toolbar, when the toolbar is rebuilt or destroyed.
-- `SelectionManager.applyInlineTool` and `ToolsManager` validation create throwaway instances. They call `destroy?.()` right after use, in a `finally`.
+Add `destroy?(): void` to `InlineTool`. `BlockTool` already gets it from the v2 type, and we spell it out in the SDK spec. The rule is that every instance the editor creates gets `destroy()` called once, by whoever owns it, when the editor stops using it.
 
-*Alternative*: call `destroy()` only on long-lived instances. Rejected because tool authors would then have to know which instances are which, while a uniform rule works without that knowledge.
+The owner differs by tool type, because the facades create instances differently:
+- **Block tools**: `BlockToolFacade.create()` builds a new instance per block, and `BlockRenderer` owns it. It calls `destroy()` when the block is removed or on teardown.
+- **Inline tools**: `InlineToolFacade.create()` returns one cached instance per tool (since #127), so `FormattingAdapter`, `SelectionManager.applyInlineTool`, `ToolsManager` validation and `InlineToolbarUI` all receive the same object. None of them owns it, and none of them destroys it. The facade does: `InlineToolFacade.destroy()` destroys the instance once (only if one was ever created) and drops it. `ToolsManager.destroy()` calls it for every inline tool as the last step of teardown (D3), logging a throwing hook and moving on to the next tool.
+
+So an inline tool's `destroy()` runs exactly once, when the editor is destroyed. It doesn't run when the inline toolbar is rebuilt or hidden, or after a format is applied.
+
+*Alternative*: each consumer destroys the instance it was handed. Rejected because the instance is shared. The first consumer to finish would destroy it under the others, and teardown would call the hook once per consumer. That's how this change was first written, and review caught it.
+
+*Alternative*: make `InlineToolFacade.create()` return a new instance each time, like block tools. Rejected because tools may rely on keeping state between toolbar renders and applications, and that would be a behaviour change outside this work.
 
 ### D8. Listeners are released through `AbortController` across the repo
 Every first-party component that registers listeners owns one `AbortController`. It passes the controller's `signal` to every registration and calls `abort()` in its teardown. This covers:
@@ -114,7 +126,7 @@ Plugins and tools are interfaces, not base classes, so they own their own contro
 - [An async `render()` settles after teardown and dispatches `BlockAddedCoreEvent` into a dead EventBus] → `BlockRenderer` checks a `#destroyed` flag after the `await`, then destroys the late instance and its adapter instead of dispatching.
 - [Ops not yet sent in `CollaborationManager`'s debounced batch are lost on destroy] → This already happens when a tab closes. Flushing would need async teardown (Non-Goal) and is listed in Open Questions.
 - [The adapter contract narrows `destroy?()` to `destroy()`, which is a type-level break for third-party adapters] → No third-party adapters exist yet, and the package is pre-1.0.
-- [#174 overlaps with UI teardown] → #174 covers every UI plugin's teardown, so this change has no UI plugin implementation. The only UI code here is `InlineToolbarUI` destroying its inline tool instances, which is done after #174 lands because #174 rewrites that file. Both changes edit the same `docs/plugins.md` lifecycle line, so whichever lands second merges that one line.
+- [#174 overlaps with UI teardown] → #174 covers every UI plugin's teardown, so this change has no UI plugin implementation. `InlineToolbarUI` doesn't destroy inline tool instances either, because they're shared (D7). Both changes edit the same `docs/plugins.md` lifecycle line, so whichever lands second merges that one line.
 
 ## Migration Plan
 
