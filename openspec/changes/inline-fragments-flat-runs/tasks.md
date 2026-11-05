@@ -40,3 +40,4 @@
 - [ ] 6.5 Cache `RunList#length`, drop the `#merge` call for inserting into an empty list, and fold `getFragments` filters into one predicate
 - [ ] 6.6 Write a failing test, then put a separate copy of the inline data into `TextFormattedEvent`, so mutating the caller's object can't change collaboration operations or undo history built from the event
 - [ ] 6.7 Write failing tests, then make `FormattingAdapter` re-query fragments over the widened re-render range until it stops growing (`collectFragmentsToRender` in `dom-adapters/src/utils/`), and start the range from the edit rather than from the first fragment
+- [ ] 6.8 Write failing jsdom-backed `FormattingAdapter` tests (literal tags, entity-like text, HTML in text), then rebuild re-rendered ranges from a text node instead of `template.innerHTML`. Run `dom-adapters` Jest in jsdom and ESM mode so the specs can import the ESM `sdk` build
