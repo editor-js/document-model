@@ -80,7 +80,7 @@ classDiagram
       detail.data.value: T
       detail.data.previous: T
     }
-    class TuneModifiedEvent {
+    class PluginDataModifiedEvent {
       detail.data.value: T
       detail.data.previous: T
     }
@@ -163,7 +163,7 @@ classDiagram
   DataNodeAddedEvent --|> BaseDocumentEvent
   DataNodeRemovedEvent --|> BaseDocumentEvent
   ValueModifiedEvent --|> BaseDocumentEvent
-  TuneModifiedEvent --|> BaseDocumentEvent
+  PluginDataModifiedEvent --|> BaseDocumentEvent
   PropertyModifiedEvent --|> BaseDocumentEvent
 
   BlockAddedCoreEvent --|> CoreEventBase

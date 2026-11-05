@@ -64,19 +64,19 @@ All fields that can be omitted (`id`) are absent from the JSON when `undefined` 
 
 ---
 
-## `TuneIndex` — `k: "tune"`
+## `PluginDataIndex` — `k: "plugin"`
 
 ```json
-{ "k": "tune", "b": 2, "tune": "<tuneName>", "key": "<tuneKey>", "id": "<documentId>" }
+{ "k": "plugin", "b": 2, "plugin": "<pluginName>", "key": "<pluginKey>", "id": "<documentId>" }
 ```
 
-| Field  | Type     | Required |
-|--------|----------|----------|
-| `k`    | `"tune"` | yes |
-| `b`    | number   | yes — zero-based block position |
-| `tune` | string   | yes — block tune name |
-| `key`  | string   | yes — key within the tune |
-| `id`   | string   | no  |
+| Field    | Type       | Required |
+|----------|------------|----------|
+| `k`      | `"plugin"` | yes |
+| `b`      | number     | yes — zero-based block position |
+| `plugin` | string     | yes — name the data is stored under, by convention the plugin's `name` |
+| `key`    | string     | yes — key within that plugin's data |
+| `id`     | string     | no  |
 
 ---
 
@@ -167,13 +167,13 @@ Index.block(2, 'doc-abc').serialize()
 // → '{"k":"block","b":2,"id":"doc-abc"}'
 ```
 
-### Tune property change
+### Plugin data change
 
-A `fontSize` tune on block 1, key `"size"` changed.
+The `fontSize` plugin's `"size"` key changed on block 1.
 
 ```ts
-Index.tune(1, 'fontSize', 'size').serialize()
-// → '{"k":"tune","b":1,"tune":"fontSize","key":"size"}'
+Index.pluginData(1, 'fontSize', 'size').serialize()
+// → '{"k":"plugin","b":1,"plugin":"fontSize","key":"size"}'
 ```
 
 ### Round-trip through `Index.parse`

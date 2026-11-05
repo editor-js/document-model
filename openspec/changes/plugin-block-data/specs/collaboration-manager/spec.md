@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Plugin data operations
-`CollaborationManager` SHALL translate a `PluginDataModifiedEvent` into a `Modify` `Operation` on its `PluginDataIndex`, with `payload` set to the new value and `prevPayload` to the previous value. `OperationsTransformer` SHALL shift a plugin data operation's block index against block insertions and removals the same way it does for data index operations, SHALL turn it into a `Neutral` operation when its block is removed, and SHALL resolve two concurrent writes to the same block, plugin and key the same way it resolves two concurrent writes to the same data key: the operation being transformed becomes `Neutral` when the operation it is transformed against is the later of the two, an unsent local operation counting as later than any revision. Writes to different blocks, different plugins or different keys SHALL be left untransformed, since one cannot shift another's position. Transformation SHALL also accept a plugin data operation as the operation being transformed *against*, rather than rejecting its index kind. The `Modify` operation payload type SHALL admit any JSON value, including primitives.
+`CollaborationManager` SHALL translate a `PluginDataModifiedEvent` into a `Modify` `Operation` on its `PluginDataIndex`, with `payload` set to the new value and `prevPayload` to the previous value. `OperationsTransformer` SHALL shift a plugin data operation's block index against block insertions and removals the same way it does for data index operations, SHALL turn it into a `Neutral` operation when its block is removed, and SHALL resolve two concurrent writes to the same block, plugin and key the same way it resolves two concurrent writes to the same data key: the operation being transformed becomes `Neutral` when the operation it is transformed against is the later of the two, an unsent local operation counting as later than any revision. Writes to different blocks, different plugins or different keys SHALL be left untransformed, since one cannot shift another's position. An operation carrying no revision of its own SHALL lose to whatever it is transformed against. Such an operation comes from an undo or redo stack, whose entries are built from model events and are never numbered, while an operation from the server always is; and the operation it is transformed against has already been applied to the document. Keeping it would leave an undo step that writes a value the document has moved on from, and whose recorded previous value is older still, so undoing a local write that a collaborator had overwritten would delete the collaborator's value. Transformation SHALL also accept a plugin data operation as the operation being transformed *against*, rather than rejecting its index kind. The `Modify` operation payload type SHALL admit any JSON value, including primitives.
 
 #### Scenario: Local plugin data change becomes an operation
 - **GIVEN** the local user changes `anchors.visible` on block 1 from `true` to `false`
@@ -37,6 +37,16 @@
 - **GIVEN** clients A and B both write `anchors.visible` on block 1, and the server applies A before B
 - **WHEN** B receives A's operation while its own write is still unsent
 - **THEN** A's operation is transformed to `Neutral` on B, so B keeps the value the server will end up holding rather than being left on A's
+
+#### Scenario: Undoing a write a collaborator overwrote
+- **GIVEN** the local user wrote `anchors.color` on block 0, and a collaborator then overwrote the same key
+- **WHEN** the undo stack is transformed against the collaborator's operation
+- **THEN** the entry is dropped, so undo reaches past it rather than writing a value that is gone and deleting the collaborator's
+
+#### Scenario: Undoing a write to a key nobody else touched
+- **GIVEN** the local user wrote `anchors.color` and a collaborator wrote `anchors.label` on the same block
+- **WHEN** the undo stack is transformed against the collaborator's operation
+- **THEN** the entry survives, because the two do not describe the same value
 
 #### Scenario: Concurrent writes to different keys
 - **GIVEN** a plugin data operation on `anchors.visible` and a concurrent one on `anchors.id` of the same block
