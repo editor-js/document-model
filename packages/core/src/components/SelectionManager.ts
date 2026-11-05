@@ -48,6 +48,11 @@ export class SelectionManager {
   #toolsManager: ToolsManager;
 
   /**
+   * Releases the caret listener on destroy
+   */
+  readonly #controller = new AbortController();
+
+  /**
    * @param config - Editor's config
    * @param model - editor model instance
    * @param eventBus - EventBus instance to exchange events between components
@@ -64,7 +69,18 @@ export class SelectionManager {
     this.#eventBus = eventBus;
     this.#toolsManager = toolsManager;
 
-    this.#model.addEventListener(EventType.CaretManagerUpdated, (event: CaretManagerEvents) => this.#handleCaretManagerUpdate(event));
+    this.#model.addEventListener(
+      EventType.CaretManagerUpdated,
+      (event: CaretManagerEvents) => this.#handleCaretManagerUpdate(event),
+      { signal: this.#controller.signal }
+    );
+  }
+
+  /**
+   * Stops listening to caret updates
+   */
+  public destroy(): void {
+    this.#controller.abort();
   }
 
   /**

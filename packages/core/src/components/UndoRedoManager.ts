@@ -42,11 +42,6 @@ export class UndoRedoManager {
   #model: EditorJSModel;
 
   /**
-   * Editor's EventBus instance
-   */
-  #eventBus: EventBus;
-
-  /**
    * Editor configuration (provides the current user id).
    */
   #config: CoreConfigValidated;
@@ -79,36 +74,9 @@ export class UndoRedoManager {
   #isApplying = false;
 
   /**
-   * Undo Core Event listener. Stored to be removed on destroy
-   * @param event - undo core event
+   * Releases the manager's model and EventBus listeners on destroy
    */
-  #undoListener = (event: UndoCoreEvent): void => {
-    if (event.defaultPrevented) {
-      return;
-    }
-
-    this.undo();
-  };
-
-  /**
-   * Redo Core Event listener. Stored to be removed on destroy
-   * @param event - redo core event
-   */
-  #redoListener = (event: RedoCoreEvent): void => {
-    if (event.defaultPrevented) {
-      return;
-    }
-
-    this.redo();
-  };
-
-  /**
-   * Model updates listener. Stored to be removed on destroy
-   * @param e - model event
-   */
-  #modelUpdatesListener = (e: ModelEvents): void => {
-    this.#handleEvent(e);
-  };
+  readonly #controller = new AbortController();
 
   /**
    * UndoRedoManager constructor.
@@ -124,12 +92,26 @@ export class UndoRedoManager {
   ) {
     this.#config = config;
     this.#model = model;
-    this.#eventBus = eventBus;
 
-    model.addEventListener(EventType.Changed, this.#modelUpdatesListener);
+    const { signal } = this.#controller;
 
-    eventBus.addEventListener(`core:${CoreEventType.Undo}`, this.#undoListener);
-    eventBus.addEventListener(`core:${CoreEventType.Redo}`, this.#redoListener);
+    model.addEventListener(EventType.Changed, (e: ModelEvents) => this.#handleEvent(e), { signal });
+
+    eventBus.addEventListener(`core:${CoreEventType.Undo}`, (event: UndoCoreEvent) => {
+      if (event.defaultPrevented) {
+        return;
+      }
+
+      this.undo();
+    }, { signal });
+
+    eventBus.addEventListener(`core:${CoreEventType.Redo}`, (event: RedoCoreEvent) => {
+      if (event.defaultPrevented) {
+        return;
+      }
+
+      this.redo();
+    }, { signal });
   }
 
   /**
@@ -180,13 +162,11 @@ export class UndoRedoManager {
   }
 
   /**
-   * Releases resources held by the manager (the pending debounce timer).
+   * Releases resources held by the manager: its listeners and the pending debounce timer
    */
   public destroy(): void {
     clearTimeout(this.#debounceTimer);
-    this.#eventBus.removeEventListener(`core:${CoreEventType.Undo}`, this.#undoListener);
-    this.#eventBus.removeEventListener(`core:${CoreEventType.Redo}`, this.#redoListener);
-    this.#model.removeEventListener(EventType.Changed, this.#modelUpdatesListener);
+    this.#controller.abort();
   }
 
   /**

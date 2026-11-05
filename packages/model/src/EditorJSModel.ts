@@ -36,12 +36,12 @@ export interface EditorJSModel {
   /**
    * Overload for EditorDocument events
    */
-  addEventListener<K extends ModelEvents>(type: EventType.Changed, listener: (event: K) => void): void;
+  addEventListener<K extends ModelEvents>(type: EventType.Changed, listener: (event: K) => void, options?: AddEventListenerOptions | boolean): void;
 
   /**
    * Overload for CaretManager events
    */
-  addEventListener<K extends CaretManagerEvents>(type: EventType.CaretManagerUpdated, listener: (event: K) => void): void;
+  addEventListener<K extends CaretManagerEvents>(type: EventType.CaretManagerUpdated, listener: (event: K) => void, options?: AddEventListenerOptions | boolean): void;
 }
 
 /**

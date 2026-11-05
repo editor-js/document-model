@@ -57,6 +57,12 @@ export default class ToolsManager {
   #unavailableTools = new ToolsCollection();
 
   /**
+   * Aborted by {@link destroy}: tools still queued for preparation are skipped, and a tool whose
+   * prepare() settles afterwards is neither created nor registered
+   */
+  readonly #controller = new AbortController();
+
+  /**
    * Returns available Tools
    */
   public get available(): ToolsCollection {
@@ -111,11 +117,39 @@ export default class ToolsManager {
   }
 
   /**
+   * Destroys the shared inline tool instances, once each.
+   *
+   * Every inline tool facade hands the same instance to all its consumers (formatting, selection,
+   * the inline toolbar), so none of them destroys it: the facade owns it and is destroyed here, on
+   * editor teardown. A throwing hook is logged and the remaining tools are still destroyed.
+   *
+   * Also stops a {@link prepareTools} still running: no tool is prepared, created or announced after this
+   */
+  public destroy(): void {
+    this.#controller.abort();
+
+    const facades = new Set([...this.#availableTools.values(), ...this.#unavailableTools.values()]);
+
+    for (const facade of facades) {
+      if (!facade.isInline()) {
+        continue;
+      }
+
+      try {
+        facade.destroy();
+      } catch (error) {
+        console.error(`[ToolsManager] Inline tool ${facade.name} failed to destroy`, error);
+      }
+    }
+  }
+
+  /**
    * Calls tools prepare method if it exists and adds tools to relevant collection (available or unavailable tools)
    * @param tools - tools to prepare and their settings
    */
   public async prepareTools(tools: [ToolConstructable, ToolStaticOptions | undefined][]): Promise<void> {
     const promiseQueue = new PromiseQueue();
+    const { signal } = this.#controller;
 
     const setToAvailableToolsCollection = (toolName: string, tool: ToolFacadeClass): void => {
       this.#availableTools.set(toolName, tool);
@@ -134,6 +168,13 @@ export default class ToolsManager {
 
       if (isFunction(toolConstructor.prepare)) {
         void promiseQueue.add(async () => {
+          /**
+           * The editor was destroyed while earlier tools were being prepared
+           */
+          if (signal.aborted) {
+            return;
+          }
+
           try {
             const tool = factory.get(toolName);
 
@@ -145,12 +186,24 @@ export default class ToolsManager {
               config: tool.config,
             });
 
+            /**
+             * The editor was destroyed while this tool was preparing. An inline instance created now
+             * would outlive destroy(), and ToolLoaded would reach a torn-down editor
+             */
+            if (signal.aborted) {
+              return;
+            }
+
             if (tool.isInline()) {
               /**
                * Some Tools validation
                */
               const inlineToolRequiredMethods = ['render'];
-              const notImplementedMethods = inlineToolRequiredMethods.filter(method => tool.create()[method as keyof InlineTool] !== undefined);
+              /**
+               * The facade's shared instance: it stays alive for the other consumers and is destroyed on teardown
+               */
+              const instance = tool.create();
+              const notImplementedMethods = inlineToolRequiredMethods.filter(method => instance[method as keyof InlineTool] !== undefined);
 
               if (notImplementedMethods.length > 0) {
                 /**

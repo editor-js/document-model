@@ -125,6 +125,12 @@ export interface InlineTool extends Omit<InlineToolVersion2, 'save' | 'checkStat
    * Inline toolbar items configuration for the Tool
    */
   getToolbarConfig(index: TextRange, fragments: InlineFragment[]): MenuConfig | Promise<MenuConfig>;
+
+  /**
+   * Releases resources held by the instance.
+   * Called once, when the editor stops using this instance
+   */
+  destroy?(): void;
 }
 
 /**

@@ -6,6 +6,7 @@ import {
   EventType,
   ModelEvents
 } from '@editorjs/sdk';
+import type { BlockId, BlockTool } from '@editorjs/sdk';
 import 'reflect-metadata';
 import { inject, injectable } from 'inversify';
 import { TOKENS } from '../tokens.js';
@@ -54,6 +55,16 @@ export class BlockRenderer {
   #adapter: EditorJSAdapterPlugin;
 
   /**
+   * Tool instance of each rendered block, destroyed when the block is removed or the renderer is destroyed
+   */
+  #blocks = new Map<BlockId, BlockTool>();
+
+  /**
+   * Releases the model listener on destroy
+   */
+  readonly #controller = new AbortController();
+
+  /**
    * BlockRenderer constructor.
    * All parameters are injected through the IoC container.
    * @param model - Editor's Document Model instance
@@ -73,7 +84,19 @@ export class BlockRenderer {
     this.#adapter = adapter;
 
     // eslint-disable-next-line @typescript-eslint/no-misused-promises -- Need to bubble the promise up in case of errors
-    this.#model.addEventListener(EventType.Changed, event => this.#handleModelUpdate(event));
+    this.#model.addEventListener(EventType.Changed, event => this.#handleModelUpdate(event), { signal: this.#controller.signal });
+  }
+
+  /**
+   * Stops listening to the model and releases every rendered block: its tool instance and its adapter.
+   * The model is left untouched and no BlockRemovedCoreEvent is dispatched
+   */
+  public destroy(): void {
+    this.#controller.abort();
+
+    for (const id of this.#blocks.keys()) {
+      this.#releaseBlock(id);
+    }
   }
 
   /**
@@ -112,7 +135,8 @@ export class BlockRenderer {
       throw new Error(`[BlockRenderer] Block Tool ${data.name} not found`);
     }
 
-    const blockToolAdapter = this.#adapter.createBlockToolAdapter(createBlockId(data.id), tool.name);
+    const blockId = createBlockId(data.id);
+    const blockToolAdapter = this.#adapter.createBlockToolAdapter(blockId, tool.name);
 
     const block = tool.create({
       adapter: blockToolAdapter,
@@ -121,8 +145,17 @@ export class BlockRenderer {
       readOnly: false,
     });
 
+    this.#blocks.set(blockId, block);
+
     try {
       const blockElement = await block.render();
+
+      /**
+       * The renderer was destroyed while the block was rendering, so the block is already released
+       */
+      if (this.#controller.signal.aborted) {
+        return;
+      }
 
       this.#eventBus.dispatchEvent(new BlockAddedCoreEvent({
         tool: tool.name,
@@ -149,15 +182,30 @@ export class BlockRenderer {
       throw new Error('[BlockRenderer] Block index should be defined. Probably something wrong with the Editor Model. Please, report this issue');
     }
 
-    this.#adapter.destroyBlockToolAdapter(createBlockId(data.id));
+    this.#releaseBlock(createBlockId(data.id));
 
     this.#eventBus.dispatchEvent(new BlockRemovedCoreEvent({
       tool: data.name,
       index: blockIndex,
     }));
+  }
 
-    /**
-     * @todo clear block tool adapter memory
-     */
+  /**
+   * Destroys the block's tool instance and its adapter.
+   * A throwing tool is logged so the rest of the teardown still runs
+   * @param id - id of the block to release
+   */
+  #releaseBlock(id: BlockId): void {
+    const block = this.#blocks.get(id);
+
+    this.#blocks.delete(id);
+
+    try {
+      block?.destroy?.();
+    } catch (error) {
+      console.error(`[BlockRenderer] Block Tool failed to destroy block ${id}`, error);
+    }
+
+    this.#adapter.destroyBlockToolAdapter(id);
   }
 }
