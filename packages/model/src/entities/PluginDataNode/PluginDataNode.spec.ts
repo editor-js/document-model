@@ -250,6 +250,108 @@ describe('PluginDataNode', () => {
     });
   });
 
+  describe('values the caller still holds a reference to', () => {
+    it('should store a copy rather than the object it was given', () => {
+      const pluginData = new PluginDataNode({ name: pluginName });
+      const settings = { align: 'left' };
+
+      pluginData.update('settings', settings);
+      settings.align = 'center';
+
+      /**
+       * Sharing the object lets an edit to it change the Model with no write at all, so the document moves while
+       * nothing is recorded and no collaborator is told
+       */
+      expect(pluginData.serialized).toEqual({ settings: { align: 'left' } });
+    });
+
+    it('should store a copy of nested values too', () => {
+      const pluginData = new PluginDataNode({ name: pluginName });
+      const settings = { nested: { depth: 1 },
+        items: [{ id: 'one' }] };
+
+      pluginData.update('settings', settings);
+      settings.nested.depth = 2;
+      settings.items[0].id = 'two';
+
+      expect(pluginData.serialized).toEqual({ settings: { nested: { depth: 1 },
+        items: [{ id: 'one' }] } });
+    });
+
+    it('should emit when a value is mutated and written back', () => {
+      const pluginData = new PluginDataNode({ name: pluginName });
+      const settings = { align: 'left' };
+
+      pluginData.update('settings', settings);
+
+      const events: PluginDataModifiedEvent[] = [];
+
+      pluginData.addEventListener(EventType.Changed, (event) => {
+        events.push(event as PluginDataModifiedEvent);
+      });
+
+      settings.align = 'center';
+      pluginData.update('settings', settings);
+
+      /**
+       * The write-back is the only announcement a read-modify-write makes, and over a shared object identity finds
+       * it unchanged: no operation for collaborators, no step to undo, and two documents quietly diverged
+       */
+      expect(events).toHaveLength(1);
+      expect(events[0]?.detail.data).toEqual({ value: { align: 'center' },
+        previous: { align: 'left' } });
+      expect(pluginData.serialized).toEqual({ settings: { align: 'center' } });
+    });
+
+    it('should not emit when an equal object is written again', () => {
+      const pluginData = new PluginDataNode({ name: pluginName,
+        data: { settings: { align: 'left',
+          nested: { depth: 1 } } } });
+      const events: PluginDataModifiedEvent[] = [];
+
+      pluginData.addEventListener(EventType.Changed, (event) => {
+        events.push(event as PluginDataModifiedEvent);
+      });
+
+      /**
+       * A different object holding the same state. Plugins re-apply their current state routinely, and once stored
+       * values are copies an identity check would never match one
+       */
+      pluginData.update('settings', { align: 'left',
+        nested: { depth: 1 } });
+
+      expect(events).toHaveLength(0);
+    });
+
+    it('should keep the recorded change out of reach of a later edit', () => {
+      const pluginData = new PluginDataNode({ name: pluginName });
+      const settings = { align: 'left' };
+      const events: PluginDataModifiedEvent[] = [];
+
+      pluginData.addEventListener(EventType.Changed, (event) => {
+        events.push(event as PluginDataModifiedEvent);
+      });
+
+      pluginData.update('settings', settings);
+      settings.align = 'center';
+
+      /**
+       * The payload becomes an operation and an undo step, both of which outlive the call
+       */
+      expect(events[0]?.detail.data.value).toEqual({ align: 'left' });
+    });
+
+    it('should copy the data it is constructed with', () => {
+      const data = { settings: { align: 'left' } };
+      const pluginData = new PluginDataNode({ name: pluginName,
+        data });
+
+      data.settings.align = 'center';
+
+      expect(pluginData.serialized).toEqual({ settings: { align: 'left' } });
+    });
+  });
+
   describe('.serialized', () => {
     it('should hand back a copy rather than the record it keeps', () => {
       const pluginData = new PluginDataNode({ name: pluginName,

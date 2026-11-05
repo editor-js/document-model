@@ -1,4 +1,5 @@
 import { getContext } from '../../utils/Context.js';
+import { deepEqual } from '../../utils/deepEqual.js';
 import type { PluginDataNodeConstructorParameters } from './types/index.js';
 import {
   PartialIndex,
@@ -7,6 +8,15 @@ import {
   EventBus,
   PluginDataModifiedEvent
 } from '@editorjs/model-types';
+
+/**
+ * Copies a single plugin data value, so that neither side can reach the other's through it. Objects and arrays are
+ * detached down to their nested values; anything else has nothing to share and is returned as it is
+ * @param value - the value to copy
+ */
+function copyValue(value: unknown): unknown {
+  return typeof value === 'object' && value !== null ? structuredClone(value) : value;
+}
 
 /**
  * Copies a plugin data record so that callers hold something of their own.
@@ -52,9 +62,12 @@ export class PluginDataNode extends EventBus {
      * data, so a `__proto__` key loaded from a document would otherwise reach the prototype
      * setter instead of becoming an own property, and vanish from serialization. A first write
      * to a key like `toString` would also read the inherited function as its previous value and
-     * put that on the undo stack
+     * put that on the undo stack.
+     *
+     * Deep-copied as writes are, below: the document object this came from is the caller's, and sharing its
+     * nested values would let an edit to it change the Model
      */
-    this.#data = Object.assign(Object.create(null) as Record<string, unknown>, data);
+    this.#data = detach(data);
   }
 
   /**
@@ -85,23 +98,34 @@ export class PluginDataNode extends EventBus {
      * for collaborators and a step on the undo stack. Plugins re-apply their current state
      * routinely, and an undo step that undoes nothing is worse than no step at all.
      *
+     * Compared structurally rather than by identity: what is stored is a copy of what was written, so identity
+     * could only ever match a primitive, and re-applying the same object state would emit every time.
+     *
      * The second clause is the removal case: both sides are `undefined` when a key holding
      * `undefined` is removed, which is a real change, and when an absent key is removed, which
      * is not.
      */
-    if (Object.is(previousValue, value) && (value !== undefined || !(key in this.#data))) {
+    if (deepEqual(previousValue, value) && (value !== undefined || !(key in this.#data))) {
       return;
     }
 
     if (value === undefined) {
       delete this.#data[key];
     } else {
-      this.#data[key] = value;
+      /**
+       * Stored as a copy: over the caller's own object an edit has already changed the Model, so the write-back that
+       * should have announced it finds nothing to say -- no operation for collaborators, no step to undo
+       */
+      this.#data[key] = copyValue(value);
     }
 
     this.dispatchEvent(
       new PluginDataModifiedEvent(new PartialIndex({ pluginKey: key }), {
-        value,
+        /**
+         * Copied again: this payload becomes an operation and an undo step, both of which outlive the call.
+         * `previousValue` needs none -- it is the Model's own former copy, just dropped above and never handed out
+         */
+        value: copyValue(value),
         previous: previousValue,
       }, getContext<string | number>()!)
     );
