@@ -29,6 +29,29 @@ describe('deepEqual', () => {
     expect(deepEqual([], {})).toBe(false);
   });
 
+  it('should report arrays of different lengths as different', () => {
+    expect(deepEqual([1], [1, 2])).toBe(false);
+    expect(deepEqual([1, 2], [1])).toBe(false);
+  });
+
+  /**
+   * An array and an array-like record agree on `length` and on every index, so without the
+   * kind check in front of them they would compare equal
+   */
+  it('should report an array and an array-like record as different', () => {
+    expect(deepEqual([], { length: 0 })).toBe(false);
+    expect(deepEqual({ length: 0 }, [])).toBe(false);
+  });
+
+  /**
+   * One side keyed and the other not: both have no own enumerable properties, so falling
+   * through to the key comparison would call them equal
+   */
+  it('should report a non-plain object as different from a plain record', () => {
+    expect(deepEqual(new Date(1), {})).toBe(false);
+    expect(deepEqual({}, new Date(1))).toBe(false);
+  });
+
   it('should compare a record with a null prototype by its keys too', () => {
     const nullProto = Object.assign(Object.create(null) as Record<string, unknown>, { a: 1 });
 

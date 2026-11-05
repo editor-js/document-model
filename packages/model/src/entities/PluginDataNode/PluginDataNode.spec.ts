@@ -149,6 +149,25 @@ describe('PluginDataNode', () => {
       expect(listener).not.toHaveBeenCalled();
     });
 
+    /**
+     * The key is present and holds `undefined`, which only a loaded document can produce, so
+     * removing it is a real change even though both sides of the comparison are `undefined`
+     */
+    it('should still emit when a key that explicitly holds undefined is removed', () => {
+      const pluginData = new PluginDataNode({ name: pluginName,
+        data: { id: undefined } });
+      const events: PluginDataModifiedEvent[] = [];
+
+      pluginData.addEventListener(EventType.Changed, (event) => {
+        events.push(event as PluginDataModifiedEvent);
+      });
+
+      pluginData.update('id', undefined);
+
+      expect(events).toHaveLength(1);
+      expect(pluginData.isEmpty).toBe(true);
+    });
+
     it('should still emit when the value actually differs', () => {
       const pluginData = new PluginDataNode({
         name: pluginName,
