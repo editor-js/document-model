@@ -1,6 +1,6 @@
 import type { DataKey } from '@editorjs/model-types';
 import type { ValueNode } from '../../ValueNode/index.js';
-import type { TextNode } from '../../inline-fragments/index.js';
+import type { TextNode } from '../../inline-text/index.js';
 
 export type ChildNode = ValueNode | TextNode;
 

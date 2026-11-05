@@ -4,7 +4,7 @@ context: |
   Tech stack: TypeScript, Yarn 4 (Berry) workspaces monorepo (packages/*, packages/tools/*).
   Domain: Editor.js document model - a collaborative rich-text editor engine (block/inline
   data tree, operational-transform based collaboration, pluggable block/inline tools).
-  Key packages: model (EditorJSModel/EditorDocument/BlockNode/inline-fragments/CaretManager),
+  Key packages: model (EditorJSModel/EditorDocument/BlockNode/inline-text/CaretManager),
   model-types (shared event/type contracts), core, dom-adapters, ot-server (collaboration/OT
   server), sdk (public API for building tools/plugins - tools should depend on this, not on
   model directly), ui, collaboration-manager, and packages/tools/* (built-in block/inline
