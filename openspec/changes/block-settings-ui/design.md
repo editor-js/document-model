@@ -44,12 +44,16 @@ type BlockSettingsProvider = (ctx: { blockId: BlockId; blockIndex: number; tool:
 
 Wiring follows the Toolbox pattern, with one departure from it:
 1. `BlockSettingsUI` renders both the popover **and the button that opens it**, and announces the two together via `ui:block-settings:rendered`. `ToolbarUI` mounts them in its actions area and reassigns its single tab stop once the button joins.
-2. The plugin follows `ui:blocks:block-selected` itself to know which block the button acts on, and stops following it while the menu is open. It also opens on a `ui:block-settings:open` event, so a host can request the menu for a block without the button.
-3. `ToolbarUI` doesn't reposition while settings are open.
+2. The plugin follows `ui:blocks:block-selected` itself to know which block the button acts on, and stops following it for as long as the toolbar is holding its position -- while the menu is open, and while the toolbox is open. It also opens on a `ui:block-settings:open` event, so a host can request the menu for a block without the button.
+3. `ToolbarUI` doesn't reposition while settings or the toolbox are open.
+
+The two halves of 2 and 3 have to agree, which is why the plugin tracks `ui:toolbox:opened`/`closed` as well. `ToolbarUI` owns where the button sits and this plugin owns what it acts on, so whenever one freezes the other must: a button left beside one block whose menu was built for another acts on the wrong block, and `Delete` is one of the items.
 
 *Why the button belongs to the plugin rather than the toolbar:* a menu button's `aria-expanded` has to track the menu, and the menu's open state is the plugin's. Split across the two, every open and close would need a round trip through the event bus to keep an attribute honest, and the button would report a block the menu was not built for. `ToolbarUI` treats it as a control of the container like its own plus button -- named, stated and operated by its owner, positioned and tab-managed by the toolbar.
 
 `BlockSettingsUI` resolves the target block's id with `api.blocks.getIdByIndex(index)` from the index it last saw selected, so this change needs no new event or payload field from `core`.
+
+*Alternative considered:* give `ToolbarUI` the target index and pass it in `ui:block-settings:open`, so there is one owner rather than two components agreeing. Rejected for now because it moves the block the menu acts on back out of the plugin that owns the button, against the reasoning above; the duplicated flag is the smaller cost, and `ui:block-settings:open` stays available as the seam if that trade changes.
 
 The provider context carries both `blockId` and `blockIndex`, but only `blockId` is durable: a menu can stay open while a collaborator inserts or removes blocks above the target, or while an undo does. Item handlers therefore resolve the position from `blockId` at activation time. This is how the tunes in PR #157 behave (`getIndexById` inside `activate()`), and it is worth keeping.
 
