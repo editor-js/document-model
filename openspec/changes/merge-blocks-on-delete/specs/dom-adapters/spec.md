@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Block-level DOM binding and input translation
-The system SHALL provide `DOMBlockToolAdapter`, attached by tools to a contenteditable element for a model data key, which intercepts `beforeinput` events and applies model text-add/remove events back into the DOM. A target range SHALL be treated as crossing blocks when its model `Index` has segments in more than one block. Deletions that cross a block boundary — a target range spanning blocks, or a collapsed caret at the start of a block's first text input or the end of its last text input with a delete input type — SHALL be performed by exactly one adapter: through a single `api.blocks.merge()` call when the blocks on both sides have text inputs, after which the adapter SHALL place the caret at the returned junction, or through `api.blocks.delete()` of the neighbouring block when that block has no text inputs. Adapters SHALL NOT clip cross-block ranges or join blocks themselves, and every follow-up after `merge()` SHALL address the block id it returns, since the merge may remove the acting adapter's own block.
+The system SHALL provide `DOMBlockToolAdapter`, attached by tools to a contenteditable element for a model data key, which intercepts `beforeinput` events and applies model text-add/remove events back into the DOM. A target range SHALL be treated as crossing blocks when its model `Index` has segments in more than one block. Deletions that cross a block boundary — a target range spanning blocks, or a collapsed caret at the start of a block's first text input or the end of its last text input with a delete input type — SHALL be performed by exactly one adapter: through a single `api.blocks.merge()` call when the blocks on both sides have text inputs, after which the adapter SHALL place the caret at the returned junction, or through `api.blocks.delete({ block })` with the neighbouring block's id when that block has no text inputs, after which the adapter SHALL re-set the caret to the same block id, key and offset. Whether a neighbouring block has text inputs SHALL be decided from the model with `api.blocks.getTextKeys()`, not from the inputs registered in the DOM, which stay empty until the block has rendered. Adapters SHALL NOT clip cross-block ranges or join blocks themselves, and every follow-up after `merge()` SHALL address the block id it returns, since the merge may remove the acting adapter's own block.
 
 #### Scenario: Text insertion via beforeinput
 - **GIVEN** a `beforeinput` event of type `insertText`, `insertCompositionText`, `insertFromPaste`, `insertFromDrop`, or `insertReplacementText`
@@ -19,19 +19,24 @@ The system SHALL provide `DOMBlockToolAdapter`, attached by tools to a contented
 - **THEN** the adapter owning the range start calls `api.blocks.merge({ index })` and then inserts the data at the returned junction
 
 #### Scenario: Backspace at the start of a block
-- **GIVEN** the DOM selection is collapsed at offset 0 of a block's first text input, the input type is `deleteContentBackward`, `deleteWordBackward`, `deleteSoftLineBackward` or `deleteHardLineBackward`, and the previous block has a registered text input
+- **GIVEN** the DOM selection is collapsed at offset 0 of a block's first text input, the input type is `deleteContentBackward`, `deleteWordBackward`, `deleteSoftLineBackward` or `deleteHardLineBackward`, and the previous block has a text input in the model
 - **WHEN** the `beforeinput` event fires
 - **THEN** the adapter calls `api.blocks.merge({ block })` with its own block and places the caret at the returned junction, regardless of the target range reported by the browser
 
 #### Scenario: Delete at the end of a block
-- **GIVEN** the DOM selection is collapsed at the end of a block's last text input, the input type is the forward counterpart of a backward delete type, and the next block has a registered text input
+- **GIVEN** the DOM selection is collapsed at the end of a block's last text input, the input type is the forward counterpart of a backward delete type, and the next block has a text input in the model
 - **WHEN** the `beforeinput` event fires
 - **THEN** the adapter calls `api.blocks.merge({ block })` with the next block and places the caret at the returned junction
 
+#### Scenario: Delete before a block that has not rendered yet
+- **GIVEN** the caret is at the end of a block's last text input, and the next block has persisted text in the model but its `render()` has not finished, so it has no registered inputs
+- **WHEN** a forward delete `beforeinput` event fires
+- **THEN** the adapter calls `api.blocks.merge({ block })` with the next block and does not call `api.blocks.delete`
+
 #### Scenario: Backspace or Delete next to a block without text inputs
-- **GIVEN** the caret is at the start of a block's first text input with a backward delete type, or at the end of its last text input with a forward delete type, and the neighbouring block in that direction has no registered text input
+- **GIVEN** the caret is at the start of a block's first text input with a backward delete type, or at the end of its last text input with a forward delete type, and the neighbouring block in that direction has no text input in the model
 - **WHEN** the `beforeinput` event fires
-- **THEN** the adapter calls `api.blocks.delete()` for that neighbouring block, does not call `api.blocks.merge()`, and leaves the caret where it is
+- **THEN** the adapter calls `api.blocks.delete({ block })` with that neighbouring block's id, does not call `api.blocks.merge()`, and re-sets the caret to the same block id, key and offset, so that after removing the previous block it is not left one block too far
 
 #### Scenario: Backspace or Delete at the edge of the document
 - **GIVEN** the caret is at the start of the first block with a backward delete type, or at the end of the last block with a forward delete type

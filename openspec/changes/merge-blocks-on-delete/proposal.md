@@ -15,7 +15,9 @@ Today none of these join anything. Backspace/Delete at a boundary is a no-op, an
 - **One new API method, `BlocksAPI.merge()`**, backed by a new `BlocksManager.mergeBlocks()`, in two forms:
   - **`merge({ block })`** merges `block` into the block **before it**. Only neighbouring blocks can be merged, so one block is enough.
   - **`merge({ index })`** takes a text range that starts in one block and ends in another: the text inside the range is removed, the blocks strictly between are removed, and the end block is merged into the start block at the range start. `merge({ block })` is exactly `merge({ index })` over the empty range from the end of the previous block to the start of `block`.
-  - Both return the junction `{ block, key, offset }` — where the two blocks met — so callers can place the caret without re-deriving it. `merge` itself never moves the caret, like `split` and `convert`.
+  - Both return the junction `{ block, key, offset }` — where the two blocks met — so callers can place the caret without re-deriving it.
+  - **The caret is kept.** The merge's own text events would otherwise let the DOM adapter drag the caller's caret into the merged input; `merge` restores a caret that was outside the joined blocks (or in the first block before the junction) to the same position, and puts any other caret of that user at the junction.
+- **One read-only helper, `BlocksAPI.getTextKeys({ block })`**, lists a block's text inputs from the model. The DOM adapter needs it to tell a block without text inputs from one that simply has not rendered yet.
 - **The second block is always converted into the first.** The first block survives with its id and tool; the second block's content is appended to it and the second block is removed. There is no separate convert step and no direction: Backspace at the start of B and Delete at the end of A delete the same boundary and give the same result. Blocks of different tools merge in one step, as in v2.
 - **The second block's tool decides what is absorbed**, through its existing `conversionConfig.export`:
   - a key path → that text input, **with its inline formatting** (read from the model, no plain-string round trip);
@@ -23,7 +25,7 @@ Today none of these join anything. Backspace/Delete at a boundary is a no-op, an
   - none → its first text input.
   Content the export does not carry is dropped with the block, exactly as `convert` drops it. The content lands in the first block's text input at the junction (its last text input for `{ block }`, the range's start input for `{ index }`).
 - **Empty blocks give way.** If the first block is empty (after the range is removed), it is removed instead and the second block survives with its id and tool — Backspace after an empty line or Delete in an empty line removes that line, as in v2. If the second block has nothing to absorb, it is simply removed.
-- **Blocks without text inputs are unmergeable.** `merge({ block })` throws when either of the two blocks has no text inputs. Backspace right after such a block (an image, a delimiter) or Delete right before it **removes that block** instead, through the existing `blocks.delete`. In a range, blocks without text inputs lying between the edges are removed like any other block in between.
+- **Blocks without text inputs are unmergeable.** `merge({ block })` throws when either of the two blocks has no text inputs. Backspace right after such a block (an image, a delimiter) or Delete right before it **removes that block** instead, through the existing `blocks.delete({ block: <its id> })`, and the caret stays where it was. In a range, blocks without text inputs lying between the edges are removed like any other block in between.
 - **Errors:** `merge` throws, leaving the document unchanged, when the block does not exist or is the first block, when the index is not a text index or does not start and end in different blocks, or when either block to be joined has no text inputs. No `canMerge`, no new tool option — `conversionConfig` only refines what is absorbed, it never blocks a merge.
 - **Undo grouping is out of scope.** A merge emits several model events, which today's `UndoRedoManager` records as several undo steps. The open `undo-group-by-task` change ([#201](https://github.com/editor-js/document-model/pull/201), implemented in [#203](https://github.com/editor-js/document-model/pull/203)) records all events of one browser task as one undo step, which makes a merge — and a merge plus its follow-up insert — a single step without anything in this change. It also fixes undo of block insertion/removal, which currently throws, so undoing a merge depends on it.
 - **`DOMBlockToolAdapter` only maps events to calls; the merge rules live in core:**
@@ -31,9 +33,10 @@ Today none of these join anything. Backspace/Delete at a boundary is a no-op, an
   - delete input type over a cross-block range → the adapter owning the range start calls `merge({ index })` once and puts the caret at the junction;
   - insert types or Enter over a cross-block range → the same, followed by `text.insert` or `blocks.split` at the junction;
   - a range across several inputs of the **same** block keeps the existing per-input `text.remove` handling;
-  - Backspace at the start of a block's first input / Delete at the end of its last input → `merge({ block })` with the current / next block when the neighbour has text inputs, `blocks.delete` of the neighbour when it has none, nothing when there is no neighbour;
+  - Backspace at the start of a block's first input / Delete at the end of its last input → `merge({ block })` with the current / next block when the neighbour has text inputs in the model (`getTextKeys`, not the DOM registry, which is empty until the block renders), `blocks.delete({ block })` of the neighbour when it has none, nothing when there is no neighbour;
   - Backspace/Delete at an edge between two inputs of the same block → caret moves to the neighbouring input (no document change).
   The merge may remove the acting adapter's own block, so every follow-up (caret, insert, split) addresses the block id returned by `merge`. The per-adapter cross-block slicing and the "middle block → `blocks.delete`" path are removed.
+- **Left for follow-ups:** word/line deletes at a block boundary also removing the word or line on the other side (they do a plain merge here), and keeping the end block's text fields beyond its `export`.
 - **Deliberate deviations from v2:**
   - inline formatting survives a merge between different tools when the second tool's export is a key path;
   - text blocks v2 treated as unmergeable (target without a `merge()` method, or different tools without conversion configs) now merge — v2 only moved the caret;
@@ -47,19 +50,19 @@ None.
 
 ### Modified Capabilities
 
-- `core`: new "Block merging" requirement (`BlocksManager.mergeBlocks` / `BlocksAPI.merge`, both forms, conversion of the second block, empty and unmergeable blocks, junction); the "EditorAPI surface" requirement lists `merge` on `BlocksAPI`.
-- `sdk`: the "EditorAPI surface" requirement gains the `BlocksAPI.merge` signature and its `MergeResult` type.
+- `core`: new "Block merging" requirement (`BlocksManager.mergeBlocks` / `BlocksAPI.merge`, both forms, conversion of the second block, empty and unmergeable blocks, junction, caret, `getTextKeys`); the "EditorAPI surface" requirement lists every `BlocksAPI` method, `merge` and `getTextKeys` included.
+- `sdk`: the "EditorAPI surface" requirement gains the `BlocksAPI.merge` and `getTextKeys` signatures and the `MergeResult` type.
 - `dom-adapters`: the "Block-level DOM binding and input translation" requirement replaces per-adapter cross-block deletion with a single `merge` call, and adds the boundary Backspace/Delete mapping, including removal of neighbours without text inputs.
 
 ## Impact
 
 - **Code**:
-  - `packages/sdk/src/api/BlocksAPI.ts` — `merge` signature and `MergeResult` type.
-  - `packages/core/src/api/BlocksAPI.ts` — thin wrapper.
+  - `packages/sdk/src/api/BlocksAPI.ts` — `merge` and `getTextKeys` signatures, `MergeResult` type.
+  - `packages/core/src/api/BlocksAPI.ts` — thin wrappers; `merge` keeps the caller's caret.
   - `packages/core/src/components/BlockManager.ts` — `mergeBlocks` and the internal content-append helper.
   - `packages/dom-adapters/src/BlockToolAdapter/index.ts` (and `CaretAdapter` for range → `Index`) — map events to `merge`; remove per-adapter cross-block slicing.
   - Co-located Jest specs; Playwright e2e in `packages/editorjs/e2e/tests`.
-- **APIs**: one additive method on `BlocksAPI`. No breaking changes, no tool changes required — `Paragraph` and `@editorjs/header` merge without opting in.
+- **APIs**: two additive methods on `BlocksAPI` (`merge`, read-only `getTextKeys`). No breaking changes, no tool changes required — `Paragraph` and `@editorjs/header` merge without opting in.
 - **Depends on**: `undo-group-by-task` ([#201](https://github.com/editor-js/document-model/pull/201) / [#203](https://github.com/editor-js/document-model/pull/203)) for merges to undo as one step and for undo of the removed blocks to work at all. Related open work: the run-based inline model ([#198](https://github.com/editor-js/document-model/pull/198)) — the junction formatting clean-up is written against the model's public operations, so it holds before and after; clipboard paste ([#191](https://github.com/editor-js/document-model/pull/191)) hands selections across several inputs back to `insertFromPaste`, which this change routes through `merge({ index })`.
 - **Model**: no changes to `@editorjs/model`; everything is composed from existing `getBlockTextContent`/`insertText`/`removeText`/`format`/`unformat`/`getFragments`/`removeBlock` operations, so collaboration needs no new OT support.
 - **Behaviour users will notice**: deleting, typing, pasting or pressing Enter over a cross-block selection now joins the edge blocks; Backspace/Delete at block boundaries now merge, or remove a neighbouring block that has no text inputs.
