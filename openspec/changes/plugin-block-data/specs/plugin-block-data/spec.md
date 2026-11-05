@@ -9,6 +9,8 @@ Plugin names and the keys within an entry are document data, not identifiers the
 
 What `getPluginData` and the serialized document hand back SHALL be detached from the store, so that changing it does not change the document. Reading an entry, editing it and passing it back to `updatePluginData` is the obvious way to use the two together, and over a live record the no-op rule above turns it into silent loss: the document has already changed, so the write that should have announced it emits nothing.
 
+A value handed to the store SHALL be detached the same way before it is stored and before the change is recorded, down to nested objects and arrays, and so SHALL the data a block is initialized with. This is the same read-modify-write from the other end: a plugin keeps the object it wrote and edits it again, and over a shared object the document moves with no write at all, no operation for collaborators and no step to undo — two documents diverging with nothing to say so. What is recorded needs detaching for the same reason, since an operation and an undo step both outlive the call that produced them. Because what is stored is therefore a copy of what was written, the no-op rule above SHALL compare values structurally rather than by identity, which could only ever match a primitive.
+
 #### Scenario: A block with no plugin data
 - **GIVEN** a block that has no plugin data at all
 - **WHEN** it is serialized
@@ -43,6 +45,26 @@ What `getPluginData` and the serialized document hand back SHALL be detached fro
 - **GIVEN** a block whose `anchors` entry has no `visible` key
 - **WHEN** `{ visible: undefined }` is written for `anchors`
 - **THEN** the data is unchanged and no `PluginDataModifiedEvent` is emitted
+
+#### Scenario: Editing a value that was written earlier
+- **GIVEN** a plugin wrote `{ align: "left" }` for a key and still holds that object
+- **WHEN** it changes the object to `{ align: "center" }` and writes it again
+- **THEN** the document held `left` until that write, which emits a `PluginDataModifiedEvent` with `previous` `{ align: "left" }` and `value` `{ align: "center" }`
+
+#### Scenario: Writing an equal object again
+- **GIVEN** a key holds `{ align: "left" }`
+- **WHEN** a different object holding `{ align: "left" }` is written for it
+- **THEN** no `PluginDataModifiedEvent` is emitted, because nothing about the stored data changed
+
+#### Scenario: Editing an object after the change was recorded
+- **GIVEN** a plugin wrote an object for a key, and the change was recorded
+- **WHEN** it changes that object afterwards
+- **THEN** the recorded value is unaffected, so neither the operation sent to collaborators nor the undo step is rewritten
+
+#### Scenario: Reusing the data a block was initialized with
+- **GIVEN** a block is initialized with a `plugins` map whose nested values the caller still holds
+- **WHEN** the caller changes one of them
+- **THEN** the block's plugin data is unaffected
 
 #### Scenario: Reading an entry whose keys were all removed
 - **GIVEN** a block whose `anchors` entry existed and then had every key removed
