@@ -241,8 +241,14 @@ export class OperationsTransformer {
      */
     const againstRevision = againstOp.rev === undefined ? Infinity : againstOp.rev;
 
+    /**
+     * Only an undo or redo stack entry reaches this with no revision, and it is transformed against an operation the
+     * model has already applied -- so it describes a value that is gone, and undoing it would delete the newer one
+     */
+    const revision = operation.rev === undefined ? -Infinity : operation.rev;
+
     // Cover case 3
-    if (againstRevision > operation.rev!) {
+    if (againstRevision > revision) {
       return new Operation(OperationType.Neutral, index, { payload: [] }, operation.userId, operation.rev);
     }
 

@@ -683,6 +683,55 @@ describe('OperationsTransformer', () => {
       expect(result.serialize()).toEqual(incoming.serialize());
     });
 
+    /**
+     * Only a stack entry reaches the transformer with no revision of its own, and the operation it is transformed
+     * against has already been applied -- so the entry describes a value the document has moved on from
+     */
+    describe('when the operation itself has no revision', () => {
+      /**
+       * A stack entry, as `CollaborationManager` builds it from a model event
+       * @param key - plugin data key the entry writes to
+       */
+      const stackEntry = (key = 'id'): Operation<OperationType.Modify> => new Operation(
+        OperationType.Modify,
+        pluginIndex(2, key),
+        { payload: false,
+          prevPayload: true },
+        'user1'
+      );
+
+      it('should become Neutral against a numbered write to the same key', () => {
+        const entry = stackEntry();
+
+        expect(entry.rev).toBeUndefined();
+        expect(transformer.transform(entry, pluginOp(2)).type).toBe(OperationType.Neutral);
+      });
+
+      /**
+       * The remote operation is reconstructed from a model event too, so it carries no revision either -- which
+       * is the shape the undo stack actually sees
+       */
+      it('should become Neutral against an unnumbered write to the same key', () => {
+        const remote = new Operation(
+          OperationType.Modify,
+          pluginIndex(2),
+          { payload: true,
+            prevPayload: false },
+          'user2'
+        );
+
+        expect(transformer.transform(stackEntry(), remote).type).toBe(OperationType.Neutral);
+      });
+
+      it('should survive a write to another key of the same plugin', () => {
+        const entry = stackEntry('visible');
+
+        const result = transformer.transform(entry, pluginOp(2, 'id'));
+
+        expect(result.serialize()).toEqual(entry.serialize());
+      });
+    });
+
     it('should transform a text operation against a plugin data operation without throwing', () => {
       const operation = new Operation(
         OperationType.Insert,
