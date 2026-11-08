@@ -3,6 +3,7 @@ import { inject, injectable } from 'inversify';
 import { TOKENS } from '../tokens.js';
 import { BlocksManager } from '../components/BlockManager.js';
 import { CoreConfigValidated, BlocksAPI as BlocksApiInterface, EditorDocumentSerialized, BlockId, BlockIndexOrId, createBlockId, createDataKey } from '@editorjs/sdk';
+import type { PluginDataFor, PluginId } from '@editorjs/sdk';
 import { EditorJSModel } from '@editorjs/model';
 import type { TextNodeSerialized, ValueSerialized } from '@editorjs/sdk';
 
@@ -105,9 +106,10 @@ export class BlocksAPI implements BlocksApiInterface {
    * @param [params.index] - index to insert block at
    * @param [params.focus] - flag indicates if new block should be focused @todo implement
    * @param [params.replace] - flag indicates if block at index should be replaced @todo implement
+   * @param [params.plugins] - initial per-plugin data for the block, keyed by plugin name
    * @param [params.userId] - user id to attribute the change to
    */
-  public insert({ type, data, index, focus, replace, userId = this.#config.userId }: NonNullable<Parameters<BlocksApiInterface['insert']>[0]> = {}): void {
+  public insert({ type, data, index, focus, replace, plugins, userId = this.#config.userId }: NonNullable<Parameters<BlocksApiInterface['insert']>[0]> = {}): void {
     const blockType = type ?? this.#config.defaultBlock;
     const blockData = data ?? {};
 
@@ -117,6 +119,7 @@ export class BlocksAPI implements BlocksApiInterface {
       index,
       replace,
       focus,
+      plugins,
       userId,
     });
   };
@@ -218,5 +221,27 @@ export class BlocksAPI implements BlocksApiInterface {
     userId = this.#config.userId,
   }: Parameters<BlocksApiInterface['convert']>[0]): void {
     this.#blocksManager.convertBlock(block as BlockIndexOrId, createDataKey(key), newType, userId, dataOverrides);
+  }
+
+  /**
+   * Returns the per-block data stored by the given plugin, or undefined when it stores none
+   * @param params - getPluginData parameters
+   * @param params.block - index or id of the block
+   * @param params.plugin - name the data is stored under, by convention the plugin's `name`
+   */
+  public getPluginData<Id extends PluginId>({ block, plugin }: Parameters<BlocksApiInterface['getPluginData']>[0]): PluginDataFor<Id> | undefined {
+    return this.#blocksManager.getPluginData(block as BlockIndexOrId, plugin) as PluginDataFor<Id> | undefined;
+  }
+
+  /**
+   * Merges the passed keys into the per-block data of the given plugin
+   * @param params - updatePluginData parameters
+   * @param params.block - index or id of the block
+   * @param params.plugin - name the data is stored under, by convention the plugin's `name`
+   * @param params.data - keys to merge into the plugin's data
+   * @param [params.userId] - user id to attribute the change to
+   */
+  public updatePluginData({ block, plugin, data, userId = this.#config.userId }: Parameters<BlocksApiInterface['updatePluginData']>[0]): void {
+    this.#blocksManager.updatePluginData(block as BlockIndexOrId, plugin, data as Record<string, unknown>, userId);
   }
 }

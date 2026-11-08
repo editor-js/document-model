@@ -1,6 +1,7 @@
 {
   "name": "@editorjs/editorjs",
   "version": "0.0.0",
+  "private": true,
   "packageManager": "yarn@4.0.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

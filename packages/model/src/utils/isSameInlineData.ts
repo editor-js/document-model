@@ -1,40 +1,5 @@
 import type { InlineToolData } from '@editorjs/model-types';
-
-/**
- * Deep structural equality check for two plain JSON-like values.
- * @param a - first value to compare
- * @param b - second value to compare
- */
-function deepEqual(a: unknown, b: unknown): boolean {
-  if (a === b) {
-    return true;
-  }
-
-  if (typeof a !== 'object' || a === null || typeof b !== 'object' || b === null) {
-    return false;
-  }
-
-  const aIsArray = Array.isArray(a);
-
-  if (aIsArray !== Array.isArray(b)) {
-    return false;
-  }
-
-  if (aIsArray) {
-    const arrA = a as unknown[];
-    const arrB = b as unknown[];
-
-    return arrA.length === arrB.length && arrA.every((item, index) => deepEqual(item, arrB[index]));
-  }
-
-  const objA = a as Record<string, unknown>;
-  const objB = b as Record<string, unknown>;
-  const keysA = Object.keys(objA);
-  const keysB = Object.keys(objB);
-
-  return keysA.length === keysB.length
-    && keysA.every(key => Object.prototype.hasOwnProperty.call(objB, key) && deepEqual(objA[key], objB[key]));
-}
+import { deepEqual } from './deepEqual.js';
 
 /**
  * Determines whether two inline tool data objects should be treated as equal.

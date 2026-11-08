@@ -42,7 +42,7 @@ Canonical startup order:
 ## Lifecycle boundary
 
 - Plugins receive dependencies via constructor params (`config`, `api`, `eventBus`).
-- Plugin instances may implement `destroy()`, but `Core` currently does not expose a global `destroy()` lifecycle hook.
+- Plugin instances may implement `destroy()`, but `Core` currently does not expose a global `destroy()` lifecycle hook. UI plugins abort their own EventBus/DOM subscriptions before removing their holders and disposing their popovers. Pending inline-toolbar configuration cannot recreate UI after destruction; other instances sharing the bus remain active.
 - Plugins are constructed in registration order, and `api.plugins` is populated as each one is constructed. **Reading another plugin's API inside your constructor returns `undefined`** — do it after `core:ready`, or lazily inside an event handler. `api.plugins` resolves entries at access time, so a plugin constructed first still sees one registered later.
 
 ## Keyboard input
@@ -114,11 +114,52 @@ Merging is shallow **at the plugin-id level**: a slice supplied through `use()` 
 const { shortcut } = toolFacade.pluginOptions('shortcuts') ?? {};
 ```
 
+## Per-block plugin data
+
+A plugin stores its own data on a block through `api.blocks`, under a key that is by convention the
+plugin's `name`. The entry is created on first write, so there is nothing to initialize:
+
+```ts
+api.blocks.updatePluginData({ block: blockId, plugin: 'anchors', data: { id: 'intro' } });
+
+api.blocks.getPluginData({ block: blockId, plugin: 'anchors' }); // → { id: 'intro' }
+```
+
+Declare the shape once and both calls are typed, with a wrong value a compile error:
+
+```ts
+declare module '@editorjs/sdk' {
+  interface EditorjsPluginDataMap {
+    anchors: { id: string };
+  }
+}
+```
+
+A plugin that never augments the map still works: its data is typed as `Record<string, unknown>`.
+
+Things worth knowing before relying on it:
+
+- **A key set to `undefined` is removed**, and an entry with no keys left is dropped from the
+  serialized block. So `getPluginData` returns `undefined` both for a plugin that never wrote
+  anything and for one whose last key was removed.
+- **Each key is its own change.** Writing two keys in one call produces two modifications, so one
+  undo reverts only the last of them. Write a single key when the change must be atomic.
+- **Concurrent writes to the same key resolve last-writer-wins.** Two collaborators toggling
+  different keys of the same plugin do not collide; two writing the same key do, and the operation
+  the server orders last wins. Split state across keys when that matters.
+- **Data for an unregistered plugin is preserved**, not dropped, so opening a document in an editor
+  without that plugin does not lose it.
+- **Blocks keep their data through `move` and `convert`**; a `split` leaves it on the original block
+  and gives the new one none.
+- **v2 documents carry over**: a v2 block's `tunes` are mapped onto the same keys on load, and a
+  tune whose data was not an object lands under a `value` key.
+
 ## TypeScript caveats
 
-Both features — calling a plugin API and configuring a plugin from a tool — are typed the same
-way: `@editorjs/sdk` declares two empty interfaces (`EditorjsPluginApiMap`, `ToolPluginOptionsMap`)
-and each plugin package fills in its own row via module augmentation. That gives inference with no
+Three features — calling a plugin API, configuring a plugin from a tool, and storing per-block
+plugin data — are typed the same way: `@editorjs/sdk` declares three empty interfaces
+(`EditorjsPluginApiMap`, `ToolPluginOptionsMap`, `EditorjsPluginDataMap`) and each plugin package
+fills in its own row via module augmentation. That gives inference with no
 casts, but it comes with rules worth knowing before you hit them.
 
 ### The augmentation must be in *your* compilation
@@ -267,6 +308,8 @@ Programmatic block management — delegates to `BlocksManager`.
 | `render(document)` | Re-initialize the document from serialised data |
 | `clear()` | Remove all blocks |
 | `getBlocksCount()` | Return the total number of blocks |
+| `getPluginData({ block, plugin })` | Read a plugin's per-block data, or `undefined` |
+| `updatePluginData({ block, plugin, data, userId? })` | Merge keys into a plugin's per-block data |
 
 ### `api.selection`
 

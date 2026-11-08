@@ -11,11 +11,16 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Deinit submodules before comparing against base ref
+      shell: bash
+      run: git submodule deinit --all -f
+
     - name: Checkout base ref
       uses: actions/checkout@v6
       with:
         ref: ${{ github.event.pull_request.base.ref }}
         fetch-depth: 0
+        submodules: true
 
     - name: Check package exists on base ref
       id: check

@@ -1,5 +1,6 @@
 import Core from '@editorjs/core';
 import type { CoreConfig, ToolConstructable } from '@editorjs/sdk';
+import type { ToolEntry } from './mergeTools.js';
 import { DOMAdapters } from '@editorjs/dom-adapters';
 import { CollaborationManager } from '@editorjs/collaboration-manager';
 import { Paragraph } from '@editorjs/paragraph';
@@ -32,8 +33,10 @@ export type EditorJSConfig = Omit<CoreConfig, 'tools'> & {
   /**
    * User tools to register on top of the defaults. A tool provided under a name
    * that matches a default tool replaces that default instead of duplicating it.
+   * Pass `{ class: tool, ...options }` instead of a bare constructor to forward
+   * options (most commonly `config`) to `core.use`.
    */
-  tools?: Record<string, ToolConstructable>;
+  tools?: Record<string, ToolEntry>;
 };
 
 /**
@@ -77,8 +80,8 @@ export default class EditorJS {
     /**
      * Default tools merged with user-provided `config.tools` (user wins by name).
      */
-    for (const tool of mergeTools(DEFAULT_TOOLS, tools)) {
-      this.#core.use(tool);
+    for (const [tool, options] of mergeTools(DEFAULT_TOOLS, tools)) {
+      this.#core.use(tool, options);
     }
 
     /**

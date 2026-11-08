@@ -57,6 +57,11 @@ export class ToolbarUI implements EditorjsPlugin {
   #eventBus: EventBus;
 
   /**
+   * Controls this toolbar's DOM and EventBus listeners
+   */
+  #listenersController = new AbortController();
+
+  /**
    * Toolbar HTML nodes
    */
   #nodes: ToolbarNodes = {
@@ -82,6 +87,8 @@ export class ToolbarUI implements EditorjsPlugin {
     api,
     eventBus,
   }: EditorjsPluginParams) {
+    const { signal } = this.#listenersController;
+
     this.#api = api;
     this.#eventBus = eventBus;
 
@@ -95,7 +102,7 @@ export class ToolbarUI implements EditorjsPlugin {
       }
 
       this.moveTo(event.detail.block);
-    });
+    }, { signal });
   }
 
   /**
@@ -111,6 +118,14 @@ export class ToolbarUI implements EditorjsPlugin {
    * Removes Toolbar's HTML nodes from DOM
    */
   public destroy(): void {
+    /**
+     * Already destroyed: a second call has nothing left to release
+     */
+    if (this.#listenersController.signal.aborted) {
+      return;
+    }
+
+    this.#listenersController.abort();
     this.#nodes.holder.remove();
   }
 
@@ -126,6 +141,8 @@ export class ToolbarUI implements EditorjsPlugin {
    * Creates Toolbar HTML nodes
    */
   #render(): void {
+    const { signal } = this.#listenersController;
+
     this.#nodes.holder.appendChild(this.#nodes.actions);
     this.#nodes.actions.appendChild(this.#nodes.plusButton);
 
@@ -145,7 +162,7 @@ export class ToolbarUI implements EditorjsPlugin {
      * interaction the toolbar does not support - and getting it right now is what keeps adding
      * a second control from being the moment it silently becomes wrong
      */
-    this.#nodes.actions.addEventListener('keydown', this.#handleActionsKeydown);
+    this.#nodes.actions.addEventListener('keydown', this.#handleActionsKeydown, { signal });
     this.#updateRovingTabindex(this.#nodes.plusButton);
 
     /**
@@ -166,7 +183,7 @@ export class ToolbarUI implements EditorjsPlugin {
       this.#nodes.plusButton.focus();
 
       this.#openToolbox();
-    });
+    }, { signal });
 
     this.#eventBus.dispatchEvent(new ToolbarRenderedUIEvent({
       toolbar: this.#nodes.holder,
@@ -177,19 +194,21 @@ export class ToolbarUI implements EditorjsPlugin {
    * Subscribes to Toolbox event
    */
   #subscribeToToolboxEvents(): void {
+    const { signal } = this.#listenersController;
+
     this.#eventBus.addEventListener(`ui:toolbox:rendered`, (event: ToolboxRenderedUIEvent) => {
       this.#addToolbox(event.detail.toolbox);
-    });
+    }, { signal });
 
     this.#eventBus.addEventListener(`ui:toolbox:opened`, () => {
       this.#isToolboxOpen = true;
       this.#nodes.plusButton.setAttribute('aria-expanded', 'true');
-    });
+    }, { signal });
 
     this.#eventBus.addEventListener(`ui:toolbox:closed`, () => {
       this.#isToolboxOpen = false;
       this.#nodes.plusButton.setAttribute('aria-expanded', 'false');
-    });
+    }, { signal });
   }
 
   /**
