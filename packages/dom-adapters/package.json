@@ -34,7 +34,7 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
-    "@editorjs/dom": "^1.1.0",
+    "@editorjs/dom": "^1.2.0",
     "@editorjs/sdk": "workspace:^",
     "inversify": "^8.1.0",
     "reflect-metadata": "^0.2.2"

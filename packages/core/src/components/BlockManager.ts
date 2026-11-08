@@ -145,9 +145,9 @@ export class BlocksManager {
     }
 
     this.#model.addBlock(userId, {
-      ...data,
       id,
       name: type,
+      data,
     }, newIndex);
 
     if (focus) {

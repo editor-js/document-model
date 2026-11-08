@@ -87,6 +87,15 @@ describe('BlocksAPI integration (real model, mocked tools)', () => {
       );
     });
 
+    it('creates the block with the data it was inserted with', () => {
+      blocksAPI.insert({
+        type: 'header',
+        data: { level: 2 },
+      });
+
+      expect(model.serialized.blocks[0].data).toEqual({ level: 2 });
+    });
+
     it('should insert a block at the specified index', () => {
       blocksAPI.insert({ type: 'paragraph' });
       blocksAPI.insert({ type: 'paragraph' });
