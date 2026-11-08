@@ -22,5 +22,5 @@
 - [x] 4.2 Hand-edit the **Purpose** preamble of `openspec/specs/sdk/spec.md` to drop "block tunes" — the mechanical archive fold only rewrites `### Requirement:` blocks
 - [x] 4.3 Change the `shortcuts-plugin` spec's reserved-work note from "block tunes" to "block settings items"
 - [x] 4.4 Run `yarn lint` and `yarn test`. Fix any regressions
-- [ ] 4.5 Comment on PR #157 linking `plugin-block-data`, `block-settings-ui` and `remove-block-tunes` as its replacement
+- [x] 4.5 Comment on PR #157 linking `plugin-block-data`, `block-settings-ui` and `remove-block-tunes` as its replacement
 - [x] 4.6 Run `openspec validate remove-block-tunes --type change` and confirm it passes
