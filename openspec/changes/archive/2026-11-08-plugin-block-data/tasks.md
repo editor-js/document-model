@@ -51,7 +51,7 @@
 - [x] 6.1 Update `docs/model.md`, `docs/index-serialization.md` and `docs/events.md` for `PluginDataNode`, `PluginDataIndex` and `PluginDataModifiedEvent`, plus `docs/plugins.md` (the SDK declares **three** augmentable interfaces now) and `.github/agents/docs-updater.agent.md` (its `BlockTune` → `docs/model.md` mapping)
 - [x] 6.2 Update the diagrams `model-tree-structure.mmd`, `events-catalog.mmd` and `architecture-overview.mmd`
 - [x] 6.3 Run `yarn lint`, `yarn test`, and the mutation tests for the touched packages that have them. Fix any regressions
-- [ ] 6.4 Run `openspec validate plugin-block-data --type change` and confirm it passes. After archiving, fill the `## Purpose` of the new `plugin-block-data` spec from the proposal's intended-Purpose text
+- [x] 6.4 Run `openspec validate plugin-block-data --type change` and confirm it passes. After archiving, fill the `## Purpose` of the new `plugin-block-data` spec from the proposal's intended-Purpose text
 
 ## 7. Review follow-ups
 
