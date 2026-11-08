@@ -171,6 +171,29 @@ function activateFromKeyboard(button: HTMLButtonElement): void {
 }
 
 /**
+ * Activates the button the way Enter does while the open menu's own keyboard handling owns the
+ * key: the default is prevented before the event reaches the button, so no click ever follows
+ * @param button - control to activate
+ */
+function activateFromKeyboardWithoutClick(button: HTMLButtonElement): void {
+  /**
+   * Claims the key the way ui-kit's flipper does, from a capture listener above the button
+   * @param event - the keydown on its way down to the button
+   */
+  const claimTheKey = (event: Event): void => {
+    event.preventDefault();
+  };
+
+  document.addEventListener('keydown', claimTheKey, { capture: true });
+
+  button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter',
+    bubbles: true,
+    cancelable: true }));
+
+  document.removeEventListener('keydown', claimTheKey, { capture: true });
+}
+
+/**
  * Asks the plugin to open settings for a block, then lets the providers settle
  * @param eventBus - bus to dispatch on
  * @param index - block position to open settings for
@@ -847,6 +870,40 @@ describe('BlockSettingsUI', () => {
       expect(instance.button.getAttribute('aria-expanded')).toBe('false');
       expect(onClosed).toHaveBeenCalledTimes(1);
       expect(provider).toHaveBeenCalledTimes(1);
+    });
+
+    /**
+     * The menu's own keyboard handling claims Enter and prevents the click the activation would
+     * otherwise produce, so the keydown is the only thing the button gets to act on
+     */
+    it('should close the menu from the keyboard when no click follows', async () => {
+      instance.plugin.publicApi.register(() => ({ title: 'Anchor',
+        onActivate: () => {} }));
+
+      selectBlock(0);
+      clickButton(instance.button);
+      await flush();
+
+      expect(instance.button.getAttribute('aria-expanded')).toBe('true');
+
+      activateFromKeyboardWithoutClick(instance.button);
+      await flush();
+
+      expect(instance.button.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('should not re-open the menu when a prevented key arrives with it closed', async () => {
+      const provider = jest.fn<BlockSettingsProvider>(() => ({ title: 'Anchor',
+        onActivate: () => {} }));
+
+      instance.plugin.publicApi.register(provider);
+
+      selectBlock(0);
+      activateFromKeyboardWithoutClick(instance.button);
+      await flush();
+
+      expect(provider).not.toHaveBeenCalled();
+      expect(instance.button.getAttribute('aria-expanded')).toBe('false');
     });
 
     it('should open from the keyboard when the menu is closed', async () => {

@@ -409,6 +409,14 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
       }
 
       this.#wasOpenOnActivationStart = this.#isOpen;
+
+      /**
+       * No click follows a key the open menu's own handling has claimed, so the toggle on it never runs: closing
+       * here is the only way left to dismiss the menu from the button that opened it
+       */
+      if (this.#isOpen && event.defaultPrevented) {
+        this.#close();
+      }
     });
 
     this.#button.addEventListener('click', () => {
