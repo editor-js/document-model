@@ -206,6 +206,29 @@ test.describe('keyboard operation', () => {
     await expect(blocks).toHaveText(['Beta', 'Alpha']);
     await expect(menu).toBeHidden();
   });
+
+  test('is dismissed from its own button by a second Enter', async ({ page }) => {
+    const blocks = page.getByRole('textbox', { name: 'Paragraph' });
+
+    await blocks.first().hover();
+
+    const button = page.getByRole('button', { name: 'Block settings' });
+
+    await button.click();
+
+    const menu = page.getByRole('menu', { name: 'Block settings' });
+
+    await expect(menu).toBeVisible();
+    await expect(button).toBeFocused();
+
+    // ui-kit's flipper claims this Enter for the open menu and prevents the default before the
+    // event reaches the button, so no click is produced and the plugin has to dismiss the menu
+    // from the keydown itself. Without that, the menu cannot be closed from the button at all.
+    await page.keyboard.press('Enter');
+
+    await expect(menu).toBeHidden();
+    await expect(button).toHaveAttribute('aria-expanded', 'false');
+  });
 });
 
 test.describe('actions', () => {
