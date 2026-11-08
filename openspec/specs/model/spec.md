@@ -42,7 +42,10 @@ The system SHALL provide `EditorDocument` as the root container of `BlockNode`s,
 - **WHEN** `addBlock` is called without an index
 - **THEN** the block is appended at the end and a `BlockAddedEvent` fires carrying the serialized block data and its index
 
-Implemented in `src/entities/EditorDocument/index.ts`, validated by its co-located `.spec.ts`.
+#### Scenario: Modifying text with a formatting value
+- **GIVEN** a `TextIndex` and a modified value `{ tool, data }`
+- **WHEN** `modifyData` is called
+- **THEN** the range is formatted with that `tool` and its `data`, so re-applying a data-carrying tool (e.g. redo or a remote op) keeps the fragment's data
 
 ### Requirement: BlockNode data tree
 The system SHALL provide `BlockNode` representing a single block's data tree (nested value/text nodes, arrays, and objects) plus its `BlockTune`s, supporting creation/removal/lookup of data nodes, text insert/remove/format/unformat, tune/value updates, and text content extraction.
