@@ -24,7 +24,7 @@ The system SHALL provide `BlockSettingsUI`, an `EditorjsPlugin` with static `nam
 - **THEN** no provider is invoked, the popover is not opened, and no error is thrown
 
 ### Requirement: Block settings button
-The button `BlockSettingsUI` announces SHALL carry the whole menu-button contract, because the state it reports is the plugin's own: an accessible name from the UI package's message catalogue, `aria-haspopup="menu"`, and an `aria-expanded` kept in sync with whether the menu is open. Activating it SHALL focus it before opening the menu, so the popover has a control to return focus to when it closes. Activating it while the menu is already open SHALL close the menu instead of rebuilding it, as the menu button pattern requires: the control that opens a menu is also the control that dismisses it. This SHALL hold however the button is activated, pointer or keyboard, which means the state it reads cannot be captured from pointer events alone. The button SHALL also declare itself a non-submitting control, so that an editor mounted inside a form does not post it when the menu is opened. The plugin SHALL follow block selection to know which block the button acts on, and SHALL stop following it whenever the toolbar is holding its position — while the menu is open, and while the toolbox is open, since that popover renders inside the toolbar and moving it would carry the popover along. The button therefore stays beside one block for as long as either is open, and the block it acts on SHALL stay with it: a menu built for a block the button is not next to acts on the wrong one, and `Delete` is among its items.
+The button `BlockSettingsUI` announces SHALL carry the whole menu-button contract, because the state it reports is the plugin's own: an accessible name from the UI package's message catalogue, `aria-haspopup="menu"`, and an `aria-expanded` kept in sync with whether the menu is open. Activating it SHALL focus it before opening the menu, so the popover has a control to return focus to when it closes. Activating it while the menu is already open SHALL close the menu instead of rebuilding it, as the menu button pattern requires: the control that opens a menu is also the control that dismisses it. This SHALL hold however the button is activated, pointer or keyboard, which means the state it reads cannot be captured from pointer events alone. Where the open menu's own keyboard handling claims the key and suppresses the click the activation would otherwise produce, the dismissal SHALL happen on the keydown itself: no click arrives to carry it, and without that the menu cannot be dismissed from the button at all. The button SHALL also declare itself a non-submitting control, so that an editor mounted inside a form does not post it when the menu is opened. The plugin SHALL follow block selection to know which block the button acts on, and SHALL stop following it whenever the toolbar is holding its position — while the menu is open, and while the toolbox is open, since that popover renders inside the toolbar and moving it would carry the popover along. The button therefore stays beside one block for as long as either is open, and the block it acts on SHALL stay with it: a menu built for a block the button is not next to acts on the wrong one, and `Delete` is among its items.
 
 #### Scenario: The button is announced with the menu
 - **WHEN** `BlockSettingsUI` is constructed
@@ -44,6 +44,16 @@ The button `BlockSettingsUI` announces SHALL carry the whole menu-button contrac
 - **GIVEN** the button has opened the menu
 - **WHEN** the button is activated again
 - **THEN** the menu closes, `aria-expanded` returns to `"false"`, and no second menu is built
+
+#### Scenario: The button is activated again from the keyboard
+- **GIVEN** the menu was opened from the button, and the button holds focus
+- **WHEN** Enter is pressed again, and the open menu's keyboard handling has already prevented the default so that no click follows
+- **THEN** the menu closes and `aria-expanded` returns to `"false"`, rather than staying open with nothing left to dismiss it
+
+#### Scenario: A claimed key arrives with the menu closed
+- **GIVEN** the menu is closed
+- **WHEN** a key whose default was prevented elsewhere reaches the button
+- **THEN** no provider is asked and no menu opens, because a dismissal is all that keydown stands in for
 
 #### Scenario: The menu is dismissed while a replacement is being built
 - **GIVEN** the menu is open and another block's menu has been requested, whose providers have not returned
