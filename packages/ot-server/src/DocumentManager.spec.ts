@@ -80,7 +80,7 @@ describe('DocumentManager', () => {
       blocks: [
         expect.objectContaining({
           name: 'paragraph',
-          tunes: {},
+          plugins: {},
           data: {
             text: {
               $t: 't',
@@ -141,7 +141,7 @@ describe('DocumentManager', () => {
       blocks: [
         expect.objectContaining({
           name: 'paragraph',
-          tunes: {},
+          plugins: {},
           data: {
             text: {
               $t: 't',
@@ -211,7 +211,7 @@ describe('DocumentManager', () => {
       blocks: [
         expect.objectContaining({
           name: 'paragraph',
-          tunes: {},
+          plugins: {},
           data: {
             text: {
               $t: 't',
@@ -284,7 +284,7 @@ describe('DocumentManager', () => {
       blocks: [
         expect.objectContaining({
           name: 'paragraph',
-          tunes: {},
+          plugins: {},
           data: {
             text: {
               $t: 't',

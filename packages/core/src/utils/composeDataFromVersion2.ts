@@ -1,7 +1,7 @@
-import type { OutputData } from 'editorjs-v2';
+import type { OutputBlockData, OutputData } from 'editorjs-v2';
 import { TextNode, ValueNode } from '@editorjs/model';
 import type { InlineFragment } from '@editorjs/sdk';
-import { createInlineToolData, createInlineToolName, type BlockNodeInit } from '@editorjs/sdk';
+import { createInlineToolData, createInlineToolName, type BlockNodeInit, type PluginDataSerialized } from '@editorjs/sdk';
 
 /**
  * Removes HTML tags from the input string
@@ -86,6 +86,33 @@ function extractFragments(html: string): InlineFragment[] {
 }
 
 /**
+ * Key a non-object tune value is stored under, since plugin data is a key/value map
+ * while v2 tune data may be any JSON value
+ */
+const SCALAR_TUNE_KEY = 'value';
+
+/**
+ * Maps a v2 block's tunes onto v3 per-plugin data, keeping names verbatim so a v3 plugin that
+ * adopts a v2 tune's name finds its data. Object data is copied key by key; anything else goes
+ * under `value`, since a plugin entry is a key/value map.
+ * @param tunes - `tunes` map of a v2 block
+ */
+function composePluginsFromTunes(tunes: NonNullable<OutputBlockData['tunes']>): Record<string, PluginDataSerialized> {
+  return Object.fromEntries(
+    Object.entries(tunes).map(([tuneName, tuneData]) => {
+      const isPlainObject = typeof tuneData === 'object' && tuneData !== null && !Array.isArray(tuneData);
+
+      return [
+        tuneName,
+        isPlainObject
+          ? { ...tuneData as Record<string, unknown> }
+          : { [SCALAR_TUNE_KEY]: tuneData },
+      ];
+    })
+  ) as Record<string, PluginDataSerialized>;
+}
+
+/**
  * Converst OutputData from version 2 to version 3
  * @param data - OutputData from version 2
  */
@@ -97,8 +124,13 @@ export function composeDataFromVersion2(data: OutputData): {
 } {
   return {
     blocks: data.blocks.map((block) => {
+      const plugins = block.tunes !== undefined && Object.keys(block.tunes).length > 0
+        ? composePluginsFromTunes(block.tunes)
+        : undefined;
+
       return {
         name: block.type,
+        ...(plugins !== undefined && { plugins }),
         data: Object.fromEntries(
           Object
             .entries(block.data as Record<string, unknown>)
