@@ -18,6 +18,16 @@ The system SHALL provide `OTClient`, which performs a handshake with the OT serv
 - **WHEN** the message is processed
 - **THEN** it is transformed against the in-flight operation and then each queued operation, those local operations are rebased against it, and it is surfaced via `onRemoteOperation`; if the transform reduces it to Neutral, the callback is not invoked; messages originating from the client's own `userId`, or of a non-`Operation` message type, are ignored outright
 
+#### Scenario: Neutral remote operation still advances the revision
+- **GIVEN** the server broadcasts a `Neutral` operation, or a remote operation is reduced to `Neutral` by the client's transform
+- **WHEN** the message is processed
+- **THEN** the client's revision counter advances as for any remote operation, and `onRemoteOperation` is not invoked
+
+#### Scenario: Dropping a queued operation neutralized by rebasing
+- **GIVEN** a queued local operation that becomes `Neutral` when rebased against an incoming remote operation
+- **WHEN** it reaches the front of the queue
+- **THEN** it is dropped instead of being sent, and the next queued operation is considered
+
 #### Scenario: Concurrent clients converge
 - **GIVEN** two clients insert text concurrently, at different positions or at the same position, including while one has an operation in flight and another queued
 - **WHEN** the server has processed all operations and both clients have received them
@@ -46,3 +56,16 @@ The system SHALL let the caller of `Operation.transform(against, againstIsLater)
 - **GIVEN** a remote Insert at position 0 and an unacknowledged local Insert at position 0
 - **WHEN** the remote operation is transformed against the local one with `againstIsLater: true`
 - **THEN** its position is unchanged
+
+### Requirement: Insert against insert transforms by position
+The system SHALL transform a text Insert against a concurrent text Insert in the same input by comparing their start positions only, and SHALL NOT merge the other Insert's payload into the transformed one. If the other Insert starts earlier, the transformed Insert shifts right by the other payload's length; if it starts later, the transformed Insert is unchanged; if both start at the same position, the order given by `againstIsLater` decides.
+
+#### Scenario: Concurrent insert inside a multi-character insert's range
+- **GIVEN** the text `hello`, an Insert of `abc` at position 2 and a concurrent Insert of `Z` at position 3, both based on the same revision
+- **WHEN** the `abc` Insert is transformed against the `Z` Insert
+- **THEN** it still inserts `abc` at position 2, and applying both yields `heabclZlo`
+
+#### Scenario: Concurrent insert before the transformed insert
+- **GIVEN** an Insert of `abc` at position 3 and a concurrent Insert of `Z` at position 1
+- **WHEN** the `abc` Insert is transformed against the `Z` Insert
+- **THEN** it inserts `abc` at position 4 with its payload unchanged
