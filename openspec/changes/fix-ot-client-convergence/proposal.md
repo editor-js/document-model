@@ -1,6 +1,6 @@
 ## Bug
 
-Two clients editing concurrently end up with different documents, and the server ends up with a third. `packages/ot-server/src/convergence.spec.ts` reproduces it with two `OTClient`s and a real `DocumentManager`. Four defects combine, and two more surface once the first four are fixed:
+Two clients editing concurrently end up with different documents, and the server ends up with a third. Driving two `OTClient`s against a real `DocumentManager` reproduces it. Four defects combine, and two more surface once the first four are fixed:
 
 - `OTClient` never puts a revision on the operations it sends. `Operation.rev` is unset on local operations, so the server's conflict filter (`op.rev >= undefined`) matches nothing, and the server applies every operation untransformed, in arrival order.
 - The client's revision counter is off by one: it stores the last-seen history index, while the server expects the next one. It also ignores the revision in the handshake reply.
