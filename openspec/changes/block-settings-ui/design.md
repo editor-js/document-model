@@ -51,7 +51,7 @@ The two halves of 2 and 3 have to agree, which is why the plugin tracks `ui:tool
 
 *Why the button belongs to the plugin rather than the toolbar:* a menu button's `aria-expanded` has to track the menu, and the menu's open state is the plugin's. Split across the two, every open and close would need a round trip through the event bus to keep an attribute honest, and the button would report a block the menu was not built for. `ToolbarUI` treats it as a control of the container like its own plus button -- named, stated and operated by its owner, positioned and tab-managed by the toolbar.
 
-`BlockSettingsUI` resolves the target block's id with `api.blocks.getIdByIndex(index)` from the index it last saw selected, so this change needs no new event or payload field from `core`.
+`BlockSettingsUI` resolves the target block's id with `api.blocks.getIdByIndex(index)` as each selection is reported, and keeps that id as the target, resolving the position back with `getIndexById` when the menu opens. So this change needs no new event or payload field from `core`. Keeping the position instead would go stale: a block inserted or removed above the target shifts every position below it, and none of the ways that happens -- a collaborator, an undo, a move -- reports a selection, so the button would quietly come to act on a different block.
 
 *Alternative considered:* give `ToolbarUI` the target index and pass it in `ui:block-settings:open`, so there is one owner rather than two components agreeing. Rejected for now because it moves the block the menu acts on back out of the plugin that owns the button, against the reasoning above; the duplicated flag is the smaller cost, and `ui:block-settings:open` stays available as the seam if that trade changes.
 

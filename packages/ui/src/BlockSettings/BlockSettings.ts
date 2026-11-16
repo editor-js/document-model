@@ -217,12 +217,10 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
   #button: HTMLButtonElement;
 
   /**
-   * Position of the block the menu will be built for, as last reported by block selection.
-   *
-   * Frozen while the menu is open: the menu belongs to one block, and re-targeting under it
-   * would leave the button and the open menu pointing at different blocks
+   * The block the menu will be built for, as last reported by block selection. Held by id, not position: a block
+   * inserted or removed above it shifts every position below, and nothing reports that as a selection
    */
-  #selectedBlockIndex = -1;
+  #selectedBlockId: BlockId | undefined;
 
   /**
    * Whether the toolbox popover is open. The toolbar holds its position while it is, since that popover renders inside
@@ -277,7 +275,7 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
    * Providers may be asynchronous, so the block a menu is being built for can stop being the
    * selected one before the menu exists
    */
-  #buildingFor: number | null = null;
+  #buildingFor: BlockId | null = null;
 
   /**
    * BlockSettingsUI class constructor
@@ -342,6 +340,18 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
   }
 
   /**
+   * Where the target sits now, or -1 when there is no target or the document no longer holds it. Resolved on
+   * demand rather than stored, so it cannot go stale between the selection and the open
+   */
+  get #selectedBlockIndex(): number {
+    if (this.#selectedBlockId === undefined) {
+      return -1;
+    }
+
+    return this.#api.blocks.getIndexById(this.#selectedBlockId);
+  }
+
+  /**
    * Follows block selection, except while the menu or the toolbox is open: whenever the toolbar holds its position,
    * re-targeting here would leave the button and this target on different blocks
    * @param event - the selection event
@@ -351,18 +361,18 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
       return;
     }
 
-    const { index } = event.detail;
+    const blockId = this.#api.blocks.getIdByIndex(event.detail.index);
 
     /**
      * A build in flight was started for whichever block was selected at the time. Letting it
      * finish after the selection has moved would open that block's actions beside this one,
      * which is a menu that acts on a block the user is no longer pointing at
      */
-    if (this.#buildingFor !== null && this.#buildingFor !== index) {
+    if (this.#buildingFor !== null && this.#buildingFor !== blockId) {
       this.#abandonPendingBuild();
     }
 
-    this.#selectedBlockIndex = index;
+    this.#selectedBlockId = blockId;
   };
 
   /**
@@ -530,8 +540,6 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
   async #open(index: number): Promise<void> {
     const token = ++this.#openToken;
 
-    this.#buildingFor = index;
-
     const blockId = this.#api.blocks.getIdByIndex(index);
 
     /**
@@ -544,6 +552,8 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
 
       return;
     }
+
+    this.#buildingFor = blockId;
 
     const items = await this.#collectItems({
       blockId,

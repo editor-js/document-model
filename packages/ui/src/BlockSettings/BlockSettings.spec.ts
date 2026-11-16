@@ -1088,6 +1088,82 @@ describe('BlockSettingsUI', () => {
     });
   });
 
+  describe('a target the document moves', () => {
+    /**
+     * Reports a selection to a freshly built instance
+     * @param target - the instance under test
+     * @param index - block position to report as selected
+     */
+    function select(target: ReturnType<typeof setup>, index: number): void {
+      target.eventBus.dispatchEvent(new BlockSelectedUIEvent({
+        block: document.createElement('div'),
+        index,
+      }));
+    }
+
+    /**
+     * A collaborator, an undo or a move can insert above the selected block, and none of those
+     * report a selection -- so a target held as a position quietly comes to mean another block
+     */
+    it('should open for the block that was selected, not the position it held', async () => {
+      const blocks = [...defaultBlocks];
+      const target = setup(blocks);
+
+      target.plugin.publicApi.register(ctx => ({
+        title: `For ${ctx.blockId}`,
+        onActivate: () => {},
+      }));
+
+      select(target, 1);
+
+      blocks.unshift({ id: 'block-new',
+        name: 'paragraph' });
+
+      clickButton(target.button);
+      await flush();
+
+      expect(itemTitles(target.element)).toEqual(['For block-1']);
+    });
+
+    it('should hand providers the position the block holds now', async () => {
+      const blocks = [...defaultBlocks];
+      const target = setup(blocks);
+      const provider = jest.fn<BlockSettingsProvider>(() => undefined);
+
+      target.plugin.publicApi.register(provider);
+
+      select(target, 1);
+
+      blocks.unshift({ id: 'block-new',
+        name: 'paragraph' });
+
+      clickButton(target.button);
+      await flush();
+
+      expect(provider).toHaveBeenCalledWith(expect.objectContaining({ blockId: 'block-1',
+        blockIndex: 2 }));
+    });
+
+    it('should not open when the selected block is gone', async () => {
+      const blocks = [...defaultBlocks];
+      const target = setup(blocks);
+      const provider = jest.fn<BlockSettingsProvider>(() => ({ title: 'Anchor',
+        onActivate: () => {} }));
+
+      target.plugin.publicApi.register(provider);
+
+      select(target, 1);
+
+      blocks.splice(1, 1);
+
+      clickButton(target.button);
+      await flush();
+
+      expect(provider).not.toHaveBeenCalled();
+      expect(target.button.getAttribute('aria-expanded')).toBe('false');
+    });
+  });
+
   describe('destroy', () => {
     it('should stop answering open requests', async () => {
       const destroyed = setup();
