@@ -198,6 +198,10 @@ function withIsolatedCallbacks(item: PopoverItemParams): PopoverItemParams {
  * UI plugin that renders the per-block settings menu and the button that opens it, announcing
  * both once for a host to mount. It owns no items of its own -- everything in the menu comes
  * from registered providers, the built-in Move/Delete entries included.
+ *
+ * Register it after whatever mounts it. The announcement is made once, from the constructor, and
+ * is not replayed, so a host registered later never hears it and the button and menu stay off
+ * the page with nothing reported
  */
 export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
   /**
