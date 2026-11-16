@@ -9,7 +9,7 @@ import type {
   EventBus
 } from '@editorjs/sdk';
 import { UiComponentType } from '@editorjs/sdk';
-import type { PopoverItemChildren, PopoverItemParams } from '@editorjs/ui-kit';
+import type { PopoverItemDefaultBaseParams, PopoverItemParams } from '@editorjs/ui-kit';
 import { PopoverDesktop, PopoverEvent, PopoverItemType } from '@editorjs/ui-kit';
 import { messages } from '../messages.js';
 import ControlStyle from '../controls.module.pcss';
@@ -155,51 +155,91 @@ interface Registration {
  * renders, and `onActivate`, which it calls on a click -- both long after the provider's own `try` has returned
  * @param item - item as the provider returned it
  */
+/**
+ * Signature ui-kit calls a contributed item's handler with
+ */
+type ItemActivate = (activated: PopoverItemParams, event?: PointerEvent) => void;
+
+/**
+ * The handler with its failures reported rather than left to escape
+ * @param activate - the handler the provider supplied
+ */
+function guarded(activate: ItemActivate): ItemActivate {
+  return (activated, event): void => {
+    try {
+      activate(activated, event);
+    } catch (error) {
+      console.error('[BlockSettingsUI] A block settings item failed on activation', error);
+    }
+  };
+}
+
+/**
+ * The resolved active state, shaped to be spread over the item it came from
+ */
+interface ActiveStatePatch {
+  /**
+   * What the item's `isActive` callback returned, absent when it carried none
+   */
+  isActive?: boolean;
+}
+
+/**
+ * The item's `isActive` resolved to the boolean it returns, as a patch to spread over the item
+ * @param item - item carrying it, if it carries one at all
+ */
+function resolvedActiveState(item: PopoverItemParams): ActiveStatePatch {
+  if (!('isActive' in item) || typeof item.isActive !== 'function') {
+    return {};
+  }
+
+  return { isActive: item.isActive() };
+}
+
+/**
+ * Takes the callbacks ui-kit will call on a contributed item out of harm's way: `isActive`, which it reads as it
+ * renders, and `onActivate`, which it calls on a click -- both long after the provider's own `try` has returned
+ * @param item - item as the provider returned it
+ */
 function withIsolatedCallbacks(item: PopoverItemParams): PopoverItemParams {
-  const resolved: Record<string, unknown> = { ...item };
-
-  if (typeof resolved.isActive === 'function') {
-    resolved.isActive = (resolved.isActive as () => boolean)();
+  /**
+   * A separator carries no behaviour at all
+   */
+  if ('type' in item && item.type === PopoverItemType.Separator) {
+    return item;
   }
 
-  const activate = resolved.onActivate;
-
-  /**
-   * Wrapped rather than resolved: this one runs on a click, inside ui-kit's own handler, which goes on to honour
-   * `closeOnActivate` after it returns -- so a throw escaping here abandons the rest of that sequence
-   */
-  if (typeof activate === 'function') {
-    resolved.onActivate = (...args: unknown[]): void => {
-      try {
-        (activate as (...callArgs: unknown[]) => void)(...args);
-      } catch (error) {
-        console.error('[BlockSettingsUI] A block settings item failed on activation', error);
-      }
+  if ('children' in item) {
+    return {
+      ...item,
+      ...resolvedActiveState(item),
+      children: {
+        ...item.children,
+        items: item.children.items?.map(withIsolatedCallbacks),
+      },
     };
   }
 
-  const children = resolved.children as PopoverItemChildren | undefined;
-
-  /**
-   * Nested items render with their parent, so their callbacks are called just as early
-   */
-  if (children?.items !== undefined) {
-    resolved.children = {
-      ...children,
-      items: children.items.map(withIsolatedCallbacks),
+  if ('confirmation' in item) {
+    return {
+      ...item,
+      ...resolvedActiveState(item),
+      confirmation: withIsolatedCallbacks(item.confirmation) as PopoverItemDefaultBaseParams,
     };
   }
 
-  const confirmation = resolved.confirmation as PopoverItemParams | undefined;
-
-  /**
-   * The confirmation state replaces the item's own params on activation and renders from them the same way
-   */
-  if (confirmation !== undefined) {
-    resolved.confirmation = withIsolatedCallbacks(confirmation);
+  if ('onActivate' in item && typeof item.onActivate === 'function') {
+    return {
+      ...item,
+      ...resolvedActiveState(item),
+      onActivate: guarded(item.onActivate),
+    };
   }
 
-  return resolved as PopoverItemParams;
+  return {
+    ...item,
+    ...resolvedActiveState(item),
+  };
 }
 
 /**
