@@ -26,9 +26,19 @@ function setup(count: number): {
   texts: Text[];
   /** Indexes reported through `ui:blocks:block-selected`, in order */
   selected: number[];
+  /** Adds a block at a position, keeping the ids the fake API answers with in step */
+  addBlockAt: (index: number) => void;
+  /** Removes the block at a position, keeping those ids in step */
+  removeBlockAt: (index: number) => void;
 } {
   const eventBus = new EventBus();
   const selected: number[] = [];
+
+  /**
+   * Ids of the blocks by position, as the model would hold them. Spliced alongside every add and
+   * removal, so `getIdByIndex` answers for the document the plugin actually has
+   */
+  const ids: string[] = [];
 
   eventBus.addEventListener('ui:blocks:block-selected', (event: BlockSelectedUIEvent) => {
     selected.push(event.detail.index);
@@ -44,7 +54,11 @@ function setup(count: number): {
 
   const plugin = new BlocksUI({
     eventBus,
-    api: {} as EditorAPI,
+    api: {
+      blocks: {
+        getIdByIndex: (index: number) => ids[index],
+      },
+    } as unknown as EditorAPI,
   } as EditorjsPluginParams);
 
   const texts: Text[] = [];
@@ -56,6 +70,8 @@ function setup(count: number): {
     blockElement.appendChild(text);
     texts.push(text);
 
+    ids.splice(index, 0, `block-${index}`);
+
     eventBus.dispatchEvent(new BlockAddedCoreEvent({
       tool: 'paragraph',
       data: {},
@@ -65,6 +81,32 @@ function setup(count: number): {
   }
 
   return {
+    /**
+     * Adds a block at a position, as the core would
+     * @param index - where the block appears
+     */
+    addBlockAt: (index: number): void => {
+      const blockElement = document.createElement('div');
+
+      blockElement.appendChild(document.createTextNode('Inserted'));
+      ids.splice(index, 0, 'block-inserted');
+
+      eventBus.dispatchEvent(new BlockAddedCoreEvent({ tool: 'paragraph',
+        data: {},
+        ui: blockElement,
+        index }));
+    },
+
+    /**
+     * Removes the block at a position, as the core would
+     * @param index - which block goes
+     */
+    removeBlockAt: (index: number): void => {
+      ids.splice(index, 1);
+
+      eventBus.dispatchEvent(new BlockRemovedCoreEvent({ tool: 'paragraph',
+        index }));
+    },
     eventBus,
     plugin,
     texts,
@@ -81,6 +123,21 @@ function hoverBlock(node: Text): void {
   const wrapper = node.parentElement?.parentElement?.parentElement;
 
   wrapper?.dispatchEvent(new MouseEvent('mouseenter'));
+}
+
+/**
+ * The wrapper `BlocksUI` built around the element it was handed
+ * @param node - a text node inside that element
+ */
+function wrapperOf(node: Text): HTMLElement {
+  // BlocksUI wraps what it is given: wrapper > contents > the element handed to it > this text.
+  const wrapper = node.parentElement?.parentElement?.parentElement;
+
+  if (wrapper === null || wrapper === undefined) {
+    throw new Error('the block has no wrapper');
+  }
+
+  return wrapper;
 }
 
 /**
@@ -105,6 +162,52 @@ describe('BlocksUI', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
     document.getSelection()?.removeAllRanges();
+  });
+
+  describe('telling other plugins which block is selected', () => {
+    it('should answer with nothing before any block has been reported', () => {
+      const instance = setup(TWO_BLOCKS);
+
+      expect(instance.plugin.publicApi.getSelectedBlock()).toBeUndefined();
+    });
+
+    it('should answer with the reported block and its id', () => {
+      const instance = setup(THREE_BLOCKS);
+
+      putCaretIn(instance.texts[1]);
+
+      expect(instance.plugin.publicApi.getSelectedBlock()).toEqual({
+        block: wrapperOf(instance.texts[1]),
+        id: 'block-1',
+      });
+    });
+
+    /**
+     * The id is read through the position the block holds when asked, so a block added above the
+     * reported one does not leave the answer naming whoever took its old slot
+     */
+    it('should still answer with that block once one is added above it', () => {
+      const instance = setup(TWO_BLOCKS);
+
+      putCaretIn(instance.texts[1]);
+      instance.addBlockAt(0);
+
+      expect(instance.plugin.publicApi.getSelectedBlock()?.id).toBe('block-1');
+    });
+
+    /**
+     * The wrapper is still held after its block is removed, so without this the answer would be
+     * an element that has left the document
+     */
+    it('should answer with nothing once the reported block is removed', () => {
+      const instance = setup(TWO_BLOCKS);
+
+      putCaretIn(instance.texts[1]);
+
+      instance.removeBlockAt(1);
+
+      expect(instance.plugin.publicApi.getSelectedBlock()).toBeUndefined();
+    });
   });
 
   describe('reporting the selected block', () => {
@@ -148,8 +251,7 @@ describe('BlocksUI', () => {
       putCaretIn(instance.texts[1]);
 
       // Removing the block above shifts the caret's block to 0 and the one below it to 1.
-      instance.eventBus.dispatchEvent(new BlockRemovedCoreEvent({ tool: 'paragraph',
-        index: 0 }));
+      instance.removeBlockAt(0);
 
       putCaretIn(instance.texts[2]);
 
@@ -161,8 +263,7 @@ describe('BlocksUI', () => {
 
       putCaretIn(instance.texts[1]);
 
-      instance.eventBus.dispatchEvent(new BlockRemovedCoreEvent({ tool: 'paragraph',
-        index: 1 }));
+      instance.removeBlockAt(1);
 
       // Block 2 is block 1 now, and it is where the caret goes once the block under it is gone.
       putCaretIn(instance.texts[2]);
@@ -179,14 +280,7 @@ describe('BlocksUI', () => {
 
       putCaretIn(instance.texts[1]);
 
-      const blockElement = document.createElement('div');
-
-      blockElement.appendChild(document.createTextNode('Inserted'));
-
-      instance.eventBus.dispatchEvent(new BlockAddedCoreEvent({ tool: 'paragraph',
-        data: {},
-        ui: blockElement,
-        index: 0 }));
+      instance.addBlockAt(0);
 
       putCaretIn(instance.texts[1]);
 

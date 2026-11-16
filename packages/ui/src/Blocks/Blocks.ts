@@ -2,7 +2,7 @@ import type { EventBus,
   BlockAddedCoreEvent,
   BlockRemovedCoreEvent, CopyUIEventPayload,
   EditorjsPlugin,
-  EditorjsPluginParams, EditorAPI } from '@editorjs/sdk';
+  EditorjsPluginParams, EditorAPI, BlockId } from '@editorjs/sdk';
 import {
   CoreEventType,
   CopyUIEvent,
@@ -16,16 +16,67 @@ import { BlocksHolderRenderedUIEvent, BlockSelectedUIEvent } from './events/inde
 import { blockCss, blocksCss } from './Blocks.const.js';
 
 /**
+ * A block the editor's UI treats as selected: its wrapper element, and the position it holds now
+ */
+export interface SelectedBlock {
+  /**
+   * Wrapper element of the block, which is what a caller positions against
+   */
+  block: HTMLElement;
+
+  /**
+   * Id of the block, which stays its own however the document moves around it
+   */
+  id: BlockId;
+}
+
+/**
+ * Public API the Blocks plugin exposes as `api.plugins.blocksUI`
+ */
+export interface BlocksUIAPI {
+  /**
+   * The block the UI treats as selected: the one last reported by the pointer entering it or by the caret moving
+   * into it. This is the UI's own notion, not the model's selection, which `core:selection-changed` carries
+   * @returns the block's element and id, or `undefined` when none has been reported or it has been removed
+   */
+  getSelectedBlock(): SelectedBlock | undefined;
+}
+
+declare module '@editorjs/sdk' {
+  /* eslint-disable jsdoc/require-jsdoc -- interface members are documented on the types they alias */
+  interface EditorjsPluginApiMap {
+    /**
+     * Blocks plugin's public API
+     */
+    blocksUI: BlocksUIAPI;
+  }
+  /* eslint-enable jsdoc/require-jsdoc */
+}
+
+/**
  * Editor's main UI renderer for HTML environment
  *  - renders the editor UI
  *  - adds and removes blocks on the page
  *  - handles user UI interactions
  */
-export class BlocksUI implements EditorjsPlugin {
+export class BlocksUI implements EditorjsPlugin<'blocksUI'> {
   /**
    * Plugin type
    */
   public static readonly type = UiComponentType.Blocks;
+
+  /**
+   * Plugin name -- keys `api.plugins.blocksUI`
+   */
+  public static readonly name = 'blocksUI';
+
+  /**
+   * API telling other plugins which block the UI treats as selected.
+   *
+   * Exposed because selection reaches them as a one-shot event, and a plugin that ignores one on purpose -- as the
+   * toolbar and the settings menu both do while a popover holds them -- has no other way to find out what it missed
+   */
+  public readonly publicApi: BlocksUIAPI;
 
   /**
    * Blocks holder element
@@ -73,6 +124,10 @@ export class BlocksUI implements EditorjsPlugin {
 
     this.#eventBus = params.eventBus;
     this.#api = params.api;
+
+    this.publicApi = {
+      getSelectedBlock: () => this.#selectedBlock(),
+    };
     this.#blocksHolder = this.#prepareBlocksHolder();
 
     this.#eventBus.addEventListener(`core:${CoreEventType.BlockAdded}`, (event: BlockAddedCoreEvent<HTMLElement>) => {
@@ -334,6 +389,33 @@ export class BlocksUI implements EditorjsPlugin {
       block,
       index,
     }));
+  }
+
+  /**
+   * The block last announced as selected, with its id read through the position it holds now rather than the one it
+   * held then. Nothing is returned once it has left the document, so a caller is never handed an orphaned wrapper
+   */
+  #selectedBlock(): SelectedBlock | undefined {
+    if (this.#announcedBlock === null) {
+      return undefined;
+    }
+
+    const index = this.#blocks.indexOf(this.#announcedBlock);
+
+    if (index === -1) {
+      return undefined;
+    }
+
+    const id = this.#api.blocks.getIdByIndex(index);
+
+    if (id === undefined) {
+      return undefined;
+    }
+
+    return {
+      block: this.#announcedBlock,
+      id,
+    };
   }
 
   /**
