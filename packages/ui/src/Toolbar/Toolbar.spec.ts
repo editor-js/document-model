@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import type { EditorAPI } from '@editorjs/sdk';
+import type { BlockId, EditorAPI } from '@editorjs/sdk';
 import { EventBus } from '@editorjs/sdk';
 import { ToolbarUI } from './Toolbar.js';
 import type { ToolbarRenderedUIEventPayload } from './ToolbarRenderedUIEvent.js';
 import { BlockSelectedUIEvent } from '../Blocks/events/index.js';
+import type { SelectedBlock } from '../Blocks/Blocks.js';
 import { BlockSettingsClosedUIEvent, BlockSettingsOpenedUIEvent, BlockSettingsRenderedUIEvent } from '../BlockSettings/events/index.js';
+import { ToolboxClosedUIEvent, ToolboxOpenedUIEvent } from '../Toolbox/events/index.js';
 import { messages } from '../messages.js';
 
 /**
@@ -17,9 +19,25 @@ function setup(): {
   eventBus: EventBus;
   /** Element the instance announced */
   holder: HTMLElement;
+  /** Reports a block as selected, as `BlocksUI` does: by event, and through its public API */
+  select: (block: HTMLElement, index: number) => void;
 } {
   const eventBus = new EventBus();
-  const api = { blocks: {} } as unknown as EditorAPI;
+
+  /**
+   * What the blocks plugin would answer with. Driven only through `select`, so this fake cannot
+   * come to disagree with the events the toolbar is given
+   */
+  let selected: SelectedBlock | undefined;
+
+  const api = {
+    blocks: {},
+    plugins: {
+      blocksUI: {
+        getSelectedBlock: () => selected,
+      },
+    },
+  } as unknown as EditorAPI;
 
   let holder: HTMLElement | undefined;
 
@@ -45,6 +63,18 @@ function setup(): {
   document.body.appendChild(holder);
 
   return {
+    /**
+     * Reports a block as selected the way `BlocksUI` does
+     * @param block - the block's wrapper element
+     * @param index - its position in the document
+     */
+    select: (block: HTMLElement, index: number): void => {
+      selected = { block,
+        id: `block-${index}` as BlockId };
+
+      eventBus.dispatchEvent(new BlockSelectedUIEvent({ block,
+        index }));
+    },
     plugin,
     eventBus,
     holder,
@@ -89,14 +119,16 @@ function announceBlockSettings(eventBus: EventBus): {
 
 /**
  * Reports a block as hovered, which is what the toolbar follows
- * @param eventBus - bus to dispatch on
+ * @param instance - the instance under test
  * @param index - position of the block
+ * @returns the block element reported as selected
  */
-function selectBlock(eventBus: EventBus, index: number): void {
-  eventBus.dispatchEvent(new BlockSelectedUIEvent({
-    block: document.createElement('div'),
-    index,
-  }));
+function selectBlock(instance: ReturnType<typeof setup>, index: number): HTMLElement {
+  const block = document.createElement('div');
+
+  instance.select(block, index);
+
+  return block;
 }
 
 describe('ToolbarUI', () => {
@@ -164,14 +196,68 @@ describe('ToolbarUI', () => {
       const moveTo = jest.spyOn(instance.plugin, 'moveTo');
 
       instance.eventBus.dispatchEvent(new BlockSettingsOpenedUIEvent({}));
-      selectBlock(instance.eventBus, 1);
+      selectBlock(instance, 1);
+
+      expect(moveTo).not.toHaveBeenCalled();
+    });
+
+    /**
+     * Nothing announces that selection again, so dropping it stranded the toolbar beside a block
+     * the caret had left -- which is what clicking into another block does, since the caret moves
+     * on mousedown while the popover only closes on the click
+     */
+    it('should make the move it skipped once block settings close', () => {
+      const moveTo = jest.spyOn(instance.plugin, 'moveTo');
+
+      instance.eventBus.dispatchEvent(new BlockSettingsOpenedUIEvent({}));
+
+      const block = selectBlock(instance, 1);
+
+      instance.eventBus.dispatchEvent(new BlockSettingsClosedUIEvent({}));
+
+      expect(moveTo).toHaveBeenCalledTimes(1);
+      expect(moveTo).toHaveBeenCalledWith(block);
+    });
+
+    it('should make the move it skipped once the toolbox closes', () => {
+      const moveTo = jest.spyOn(instance.plugin, 'moveTo');
+
+      instance.eventBus.dispatchEvent(new ToolboxOpenedUIEvent({}));
+
+      const block = selectBlock(instance, 1);
+
+      instance.eventBus.dispatchEvent(new ToolboxClosedUIEvent({}));
+
+      expect(moveTo).toHaveBeenCalledWith(block);
+    });
+
+    /**
+     * Either popover alone pins the position, so the catch-up waits for both to be gone
+     */
+    it('should keep holding its position while the other popover is still open', () => {
+      const moveTo = jest.spyOn(instance.plugin, 'moveTo');
+
+      instance.eventBus.dispatchEvent(new ToolboxOpenedUIEvent({}));
+      instance.eventBus.dispatchEvent(new BlockSettingsOpenedUIEvent({}));
+
+      const block = selectBlock(instance, 1);
+
+      instance.eventBus.dispatchEvent(new ToolboxClosedUIEvent({}));
 
       expect(moveTo).not.toHaveBeenCalled();
 
       instance.eventBus.dispatchEvent(new BlockSettingsClosedUIEvent({}));
-      selectBlock(instance.eventBus, 1);
 
-      expect(moveTo).toHaveBeenCalledTimes(1);
+      expect(moveTo).toHaveBeenCalledWith(block);
+    });
+
+    it('should not move when nothing was reported while it was held', () => {
+      const moveTo = jest.spyOn(instance.plugin, 'moveTo');
+
+      instance.eventBus.dispatchEvent(new BlockSettingsOpenedUIEvent({}));
+      instance.eventBus.dispatchEvent(new BlockSettingsClosedUIEvent({}));
+
+      expect(moveTo).not.toHaveBeenCalled();
     });
   });
 
@@ -181,7 +267,7 @@ describe('ToolbarUI', () => {
 
       instance.plugin.destroy();
 
-      selectBlock(instance.eventBus, 1);
+      selectBlock(instance, 1);
 
       // The bus outlives the toolbar, so a listener left on it would keep this instance alive
       // and still moving an element that is no longer on the page.

@@ -232,6 +232,7 @@ export class ToolbarUI implements EditorjsPlugin {
 
     this.#eventBus.addEventListener(`ui:toolbox:closed`, () => {
       this.#isToolboxOpen = false;
+      this.#catchUpWithSelection();
       this.#nodes.plusButton.setAttribute('aria-expanded', 'false');
     }, { signal });
   }
@@ -268,7 +269,29 @@ export class ToolbarUI implements EditorjsPlugin {
 
     this.#eventBus.addEventListener(`ui:block-settings:closed`, () => {
       this.#isBlockSettingsOpen = false;
+      this.#catchUpWithSelection();
     }, { signal });
+  }
+
+  /**
+   * Moves to the block the UI treats as selected now, so a caret that left the block under the toolbar is followed
+   * once nothing is holding it: selection arrives as a one-shot event, and the ones skipped here are not repeated
+   */
+  #catchUpWithSelection(): void {
+    /**
+     * Either popover alone pins the position, so this waits for both
+     */
+    if (this.#isToolboxOpen || this.#isBlockSettingsOpen) {
+      return;
+    }
+
+    const selected = this.#api.plugins.blocksUI?.getSelectedBlock();
+
+    if (selected === undefined) {
+      return;
+    }
+
+    this.moveTo(selected.block);
   }
 
   /**

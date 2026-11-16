@@ -395,7 +395,30 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
    */
   #handleToolboxClosed = (): void => {
     this.#isToolboxOpen = false;
+    this.#catchUpWithSelection();
   };
+
+  /**
+   * Targets the block the UI treats as selected now, so the button acts on the block the caret reached while the
+   * target was frozen: selection arrives as a one-shot event, and the ones ignored here are not repeated
+   */
+  #catchUpWithSelection(): void {
+    /**
+     * Either state alone freezes the target, so this waits for both. While frozen the target has to stay with the
+     * button, which the toolbar is holding beside another block
+     */
+    if (this.#isOpen || this.#isToolboxOpen) {
+      return;
+    }
+
+    const selected = this.#api.plugins.blocksUI?.getSelectedBlock();
+
+    if (selected === undefined) {
+      return;
+    }
+
+    this.#selectedBlockId = selected.id;
+  }
 
   /**
    * Gives the button its menu-button semantics and wires it to the menu
@@ -520,6 +543,8 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
     this.#button.setAttribute('aria-expanded', 'false');
 
     this.#eventBus.dispatchEvent(new BlockSettingsClosedUIEvent({}));
+
+    this.#catchUpWithSelection();
   };
 
   /**

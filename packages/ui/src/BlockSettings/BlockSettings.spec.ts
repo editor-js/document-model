@@ -1,10 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import type { CoreConfigValidated, EditorAPI } from '@editorjs/sdk';
+import type { BlockId, CoreConfigValidated, EditorAPI } from '@editorjs/sdk';
 import { EventBus } from '@editorjs/sdk';
 import { BlockSettingsUI } from './BlockSettings.js';
 import { BlockSettingsOpenUIEvent } from './events/index.js';
 import type { BlockSettingsRenderedUIEventPayload } from './events/index.js';
 import { BlockSelectedUIEvent } from '../Blocks/events/index.js';
+import type { SelectedBlock } from '../Blocks/Blocks.js';
 import { ToolboxClosedUIEvent, ToolboxOpenedUIEvent } from '../Toolbox/events/index.js';
 import type { BlockSettingsProvider } from './BlockSettings.js';
 
@@ -66,11 +67,19 @@ function setup(blocks: StubBlock[] = defaultBlocks): {
   api: EditorAPI;
   /** The mock backing `api.blocks.getIdByIndex` */
   getIdByIndex: jest.Mock<(index: number) => string | undefined>;
+  /** Reports a block as selected, as `BlocksUI` does: by event, and through its public API */
+  select: (index: number) => void;
 } {
   const eventBus = new EventBus();
   const holder = document.createElement('div');
 
   const getIdByIndex = jest.fn((index: number) => blocks[index]?.id);
+
+  /**
+   * What the blocks plugin would answer with. Driven only through the selection helpers, so this
+   * fake cannot come to disagree with the events the plugin is given
+   */
+  let selected: SelectedBlock | undefined;
 
   const api = {
     blocks: {
@@ -81,7 +90,11 @@ function setup(blocks: StubBlock[] = defaultBlocks): {
        */
       getToolByIndex: jest.fn((index: number) => blocks[index]?.name),
     },
-    plugins: {},
+    plugins: {
+      blocksUI: {
+        getSelectedBlock: () => selected,
+      },
+    },
   } as unknown as EditorAPI;
 
   let element: HTMLElement | undefined;
@@ -124,6 +137,19 @@ function setup(blocks: StubBlock[] = defaultBlocks): {
   document.body.appendChild(holder);
 
   return {
+    /**
+     * Reports a block as selected the way `BlocksUI` does: by event, and through its public API
+     * @param index - position of the block to report
+     */
+    select: (index: number): void => {
+      const block = document.createElement('div');
+
+      selected = { block,
+        id: blocks[index]?.id as BlockId };
+
+      eventBus.dispatchEvent(new BlockSelectedUIEvent({ block,
+        index }));
+    },
     plugin,
     eventBus,
     element,
@@ -810,10 +836,7 @@ describe('BlockSettingsUI', () => {
      * @param index - position of the block
      */
     function selectBlock(index: number): void {
-      instance.eventBus.dispatchEvent(new BlockSelectedUIEvent({
-        block: document.createElement('div'),
-        index,
-      }));
+      instance.select(index);
     }
 
     /**
@@ -1040,20 +1063,47 @@ describe('BlockSettingsUI', () => {
       clickButton(instance.button);
       await flush();
 
-      // The menu belongs to block 0; hovering elsewhere must not move it underneath.
+      // The menu belongs to block 0; a selection arriving now must not move it underneath.
       selectBlock(2);
-      instance.plugin.publicApi.close();
-      clickButton(instance.button);
       await flush();
 
       expect(itemTitles(instance.element)).toEqual(['For block-0']);
     });
 
     /**
+     * Nothing announces that selection a second time, so dropping it left the button acting on a
+     * block the caret had already left -- which is what clicking into another block does, since
+     * the caret moves on mousedown and the popover only closes on the click
+     */
+    it('should take the selection it skipped once its menu closes', async () => {
+      instance.plugin.publicApi.register(ctx => ({
+        title: `For ${ctx.blockId}`,
+        onActivate: () => {},
+      }));
+
+      selectBlock(0);
+      clickButton(instance.button);
+      await flush();
+
+      selectBlock(2);
+      instance.plugin.publicApi.close();
+
+      clickButton(instance.button);
+      await flush();
+
+      expect(itemTitles(instance.element)).toEqual(['For block-2']);
+    });
+
+    /**
      * The toolbar holds its position while the toolbox is open, so the button stays beside one block: a target that
      * moved out from under it would open one block's actions next to another's, `Delete` among them
      */
-    it('should not re-target while the toolbox is open', async () => {
+    /**
+     * The target was frozen while the toolbox held the toolbar, and the toolbar catches up with
+     * the same selection when the toolbox closes -- so both land on the block the caret reached,
+     * which is what keeps the button and the block it acts on the same one
+     */
+    it('should take the selection it skipped once the toolbox closes', async () => {
       instance.plugin.publicApi.register(ctx => ({
         title: `For ${ctx.blockId}`,
         onActivate: () => {},
@@ -1067,6 +1117,24 @@ describe('BlockSettingsUI', () => {
       clickButton(instance.button);
       await flush();
 
+      expect(itemTitles(instance.element)).toEqual(['For block-2']);
+    });
+
+    it('should not rebuild the open menu when the toolbox closes under it', async () => {
+      instance.plugin.publicApi.register(ctx => ({
+        title: `For ${ctx.blockId}`,
+        onActivate: () => {},
+      }));
+
+      selectBlock(0);
+      clickButton(instance.button);
+      await flush();
+
+      openToolbox();
+      selectBlock(2);
+      closeToolbox();
+
+      // The menu is still open, so the target has not moved with the toolbox closing.
       expect(itemTitles(instance.element)).toEqual(['For block-0']);
     });
 
@@ -1095,10 +1163,7 @@ describe('BlockSettingsUI', () => {
      * @param index - block position to report as selected
      */
     function select(target: ReturnType<typeof setup>, index: number): void {
-      target.eventBus.dispatchEvent(new BlockSelectedUIEvent({
-        block: document.createElement('div'),
-        index,
-      }));
+      target.select(index);
     }
 
     /**
