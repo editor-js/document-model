@@ -598,6 +598,42 @@ describe('BlockSettingsUI', () => {
       expect(active).toEqual(['Active']);
     });
 
+    /**
+     * `onActivate` runs inside ui-kit's click handler, well after the provider returned. A throw
+     * there escapes into the popover, which abandons the rest of its activation sequence --
+     * `closeOnActivate` among it, since that runs after the handler
+     */
+    it('should report an onActivate that throws rather than let it escape', async () => {
+      instance.plugin.publicApi.register(() => ({
+        title: 'Faulty',
+        closeOnActivate: true,
+        onActivate: () => {
+          throw new Error('onActivate blew up');
+        },
+      }));
+
+      await open(instance.eventBus, 0);
+      instance.element.querySelector<HTMLElement>('[role="menuitem"]')?.click();
+
+      expect(reportedErrors).toHaveBeenCalledWith(
+        expect.stringContaining('failed on activation'),
+        expect.any(Error)
+      );
+    });
+
+    it('should still invoke a handler that works', async () => {
+      const onActivate = jest.fn();
+
+      instance.plugin.publicApi.register(() => ({ title: 'Anchor',
+        onActivate }));
+
+      await open(instance.eventBus, 0);
+      instance.element.querySelector<HTMLElement>('[role="menuitem"]')?.click();
+
+      expect(onActivate).toHaveBeenCalledTimes(1);
+      expect(reportedErrors).not.toHaveBeenCalled();
+    });
+
     it('should skip a provider whose promise rejects', async () => {
       instance.plugin.publicApi.register(() => Promise.reject(new Error('async blow-up')));
       instance.plugin.publicApi.register(() => ({

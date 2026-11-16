@@ -131,15 +131,31 @@ interface Registration {
 }
 
 /**
- * Replaces every `isActive` callback in an item tree with the boolean it returns: ui-kit calls them as it renders,
- * long after the provider's own `try` has returned, and a throw there aborts the popover and every provider's items
+ * Takes the callbacks ui-kit will call on a contributed item out of harm's way: `isActive`, which it reads as it
+ * renders, and `onActivate`, which it calls on a click -- both long after the provider's own `try` has returned
  * @param item - item as the provider returned it
  */
-function withResolvedActiveState(item: PopoverItemParams): PopoverItemParams {
+function withIsolatedCallbacks(item: PopoverItemParams): PopoverItemParams {
   const resolved: Record<string, unknown> = { ...item };
 
   if (typeof resolved.isActive === 'function') {
     resolved.isActive = (resolved.isActive as () => boolean)();
+  }
+
+  const activate = resolved.onActivate;
+
+  /**
+   * Wrapped rather than resolved: this one runs on a click, inside ui-kit's own handler, which goes on to honour
+   * `closeOnActivate` after it returns -- so a throw escaping here abandons the rest of that sequence
+   */
+  if (typeof activate === 'function') {
+    resolved.onActivate = (...args: unknown[]): void => {
+      try {
+        (activate as (...callArgs: unknown[]) => void)(...args);
+      } catch (error) {
+        console.error('[BlockSettingsUI] A block settings item failed on activation', error);
+      }
+    };
   }
 
   const children = resolved.children as PopoverItemChildren | undefined;
@@ -150,7 +166,7 @@ function withResolvedActiveState(item: PopoverItemParams): PopoverItemParams {
   if (children?.items !== undefined) {
     resolved.children = {
       ...children,
-      items: children.items.map(withResolvedActiveState),
+      items: children.items.map(withIsolatedCallbacks),
     };
   }
 
@@ -160,7 +176,7 @@ function withResolvedActiveState(item: PopoverItemParams): PopoverItemParams {
    * The confirmation state replaces the item's own params on activation and renders from them the same way
    */
   if (confirmation !== undefined) {
-    resolved.confirmation = withResolvedActiveState(confirmation);
+    resolved.confirmation = withIsolatedCallbacks(confirmation);
   }
 
   return resolved as PopoverItemParams;
@@ -641,7 +657,7 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
            * Inside the `try` on purpose: an `isActive` that throws is this provider failing, so it costs this
            * provider's items rather than the whole menu
            */
-          return items.map(withResolvedActiveState);
+          return items.map(withIsolatedCallbacks);
         } catch (error) {
           /**
            * Providers are third-party code and this is the one place all of it runs, so without

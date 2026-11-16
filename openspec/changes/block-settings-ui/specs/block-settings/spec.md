@@ -151,7 +151,7 @@ The settings popover SHALL carry an accessible name drawn from the UI package's 
 - **THEN** the item switches to its confirmation state, and only activating the confirmation runs the handler declared inside `confirmation`
 
 ### Requirement: A failing provider costs only its own items
-Providers are third-party code, and the open menu is the one place all of it runs, so no single provider SHALL be able to stop the menu from opening. A provider that throws, whose promise rejects, or that has not settled within a fixed timeout SHALL contribute nothing, SHALL be reported to the console so the plugin behind it can be identified, and SHALL leave no separator behind; every other provider's contribution is still built and shown. This SHALL cover the callbacks a contributed item carries that the popover calls as it renders — `isActive`, at any depth of nested items and on an item's confirmation state — which run after the provider has returned and outside anything it could be held to otherwise: a callback throwing there SHALL cost that provider's items, as returning nothing does, rather than aborting the popover and with it every other provider's items. A contribution SHALL be discarded rather than rendered when a newer open request has started since it was asked for, or when the menu it was being built for has been closed in the meantime.
+Providers are third-party code, and the open menu is the one place all of it runs, so no single provider SHALL be able to stop the menu from opening. A provider that throws, whose promise rejects, or that has not settled within a fixed timeout SHALL contribute nothing, SHALL be reported to the console so the plugin behind it can be identified, and SHALL leave no separator behind; every other provider's contribution is still built and shown. This SHALL cover the callbacks a contributed item carries that the popover calls itself, at any depth of nested items and on an item's confirmation state, since they run after the provider has returned and outside anything it could be held to otherwise. `isActive`, which the popover reads as it renders, SHALL be resolved while the provider's items are collected, so a throw costs that provider's items as returning nothing does, rather than aborting the popover and with it every other provider's items. `onActivate`, which the popover calls on a click, SHALL instead be reported and go no further, because the popover honours `closeOnActivate` only after the handler returns and a throw escaping would abandon that along with the rest of the activation. A contribution SHALL be discarded rather than rendered when a newer open request has started since it was asked for, or when the menu it was being built for has been closed in the meantime.
 
 #### Scenario: A provider throws
 - **GIVEN** two providers are registered and the first throws when invoked
@@ -162,6 +162,11 @@ Providers are third-party code, and the open menu is the one place all of it run
 - **GIVEN** two providers are registered and the first contributes an item whose `isActive` throws
 - **WHEN** block settings open
 - **THEN** the menu opens with the second provider's items alone and the failure is reported to the console, rather than no menu opening at all
+
+#### Scenario: An item's onActivate throws
+- **GIVEN** an item whose `onActivate` throws, contributed by a provider
+- **WHEN** it is activated
+- **THEN** the failure is reported to the console and does not reach the popover, so the activation it would have abandoned, `closeOnActivate` among it, still runs
 
 #### Scenario: A nested item's isActive callback throws
 - **GIVEN** a provider contributes an item whose nested child's `isActive` throws
