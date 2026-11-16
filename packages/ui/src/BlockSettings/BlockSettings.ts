@@ -54,9 +54,14 @@ export interface BlockSettingsContext {
   blockIndex: number;
 
   /**
-   * Name of the tool rendering the block, for providers that only apply to some tools
+   * Name of the tool rendering the block, for providers that only apply to some tools.
+   *
+   * Absent when it could not be determined, which means the editor's own view of this block
+   * disagrees with the Model's -- the id resolved and the tool did not. A provider matching on
+   * a tool simply does not match, rather than being handed an empty name that matches nothing
+   * while looking like an answer
    */
-  tool: string;
+  tool?: string;
 }
 
 /**
@@ -616,7 +621,7 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
     const items = await this.#collectItems({
       blockId,
       blockIndex: index,
-      tool: this.#api.blocks.getToolByIndex(index) ?? '',
+      tool: this.#api.blocks.getToolByIndex(index),
     });
 
     /**

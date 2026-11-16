@@ -278,6 +278,24 @@ describe('BlockSettingsUI', () => {
       });
     });
 
+    /**
+     * Only reachable if the editor's view of the block disagrees with the Model's, since the id
+     * and the tool are read from the same position. An empty name would match no provider while
+     * looking like an answer
+     */
+    it('should leave the tool out when it cannot be determined', async () => {
+      const provider = jest.fn<BlockSettingsProvider>(() => undefined);
+
+      instance.plugin.publicApi.register(provider);
+      (instance.api.blocks.getToolByIndex as jest.Mock<(index: number) => string | undefined>)
+        .mockReturnValue(undefined);
+
+      await open(instance.eventBus, 2);
+
+      expect(provider).toHaveBeenCalledWith({ blockId: 'block-2',
+        blockIndex: 2 });
+    });
+
     it('should call providers again on every open, so items reflect current state', async () => {
       let isActive = false;
       const provider = jest.fn<BlockSettingsProvider>(() => ({
