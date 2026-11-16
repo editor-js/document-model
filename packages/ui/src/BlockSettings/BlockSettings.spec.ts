@@ -1034,6 +1034,29 @@ describe('BlockSettingsUI', () => {
       expect(instance.button.getAttribute('aria-expanded')).toBe('false');
     });
 
+    /**
+     * The route the review asked about: the caret leaves the block the menu belongs to, and the
+     * menu is reopened without a pointer ever being used
+     */
+    it('should open for the skipped selection when reopened from the keyboard', async () => {
+      instance.plugin.publicApi.register(ctx => ({
+        title: `For ${ctx.blockId}`,
+        onActivate: () => {},
+      }));
+
+      selectBlock(0);
+      clickButton(instance.button);
+      await flush();
+
+      selectBlock(2);
+      instance.plugin.publicApi.close();
+
+      activateFromKeyboard(instance.button);
+      await flush();
+
+      expect(itemTitles(instance.element)).toEqual(['For block-2']);
+    });
+
     it('should open from the keyboard when the menu is closed', async () => {
       instance.plugin.publicApi.register(() => ({
         title: 'Anchor',
