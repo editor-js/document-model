@@ -1,12 +1,17 @@
 ## ADDED Requirements
 
 ### Requirement: Block settings plugin
-The system SHALL provide `BlockSettingsUI`, an `EditorjsPlugin` with static `name` `block-settings`, that renders a per-block settings popover **and the button that opens it**. Both SHALL be announced together via `ui:block-settings:rendered` for a host to mount; the plugin SHALL NOT place them itself. The popover SHALL open when that button is activated, or on a `ui:block-settings:open` event targeting a block, and SHALL dispatch `ui:block-settings:opened` and `ui:block-settings:closed` when its open state changes.
+The system SHALL provide `BlockSettingsUI`, an `EditorjsPlugin` with static `name` `block-settings`, that renders a per-block settings popover **and the button that opens it**. Both SHALL be announced together via `ui:block-settings:rendered` for a host to mount; the plugin SHALL NOT place them itself. The popover SHALL open when that button is activated, or on a `ui:block-settings:open` event targeting a block, and SHALL dispatch `ui:block-settings:opened` and `ui:block-settings:closed` when its open state changes. Those SHALL be dispatched only when the state really changes: replacing the popover to show another block's items keeps the menu open throughout, so a rebuild SHALL report neither, and `aria-expanded` SHALL stay `"true"` across it.
 
 #### Scenario: Opening settings for a block
 - **GIVEN** at least one settings provider is registered
 - **WHEN** a `ui:block-settings:open` event targeting block index 2 is dispatched
 - **THEN** the popover opens populated with the items the providers return for block 2, and `ui:block-settings:opened` is dispatched
+
+#### Scenario: Rebuilding the menu for another block
+- **GIVEN** the menu is open for one block
+- **WHEN** it is asked to open for another, which replaces the popover under it
+- **THEN** the items become that block's, and neither `closed` nor `opened` is dispatched and `aria-expanded` stays `"true"`, because the menu never stopped being open
 
 #### Scenario: Closing settings
 - **GIVEN** the settings popover is open

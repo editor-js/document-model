@@ -704,6 +704,11 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
    * @param items - items the menu should consist of
    */
   #renderPopover(items: PopoverItemParams[]): void {
+    /**
+     * `destroy()` hides before it tears down, and hiding emits `Closed`. Left subscribed, the
+     * popover being replaced would report the menu as closed and open again on every rebuild
+     */
+    this.#popover?.off(PopoverEvent.Closed, this.#handleClosed);
     this.#popover?.destroy();
 
     /**

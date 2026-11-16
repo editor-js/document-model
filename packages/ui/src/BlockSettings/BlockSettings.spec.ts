@@ -1156,6 +1156,46 @@ describe('BlockSettingsUI', () => {
     });
   });
 
+  describe('rebuilding an open menu', () => {
+    /**
+     * `PopoverDesktop.destroy()` hides before it tears down, and hiding emits `Closed`. With the
+     * old popover still subscribed, replacing it reported the menu as closed and open again
+     */
+    it('should not report the menu as closed while it is being replaced', async () => {
+      const closed: unknown[] = [];
+
+      instance.eventBus.addEventListener('ui:block-settings:closed', event => closed.push(event));
+      instance.plugin.publicApi.register(ctx => ({
+        title: `For ${ctx.blockId}`,
+        onActivate: () => {},
+      }));
+
+      await open(instance.eventBus, 0);
+
+      expect(closed).toHaveLength(0);
+
+      await open(instance.eventBus, 1);
+
+      expect(closed).toHaveLength(0);
+      expect(itemTitles(instance.element)).toEqual(['For block-1']);
+      expect(instance.button.getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it('should still report the menu as closed when it really closes', async () => {
+      const closed: unknown[] = [];
+
+      instance.eventBus.addEventListener('ui:block-settings:closed', event => closed.push(event));
+      instance.plugin.publicApi.register(() => ({ title: 'Anchor',
+        onActivate: () => {} }));
+
+      await open(instance.eventBus, 0);
+      instance.plugin.publicApi.close();
+
+      expect(closed).toHaveLength(1);
+      expect(instance.button.getAttribute('aria-expanded')).toBe('false');
+    });
+  });
+
   describe('a target the document moves', () => {
     /**
      * Reports a selection to a freshly built instance
