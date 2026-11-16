@@ -13,6 +13,11 @@ The system SHALL provide `ToolbarUI`, which renders a floating toolbar with a pl
 - **WHEN** the click is handled
 - **THEN** `ToolbarUI` dispatches a `ToolboxOpenUIEvent`
 
+#### Scenario: The toolbar's own button does not submit a form
+- **GIVEN** the editor is mounted inside a `<form>`
+- **WHEN** the plus button is clicked
+- **THEN** the toolbox opens and the form is not submitted, because the button is not a submit control
+
 #### Scenario: Mounting an announced widget
 - **GIVEN** a plugin announces a button and a menu element through `ui:block-settings:rendered`
 - **WHEN** `ToolbarUI` handles the event
@@ -31,7 +36,7 @@ The system SHALL provide `ToolbarUI`, which renders a floating toolbar with a pl
 Implemented in `src/Toolbar/Toolbar.ts`, `src/Toolbar/ToolbarRenderedUIEvent.ts`.
 
 ### Requirement: Accessible floating toolbar
-`ToolbarUI` SHALL expose its actions container with `role="toolbar"` and an accessible name distinguishing it from the inline toolbar. Its plus-button SHALL have an accessible name (`aria-label`) describing its action, sourced from the message catalogue, and SHALL advertise the menu it controls via `aria-haspopup="menu"`. A control contributed by another plugin SHALL carry its own name and state, set by the plugin that owns it.
+`ToolbarUI` SHALL expose its actions container with `role="toolbar"` and an accessible name distinguishing it from the inline toolbar. Its plus-button SHALL have an accessible name (`aria-label`) describing its action, sourced from the message catalogue, SHALL advertise the menu it controls via `aria-haspopup="menu"`, and SHALL declare itself a non-submitting control, so that an editor mounted inside a form is not posted when the toolbox is opened. A control contributed by another plugin SHALL carry its own name and state, set by the plugin that owns it.
 
 #### Scenario: Toolbar actions container has toolbar role
 - **GIVEN** `ToolbarUI` has rendered its actions container

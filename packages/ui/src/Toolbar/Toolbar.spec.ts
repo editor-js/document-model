@@ -176,6 +176,12 @@ describe('ToolbarUI', () => {
       expect(buttons.filter(button => button.tabIndex === 0)).toHaveLength(1);
     });
 
+    it('should not submit a form it happens to sit inside', () => {
+      const [plusButton] = actionButtons(instance.holder);
+
+      expect(plusButton.getAttribute('type')).toBe('button');
+    });
+
     it('should let the arrow keys reach an announced button', () => {
       const { button } = announceBlockSettings(instance.eventBus);
       const [plusButton] = actionButtons(instance.holder);

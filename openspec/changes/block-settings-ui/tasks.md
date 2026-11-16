@@ -134,3 +134,5 @@
 - [x] 11.10 Say on `register` and in the spec that unregistering takes effect from the next open, since providers are asked as the menu is built and one already on screen keeps the items it was built with
 
 - [x] 11.11 Move the item titles out of `#items` into a `messages.ts` of the plugin's own, as `@editorjs/ui` keeps its own strings. Plugin config was the other suggestion and is left open: a catalogue is where localisation would read from either way, and it needs no options plumbing to be worth having now. The plugin's own tests go on asserting the literal titles, since those are what a user reads
+
+- [x] 11.12 Give the toolbar's plus button `type="button"`, as the settings button already had. Both sit in the same container and an editor mounted inside a form was posted by whichever of them still defaulted to `submit`

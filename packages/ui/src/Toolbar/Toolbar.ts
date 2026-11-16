@@ -71,6 +71,11 @@ export class ToolbarUI implements EditorjsPlugin {
     actions: make('div', Style[css.actions]) as HTMLDivElement,
     plusButton: make('button', ControlStyle['toolbar-button'], {
       innerHTML: IconPlus,
+      /**
+       * A button defaults to `submit`, and the editor's holder may sit inside a form, where
+       * opening the toolbox would submit it
+       */
+      type: 'button',
     }) as HTMLButtonElement,
   };
 
