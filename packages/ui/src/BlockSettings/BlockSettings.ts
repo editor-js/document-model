@@ -64,6 +64,10 @@ export interface BlockSettingsContext {
  *
  * Returning `undefined` or an empty list opts out for that block, contributing neither items
  * nor a separator.
+ *
+ * Expected to answer from what it already has: the menu shows nothing until every provider has
+ * answered, and one that has not answered within its timeout is left out of it. A provider that
+ * genuinely needs longer than the default says so through `options.timeout`.
  */
 export type BlockSettingsProvider = (
   context: BlockSettingsContext
@@ -78,6 +82,12 @@ export interface BlockSettingsRegisterOptions {
    * registration order. The built-in settings sit last, at `1000`
    */
   order?: number;
+
+  /**
+   * How long this provider may take before the menu is built without it, in milliseconds. A backstop rather than a
+   * budget: the menu shows nothing until every provider has answered, so one that needs this is one worth noticing
+   */
+  timeout?: number;
 }
 
 /**
@@ -116,7 +126,7 @@ declare module '@editorjs/sdk' {
  * Long enough that a provider reading something off the network still makes it, short enough
  * that the menu is not simply unresponsive while one waits
  */
-const PROVIDER_TIMEOUT_MS = 2000;
+const PROVIDER_TIMEOUT_MS = 500;
 
 /**
  * A registered provider together with what it was registered with
@@ -128,6 +138,8 @@ interface Registration {
   order: number;
   /** Registration counter, used to keep equal orders in registration sequence */
   sequence: number;
+  /** How long this provider may take, in milliseconds */
+  timeout: number;
 }
 
 /**
@@ -510,6 +522,7 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
       provider,
       order: options?.order ?? 0,
       sequence: this.#sequence++,
+      timeout: options?.timeout ?? PROVIDER_TIMEOUT_MS,
     };
 
     this.#registrations.add(registration);
@@ -643,9 +656,9 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
     );
 
     const contributions = await Promise.all(
-      ordered.map(async ({ provider }) => {
+      ordered.map(async ({ provider, timeout }) => {
         try {
-          const result = await this.#withTimeout(provider(context));
+          const result = await this.#withTimeout(provider(context), timeout);
 
           if (result === undefined) {
             return [];
@@ -691,9 +704,11 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
    * on the same provider. A rejection instead lands in the same skip-and-log path as one that
    * threw, which is the behaviour a plugin author already has to expect
    * @param result - what the provider returned
+   * @param timeout - how long that provider may take, in milliseconds
    */
   async #withTimeout(
-    result: BlockSettingsMenuConfig | undefined | Promise<BlockSettingsMenuConfig | undefined>
+    result: BlockSettingsMenuConfig | undefined | Promise<BlockSettingsMenuConfig | undefined>,
+    timeout: number
   ): Promise<BlockSettingsMenuConfig | undefined> {
     let timer: ReturnType<typeof setTimeout> | undefined;
 
@@ -702,8 +717,8 @@ export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
         result,
         new Promise<never>((_resolve, reject) => {
           timer = setTimeout(
-            () => reject(new Error(`A block settings provider did not return within ${PROVIDER_TIMEOUT_MS}ms`)),
-            PROVIDER_TIMEOUT_MS
+            () => reject(new Error(`A block settings provider did not return within ${timeout}ms`)),
+            timeout
           );
         }),
       ]);

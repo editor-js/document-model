@@ -39,6 +39,9 @@ const SLOW_PROVIDER_MS = 20;
 /** Long enough for both overlapping requests to have settled. */
 const BOTH_REQUESTS_SETTLED_MS = 50;
 
+/** Longer than the default budget, so a provider needing it has to ask. */
+const SLOW_PROVIDER_ASKED_FOR_MS = 900;
+
 /** Well past whatever the provider timeout is set to, advanced over on fake timers. */
 const PAST_PROVIDER_TIMEOUT_MS = 10_000;
 
@@ -681,6 +684,54 @@ describe('BlockSettingsUI', () => {
           expect.stringContaining('provider failed'),
           expect.objectContaining({ message: expect.stringContaining('did not return') })
         );
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    /**
+     * The default is a backstop for providers that answer locally. One that genuinely needs
+     * longer says so at registration rather than every menu waiting on its account
+     */
+    it('should wait as long as a provider asked to be waited for', async () => {
+      jest.useFakeTimers();
+
+      try {
+        instance.plugin.publicApi.register(
+          () => new Promise(resolve => setTimeout(() => resolve({ title: 'Slow',
+            onActivate: () => {} }), SLOW_PROVIDER_ASKED_FOR_MS)),
+          { timeout: SLOW_PROVIDER_ASKED_FOR_MS * 2 }
+        );
+
+        instance.eventBus.dispatchEvent(new BlockSettingsOpenUIEvent({ index: 0 }));
+
+        await jest.advanceTimersByTimeAsync(SLOW_PROVIDER_ASKED_FOR_MS * 2);
+
+        expect(itemTitles(instance.element)).toEqual(['Slow']);
+        expect(reportedErrors).not.toHaveBeenCalled();
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('should give up on a provider sooner when it asked for less', async () => {
+      jest.useFakeTimers();
+
+      try {
+        // Comfortably inside the default, so only the budget it asked for can cut it off.
+        instance.plugin.publicApi.register(
+          () => new Promise(resolve => setTimeout(() => resolve({ title: 'Slow',
+            onActivate: () => {} }), SLOW_PROVIDER_MS)),
+          { timeout: 1 }
+        );
+        instance.plugin.publicApi.register(() => ({ title: 'Healthy',
+          onActivate: () => {} }));
+
+        instance.eventBus.dispatchEvent(new BlockSettingsOpenUIEvent({ index: 0 }));
+
+        await jest.advanceTimersByTimeAsync(SLOW_PROVIDER_ASKED_FOR_MS);
+
+        expect(itemTitles(instance.element)).toEqual(['Healthy']);
       } finally {
         jest.useRealTimers();
       }
