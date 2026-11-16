@@ -7,6 +7,7 @@ import type {
 } from '@editorjs/sdk';
 import { CoreEventType, PluginType } from '@editorjs/sdk';
 import { IconChevronDown, IconChevronUp, IconCross, IconTrash } from '@codexteam/icons';
+import { messages } from './messages.js';
 import type { BlockSettingsContext, BlockSettingsMenuConfig } from '@editorjs/ui';
 
 /**
@@ -110,7 +111,7 @@ export class DefaultBlockSettingsPlugin implements EditorjsPlugin {
     return [
       {
         name: 'move-up',
-        title: 'Move up',
+        title: messages.moveUp,
         icon: IconChevronUp,
         closeOnActivate: true,
 
@@ -123,7 +124,7 @@ export class DefaultBlockSettingsPlugin implements EditorjsPlugin {
       },
       {
         name: 'move-down',
-        title: 'Move down',
+        title: messages.moveDown,
         icon: IconChevronDown,
         closeOnActivate: true,
         isDisabled: blockIndex >= lastIndex,
@@ -131,7 +132,7 @@ export class DefaultBlockSettingsPlugin implements EditorjsPlugin {
       },
       {
         name: 'delete',
-        title: 'Delete',
+        title: messages.delete,
         icon: IconTrash,
 
         /**
@@ -140,7 +141,7 @@ export class DefaultBlockSettingsPlugin implements EditorjsPlugin {
          */
         confirmation: {
           name: 'delete-confirm',
-          title: 'Click to delete',
+          title: messages.deleteConfirmation,
           icon: IconCross,
           closeOnActivate: true,
           onActivate: () => this.#delete(blockId),
