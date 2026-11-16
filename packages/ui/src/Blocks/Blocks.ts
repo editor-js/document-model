@@ -38,10 +38,16 @@ export class BlocksUI implements EditorjsPlugin {
   #blocks: HTMLElement[] = [];
 
   /**
-   * Position of the block last announced as selected, so the same one is not announced twice.
-   * `selectionchange` fires on every keystroke, and only a move to another block is news
+   * The block last announced as selected. Held as the element, because a position recorded earlier comes to name a
+   * different block once one is added or removed above it, and that block would then read as already announced
    */
-  #selectedBlockIndex = -1;
+  #announcedBlock: HTMLElement | null = null;
+
+  /**
+   * The position that block held when it was announced. A change means the block itself moved on the page, which
+   * the toolbar follows off this event and nothing else -- so it is news even though the selection stayed put
+   */
+  #announcedIndex = -1;
 
   /**
    * EventBus instance to exchange events between components
@@ -308,7 +314,7 @@ export class BlocksUI implements EditorjsPlugin {
      * `selectionchange` fires for every caret move, most of which stay inside one block, so
      * announcing each one would be noise. Pointer entry is announced unconditionally instead
      */
-    if (index === this.#selectedBlockIndex) {
+    if (block === this.#announcedBlock && index === this.#announcedIndex) {
       return;
     }
 
@@ -321,7 +327,8 @@ export class BlocksUI implements EditorjsPlugin {
    * @param index - position of the block in the document
    */
   #announceSelectedBlock(block: HTMLElement, index: number): void {
-    this.#selectedBlockIndex = index;
+    this.#announcedBlock = block;
+    this.#announcedIndex = index;
 
     this.#eventBus.dispatchEvent(new BlockSelectedUIEvent({
       block,
@@ -348,6 +355,7 @@ export class BlocksUI implements EditorjsPlugin {
     this.#blocksHolder.remove();
 
     this.#blocks = [];
-    this.#selectedBlockIndex = -1;
+    this.#announcedBlock = null;
+    this.#announcedIndex = -1;
   }
 }

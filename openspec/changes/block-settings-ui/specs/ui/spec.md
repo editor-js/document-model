@@ -86,6 +86,8 @@ Selection SHALL be dispatched both when the pointer enters a block and when the 
 
 Only caret movement SHALL be filtered for repeats, because `selectionchange` fires for every keystroke and most of those stay inside one block. Pointer entry SHALL always be dispatched: `mouseenter` only fires on actually crossing into a block, so there is nothing repeated to suppress, and a listener that ignored the previous announcement -- as the toolbar and the settings menu both do while the menu is open -- must still be told when the pointer comes back to a block it was last told about.
 
+A repeat SHALL mean the same block at the same position, and either differing SHALL be dispatched. Adding or removing a block shifts the positions below it without the selection having moved, which makes each half necessary on its own: recognising the repeat by position alone lets the next block to land on that number read as already reported, so the caret arriving there is announced to nobody; recognising it by block alone hides that the block moved on the page, which the toolbar follows off this event and nothing else.
+
 #### Scenario: Inserting a block wrapper at an index
 - **GIVEN** a `BlockAddedCoreEvent` with a valid index
 - **WHEN** `BlocksUI` processes it
@@ -110,6 +112,16 @@ Only caret movement SHALL be filtered for repeats, because `selectionchange` fir
 - **GIVEN** the pointer was last reported as entering a block, and the menu that was open at the time has since been dismissed
 - **WHEN** the pointer enters that same block again
 - **THEN** `BlockSelectedUIEvent` is dispatched again, because anything that ignored the first announcement would otherwise keep acting on an older block
+
+#### Scenario: A different block lands on the reported position
+- **GIVEN** the caret was reported in a block, and a block above it is then removed, so the block below takes the position the caret's block held
+- **WHEN** the caret moves into that block
+- **THEN** `BlockSelectedUIEvent` is dispatched, because it is a different block however its position compares
+
+#### Scenario: A block is added above the caret
+- **GIVEN** the caret is in a block, and a block is inserted above it, pushing it down the page
+- **WHEN** the caret moves within that same block
+- **THEN** `BlockSelectedUIEvent` is dispatched with its new position, because the toolbar tracks where the block is from this event alone
 
 #### Scenario: The caret staying in one block dispatches nothing
 - **GIVEN** the caret is already in a block

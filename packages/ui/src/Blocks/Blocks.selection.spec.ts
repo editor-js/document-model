@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
 import type { EditorAPI, EditorjsPluginParams } from '@editorjs/sdk';
-import { BlockAddedCoreEvent, EventBus } from '@editorjs/sdk';
+import { BlockAddedCoreEvent, BlockRemovedCoreEvent, EventBus } from '@editorjs/sdk';
 import { BlocksUI } from './Blocks.js';
 import type { BlocksHolderRenderedUIEvent, BlockSelectedUIEvent } from './events/index.js';
 
@@ -135,6 +135,62 @@ describe('BlocksUI', () => {
       putCaretIn(instance.texts[1]);
 
       expect(instance.selected).toEqual([1]);
+    });
+
+    /**
+     * A position recorded earlier goes stale when a block is removed above it: the next block to
+     * land on that number reads as "already reported", and the caret arriving there is announced
+     * to nobody
+     */
+    it('should report a different block that lands on the reported position', () => {
+      const instance = setup(THREE_BLOCKS);
+
+      putCaretIn(instance.texts[1]);
+
+      // Removing the block above shifts the caret's block to 0 and the one below it to 1.
+      instance.eventBus.dispatchEvent(new BlockRemovedCoreEvent({ tool: 'paragraph',
+        index: 0 }));
+
+      putCaretIn(instance.texts[2]);
+
+      expect(instance.selected).toEqual([1, 1]);
+    });
+
+    it('should report the block that takes the position of a removed one', () => {
+      const instance = setup(THREE_BLOCKS);
+
+      putCaretIn(instance.texts[1]);
+
+      instance.eventBus.dispatchEvent(new BlockRemovedCoreEvent({ tool: 'paragraph',
+        index: 1 }));
+
+      // Block 2 is block 1 now, and it is where the caret goes once the block under it is gone.
+      putCaretIn(instance.texts[2]);
+
+      expect(instance.selected).toEqual([1, 1]);
+    });
+
+    /**
+     * The selection has not moved, but the block has: inserting above it pushes it down the page,
+     * and the toolbar takes its position from this event and from nothing else
+     */
+    it('should report the caret block again when one is added above it', () => {
+      const instance = setup(TWO_BLOCKS);
+
+      putCaretIn(instance.texts[1]);
+
+      const blockElement = document.createElement('div');
+
+      blockElement.appendChild(document.createTextNode('Inserted'));
+
+      instance.eventBus.dispatchEvent(new BlockAddedCoreEvent({ tool: 'paragraph',
+        data: {},
+        ui: blockElement,
+        index: 0 }));
+
+      putCaretIn(instance.texts[1]);
+
+      expect(instance.selected).toEqual([1, 2]);
     });
 
     it('should report a block the pointer re-enters, even if it was the last one reported', () => {
