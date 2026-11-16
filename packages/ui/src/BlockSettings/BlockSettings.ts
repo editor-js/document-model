@@ -100,9 +100,12 @@ export interface BlockSettingsRegisterOptions {
  */
 export interface BlockSettingsAPI {
   /**
-   * Registers a settings provider
+   * Registers a settings provider.
+   *
+   * Unregistering takes effect from the next open: providers are asked as the menu is built, so
+   * one already on screen keeps the items it was built with until it closes
    * @param provider - called with the target block each time the menu opens
-   * @param options - registration options, `order` among them
+   * @param options - registration options, `order` and `timeout` among them
    * @returns a function that unregisters the provider
    */
   register(provider: BlockSettingsProvider, options?: BlockSettingsRegisterOptions): () => void;
