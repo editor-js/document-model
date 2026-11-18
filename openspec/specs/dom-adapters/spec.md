@@ -97,6 +97,11 @@ Implemented in `src/FormattingAdapter/index.ts`, `src/utils/surround.ts`, `src/u
 - **WHEN** `destroy()` is called
 - **THEN** no inline tool instance's `destroy()` is called, the adapter holds none of them anymore, and later model formatting events don't touch the DOM
 
+#### Scenario: A teardown step fails
+- **GIVEN** a block adapter, the caret adapter or the formatting adapter throws when destroyed
+- **WHEN** `DOMAdapters.destroy()` is called
+- **THEN** the error is logged with `console.error`, every other block adapter and the caret and formatting adapters are still destroyed, and the failing block is still removed from the adapters and the inputs registry, so the holder doesn't stay subscribed to the `selectionchange` watcher
+
 #### Scenario: Two editors on one page
 - **GIVEN** two editors are initialized on the same page and share the `selectionchange` watcher
 - **WHEN** the first editor is destroyed

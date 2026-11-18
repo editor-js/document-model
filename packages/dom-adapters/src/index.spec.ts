@@ -122,4 +122,73 @@ describe('DOMAdapters', () => {
 
     expect(options.signal?.aborted).toBe(true);
   });
+
+  describe('when a teardown step throws', () => {
+    it('should log a throwing block adapter and still destroy the other blocks and the caret and formatting adapters', () => {
+      const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+      const destroy = jest.spyOn(DOMBlockToolAdapter.prototype, 'destroy');
+      const caretDestroy = jest.spyOn(CaretAdapter.prototype, 'destroy');
+      const formattingDestroy = jest.spyOn(FormattingAdapter.prototype, 'destroy');
+      const { plugin } = createPlugin();
+
+      plugin.createBlockToolAdapter('a' as BlockId, 'paragraph');
+      plugin.createBlockToolAdapter('b' as BlockId, 'paragraph');
+      destroy.mockClear();
+      destroy.mockImplementationOnce(() => {
+        throw new Error('broken adapter');
+      });
+
+      expect(() => plugin.destroy()).not.toThrow();
+      expect(destroy).toHaveBeenCalledTimes(2);
+      expect(caretDestroy).toHaveBeenCalledTimes(1);
+      expect(formattingDestroy).toHaveBeenCalledTimes(1);
+      expect(error).toHaveBeenCalledWith('[DOMAdapters] Failed to destroy the adapter of block a', expect.any(Error));
+
+      jest.restoreAllMocks();
+    });
+
+    it('should release a block whose adapter throws, so it is not destroyed again and its inputs are removed', () => {
+      jest.spyOn(console, 'error').mockImplementation(() => undefined);
+      const removeBlock = jest.spyOn(InputsRegistry.prototype, 'removeBlock');
+      const destroy = jest.spyOn(DOMBlockToolAdapter.prototype, 'destroy');
+      const { plugin } = createPlugin();
+
+      plugin.createBlockToolAdapter('a' as BlockId, 'paragraph');
+      destroy.mockClear();
+      destroy.mockImplementationOnce(() => {
+        throw new Error('broken adapter');
+      });
+
+      expect(() => plugin.destroyBlockToolAdapter('a' as BlockId)).toThrow('broken adapter');
+      expect(removeBlock).toHaveBeenCalledWith('a');
+
+      plugin.destroy();
+
+      expect(destroy).toHaveBeenCalledTimes(1);
+
+      jest.restoreAllMocks();
+    });
+
+    it.each([
+      ['CaretAdapter', CaretAdapter],
+      ['FormattingAdapter', FormattingAdapter],
+    ])('should log a throwing %s and still destroy the other adapter', (label, Adapter) => {
+      const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+      const caretDestroy = jest.spyOn(CaretAdapter.prototype, 'destroy');
+      const formattingDestroy = jest.spyOn(FormattingAdapter.prototype, 'destroy');
+
+      jest.spyOn(Adapter.prototype, 'destroy').mockImplementationOnce(() => {
+        throw new Error('broken adapter');
+      });
+
+      const { plugin } = createPlugin();
+
+      expect(() => plugin.destroy()).not.toThrow();
+      expect(caretDestroy).toHaveBeenCalledTimes(1);
+      expect(formattingDestroy).toHaveBeenCalledTimes(1);
+      expect(error).toHaveBeenCalledWith(`[DOMAdapters] Failed to destroy ${label}`, expect.any(Error));
+
+      jest.restoreAllMocks();
+    });
+  });
 });
