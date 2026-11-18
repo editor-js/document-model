@@ -27,6 +27,30 @@ describe('cloneInlineData', () => {
     expect(copy.attributes.rel).not.toBe(original.attributes.rel);
   });
 
+  it('should drop keys whose value is undefined, as JSON does', () => {
+    const data = createInlineToolData({
+      href: 'a',
+      title: undefined,
+      attributes: {
+        rel: undefined,
+        target: '_blank',
+      },
+    });
+
+    expect(cloneInlineData(data)).toStrictEqual(createInlineToolData({
+      href: 'a',
+      attributes: {
+        target: '_blank',
+      },
+    }));
+  });
+
+  it('should turn undefined array items into null, as JSON does', () => {
+    const data = createInlineToolData({ items: ['a', undefined, 'c'] });
+
+    expect(cloneInlineData(data)).toStrictEqual(createInlineToolData({ items: ['a', null, 'c'] }));
+  });
+
   it('should keep primitive values', () => {
     const data = createInlineToolData({
       count: 1,

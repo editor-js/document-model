@@ -602,6 +602,30 @@ describe('TextNode', () => {
       expect(second.getFragments()).toEqual(first.getFragments());
     });
 
+    it('should treat data that differs only by undefined keys as equal when loading', () => {
+      const withUndefined = {
+        tool: link,
+        range: [0, 4] as [number, number],
+        data: createInlineToolData({
+          href: 'a',
+          title: undefined,
+        }),
+      };
+      const fragments = [fragment(link, 0, 4, href('a')), withUndefined];
+
+      const first = new TextNode({
+        value: 'abcd',
+        fragments,
+      });
+      const second = new TextNode({
+        value: 'abcd',
+        fragments: [...fragments].reverse(),
+      });
+
+      expect(first.getFragments()).toStrictEqual([fragment(link, 0, 4, href('a'))]);
+      expect(second.getFragments()).toStrictEqual(first.getFragments());
+    });
+
     it('should resolve fragments of the same tool with equal ranges the same way whatever their order', () => {
       const fragments = [fragment(link, 0, 4, href('b')), fragment(link, 0, 4, href('a'))];
 

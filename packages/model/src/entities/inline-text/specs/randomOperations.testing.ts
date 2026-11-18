@@ -4,7 +4,17 @@ import { createInlineToolData, createInlineToolName } from '@editorjs/model-type
 import { isSameInlineData } from '../../../utils/index.js';
 
 const tools = [createInlineToolName('bold'), createInlineToolName('italic'), createInlineToolName('link')];
-const linkData = [createInlineToolData({ href: 'a' }), createInlineToolData({ href: 'b' })];
+const linkData = [
+  createInlineToolData({ href: 'a' }),
+  createInlineToolData({ href: 'b' }),
+  /**
+   * Equal to { href: 'a' }: keys with undefined values don't survive serialization
+   */
+  createInlineToolData({
+    href: 'a',
+    title: undefined,
+  }),
+];
 const emptyData = createInlineToolData({});
 
 /**
@@ -138,7 +148,10 @@ export class ReferenceText {
         this.#chars.splice(operation.start, operation.end - operation.start);
         break;
       case 'format': {
-        const data = isEmptyData(operation.data) ? undefined : operation.data;
+        /**
+         * The model stores data as it would come back from JSON, and empty data as no data
+         */
+        const data = isEmptyData(operation.data) ? undefined : JSON.parse(JSON.stringify(operation.data)) as InlineToolData;
 
         this.#chars.slice(operation.start, operation.end).forEach(char => char.marks.set(operation.tool, data));
         break;
