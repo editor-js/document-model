@@ -11,7 +11,7 @@ The `BlockTool` and `InlineTool` instance contracts SHALL each declare an option
 #### Scenario: The inline tool facade destroys its shared instance once
 - **GIVEN** an inline tool facade whose `create()` has been called several times
 - **WHEN** `destroy()` is called on the facade, once or more
-- **THEN** every `create()` returned the same instance, its `destroy()` is called once, and a facade whose `create()` was never called constructs nothing
+- **THEN** every `create()` returned the same instance, its `destroy()` is called once, a facade whose `create()` was never called constructs nothing, and any `create()` after `destroy()` throws instead of constructing an instance nobody would destroy
 
 #### Scenario: Block tool declares destroy
 - **GIVEN** a block tool class implements `destroy()`

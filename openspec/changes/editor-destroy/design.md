@@ -45,10 +45,10 @@ Every existing `destroy()` in the repo is synchronous, and `EditorjsPlugin.destr
 `#initializePlugin` pushes each instance onto a `#pluginInstances` array, paired with its `name`. `destroy()` walks the array backwards, calls `destroy?.()` inside a try/catch with `console.error`, and calls `PluginRegistry.unregister(name)`. Reverse order means a plugin that depends on another one's `publicApi` or DOM, like `EditorjsUI` hosting the elements other UI plugins render, is torn down after its dependents.
 
 ### D3. Teardown order inside `Core.destroy()`
-1. Set `#destroyed = true`, so `use()` and `initialize()` throw from now on. Plugin instances and services are cleared as they're destroyed, so a second `destroy()` finds nothing left and is a no-op.
+1. Return at once if `#destroyed` is already set, so a second `destroy()` is a no-op. That includes a call made from inside a teardown hook, such as a plugin whose `destroy()` destroys the editor, which would otherwise run the whole teardown again recursively. Otherwise set `#destroyed = true`, so `use()` and `initialize()` throw from now on.
 2. Plugins, in reverse order (D2). UI disappears first, collaboration closes its socket and stops sending ops, and keyboard and clipboard plugins detach.
 3. `UndoRedoManager.destroy()`, then `SelectionManager.destroy()`.
-4. `BlockRenderer.destroy()`: for each tracked block, call the tool instance's `destroy?.()`, then `adapter.destroyBlockToolAdapter(id)`. Remove the model listener. No `BlockRemovedCoreEvent` is dispatched, because the UI is already gone.
+4. `BlockRenderer.destroy()`: for each tracked block, call the tool instance's `destroy?.()`, then `adapter.destroyBlockToolAdapter(id)`, logging either one if it throws so the other blocks are still released. Remove the model listener. No `BlockRemovedCoreEvent` is dispatched, because the UI is already gone.
 5. `adapter.destroy()` (D5).
 6. `ToolsManager.destroy()`: destroy each inline tool's shared instance once (D7), and stop any tool preparation still running (D4). It runs last because the adapter, the selection manager and the inline toolbar all use those instances until they're gone.
 
@@ -64,6 +64,11 @@ The model is never mutated. If `destroy()` cleared blocks through the model, `Co
 A `prepare()` that is already running can't be interrupted, because it takes no signal, and passing one would change the tool API. Its result is discarded instead. `initialize()` therefore settles once that `prepare()` settles, not immediately. Racing the queue against the signal would end the wait sooner without stopping the tool's work, so it isn't worth the extra code.
 
 After the queue settles, `initialize()` checks `#destroyed` and stops before the document is initialized or `core:ready` is dispatched. `destroy()` tears down whatever stage was reached.
+
+`destroy()` can also run synchronously, from integrator or plugin code that `initialize()` itself calls. Each such point is checked:
+- **Plugin constructors.** A constructor that destroys the editor (say, by changing the model, which calls `onModelUpdate`) runs before its instance is tracked, so teardown misses it. `#initializePlugin` checks `#destroyed` after each constructor. If it's set, the instance is destroyed on the spot and `initialize()` rejects, so no later plugin is constructed.
+- **`ToolLoaded` listeners.** A listener that destroys the editor aborts `ToolsManager`'s signal. Each tool is checked at the start of the registration loop, so tools without `prepare()` stop being registered and announced too. A `prepare()` that rejects after destroy returns without logging or registering a fallback facade, because building one runs the tool's static options code.
+- **Document initialization.** `initializeDocument()` dispatches model events synchronously, so `onModelUpdate` can destroy the editor there. `initialize()` checks `#destroyed` again afterwards and rejects instead of dispatching `core:ready`.
 
 `initialize()` then **rejects** with a `DOMException` named `AbortError`, following the platform convention (`fetch` rejects the same way when its signal aborts). Code awaiting readiness (loading data, focusing, subscribing) must not run against a destroyed editor, and resolving would let it run. Callers that unmount during boot ignore the error by name: `if (error.name === 'AbortError') return`. This matters in practice: React StrictMode mounts, unmounts and remounts every component in development, so every React integration hits this path.
 
@@ -89,7 +94,7 @@ Add `destroy?(): void` to `InlineTool`. `BlockTool` already gets it from the v2 
 
 The owner differs by tool type, because the facades create instances differently:
 - **Block tools**: `BlockToolFacade.create()` builds a new instance per block, and `BlockRenderer` owns it. It calls `destroy()` when the block is removed or on teardown.
-- **Inline tools**: `InlineToolFacade.create()` returns one cached instance per tool (since #127), so `FormattingAdapter`, `SelectionManager.applyInlineTool`, `ToolsManager` validation and `InlineToolbarUI` all receive the same object. None of them owns it, and none of them destroys it. The facade does: `InlineToolFacade.destroy()` destroys the instance once (only if one was ever created) and drops it. `ToolsManager.destroy()` calls it for every inline tool as the last step of teardown (D3), logging a throwing hook and moving on to the next tool.
+- **Inline tools**: `InlineToolFacade.create()` returns one cached instance per tool (since #127), so `FormattingAdapter`, `SelectionManager.applyInlineTool`, `ToolsManager` validation and `InlineToolbarUI` all receive the same object. None of them owns it, and none of them destroys it. The facade does: `InlineToolFacade.destroy()` destroys the instance once (only if one was ever created) and drops it. `ToolsManager.destroy()` calls it for every inline tool as the last step of teardown (D3), logging a throwing hook and moving on to the next tool. `ToolsManager` keeps every inline facade it creates in its own set, separate from the name-keyed collections, which can lose one: a tool registered twice, or a facade replaced after a failed validation. Once destroyed, a facade's `create()` throws, because a new instance would never be destroyed.
 
 So an inline tool's `destroy()` runs exactly once, when the editor is destroyed. It doesn't run when the inline toolbar is rebuilt or hidden, or after a format is applied.
 
@@ -123,7 +128,7 @@ Plugins and tools are interfaces, not base classes, so they own their own contro
 ## Risks / Trade-offs
 
 - [A plugin's `destroy()` throws partway through] → Each plugin call is wrapped in its own try/catch and logged, and teardown continues. The editor may still be left partly torn down, which beats aborting and leaking everything.
-- [An async `render()` settles after teardown and dispatches `BlockAddedCoreEvent` into a dead EventBus] → `BlockRenderer` checks a `#destroyed` flag after the `await`, then destroys the late instance and its adapter instead of dispatching.
+- [An async `render()` settles after its block was released and dispatches `BlockAddedCoreEvent` with a destroyed instance's UI] → the block may have been removed, removed and added again (a move creates a new instance under the same id), or the renderer destroyed. After the `await`, `BlockRenderer` dispatches only if the instance is still the one tracked for that block id. Releasing the block already destroyed the instance and its adapter.
 - [Ops not yet sent in `CollaborationManager`'s debounced batch are lost on destroy] → This already happens when a tab closes. Flushing would need async teardown (Non-Goal) and is listed in Open Questions.
 - [The adapter contract narrows `destroy?()` to `destroy()`, which is a type-level break for third-party adapters] → No third-party adapters exist yet, and the package is pre-1.0.
 - [#174 overlaps with UI teardown] → #174 covers every UI plugin's teardown, so this change has no UI plugin implementation. `InlineToolbarUI` doesn't destroy inline tool instances either, because they're shared (D7). Both changes edit the same `docs/plugins.md` lifecycle line, so whichever lands second merges that one line.

@@ -34,7 +34,7 @@
 - **THEN** each inline tool instance's `destroy()` is called once, after the adapter plugin's `destroy()`; a throwing hook is logged with `console.error` and the other inline tools are still destroyed; inline tools that were never instantiated are not constructed
 
 #### Scenario: Destroying twice is a no-op
-- **GIVEN** `destroy()` has already been called
+- **GIVEN** `destroy()` has already been called, or is still running and a teardown hook calls it again
 - **WHEN** `destroy()` is called again
 - **THEN** it returns without calling any plugin, tool, or adapter `destroy()` a second time
 
@@ -47,6 +47,11 @@
 - **GIVEN** `initialize()` has been called and its promise has not settled
 - **WHEN** `destroy()` is called
 - **THEN** whatever was constructed so far is torn down, the pending `initialize()` rejects with a `DOMException` named `AbortError` without initializing the document or dispatching `CoreEventType.Ready`, any tool or plugin it would have constructed afterwards is not constructed, tools still queued for preparation are not prepared, and a tool whose `prepare()` settles after `destroy()` is neither created nor registered and dispatches no `CoreEventType.ToolLoaded`
+
+#### Scenario: Initialization code destroys the editor
+- **GIVEN** a plugin constructor, a `CoreEventType.ToolLoaded` listener, or `onModelUpdate` during document initialization calls `destroy()`
+- **WHEN** control returns to `initialize()`
+- **THEN** `initialize()` rejects with a `DOMException` named `AbortError` without dispatching `CoreEventType.Ready`, a plugin constructed in that call is destroyed, and no further plugin or tool is constructed, registered or announced
 
 #### Scenario: Using a destroyed editor
 - **GIVEN** `destroy()` has been called
@@ -78,9 +83,14 @@ The system SHALL provide `BlockRenderer`, which listens for model `BlockAddedEve
 - **WHEN** `BlockRenderer.destroy()` is called
 - **THEN** each remaining tool instance's `destroy()` is called, each remaining block's adapter is destroyed, no `BlockRemovedCoreEvent` is dispatched, and the renderer stops listening to model events
 
-#### Scenario: A block that finishes rendering after teardown
-- **GIVEN** a block tool's `render()` is still pending when `BlockRenderer.destroy()` is called
+#### Scenario: A block that finishes rendering after it was released
+- **GIVEN** a block tool's `render()` is still pending when its block is removed (or removed and added again, as a move does), or when `BlockRenderer.destroy()` is called
 - **WHEN** `render()` settles
-- **THEN** no `BlockAddedCoreEvent` is dispatched for it, and the tool instance and its adapter are still destroyed
+- **THEN** no `BlockAddedCoreEvent` is dispatched for that instance, and the instance and its adapter are still destroyed; only the render of the instance currently tracked for the block is dispatched
+
+#### Scenario: A block adapter fails to destroy
+- **GIVEN** several rendered blocks, one of whose adapters throws when destroyed
+- **WHEN** `BlockRenderer.destroy()` is called
+- **THEN** the error is logged with `console.error`, and every other block's tool instance and adapter are still destroyed
 
 Implemented in `src/components/BlockRenderer.ts`, validated by its co-located `.spec.ts`.
