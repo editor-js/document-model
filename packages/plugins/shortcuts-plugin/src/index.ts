@@ -114,12 +114,19 @@ export class ShortcutsPlugin implements EditorjsPlugin<'shortcuts'> {
   };
 
   /**
+   * Releases the plugin's listeners on destroy
+   */
+  readonly #controller = new AbortController();
+
+  /**
    * @param params - {@link EditorjsPluginParams}
    */
   constructor(params: EditorjsPluginParams) {
     const { eventBus, api } = params;
 
     this.#api = api;
+
+    const { signal } = this.#controller;
 
     eventBus.addEventListener(`core:${CoreEventType.ToolLoaded}`, (event: Event) => {
       const { detail } = event as ToolLoadedCoreEvent;
@@ -149,7 +156,7 @@ export class ShortcutsPlugin implements EditorjsPlugin<'shortcuts'> {
        *   },
        * })
        */
-    });
+    }, { signal });
 
     eventBus.addEventListener(`ui:${KeydownUIEventName}`, (event: Event) => {
       const { detail } = event as KeydownUIEvent;
@@ -168,13 +175,14 @@ export class ShortcutsPlugin implements EditorjsPlugin<'shortcuts'> {
           return;
         }
       }
-    });
+    }, { signal });
   }
 
   /**
    * Destroys the plugin
    */
   public destroy(): void {
+    this.#controller.abort();
     this.#handlers.clear();
   }
 

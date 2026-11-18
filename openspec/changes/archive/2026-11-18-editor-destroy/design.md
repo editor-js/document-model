@@ -6,9 +6,9 @@ Resources that outlive an editor if nobody releases them:
 
 | Owner | Resource | Today |
 |---|---|---|
-| `EditorjsUI` | wrapper `div` appended to the integrator's holder | covered by #174, out of scope here |
-| `BlocksUI` | blocks holder DOM listeners (`beforeinput`, `keydown`, `copy`), block wrappers | covered by #174, out of scope here |
-| `ToolbarUI` / `ToolboxUI` / `InlineToolbarUI` | EventBus listeners, popovers | covered by #174, out of scope here |
+| `EditorjsUI` | wrapper `div` appended to the integrator's holder | fixed by #174 |
+| `BlocksUI` | blocks holder DOM listeners (`beforeinput`, `keydown`, `copy`), block wrappers | fixed by #174 |
+| `ToolbarUI` / `ToolboxUI` / `InlineToolbarUI` | EventBus listeners, popovers | fixed by #174 |
 | `CaretAdapter` | subscription to the singleton `useSelectionChange` watcher (`document` `selectionchange`) and `api.selection.onCaretUpdate` | `@todo Unsubscribe on adapter destruction` |
 | `FormattingAdapter` | `core:ToolLoaded` and `api.document.onUpdate` listeners | never released |
 | `ToolsManager` | inline tool facades, each holding the one instance its consumers share | never destroyed |
@@ -131,7 +131,8 @@ Plugins and tools are interfaces, not base classes, so they own their own contro
 - [An async `render()` settles after its block was released and dispatches `BlockAddedCoreEvent` with a destroyed instance's UI] → the block may have been removed, removed and added again (a move creates a new instance under the same id), or the renderer destroyed. After the `await`, `BlockRenderer` dispatches only if the instance is still the one tracked for that block id. Releasing the block already destroyed the instance and its adapter.
 - [Ops not yet sent in `CollaborationManager`'s debounced batch are lost on destroy] → This already happens when a tab closes. Flushing would need async teardown (Non-Goal) and is listed in Open Questions.
 - [The adapter contract narrows `destroy?()` to `destroy()`, which is a type-level break for third-party adapters] → No third-party adapters exist yet, and the package is pre-1.0.
-- [#174 overlaps with UI teardown] → #174 covers every UI plugin's teardown, so this change has no UI plugin implementation. `InlineToolbarUI` doesn't destroy inline tool instances either, because they're shared (D7). Both changes edit the same `docs/plugins.md` lifecycle line, so whichever lands second merges that one line.
+- [#174 overlapped with UI teardown] → #174 (merged) covers every UI plugin's teardown, so this change has no UI plugin teardown of its own. `InlineToolbarUI` doesn't destroy inline tool instances either, because they're shared (D7).
+- [ui-kit's tooltip singleton kept a `window` `scroll` listener and its element] → it was created lazily and never destroyed, so a page that showed (or merely tore down) a hint kept both after every editor was gone. Fixed upstream: `codex-tooltip` 1.1.0 (codex-team/codex.tooltips#32) only holds them while a hint is shown, and `@editorjs/ui-kit` 2.0.1 (editor-js/utils#43) bundles it and no longer creates the tooltip just to hide it. This change depends on `@editorjs/ui-kit` `^2.0.1`.
 
 ## Migration Plan
 

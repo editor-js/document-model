@@ -1,17 +1,18 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers, jsdoc/require-jsdoc */
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
-import { getAbsoluteRangeOffset } from './getAbsoluteRangeOffset.js';
-import {
+
+jest.unstable_mockModule('./getAbsoluteRangeOffset.js', () => ({
+  getAbsoluteRangeOffset: jest.fn(),
+}));
+
+const { getAbsoluteRangeOffset } = await import('./getAbsoluteRangeOffset.js');
+const {
   getClippedTextRangeForInput,
   isInputContainsOnlyEndOfSelection,
   isInputContainsOnlyStartOfSelection,
   isInputContainsWholeSelection,
-  isInputInBetweenSelection
-} from './selectionRangeInInput.js';
-
-jest.mock('./getAbsoluteRangeOffset.js', () => ({
-  getAbsoluteRangeOffset: jest.fn(),
-}));
+  isInputInBetweenSelection,
+} = await import('./selectionRangeInInput.js');
 
 const mockedGetAbsoluteRangeOffset = jest.mocked(getAbsoluteRangeOffset);
 
