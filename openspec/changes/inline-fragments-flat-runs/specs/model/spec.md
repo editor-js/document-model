@@ -64,13 +64,23 @@ The formatting state of a `TextNode`, and so its fragments, SHALL depend only on
 - **WHEN** one `TextNode` is constructed with them in that order and another with them reversed
 - **THEN** both return link `[0, 2]` with `{ href: 'a' }` and link `[2, 6]` with `{ href: 'b' }`
 
+#### Scenario: Loading conflicting fragments with equal ranges in a different order
+- **GIVEN** fragments link `[0, 4]` with `{ href: 'b' }` and link `[0, 4]` with `{ href: 'a' }` for text `abcd`
+- **WHEN** one `TextNode` is constructed with them in that order and another with them reversed
+- **THEN** both return a single link `[0, 4]` with `{ href: 'b' }`
+
+#### Scenario: Data that differs only by undefined keys
+- **GIVEN** fragments link `[0, 4]` with `{ href: 'a' }` and link `[0, 4]` with `{ href: 'a', title: undefined }` for text `abcd`
+- **WHEN** one `TextNode` is constructed with them in that order and another with them reversed
+- **THEN** both return a single link `[0, 4]` with `{ href: 'a' }` and no `title` key
+
 #### Scenario: Unformatting restores the previous state
 - **GIVEN** a `TextNode` with text `abcd` formatted with bold `[0, 4]`
 - **WHEN** italic is applied over `[1, 3]` and then removed over `[1, 3]`
 - **THEN** `getFragments()` returns only bold `[0, 4]`
 
 ### Requirement: Maximal inline fragments
-`getFragments()` SHALL return one fragment per maximal stretch of characters formatted with the same tool and equal data. Adjacent or overlapping stretches of the same tool with equal data SHALL be returned as a single fragment; stretches of the same tool whose data differs SHALL be returned as separate fragments. Data equality SHALL default to a deep structural comparison, which an inline tool MAY override with its own comparator.
+`getFragments()` SHALL return one fragment per maximal stretch of characters formatted with the same tool and equal data. Adjacent or overlapping stretches of the same tool with equal data SHALL be returned as a single fragment; stretches of the same tool whose data differs SHALL be returned as separate fragments. Data equality SHALL default to a deep structural comparison, which an inline tool MAY override with its own comparator. Stored data SHALL follow JSON serialization: keys whose value is `undefined` are dropped and `undefined` array items become `null`. Canonical state holds up to data equality as the effective comparator decides it: where data is equal but not identical, each character SHALL keep the most recently applied data, and a fragment SHALL carry the data of its first character.
 
 #### Scenario: Fragments split by other formatting are merged
 - **GIVEN** a `TextNode` with text `abcdef`
@@ -81,6 +91,11 @@ The formatting state of a `TextNode`, and so its fragments, SHALL depend only on
 - **GIVEN** a `TextNode` with text `abcd`
 - **WHEN** link `{ href: 'a' }` is applied over `[0, 2]` and then over `[2, 4]`
 - **THEN** `getFragments()` returns a single link fragment over `[0, 4]` with data `{ href: 'a' }`
+
+#### Scenario: Equal data written differently
+- **GIVEN** a `TextNode` with text `abcd`
+- **WHEN** link `{ href: 'a', title: 't' }` is applied over `[0, 2]` and link `{ title: 't', href: 'a' }` over `[2, 4]`
+- **THEN** `getFragments()` returns a single link fragment over `[0, 4]` carrying the data of its first character, `{ href: 'a', title: 't' }` in that key order
 
 #### Scenario: Adjacent formatting with different data is kept separate
 - **GIVEN** a `TextNode` with text `abcd`
