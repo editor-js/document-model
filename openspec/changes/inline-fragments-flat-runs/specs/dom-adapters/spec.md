@@ -6,7 +6,9 @@ The system SHALL provide `FormattingAdapter`, which registers `InlineTool` insta
 #### Scenario: Re-rendering overlapping formats
 - **GIVEN** a `TextFormattedEvent` or `TextUnformattedEvent` affecting a range
 - **WHEN** the adapter re-renders that range
-- **THEN** it expands the range by one character on each side to catch adjacent boundary fragments, extracts the range into a template, wraps overlapping fragments using each tool's `createWrapper(data)` output, and replaces the DOM range contents so overlapping/adjacent inline formats nest correctly
+- **THEN** it starts from the affected range plus one character on each side, to catch adjacent fragments
+- **AND** widens the range to the boundaries of the returned fragments and queries again until the range stops growing
+- **AND** rebuilds the range from its plain text as a single text node, wraps every fragment overlapping the range using each tool's `createWrapper(data)` output, and replaces the DOM range contents, so overlapping and adjacent inline formats nest correctly
 
 #### Scenario: Formatting that only overlaps the widened range
 - **GIVEN** text `abcdefghij` with italic `[0, 2)` and bold `[0, 10)`
