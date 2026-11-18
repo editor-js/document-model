@@ -81,7 +81,8 @@
 - [x] 5.1 Update `docs/plugins.md` (the block settings API and default-block-settings as the reference "tune") and `docs/events.md` (the `ui:block-settings:*` events)
 - [x] 5.2 Run `yarn lint`, `yarn test`, and the e2e suite. Fix any regressions
   - Clean: lint and build workspace-wide, 1,099 unit tests, and 92 e2e across Chromium and WebKit. The one `✘` in the e2e run is `aria.spec.ts`'s `test.fail()` case for the unfixed `focus: true` caret todo, which Playwright counts as passing
-- [ ] 5.3 Run `openspec validate block-settings-ui --type change` and confirm it passes. After archiving, fill the `## Purpose` of the new `block-settings` and `default-block-settings-plugin` specs from the proposal's intended-Purpose text
+- [x] 5.3 Run `openspec validate block-settings-ui --type change` and confirm it passes
+- [x] 5.4 Archive the change, then fill the `## Purpose` of the new `block-settings` and `default-block-settings-plugin` specs from the proposal's intended-Purpose text, which `openspec archive` leaves as a `TBD` placeholder
 
 ## 6. Review follow-ups
 
