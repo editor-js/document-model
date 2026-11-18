@@ -63,6 +63,13 @@ export default class ToolsManager {
   readonly #controller = new AbortController();
 
   /**
+   * Every inline tool facade this manager created, whatever happened to it afterwards. The name-keyed
+   * collections can lose one (a tool registered twice, a facade replaced after a failed validation),
+   * but its shared instance must still be destroyed
+   */
+  readonly #inlineFacades = new Set<InlineToolFacade>();
+
+  /**
    * Returns available Tools
    */
   public get available(): ToolsCollection {
@@ -120,13 +127,7 @@ export default class ToolsManager {
   public destroy(): void {
     this.#controller.abort();
 
-    const facades = new Set([...this.#availableTools.values(), ...this.#unavailableTools.values()]);
-
-    for (const facade of facades) {
-      if (!facade.isInline()) {
-        continue;
-      }
-
+    for (const facade of this.#inlineFacades) {
       try {
         facade.destroy();
       } catch (error) {
@@ -155,7 +156,28 @@ export default class ToolsManager {
 
     factory.setTools(tools);
 
+    /**
+     * Builds a tool's facade, keeping every inline one for {@link destroy}
+     * @param toolName - name of the tool to build a facade for
+     */
+    const createFacade = (toolName: string): ToolFacadeClass => {
+      const facade = factory.get(toolName);
+
+      if (facade.isInline()) {
+        this.#inlineFacades.add(facade);
+      }
+
+      return facade;
+    };
+
     tools.forEach(([toolConstructor]) => {
+      /**
+       * A ToolLoaded listener of an earlier tool destroyed the editor
+       */
+      if (signal.aborted) {
+        return;
+      }
+
       const toolName = toolConstructor.name;
 
       if (isFunction(toolConstructor.prepare)) {
@@ -168,7 +190,7 @@ export default class ToolsManager {
           }
 
           try {
-            const tool = factory.get(toolName);
+            const tool = createFacade(toolName);
 
             /**
              * Merged plugin `config` only (static `options().config` + `use(Tool, options).config`), aligned with `BaseToolFacade.prepare`.
@@ -215,13 +237,20 @@ export default class ToolsManager {
 
             setToAvailableToolsCollection(toolName, tool);
           } catch (e) {
+            /**
+             * A prepare() that rejects after destroy: nothing of the tool may run or be registered now
+             */
+            if (signal.aborted) {
+              return;
+            }
+
             console.error(`Tool ${toolName} failed to prepare`, e);
 
-            this.#unavailableTools.set(toolName, factory.get(toolName));
+            this.#unavailableTools.set(toolName, createFacade(toolName));
           }
         });
       } else {
-        setToAvailableToolsCollection(toolName, factory.get(toolName));
+        setToAvailableToolsCollection(toolName, createFacade(toolName));
       }
     });
 

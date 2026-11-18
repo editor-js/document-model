@@ -151,9 +151,10 @@ export class BlockRenderer {
       const blockElement = await block.render();
 
       /**
-       * The renderer was destroyed while the block was rendering, so the block is already released
+       * This instance was released while it rendered: its block was removed (or removed and added
+       * again, e.g. by a move, which creates a new instance), or the renderer was destroyed
        */
-      if (this.#controller.signal.aborted) {
+      if (this.#blocks.get(blockId) !== block) {
         return;
       }
 
@@ -192,7 +193,7 @@ export class BlockRenderer {
 
   /**
    * Destroys the block's tool instance and its adapter.
-   * A throwing tool is logged so the rest of the teardown still runs
+   * A throwing tool or adapter is logged so the rest of the teardown still runs
    * @param id - id of the block to release
    */
   #releaseBlock(id: BlockId): void {
@@ -206,6 +207,10 @@ export class BlockRenderer {
       console.error(`[BlockRenderer] Block Tool failed to destroy block ${id}`, error);
     }
 
-    this.#adapter.destroyBlockToolAdapter(id);
+    try {
+      this.#adapter.destroyBlockToolAdapter(id);
+    } catch (error) {
+      console.error(`[BlockRenderer] Failed to destroy the adapter of block ${id}`, error);
+    }
   }
 }

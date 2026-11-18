@@ -93,4 +93,23 @@ describe('InlineToolFacade', () => {
 
     expect(destroy).toHaveBeenCalledTimes(1);
   });
+
+  it('should refuse to create an instance once destroyed', () => {
+    const { facade, constructed } = createFacade(jest.fn());
+
+    facade.create();
+    facade.destroy();
+
+    expect(() => facade.create()).toThrow('Inline tool "probe" has been destroyed');
+    expect(constructed).toHaveBeenCalledTimes(1);
+  });
+
+  it('should refuse to create an instance once destroyed, even if none was created before', () => {
+    const { facade, constructed } = createFacade();
+
+    facade.destroy();
+
+    expect(() => facade.create()).toThrow('Inline tool "probe" has been destroyed');
+    expect(constructed).not.toHaveBeenCalled();
+  });
 });

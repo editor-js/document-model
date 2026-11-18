@@ -406,6 +406,72 @@ describe('BlockRenderer lifecycle', () => {
     expect(adapter.destroyBlockToolAdapter).toHaveBeenCalledWith('a');
   });
 
+  it('should not dispatch BlockAddedCoreEvent for a block removed while it renders', async () => {
+    let resolveRender: (value: unknown) => void = () => undefined;
+    const destroy = jest.fn();
+    const { emit, dispatchEvent } = setup(() => ({
+      render: () => new Promise((resolve) => {
+        resolveRender = resolve;
+      }),
+      destroy,
+    }));
+
+    const pending = emit(added('a'));
+
+    await emit(removed('a'));
+    dispatchEvent.mockClear();
+    resolveRender({});
+    await pending;
+
+    expect(destroy).toHaveBeenCalledTimes(1);
+    expect(dispatchEvent).not.toHaveBeenCalled();
+  });
+
+  it('should dispatch only the latest render of a block removed and added again while rendering', async () => {
+    const renders: ((value: unknown) => void)[] = [];
+    const { emit, dispatchEvent } = setup(() => ({
+      render: () => new Promise((resolve) => {
+        renders.push(resolve);
+      }),
+    }));
+
+    const first = emit(added('a'));
+
+    await emit(removed('a'));
+
+    const second = emit(added('a'));
+
+    dispatchEvent.mockClear();
+
+    const stale = { stale: true };
+    const fresh = { fresh: true };
+
+    renders[0](stale);
+    await first;
+    renders[1](fresh);
+    await second;
+
+    expect(dispatchEvent).toHaveBeenCalledTimes(1);
+  });
+
+  it('should keep releasing blocks when a block adapter fails to destroy', async () => {
+    const destroy = jest.fn();
+    const { renderer, emit, adapter } = setup(() => ({ render: () => Promise.resolve({}),
+      destroy }));
+
+    adapter.destroyBlockToolAdapter.mockImplementationOnce(() => {
+      throw new Error('broken adapter');
+    });
+
+    await emit(added('a', 0));
+    await emit(added('b', 1));
+
+    expect(() => renderer.destroy()).not.toThrow();
+    expect(destroy).toHaveBeenCalledTimes(2);
+    expect(adapter.destroyBlockToolAdapter).toHaveBeenCalledTimes(2);
+    expect(console.error).toHaveBeenCalledWith('[BlockRenderer] Failed to destroy the adapter of block a', expect.any(Error));
+  });
+
   it('should keep tearing down when a tool destroy throws', async () => {
     let calls = 0;
     const { renderer, emit, adapter } = setup(() => ({

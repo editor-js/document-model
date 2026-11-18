@@ -40,6 +40,7 @@
 - [x] 6.3 Write failing tests: `should not construct anything when destroyed before initialize`, `should reject initialize with an AbortError without dispatching ready when destroyed mid-initialization`, and `should throw from use and initialize after destroy`
 - [x] 6.4 Implement the `#destroyed` checks after each `await` in `initialize()`, and the post-destroy guards in `use()` and `initialize()`
 - [x] 6.5 Write failing `ToolsManager` tests, `should not prepare the tools still queued` and `should neither create nor announce a tool whose prepare() settles after destroy`. Give `ToolsManager` an `AbortController` that `destroy()` aborts, and check its signal before and after each `prepare()` (design D4)
+- [x] 6.6 Address the review of #196, each with a failing test first: `BlockRenderer` dispatches a render only for the instance still tracked for its block and logs a throwing block adapter; `Core.destroy()` returns at once when already destroying; `initialize()` rejects after a plugin constructor or document initialization destroys the editor, destroying that plugin; `ToolsManager` checks its signal for every tool and in the failed-`prepare()` path, and tracks every inline facade it creates; `InlineToolFacade.create()` throws once destroyed (design D3, D4, D7)
 
 ## 7. UI
 

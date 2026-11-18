@@ -114,7 +114,7 @@ export default class EditorJS {
   }
 
   /**
-   * Tears the editor down: removes its DOM, closes the collaboration connection, and releases plugins and tools.
+   * Tears the editor down: destroys its plugins (each releases what it holds), core services, tools and adapter.
    * Safe to call more than once and before {@link isReady} settles
    */
   public destroy(): void {

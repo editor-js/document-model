@@ -1,5 +1,5 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import type { CoreConfigValidated, InlineToolConstructor } from '@editorjs/sdk';
+import type { CoreConfigValidated, InlineToolConstructor, ToolConstructable } from '@editorjs/sdk';
 import { EventBus, ToolType } from '@editorjs/sdk';
 import ToolsManager from './ToolsManager.js';
 import type { EditorAPI } from '../api/index.js';
@@ -196,6 +196,69 @@ describe('ToolsManager', () => {
       expect(manager.available.get('late')).toBeUndefined();
       expect(manager.unavailable.get('late')).toBeUndefined();
     });
+
+    it('should neither log nor register a tool whose prepare() rejects after destroy', async () => {
+      const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+      let fail: () => void = () => undefined;
+
+      /**
+       * Inline tool whose preparation fails once the test says so
+       */
+      class FailingInlineTool {
+        public static type = ToolType.Inline;
+
+        public static name = 'failing';
+
+        public static prepare = (): Promise<void> => new Promise((_resolve, reject) => {
+          fail = () => reject(new Error('prepare failed'));
+        });
+      }
+
+      const manager = new ToolsManager(
+        { tools: {} } as unknown as CoreConfigValidated,
+        () => ({}) as EditorAPI,
+        new EventBus()
+      );
+
+      const preparing = manager.prepareTools([[FailingInlineTool as unknown as InlineToolConstructor, undefined]]);
+
+      await flush();
+      manager.destroy();
+      fail();
+      await preparing;
+
+      expect(error).not.toHaveBeenCalled();
+      expect(manager.unavailable.get('failing')).toBeUndefined();
+
+      error.mockRestore();
+    });
+
+    it('should stop registering tools once a ToolLoaded listener destroys the manager', async () => {
+      const eventBus = new EventBus();
+      const manager = new ToolsManager(
+        { tools: {} } as unknown as CoreConfigValidated,
+        () => ({}) as EditorAPI,
+        eventBus
+      );
+      const dispatch = jest.spyOn(eventBus, 'dispatchEvent').mockImplementation(() => {
+        manager.destroy();
+
+        return true;
+      });
+
+      /**
+       * Block tools without prepare(), registered synchronously
+       * @param name - static name of the tool
+       */
+      const blockTool = (name: string): ToolConstructable => ({ type: ToolType.Block,
+        name }) as unknown as ToolConstructable;
+
+      await manager.prepareTools([[blockTool('first'), undefined], [blockTool('second'), undefined]]);
+
+      expect(dispatch).toHaveBeenCalledTimes(1);
+      expect(manager.available.get('first')).toBeDefined();
+      expect(manager.available.get('second')).toBeUndefined();
+    });
   });
 
   describe('.destroy()', () => {
@@ -266,6 +329,61 @@ describe('ToolsManager', () => {
       manager.destroy();
 
       expect(destroy).not.toHaveBeenCalled();
+    });
+
+    it('should destroy the instance of every registration of an inline tool registered twice', async () => {
+      const destroy = jest.fn();
+      const tool = inlineTool('twice', destroy, true);
+      const manager = await prepared(tool, tool);
+
+      manager.destroy();
+
+      expect(destroy).toHaveBeenCalledTimes(2);
+    });
+
+    it('should destroy an inline instance whose validation throws', async () => {
+      const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+      const destroy = jest.fn();
+
+      /**
+       * Inline tool whose instance throws when validation reads it
+       */
+      class ThrowingValidationTool {
+        public static type = ToolType.Inline;
+
+        public static name = 'throwing';
+
+        /**
+         * Gives the tool a validation pass
+         */
+        public static prepare(): Promise<void> {
+          return Promise.resolve();
+        }
+
+        /**
+         * Read by validation
+         */
+        public get render(): never {
+          throw new Error('broken getter');
+        }
+
+        /**
+         * Destroy hook under test
+         */
+        public destroy(): void {
+          destroy();
+        }
+      }
+
+      const manager = await prepared(ThrowingValidationTool as unknown as InlineToolConstructor);
+
+      expect(manager.unavailable.get('throwing')).toBeDefined();
+
+      manager.destroy();
+
+      expect(destroy).toHaveBeenCalledTimes(1);
+
+      error.mockRestore();
     });
 
     it('should log a throwing destroy() and still destroy the other tools', async () => {

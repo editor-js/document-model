@@ -249,9 +249,7 @@ export default class Core {
     /**
      * destroy() was called while tools were being prepared: it already tore down what exists
      */
-    if (this.#destroyed) {
-      throw new DOMException('Editor was destroyed during initialization', 'AbortError');
-    }
+    this.#throwIfDestroyedDuringInitialization();
 
     /**
      * UndoRedoManager should go after plugins as it uses defaultPrevented on undo/redo events which can be set by plugins
@@ -260,6 +258,11 @@ export default class Core {
     this.#services.undoRedoManager = this.#iocContainer.get(UndoRedoManager);
 
     this.#model.initializeDocument({ blocks });
+
+    /**
+     * The document's model events run integrator code synchronously (`onModelUpdate`), which may destroy the editor
+     */
+    this.#throwIfDestroyedDuringInitialization();
 
     const eventBus = this.#iocContainer.get(EventBus);
 
@@ -273,8 +276,12 @@ export default class Core {
    */
   public destroy(): void {
     /**
-     * Plugin instances and services are cleared below, so a second call finds nothing left to destroy
+     * A second call, including one made from inside a teardown hook, finds the editor already being torn down
      */
+    if (this.#destroyed) {
+      return;
+    }
+
     this.#destroyed = true;
     this.#controller.abort();
 
@@ -312,6 +319,15 @@ export default class Core {
       step();
     } catch (error) {
       console.error(`[Core] Failed to destroy ${label}`, error);
+    }
+  }
+
+  /**
+   * Rejects a pending {@link initialize} once {@link destroy} has torn the editor down
+   */
+  #throwIfDestroyedDuringInitialization(): void {
+    if (this.#destroyed) {
+      throw new DOMException('Editor was destroyed during initialization', 'AbortError');
     }
   }
 
@@ -387,6 +403,15 @@ export default class Core {
       api: apiFactory(),
       eventBus,
     });
+
+    /**
+     * The constructor destroyed the editor (say, through `onModelUpdate`). Teardown has already run
+     * without this instance, so release it here and construct nothing more
+     */
+    if (this.#destroyed) {
+      this.#safely(`plugin "${plugin.name}"`, () => instance.destroy?.());
+      this.#throwIfDestroyedDuringInitialization();
+    }
 
     this.#pluginInstances.push({ name: plugin.name,
       instance });

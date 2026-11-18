@@ -496,6 +496,105 @@ describe('Core', () => {
       expect(log).toEqual(['plugin:a', 'adapter']);
     });
 
+    it('should not run teardown again when a plugin destroy calls destroy', async () => {
+      const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+      const core = createCore();
+
+      core.use(createPlugin('a') as typeof StubPlugin);
+      core.use(class ReentrantPlugin {
+        public static type = PluginType.Plugin as const;
+        public static name = 'reentrant';
+
+        public destroy(): void {
+          log.push('plugin:reentrant');
+          core.destroy();
+        }
+      } as unknown as typeof StubPlugin);
+      await core.initialize();
+      await flush();
+
+      core.destroy();
+
+      expect(log).toEqual(['plugin:reentrant', 'plugin:a', 'tool', 'adapter:block', 'adapter']);
+      expect(error).not.toHaveBeenCalled();
+
+      error.mockRestore();
+    });
+
+    it('should reject initialize with an AbortError without dispatching ready when destroyed while the document initializes', async () => {
+      const ready = jest.fn();
+      let core: Core | undefined;
+      const onModelUpdate = jest.fn(() => core?.destroy());
+
+      core = createCore({ onModelUpdate });
+      core.use(createPlugin('a', ({ eventBus }) => {
+        eventBus.addEventListener(`core:${CoreEventType.Ready}`, ready);
+      }) as typeof StubPlugin);
+
+      await expect(core.initialize()).rejects.toMatchObject({ name: 'AbortError' });
+
+      expect(onModelUpdate).toHaveBeenCalled();
+      expect(ready).not.toHaveBeenCalled();
+      expect(log).toContain('plugin:a');
+    });
+
+    it('should destroy a plugin whose constructor destroys the editor, and construct no further plugins', async () => {
+      const created = jest.fn();
+      const core = createCore();
+
+      core.use(createPlugin('destroyer', () => core.destroy()) as typeof StubPlugin);
+      core.use(createPlugin('later', created) as typeof StubPlugin);
+
+      await expect(core.initialize()).rejects.toMatchObject({ name: 'AbortError' });
+
+      expect(created).not.toHaveBeenCalled();
+      expect(log).toEqual(['adapter', 'plugin:destroyer']);
+    });
+
+    it('should log a throwing destroy of a plugin whose constructor destroys the editor', async () => {
+      const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+      const core = createCore();
+
+      core.use(class BrokenDestroyer {
+        public static type = PluginType.Plugin as const;
+        public static name = 'broken-destroyer';
+
+        constructor() {
+          core.destroy();
+        }
+
+        public destroy(): void {
+          throw new Error('broken plugin');
+        }
+      } as unknown as typeof StubPlugin);
+
+      await expect(core.initialize()).rejects.toMatchObject({ name: 'AbortError' });
+
+      expect(error).toHaveBeenCalledWith('[Core] Failed to destroy plugin "broken-destroyer"', expect.any(Error));
+
+      error.mockRestore();
+    });
+
+    it('should not log when a plugin without destroy destroys the editor from its constructor', async () => {
+      const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+      const core = createCore();
+
+      core.use(class Destroyer {
+        public static type = PluginType.Plugin as const;
+        public static name = 'destroyer';
+
+        constructor() {
+          core.destroy();
+        }
+      } as unknown as typeof StubPlugin);
+
+      await expect(core.initialize()).rejects.toMatchObject({ name: 'AbortError' });
+
+      expect(error).not.toHaveBeenCalled();
+
+      error.mockRestore();
+    });
+
     it('should throw from use and initialize after destroy', async () => {
       const core = createCore();
 
