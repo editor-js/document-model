@@ -224,6 +224,15 @@ export class BlocksAPI implements BlocksApiInterface {
   }
 
   /**
+   * Returns the name of the tool rendering the block at the given index, or undefined when no
+   * block is there
+   * @param index - index of the block
+   */
+  public getToolByIndex(index: number): string | undefined {
+    return this.#blocksManager.getToolByIndex(index);
+  }
+
+  /**
    * Returns the per-block data stored by the given plugin, or undefined when it stores none
    * @param params - getPluginData parameters
    * @param params.block - index or id of the block

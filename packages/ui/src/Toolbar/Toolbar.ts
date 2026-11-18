@@ -5,9 +5,11 @@ import { css } from './Toolbar.const.js';
 import type { ToolboxRenderedUIEvent } from '../Toolbox/events/index.js';
 import { IconPlus } from '@codexteam/icons';
 import Style from './Toolbar.module.pcss';
+import ControlStyle from '../controls.module.pcss';
 import { ToolbarRenderedUIEvent } from './ToolbarRenderedUIEvent.js';
 import type { BlockSelectedUIEvent } from '../Blocks/events/index.js';
 import { ToolboxOpenUIEvent } from '../Toolbox/events/index.js';
+import type { BlockSettingsRenderedUIEvent } from '../BlockSettings/events/index.js';
 import { messages } from '../messages.js';
 
 /**
@@ -67,8 +69,13 @@ export class ToolbarUI implements EditorjsPlugin {
   #nodes: ToolbarNodes = {
     holder: make('div', Style[css.toolbar]) as HTMLDivElement,
     actions: make('div', Style[css.actions]) as HTMLDivElement,
-    plusButton: make('button', Style[css.plusButton], {
+    plusButton: make('button', ControlStyle['toolbar-button'], {
       innerHTML: IconPlus,
+      /**
+       * A button defaults to `submit`, and the editor's holder may sit inside a form, where
+       * opening the toolbox would submit it
+       */
+      type: 'button',
     }) as HTMLButtonElement,
   };
 
@@ -76,6 +83,12 @@ export class ToolbarUI implements EditorjsPlugin {
    * True if Toolbox open. We shouldn't move Toolbar while it's open
    */
   #isToolboxOpen = false;
+
+  /**
+   * True while the Block Settings menu is open. The menu was built for one particular block,
+   * so the toolbar has to stay on it until the menu closes
+   */
+  #isBlockSettingsOpen = false;
 
   /**
    * Constructor function
@@ -96,8 +109,10 @@ export class ToolbarUI implements EditorjsPlugin {
 
     this.#subscribeToToolboxEvents();
 
+    this.#subscribeToBlockSettingsEvents();
+
     this.#eventBus.addEventListener(`ui:blocks:block-selected`, (event: BlockSelectedUIEvent) => {
-      if (this.#isToolboxOpen) {
+      if (this.#isToolboxOpen || this.#isBlockSettingsOpen) {
         return;
       }
 
@@ -135,6 +150,21 @@ export class ToolbarUI implements EditorjsPlugin {
    */
   #addToolbox(toolboxElement: HTMLElement): void {
     this.#nodes.actions.appendChild(toolboxElement);
+  }
+
+  /**
+   * Mounts the Block Settings widget: its button among the toolbar's own controls, where being
+   * a direct child is what puts it in `#controls` and so in the roving tabindex, and its menu
+   * alongside the toolbox popover. The tab stop is reassigned afterwards, since this arrives
+   * after the toolbar rendered and a button carrying no `tabindex` would be a second stop
+   * @param button - the control that opens the menu
+   * @param blockSettingsElement - the element the menu renders into
+   */
+  #addBlockSettings(button: HTMLElement, blockSettingsElement: HTMLElement): void {
+    this.#nodes.actions.appendChild(button);
+    this.#nodes.actions.appendChild(blockSettingsElement);
+
+    this.#updateRovingTabindex(this.#nodes.plusButton);
   }
 
   /**
@@ -207,6 +237,7 @@ export class ToolbarUI implements EditorjsPlugin {
 
     this.#eventBus.addEventListener(`ui:toolbox:closed`, () => {
       this.#isToolboxOpen = false;
+      this.#catchUpWithSelection();
       this.#nodes.plusButton.setAttribute('aria-expanded', 'false');
     }, { signal });
   }
@@ -215,7 +246,57 @@ export class ToolbarUI implements EditorjsPlugin {
    * Dispatches an event to Toolbox plugin to open the toolbox
    */
   #openToolbox(): void {
-    this.#eventBus.dispatchEvent(new ToolboxOpenUIEvent('ui:toolbox:open'));
+    /**
+     * The constructor takes a payload, not an event name -- the name is the class's own
+     * business. A string satisfied the empty payload type, so this went unnoticed and
+     * shipped `detail: 'ui:toolbox:open'` to every listener
+     */
+    this.#eventBus.dispatchEvent(new ToolboxOpenUIEvent({}));
+  }
+
+  /**
+   * Subscribes to the Block Settings plugin's events
+   */
+  #subscribeToBlockSettingsEvents(): void {
+    const { signal } = this.#listenersController;
+
+    this.#eventBus.addEventListener(`ui:block-settings:rendered`, (event: BlockSettingsRenderedUIEvent) => {
+      this.#addBlockSettings(event.detail.button, event.detail.blockSettings);
+    }, { signal });
+
+    /**
+     * The menu was built for one block, so the toolbar holds its position until it closes.
+     * The button's own `aria-expanded` belongs to the plugin that owns the button
+     */
+    this.#eventBus.addEventListener(`ui:block-settings:opened`, () => {
+      this.#isBlockSettingsOpen = true;
+    }, { signal });
+
+    this.#eventBus.addEventListener(`ui:block-settings:closed`, () => {
+      this.#isBlockSettingsOpen = false;
+      this.#catchUpWithSelection();
+    }, { signal });
+  }
+
+  /**
+   * Moves to the block the UI treats as selected now, so a caret that left the block under the toolbar is followed
+   * once nothing is holding it: selection arrives as a one-shot event, and the ones skipped here are not repeated
+   */
+  #catchUpWithSelection(): void {
+    /**
+     * Either popover alone pins the position, so this waits for both
+     */
+    if (this.#isToolboxOpen || this.#isBlockSettingsOpen) {
+      return;
+    }
+
+    const selected = this.#api.plugins.blocksUI?.getSelectedBlock();
+
+    if (selected === undefined) {
+      return;
+    }
+
+    this.moveTo(selected.block);
   }
 
   /**

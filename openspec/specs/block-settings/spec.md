@@ -1,0 +1,210 @@
+# block-settings Specification
+
+## Purpose
+
+The block settings menu (the "tunes" menu in v2) is a UI surface that any plugin can add items to; it is not tied to a special entity type. This capability owns the `BlockSettingsUI` plugin, the button that opens it for the selected block, and the `publicApi` through which plugins register settings providers that return `BlockSettingsMenuConfig` items for a given block. The toolbar that hosts the button and the block rendering it builds on live in [[ui]], and cross-plugin access in [[plugin-public-api]].
+
+## Requirements
+### Requirement: Block settings plugin
+The system SHALL provide `BlockSettingsUI`, an `EditorjsPlugin` with static `name` `block-settings`, that renders a per-block settings popover **and the button that opens it**. Both SHALL be announced together via `ui:block-settings:rendered` for a host to mount; the plugin SHALL NOT place them itself. That announcement is made once and is not replayed, so the plugin SHALL be registered after whatever mounts it: a host registered later never hears it, and the button and the menu stay off the page with nothing reported. This ordering requirement SHALL be documented on the plugin. The popover SHALL open when that button is activated, or on a `ui:block-settings:open` event targeting a block, and SHALL dispatch `ui:block-settings:opened` and `ui:block-settings:closed` when its open state changes. Those SHALL be dispatched only when the state really changes: replacing the popover to show another block's items keeps the menu open throughout, so a rebuild SHALL report neither, and `aria-expanded` SHALL stay `"true"` across it.
+
+#### Scenario: Opening settings for a block
+- **GIVEN** at least one settings provider is registered
+- **WHEN** a `ui:block-settings:open` event targeting block index 2 is dispatched
+- **THEN** the popover opens populated with the items the providers return for block 2, and `ui:block-settings:opened` is dispatched
+
+#### Scenario: Rebuilding the menu for another block
+- **GIVEN** the menu is open for one block
+- **WHEN** it is asked to open for another, which replaces the popover under it
+- **THEN** the items become that block's, and neither `closed` nor `opened` is dispatched and `aria-expanded` stays `"true"`, because the menu never stopped being open
+
+#### Scenario: Closing settings
+- **GIVEN** the settings popover is open
+- **WHEN** it is closed by the user, by an item with default close-on-activate, or by `api.plugins['block-settings'].close()`
+- **THEN** `ui:block-settings:closed` is dispatched
+
+#### Scenario: No items for a block
+- **GIVEN** every registered provider returns nothing for the target block
+- **WHEN** settings are requested for that block
+- **THEN** the popover is not opened
+
+#### Scenario: No target block
+- **GIVEN** no block has been selected, so the requested index resolves to no block id
+- **WHEN** block settings are requested
+- **THEN** no provider is invoked, the popover is not opened, and no error is thrown
+
+### Requirement: Block settings button
+The button `BlockSettingsUI` announces SHALL carry the whole menu-button contract, because the state it reports is the plugin's own: an accessible name from the UI package's message catalogue, `aria-haspopup="menu"`, and an `aria-expanded` kept in sync with whether the menu is open. Activating it SHALL focus it before opening the menu, so the popover has a control to return focus to when it closes. Activating it while the menu is already open SHALL close the menu instead of rebuilding it, as the menu button pattern requires: the control that opens a menu is also the control that dismisses it. This SHALL hold however the button is activated, pointer or keyboard, which means the state it reads cannot be captured from pointer events alone. Where the open menu's own keyboard handling claims the key and suppresses the click the activation would otherwise produce, the dismissal SHALL happen on the keydown itself: no click arrives to carry it, and without that the menu cannot be dismissed from the button at all. The button SHALL also declare itself a non-submitting control, so that an editor mounted inside a form does not post it when the menu is opened. The plugin SHALL remember the block it acts on by identity rather than by position, because a block inserted or removed above it shifts every position below without any selection being reported, and resolve the position again when the menu opens. Once nothing is holding the target, the plugin SHALL take up whichever block the blocks plugin then reports as selected, rather than waiting for the next selection to be announced: the ones ignored while frozen are not announced again, so the button would go on acting on a block the caret has left -- which is what clicking into another block does, since the caret moves on mousedown while the popover only closes on the click. The plugin SHALL follow block selection to know which block the button acts on, and SHALL stop following it whenever the toolbar is holding its position — while the menu is open, and while the toolbox is open, since that popover renders inside the toolbar and moving it would carry the popover along. The button therefore stays beside one block for as long as either is open, and the block it acts on SHALL stay with it: a menu built for a block the button is not next to acts on the wrong one, and `Delete` is among its items.
+
+#### Scenario: The button is announced with the menu
+- **WHEN** `BlockSettingsUI` is constructed
+- **THEN** `ui:block-settings:rendered` carries both the button and the element the menu renders into
+
+#### Scenario: The button names the menu it controls
+- **WHEN** the button is inspected
+- **THEN** it has an accessible name from the message catalogue, `aria-haspopup="menu"`, and `aria-expanded="false"`
+
+#### Scenario: The button reports the menu state
+- **GIVEN** the button has opened the menu
+- **THEN** its `aria-expanded` is `"true"`, and it holds focus
+- **WHEN** the menu closes, by any route
+- **THEN** its `aria-expanded` returns to `"false"`
+
+#### Scenario: The button closes the menu it opened
+- **GIVEN** the button has opened the menu
+- **WHEN** the button is activated again
+- **THEN** the menu closes, `aria-expanded` returns to `"false"`, and no second menu is built
+
+#### Scenario: Clicking into another block while the menu is open
+- **GIVEN** the menu is open for one block, and the caret is then placed in another, which is reported while the target is frozen
+- **WHEN** the menu closes
+- **THEN** the button acts on the block the caret reached, and the toolbar has moved to it, so the two still name the same block
+
+#### Scenario: A block is inserted above the target
+- **GIVEN** the block at index 1 is the reported selection, and a block is then inserted above it by a collaborator, an undo or a move
+- **WHEN** the button is activated
+- **THEN** the menu is built for the block that was selected, at the position it now holds, rather than for whatever moved into index 1
+
+#### Scenario: The target block is removed
+- **GIVEN** the reported selection is a block that is then removed from the document
+- **WHEN** the button is activated
+- **THEN** no provider is asked and no menu opens, as for any position naming no block
+
+#### Scenario: The button is activated again from the keyboard
+- **GIVEN** the menu was opened from the button, and the button holds focus
+- **WHEN** Enter is pressed again, and the open menu's keyboard handling has already prevented the default so that no click follows
+- **THEN** the menu closes and `aria-expanded` returns to `"false"`, rather than staying open with nothing left to dismiss it
+
+#### Scenario: A claimed key arrives with the menu closed
+- **GIVEN** the menu is closed
+- **WHEN** a key whose default was prevented elsewhere reaches the button
+- **THEN** no provider is asked and no menu opens, because a dismissal is all that keydown stands in for
+
+#### Scenario: The menu is dismissed while a replacement is being built
+- **GIVEN** the menu is open and another block's menu has been requested, whose providers have not returned
+- **WHEN** the open menu is dismissed, by Escape or by a click outside
+- **THEN** the requested menu does not open when its providers return, because a dismissal abandons a build in flight exactly as a programmatic close does
+
+#### Scenario: Selection moves while a menu is being built
+- **GIVEN** a menu is being built for one block and its providers have not returned
+- **WHEN** another block is reported as selected
+- **THEN** that build is abandoned, rather than opening one block's actions beside another
+
+#### Scenario: The target does not move while the toolbox is open
+- **GIVEN** the block at index 0 is selected and the toolbox is open, so the toolbar is holding its position beside that block
+- **WHEN** another block is reported as selected, the toolbox closes, and the button is activated
+- **THEN** the menu is built for the block the button is beside, not the one hovered while the toolbox was open
+
+#### Scenario: The target follows the selection again once the toolbox closes
+- **GIVEN** the toolbox was open and has closed
+- **WHEN** another block is reported as selected and the button is activated
+- **THEN** the menu is built for that block, because the toolbar is following the selection again
+
+#### Scenario: The target does not move under an open menu
+- **GIVEN** the menu is open for the block at index 0
+- **WHEN** another block is reported as selected and the menu is then closed and opened again
+- **THEN** the menu built the second time is for the block selected after it closed, not one chosen while it was open
+
+### Requirement: Block settings menu is accessible
+The settings popover SHALL carry an accessible name drawn from the UI package's message catalogue, in the same way the toolbox menu is named. Items removed from the menu SHALL leave the accessibility tree rather than remaining hidden but present.
+
+#### Scenario: Menu is named
+- **WHEN** the block settings popover opens
+- **THEN** it exposes an accessible name from the message catalogue, so a screen reader announces what the menu is
+
+#### Scenario: Removed items leave the tree
+- **GIVEN** the menu is rebuilt for a different block with fewer items
+- **WHEN** the previous items are removed
+- **THEN** they are no longer reachable in the accessibility tree
+
+### Requirement: Settings provider registration
+`BlockSettingsUI` SHALL expose a `publicApi` with `register(provider, options?)` that returns an unregister function. A provider SHALL be a function receiving `{ blockId, blockIndex, tool }` for the target block, with `tool` absent when it could not be determined -- which means the editor's view of the block disagrees with the Model's, since the id and the tool are read from the same position -- so that a provider matching on a tool does not match, rather than being handed an empty name that matches nothing while looking like an answer and returning a `BlockSettingsMenuConfig`, a promise of one, or `undefined`. In that context `blockId` identifies the block for as long as it exists, while `blockIndex` is only its position at the moment the menu was built, so an item's handler SHALL resolve the block's current position from `blockId` rather than reusing `blockIndex`. Unregistering SHALL take effect from the next open, since providers are asked as the menu is built, so a menu already on screen keeps the items it was built with until it closes. Providers SHALL be invoked each time the popover opens, and their results SHALL be concatenated in ascending `options.order` (default `0`, ties broken by registration order), with a separator between the contributions of different providers. Item behavior SHALL be taken entirely from the returned `BlockSettingsMenuConfig` (`onActivate`, `isActive`, `isDisabled`, `closeOnActivate`, `children`, or a `confirmation` object whose own handler runs on the second activation — a confirmation item carries no top-level `onActivate`).
+
+#### Scenario: Plugin contributes an item
+- **GIVEN** a plugin calls `api.plugins['block-settings'].register(ctx => ({ title: 'Anchor', icon, onActivate: () => ... }))`
+- **WHEN** block settings open for any block
+- **THEN** an "Anchor" item is shown, and activating it calls the provider's `onActivate`
+
+#### Scenario: Provider opts out for a tool
+- **GIVEN** a provider returns `undefined` when `ctx.tool` is `"image"`
+- **WHEN** block settings open for an image block
+- **THEN** that provider contributes no items and no separator
+
+#### Scenario: Item acts on the block it was built for
+- **GIVEN** a provider returns an item whose `onActivate` resolves the block's position from `ctx.blockId`
+- **WHEN** the document changes while the menu is open and the item is then activated
+- **THEN** the action applies to that same block, because positions are resolved at activation rather than taken from `ctx.blockIndex`
+
+#### Scenario: Items reflect current state
+- **GIVEN** a provider derives an item's `isActive` from state it reads when called (e.g. the block's data via `EditorAPI`)
+- **WHEN** that state changes and settings are opened again
+- **THEN** the item's active state reflects the new data
+
+#### Scenario: Ordering providers
+- **GIVEN** provider A is registered with `order: 1000` before provider B with default order
+- **WHEN** settings open
+- **THEN** B's items are shown before A's
+
+#### Scenario: Unregistering a provider
+- **GIVEN** a provider was registered and its returned unregister function is called
+- **WHEN** settings open afterwards
+- **THEN** that provider is not invoked
+
+#### Scenario: Item with confirmation
+- **GIVEN** a provider returns an item with a `confirmation` config and no top-level `onActivate`
+- **WHEN** the user activates the item
+- **THEN** the item switches to its confirmation state, and only activating the confirmation runs the handler declared inside `confirmation`
+
+### Requirement: A failing provider costs only its own items
+Providers are third-party code, and the open menu is the one place all of it runs, so no single provider SHALL be able to stop the menu from opening. A provider that throws, whose promise rejects, or that has not settled within its timeout SHALL contribute nothing, SHALL be reported to the console so the plugin behind it can be identified, and SHALL leave no separator behind; every other provider's contribution is still built and shown. The menu shows nothing until every provider has answered, so providers are expected to answer from what they already have: the timeout SHALL default to half a second, as a backstop rather than a budget, and a provider that genuinely needs longer SHALL say so at registration through `options.timeout` rather than every menu waiting on its account. This SHALL cover the callbacks a contributed item carries that the popover calls itself, at any depth of nested items and on an item's confirmation state, since they run after the provider has returned and outside anything it could be held to otherwise. `isActive`, which the popover reads as it renders, SHALL be resolved while the provider's items are collected, so a throw costs that provider's items as returning nothing does, rather than aborting the popover and with it every other provider's items. `onActivate`, which the popover calls on a click, SHALL instead be reported and go no further, because the popover honours `closeOnActivate` only after the handler returns and a throw escaping would abandon that along with the rest of the activation. A contribution SHALL be discarded rather than rendered when a newer open request has started since it was asked for, or when the menu it was being built for has been closed in the meantime.
+
+#### Scenario: A provider throws
+- **GIVEN** two providers are registered and the first throws when invoked
+- **WHEN** block settings open
+- **THEN** the menu opens with the second provider's items alone, with no separator for the first, and the failure is reported to the console
+
+#### Scenario: An item's isActive callback throws
+- **GIVEN** two providers are registered and the first contributes an item whose `isActive` throws
+- **WHEN** block settings open
+- **THEN** the menu opens with the second provider's items alone and the failure is reported to the console, rather than no menu opening at all
+
+#### Scenario: An item's onActivate throws
+- **GIVEN** an item whose `onActivate` throws, contributed by a provider
+- **WHEN** it is activated
+- **THEN** the failure is reported to the console and does not reach the popover, so the activation it would have abandoned, `closeOnActivate` among it, still runs
+
+#### Scenario: A nested item's isActive callback throws
+- **GIVEN** a provider contributes an item whose nested child's `isActive` throws
+- **WHEN** block settings open
+- **THEN** that provider is skipped on the same terms, because nested items are rendered with their parent
+
+#### Scenario: An isActive callback that works
+- **GIVEN** a provider contributes one item whose `isActive` returns `true` and one whose returns `false`
+- **WHEN** block settings open
+- **THEN** the first is shown as active and the second is not
+
+#### Scenario: A provider's promise rejects
+- **GIVEN** a provider returns a promise that rejects
+- **WHEN** block settings open
+- **THEN** it is skipped on the same terms as one that threw synchronously
+
+#### Scenario: A provider asks to be waited for
+- **GIVEN** a provider registered with a `timeout` longer than the default, which answers within it
+- **WHEN** block settings open
+- **THEN** its items are shown, and nothing is reported -- while a provider that asked for less than it takes is skipped at the budget it asked for
+
+#### Scenario: A provider never settles
+- **GIVEN** a provider returns a promise that never settles
+- **WHEN** block settings open and the timeout elapses
+- **THEN** the menu opens without that provider's items rather than never opening, and the timeout is reported to the console
+
+#### Scenario: A result arrives after a newer request
+- **GIVEN** a provider is still working on the menu for one block when settings are requested for another
+- **WHEN** the first request's providers finally return
+- **THEN** their items are discarded, because the newer request owns the menu
+
+#### Scenario: The menu is closed while it is being built
+- **GIVEN** settings were requested and a provider has not yet returned
+- **WHEN** `api.plugins['block-settings'].close()` is called before it does
+- **THEN** the menu does not open when the provider finally returns, because a close abandons a build in flight as well as an open menu
+

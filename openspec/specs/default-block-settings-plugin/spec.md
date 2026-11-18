@@ -1,7 +1,12 @@
-## ADDED Requirements
+# default-block-settings-plugin Specification
 
+## Purpose
+
+`@editorjs/default-block-settings-plugin` supplies the default block settings entries — moving a block up or down and deleting it after confirmation — by registering a provider with [[block-settings]] and calling `BlocksAPI.move`/`delete` from [[core]]. It is the reference example of a "tune" built as a plain plugin, and is registered by the [[editorjs-bundle]].
+
+## Requirements
 ### Requirement: Default block settings plugin
-The system SHALL provide `@editorjs/default-block-settings-plugin`, an `EditorjsPlugin` with static `name` `default-block-settings` whose only runtime dependencies are `@editorjs/sdk` and `@codexteam/icons` (it takes `@editorjs/ui` as a devDependency, for `import type` alone, so that `api.plugins['block-settings']` typechecks without a runtime coupling). Once the editor is ready, it SHALL register a settings provider with `block-settings` at `order: 1000`, contributing "Move up", "Move down" and "Delete" items for every block. When no `block-settings` plugin is registered, it SHALL do nothing and SHALL NOT throw.
+The system SHALL provide `@editorjs/default-block-settings-plugin`, an `EditorjsPlugin` with static `name` `default-block-settings` whose only runtime dependencies are `@editorjs/sdk` and `@codexteam/icons` (it takes `@editorjs/ui` as a devDependency, for `import type` alone, so that `api.plugins['block-settings']` typechecks without a runtime coupling). Once the editor is ready, it SHALL register a settings provider with `block-settings` at `order: 1000`, contributing "Move up", "Move down" and "Delete" items for every block. Their titles SHALL come from a message catalogue of the plugin's own, as `@editorjs/ui` keeps its own strings, so that localising them is a change to one module rather than to every item it builds. When no `block-settings` plugin is registered, it SHALL do nothing and SHALL NOT throw.
 
 #### Scenario: Items are contributed
 - **GIVEN** `BlockSettingsUI` and `DefaultBlockSettingsPlugin` are both registered
@@ -48,3 +53,4 @@ The system SHALL provide `@editorjs/default-block-settings-plugin`, an `Editorjs
 - **GIVEN** "Delete" was activated once and shows its confirmation state
 - **WHEN** the popover is closed without activating the confirmation
 - **THEN** no block is deleted
+
