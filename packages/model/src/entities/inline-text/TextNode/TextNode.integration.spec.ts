@@ -147,6 +147,40 @@ describe('TextNode', () => {
       expect(node.getFragments()).toEqual([fragment(link, 0, 4, href('a'))]);
     });
 
+    it('should keep the data of the first character when equal data is written differently', () => {
+      const node = new TextNode({ value: 'abcd' });
+
+      node.format(link, 0, 2, createInlineToolData({
+        href: 'a',
+        title: 't',
+      }));
+      node.format(link, 2, 4, createInlineToolData({
+        title: 't',
+        href: 'a',
+      }));
+
+      const fragments = node.getFragments();
+
+      expect(fragments).toHaveLength(1);
+      expect(fragments[0].range).toEqual([0, 4]);
+      expect(Object.keys(fragments[0].data ?? {})).toEqual(['href', 'title']);
+    });
+
+    it('should keep the most recently applied data when equal data is re-applied', () => {
+      const node = new TextNode({ value: 'abcd' });
+
+      node.format(link, 0, 4, createInlineToolData({
+        href: 'a',
+        title: 't',
+      }));
+      node.format(link, 0, 4, createInlineToolData({
+        title: 't',
+        href: 'a',
+      }));
+
+      expect(Object.keys(node.getFragments()[0].data ?? {})).toEqual(['title', 'href']);
+    });
+
     it('should keep adjacent formatting with different data separate', () => {
       const node = new TextNode({ value: 'abcd' });
 
