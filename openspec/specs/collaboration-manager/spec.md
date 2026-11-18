@@ -3,9 +3,7 @@
 ## Purpose
 
 `@editorjs/collaboration-manager` is a core plugin that listens to document model events, converts them into operational-transformation (OT) `Operation`s, batches rapid local edits for undo/redo, maintains local undo/redo stacks transformed against remote edits, and optionally syncs with a remote OT server over WebSocket using a handshake + serialized-ack protocol.
-
 ## Requirements
-
 ### Requirement: Operation model
 The system SHALL represent every document mutation as an `Operation` (Insert/Delete/Modify/Neutral) supporting `inverse()`, `transform()` against another operation, `serialize()`, and `getEffectiveRange()`.
 
@@ -105,3 +103,67 @@ The system SHALL classify how two text ranges relate (None/Left/Right/Includes/I
 - **THEN** it returns one of `None`, `Left`, `Right`, `Includes`, or `IncludedBy` describing how the ranges overlap
 
 Implemented in `src/utils/getRangesIntersectionType.ts`.
+
+### Requirement: Plugin data operations
+`CollaborationManager` SHALL translate a `PluginDataModifiedEvent` into a `Modify` `Operation` on its `PluginDataIndex`, with `payload` set to the new value and `prevPayload` to the previous value. `OperationsTransformer` SHALL shift a plugin data operation's block index against block insertions and removals the same way it does for data index operations, SHALL turn it into a `Neutral` operation when its block is removed, and SHALL resolve two concurrent writes to the same block, plugin and key the same way it resolves two concurrent writes to the same data key: the operation being transformed becomes `Neutral` when the operation it is transformed against is the later of the two, a local operation the server has not acknowledged counting as later than any revision. A local operation SHALL count as unacknowledged for the whole round trip, not merely until it leaves for the server, so the client SHALL keep it among the operations an incoming one is transformed against until its acknowledgement arrives. The acknowledgement is what establishes the server's order: while it is outstanding, every remote operation the server delivers was ordered before the local one, and once it arrives, everything after it was ordered later. Writes to different blocks, different plugins or different keys SHALL be left untransformed, since one cannot shift another's position. An operation carrying no revision of its own SHALL lose to whatever it is transformed against. Such an operation comes from an undo or redo stack, whose entries are built from model events and are never numbered, while an operation from the server always is; and the operation it is transformed against has already been applied to the document. Keeping it would leave an undo step that writes a value the document has moved on from, and whose recorded previous value is older still, so undoing a local write that a collaborator had overwritten would delete the collaborator's value. Transformation SHALL also accept a plugin data operation as the operation being transformed *against*, rather than rejecting its index kind. The `Modify` operation payload type SHALL admit any JSON value, including primitives.
+
+#### Scenario: Local plugin data change becomes an operation
+- **GIVEN** the local user changes `anchors.visible` on block 1 from `true` to `false`
+- **WHEN** `CollaborationManager` handles the resulting event
+- **THEN** it sends a `Modify` operation on `Index.pluginData(1, 'anchors', 'visible')` with `payload` `false` and `prevPayload` `true`, rather than logging an unknown event
+
+#### Scenario: Inverting a plugin data operation
+- **GIVEN** a plugin data `Modify` operation with `payload` `false` and `prevPayload` `true`
+- **WHEN** `inverse()` is called
+- **THEN** it returns a `Modify` operation on the same index with `payload` `true` and `prevPayload` `false`
+
+#### Scenario: Transforming against a block insertion
+- **GIVEN** a plugin data operation on block 2 and a concurrent block insertion at index 0
+- **WHEN** the plugin data operation is transformed against the insertion
+- **THEN** its index targets block 3
+
+#### Scenario: A plugin data operation as the against-operation
+- **GIVEN** any pending or stacked operation and a plugin data `Modify` operation to transform it against
+- **WHEN** the transformation runs — as it does for pending operations on the client, for the undo/redo stacks on every remote plugin data event, and for conflicting operations on the server
+- **THEN** it completes and returns an operation, rather than throwing an unsupported-index error
+
+#### Scenario: A scalar payload
+- **GIVEN** a plugin data change whose value is a boolean
+- **WHEN** the operation is constructed
+- **THEN** the payload type admits it, so scalar plugin data is representable in an operation
+
+#### Scenario: Transforming against removal of its block
+- **GIVEN** a plugin data operation on block 2 and a concurrent removal of block 2
+- **WHEN** the plugin data operation is transformed against the removal
+- **THEN** it becomes a `Neutral` operation
+
+#### Scenario: Two clients write the same key concurrently
+- **GIVEN** clients A and B both write `anchors.visible` on block 1, and the server applies A before B
+- **WHEN** B receives A's operation while its own write is still unacknowledged
+- **THEN** A's operation is transformed to `Neutral` on B, so B keeps the value the server will end up holding rather than being left on A's
+
+#### Scenario: A collaborator writes while the local write is in flight
+- **GIVEN** the local client has sent a write of `anchors.color` and is waiting for its acknowledgement
+- **WHEN** a collaborator's write to the same key arrives before that acknowledgement
+- **THEN** it is transformed to `Neutral` and not applied, since the server will apply the local write after it -- and a client's own operations are not echoed back to it, so nothing would restore the value the server ends up holding
+
+#### Scenario: A collaborator writes once the local write is acknowledged
+- **GIVEN** the local client's write of `anchors.color` has been acknowledged
+- **WHEN** a collaborator's write to the same key arrives
+- **THEN** it is applied, because the server ordered it after the local write
+
+#### Scenario: Undoing a write a collaborator overwrote
+- **GIVEN** the local user wrote `anchors.color` on block 0, and a collaborator then overwrote the same key
+- **WHEN** the undo stack is transformed against the collaborator's operation
+- **THEN** the entry is dropped, so undo reaches past it rather than writing a value that is gone and deleting the collaborator's
+
+#### Scenario: Undoing a write to a key nobody else touched
+- **GIVEN** the local user wrote `anchors.color` and a collaborator wrote `anchors.label` on the same block
+- **WHEN** the undo stack is transformed against the collaborator's operation
+- **THEN** the entry survives, because the two do not describe the same value
+
+#### Scenario: Concurrent writes to different keys
+- **GIVEN** a plugin data operation on `anchors.visible` and a concurrent one on `anchors.id` of the same block
+- **WHEN** one is transformed against the other
+- **THEN** it is returned unchanged, because the two do not describe the same value
+

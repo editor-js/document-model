@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
-import type { DataKey, BlockTuneName, DocumentId } from '@editorjs/model-types';
+import type { DataKey, PluginDataName, DocumentId } from '@editorjs/model-types';
 import {
   Index,
   IndexKind,
@@ -8,7 +8,8 @@ import {
   DocumentIndex,
   PropertyIndex,
   TextIndex,
-  TuneIndex
+  PluginDataIndex,
+  PartialIndex
 } from './index.js';
 
 describe('Index', () => {
@@ -57,19 +58,19 @@ describe('Index', () => {
       });
     });
 
-    describe('Index.tune()', () => {
-      it('creates a TuneIndex with block, tune name, and tune key', () => {
-        const idx = Index.tune(3, 'header' as BlockTuneName, 'level');
+    describe('Index.pluginData()', () => {
+      it('creates a PluginDataIndex with block, plugin name, and plugin key', () => {
+        const idx = Index.pluginData(3, 'anchors' as PluginDataName, 'id');
 
-        expect(idx).toBeInstanceOf(TuneIndex);
-        expect(idx.kind).toBe(IndexKind.Tune);
+        expect(idx).toBeInstanceOf(PluginDataIndex);
+        expect(idx.kind).toBe(IndexKind.PluginData);
         expect(idx.blockIndex).toBe(3);
-        expect(idx.tuneName).toBe('header');
-        expect(idx.tuneKey).toBe('level');
+        expect(idx.pluginName).toBe('anchors');
+        expect(idx.pluginKey).toBe('id');
       });
 
       it('optionally accepts documentId', () => {
-        const idx = Index.tune(3, 'header' as BlockTuneName, 'level', 'doc1' as DocumentId);
+        const idx = Index.pluginData(3, 'anchors' as PluginDataName, 'id', 'doc1' as DocumentId);
 
         expect(idx.documentId).toBe('doc1');
       });
@@ -137,8 +138,8 @@ describe('Index', () => {
       expect(Index.data(0, 'key' as DataKey).kind).not.toBe(IndexKind.Block);
     });
 
-    it('TuneIndex kind is not Block', () => {
-      expect(Index.tune(0, 'tune' as BlockTuneName, 'key').kind).not.toBe(IndexKind.Block);
+    it('PluginDataIndex kind is not Block', () => {
+      expect(Index.pluginData(0, 'anchors' as PluginDataName, 'key').kind).not.toBe(IndexKind.Block);
     });
   });
 
@@ -389,13 +390,13 @@ describe('Index', () => {
       expect(parsed.documentId).toBe('doc1');
     });
 
-    it('round-trips a TuneIndex', () => {
-      const idx = Index.tune(3, 'header' as BlockTuneName, 'level');
-      const parsed = Index.parse(idx.serialize()) as TuneIndex;
+    it('round-trips a PluginDataIndex', () => {
+      const idx = Index.pluginData(3, 'anchors' as PluginDataName, 'id');
+      const parsed = Index.parse(idx.serialize()) as PluginDataIndex;
 
       expect(parsed.blockIndex).toBe(3);
-      expect(parsed.tuneName).toBe('header');
-      expect(parsed.tuneKey).toBe('level');
+      expect(parsed.pluginName).toBe('anchors');
+      expect(parsed.pluginKey).toBe('id');
     });
 
     it('round-trips a DataIndex', () => {
@@ -443,11 +444,11 @@ describe('Index', () => {
         id: 'doc1' });
     });
 
-    it('emits the expected wire object for TuneIndex', () => {
-      expect(JSON.parse(Index.tune(3, 'header' as BlockTuneName, 'level').serialize())).toEqual({ k: 'tune',
+    it('emits the expected wire object for PluginDataIndex', () => {
+      expect(JSON.parse(Index.pluginData(3, 'anchors' as PluginDataName, 'id').serialize())).toEqual({ k: 'plugin',
         b: 3,
-        tune: 'header',
-        key: 'level' });
+        plugin: 'anchors',
+        key: 'id' });
     });
 
     it('emits the expected wire object for DataIndex', () => {
@@ -502,6 +503,40 @@ describe('Index', () => {
 
     it('throws when parsing an unknown kind', () => {
       expect(() => Index.parse('{"k":"unknown"}')).toThrow('Unknown index kind');
+    });
+  });
+
+  describe('PartialIndex#resolve() for plugin data', () => {
+    it('should resolve to a PluginDataIndex once block index is attached', () => {
+      const resolved = new PartialIndex({ pluginName: 'anchors' as PluginDataName,
+        pluginKey: 'id' })
+        .withBlockIndex(2)
+        .resolve();
+
+      expect(resolved).toBeInstanceOf(PluginDataIndex);
+      expect((resolved as PluginDataIndex).pluginName).toBe('anchors');
+      expect((resolved as PluginDataIndex).pluginKey).toBe('id');
+      expect((resolved as PluginDataIndex).blockIndex).toBe(2);
+    });
+
+    it('should throw when the plugin key is missing', () => {
+      expect(() => new PartialIndex({ pluginName: 'anchors' as PluginDataName })
+        .withBlockIndex(2)
+        .resolve()).toThrow('PluginDataIndex requires pluginKey');
+    });
+
+    it('should throw when the plugin name is missing', () => {
+      expect(() => new PartialIndex({ pluginKey: 'id' })
+        .withBlockIndex(2)
+        .resolve()).toThrow('PluginDataIndex requires pluginName');
+    });
+
+    it('should throw when combined with a data key', () => {
+      expect(() => new PartialIndex({ dataKey: 'text' as DataKey,
+        pluginName: 'anchors' as PluginDataName,
+        pluginKey: 'id' })
+        .withBlockIndex(2)
+        .resolve()).toThrow('DataIndex cannot be combined with pluginName');
     });
   });
 });

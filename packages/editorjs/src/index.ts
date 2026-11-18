@@ -9,7 +9,8 @@ import { ItalicInlineTool } from '@editorjs/italic';
 import { LinkInlineTool } from '@editorjs/inline-link';
 import { ClipboardPlugin } from '@editorjs/clipboard-plugin';
 import { ShortcutsPlugin } from '@editorjs/shortcuts-plugin';
-import { EditorjsUI, BlocksUI, InlineToolbarUI, ToolbarUI, ToolboxUI } from '@editorjs/ui';
+import { DefaultBlockSettingsPlugin } from '@editorjs/default-block-settings-plugin';
+import { EditorjsUI, BlocksUI, BlockSettingsUI, InlineToolbarUI, ToolbarUI, ToolboxUI } from '@editorjs/ui';
 import { mergeTools } from './mergeTools.js';
 import { reportUnlessAborted } from './reportUnlessAborted.js';
 
@@ -77,6 +78,7 @@ export default class EditorJS {
      */
     this.#core.use(ClipboardPlugin);
     this.#core.use(ShortcutsPlugin);
+    this.#core.use(DefaultBlockSettingsPlugin);
 
     /**
      * Default tools merged with user-provided `config.tools` (user wins by name).
@@ -93,6 +95,7 @@ export default class EditorJS {
     this.#core.use(InlineToolbarUI);
     this.#core.use(ToolbarUI);
     this.#core.use(ToolboxUI);
+    this.#core.use(BlockSettingsUI);
 
     this.#readyPromise = this.#core.initialize();
 

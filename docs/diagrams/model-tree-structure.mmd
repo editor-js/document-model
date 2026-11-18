@@ -38,7 +38,7 @@ classDiagram
   class BlockNode {
     +name: BlockToolName
     +data: BlockNodeData
-    +tunes: Record~BlockTuneName, BlockTune~
+    +plugins: Record~PluginDataName, PluginDataNode~
     +parent: EditorDocument
     +createDataNode(key, data)
     +removeDataNode(key)
@@ -47,9 +47,10 @@ classDiagram
     +getFragments(key, ...): InlineFragment[]
   }
 
-  class BlockTune {
-    +name: BlockTuneName
+  class PluginDataNode {
+    +name: PluginDataName
     +data: Record~string, unknown~
+    +isEmpty: boolean
     +update(key, value)
   }
 
@@ -123,7 +124,7 @@ classDiagram
   EditorJSModel --|> EventBus
   EditorDocument --|> EventBus
   BlockNode --|> EventBus
-  BlockTune --|> EventBus
+  PluginDataNode --|> EventBus
   ValueNode --|> EventBus
   ParentInlineNode --|> EventBus
 
@@ -134,7 +135,7 @@ classDiagram
   EditorDocument "1" *-- "0..*" BlockNode : children
   BlockNode "1" *-- "0..*" TextNode : data[key]
   BlockNode "1" *-- "0..*" ValueNode : data[key]
-  BlockNode "1" *-- "0..*" BlockTune : tunes[name]
+  BlockNode "1" *-- "0..*" PluginDataNode : plugins[name]
 
   %% Inline tree
   TextNode --|> ParentInlineNode

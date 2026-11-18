@@ -5,17 +5,16 @@ import { isFunction } from '@editorjs/helpers';
 import { type BlockToolFacade } from './BlockToolFacade.js';
 import { type InlineToolFacade } from './InlineToolFacade.js';
 import { ToolType, BaseToolOptionKey } from '../../entities/index.js';
-import { type BlockTuneFacade } from './BlockTuneFacade.js';
 import type {
-  BlockTool, BlockToolConstructor, InlineTool, InlineToolConstructor, BlockTuneConstructor,
-  ToolTypeToOptions, ToolStaticOptions, BlockToolOptions, InlineToolOptions, BlockTuneOptions,
+  BlockTool, BlockToolConstructor, InlineTool, InlineToolConstructor,
+  ToolTypeToOptions, ToolStaticOptions, BlockToolOptions, InlineToolOptions,
   ToolOptionsFactory
 } from '../../entities/index.js';
 import type { EditorAPI } from '../../api';
 import type { ToolPluginOptions, ToolPluginOptionsMap } from '../../index.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- need to allow any type here so extended interfaces pass
-export type ToolConstructable = BlockToolConstructor<any, any, any> | InlineToolConstructor | BlockTuneConstructor;
+export type ToolConstructable = BlockToolConstructor<any, any, any> | InlineToolConstructor;
 
 // Re-export canonical option-key enums so facades/consumers can import from one place
 export { BaseToolOptionKey } from '../../entities/BaseTool.js';
@@ -31,8 +30,6 @@ export enum UserToolOptions {
   Toolbox = 'toolbox',
   /** Inline tools enabled for blocks of this type. */
   EnabledInlineTools = 'inlineToolbar',
-  /** Block tunes enabled for blocks of this type. */
-  EnabledBlockTunes = 'tunes',
   /** Plugin-specific configuration. */
   Config = 'config'
 }
@@ -40,7 +37,7 @@ export enum UserToolOptions {
 export type ToolOptions = ToolStaticOptions;
 
 // Re-export per-tool option types so consumers can import them from here
-export type { BlockToolOptions, InlineToolOptions, BlockTuneOptions };
+export type { BlockToolOptions, InlineToolOptions };
 
 /**
  * BlockToolFacade constructor options inteface
@@ -122,7 +119,7 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
   protected defaultPlaceholder?: string | false;
 
   /**
-   * Tool type: Block, Inline or Tune
+   * Tool type: Block or Inline
    */
   public abstract type: Type;
 
@@ -253,13 +250,6 @@ export abstract class BaseToolFacade<Type extends ToolType = ToolType, ToolClass
    */
   public isBlock(): this is BlockToolFacade {
     return this.type === ToolType.Block;
-  }
-
-  /**
-   * Returns true if Tools is tune
-   */
-  public isTune(): this is BlockTuneFacade {
-    return this.type === ToolType.Tune;
   }
 
   /**

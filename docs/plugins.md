@@ -2,7 +2,7 @@
 
 ## Package boundary
 
-Tools and plugins should only depend on `@editorjs/sdk` — never on `@editorjs/model` or `@editorjs/model-types` directly. `sdk` re-exports every type a tool/plugin author needs (`Index`, event classes, `BlockTool`/`InlineTool`/`BlockTune` contracts, etc.); `model` is the engine implementation that `core` and `ot-server` orchestrate, and `model-types` is an internal foundation shared only by `model` and `sdk`. Neither is part of the stable, tool-facing API.
+Tools and plugins should only depend on `@editorjs/sdk` — never on `@editorjs/model` or `@editorjs/model-types` directly. `sdk` re-exports every type a tool/plugin author needs (`Index`, event classes, `BlockTool`/`InlineTool` contracts, etc.); `model` is the engine implementation that `core` and `ot-server` orchestrate, and `model-types` is an internal foundation shared only by `model` and `sdk`. Neither is part of the stable, tool-facing API.
 
 ## Registration
 
@@ -26,7 +26,10 @@ Tools are registered via `core.use(ToolConstructor, options)` during setup. The 
 | UI Plugin | `EditorjsPlugin` | UI component/behavior registered via `core.use(...)` |
 | Block Tool | `BlockTool` (from config `tools`) | Block rendering and block-specific behavior |
 | Inline Tool | `InlineTool` (from config `tools`) | Selection formatting actions |
-| Block Tune | `BlockTune` (from config `tools`) | Per-block tune behavior |
+
+There is no Block Tune tool kind. What v2 called a tune is a UI plugin: it puts an item in the
+[block settings menu](#block-settings) and stores its state as
+[per-block plugin data](#per-block-plugin-data).
 
 ## Initialization sequence
 
@@ -114,11 +117,112 @@ Merging is shallow **at the plugin-id level**: a slice supplied through `use()` 
 const { shortcut } = toolFacade.pluginOptions('shortcuts') ?? {};
 ```
 
+## Block settings
+
+The per-block settings menu — the thing v2 called "block tunes" — is no longer a kind of entity.
+`BlockSettingsUI` renders the popover and the button that opens it, announcing both through
+`ui:block-settings:rendered` for the toolbar to place, and owns no items of its own; a plugin
+contributes to it by registering a *provider*:
+
+```ts
+const unregister = api.plugins['block-settings']?.register(ctx => ({
+  title: 'Anchor',
+  icon: IconLink,
+  isActive: Boolean(api.blocks.getPluginData({ block: ctx.blockId, plugin: 'anchors' })),
+  onActivate: () => setAnchor(ctx.blockId),
+}));
+```
+
+A provider is asked again every time the menu opens, so an item's `isActive`, `isDisabled` and
+`title` can be derived from current state rather than cached. Return `undefined` (or an empty
+array) to contribute nothing for a given block — a provider that opts out adds no separator
+either. Item behaviour comes entirely from the returned config — a `BlockSettingsMenuConfig`, which is
+ui-kit's popover-item shape: `onActivate`, `closeOnActivate`, `children` for a submenu, or a
+`confirmation` whose own handler runs on the second activation. It is deliberately not
+`@editorjs/sdk`'s `MenuConfig`, which is the narrower shape inline tools return from
+`getToolbarConfig`.
+
+The button that opens the menu is a toggle: activating it while the menu is open dismisses it.
+It acts on the block the pointer is over, or — with no pointer involved — the one the caret is
+in, so the menu is reachable from the keyboard alone.
+
+Contributions are concatenated in ascending `order` (default `0`, ties broken by registration
+order), separated from one another. `@editorjs/default-block-settings-plugin` registers at
+`order: 1000` so the built-in Move up / Move down / Delete sit last; it is the reference example
+of a former "tune" written as a plain plugin, with no privileged path into the menu.
+
+### Resolve positions from `blockId`, not `blockIndex`
+
+The provider context carries both, but only `blockId` is durable:
+
+```ts
+onActivate: () => {
+  const index = api.blocks.getIndexById(ctx.blockId);
+
+  // The block may be gone — removed by a collaborator, or by an undo — while the menu was open.
+  if (index === -1) {
+    return;
+  }
+
+  api.blocks.move({ fromIndex: index, toIndex: index - 1 });
+}
+```
+
+`ctx.blockIndex` is only true at the moment the menu was built. A menu can stay open while a
+collaborator inserts a block above the target, or while an undo runs, and a handler acting on the
+stale index then moves the wrong block. Deriving a *disabled state* from the index is fine, since
+going stale only greys an item out — deriving an *action* from it is not.
+
+The menu is absent in a headless setup, which is why the lookup above is optional: a plugin
+registered on a `Core` without `BlockSettingsUI` finds nothing under `api.plugins['block-settings']`
+and should simply contribute nothing rather than fail.
+
+## Per-block plugin data
+
+A plugin stores its own data on a block through `api.blocks`, under a key that is by convention the
+plugin's `name`. The entry is created on first write, so there is nothing to initialize:
+
+```ts
+api.blocks.updatePluginData({ block: blockId, plugin: 'anchors', data: { id: 'intro' } });
+
+api.blocks.getPluginData({ block: blockId, plugin: 'anchors' }); // → { id: 'intro' }
+```
+
+Declare the shape once and both calls are typed, with a wrong value a compile error:
+
+```ts
+declare module '@editorjs/sdk' {
+  interface EditorjsPluginDataMap {
+    anchors: { id: string };
+  }
+}
+```
+
+A plugin that never augments the map still works: its data is typed as `Record<string, unknown>`.
+
+Things worth knowing before relying on it:
+
+- **A key set to `undefined` is removed**, and an entry with no keys left is dropped from the
+  serialized block. So `getPluginData` returns `undefined` both for a plugin that never wrote
+  anything and for one whose last key was removed.
+- **Each key is its own change.** Writing two keys in one call produces two modifications, so one
+  undo reverts only the last of them. Write a single key when the change must be atomic.
+- **Concurrent writes to the same key resolve last-writer-wins.** Two collaborators toggling
+  different keys of the same plugin do not collide; two writing the same key do, and the operation
+  the server orders last wins. Split state across keys when that matters.
+- **Data for an unregistered plugin is preserved**, not dropped, so opening a document in an editor
+  without that plugin does not lose it.
+- **Blocks keep their data through `move` and `convert`**; a `split` leaves it on the original block
+  and gives the new one none.
+- **v2 documents carry over**: a v2 block's `tunes` are mapped onto the same keys on load, and a
+  tune whose data was not an object lands under a `value` key.
+
 ## TypeScript caveats
 
-Both features — calling a plugin API and configuring a plugin from a tool — are typed the same
-way: `@editorjs/sdk` declares two empty interfaces (`EditorjsPluginApiMap`, `ToolPluginOptionsMap`)
-and each plugin package fills in its own row via module augmentation. That gives inference with no
+Three features — calling a plugin API, configuring a plugin from a tool, and storing per-block
+plugin data — are typed the same way: `@editorjs/sdk` declares three empty interfaces
+(`EditorjsPluginApiMap`, `ToolPluginOptionsMap`, `EditorjsPluginDataMap`) and each plugin package
+fills in its own row via module augmentation. That gives inference with no
 casts, but it comes with rules worth knowing before you hit them.
 
 ### The augmentation must be in *your* compilation
@@ -267,6 +371,11 @@ Programmatic block management — delegates to `BlocksManager`.
 | `render(document)` | Re-initialize the document from serialised data |
 | `clear()` | Remove all blocks |
 | `getBlocksCount()` | Return the total number of blocks |
+| `getIdByIndex(index)` | Id of the block at that index, or `undefined` |
+| `getIndexById(id)` | Position of the block with that id, or `-1` |
+| `getToolByIndex(index)` | Tool name of the block at that index, or `undefined` |
+| `getPluginData({ block, plugin })` | Read a plugin's per-block data, or `undefined` |
+| `updatePluginData({ block, plugin, data, userId? })` | Merge keys into a plugin's per-block data |
 
 ### `api.selection`
 

@@ -1,7 +1,7 @@
 # editorjs-bundle Specification
 
 ## Purpose
-`@editorjs/editorjs` is the batteries-included entry point for Editor.js: its default export `EditorJS` composes the headless `@editorjs/core` engine with `DOMAdapters`, `CollaborationManager`, a default set of tools (paragraph, bold, italic, link) and plugins (clipboard, shortcuts), and the default UI, so a caller can get a fully functional editor from configuration alone. It auto-initializes from the constructor, exposes an `isReady` promise, and accepts a v2-style `config.tools` map merged over the defaults with override-by-name.
+`@editorjs/editorjs` is the batteries-included entry point for Editor.js: its default export `EditorJS` composes the headless `@editorjs/core` engine with `DOMAdapters`, `CollaborationManager`, a default set of tools (paragraph, bold, italic, link) and plugins (clipboard, shortcuts, default block settings), and the default UI, so a caller can get a fully functional editor from configuration alone. It auto-initializes from the constructor, exposes an `isReady` promise, and accepts a v2-style `config.tools` map merged over the defaults with override-by-name.
 ## Requirements
 ### Requirement: Batteries-included editor entry point
 The system SHALL provide `@editorjs/editorjs`, a package whose default export is an `EditorJS` class that composes `@editorjs/core` with a default set of tools, plugins, infrastructure, and UI so that a caller can construct a fully functional editor from configuration alone.
@@ -9,7 +9,7 @@ The system SHALL provide `@editorjs/editorjs`, a package whose default export is
 #### Scenario: Default composition
 - **GIVEN** a caller constructs `new EditorJS(config)`
 - **WHEN** the instance is created
-- **THEN** it registers the DOM adapter (`DOMAdapters`), collaboration (`CollaborationManager`), default block tool (paragraph), default inline tools (bold, italic, link), default plugins (clipboard, shortcuts), and the default UI packages on the underlying `Core` before initialization
+- **THEN** it registers the DOM adapter (`DOMAdapters`), collaboration (`CollaborationManager`), default block tool (paragraph), default inline tools (bold, italic, link), default plugins (clipboard, shortcuts, default block settings), and the default UI packages (including `BlockSettingsUI`) on the underlying `Core` before initialization
 
 #### Scenario: Delegates the engine to Core
 - **GIVEN** `EditorJS` composes the editor

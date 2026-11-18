@@ -1,5 +1,5 @@
 /* eslint-disable jsdoc/require-jsdoc -- inline test stubs */
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { afterEach, beforeEach, describe, it, expect, jest } from '@jest/globals';
 import { CoreEventType, PluginType, ToolType } from '@editorjs/sdk';
 import type { CoreConfig, EditorjsPluginParams } from '@editorjs/sdk';
 import Core from './index.js';
@@ -57,6 +57,22 @@ class StubPlugin {
 
   constructor() {
     StubPlugin.instances += 1;
+  }
+}
+
+/**
+ * Stands in for a former Block Tune: a plain plugin that contributes an item to the
+ * block settings menu. It carries no `type`, so `use()` must route it to the plugins
+ * container rather than to any tool collection.
+ */
+class StubSettingsPlugin {
+  public static type = PluginType.Plugin as const;
+  public static name = 'delete-block';
+
+  public static instances = 0;
+
+  constructor() {
+    StubSettingsPlugin.instances += 1;
   }
 }
 
@@ -487,6 +503,41 @@ describe('Core', () => {
 
       expect(() => core.use(createPlugin('a') as typeof StubPlugin)).toThrow(/destroyed/);
       await expect(core.initialize()).rejects.toThrow(/destroyed/);
+    });
+  });
+
+  describe('registering a former block tune', () => {
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('should instantiate a block settings plugin as a plugin and keep it out of the tools handed to ToolsManager', async () => {
+      StubSettingsPlugin.instances = 0;
+
+      const prepareTools = jest.spyOn(ToolsManager.prototype, 'prepareTools');
+      const core = new Core(createConfig());
+
+      core.use(StubAdapter);
+      core.use(StubBlockTool);
+      core.use(StubSettingsPlugin);
+
+      await core.initialize();
+
+      const prepared = prepareTools.mock.calls[0][0];
+
+      expect(StubSettingsPlugin.instances).toBe(1);
+      expect(prepared.map(([tool]) => tool.name)).toEqual(['paragraph']);
+    });
+
+    it('should no longer expose a blockTunes collection on ToolsManager', () => {
+      type ManagerCollections = {
+        // @ts-expect-error -- `blockTunes` went with the tune tool kind
+        blockTunes: ToolsManager['blockTunes'];
+      };
+
+      const probe: ManagerCollections | undefined = undefined;
+
+      expect(probe).toBeUndefined();
     });
   });
 });

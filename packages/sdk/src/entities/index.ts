@@ -1,7 +1,6 @@
 export * from './BaseTool.js';
 export type * from './InlineTool.js';
 export * from './BlockTool.js';
-export type * from './BlockTune.js';
 export type * from './Config.js';
 export * from './BlockToolAdapter.js';
 export * from './EventBus/index.js';

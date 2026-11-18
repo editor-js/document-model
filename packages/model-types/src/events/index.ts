@@ -11,4 +11,4 @@ export { CaretManagerCaretRemovedEvent } from './CaretManagerCaretRemovedEvent.j
 export { BlockAddedEvent } from './BlockAddedEvent.js';
 export { BlockRemovedEvent } from './BlockRemovedEvent.js';
 export { PropertyModifiedEvent } from './PropertyModifiedEvent.js';
-export { TuneModifiedEvent } from './TuneModifiedEvent.js';
+export { PluginDataModifiedEvent } from './PluginDataModifiedEvent.js';
