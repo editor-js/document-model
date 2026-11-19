@@ -51,12 +51,14 @@ Quick links:
 
 ## Development
 
+Pull in submodules `git submodule update --init`
+
 ```bash
 # Install all package dependencies
 yarn install
 
 # Build all packages
-yarn workspaces run build
+yarn run build
 
 # Run tests for a specific package (e.g. model)
 cd packages/model && yarn test
