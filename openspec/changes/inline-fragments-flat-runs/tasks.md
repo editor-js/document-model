@@ -5,15 +5,15 @@
 - [x] 1.3 Add behaviour-preservation tests that pass on the current implementation: insertion inheritance (at the end of a formatted stretch, at index 0, after unformatted text, into empty text), range queries (partial overlap returns the whole fragment, touching fragments and empty ranges return nothing, filtering by tool), data replacement and the identical-data no-op, adjacent equal/different data, `removeText` inside formatting, removing all formatted text, `removeText` joining equal fragments, unformat restoring the previous state, zero-length format, and the validation errors
 - [x] 1.4 Commit the tests on their own so the implementation commit shows only the failing order-dependent cases turning green
 
-## 2. Run model
+## 2. Span model
 
-- [x] 2.1 Write failing tests for the private run helpers (`RunList/RunList.spec.ts`, `TextMark/TextMark.spec.ts`): `splitAt` (inside a run, on a boundary, at 0 and at the end), `merge` (equal neighbours joined, empty runs dropped, different data kept apart), and the fragment sweep (open/close on data change, maximal fragments, sort order)
-- [x] 2.2 Implement `TextMark` (immutable, `equals()` using `isSameInlineData`), `TextRun` (immutable data) and `RunList` (owns the runs and their invariants) classes under `inline-text/`, with mark equality only through `TextMark#equals`
-- [x] 2.3 Add a test-only `expectRunInvariants(runList)` helper (`RunList/runInvariants.testing.ts`, excluded from Stryker) checking no empty runs, no equal neighbours, one mark per tool and marks sorted by tool. Call it after every `RunList` spec and after every operation in the `RunList` random sequences (`RunList/RunList.random.spec.ts`). Keep `TextNode` free of test-only API
+- [x] 2.1 Write failing tests for the private span helpers (`FormattedText/FormattedText.spec.ts`, `InlineFormat/InlineFormat.spec.ts`): `splitAt` (inside a span, on a boundary, at 0 and at the end), `merge` (equal neighbours joined, empty spans dropped, different data kept apart), and the fragment sweep (open/close on data change, maximal fragments, sort order)
+- [x] 2.2 Implement `InlineFormat` (immutable, `equals()` using `isSameInlineData`), `TextSpan` (immutable data) and `FormattedText` (owns the spans and their invariants) classes under `inline-text/`, with format equality only through `InlineFormat#equals`
+- [x] 2.3 Add a test-only `expectSpanInvariants(formattedText)` helper (`FormattedText/spanInvariants.testing.ts`, excluded from Stryker) checking no empty spans, no equal neighbours, one format per tool and formats sorted by tool. Call it after every `FormattedText` spec and after every operation in the `FormattedText` random sequences (`FormattedText/FormattedText.random.spec.ts`). Keep `TextNode` free of test-only API
 
-## 3. TextNode on runs
+## 3. TextNode on spans
 
-- [x] 3.1 Rewrite `TextNode` to extend `EventBus` directly and store `#runs`: implement `length`, `getText`, `insertText`, `removeText`, `format`, `unformat`, `getFragments` and `serialized` as in design Decisions 2–5, dispatching the same events with the same payloads and keeping the current validation error messages
+- [x] 3.1 Rewrite `TextNode` to extend `EventBus` directly and store `#formattedText`: implement `length`, `getText`, `insertText`, `removeText`, `format`, `unformat`, `getFragments` and `serialized` as in design Decisions 2–5, dispatching the same events with the same payloads and keeping the current validation error messages
 - [x] 3.2 Make `format`/`unformat` return `void` and update their callers' types if needed (`BlockNode`)
 - [x] 3.3 Make the section 1 and 2 tests pass
 - [x] 3.4 Add the seeded random-sequence test (no new dependency, shared generator and reference model in `specs/randomOperations.testing.ts`, `TextNode/TextNode.random.spec.ts`): random `insertText`/`removeText`/`format`/`unformat` sequences compare text and fragments with a per-character reference model after every operation, then check that a `TextNode` rebuilt from `serialized` returns the same fragments, and that shuffling the serialized fragments before rebuilding gives the same result
@@ -26,20 +26,21 @@
 
 ## 5. Docs and wrap-up
 
-- [x] 5.1 Update `docs/model.md` (the `TextNode` bullet) and `docs/diagrams/model-tree-structure.mmd` (replace the `ParentInlineNode`/`FormattingInlineNode`/`TextInlineNode` classes with the run model) to describe runs
+- [x] 5.1 Update `docs/model.md` (the `TextNode` bullet) and `docs/diagrams/model-tree-structure.mmd` (replace the `ParentInlineNode`/`FormattingInlineNode`/`TextInlineNode` classes with the span model) to describe spans
 - [x] 5.2 Run `yarn lint` for the touched packages and `test:mutations` for `@editorjs/model`; make sure the score stays above the threshold
 - [x] 5.3 Check formatting in the playground once by hand (overlapping bold/italic, undo/redo of formatting)
 - [x] 5.4 Run `openspec validate inline-fragments-flat-runs --type change` and make sure it passes
 
 ## 6. Review fixes
 
-- [x] 6.1 Write failing tests, then store empty data as no data in `TextMark`, so equal data can't serialize differently depending on operation order
-- [x] 6.2 Write failing tests, then make `TextMark` keep a deep copy of its data and `RunList#toFragments` return copies (`cloneInlineData` in `utils/`)
+- [x] 6.1 Write failing tests, then store empty data as no data in `InlineFormat`, so equal data can't serialize differently depending on operation order
+- [x] 6.2 Write failing tests, then make `InlineFormat` keep a deep copy of its data and `FormattedText#toFragments` return copies (`cloneInlineData` in `utils/`)
 - [x] 6.3 Write failing tests, then apply initial fragments in a total order (start, end descending, tool, data) so conflicting fragments load the same in any order
 - [x] 6.4 Extend the shared random generator with empty data for non-link tools and random, possibly conflicting, initial fragments loaded in shuffled order against the reference model
-- [x] 6.5 Cache `RunList#length`, drop the `#merge` call for inserting into an empty list, and fold `getFragments` filters into one predicate
+- [x] 6.5 Cache `FormattedText#length`, drop the `#merge` call for inserting into an empty list, and fold `getFragments` filters into one predicate
 - [x] 6.6 Write a failing test, then put a separate copy of the inline data into `TextFormattedEvent`, so mutating the caller's object can't change collaboration operations or undo history built from the event
 - [x] 6.7 Write failing tests, then make `FormattingAdapter` re-query fragments over the widened re-render range until it stops growing (`collectFragmentsToRender` in `dom-adapters/src/utils/`), and start the range from the edit rather than from the first fragment
 - [x] 6.8 Write failing jsdom-backed `FormattingAdapter` tests (literal tags, entity-like text, HTML in text), then rebuild re-rendered ranges from a text node instead of `template.innerHTML`. Run `dom-adapters` Jest in jsdom and ESM mode so the specs can import the ESM `sdk` build
 - [x] 6.9 Write failing tests, then make `cloneInlineData` follow JSON for `undefined` (drop such keys, turn such array items into `null`), so the `JSON.stringify` tie-break for conflicting initial fragments is a total order over distinct data. Add `{ href: 'a', title: undefined }` to the random load sequences
 - [x] 6.10 Align the design and spec text with the code: the empty-range predicate, the `dom-adapters` re-render scenario, and which data survives when data is equal under the comparator but not identical
+- [x] 6.11 Name the internals after the public vocabulary (`InlineFormat`, `TextSpan`, `FormattedText`; `applyFormat`/`removeFormat`; `formats`/`spans`) and add the format → span → fragment glossary with a diagram to `docs/model.md`

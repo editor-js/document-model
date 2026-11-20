@@ -35,79 +35,79 @@ All four should return maximal fragments; the first two describe identical forma
 
 - Per-tool inclusivity (e.g. text typed right after a link not extending it).
 - Per-tool `rank` to control nesting between tools beyond the default sort.
-- Several marks of the same tool on one character (nested `<q>`, overlapping comments).
-- Mark identity (an id table so a link's data is stored once).
+- Several formats of the same tool on one character (nested `<q>`, overlapping comments).
+- Format identity (an id table so a link's data is stored once).
 - Inline embeds (atomic inline objects with their own content).
-- A balanced run container (rope / B-tree) for very long texts.
+- A balanced span container (rope / B-tree) for very long texts.
 
-Each of these fits the run model later without changing its core rule (see Decision 1); none is needed now.
+Each of these fits the span model later without changing its core rule (see Decision 1); none is needed now.
 
 ## Decisions
 
-### 1. Flat runs instead of a (canonical) tree
+### 1. Flat spans instead of a (canonical) tree
 
-`TextNode` stores its content in a `RunList`, which holds `TextRun`s:
+`TextNode` stores its content in a `FormattedText`, which holds `TextSpan`s:
 
 ```ts
-class TextMark { readonly tool: InlineToolName; readonly data?: InlineToolData; equals(mark: TextMark): boolean }
-class TextRun  { readonly text: string; readonly marks: readonly TextMark[] } // marks sorted by tool name
+class InlineFormat { readonly tool: InlineToolName; readonly data?: InlineToolData; equals(format: InlineFormat): boolean }
+class TextSpan  { readonly text: string; readonly formats: readonly InlineFormat[] } // formats sorted by tool name
 ```
 
 Invariants, restored at the end of every mutating operation:
 
-1. No empty runs. Empty text is `[]`.
-2. Adjacent runs never have equal mark sets (they are merged).
-3. A run carries at most one mark per tool.
+1. No empty spans. Empty text is `[]`.
+2. Adjacent spans never have equal format sets (they are merged).
+3. A span carries at most one format per tool.
 
-Invariant 2 makes the representation canonical: the runs are a pure function of "which marks apply to which character".
+Invariant 2 makes the representation canonical: the spans are a pure function of "which formats apply to which character".
 
 Alternatives considered:
 
 - **Keep the tree, rebuild it canonically after each operation** with a stack rule (start asc, end desc, tool name). Canonical, but keeps all the tree code, still needs a global fragment merge (a tree has to cut crossing fragments), and rebuilds the tree on every operation.
-- **Keep the tree, build the fewest-splits tree.** Exact minimisation is a dynamic program over mark orders per run, O(runs · k! · k) for k overlapping marks; it needs the run decomposition as input anyway, plus a deterministic tie-break.
+- **Keep the tree, build the fewest-splits tree.** Exact minimisation is a dynamic program over format orders per span, O(spans · k! · k) for k overlapping formats; it needs the span decomposition as input anyway, plus a deterministic tie-break.
 - **Fix only `getFragments` merging (#53).** Fixes the fragment output but leaves order-dependent fragment order, DOM nesting and loading.
 
 The tree's advantages (direct mapping from HTML, stored nesting, inline nodes with children) are not used by the model today, and the flat fragment format could not carry them anyway.
 
-### 2. Operations: split, change marks, merge
+### 2. Operations: split, change formats, merge
 
-All range edits use one helper, `#splitAt(offset)`, which guarantees a run boundary at `offset` (cutting a run in two with the same marks if needed). Then:
+All range edits use one helper, `#splitAt(offset)`, which guarantees a span boundary at `offset` (cutting a span in two with the same formats if needed). Then:
 
-- `format(tool, start, end, data)`: split at `start` and `end`; on every run in `[start, end)` set the mark for `tool` to `{ tool, data }` (adding it or replacing an existing one: Invariant 3 and "re-applying replaces data"); merge.
-- `unformat(tool, start, end)`: split at `start` and `end`; remove the `tool` mark from runs in `[start, end)`; merge.
-- `removeText(start, end)`: split at `start` and `end`; remove the runs in `[start, end)`, collecting their text; merge.
-- `insertText(text, index)`: find the run that owns `index` (Decision 4) and insert into its string. Mark sets don't change, so no split or merge is needed. Into empty text, create `{ text, marks: [] }`.
+- `format(tool, start, end, data)`: split at `start` and `end`; on every span in `[start, end)` set the format for `tool` to `{ tool, data }` (adding it or replacing an existing one: Invariant 3 and "re-applying replaces data"); merge.
+- `unformat(tool, start, end)`: split at `start` and `end`; remove the `tool` format from spans in `[start, end)`; merge.
+- `removeText(start, end)`: split at `start` and `end`; remove the spans in `[start, end)`, collecting their text; merge.
+- `insertText(text, index)`: find the span that owns `index` (Decision 4) and insert into its string. Format sets don't change, so no split or merge is needed. Into empty text, create `{ text, formats: [] }`.
 - A zero-length `format`/`unformat`/`removeText` range changes nothing (same as today).
 
-`#merge()` is one pass joining adjacent runs with equal mark sets and dropping empty runs. Operations stay O(runs), and runs exist only where formatting changes.
+`#merge()` is one pass joining adjacent spans with equal format sets and dropping empty spans. Operations stay O(spans), and spans exist only where formatting changes.
 
 Events are dispatched by `TextNode` exactly as today (same event classes, `PartialIndex({ textRange })`, context user, `{ tool, data }` payloads), including when `format` re-applies identical data.
 
 ### 3. Fragments: one sweep, then a fixed sort
 
-`getFragments()` walks the runs once with a map of open fragments by tool:
+`getFragments()` walks the spans once with a map of open fragments by tool:
 
-- a fragment closes at the current offset when the run no longer has a mark of that tool, or has one with different data;
-- a fragment opens for every mark of the run that isn't already open;
+- a fragment closes at the current offset when the span no longer has a format of that tool, or has one with different data;
+- a fragment opens for every format of the span that isn't already open;
 - everything still open closes at the end.
 
-The result is sorted by start ascending, end descending, tool name ascending. Because a fragment stays open across runs while its mark continues, fragments are maximal by construction (#53), and the sort makes the order, and therefore `FormattingAdapter`'s DOM nesting, deterministic. `surround()` wraps whatever is already in the range, so a containing fragment (listed first) wraps the contained one, and for equal ranges the tool later in name order ends up outside. Fragment objects, ranges and data are fresh copies per call, so callers can't change internal state through them.
+The result is sorted by start ascending, end descending, tool name ascending. Because a fragment stays open across spans while its format continues, fragments are maximal by construction (#53), and the sort makes the order, and therefore `FormattingAdapter`'s DOM nesting, deterministic. `surround()` wraps whatever is already in the range, so a containing fragment (listed first) wraps the contained one, and for equal ranges the tool later in name order ends up outside. Fragment objects, ranges and data are fresh copies per call, so callers can't change internal state through them.
 
 ### 4. Insertion inherits from the left
 
-`insertText` at index `i > 0` inserts into the run containing character `i - 1`; at `i = 0` it inserts into the first run. This reproduces today's `findChildByIndex` behaviour (`index <= offset + length` picks the left node) and was confirmed against the current implementation.
+`insertText` at index `i > 0` inserts into the span containing character `i - 1`; at `i = 0` it inserts into the first span. This reproduces today's `findChildByIndex` behaviour (`index <= offset + length` picks the left node) and was confirmed against the current implementation.
 
 ### 5. Range queries
 
-`getFragments(start, end, tool?)` validates the range, computes all fragments, and keeps those with `start < end && fragment.start < end && fragment.end > start`. An empty range returns nothing, even inside a fragment. That matches today's `#reduceChildrenInRange` (strict overlap, so touching fragments and empty ranges return nothing), but returns full merged ranges instead of the tree pieces that happened to overlap. `tool` filters the result as today. Computing all fragments per query is O(runs); it can be narrowed later if profiling shows a need.
+`getFragments(start, end, tool?)` validates the range, computes all fragments, and keeps those with `start < end && fragment.start < end && fragment.end > start`. An empty range returns nothing, even inside a fragment. That matches today's `#reduceChildrenInRange` (strict overlap, so touching fragments and empty ranges return nothing), but returns full merged ranges instead of the tree pieces that happened to overlap. `tool` filters the result as today. Computing all fragments per query is O(spans); it can be narrowed later if profiling shows a need.
 
-### 6. Single equality point for mark data
+### 6. Single equality point for format data
 
-Two marks are equal when their tools are equal and `isSameInlineData(a.data, b.data)` holds. Run merging (Invariant 2), the fragment sweep and the identical-data check all go through `TextMark#equals`. The `wire-inline-tool-data-comparator` change can replace the data comparison there with a per-tool comparator without touching the algorithms.
+Two formats are equal when their tools are equal and `isSameInlineData(a.data, b.data)` holds. Span merging (Invariant 2), the fragment sweep and the identical-data check all go through `InlineFormat#equals`. The `wire-inline-tool-data-comparator` change can replace the data comparison there with a per-tool comparator without touching the algorithms.
 
 Canonical state therefore holds up to data equality as the comparator decides it. Data that is equal but not identical (different key order with the default comparator, or fields a tool comparator ignores) is kept by a fixed rule rather than made unique: re-applying a tool replaces the data of every character in the range, so each character keeps the most recently applied data, and merging spans keeps the left one's data, so a fragment carries the data of its first character. A tool comparator must therefore treat every difference that should reach the output as inequality.
 
-`isSameInlineData` treats `undefined` and `{}` as equal, but they serialize differently. Without care, merging runs keeps whichever one was on the left and re-applying replaces one with the other, so equal formatting could serialize differently. `TextMark` therefore stores empty data as `undefined`, and fragments never carry `data: {}`. It also stores a deep copy of the data (`cloneInlineData`) made the way JSON serializes it: keys whose value is `undefined` are dropped and `undefined` array items become `null`. Without that, `{ href: 'a' }` and `{ href: 'a', title: undefined }` would serialize the same while `isSameInlineData` treats them as different, and `RunList#toFragments` hands out copies, so neither the object passed to `format` nor a returned fragment can change the runs behind the model's back.
+`isSameInlineData` treats `undefined` and `{}` as equal, but they serialize differently. Without care, merging spans keeps whichever one was on the left and re-applying replaces one with the other, so equal formatting could serialize differently. `InlineFormat` therefore stores empty data as `undefined`, and fragments never carry `data: {}`. It also stores a deep copy of the data (`cloneInlineData`) made the way JSON serializes it: keys whose value is `undefined` are dropped and `undefined` array items become `null`. Without that, `{ href: 'a' }` and `{ href: 'a', title: undefined }` would serialize the same while `isSameInlineData` treats them as different, and `FormattedText#toFragments` hands out copies, so neither the object passed to `format` nor a returned fragment can change the spans behind the model's back.
 
 Alternatives considered: normalizing to `{}` instead (adds `data: {}` to every fragment without data, changing serialized output for most documents); freezing the data (throws on consumers that mutate fragments in strict mode).
 
@@ -115,25 +115,37 @@ Alternatives considered: normalizing to `{}` instead (adds `data: {}` to every f
 
 Our own serialized fragments never overlap for one tool, but external input can (v2 import, hand-written or remote JSON). `TextNode#initialize` applies initial fragments sorted by start, end descending, tool name, then `JSON.stringify(data)`, so where fragments of one tool overlap with different data, the one that sorts later wins regardless of input order. Because stored data follows JSON (see Decision 6), two data values that stringify the same are equal, so this comparator is a total order over distinct data. The fragment output sort doesn't need that, since it never compares two fragments of the same tool with equal ranges. Key order can differ between equal values; it only decides which of two equal representations is kept.
 
-### 7. Module layout and exports
+### 7. Naming
+
+The public vocabulary is fixed: text is *formatted* (`format()`/`unformat()`, `TextFormattedEvent`, `FormattingAdapter`) and exposed as *fragments* (`InlineFragment`, serialized). Internal names follow it, so the three layers read as one model:
+
+- `InlineFormat`: what gets applied, a tool with its data and no range. An `InlineFragment` is an `InlineFormat` over a range.
+- `TextSpan`: a piece of text with the `InlineFormat`s that apply to every character in it. Spans never overlap.
+- `FormattedText`: the ordered spans, what `TextNode` stores.
+
+Alternatives considered: "mark" (ProseMirror's term) is a second word for a format, so it was dropped. "Run" is the established term for a span (OOXML, Google Docs, CoreText) but carries no meaning on its own and was replaced in review. "Segment" is taken by composite `TextIndex` segments. "Span" is also used for overlapping ranges in some APIs (Android), so the glossary in `docs/model.md` defines it explicitly, with a text → spans → fragments diagram.
+
+Spans are not exposed. Fragments stay the only public and serialized representation: they already fit HTML rendering and `FormattingAdapter`. Flat spans would suit other renderers better (PDF, native mobile text), and those usually start from saved data rather than a model instance, so they are better served by pure helpers converting fragments to spans and back. That is a follow-up, not part of this change.
+
+### 8. Module layout and exports
 
 - `TextNode/index.ts` keeps the public class. It extends `EventBus` directly (it no longer has a `ParentInlineNode` base) and keeps its constructor options (`value`, `fragments`).
-- `TextMark`, `TextRun` and `RunList` are classes in their own folders under `inline-text/` (the `inline-fragments/` folder is renamed, since it no longer holds fragments), not exported from the package:
-  - `TextMark` is an immutable value object with `equals()`.
-  - `TextRun` is an immutable data class with no behaviour, kept as a class for consistency with the other entities.
-  - `RunList` owns the runs and their invariants. Its public methods (`insert`, `remove`, `setMark`, `removeMark`, `toFragments`, `getText`, `length`, and a `runs` copy for tests) restore the invariants before returning. Splitting, merging and mark-set helpers are private.
-  - `TextNode` keeps validation, events and loading, and delegates storage to `RunList`.
-  - Fields are `public readonly`, not `#private`, because Jest's `toEqual` ignores `#` fields and run assertions would pass vacuously.
+- `InlineFormat`, `TextSpan` and `FormattedText` are classes in their own folders under `inline-text/` (the `inline-fragments/` folder is renamed, since it no longer holds fragments), not exported from the package:
+  - `InlineFormat` is an immutable value object with `equals()`.
+  - `TextSpan` is an immutable data class with no behaviour, kept as a class for consistency with the other entities.
+  - `FormattedText` owns the spans and their invariants. Its public methods (`insert`, `remove`, `applyFormat`, `removeFormat`, `toFragments`, `getText`, `length`, and a `spans` copy for tests) restore the invariants before returning. Splitting, merging and format-set helpers are private.
+  - `TextNode` keeps validation, events and loading, and delegates storage to `FormattedText`.
+  - Fields are `public readonly`, not `#private`, because Jest's `toEqual` ignores `#` fields and span assertions would pass vacuously.
 - `ParentInlineNode`, `FormattingInlineNode`, `TextInlineNode`, `InlineNode`, the `ParentNode`/`ChildNode` mixins and their mocks are deleted, along with their exports from `@editorjs/model`.
 - `format`/`unformat` return `void`.
 - Validation errors keep their current messages, since specs and callers may rely on them.
 
-### 8. Testing strategy
+### 9. Testing strategy
 
 - **Regression first.** The four cases from Context, plus behaviour-preservation tests (insertion inheritance, range queries, data replacement, removal, validation), are added to `TextNode/TextNode.integration.spec.ts` before the rewrite (the unit spec mocks the tree, so it can't host them). They run against the current implementation (the order-dependent ones fail) and stay unchanged afterwards as the contract.
-- **Invariant checks on `RunList`.** The invariants belong to `RunList`, so they are checked there: a test-only helper (a `*.testing.ts` file, excluded from Stryker) reads `RunList#runs` and asserts them after every `RunList` spec and after every step of the `RunList` random sequences. `TextNode` has no test-only API; its tests go through its public API only.
+- **Invariant checks on `FormattedText`.** The invariants belong to `FormattedText`, so they are checked there: a test-only helper (a `*.testing.ts` file, excluded from Stryker) reads `FormattedText#spans` and asserts them after every `FormattedText` spec and after every step of the `FormattedText` random sequences. `TextNode` has no test-only API; its tests go through its public API only.
 - **Seeded random sequences.** A shared helper (no new dependency) generates operation sequences and applies them to a per-character reference model:
-  - the `RunList` sequences check the invariants, text and fragments after every operation;
+  - the `FormattedText` sequences check the invariants, text and fragments after every operation;
   - the `TextNode` sequences check text and fragments after every operation, then that rebuilding from `serialized` gives the same fragments, and that shuffling the serialized fragments before loading gives the same result.
 - Integration specs (`InlineTree.integration.spec.ts`) are kept where they assert fragments and rewritten where they assert tree shape.
 
@@ -146,7 +158,7 @@ Our own serialized fragments never overlap for one tool, but external input can 
 - [`getFragments(start, end)` returns whole merged ranges where the tree used to return split pieces, so a fragment can reach outside the range `FormattingAdapter` queried and overlap fragments it never saw. Rendering the widened range with only the first query's fragments drops formatting from the DOM] → `FormattingAdapter` re-queries over the widened range until it stops growing (`collectFragmentsToRender`) and renders with every fragment overlapping it. The same loss already happened on `main` in some operation orders.
 - [Wider re-render ranges push more text through the adapter's rebuild, which assigned the plain text to `template.innerHTML`: text that looks like markup was parsed, shifting offsets and inserting live elements] → The range is rebuilt from a `DocumentFragment` holding a single text node. Pre-existing on `main`; fixed here because this change makes it easier to hit. `dom-adapters` specs now run in jsdom (and as ESM, like `core`) so the rendering is covered by tests.
 - [Removing exported classes is a breaking change for anyone importing them from `@editorjs/model`] → Nothing in the monorepo does. Listed as BREAKING in the proposal.
-- [Rewriting a mutation-tested module can lower the Stryker score] → The run code is much smaller; the regression, invariant and randomized tests target it directly. Run `test:mutations` for the model before opening the PR.
+- [Rewriting a mutation-tested module can lower the Stryker score] → The span code is much smaller; the regression, invariant and randomized tests target it directly. Run `test:mutations` for the model before opening the PR.
 - [Open conflicts with in-flight PRs] → #192 and #194 touch `EditorDocument`/`BlockNode`/`model-types`, not `inline-fragments/`. The folder rename only changes import paths in `BlockNode` and `entities/index.ts`, which may need a trivial rebase. #192 also edits `BlockNode` specs that build `TextNode`s, which only use the public API.
 
 ## Migration Plan
@@ -155,4 +167,4 @@ No data migration: the serialized format is unchanged and loading is order-indep
 
 ## Open Questions
 
-None blocking. Follow-ups once needed: per-tool rank and inclusivity, multi-instance marks, a mark id table, inline embeds.
+None blocking. Follow-ups once needed: per-tool rank and inclusivity, multi-instance formats, a format id table, inline embeds.
