@@ -89,13 +89,22 @@ Prefixes nest: `P` itself may contain array segments (`rows.2.cells.0`). Only th
 
 - *Server.* Incoming `A` is reduced through history op `B` (default order), so `A` shifts. `B` stays at `i` and `A` goes to `i+1`.
 - *Author of `A`.* `OTClient` transforms incoming `B` against its unacknowledged `A` with `againstIsLater: true`, so `B` stays at `i`. The local `A` moves to `i+1` because the model splices, and the client rebases `A` against `B` with the default order. The result is the same order.
-- *Undo stacks and the open batch.* An entry transformed against a remote insert at the same position (default order) shifts, which is correct: the remote element now sits in front of it.
+- *Undo stacks.* An entry rebased against a remote insert at the same position (default order) shifts, which is correct: the remote element now sits in front of it. D8 covers how the stacks are rebased.
 
-### D6. Same-key conflicts that do not shift
+### D6. Conflicting writes on the same or overlapping keys
 
-- **Modify vs. Modify, same block and key.** Last-writer-wins in server order: `op` becomes `Neutral` iff `against` comes later (`againstIsLater`). Otherwise `op` is kept and applied after `against`. This is the rule `fix-ot-client-convergence` sets for values.
-- **Insert vs. Insert on the same object key** (last segment not an integer). The same rule as Modify. With replace-on-insert (D4), the later write in server order wins on the server and on every client, exactly as for values.
-- **Modify vs. Insert / Delete** follows D5. A Modify under a deleted element or member becomes `Neutral`. A Modify inside a shifted element is re-keyed.
+A *write* here is a `Modify`, or an `Insert` at a key whose last segment is not an integer, which replaces whatever is at that key (D4). An Insert at an array position doesn't replace anything and follows D5. Two keys *overlap* when one equals the other or is a prefix of it by whole segments (`meta` and `meta.url`, but not `meta` and `metadata`). D5 shifting is applied first, and overlap is checked on the shifted keys.
+
+- **Two writes at the same key.** Last-writer-wins in server order: `op` becomes `Neutral` iff `against` comes later (`againstIsLater`). Otherwise `op` is kept and applied after `against`. This is the rule `fix-ot-client-convergence` sets for values. With replace-on-insert (D4), it also covers two Inserts creating the same object key.
+- **A write at an ancestor key against any operation under it.** The ancestor write replaces the subtree, so it wins regardless of order, as an object-member Delete already does in D5. An `op` under the key (`Insert`, `Delete`, `Modify` or a text operation) becomes `Neutral` when transformed against an ancestor write. An ancestor write transformed against an operation under its key is returned unchanged.
+- **Modify vs. Insert / Delete at array positions** follows D5. A Modify under a deleted element or member becomes `Neutral`. A Modify inside a shifted element is re-keyed.
+
+For example, X inserts `meta = {url: 'a'}` and Y concurrently inserts `meta.url = 'b'`. In either server order, everyone ends with `{url: 'a'}`.
+
+- *Server takes X first.* Y is transformed against X, becomes `Neutral`, and is stored and broadcast as one. Client X ignores it. Client Y transforms incoming X against its unacknowledged Y, and X stays unchanged, replacing `meta`.
+- *Server takes Y first.* X is transformed against Y and stays unchanged. Client Y applies X after its acknowledgement. Client X transforms incoming Y against its unacknowledged X, and Y becomes `Neutral`.
+
+*Alternative*: last-writer-wins across levels, where an earlier ancestor write is kept and a later descendant write is applied inside it. That gives the descendant write a chance to win, but the client that sent the descendant write must then patch the incoming ancestor payload with its own write. For a text operation under the key, that means applying a text operation to a serialized subtree, which the transformer can't do without a model. The rule above needs no payload rewriting and matches how D5 treats deleted members.
 
 Every new rule is added to the existing `#transformAgainstDataOperation` branch, which `#applyTransformation` already dispatches to for any `DataIndex` `againstOp`. Text operations stop being returned unchanged there. Data operations transformed against *text* operations, and anything transformed against *block* operations, keep their current rules: `DataIndex` already has `withBlockIndex`.
 
@@ -103,10 +112,30 @@ Every new rule is added to the existing `#transformAgainstDataOperation` branch,
 
 `Operation.inverse()` already swaps Insert ↔ Delete with the same payload and swaps `payload` / `prevPayload` for Modify. With D3 and D4 in place, collaboration undo of a data operation works without new code. Core's `UndoRedoManager` replays `event.data` for Added/Removed (the raw subtree, which matches the model) and inverts Modified, so it works once D1 (skip the marker), D2 (attribution) and D4 (`modifyData`) are in place.
 
+Collaboration undo also depends on the stacks being rebased correctly against remote operations, which D8 fixes.
+
+### D8. Undo stacks are rebased in each entry's own document
+
+`UndoRedoManager.transformStack` transforms every stack entry against the same remote operation. The remote operation is expressed in the current document, but only the newest entry was recorded there. Each older entry was recorded before the entries above it were applied, so the remote operation's position is wrong for it. With two local inserts at `items.0` and then a remote insert at `items.1`, both entries stay at `items.0`, and the second undo deletes the remote element instead of the first local one.
+
+This already happens with text, independently of this change. Type `a` into an empty paragraph, then type `b` at 0 as a separate undo step (`ba`). A remote user inserts `R` at 1 (`bRa`). The first undo deletes `b`. The second undo deletes position 0, which is now `R`, and leaves `a`. This change makes the same flaw reachable through array edits, so it fixes it here.
+
+`transformStacks` rebases each stack from the newest entry to the oldest, carrying the remote operation `r` back through the history:
+
+1. Take the entry's inverse `u`. It applies to the same document as `r`.
+2. Transform `u` against `r` with the default order (`r` counts as earlier), and store the inverse of the result as the new entry. An entry that becomes `Neutral` is dropped, as now.
+3. Transform `r` against `u` with `againstIsLater: true`. That expresses `r` in the document as it was before the entry, for the next older one. The flags in steps 2 and 3 are opposite, so a position tie resolves the same way in both.
+4. If `r` becomes `Neutral`, it was entirely inside what the entry added. The older entries don't depend on it and are left unchanged.
+
+A batch entry is rebased the same way, operation by operation, through its inverse operations in the order they apply. Today's batches (contiguous typing or deleting) give the same result as before, but the fold keeps them correct for any sequence. The redo stack is rebased with the same procedure, starting from the original `r`, because its newest entry was also recorded in the current document.
+
+*Alternative*: a separate bug change on `main`. The fix needs the transform order argument from `fix-ot-client-convergence` for step 3, and this change is where it becomes reachable for structural edits, so it lives here.
+
 ## Risks / Trade-offs
 
 - **Stale delete payloads.** A Delete carries a snapshot of the removed subtree. If a peer edits inside the element concurrently, the server still deletes the right element, but undoing the delete restores the snapshot without the peer's edit. Block deletes behave the same way today. This is accepted and documented.
-- **Undoing a Modify overwrites a newer remote value.** Undo stack entries are transformed with the default order, so a remote Modify on the same key does not neutralize them. Undo then restores the local `prevPayload` over the peer's value. This is current behavior for data operations and is unchanged.
+- **Undoing a Modify overwrites a newer remote value.** Undo stack entries are rebased with the default order (D8), so a remote Modify on the same key does not neutralize them. Undo then restores the local `prevPayload` over the peer's value. This is current behavior for data operations and is unchanged.
+- **A replaced subtree discards concurrent edits inside it.** Under D6, a write at `meta` wins over a concurrent write at `meta.url` even if the server orders the `meta.url` write later. This matches how deleting a member discards concurrent edits inside it.
 - **Dependency on `fix-ot-client-convergence`.** Until it lands, the server never transforms client operations and the client skips its in-flight operation, so concurrent array edits diverge exactly as concurrent text edits do today. The rules here are correct only on top of that fix.
 - **The numeric-segment convention** rules out digit-only object keys for array semantics. It is cheap to state, and no current tool uses such keys.
 - **Wire compatibility.** An older `ot-server` silently ignores `DataIndex` Insert/Delete (no model support) and drops `Modify`. Clients and server deploy together, which is already the rule for this monorepo.

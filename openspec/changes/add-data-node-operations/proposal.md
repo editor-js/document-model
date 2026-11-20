@@ -14,8 +14,9 @@ The v3 List tool depends on all four. It stores items as one flat array, `items:
 - **Model events carry their author.** `createDataNode` called on an existing block dispatches `DataNodeAddedEvent` synchronously with the context `userId`. `DataNodeAddedEvent`s dispatched while a `BlockNode` is being constructed are marked as initialization events. They still reach adapters, which is how tools render their inputs data-first, but they never become operations or undo steps, because `BlockAddedEvent` already carries the whole block.
 - **The model applies data operations by index.** `modifyData` applies a `DataIndex` change through `updateValue`. `insertData` on a `DataIndex` whose key already exists (outside an array) replaces the node instead of throwing, so concurrent creations of the same key converge on last-writer-wins.
 - **New operation kinds in `collaboration-manager`.** `DataNodeAdded` becomes an `Insert` and `DataNodeRemoved` a `Delete` on a `DataIndex`, with a one-element `payload: [subtree]`. `ValueModified` becomes a `Modify` with `payload` / `prevPayload`. `ModifyOperationData.payload` widens to any JSON value, the same widening as #192. The client and `ot-server` share one helper that turns an operation into model-shaped data.
-- **Transformer rules for array positions.** Inserts and deletes of array elements shift the positions of other operations in the same array: data operations and text operations whose `dataKey` passes through that array. Operations inside a deleted element or a deleted subtree become `Neutral`. Two inserts at the same position break the tie with the explicit transform order from `fix-ot-client-convergence`, so the server and every client order them the same way. Value vs. value on the same key keeps last-writer-wins under that same order.
-- **Undo/redo of data changes works** in both the core and collaboration undo managers. No new mechanism is needed: the existing inversion works once the model applies the inverted change.
+- **Transformer rules for array positions.** Inserts and deletes of array elements shift the positions of other operations in the same array: data operations and text operations whose `dataKey` passes through that array. Operations inside a deleted element or a deleted subtree become `Neutral`. Two inserts at the same position break the tie with the explicit transform order from `fix-ot-client-convergence`, so the server and every client order them the same way. Value vs. value on the same key keeps last-writer-wins under that same order. A write that replaces an object wins over concurrent operations inside it, the way deleting it would.
+- **Undo/redo of data changes works** in both the core and collaboration undo managers. The existing inversion works once the model applies the inverted change.
+- **Collaboration undo stacks are rebased in each entry's own document.** `UndoRedoManager` transforms every stack entry against the same remote operation, although only the newest one was recorded in the current document. With two local inserts at `items.0` and a remote insert at `items.1`, the second undo deletes the remote element. Text undo has the same flaw today. The stacks are now rebased from the newest entry to the oldest, carrying the remote operation back past each one.
 
 ## Capabilities
 
@@ -25,7 +26,7 @@ None.
 
 ### Modified Capabilities
 
-- `collaboration-manager`: data-node and value events become operations; new transformation rules for array positions and subtree deletion; undo/redo of data operations.
+- `collaboration-manager`: data-node and value events become operations; new transformation rules for array positions, subtree deletion and overlapping writes; undo/redo of data operations; undo/redo stacks rebased in each entry's own document.
 - `model`: `modifyData` / `insertData` semantics for `DataIndex`; synchronous, attributed `DataNodeAddedEvent` outside construction.
 - `model-types`: `DataNodeAddedEvent` gains the initialization marker, and bubbling keeps it.
 - `core`: the local `UndoRedoManager` records data-node and value changes and skips initialization events.
@@ -41,6 +42,6 @@ None.
 
 ## Impact
 
-- **Code**: `packages/model-types/src/events/DataNodeAddedEvent.ts`; `packages/model/src/entities/BlockNode/index.ts`, `EditorDocument/index.ts`, `EditorJSModel.ts`; `packages/collaboration-manager/src/{CollaborationManager,Operation,OperationsTransformer}.ts`; `packages/core/src/components/UndoRedoManager.ts`; `packages/ot-server/src/DocumentManager.ts`.
+- **Code**: `packages/model-types/src/events/DataNodeAddedEvent.ts`; `packages/model/src/entities/BlockNode/index.ts`, `EditorDocument/index.ts`, `EditorJSModel.ts`; `packages/collaboration-manager/src/{CollaborationManager,Operation,OperationsTransformer,UndoRedoManager,BatchedOperation}.ts`; `packages/core/src/components/UndoRedoManager.ts`; `packages/ot-server/src/DocumentManager.ts`.
 - **Wire format**: additive. `Insert` / `Delete` / `Modify` on `k: "data"` indexes, which already serialize. Clients and `ot-server` must deploy together, because an older server drops these operations.
 - **Docs**: `docs/collaboration.md` (operation kinds and the transform rules table), `docs/events.md` (`DataNodeAddedEvent` marker and synchronous dispatch). The "Step 1: transform each pending local op against the incoming remote op" in `docs/collaboration.md` does not match `OTClient`, which only transforms the incoming op against pending ones. This change does not alter that and notes it in design.md.
