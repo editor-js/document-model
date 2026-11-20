@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Tool-facing keyboard events
-The system SHALL forward native `keydown` events to the block tool owning the selection as a cancelable, bubbling DOM `CustomEvent` named `editor:keydown`, dispatched on the input element registered for the data key holding the selection start. The event's `detail` SHALL carry the native `KeyboardEvent` as `nativeEvent`, the data `key` and the `range` of the selection inside that input, and `inputs`, every input of the block the selection touches in document order with its range. The event SHALL be forwarded only when the native event's target is editable content and the selection lies within registered inputs of a single block. Cancelling `editor:keydown` SHALL call `preventDefault()` on the native `KeyboardEvent`. `editor:keydown` SHALL be dispatched before any plugin other than the rendering adapter receives the `KeydownUIEvent`.
+The system SHALL forward native `keydown` events to the block tool owning the selection as a cancelable, bubbling DOM `CustomEvent` named `editor:keydown`, dispatched on the input element registered for the data key holding the selection start. The event's `detail` SHALL carry the native `KeyboardEvent` as `nativeEvent`, the data `key` and the `range` of the selection inside that input, and `inputs`, every input of the block the selection touches in document order with its range. The event SHALL be forwarded only when the native event's target is the blocks holder, meaning focus is in editable content rather than on a focusable element inside a block, and the selection lies within registered inputs of a single block. Cancelling `editor:keydown` SHALL call `preventDefault()` on the native `KeyboardEvent`. `editor:keydown` SHALL be dispatched before any plugin other than the rendering adapter receives the `KeydownUIEvent`.
 
 #### Scenario: A tool listens on its wrapper
 - **GIVEN** a block tool added an `editor:keydown` listener to the wrapper element containing its inputs
@@ -38,10 +38,20 @@ The system SHALL forward native `keydown` events to the block tool owning the se
 - **WHEN** a key is pressed
 - **THEN** no `editor:keydown` event is dispatched and the key is handled as it is today
 
-#### Scenario: Key pressed on a control inside a block
-- **GIVEN** the caret was placed in an input of block A and focus then moved to a button inside block B, leaving the document selection in block A
+#### Scenario: Key pressed on a button inside a block
+- **GIVEN** the caret was placed in an input of block A and keyboard focus then moved to a plain `<button>` inside block B (no `contenteditable="false"`, so it inherits `isContentEditable === true`), leaving the document selection in block A
 - **WHEN** the user presses Enter
 - **THEN** no `editor:keydown` event is dispatched, block A is not edited, and the button activates
+
+#### Scenario: Key pressed in a native input inside a block
+- **GIVEN** a block tool renders a native `<input>` and keyboard focus is in it while the document selection is still in an input of another block
+- **WHEN** the user presses Enter or Backspace
+- **THEN** no `editor:keydown` event is dispatched and the key goes to the native input as usual
+
+#### Scenario: Key pressed on an ARIA widget inside a block
+- **GIVEN** keyboard focus is on an element with `role="button"` and `tabindex="0"` inside a block, with the document selection in an input
+- **WHEN** the user presses Enter
+- **THEN** no `editor:keydown` event is dispatched and the widget's own keydown handling runs
 
 #### Scenario: Keys during IME composition
 - **GIVEN** an IME composition is in progress inside a tool's input
