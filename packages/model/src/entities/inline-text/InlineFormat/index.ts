@@ -4,11 +4,11 @@ import { cloneInlineData, isSameInlineData } from '../../../utils/index.js';
 /**
  * Inline tool with its data applied to a piece of text.
  *
- * Immutable, so the same instance can be shared between runs. The mark keeps its own copy of the data,
+ * Immutable, so the same instance can be shared between spans. The format keeps its own copy of the data,
  * so changes to the object passed in don't reach the model. Empty data is stored as no data,
  * since the two are equal and the stored form must not depend on which one was passed
  */
-export class TextMark {
+export class InlineFormat {
   /**
    * Name of the inline tool
    */
@@ -20,21 +20,21 @@ export class TextMark {
   public readonly data?: InlineToolData;
 
   /**
-   * TextMark constructor
+   * InlineFormat constructor
    * @param tool - name of the inline tool
    * @param [data] - inline tool data if applicable
    */
   constructor(tool: InlineToolName, data?: InlineToolData) {
     this.tool = tool;
-    this.data = data === undefined || TextMark.#isEmpty(data) ? undefined : cloneInlineData(data);
+    this.data = data === undefined || InlineFormat.#isEmpty(data) ? undefined : cloneInlineData(data);
   }
 
   /**
-   * Checks if the passed mark is equal to this one: same tool and equal data
-   * @param mark - mark to compare with
+   * Checks if the passed format is equal to this one: same tool and equal data
+   * @param format - format to compare with
    */
-  public equals(mark: TextMark): boolean {
-    return this.tool === mark.tool && isSameInlineData(this.data, mark.data);
+  public equals(format: InlineFormat): boolean {
+    return this.tool === format.tool && isSameInlineData(this.data, format.data);
   }
 
   /**

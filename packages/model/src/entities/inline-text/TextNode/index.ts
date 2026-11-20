@@ -11,8 +11,8 @@ import {
 } from '@editorjs/model-types';
 import { getContext } from '../../../utils/Context.js';
 import { cloneInlineData } from '../../../utils/index.js';
-import { TextMark } from '../TextMark/index.js';
-import { RunList } from '../RunList/index.js';
+import { InlineFormat } from '../InlineFormat/index.js';
+import { FormattedText } from '../FormattedText/index.js';
 
 interface TextNodeConstructorOptions {
   value?: string;
@@ -22,15 +22,15 @@ interface TextNodeConstructorOptions {
 /**
  * TextNode stores a text value with its inline formatting.
  *
- * The content is kept as a list of runs: pieces of text with the same set of marks (inline tools with their data).
- * Runs are canonical, so the same formatting always gives the same runs and fragments,
+ * The content is kept as a list of spans: pieces of text with the same set of formats (inline tools with their data).
+ * Spans are canonical, so the same formatting always gives the same spans and fragments,
  * whatever order formatting operations were applied in.
  */
 export class TextNode extends EventBus {
   /**
-   * Text and formatting as canonical runs
+   * Text and its formatting as canonical spans
    */
-  #runs = new RunList();
+  #formattedText = new FormattedText();
 
   /**
    * TextNode constructor
@@ -49,7 +49,7 @@ export class TextNode extends EventBus {
    * Returns text length
    */
   public get length(): number {
-    return this.#runs.length;
+    return this.#formattedText.length;
   }
 
   /**
@@ -72,7 +72,7 @@ export class TextNode extends EventBus {
   public insertText(text: string, index = this.length): void {
     this.#validateIndex(index);
 
-    this.#runs.insert(text, index);
+    this.#formattedText.insert(text, index);
 
     this.dispatchEvent(new TextAddedEvent(new PartialIndex({ textRange: [index, index] }), text, getContext<string | number>()!));
   }
@@ -86,7 +86,7 @@ export class TextNode extends EventBus {
   public removeText(start = 0, end = this.length): string {
     this.#validateRange(start, end);
 
-    const removedText = this.#runs.remove(start, end);
+    const removedText = this.#formattedText.remove(start, end);
 
     this.dispatchEvent(new TextRemovedEvent(new PartialIndex({ textRange: [start, end] }), removedText, getContext<string | number>()!));
 
@@ -101,7 +101,7 @@ export class TextNode extends EventBus {
   public getText(start = 0, end = this.length): string {
     this.#validateRange(start, end);
 
-    return this.#runs.getText().slice(start, end);
+    return this.#formattedText.getText().slice(start, end);
   }
 
   /**
@@ -114,7 +114,7 @@ export class TextNode extends EventBus {
   public getFragments(start = 0, end = this.length, tool?: InlineToolName): InlineFragment[] {
     this.#validateRange(start, end);
 
-    return this.#runs.toFragments().filter(fragment => start < end
+    return this.#formattedText.toFragments().filter(fragment => start < end
       && fragment.range[0] < end
       && fragment.range[1] > start
       && (tool === undefined || fragment.tool === tool));
@@ -131,10 +131,10 @@ export class TextNode extends EventBus {
   public format(tool: InlineToolName, start: number, end: number, data?: InlineToolData): void {
     this.#validateRange(start, end);
 
-    this.#runs.setMark(start, end, new TextMark(tool, data));
+    this.#formattedText.applyFormat(start, end, new InlineFormat(tool, data));
 
     /**
-     * @todo When format replaces data of an existing mark (e.g. re-applying a link with a new href), the event carries only
+     * @todo When format replaces the data of an existing inline format (e.g. re-applying a link with a new href), the event carries only
      *       the new data. Undo inverts it into unformat, which removes the link instead of restoring the previous href.
      *       The event should carry the replaced fragments so undo can re-apply them
      */
@@ -162,7 +162,7 @@ export class TextNode extends EventBus {
   public unformat(tool: InlineToolName, start: number, end: number): void {
     this.#validateRange(start, end);
 
-    this.#runs.removeMark(start, end, tool);
+    this.#formattedText.removeFormat(start, end, tool);
 
     this.dispatchEvent(new TextUnformattedEvent(new PartialIndex({ textRange: [start, end] }), { tool }, getContext<string | number>()!));
   }

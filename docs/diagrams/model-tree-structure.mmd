@@ -68,24 +68,24 @@ classDiagram
     +update(value: T)
   }
 
-  class RunList {
+  class FormattedText {
     +length: number
     +insert(text, offset)
     +remove(start, end): string
-    +setMark(start, end, mark)
-    +removeMark(start, end, tool)
+    +applyFormat(start, end, format)
+    +removeFormat(start, end, tool)
     +toFragments(): InlineFragment[]
   }
 
-  class TextRun {
+  class TextSpan {
     +text: string
-    +marks: TextMark[]
+    +formats: InlineFormat[]
   }
 
-  class TextMark {
+  class InlineFormat {
     +tool: InlineToolName
     +data?: InlineToolData
-    +equals(mark): boolean
+    +equals(format): boolean
   }
 
   %% ── Caret management ─────────────────────────────
@@ -130,10 +130,10 @@ classDiagram
   BlockNode "1" *-- "0..*" ValueNode : data[key]
   BlockNode "1" *-- "0..*" BlockTune : tunes[name]
 
-  %% Inline formatting runs
-  TextNode "1" *-- "1" RunList : runs
-  RunList "1" *-- "0..*" TextRun : runs
-  TextRun "1" o-- "0..*" TextMark : marks
+  %% Inline formatting spans
+  TextNode "1" *-- "1" FormattedText : formattedText
+  FormattedText "1" *-- "0..*" TextSpan : spans
+  TextSpan "1" o-- "0..*" InlineFormat : formats
 
   %% Caret management (declared last → placed right)
   EditorJSModel "1" *-- "1" CaretManager : caretManager

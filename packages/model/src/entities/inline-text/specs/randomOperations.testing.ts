@@ -87,19 +87,19 @@ interface UnformatOperation {
 }
 
 /**
- * Character of the reference model with the marks applied to it
+ * Character of the reference model with the formats applied to it
  */
 interface ReferenceChar {
   char: string;
-  marks: Map<InlineToolName, InlineToolData | undefined>;
+  formats: Map<InlineToolName, InlineToolData | undefined>;
 }
 
 /**
- * Straightforward model of formatted text that stores marks per character, used as the oracle
+ * Straightforward model of formatted text that stores formats per character, used as the oracle
  */
 export class ReferenceText {
   /**
-   * Characters with their marks
+   * Characters with their formats
    */
   #chars: ReferenceChar[];
 
@@ -110,7 +110,7 @@ export class ReferenceText {
   constructor(text: string) {
     this.#chars = text.split('').map(char => ({
       char,
-      marks: new Map(),
+      formats: new Map(),
     }));
   }
 
@@ -129,7 +129,7 @@ export class ReferenceText {
   }
 
   /**
-   * Applies the operation. Inserted text gets marks of the previous character, or of the first one at index 0
+   * Applies the operation. Inserted text gets formats of the previous character, or of the first one at index 0
    * @param operation - operation to apply
    */
   public apply(operation: TextOperation): void {
@@ -140,7 +140,7 @@ export class ReferenceText {
 
         this.#chars.splice(index, 0, ...text.split('').map(char => ({
           char,
-          marks: new Map(source?.marks ?? []),
+          formats: new Map(source?.formats ?? []),
         })));
         break;
       }
@@ -153,11 +153,11 @@ export class ReferenceText {
          */
         const data = isEmptyData(operation.data) ? undefined : JSON.parse(JSON.stringify(operation.data)) as InlineToolData;
 
-        this.#chars.slice(operation.start, operation.end).forEach(char => char.marks.set(operation.tool, data));
+        this.#chars.slice(operation.start, operation.end).forEach(char => char.formats.set(operation.tool, data));
         break;
       }
       case 'unformat':
-        this.#chars.slice(operation.start, operation.end).forEach(char => char.marks.delete(operation.tool));
+        this.#chars.slice(operation.start, operation.end).forEach(char => char.formats.delete(operation.tool));
         break;
     }
   }
@@ -172,16 +172,16 @@ export class ReferenceText {
       let start = 0;
 
       while (start < this.#chars.length) {
-        if (!this.#chars[start].marks.has(tool)) {
+        if (!this.#chars[start].formats.has(tool)) {
           start++;
 
           continue;
         }
 
-        const data = this.#chars[start].marks.get(tool);
+        const data = this.#chars[start].formats.get(tool);
         let end = start + 1;
 
-        while (end < this.#chars.length && this.#chars[end].marks.has(tool) && isSameInlineData(this.#chars[end].marks.get(tool), data)) {
+        while (end < this.#chars.length && this.#chars[end].formats.has(tool) && isSameInlineData(this.#chars[end].formats.get(tool), data)) {
           end++;
         }
 
