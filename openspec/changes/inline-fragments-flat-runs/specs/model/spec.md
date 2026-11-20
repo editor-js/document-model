@@ -1,7 +1,7 @@
 ## REMOVED Requirements
 
 ### Requirement: Inline text tree
-**Reason**: The inline formatting tree (`ParentInlineNode` / `FormattingInlineNode` / `TextInlineNode`) is not canonical: its shape, and the fragments derived from it, depend on the order formatting was applied in (#53). It is replaced by a flat run representation inside `TextNode`.
+**Reason**: The inline formatting tree (`ParentInlineNode` / `FormattingInlineNode` / `TextInlineNode`) is not canonical: its shape, and the fragments derived from it, depend on the order formatting was applied in (#53). It is replaced by a flat span representation inside `TextNode`.
 **Migration**: Use `TextNode` only. Its public API (`insertText`, `removeText`, `getText`, `format`, `unformat`, `getFragments`, `serialized`, `length`), events and serialized format are unchanged. `format`/`unformat` now return `void`; the tree node classes and the `ParentNode`/`ChildNode` mixins are no longer exported.
 
 ## ADDED Requirements
@@ -42,7 +42,7 @@ Implemented in `src/entities/inline-text/TextNode/index.ts`, validated by its co
 - **THEN** `getFragments()` returns no fragments
 
 ### Requirement: Canonical inline formatting state
-The formatting state of a `TextNode`, and so its fragments, SHALL depend only on which inline tool (with which data) applies to each character, never on the order or the way `format`, `unformat` and text operations were performed, nor on the order of fragments passed to the constructor. Each character SHALL carry at most one mark per inline tool. Empty data (`{}`) SHALL be treated as no data and returned without a `data` key, so equal data can't produce different output. Fragments passed to the constructor SHALL be applied sorted by range start ascending, range end descending, tool name, then data, so where fragments of the same tool overlap with different data, the one that sorts later wins whatever order they were passed in.
+The formatting state of a `TextNode`, and so its fragments, SHALL depend only on which inline tool (with which data) applies to each character, never on the order or the way `format`, `unformat` and text operations were performed, nor on the order of fragments passed to the constructor. Each character SHALL carry at most one format per inline tool. Empty data (`{}`) SHALL be treated as no data and returned without a `data` key, so equal data can't produce different output. Fragments passed to the constructor SHALL be applied sorted by range start ascending, range end descending, tool name, then data, so where fragments of the same tool overlap with different data, the one that sorts later wins whatever order they were passed in.
 
 #### Scenario: Same formatting applied in a different order
 - **GIVEN** two `TextNode`s with text `abcd`
