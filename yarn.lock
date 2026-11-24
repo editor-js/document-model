@@ -2364,6 +2364,34 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@editorjs/default-block-settings-plugin@workspace:^, @editorjs/default-block-settings-plugin@workspace:packages/plugins/default-block-settings-plugin":
+  version: 0.0.0-use.local
+  resolution: "@editorjs/default-block-settings-plugin@workspace:packages/plugins/default-block-settings-plugin"
+  dependencies:
+    "@babel/core": "npm:^7.29.0"
+    "@babel/preset-env": "npm:^7.29.2"
+    "@codexteam/icons": "npm:^0.3.3"
+    "@editorjs/sdk": "workspace:^"
+    "@editorjs/ui": "workspace:^"
+    "@jest/globals": "npm:^29.7.0"
+    "@stryker-mutator/core": "npm:^7.0.2"
+    "@stryker-mutator/jest-runner": "npm:^7.0.2"
+    "@stryker-mutator/typescript-checker": "npm:^7.0.2"
+    "@types/eslint": "npm:^9.6.1"
+    "@types/jest": "npm:^29.5.12"
+    "@types/node": "npm:^22.10.2"
+    babel-jest: "npm:^29.7.0"
+    eslint: "npm:^9.24.0"
+    eslint-config-codex: "npm:^2.0.3"
+    eslint-plugin-import: "npm:^2.31.0"
+    jest: "npm:^29.7.0"
+    stryker-cli: "npm:^1.0.2"
+    ts-jest: "npm:^29.2.5"
+    ts-node: "npm:^10.9.2"
+    typescript: "npm:^5.5.4"
+  languageName: unknown
+  linkType: soft
+
 "@editorjs/document-playground@workspace:packages/playground":
   version: 0.0.0-use.local
   resolution: "@editorjs/document-playground@workspace:packages/playground"
@@ -2446,6 +2474,7 @@ __metadata:
     "@editorjs/clipboard-plugin": "workspace:^"
     "@editorjs/collaboration-manager": "workspace:^"
     "@editorjs/core": "workspace:^"
+    "@editorjs/default-block-settings-plugin": "workspace:^"
     "@editorjs/dom-adapters": "workspace:^"
     "@editorjs/inline-link": "workspace:^"
     "@editorjs/italic": "workspace:^"
@@ -2503,6 +2532,15 @@ __metadata:
   dependencies:
     codex-tooltip: "npm:^1.0.6"
   checksum: bec78e033c77e1e887d4f1a235d7548623df239bc2755bd8f8dc1d1acddb400a7c77eb82a07e6b47ac578cbf841858fbf84889990026500da2de375f3bdcc166
+  languageName: node
+  linkType: hard
+
+"@editorjs/helpers@npm:^1.2.3":
+  version: 1.2.3
+  resolution: "@editorjs/helpers@npm:1.2.3"
+  dependencies:
+    codex-tooltip: "npm:^1.1.0"
+  checksum: 9e7d875fbfe120b5a9c20b7075b35f128e7edf35b5875e8bad4e825b3521d9a91b66330c29d36f193f8c6ad489daed05f4be8855cab86435d462c8db7f59d586
   languageName: node
   linkType: hard
 
@@ -2630,7 +2668,7 @@ __metadata:
     "@babel/preset-env": "npm:^7.29.2"
     "@editorjs/helpers": "npm:^1.2.2"
     "@editorjs/model-types": "workspace:^"
-    "@editorjs/ui-kit": "npm:^2.0.0"
+    "@editorjs/ui-kit": "npm:^2.0.1"
     "@jest/globals": "npm:^29.7.0"
     "@types/eslint": "npm:^9.6.1"
     "@types/jest": "npm:^29.5.12"
@@ -2673,15 +2711,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@editorjs/ui-kit@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "@editorjs/ui-kit@npm:2.0.0"
+"@editorjs/ui-kit@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "@editorjs/ui-kit@npm:2.0.1"
   dependencies:
     "@codexteam/icons": "npm:^0.3.3"
     "@editorjs/caret": "npm:^1.1.0"
     "@editorjs/dom": "npm:^1.2.0"
-    "@editorjs/helpers": "npm:^1.2.2"
-  checksum: 97110bd1d12fe22077cff40bf9d7df044d6cdc086cdb80c0bcd0b5a96b1363d7efa10cce62db67932f9daa0ebe782b44ed3f749d4f5781d703d2a75b0e7e8f74
+    "@editorjs/helpers": "npm:^1.2.3"
+  checksum: 67938dbe86b811a32dd10660664c18277f94f6769a692335bfb4a0721da9298992f596686540bd8f5641d74ca56c615c413eb2da4239a4af74f4955e50cbc6b4
   languageName: node
   linkType: hard
 
@@ -2689,6 +2727,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@editorjs/ui@workspace:packages/ui"
   dependencies:
+    "@babel/core": "npm:^7.29.0"
+    "@babel/preset-env": "npm:^7.29.2"
     "@codexteam/icons": "npm:^0.3.3"
     "@codexteam/ui": "npm:^0.2.2"
     "@editorjs/core": "workspace:^"
@@ -2697,9 +2737,10 @@ __metadata:
     "@editorjs/helpers": "npm:^1.2.2"
     "@editorjs/paragraph": "workspace:^"
     "@editorjs/sdk": "workspace:^"
-    "@editorjs/ui-kit": "npm:^2.0.0"
+    "@editorjs/ui-kit": "npm:^2.0.1"
     "@jest/globals": "npm:^29.7.0"
     "@types/jest": "npm:^29.5.12"
+    babel-jest: "npm:^29.7.0"
     chokidar-cli: "npm:^3.0.0"
     eslint: "npm:^9.9.1"
     eslint-config-codex: "npm:^2.0.3"
@@ -4073,10 +4114,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@oxc-project/types@npm:=0.153.0":
-  version: 0.153.0
-  resolution: "@oxc-project/types@npm:0.153.0"
-  checksum: b123d6c8ed40b683be9af3a976148d522c621421bbae2d5716d210cda7a858108daa4bad77450b780f63529f2c43bd00e4c179f5952ffb6abbaacebdc71e282f
+"@oxc-project/types@npm:=0.154.0":
+  version: 0.154.0
+  resolution: "@oxc-project/types@npm:0.154.0"
+  checksum: 543b06a3955f178214ff159092e3fe83a92355bc9e7e712f8992c15b5ad6149c854c495986df37a8295977ef5f27d30f36229546f913e67a72418bbade333bf3
   languageName: node
   linkType: hard
 
@@ -4121,107 +4162,107 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rolldown/binding-android-arm-eabi@npm:1.2.13":
-  version: 1.2.13
-  resolution: "@rolldown/binding-android-arm-eabi@npm:1.2.13"
+"@rolldown/binding-android-arm-eabi@npm:1.2.14":
+  version: 1.2.14
+  resolution: "@rolldown/binding-android-arm-eabi@npm:1.2.14"
   conditions: os=android & cpu=arm
   languageName: node
   linkType: hard
 
-"@rolldown/binding-android-arm64@npm:1.2.13":
-  version: 1.2.13
-  resolution: "@rolldown/binding-android-arm64@npm:1.2.13"
+"@rolldown/binding-android-arm64@npm:1.2.14":
+  version: 1.2.14
+  resolution: "@rolldown/binding-android-arm64@npm:1.2.14"
   conditions: os=android & cpu=arm64
   languageName: node
   linkType: hard
 
-"@rolldown/binding-darwin-arm64@npm:1.2.13":
-  version: 1.2.13
-  resolution: "@rolldown/binding-darwin-arm64@npm:1.2.13"
+"@rolldown/binding-darwin-arm64@npm:1.2.14":
+  version: 1.2.14
+  resolution: "@rolldown/binding-darwin-arm64@npm:1.2.14"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@rolldown/binding-darwin-x64@npm:1.2.13":
-  version: 1.2.13
-  resolution: "@rolldown/binding-darwin-x64@npm:1.2.13"
+"@rolldown/binding-darwin-x64@npm:1.2.14":
+  version: 1.2.14
+  resolution: "@rolldown/binding-darwin-x64@npm:1.2.14"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@rolldown/binding-freebsd-x64@npm:1.2.13":
-  version: 1.2.13
-  resolution: "@rolldown/binding-freebsd-x64@npm:1.2.13"
+"@rolldown/binding-freebsd-x64@npm:1.2.14":
+  version: 1.2.14
+  resolution: "@rolldown/binding-freebsd-x64@npm:1.2.14"
   conditions: os=freebsd & cpu=x64
   languageName: node
   linkType: hard
 
-"@rolldown/binding-linux-arm-gnueabihf@npm:1.2.13":
-  version: 1.2.13
-  resolution: "@rolldown/binding-linux-arm-gnueabihf@npm:1.2.13"
+"@rolldown/binding-linux-arm-gnueabihf@npm:1.2.14":
+  version: 1.2.14
+  resolution: "@rolldown/binding-linux-arm-gnueabihf@npm:1.2.14"
   conditions: os=linux & cpu=arm
   languageName: node
   linkType: hard
 
-"@rolldown/binding-linux-arm64-gnu@npm:1.2.13":
-  version: 1.2.13
-  resolution: "@rolldown/binding-linux-arm64-gnu@npm:1.2.13"
+"@rolldown/binding-linux-arm64-gnu@npm:1.2.14":
+  version: 1.2.14
+  resolution: "@rolldown/binding-linux-arm64-gnu@npm:1.2.14"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@rolldown/binding-linux-arm64-musl@npm:1.2.13":
-  version: 1.2.13
-  resolution: "@rolldown/binding-linux-arm64-musl@npm:1.2.13"
+"@rolldown/binding-linux-arm64-musl@npm:1.2.14":
+  version: 1.2.14
+  resolution: "@rolldown/binding-linux-arm64-musl@npm:1.2.14"
   conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
 
-"@rolldown/binding-linux-ppc64-gnu@npm:1.2.13":
-  version: 1.2.13
-  resolution: "@rolldown/binding-linux-ppc64-gnu@npm:1.2.13"
+"@rolldown/binding-linux-ppc64-gnu@npm:1.2.14":
+  version: 1.2.14
+  resolution: "@rolldown/binding-linux-ppc64-gnu@npm:1.2.14"
   conditions: os=linux & cpu=ppc64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@rolldown/binding-linux-s390x-gnu@npm:1.2.13":
-  version: 1.2.13
-  resolution: "@rolldown/binding-linux-s390x-gnu@npm:1.2.13"
+"@rolldown/binding-linux-s390x-gnu@npm:1.2.14":
+  version: 1.2.14
+  resolution: "@rolldown/binding-linux-s390x-gnu@npm:1.2.14"
   conditions: os=linux & cpu=s390x & libc=glibc
   languageName: node
   linkType: hard
 
-"@rolldown/binding-linux-x64-gnu@npm:1.2.13":
-  version: 1.2.13
-  resolution: "@rolldown/binding-linux-x64-gnu@npm:1.2.13"
+"@rolldown/binding-linux-x64-gnu@npm:1.2.14":
+  version: 1.2.14
+  resolution: "@rolldown/binding-linux-x64-gnu@npm:1.2.14"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@rolldown/binding-linux-x64-musl@npm:1.2.13":
-  version: 1.2.13
-  resolution: "@rolldown/binding-linux-x64-musl@npm:1.2.13"
+"@rolldown/binding-linux-x64-musl@npm:1.2.14":
+  version: 1.2.14
+  resolution: "@rolldown/binding-linux-x64-musl@npm:1.2.14"
   conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
 
-"@rolldown/binding-openharmony-arm64@npm:1.2.13":
-  version: 1.2.13
-  resolution: "@rolldown/binding-openharmony-arm64@npm:1.2.13"
+"@rolldown/binding-openharmony-arm64@npm:1.2.14":
+  version: 1.2.14
+  resolution: "@rolldown/binding-openharmony-arm64@npm:1.2.14"
   conditions: os=openharmony & cpu=arm64
   languageName: node
   linkType: hard
 
-"@rolldown/binding-win32-arm64-msvc@npm:1.2.13":
-  version: 1.2.13
-  resolution: "@rolldown/binding-win32-arm64-msvc@npm:1.2.13"
+"@rolldown/binding-win32-arm64-msvc@npm:1.2.14":
+  version: 1.2.14
+  resolution: "@rolldown/binding-win32-arm64-msvc@npm:1.2.14"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"@rolldown/binding-win32-x64-msvc@npm:1.2.13":
-  version: 1.2.13
-  resolution: "@rolldown/binding-win32-x64-msvc@npm:1.2.13"
+"@rolldown/binding-win32-x64-msvc@npm:1.2.14":
+  version: 1.2.14
+  resolution: "@rolldown/binding-win32-x64-msvc@npm:1.2.14"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
@@ -6179,6 +6220,13 @@ __metadata:
   version: 1.0.6
   resolution: "codex-tooltip@npm:1.0.6"
   checksum: 167dd431fb9801528947e5a0cae154b11131ef6d2cfb638a4bf005a9175c2f7a175648cac24b5ff6abbb98398f2fcb1408461d3def85575008adb30aefa4ff65
+  languageName: node
+  linkType: hard
+
+"codex-tooltip@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "codex-tooltip@npm:1.1.0"
+  checksum: c66da318e18e103daf163803ca4080ce2e3218c0939df255fe241ab3100c5d4212070825d145db652eff7cd1839ba5b8f9970f08c2718caf5005a7a9595ec62e
   languageName: node
   linkType: hard
 
@@ -12416,25 +12464,25 @@ __metadata:
   linkType: hard
 
 "rolldown@npm:~1.2.12":
-  version: 1.2.13
-  resolution: "rolldown@npm:1.2.13"
+  version: 1.2.14
+  resolution: "rolldown@npm:1.2.14"
   dependencies:
-    "@oxc-project/types": "npm:=0.153.0"
-    "@rolldown/binding-android-arm-eabi": "npm:1.2.13"
-    "@rolldown/binding-android-arm64": "npm:1.2.13"
-    "@rolldown/binding-darwin-arm64": "npm:1.2.13"
-    "@rolldown/binding-darwin-x64": "npm:1.2.13"
-    "@rolldown/binding-freebsd-x64": "npm:1.2.13"
-    "@rolldown/binding-linux-arm-gnueabihf": "npm:1.2.13"
-    "@rolldown/binding-linux-arm64-gnu": "npm:1.2.13"
-    "@rolldown/binding-linux-arm64-musl": "npm:1.2.13"
-    "@rolldown/binding-linux-ppc64-gnu": "npm:1.2.13"
-    "@rolldown/binding-linux-s390x-gnu": "npm:1.2.13"
-    "@rolldown/binding-linux-x64-gnu": "npm:1.2.13"
-    "@rolldown/binding-linux-x64-musl": "npm:1.2.13"
-    "@rolldown/binding-openharmony-arm64": "npm:1.2.13"
-    "@rolldown/binding-win32-arm64-msvc": "npm:1.2.13"
-    "@rolldown/binding-win32-x64-msvc": "npm:1.2.13"
+    "@oxc-project/types": "npm:=0.154.0"
+    "@rolldown/binding-android-arm-eabi": "npm:1.2.14"
+    "@rolldown/binding-android-arm64": "npm:1.2.14"
+    "@rolldown/binding-darwin-arm64": "npm:1.2.14"
+    "@rolldown/binding-darwin-x64": "npm:1.2.14"
+    "@rolldown/binding-freebsd-x64": "npm:1.2.14"
+    "@rolldown/binding-linux-arm-gnueabihf": "npm:1.2.14"
+    "@rolldown/binding-linux-arm64-gnu": "npm:1.2.14"
+    "@rolldown/binding-linux-arm64-musl": "npm:1.2.14"
+    "@rolldown/binding-linux-ppc64-gnu": "npm:1.2.14"
+    "@rolldown/binding-linux-s390x-gnu": "npm:1.2.14"
+    "@rolldown/binding-linux-x64-gnu": "npm:1.2.14"
+    "@rolldown/binding-linux-x64-musl": "npm:1.2.14"
+    "@rolldown/binding-openharmony-arm64": "npm:1.2.14"
+    "@rolldown/binding-win32-arm64-msvc": "npm:1.2.14"
+    "@rolldown/binding-win32-x64-msvc": "npm:1.2.14"
     "@rolldown/pluginutils": "npm:^1.0.0"
   dependenciesMeta:
     "@rolldown/binding-android-arm-eabi":
@@ -12469,7 +12517,7 @@ __metadata:
       optional: true
   bin:
     rolldown: ./bin/cli.mjs
-  checksum: 7e602afd9c851e1e4c26711030211ec36c538f57a59e5c84ea74167a98db14eeecc8741a8c3564bcce8b9377ec0c5502973acc823bca4788da25ad6f70283416
+  checksum: 8573c260516eefed8266da2dced4fa0742c8c44dbc79d35f5cc43cf1cfdaa1afedca7ab31e1abcf733be598f1866d5f8047884826717f37a507e70b4a0e510a2
   languageName: node
   linkType: hard
 

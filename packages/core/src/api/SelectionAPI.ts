@@ -66,11 +66,11 @@ export class SelectionAPI implements SelectionApiInterface {
    * @param callback - callback for CaretManager updates
    */
   public onCaretUpdate(callback: (event: CaretManagerEvents) => void): () => void {
-    this.#model.addEventListener(EventType.CaretManagerUpdated, callback);
+    const controller = new AbortController();
 
-    return () => {
-      this.#model.removeEventListener(EventType.CaretManagerUpdated, callback);
-    };
+    this.#model.addEventListener(EventType.CaretManagerUpdated, callback, { signal: controller.signal });
+
+    return () => controller.abort();
   }
 
   /**

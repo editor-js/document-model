@@ -155,6 +155,16 @@ export interface BlocksAPI {
   getIdByIndex(index: number): BlockId | undefined;
 
   /**
+   * Returns the name of the tool rendering the block at the given index, or undefined when no
+   * block is there.
+   *
+   * Exists so that a caller needing one scalar about one block is not pushed to
+   * `api.document.data`, which serializes the entire document to get there
+   * @param index - index of the block
+   */
+  getToolByIndex(index: number): string | undefined;
+
+  /**
    * Returns serialized data for provided data key
    * @param params - getData parameters
    * @param params.block - index or id of the block
@@ -285,9 +295,8 @@ export interface BlocksAPI {
    * Updates block data by id
    * @param id - id of the block to update
    * @param data - (optional) the new data. Can be partial.
-   * @param tunes - (optional) tune data
    */
-  // update(id: string, data?: Partial<BlockToolData>, tunes?: { [name: string]: BlockTuneData }): Promise<BlockAPI>;
+  // update(id: string, data?: Partial<BlockToolData>): Promise<BlockAPI>;
 
   /**
    * Converts block to another type. Both blocks should provide the conversionConfig.

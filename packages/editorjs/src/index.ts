@@ -9,8 +9,10 @@ import { ItalicInlineTool } from '@editorjs/italic';
 import { LinkInlineTool } from '@editorjs/inline-link';
 import { ClipboardPlugin } from '@editorjs/clipboard-plugin';
 import { ShortcutsPlugin } from '@editorjs/shortcuts-plugin';
-import { EditorjsUI, BlocksUI, InlineToolbarUI, ToolbarUI, ToolboxUI } from '@editorjs/ui';
+import { DefaultBlockSettingsPlugin } from '@editorjs/default-block-settings-plugin';
+import { EditorjsUI, BlocksUI, BlockSettingsUI, InlineToolbarUI, ToolbarUI, ToolboxUI } from '@editorjs/ui';
 import { mergeTools } from './mergeTools.js';
+import { reportUnlessAborted } from './reportUnlessAborted.js';
 
 /**
  * Default tools registered by the bundle, keyed later by their static `name`.
@@ -76,6 +78,7 @@ export default class EditorJS {
      */
     this.#core.use(ClipboardPlugin);
     this.#core.use(ShortcutsPlugin);
+    this.#core.use(DefaultBlockSettingsPlugin);
 
     /**
      * Default tools merged with user-provided `config.tools` (user wins by name).
@@ -92,15 +95,30 @@ export default class EditorJS {
     this.#core.use(InlineToolbarUI);
     this.#core.use(ToolbarUI);
     this.#core.use(ToolboxUI);
+    this.#core.use(BlockSettingsUI);
 
     this.#readyPromise = this.#core.initialize();
+
+    /**
+     * `isReady` may be left unawaited: ignore the AbortError a destroy before ready causes, log anything else
+     */
+    reportUnlessAborted(this.#readyPromise);
   }
 
   /**
-   * Resolves once the editor has finished initializing; rejects if initialization fails.
+   * Resolves once the editor has finished initializing. Rejects if initialization fails,
+   * or with an `AbortError` if the editor is destroyed before it is ready
    */
   public get isReady(): Promise<void> {
     return this.#readyPromise;
+  }
+
+  /**
+   * Tears the editor down: destroys its plugins (each releases what it holds), core services, tools and adapter.
+   * Safe to call more than once and before {@link isReady} settles
+   */
+  public destroy(): void {
+    this.#core.destroy();
   }
 }
 

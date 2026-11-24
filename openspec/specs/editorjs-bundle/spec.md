@@ -9,7 +9,7 @@ The system SHALL provide `@editorjs/editorjs`, a package whose default export is
 #### Scenario: Default composition
 - **GIVEN** a caller constructs `new EditorJS(config)`
 - **WHEN** the instance is created
-- **THEN** it registers the DOM adapter (`DOMAdapters`), collaboration (`CollaborationManager`), default block tool (paragraph), default inline tools (bold, italic, link), default plugins (clipboard, shortcuts), and the default UI packages on the underlying `Core` before initialization
+- **THEN** it registers the DOM adapter (`DOMAdapters`), collaboration (`CollaborationManager`), default block tool (paragraph), default inline tools (bold, italic, link), default plugins (clipboard, shortcuts, default block settings), and the default UI packages (including `BlockSettingsUI`) on the underlying `Core` before initialization
 
 #### Scenario: Delegates the engine to Core
 - **GIVEN** `EditorJS` composes the editor
@@ -46,4 +46,32 @@ The `EditorJS` class SHALL accept a v2-style `config.tools` map of tool name to 
 - **GIVEN** `config.tools` contains an entry whose key does not match the tool constructor's static `name`
 - **WHEN** the editor is composed
 - **THEN** it throws an error rather than silently registering the tool under a name that won't match `defaultBlock` or other lookups
+
+### Requirement: Editor teardown
+The `EditorJS` class SHALL expose a synchronous `destroy()` that delegates to the underlying `Core.destroy()`. This tears down the default UI, plugins, tools, DOM adapter, and the collaboration connection.
+
+#### Scenario: Destroying a ready editor
+- **GIVEN** `editor.isReady` has resolved
+- **WHEN** `editor.destroy()` is called
+- **THEN** the editor's DOM is removed from the holder, its collaboration socket is closed, and no listener it added to `document` or the holder remains
+
+#### Scenario: Destroying before ready
+- **GIVEN** `editor.isReady` has not settled
+- **WHEN** `editor.destroy()` is called
+- **THEN** `editor.isReady` rejects with a `DOMException` named `AbortError`, the editor never becomes interactive, and nothing is left in the holder
+
+#### Scenario: Destroying before ready without awaiting readiness
+- **GIVEN** nobody awaits or handles `editor.isReady`
+- **WHEN** `editor.destroy()` is called before it settles
+- **THEN** the `AbortError` rejection is not reported as an unhandled promise rejection
+
+#### Scenario: Initialization failure without awaiting readiness
+- **GIVEN** nobody awaits or handles `editor.isReady`
+- **WHEN** initialization fails with an error other than `AbortError`
+- **THEN** that error is logged with `console.error`, is not reported as an unhandled promise rejection, and `editor.isReady` still rejects with it for anyone who awaits it
+
+#### Scenario: Several editors on one page
+- **GIVEN** several `EditorJS` instances are mounted on one page
+- **WHEN** each of them is destroyed
+- **THEN** each destroy leaves the others working, and once all are destroyed no editor DOM nodes or editor-registered `document`/holder listeners remain
 

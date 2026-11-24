@@ -23,6 +23,12 @@ export interface EditorJSAdapterPlugin<Id extends PluginId = PluginId> extends E
    * @param blockId - unique identifier of the removed block
    */
   destroyBlockToolAdapter(blockId: BlockId): void;
+
+  /**
+   * Destroys every block adapter still alive and releases the adapter's own subscriptions.
+   * Called when the editor is destroyed, after every rendered block has been released
+   */
+  destroy(): void;
 }
 
 /**

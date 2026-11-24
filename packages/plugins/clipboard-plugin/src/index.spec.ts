@@ -12,7 +12,13 @@ jest.unstable_mockModule('@editorjs/sdk', () => {
       const listeners = new Map<string, Listener>();
 
       return {
-        addEventListener: jest.fn((event: string, fn: Listener) => listeners.set(event, fn)),
+        /**
+         * Honours `signal` like a real EventTarget, so aborting it removes the listener
+         */
+        addEventListener: jest.fn((event: string, fn: Listener, options?: AddEventListenerOptions) => {
+          listeners.set(event, fn);
+          options?.signal?.addEventListener('abort', () => listeners.delete(event), { once: true });
+        }),
         removeEventListener: jest.fn((event: string) => listeners.delete(event)),
         __fire: (event: string, evt: Event) => listeners.get(event)?.(evt),
       };
@@ -46,18 +52,25 @@ describe('ClipboardPlugin', () => {
 
       new ClipboardPlugin(pluginParamsMock);
 
-      expect(eventBus.addEventListener).toHaveBeenCalledWith(`ui:${CopyUIEventName}`, expect.any(Function));
+      expect(eventBus.addEventListener).toHaveBeenCalledWith(`ui:${CopyUIEventName}`, expect.any(Function), { signal: expect.any(AbortSignal) as unknown });
     });
   });
 
   describe('.destroy()', () => {
-    it('should remove CopyUIEvent listener', () => {
-      const { eventBus } = pluginParamsMock;
+    it('should stop handling CopyUIEvent after destroy', () => {
+      const selection = pluginParamsMock.api.selection as unknown as { selectedBlocks: unknown[] };
       const cp = new ClipboardPlugin(pluginParamsMock);
+      const preventDefault = jest.fn();
 
+      selection.selectedBlocks = [{}];
       cp.destroy();
 
-      expect(eventBus.removeEventListener).toHaveBeenCalledWith(`ui:${CopyUIEventName}`, expect.any(Function));
+      (pluginParamsMock.eventBus as unknown as FireableEventBus).__fire(
+        `ui:${CopyUIEventName}`,
+        { detail: { nativeEvent: { preventDefault } } } as unknown as Event
+      );
+
+      expect(preventDefault).not.toHaveBeenCalled();
     });
   });
 

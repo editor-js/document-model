@@ -22,7 +22,25 @@ The system SHALL provide `EditorjsUI` as the top-level shell that creates the ed
 Implemented in `src/index.ts`.
 
 ### Requirement: Blocks holder rendering and input capture
-The system SHALL provide `BlocksUI`, which renders the contenteditable blocks holder, adds/removes block wrappers on `core:BlockAdded`/`core:BlockRemoved`, captures native `beforeinput` and remaps it into a normalized `BeforeInputUIEvent`, delegates native `keydown` as a `KeydownUIEvent` so plugins can claim keyboard shortcuts, handles undo/redo keyboard shortcuts for keys no plugin claimed, and dispatches block-hover selection events.
+The system SHALL provide `BlocksUI`, which renders the contenteditable blocks holder, adds/removes block wrappers on `core:BlockAdded`/`core:BlockRemoved`, captures native `beforeinput` and remaps it into a normalized `BeforeInputUIEvent`, delegates native `keydown` as a `KeydownUIEvent` so plugins can claim keyboard shortcuts, handles undo/redo keyboard shortcuts for keys no plugin claimed, and dispatches block selection events.
+
+`BlocksUI` SHALL expose which block it treats as selected through its public API, as `api.plugins.blocksUI`, answering with the block's wrapper element and the position that block holds at the moment of asking. Selection reaches other plugins as a one-shot event, and one that ignores an announcement on purpose -- as the toolbar and the settings menu both do while a popover holds them -- has no other way to find out what it missed. The answer SHALL be nothing when no block has been reported, or when the block that was has since been removed, so that a caller is never handed a wrapper that has left the document. This is the UI's own notion of selection, not the model's, which `core:selection-changed` carries.
+
+Selection SHALL be dispatched both when the pointer enters a block and when the caret moves into one. Pointer entry alone leaves every control that acts on "the selected block" inert for a user who never moves a mouse, and the toolbar carries such controls. The caret is read from the document selection rather than from the editor's own caret state, which is cleared as soon as focus leaves the editable -- which is what reaching for a toolbar control does.
+
+Only caret movement SHALL be filtered for repeats, because `selectionchange` fires for every keystroke and most of those stay inside one block. Pointer entry SHALL always be dispatched: `mouseenter` only fires on actually crossing into a block, so there is nothing repeated to suppress, and a listener that ignored the previous announcement -- as the toolbar and the settings menu both do while the menu is open -- must still be told when the pointer comes back to a block it was last told about.
+
+A repeat SHALL mean the same block at the same position, and either differing SHALL be dispatched. Adding or removing a block shifts the positions below it without the selection having moved, which makes each half necessary on its own: recognising the repeat by position alone lets the next block to land on that number read as already reported, so the caret arriving there is announced to nobody; recognising it by block alone hides that the block moved on the page, which the toolbar follows off this event and nothing else.
+
+#### Scenario: Asking which block is selected
+- **GIVEN** a block has been reported as selected, and a block has since been inserted above it
+- **WHEN** a plugin asks `api.plugins.blocksUI` for the selected block
+- **THEN** it is given that same block and the position it holds now, not the one it held when it was reported
+
+#### Scenario: Asking before anything is selected, or after it is gone
+- **GIVEN** no block has been reported as selected, or the one that was has been removed
+- **WHEN** a plugin asks for the selected block
+- **THEN** it is given nothing, rather than a wrapper that is no longer in the document
 
 #### Scenario: Inserting a block wrapper at an index
 - **GIVEN** a `BlockAddedCoreEvent` with a valid index
@@ -38,6 +56,36 @@ The system SHALL provide `BlocksUI`, which renders the contenteditable blocks ho
 - **GIVEN** the pointer enters a rendered block element
 - **WHEN** the `mouseenter` event fires
 - **THEN** `BlocksUI` dispatches a `BlockSelectedUIEvent` carrying the block and its index
+
+#### Scenario: The caret moving into a block dispatches selection
+- **GIVEN** the caret is placed in a rendered block, by click or by keyboard
+- **WHEN** the document selection changes to a position inside that block
+- **THEN** `BlocksUI` dispatches a `BlockSelectedUIEvent` carrying the block and its index, so a keyboard-only user has a selected block without ever moving the pointer
+
+#### Scenario: Re-entering the block that was last reported
+- **GIVEN** the pointer was last reported as entering a block, and the menu that was open at the time has since been dismissed
+- **WHEN** the pointer enters that same block again
+- **THEN** `BlockSelectedUIEvent` is dispatched again, because anything that ignored the first announcement would otherwise keep acting on an older block
+
+#### Scenario: A different block lands on the reported position
+- **GIVEN** the caret was reported in a block, and a block above it is then removed, so the block below takes the position the caret's block held
+- **WHEN** the caret moves into that block
+- **THEN** `BlockSelectedUIEvent` is dispatched, because it is a different block however its position compares
+
+#### Scenario: A block is added above the caret
+- **GIVEN** the caret is in a block, and a block is inserted above it, pushing it down the page
+- **WHEN** the caret moves within that same block
+- **THEN** `BlockSelectedUIEvent` is dispatched with its new position, because the toolbar tracks where the block is from this event alone
+
+#### Scenario: The caret staying in one block dispatches nothing
+- **GIVEN** the caret is already in a block
+- **WHEN** it moves within that same block, as it does on every keystroke
+- **THEN** no further `BlockSelectedUIEvent` is dispatched
+
+#### Scenario: A selection outside every block dispatches nothing
+- **GIVEN** the document selection moves to a node that is in no block
+- **WHEN** the selection change is handled
+- **THEN** no `BlockSelectedUIEvent` is dispatched, and the last reported selection stands
 
 #### Scenario: Normalizing beforeinput
 - **GIVEN** a native `beforeinput` event fires on the blocks holder
@@ -67,15 +115,15 @@ The system SHALL provide `BlocksUI`, which renders the contenteditable blocks ho
 #### Scenario: Destroying the blocks UI
 - **GIVEN** `BlocksUI` has rendered the blocks holder
 - **WHEN** `destroy()` is called
-- **THEN** the `beforeinput`, `keydown` and `copy` listeners are removed from the blocks holder, so native events on it no longer dispatch `BeforeInputUIEvent`, `KeydownUIEvent` or `CopyUIEvent`, and the blocks holder is detached from the DOM
+- **THEN** the `beforeinput`, `keydown` and `copy` listeners are removed from the blocks holder, so native events on it no longer dispatch `BeforeInputUIEvent`, `KeydownUIEvent` or `CopyUIEvent`, the `selectionchange` listener is removed from the document, and the blocks holder is detached from the DOM
 
 Implemented in `src/Blocks/Blocks.ts`, `src/Blocks/events/*`, validated by `src/Blocks/Blocks.spec.ts`.
 
 ### Requirement: Floating toolbar
-The system SHALL provide `ToolbarUI`, which renders a floating toolbar with a plus-button and actions area, repositions itself to the selected block's offset on `ui:blocks:block-selected` (unless the Toolbox is open), and opens the Toolbox on plus-button click.
+The system SHALL provide `ToolbarUI`, which renders a floating toolbar with a plus-button and an actions area, repositions itself to the selected block's offset on `ui:blocks:block-selected` (unless the Toolbox or block settings are open), and opens the Toolbox on plus-button click. Once both are closed it SHALL move to whichever block the blocks plugin then reports as selected, rather than waiting for the next selection: nothing announces the ones it held through, so the toolbar would otherwise be left beside a block the caret has gone from. It SHALL mount both elements announced via `ui:block-settings:rendered` into its actions area -- the menu, and the button that opens it as a control of the container in its own right -- and SHALL reassign its single tab stop once that button joins.
 
 #### Scenario: Repositioning on block selection
-- **GIVEN** a `BlockSelectedUIEvent` is received and the Toolbox is not currently open
+- **GIVEN** a `BlockSelectedUIEvent` is received and neither the Toolbox nor block settings are currently open
 - **WHEN** `ToolbarUI` handles the event
 - **THEN** the toolbar moves to the selected block's `offsetTop`
 
@@ -83,6 +131,26 @@ The system SHALL provide `ToolbarUI`, which renders a floating toolbar with a pl
 - **GIVEN** the user clicks the toolbar's plus button
 - **WHEN** the click is handled
 - **THEN** `ToolbarUI` dispatches a `ToolboxOpenUIEvent`
+
+#### Scenario: The toolbar's own button does not submit a form
+- **GIVEN** the editor is mounted inside a `<form>`
+- **WHEN** the plus button is clicked
+- **THEN** the toolbox opens and the form is not submitted, because the button is not a submit control
+
+#### Scenario: Mounting an announced widget
+- **GIVEN** a plugin announces a button and a menu element through `ui:block-settings:rendered`
+- **WHEN** `ToolbarUI` handles the event
+- **THEN** both are placed in its actions container, the button as a direct child of it, and exactly one control of the container carries `tabindex="0"`
+
+#### Scenario: Toolbar stays put while settings are open
+- **GIVEN** block settings are open
+- **WHEN** the pointer hovers a different block
+- **THEN** the toolbar does not move until settings close
+
+#### Scenario: Catching up on the selection it held through
+- **GIVEN** a block was reported as selected while the toolbar was holding its position
+- **WHEN** the last of the Toolbox and block settings closes
+- **THEN** the toolbar asks the blocks plugin which block is selected and moves to it, and with no block selected at all it stays where it is
 
 Implemented in `src/Toolbar/Toolbar.ts`, `src/Toolbar/ToolbarRenderedUIEvent.ts`.
 
@@ -116,7 +184,6 @@ The system SHALL provide `ToolboxUI`, a searchable popover of block tools popula
 
 Implemented in `src/Toolbox/Toolbox.ts`, `src/Toolbox/events/*`, `src/Toolbox/ToolboxConfigEntry.ts`.
 
-
 ### Requirement: UI plugin listener lifetime
 Each UI plugin SHALL unsubscribe its own EventBus and DOM listeners when destroyed, detach its owned holder, and dispose its owned popover. Destroying one instance SHALL leave other consumers on the shared EventBus active. Teardown SHALL be safe to repeat.
 
@@ -141,6 +208,11 @@ Each UI plugin SHALL unsubscribe its own EventBus and DOM listeners when destroy
 - **WHEN** `destroy()` is called again
 - **THEN** it returns without releasing anything a second time
 
+#### Scenario: Inline tool instances are not destroyed with their popover
+- **GIVEN** the inline toolbar builds its popover from inline tool instances, which their facades share with every other consumer
+- **WHEN** the popover is rebuilt for a new selection, the toolbar is hidden, a render is superseded before it finishes, or the toolbar is destroyed
+- **THEN** no inline tool instance's `destroy()` is called by the toolbar; each tool's facade destroys its instance once, on editor teardown
+
 Validated by `src/lifecycle.spec.ts` using real DOM/EventBus listeners and a substituted popover boundary. Vendor-owned global listener internals are outside this requirement's verification scope.
 
 ### Requirement: Accessible blocks holder
@@ -157,7 +229,7 @@ Validated by `src/lifecycle.spec.ts` using real DOM/EventBus listeners and a sub
 - **THEN** exactly one element exposes `role="textbox"` — the block's contenteditable element, not the holder
 
 ### Requirement: Accessible floating toolbar
-`ToolbarUI` SHALL expose its actions container with `role="toolbar"` and an accessible name distinguishing it from the inline toolbar. Its plus-button control SHALL have an accessible name (`aria-label`) describing its action, and SHALL advertise the toolbox menu it controls via `aria-haspopup="menu"` and an `aria-expanded` state kept in sync with whether the toolbox is open.
+`ToolbarUI` SHALL expose its actions container with `role="toolbar"` and an accessible name distinguishing it from the inline toolbar. Its plus-button SHALL have an accessible name (`aria-label`) describing its action, sourced from the message catalogue, SHALL advertise the menu it controls via `aria-haspopup="menu"`, and SHALL declare itself a non-submitting control, so that an editor mounted inside a form is not posted when the toolbox is opened. A control contributed by another plugin SHALL carry its own name and state, set by the plugin that owns it.
 
 #### Scenario: Toolbar actions container has toolbar role
 - **GIVEN** `ToolbarUI` has rendered its actions container
@@ -170,7 +242,7 @@ Validated by `src/lifecycle.spec.ts` using real DOM/EventBus listeners and a sub
 - **THEN** it has a non-empty `aria-label`
 
 ### Requirement: The block actions toolbar is a single tab stop
-`role="toolbar"` declares that the group is reached once by `Tab` and navigated internally with the arrow keys; a browser does not provide that on its own. `ToolbarUI` SHALL therefore maintain a roving tabindex over its own controls — exactly one in the tab order at a time, moved by the horizontal arrow keys — and SHALL declare its `aria-orientation`. Only the container's own controls take part: the toolbox popover renders *inside* the actions container, and its menu items are navigated by `@editorjs/ui-kit`, so keys arriving from within it are left alone.
+`role="toolbar"` declares that the group is reached once by `Tab` and navigated internally with the arrow keys; a browser does not provide that on its own. `ToolbarUI` SHALL therefore maintain a roving tabindex over its own controls — exactly one in the tab order at a time, moved by the horizontal arrow keys — and SHALL declare its `aria-orientation`. Only the container's own controls take part: the toolbox and block settings popovers render *inside* the actions container, and their menu items are navigated by `@editorjs/ui-kit`, so keys arriving from within them are left alone.
 
 The pattern covers the **unmodified** arrow keys only. `ToolbarUI` SHALL ignore an arrow key pressed with any modifier held, and SHALL NOT call `preventDefault()` on it. A modified arrow always belongs to something else, and a screen reader is the case that matters here: VoiceOver moves its cursor with VO+Right and VO+Left, which reach the page as `Control`+`Option`+arrow. Swallowing those traps a VoiceOver user on whichever control their cursor reached, since Safari focuses a control when the cursor lands on it.
 
@@ -191,6 +263,11 @@ The pattern covers the **unmodified** arrow keys only. `ToolbarUI` SHALL ignore 
 - **WHEN** the user presses a vertical arrow key inside the menu
 - **THEN** the toolbox handles it and moves focus between menu items, unaffected by the toolbar's own arrow-key handling
 
+#### Scenario: Block settings keyboard navigation is not intercepted
+- **GIVEN** block settings have been opened from the settings button
+- **WHEN** the user presses a vertical arrow key inside the menu
+- **THEN** the popover handles it and moves focus between menu items, unaffected by the toolbar's own arrow-key handling
+
 #### Scenario: Plus-button reports the toolbox state
 - **GIVEN** the toolbox is closed
 - **WHEN** the plus-button is inspected
@@ -199,6 +276,11 @@ The pattern covers the **unmodified** arrow keys only. `ToolbarUI` SHALL ignore 
 - **THEN** its `aria-expanded` becomes `"true"`
 - **WHEN** the toolbox is dismissed
 - **THEN** its `aria-expanded` returns to `"false"`
+
+#### Scenario: A contributed control joins the tab order
+- **GIVEN** a plugin has announced a button through `ui:block-settings:rendered`
+- **WHEN** the toolbar's controls are inspected
+- **THEN** that button is one of them, reachable by the arrow keys, and exactly one control carries `tabindex="0"`
 
 ### Requirement: Focus returns to the control that opened the toolbox
 Following the WAI-ARIA menu button pattern, dismissing the toolbox SHALL return DOM focus to the plus-button that opened it, so that keyboard and screen-reader users keep their place in the editor. `ToolbarUI` SHALL therefore move focus onto the plus-button when it opens the toolbox — Safari does not focus a button when it is clicked, which would otherwise leave the popover with `document.body` as the element to restore focus to.

@@ -34,10 +34,15 @@ export class MockWebSocket {
    * @param type - event type
    * @param listener - listener function
    */
-  public addEventListener(type: string, listener: WsListener | EventListenerObject): void {
-    if (typeof listener !== 'function') {
+  public addEventListener(type: string, listener: WsListener | EventListenerObject, options?: AddEventListenerOptions): void {
+    if (typeof listener !== 'function' || options?.signal?.aborted === true) {
       return;
     }
+
+    /**
+     * Honours `signal` like a real EventTarget, so aborting it removes the listener
+     */
+    options?.signal?.addEventListener('abort', () => this.removeEventListener(type, listener), { once: true });
 
     let set = this.listeners.get(type);
 
@@ -54,6 +59,14 @@ export class MockWebSocket {
    * @param type - event type
    * @param listener - listener function
    */
+  /**
+   * Number of listeners currently registered for `type`
+   * @param type - event type
+   */
+  public listenerCount(type: string): number {
+    return this.listeners.get(type)?.size ?? 0;
+  }
+
   public removeEventListener(type: string, listener: WsListener | EventListenerObject): void {
     if (typeof listener !== 'function') {
       return;

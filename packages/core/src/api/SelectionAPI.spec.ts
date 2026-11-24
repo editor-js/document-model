@@ -50,4 +50,47 @@ describe('SelectionAPI', () => {
       });
     });
   });
+
+  describe('.onCaretUpdate()', () => {
+    /**
+     * EventTarget stands in for the model, so listeners are really added and removed
+     * @param target - stand-in for the model
+     */
+    const createAPI = (target: EventTarget): InstanceType<typeof SelectionAPI> => new SelectionAPI(
+      selectionManager as unknown as InstanceType<typeof SelectionManager>,
+      target as unknown as InstanceType<typeof EditorJSModel>,
+      {} as unknown as CoreConfigValidated
+    );
+
+    it('should call the callback on caret update', () => {
+      const target = new EventTarget();
+      const callback = jest.fn();
+
+      createAPI(target).onCaretUpdate(callback);
+      target.dispatchEvent(new Event('update'));
+
+      expect(callback).toHaveBeenCalledTimes(1);
+    });
+
+    it('should stop calling the callback after the returned function is called', () => {
+      const target = new EventTarget();
+      const callback = jest.fn();
+
+      const unsubscribe = createAPI(target).onCaretUpdate(callback);
+
+      unsubscribe();
+      target.dispatchEvent(new Event('update'));
+
+      expect(callback).not.toHaveBeenCalled();
+    });
+
+    it('should subscribe through an abort signal', () => {
+      const target = new EventTarget();
+      const addEventListener = jest.spyOn(target, 'addEventListener');
+
+      createAPI(target).onCaretUpdate(jest.fn());
+
+      expect(addEventListener).toHaveBeenCalledWith('update', expect.any(Function), { signal: expect.any(AbortSignal) });
+    });
+  });
 });

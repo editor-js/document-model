@@ -31,7 +31,7 @@ sequenceDiagram
   Core->>Plugins: bind PluginType.Plugin = SomePlugin
 
   Dev->>Core: use(SomeTool, settings)
-  Core->>Plugins: bind ToolType.Block / Inline / Tune = [SomeTool, settings]
+  Core->>Plugins: bind ToolType.Block / Inline = [SomeTool, settings]
 
   %% ── await initialize() ───────────────────────────
   Dev->>Core: await initialize()
@@ -43,13 +43,13 @@ sequenceDiagram
   Core->>Plugin: new SomePlugin(config, api, eventBus)
   Plugin->>EventBus: wire event listeners
   Core->>Registry: register(SomePlugin.name, plugin.publicApi) (if exposed)
-  Note over Registry: shared record behind api.plugins;<br/>read at access time, so plugins constructed<br/>earlier still see later registrations
+  Note over Registry: shared record behind api.plugins,<br/>read at access time, so plugins constructed<br/>earlier still see later registrations
   Core->>CollabMgr: new CollaborationManager(config, api, eventBus)
   CollabMgr->>EventBus: wire event listeners
 
-  Core->>Plugins: getAll(ToolType.Block / Inline / Tune)
+  Core->>Plugins: getAll(ToolType.Block / Inline)
   Plugins-->>Core: [[SomeTool, settings], ...]
-  Core->>ToolsManager: prepareTools(blockTools, inlineTools, blockTunes)
+  Core->>ToolsManager: prepareTools(blockTools, inlineTools)
   loop for each tool
     ToolsManager->>Tool: Tool.prepare({ toolName, config })
     ToolsManager->>ToolsManager: wrap in BlockToolFacade or InlineToolFacade
@@ -68,6 +68,22 @@ sequenceDiagram
   CollabMgr->>CollabMgr: connect() (if server config provided)
 
   %% ── Destroy ──────────────────────────────────────
-  Dev->>Plugin: plugin.destroy()
-  Plugin->>EventBus: removeEventListener (cleanup)
-  Note over Registry: the registry lives for the lifetime of the Core<br/>instance — Core does not retain plugin instances,<br/>so nothing calls unregister() on teardown today
+  Dev->>Core: destroy()
+  loop plugins, in reverse construction order
+    Core->>Plugin: plugin.destroy?.()
+    Plugin->>EventBus: abort() its listeners' signal
+    Core->>Registry: unregister(plugin.name)
+  end
+  Core->>CollabMgr: destroy() (as a plugin: aborts listeners, closes OTClient socket)
+  Core->>IoC: UndoRedoManager.destroy(), SelectionManager.destroy()
+  Core->>BlockRenderer: destroy()
+  loop each rendered block
+    BlockRenderer->>Tool: instance.destroy?.()
+    BlockRenderer->>Adapter: destroyBlockToolAdapter(blockId)
+  end
+  Core->>Adapter: destroy()
+  Core->>ToolsManager: destroy()
+  loop each inline tool facade
+    ToolsManager->>Tool: facade.destroy(), the shared instance's destroy?.() once
+  end
+  Note over EditorJSModel: never mutated during teardown,<br/>so no removals reach undo history or collaboration
