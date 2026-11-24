@@ -73,6 +73,23 @@ When a multi-change task ends, it always closes the open batch: earlier typing i
 
 *Alternative considered: let the model accept a single block.* Rejected for this change: it would touch the `model` package and its spec, whereas only the undo manager hands event data back to these methods. If another caller ever needs it, it can move into the model then.
 
+### D6. Changes made by model listeners follow the task they are made in
+
+Other `Changed` listeners on the model, such as a future `onChange` callback exposed through the API, may react to a user's change by changing the model themselves. The manager can't tell those changes apart from the user's, so they are grouped by when they run:
+
+- **Synchronously during dispatch, or in a microtask** (for example after `await`): they run before the task-end timer, so they are buffered with the user's changes and undo in the same step. That is usually what's wanted: a listener that normalizes the user's input is part of the same action.
+- **In a later task** (a timer, an animation frame, a network response): they become a separate step, by the one-event and several-event rules.
+- **A `setTimeout(0)` scheduled by a listener that runs before the manager's listener** is queued before the task-end timer, so its changes still join the step. Which listeners run first depends on registration order. This is pinned by a test, so a change in core's listener order is noticed.
+
+A listener's change never reaches the manager while a step is being recorded: `#closeTask()` and `#putBatchToUndo()` don't change the model, so they can't dispatch events.
+
+### D7. The task timer and the debounce do different jobs
+
+- **The task timer decides what goes into a step.** It is scheduled by a task's first local event and fires once that task and its microtasks are over.
+- **The debounce decides when an open step is closed.** It restarts every time `#closeTask()` adds events to the batch, so a batch is recorded 500 ms after the last task that added to it.
+
+The two can't fire in the middle of each other's work. Timers never run during synchronous code or microtasks, so the debounce can't close a batch while a task is still adding to the buffer. If the debounce fires while a task's events are still buffered (both timers were due in the same turn of the event loop), it records the open batch. The task's events then start a new batch when the task timer fires, as if the user had paused. `undo()`, `redo()` and `destroy()` handle both timers in a fixed order: the task buffer first, then the open batch (D4).
+
 ## Alternatives (whole-approach)
 
 - **Explicit `api.document.group(fn)` with a `groupId` on model events.** This was the first draft of this change. Rejected for now:
@@ -90,6 +107,7 @@ When a multi-change task ends, it always closes the open batch: earlier typing i
 - **[R3] Behaviour change for existing multi-change actions** (Enter, block conversion, inline formatting across inputs if it emits several events in one task). → Intended. The spec scenarios cover Enter, and the proposal states the change.
 - **[R4] Timer-based tests.** Existing `UndoRedoManager` tests that dispatch events and immediately call `undo()` still pass, because `undo()` records the buffer first (D4). Tests that inspect batches between events must advance timers. → Use Jest fake timers consistently.
 - **[R5] No grouping when collaboration is enabled.** → Documented. `collaboration-manager` can adopt the same per-task buffering later.
+- **[R6] Listeners that react to an undo or redo.** A model listener that changes the model in reaction to an undo or redo isn't handled well. If it does so synchronously, the manager ignores its change (`#isApplying`): the change isn't recorded and stays in the document after the next undo. If it does so in a later task, the change is recorded as a new step, which clears the redo stack. The same is true on `main` today, and task grouping doesn't change it. → Documented as a known limitation and covered by tests that pin the current behaviour. Fixing it (for example by recording listener changes made during replay into the replayed step) is a separate change, to be planned when `onChange` is exposed.
 
 ## Migration Plan
 

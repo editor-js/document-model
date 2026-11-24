@@ -68,6 +68,36 @@ The system SHALL provide `UndoRedoManager`, which batches consecutive model even
 - **WHEN** the manager handles it
 - **THEN** the event is ignored, as for any remote event, and the local task's grouping is unaffected
 
+#### Scenario: Changes made synchronously by a model listener join the task
+- **GIVEN** a `Changed` listener on the model (for example a future `onChange` callback) reacts to a local event by changing the model as the local user, synchronously during dispatch
+- **WHEN** the task ends and `undo()` is called once
+- **THEN** the user's changes and the listener's changes are reverted together, as one step
+
+#### Scenario: Changes made by a model listener in a microtask join the task
+- **GIVEN** a `Changed` listener reacts to a local event by changing the model as the local user in a microtask (for example after `await`)
+- **WHEN** the task ends and `undo()` is called once
+- **THEN** the listener's changes are reverted in the same step as the user's changes, because microtasks run before the task-end timer
+
+#### Scenario: Changes made by a model listener in a later task are a separate step
+- **GIVEN** a `Changed` listener reacts to a local event by changing the model as the local user in a timer that runs after the task-end timer
+- **WHEN** `undo()` is called once
+- **THEN** only the listener's changes are reverted, and the user's changes stay as the previous step
+
+#### Scenario: The debounce expires while a task is buffered
+- **GIVEN** the open batch's debounce timer expires while a local event of the current task is still buffered
+- **WHEN** the task ends
+- **THEN** the open batch is recorded as its own step, the buffered event starts a new batch, and no event is lost or recorded twice
+
+#### Scenario: The debounce window restarts when a task is recorded
+- **GIVEN** a task's events have just been added to the open batch
+- **WHEN** less than 500 ms pass without another local task
+- **THEN** the batch stays open, and it is recorded as a step 500 ms after the last task that added to it, not 500 ms after the batch's first event
+
+#### Scenario: Undo with both timers pending
+- **GIVEN** local events of the current task are buffered and the open batch's debounce timer is pending
+- **WHEN** `undo()` is called
+- **THEN** the buffered events are recorded first, then the open batch is closed and undone, and neither timer records anything when it would have fired
+
 #### Scenario: Destroy cancels pending timers
 - **GIVEN** a task-end timer or a debounce timer is pending
 - **WHEN** `destroy()` is called

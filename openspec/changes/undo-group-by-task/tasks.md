@@ -12,6 +12,10 @@
   - should record buffered events before undo when the task has not ended
   - should ignore remote events while a task is buffered
   - should clear the task timer and the debounce timer on destroy
+- [ ] 1.3 Write tests for the task timer and the debounce working together (design D7):
+  - should record the open batch and start a new one when the debounce expires while a task is buffered
+  - should keep a batch open until 500 ms after the last task that added to it
+  - should record the buffer, then close and undo the open batch, when undo is called with both timers pending, and record nothing when the timers would have fired
 
 ## 2. Implementation
 
@@ -25,6 +29,14 @@
 
 - [ ] 3.1 should undo a mid-paragraph Enter split in one step
 - [ ] 3.2 should undo and redo a multi-change task that adds a block with text without AlreadyExistingKeyError. Its comment should explain why block-construction `DataNodeAddedEvent`s must stay out of undo (design R2)
+- [ ] 3.3 Write tests for changes made by another `Changed` listener on the model, which stands in for a future `onChange` callback (design D6):
+  - should undo a listener's synchronous change in the same step as the user's change
+  - should undo a listener's microtask change in the same step as the user's change
+  - should record a listener's change made in a timer after the task ends as a separate step
+  - should group a listener's `setTimeout(0)` change with the task when that listener is registered before the undo manager
+- [ ] 3.4 Write tests that pin today's behaviour for listeners that react to an undo (design R6). Their comments should say this is a known limitation, not the wanted behaviour:
+  - should not record a listener's synchronous change made while an undo is replayed
+  - should clear the redo stack when a listener changes the model in a later task after an undo
 
 ## 4. Docs and wrap-up
 

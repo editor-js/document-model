@@ -16,6 +16,7 @@ From the user's point of view, each of these is a single action. They all have o
 - **`destroy()`** also cancels the pending task-end timer and drops the buffered events.
 - **Fix: undo and redo of block changes.** `BlockAddedEvent` and `BlockRemovedEvent` carry a single serialized block, but `EditorJSModel.insertData`/`removeData` expect a list of blocks for a `BlockIndex`. Re-applying any block event therefore throws (`data.forEach is not a function`), so undo can't revert a block insert or removal today. `UndoRedoManager` wraps the block in a one-item list when it re-applies it. Without this fix, grouping Enter into one step would only make it fail in one step.
 - **Behaviour change (not an API break):** actions that make several model changes in one task, which undo in several steps today, now undo in one. That is the intended effect.
+- **Model listeners.** Changes that another model listener (for example a future `onChange` callback) makes synchronously or in a microtask join the user's step. Changes it makes in a later task are a separate step. Listeners that react to an undo or redo are a known limitation that this change doesn't fix (`design.md`, D6 and R6).
 - **Unchanged:** remote events are still ignored, events produced while undo/redo replays are still ignored, and the 500 ms debounce for typing stays.
 
 ## Capabilities
@@ -24,7 +25,7 @@ From the user's point of view, each of these is a single action. They all have o
 <!-- none -->
 
 ### Modified Capabilities
-- `core`: the "Local undo/redo" requirement now groups the local changes of one browser task into one undo step. The new scenarios cover Enter, multi-change tasks around typing, and undo while events are still buffered.
+- `core`: the "Local undo/redo" requirement now groups the local changes of one browser task into one undo step. The new scenarios cover Enter, multi-change tasks around typing, undo while events are still buffered, changes made by other model listeners, and how the task timer and the debounce interact.
 
 ## Impact
 
