@@ -16,6 +16,26 @@ export default [
       },
     },
     rules: {
+      '@stylistic/object-curly-newline': ['error', {
+        ObjectExpression: {
+          multiline: true,
+          consistent: true,
+        },
+        ObjectPattern: {
+          multiline: true,
+          consistent: true,
+        },
+        ImportDeclaration: 'never',
+        ExportDeclaration: {
+          multiline: true,
+          minProperties: 3,
+          consistent: true,
+        },
+        TSTypeLiteral: {
+          multiline: true,
+          consistent: true,
+        },
+      }],
       'n/no-unpublished-import': ['error', {
         allowModules: [
           'eslint-config-codex',
