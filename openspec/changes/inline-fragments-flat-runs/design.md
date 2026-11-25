@@ -79,7 +79,7 @@ All range edits use one helper, `#splitAt(offset)`, which guarantees a span boun
 - `insertText(text, index)`: find the span that owns `index` (Decision 4) and insert into its string. Format sets don't change, so no split or merge is needed. Into empty text, create `{ text, formats: [] }`.
 - A zero-length `format`/`unformat`/`removeText` range changes nothing (same as today).
 
-`#merge()` is one pass joining adjacent spans with equal format sets and dropping empty spans. Operations stay O(spans), and spans exist only where formatting changes.
+`#merge()` is one pass joining adjacent spans with equal format sets. Spans are never empty there: splitting only cuts inside a span, and inserting empty text is a no-op. Operations stay O(spans), and spans exist only where formatting changes.
 
 Events are dispatched by `TextNode` exactly as today (same event classes, `PartialIndex({ textRange })`, context user, `{ tool, data }` payloads), including when `format` re-applies identical data.
 
@@ -147,7 +147,7 @@ Spans are not exposed. Fragments stay the only public and serialized representat
 - **Seeded random sequences.** A shared helper (no new dependency) generates operation sequences and applies them to a per-character reference model:
   - the `FormattedText` sequences check the invariants, text and fragments after every operation;
   - the `TextNode` sequences check text and fragments after every operation, then that rebuilding from `serialized` gives the same fragments, and that shuffling the serialized fragments before loading gives the same result.
-- Integration specs (`InlineTree.integration.spec.ts`) are kept where they assert fragments and rewritten where they assert tree shape.
+- Integration specs (`specs/InlineTree.integration.spec.ts`, now `specs/InlineFormatting.integration.spec.ts`) are kept where they assert fragments and rewritten where they assert tree shape.
 
 ## Risks / Trade-offs
 

@@ -10,6 +10,7 @@ import {
   TextRemovedEvent,
   TextUnformattedEvent
 } from '@editorjs/model-types';
+import { runWithContext } from '../../../utils/Context.js';
 import { TextNode } from './index.js';
 
 const bold = createInlineToolName('bold');
@@ -466,6 +467,35 @@ describe('TextNode', () => {
   });
 
   describe('events', () => {
+    it('should dispatch TextAddedEvent with an empty range when inserting into empty text', () => {
+      const node = new TextNode();
+      let event: TextAddedEvent | null = null;
+
+      node.addEventListener(EventType.Changed, e => event = e as TextAddedEvent);
+      node.insertText('abc');
+
+      expect(event).toHaveProperty('detail', expect.objectContaining({
+        index: expect.objectContaining({ textRange: [0, 0] }),
+        data: 'abc',
+      }));
+    });
+
+    it('should dispatch every text event with the current context user', () => {
+      const node = new TextNode({ value: 'abcd' });
+      const userIds: unknown[] = [];
+
+      node.addEventListener(EventType.Changed, e => userIds.push((e as TextAddedEvent).detail.userId));
+
+      runWithContext('user', () => {
+        node.insertText('X', 0);
+        node.format(bold, 0, 2);
+        node.unformat(bold, 0, 2);
+        node.removeText(0, 1);
+      });
+
+      expect(userIds).toEqual(['user', 'user', 'user', 'user']);
+    });
+
     it('should dispatch TextAddedEvent with the inserted text and range', () => {
       const node = new TextNode({ value: 'abcd' });
       let event: TextAddedEvent | null = null;
