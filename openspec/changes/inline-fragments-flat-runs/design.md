@@ -79,7 +79,7 @@ All range edits use one helper, `#splitAt(offset)`, which guarantees a span boun
 - `insertText(text, index)`: find the span that owns `index` (Decision 4) and insert into its string. Format sets don't change, so no split or merge is needed. Into empty text, create `{ text, formats: [] }`.
 - A zero-length `format`/`unformat`/`removeText` range changes nothing (same as today).
 
-`#merge()` is one pass joining adjacent spans with equal format sets and dropping empty spans. Operations stay O(spans), and spans exist only where formatting changes.
+`#merge()` is one pass joining adjacent spans with equal format sets. Spans are never empty there: splitting only cuts inside a span, and inserting empty text is a no-op. Operations stay O(spans), and spans exist only where formatting changes.
 
 Events are dispatched by `TextNode` exactly as today (same event classes, `PartialIndex({ textRange })`, context user, `{ tool, data }` payloads), including when `format` re-applies identical data.
 
@@ -147,7 +147,7 @@ Spans are not exposed. Fragments stay the only public and serialized representat
 - **Seeded random sequences.** A shared helper (no new dependency) generates operation sequences and applies them to a per-character reference model:
   - the `FormattedText` sequences check the invariants, text and fragments after every operation;
   - the `TextNode` sequences check text and fragments after every operation, then that rebuilding from `serialized` gives the same fragments, and that shuffling the serialized fragments before loading gives the same result.
-- Integration specs (`InlineTree.integration.spec.ts`) are kept where they assert fragments and rewritten where they assert tree shape.
+- Integration specs (`specs/InlineTree.integration.spec.ts`, now `specs/InlineFormatting.integration.spec.ts`) are kept where they assert fragments and rewritten where they assert tree shape.
 
 ## Risks / Trade-offs
 
@@ -156,7 +156,7 @@ Spans are not exposed. Fragments stay the only public and serialized representat
 - [Fragment order changes for existing documents with overlapping formatting, so DOM nesting can differ from before] → Content and formatting are identical; only wrapper nesting changes, and it becomes stable. Mention it in the PR description.
 - [`FormattingAdapter`'s incremental re-render can leave empty wrappers (e.g. `<b></b>`) next to a re-rendered range] → Pre-existing: the same sequence on `main` leaves them too. Out of scope; the model is correct either way.
 - [`getFragments(start, end)` returns whole merged ranges where the tree used to return split pieces, so a fragment can reach outside the range `FormattingAdapter` queried and overlap fragments it never saw. Rendering the widened range with only the first query's fragments drops formatting from the DOM] → `FormattingAdapter` re-queries over the widened range until it stops growing (`collectFragmentsToRender`) and renders with every fragment overlapping it. The same loss already happened on `main` in some operation orders.
-- [Wider re-render ranges push more text through the adapter's rebuild, which assigned the plain text to `template.innerHTML`: text that looks like markup was parsed, shifting offsets and inserting live elements] → The range is rebuilt from a `DocumentFragment` holding a single text node. Pre-existing on `main`; fixed here because this change makes it easier to hit. `dom-adapters` specs now run in jsdom (and as ESM, like `core`) so the rendering is covered by tests.
+- [Wider re-render ranges push more text through the adapter's rebuild, which assigned the plain text to `template.innerHTML`: text that looks like markup was parsed, shifting offsets and inserting live elements] → The range is rebuilt from a `DocumentFragment` holding a single text node. Pre-existing on `main`; fixed here because this change makes it easier to hit. The `FormattingAdapter` spec runs in jsdom (an `@jest-environment` pragma), so the rendering is covered by tests; the package's other specs stay on Node, where they stub `document`.
 - [Removing exported classes is a breaking change for anyone importing them from `@editorjs/model`] → Nothing in the monorepo does. Listed as BREAKING in the proposal.
 - [Rewriting a mutation-tested module can lower the Stryker score] → The span code is much smaller; the regression, invariant and randomized tests target it directly. Run `test:mutations` for the model before opening the PR.
 - [Open conflicts with in-flight PRs] → #192 and #194 touch `EditorDocument`/`BlockNode`/`model-types`, not `inline-fragments/`. The folder rename only changes import paths in `BlockNode` and `entities/index.ts`, which may need a trivial rebase. #192 also edits `BlockNode` specs that build `TextNode`s, which only use the public API.

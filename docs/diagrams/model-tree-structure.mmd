@@ -69,30 +69,24 @@ classDiagram
     +update(value: T)
   }
 
-  class ParentInlineNode {
-    <<abstract>>
-    +children: InlineNode[]
-    +insertText(text, index?)
-    +removeText(start?, end?)
-    +format(tool, start, end, data?)
-    +unformat(tool, start, end)
-    +getFragments(start?, end?): InlineFragment[]
+  class FormattedText {
+    +length: number
+    +insert(text, offset)
+    +remove(start, end): string
+    +applyFormat(start, end, format)
+    +removeFormat(start, end, tool)
+    +toFragments(): InlineFragment[]
   }
 
-  class FormattingInlineNode {
+  class TextSpan {
+    +text: string
+    +formats: InlineFormat[]
+  }
+
+  class InlineFormat {
     +tool: InlineToolName
     +data?: InlineToolData
-    +format(tool, start, end, data?)
-    +unformat(tool, start, end)
-    +split(index): FormattingInlineNode
-  }
-
-  class TextInlineNode {
-    +value: string
-    +length: number
-    +insertText(text, index?)
-    +removeText(start?, end?)
-    +format(tool, start, end, data?): InlineNode[]
+    +equals(format): boolean
   }
 
   %% ── Caret management ─────────────────────────────
@@ -126,7 +120,7 @@ classDiagram
   BlockNode --|> EventBus
   PluginDataNode --|> EventBus
   ValueNode --|> EventBus
-  ParentInlineNode --|> EventBus
+  TextNode --|> EventBus
 
   %% Document composition
   EditorJSModel "1" *-- "1" EditorDocument : document
@@ -137,11 +131,10 @@ classDiagram
   BlockNode "1" *-- "0..*" ValueNode : data[key]
   BlockNode "1" *-- "0..*" PluginDataNode : plugins[name]
 
-  %% Inline tree
-  TextNode --|> ParentInlineNode
-  FormattingInlineNode --|> ParentInlineNode
-  ParentInlineNode "1" *-- "0..*" FormattingInlineNode : children
-  ParentInlineNode "1" *-- "0..*" TextInlineNode : children
+  %% Inline formatting spans
+  TextNode "1" *-- "1" FormattedText : formattedText
+  FormattedText "1" *-- "0..*" TextSpan : spans
+  TextSpan "1" o-- "0..*" InlineFormat : formats
 
   %% Caret management (declared last → placed right)
   EditorJSModel "1" *-- "1" CaretManager : caretManager

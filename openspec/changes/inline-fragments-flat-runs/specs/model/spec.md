@@ -9,7 +9,7 @@
 ### Requirement: Inline formatted text
 The system SHALL provide `TextNode` as the container of a text data node's value and inline formatting. It SHALL support inserting and removing text, reading text, applying (`format`) and removing (`unformat`) an inline tool over a character range, and listing inline fragments. Indices and ranges SHALL be validated against the current text length, and a range's end SHALL NOT be lower than its start. `insertText`, `removeText`, `format` and `unformat` SHALL dispatch `TextAddedEvent`, `TextRemovedEvent`, `TextFormattedEvent` and `TextUnformattedEvent` respectively, with the affected text range and the current context user. `serialized` SHALL return the text value and the fragments as returned by `getFragments()`. `TextNode` SHALL keep its own copy of the data passed to `format` and SHALL return copies of it in fragments and in the dispatched `TextFormattedEvent`, so changes to those objects don't change its state or the events (and the collaboration operations and undo history built from them).
 
-Implemented in `src/entities/inline-text/TextNode/index.ts`, validated by its co-located `.spec.ts`.
+Implemented in `src/entities/inline-text/TextNode/index.ts`, `src/entities/inline-text/FormattedText/index.ts`, `src/entities/inline-text/InlineFormat/index.ts` and `src/entities/inline-text/TextSpan/index.ts`, validated by `src/entities/inline-text/TextNode/*.spec.ts`, `src/entities/inline-text/FormattedText/*.spec.ts`, `src/entities/inline-text/InlineFormat/InlineFormat.spec.ts` and `src/entities/inline-text/specs/InlineFormatting.integration.spec.ts`.
 
 #### Scenario: Inserting text into an empty text node
 - **GIVEN** a `TextNode` with no text

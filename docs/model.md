@@ -8,9 +8,25 @@ Internally it owns an `EditorDocument` (ordered `BlockNode[]`) and a `CaretManag
 
 Each `BlockNode` contains keyed data nodes:
 
-- `TextNode`: rich text with inline tree (`FormattingInlineNode` + `TextInlineNode`).
+- `TextNode`: rich text. Inline formatting is stored as spans: pieces of text with the set of formats (inline tool + data) applied to every character. Spans are canonical (no empty spans, neighbours never have equal format sets, at most one format per tool), so the same formatting always gives the same state. `getFragments()` derives maximal fragments from the spans, sorted by start, then end descending, then tool name.
 - `ValueNode<T>`: non-text typed value for tools.
 - `PluginDataNode`: per-block data owned by a plugin, keyed by the plugin's `name`.
+
+## Inline formatting terms
+
+The same formatting appears under three names, one per layer:
+
+- **Format** (`format()` / `unformat()`, `TextFormattedEvent`, `FormattingAdapter`): applying or removing an inline tool over a text range. An **`InlineFormat`** is what gets applied: the tool and its data, without a range.
+- **Span** (internal): `TextNode` stores its text as **`FormattedText`**, an ordered list of **`TextSpan`**s. A span is a piece of text with the `InlineFormat`s that apply to every character in it. Spans never overlap and are kept canonical.
+- **Fragment** (public, serialized): an **`InlineFragment`** is one `InlineFormat` over a range. Fragments can overlap. `getFragments()`, `serialized` and the API derive them from the spans.
+
+Text `abcdef` with bold over `[0, 5)` and italic over `[1, 6)`:
+
+```mermaid
+flowchart LR
+  F["formats applied<br/>bold [0,5)<br/>italic [1,6)"] --> S["spans<br/>'a' {bold}<br/>'bcde' {bold, italic}<br/>'f' {italic}"]
+  S --> G["fragments<br/>bold [0,5)<br/>italic [1,6)"]
+```
 
 ## Mutation and event invariant
 
