@@ -7,6 +7,8 @@ Core's `UndoRedoManager` only merges consecutive text inserts or removals in the
 
 From the user's point of view, each of these is a single action. They all have one thing in common: the model changes happen synchronously while the browser handles one input event. Grouping changes by browser task fixes all of them in core, without asking tools or plugins to mark their changes. It adds no public API, no new event fields, and no changes to the model.
 
+Grouping also exposes an ordering bug: Core subscribes the integrator's `onModelUpdate` callback to the model before it creates `UndoRedoManager`. A change made synchronously from `onModelUpdate` is therefore recorded before the user's change that caused it, and undo reverts them in the wrong order.
+
 ## What Changes
 
 - **Group by task.** `UndoRedoManager` buffers the local model events of the current browser task and decides how to record them when the task ends. The task end is detected with `setTimeout(0)`, scheduled when the first event of the task arrives; microtasks, such as `BlockNode`'s deferred `DataNodeAddedEvent`s, run before it.
@@ -16,7 +18,8 @@ From the user's point of view, each of these is a single action. They all have o
 - **`destroy()`** also cancels the pending task-end timer and drops the buffered events.
 - **Fix: undo and redo of block changes.** `BlockAddedEvent` and `BlockRemovedEvent` carry a single serialized block, but `EditorJSModel.insertData`/`removeData` expect a list of blocks for a `BlockIndex`. Re-applying any block event therefore throws (`data.forEach is not a function`), so undo can't revert a block insert or removal today. `UndoRedoManager` wraps the block in a one-item list when it re-applies it. Without this fix, grouping Enter into one step would only make it fail in one step.
 - **Behaviour change (not an API break):** actions that make several model changes in one task, which undo in several steps today, now undo in one. That is the intended effect.
-- **Model listeners.** Changes that another model listener (for example a future `onChange` callback) makes synchronously or in a microtask join the user's step. Changes it makes in a later task are a separate step. Listeners that react to an undo or redo are a known limitation that this change doesn't fix (`design.md`, D6 and R6).
+- **Model listeners.** `UndoRedoManager` becomes the model's first `Changed` listener: Core creates it in its constructor, before it subscribes `onModelUpdate`. Its `core:undo`/`core:redo` listeners are still registered after plugins. Changes that `onModelUpdate` or another listener makes synchronously or in a microtask then join the user's step in the order the model applied them. Changes made in a later task are a separate step. Listeners that react to an undo or redo are a known limitation that this change doesn't fix (`design.md`, D6 and R6).
+- **Plugin data.** Several `updatePluginData` writes in one task become one undo step, like any other multi-change task.
 - **Unchanged:** remote events are still ignored, events produced while undo/redo replays are still ignored, and the 500 ms debounce for typing stays.
 
 ## Capabilities
@@ -29,7 +32,7 @@ From the user's point of view, each of these is a single action. They all have o
 
 ## Impact
 
-- **Code:** `packages/core/src/components/UndoRedoManager.ts` and its `.spec.ts`, plus an integration test with a real model and `BlocksManager`. No other package changes, and no public API changes.
+- **Code:** `packages/core/src/components/UndoRedoManager.ts` and its `.spec.ts`, plus integration tests with a real model and `BlocksManager`. In `packages/core/src/index.ts`, the manager is created in the constructor instead of in `initialize()`. Existing tests that make several changes in one task and expect separate steps, including the plugin-data integration tests, now end the task between changes. No other package changes, and no public API changes.
 - **Collaboration:** `collaboration-manager` keeps its own undo manager, which takes over `core:undo`/`core:redo` when it is registered. That manager is not changed here, so multi-change actions still undo in several steps when collaboration is enabled. It can adopt the same per-task rule later, without any new event fields.
 - **Not covered:** asynchronous actions, such as a file paste that waits for an upload, which span several tasks and cannot be grouped this way. If they ever need to be one step, an explicit `api.document.group(fn)` can be added then (see `design.md`, "Alternatives").
 - **Docs:** `docs/diagrams/undo-redo-flow.mmd` (core grouping by task), `docs/collaboration.md` (note that collaboration undo does not group by task yet). Nothing in `docs/` is superseded.

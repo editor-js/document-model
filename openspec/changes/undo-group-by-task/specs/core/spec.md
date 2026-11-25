@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Local undo/redo
-The system SHALL provide `UndoRedoManager`, which batches consecutive model events (debounced) into a single undo step, inverts `Added`/`Removed`/`Modified` events on `undo()`, and responds to cancellable `core:undo`/`core:redo` events. Local events SHALL be grouped by the browser task in which they were dispatched. When a task produced exactly one local event, that event is batched by the existing rule (consecutive text insert/remove in the same input). When a task produced more than one local event, the open batch is closed and the task's events start a new batch together.
+The system SHALL provide `UndoRedoManager`, which batches consecutive model events (debounced) into a single undo step, inverts `Added`/`Removed`/`Modified` events on `undo()`, and responds to cancellable `core:undo`/`core:redo` events. Local events SHALL be grouped by the browser task in which they were dispatched. When a task produced exactly one local event, that event is batched by the existing rule (consecutive text insert/remove in the same input). When a task produced more than one local event, the open batch is closed and the task's events start a new batch together. `UndoRedoManager` SHALL be the model's first `Changed` listener, so the events of a step are recorded in the order the model applied them, including changes that other listeners make while an event is dispatched.
 
 #### Scenario: In-progress batch flushed before undo
 - **GIVEN** an undo step is mid-batch when `undo()` is triggered
@@ -58,6 +58,16 @@ The system SHALL provide `UndoRedoManager`, which batches consecutive model even
 - **WHEN** that task is undone and then redone
 - **THEN** the block is removed and re-added with its data exactly once, with no `AlreadyExistingKeyError`, because the microtask-dispatched `DataNodeAddedEvent`s from block construction are not recorded as undoable changes
 
+#### Scenario: Undoing a block removal keeps redo available
+- **GIVEN** a step that removed a block with text data
+- **WHEN** that step is undone, the microtasks queued while re-adding the block have run, and `redo()` is called
+- **THEN** the block is removed again, because the `DataNodeAddedEvent`s from re-adding the block were not recorded as a new step and did not clear the redo stack
+
+#### Scenario: Several plugin-data writes in one task are one undo step
+- **GIVEN** the local user's action writes plugin data several times in one task, for example by calling `updatePluginData` for two keys
+- **WHEN** the task ends and `undo()` is called once
+- **THEN** all of those writes are reverted together, not only the last one
+
 #### Scenario: Undoing and redoing a block change
 - **GIVEN** a recorded step contains a `BlockAddedEvent` or `BlockRemovedEvent`, whose `data` is a single serialized block
 - **WHEN** the step is undone or redone
@@ -69,9 +79,19 @@ The system SHALL provide `UndoRedoManager`, which batches consecutive model even
 - **THEN** the event is ignored, as for any remote event, and the local task's grouping is unaffected
 
 #### Scenario: Changes made synchronously by a model listener join the task
-- **GIVEN** a `Changed` listener on the model (for example a future `onChange` callback) reacts to a local event by changing the model as the local user, synchronously during dispatch
+- **GIVEN** a `Changed` listener on the model, such as the `onModelUpdate` callback, reacts to a local event by changing the model as the local user, synchronously during dispatch
 - **WHEN** the task ends and `undo()` is called once
 - **THEN** the user's changes and the listener's changes are reverted together, as one step
+
+#### Scenario: Listener changes are undone in reverse of the order they were applied
+- **GIVEN** `onModelUpdate` reacts to a local text insert by synchronously inserting text earlier in the same input, which shifts the offsets of the user's text
+- **WHEN** `undo()` is called once
+- **THEN** the listener's insert is reverted first and the user's insert second, each at the offsets where it was applied, and the document equals its state before the user's change
+
+#### Scenario: The undo manager is the model's first Changed listener
+- **GIVEN** Core is constructed with `onModelUpdate`, and plugins or tools subscribe to the model's `Changed` events
+- **WHEN** the model dispatches a `Changed` event
+- **THEN** `UndoRedoManager` receives it before `onModelUpdate` and before any plugin or tool listener, while its `core:undo`/`core:redo` listeners are still registered after plugins
 
 #### Scenario: Changes made by a model listener in a microtask join the task
 - **GIVEN** a `Changed` listener reacts to a local event by changing the model as the local user in a microtask (for example after `await`)
@@ -79,7 +99,7 @@ The system SHALL provide `UndoRedoManager`, which batches consecutive model even
 - **THEN** the listener's changes are reverted in the same step as the user's changes, because microtasks run before the task-end timer
 
 #### Scenario: Changes made by a model listener in a later task are a separate step
-- **GIVEN** a `Changed` listener reacts to a local event by changing the model as the local user in a timer that runs after the task-end timer
+- **GIVEN** a `Changed` listener reacts to a local event by changing the model as the local user in a later task, for example in a `setTimeout(0)`
 - **WHEN** `undo()` is called once
 - **THEN** only the listener's changes are reverted, and the user's changes stay as the previous step
 
@@ -103,4 +123,4 @@ The system SHALL provide `UndoRedoManager`, which batches consecutive model even
 - **WHEN** `destroy()` is called
 - **THEN** both timers are cleared, and no step is recorded afterwards
 
-Implemented in `src/components/UndoRedoManager.ts`, validated by its co-located `.spec.ts` and an integration test through `Core`.
+Implemented in `src/components/UndoRedoManager.ts` (and where `src/index.ts` creates it), validated by its co-located `.spec.ts` and an integration test through `Core`.
