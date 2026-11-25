@@ -1,4 +1,4 @@
-/* @jest-environment jsdom */
+/* @jest-environment @stryker-mutator/jest-runner/jest-env/jsdom */
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 import 'reflect-metadata';
 import { describe, expect, it, jest } from '@jest/globals';
