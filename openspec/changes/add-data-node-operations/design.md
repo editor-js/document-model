@@ -81,7 +81,7 @@ For an operation `against` at `P.i` (prefix `P`, last segment the integer `i`) a
 | Delete at `P.i` | `j == i`, anything else (same element or inside it) | `Neutral` |
 | any | `j < i`, or `op` key outside `P` | unchanged |
 
-For an operation `against` that deletes a key `K` whose last segment is **not** an integer (an object member), any `op` at `K` or under `K.` becomes `Neutral`, except an Insert at exactly `K`, which re-creates it and is unchanged.
+For an operation `against` that deletes a key `K` whose last segment is **not** an integer (an object member), any `op` at `K` or under `K.` becomes `Neutral`, except a write (an Insert or a `Modify`, see D6) at exactly `K`, which re-creates it and is unchanged.
 
 Prefixes nest: `P` itself may contain array segments (`rows.2.cells.0`). Only the segment at depth `|P|` is compared and rewritten. A text operation keeps its `textRange` and only its `dataKey` is rewritten (a `TextIndex` with the new key).
 
@@ -95,16 +95,27 @@ Prefixes nest: `P` itself may contain array segments (`rows.2.cells.0`). Only th
 
 A *write* here is a `Modify`, or an `Insert` at a key whose last segment is not an integer, which replaces whatever is at that key (D4). An Insert at an array position doesn't replace anything and follows D5. Two keys *overlap* when one equals the other or is a prefix of it by whole segments (`meta` and `meta.url`, but not `meta` and `metadata`). D5 shifting is applied first, and overlap is checked on the shifted keys.
 
+Overlapping operations are resolved by depth, and every rule gives the same result whichever operation is transformed against the other:
+
+- **The shallower key wins.** A write or a Delete at a key replaces or removes the whole subtree, so it wins over any operation under that key, regardless of order. An `op` under the key (`Insert`, `Delete`, `Modify` or a text operation) becomes `Neutral` when transformed against it. The operation at the shallower key, transformed against one under its key, is returned unchanged. The Delete half is D5's object-member rule; the write half is new.
+- **At the same key, a write wins over anything that isn't a write.** A Delete or a text operation at exactly the key of a write becomes `Neutral` when transformed against the write, in either order, and the write transformed against it is returned unchanged. For a Delete, this is the other direction of D5's exception, where a write at the deleted key is kept. Without it, the deleting client keeps the node the server removed, or the writing client loses the node the server kept.
 - **Two writes at the same key.** Last-writer-wins in server order: `op` becomes `Neutral` iff `against` comes later (`againstIsLater`). Otherwise `op` is kept and applied after `against`. This is the rule `fix-ot-client-convergence` sets for values. With replace-on-insert (D4), it also covers two Inserts creating the same object key.
-- **A write at an ancestor key against any operation under it.** The ancestor write replaces the subtree, so it wins regardless of order, as an object-member Delete already does in D5. An `op` under the key (`Insert`, `Delete`, `Modify` or a text operation) becomes `Neutral` when transformed against an ancestor write. An ancestor write transformed against an operation under its key is returned unchanged.
-- **Modify vs. Insert / Delete at array positions** follows D5. A Modify under a deleted element or member becomes `Neutral`. A Modify inside a shifted element is re-keyed.
+- **Two Deletes at the same key.** The one transformed becomes `Neutral`, as in D5.
+- **Array positions.** When the key's last segment is an integer, the same-key rules above don't apply and D5 decides: a Delete at `P.i` wins over a `Modify` at exactly `P.i` in both directions, and an array Insert shifts the operations at and after its position.
+
+For example, X inserts `meta = {url: 'a'}` while Y deletes `meta`. In either server order, everyone ends with `{url: 'a'}`.
+
+- *Server takes X first.* Y is transformed against X and becomes `Neutral`; client X ignores the broadcast. Client Y transforms incoming X against its unacknowledged Y, and X stays unchanged, re-creating `meta`.
+- *Server takes Y first.* X is transformed against Y and stays unchanged. Client Y applies X after its acknowledgement. Client X transforms incoming Y against its unacknowledged X, and Y becomes `Neutral`.
+
+The same walk-through holds for X inserting `meta` while Y inserts `meta.url = 'b'`, with Y's write under the key instead of a Delete at it.
 
 For example, X inserts `meta = {url: 'a'}` and Y concurrently inserts `meta.url = 'b'`. In either server order, everyone ends with `{url: 'a'}`.
 
 - *Server takes X first.* Y is transformed against X, becomes `Neutral`, and is stored and broadcast as one. Client X ignores it. Client Y transforms incoming X against its unacknowledged Y, and X stays unchanged, replacing `meta`.
 - *Server takes Y first.* X is transformed against Y and stays unchanged. Client Y applies X after its acknowledgement. Client X transforms incoming Y against its unacknowledged X, and Y becomes `Neutral`.
 
-*Alternative*: last-writer-wins across levels, where an earlier ancestor write is kept and a later descendant write is applied inside it. That gives the descendant write a chance to win, but the client that sent the descendant write must then patch the incoming ancestor payload with its own write. For a text operation under the key, that means applying a text operation to a serialized subtree, which the transformer can't do without a model. The rule above needs no payload rewriting and matches how D5 treats deleted members.
+*Alternative*: last-writer-wins across levels, where an earlier ancestor write is kept and a later descendant write is applied inside it. That gives the descendant write a chance to win, but the client that sent the descendant write must then patch the incoming ancestor payload with its own write. For a text operation under the key, that means applying a text operation to a serialized subtree, which the transformer can't do without a model. The rules above need no payload rewriting and match how D5 treats deleted members.
 
 Every new rule is added to the existing `#transformAgainstDataOperation` branch, which `#applyTransformation` already dispatches to for any `DataIndex` `againstOp`. Text operations stop being returned unchanged there. Data operations transformed against *text* operations, and anything transformed against *block* operations, keep their current rules: `DataIndex` already has `withBlockIndex`.
 
@@ -135,7 +146,7 @@ A batch entry is rebased the same way, operation by operation, through its inver
 
 - **Stale delete payloads.** A Delete carries a snapshot of the removed subtree. If a peer edits inside the element concurrently, the server still deletes the right element, but undoing the delete restores the snapshot without the peer's edit. Block deletes behave the same way today. This is accepted and documented.
 - **Undoing a Modify overwrites a newer remote value.** Undo stack entries are rebased with the default order (D8), so a remote Modify on the same key does not neutralize them. Undo then restores the local `prevPayload` over the peer's value. This is current behavior for data operations and is unchanged.
-- **A replaced subtree discards concurrent edits inside it.** Under D6, a write at `meta` wins over a concurrent write at `meta.url` even if the server orders the `meta.url` write later. This matches how deleting a member discards concurrent edits inside it.
+- **A replaced value discards concurrent edits at or inside it.** Under D6, a write at `meta` wins over a concurrent write at `meta.url` even if the server orders the `meta.url` write later. It also wins over a concurrent Delete of `meta`, and a write at `caption` discards text typed into `caption` at the same time. This matches how deleting a member discards concurrent edits inside it.
 - **Dependency on `fix-ot-client-convergence`.** Until it lands, the server never transforms client operations and the client skips its in-flight operation, so concurrent array edits diverge exactly as concurrent text edits do today. The rules here are correct only on top of that fix.
 - **The numeric-segment convention** rules out digit-only object keys for array semantics. It is cheap to state, and no current tool uses such keys.
 - **Wire compatibility.** An older `ot-server` silently ignores `DataIndex` Insert/Delete (no model support) and drops `Modify`. Clients and server deploy together, which is already the rule for this monorepo.

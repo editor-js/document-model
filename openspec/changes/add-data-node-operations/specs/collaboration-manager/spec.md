@@ -28,7 +28,7 @@ The system SHALL treat a data-key segment that is a non-negative integer as an a
 - an Insert at `P.i` shifts `j ≥ i` to `j+1`;
 - a Delete at `P.i` shifts `j > i` to `j−1`, and turns operations at or under `P.i` into `Neutral`, except an Insert at exactly `P.i`, which stays unchanged.
 
-For two Inserts at exactly the same position, the operation being transformed SHALL shift iff the other operation comes earlier in the transform order (`againstIsLater` is false). A Delete of a key whose last segment is not an integer SHALL turn every operation at or under that key into `Neutral`, except an Insert at exactly that key.
+For two Inserts at exactly the same position, the operation being transformed SHALL shift iff the other operation comes earlier in the transform order (`againstIsLater` is false). A Delete of a key whose last segment is not an integer SHALL turn every operation at or under that key into `Neutral`, except an `Insert` or `Modify` at exactly that key.
 
 #### Scenario: Text edit inside a shifted element
 - **GIVEN** a text insert on `TextIndex` with `dataKey: 'items.3.content'` in block 0
@@ -67,6 +67,8 @@ For two writes on the same block and data key, the operation being transformed S
 
 An operation of any kind under the key of a write in the same block SHALL become `Neutral` when transformed against that write, whatever the order. A write transformed against an operation under its key SHALL be returned unchanged.
 
+When the key's last segment is not an integer, a `Delete` or a text operation at exactly the key of a write in the same block SHALL become `Neutral` when transformed against that write, whatever the order, and the write transformed against it SHALL be returned unchanged. When the last segment is an integer, same-key conflicts follow the array position rules.
+
 #### Scenario: Concurrent value changes converge on the later write
 - **GIVEN** clients X and Y both modify `items.0.depth` of block 0 at the same revision, and the server processes Y's operation first
 - **WHEN** the server transforms X's operation against Y's, and client X transforms Y's broadcast operation against its pending operation
@@ -76,6 +78,21 @@ An operation of any kind under the key of a write in the same block SHALL become
 - **GIVEN** client X inserts `meta` as `{ url: 'a' }` and client Y inserts `meta.url` as `'b'` in block 0, at the same revision
 - **WHEN** the server processes the two operations in either order, and each client transforms the other's broadcast operation against its pending operation
 - **THEN** the server and both clients end with `meta` equal to `{ url: 'a' }`
+
+#### Scenario: Re-creating a key wins over a concurrent delete of it
+- **GIVEN** client X inserts `meta` as `{ url: 'a' }` and client Y deletes `meta` in block 0, at the same revision
+- **WHEN** the server processes the two operations in either order, and each client transforms the other's broadcast operation against its pending operation
+- **THEN** the server and both clients end with `meta` equal to `{ url: 'a' }`
+
+#### Scenario: Value change at a deleted key is kept
+- **GIVEN** a `Modify` on `DataIndex(0, 'meta')` and a concurrent `Delete` on `DataIndex(0, 'meta')`
+- **WHEN** each is transformed against the other
+- **THEN** the `Modify` is returned unchanged and the `Delete` becomes `Neutral`
+
+#### Scenario: Text edit at a replaced key
+- **GIVEN** a text insert on `TextIndex` with `dataKey: 'caption'` and a concurrent `Insert` on `DataIndex(0, 'caption')` in block 0
+- **WHEN** each is transformed against the other, earlier or later
+- **THEN** the text insert becomes `Neutral` and the `Insert` is returned unchanged
 
 #### Scenario: Text edit inside a replaced object
 - **GIVEN** a text insert on `TextIndex` with `dataKey: 'meta.caption'` in block 0

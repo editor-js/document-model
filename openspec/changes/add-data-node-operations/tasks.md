@@ -30,10 +30,10 @@
 
 - [ ] 4.1 Write failing `OperationsTransformer` specs for every row of the D5 table, for both data and text operations, including nested prefixes (`rows.2.cells.0`) and other blocks or arrays left unchanged
 - [ ] 4.2 Write failing specs for the same-position Insert tie-break with the default order (shifts) and with `againstIsLater: true` (keeps position)
-- [ ] 4.3 Write failing specs for object-member Delete (`Neutral` at or under the key, re-create left unchanged) and for Insert vs. Insert on the same object key by transform order
-- [ ] 4.4 Write failing specs for overlapping writes (D6): data and text operations under a written key become `Neutral` in both orders, the write itself is unchanged, and a sibling key with a shared string prefix (`meta` / `metadata`) does not overlap
+- [ ] 4.3 Write failing specs for object-member Delete (`Neutral` at or under the key, an Insert or Modify at the key left unchanged) and for Insert vs. Insert on the same object key by transform order
+- [ ] 4.4 Write failing specs for overlapping writes (D6), transforming each pair in both directions: data and text operations under a written key become `Neutral` in both orders and the write is unchanged; a Delete or text operation at exactly a written object key becomes `Neutral` and the write (Insert or Modify) is unchanged; a Delete at an array position still wins over a Modify at it; a sibling key with a shared string prefix (`meta` / `metadata`) does not overlap
 - [ ] 4.5 Implement a key-relation helper (common prefix by segments, array position at that depth) and extend `#transformAgainstDataOperation` to handle Insert/Delete against operations and overlapping writes, re-keying `DataIndex` and `TextIndex` via a new data-key copy method
-- [ ] 4.6 Add cases to `packages/ot-server/src/convergence.spec.ts` (added by `fix-ot-client-convergence`): concurrent same-position inserts, an insert vs. a text edit in a later element, and `meta` vs. `meta.url` in both server orders
+- [ ] 4.6 Add cases to `packages/ot-server/src/convergence.spec.ts` (added by `fix-ot-client-convergence`): concurrent same-position inserts, an insert vs. a text edit in a later element, `meta` vs. `meta.url`, and an Insert vs. a Delete at `meta`, each in both server orders
 
 ## 5. Undo/redo
 
