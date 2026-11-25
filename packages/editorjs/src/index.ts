@@ -1,5 +1,6 @@
 import Core from '@editorjs/core';
 import type { CoreConfig, ToolConstructable } from '@editorjs/sdk';
+import type { ToolEntry } from './mergeTools.js';
 import { DOMAdapters } from '@editorjs/dom-adapters';
 import { CollaborationManager } from '@editorjs/collaboration-manager';
 import { Paragraph } from '@editorjs/paragraph';
@@ -8,8 +9,10 @@ import { ItalicInlineTool } from '@editorjs/italic';
 import { LinkInlineTool } from '@editorjs/inline-link';
 import { ClipboardPlugin } from '@editorjs/clipboard-plugin';
 import { ShortcutsPlugin } from '@editorjs/shortcuts-plugin';
-import { EditorjsUI, BlocksUI, InlineToolbarUI, ToolbarUI, ToolboxUI } from '@editorjs/ui';
+import { DefaultBlockSettingsPlugin } from '@editorjs/default-block-settings-plugin';
+import { EditorjsUI, BlocksUI, BlockSettingsUI, InlineToolbarUI, ToolbarUI, ToolboxUI } from '@editorjs/ui';
 import { mergeTools } from './mergeTools.js';
+import { reportUnlessAborted } from './reportUnlessAborted.js';
 
 /**
  * Default tools registered by the bundle, keyed later by their static `name`.
@@ -32,8 +35,10 @@ export type EditorJSConfig = Omit<CoreConfig, 'tools'> & {
   /**
    * User tools to register on top of the defaults. A tool provided under a name
    * that matches a default tool replaces that default instead of duplicating it.
+   * Pass `{ class: tool, ...options }` instead of a bare constructor to forward
+   * options (most commonly `config`) to `core.use`.
    */
-  tools?: Record<string, ToolConstructable>;
+  tools?: Record<string, ToolEntry>;
 };
 
 /**
@@ -73,12 +78,13 @@ export default class EditorJS {
      */
     this.#core.use(ClipboardPlugin);
     this.#core.use(ShortcutsPlugin);
+    this.#core.use(DefaultBlockSettingsPlugin);
 
     /**
      * Default tools merged with user-provided `config.tools` (user wins by name).
      */
-    for (const tool of mergeTools(DEFAULT_TOOLS, tools)) {
-      this.#core.use(tool);
+    for (const [tool, options] of mergeTools(DEFAULT_TOOLS, tools)) {
+      this.#core.use(tool, options);
     }
 
     /**
@@ -89,15 +95,30 @@ export default class EditorJS {
     this.#core.use(InlineToolbarUI);
     this.#core.use(ToolbarUI);
     this.#core.use(ToolboxUI);
+    this.#core.use(BlockSettingsUI);
 
     this.#readyPromise = this.#core.initialize();
+
+    /**
+     * `isReady` may be left unawaited: ignore the AbortError a destroy before ready causes, log anything else
+     */
+    reportUnlessAborted(this.#readyPromise);
   }
 
   /**
-   * Resolves once the editor has finished initializing; rejects if initialization fails.
+   * Resolves once the editor has finished initializing. Rejects if initialization fails,
+   * or with an `AbortError` if the editor is destroyed before it is ready
    */
   public get isReady(): Promise<void> {
     return this.#readyPromise;
+  }
+
+  /**
+   * Tears the editor down: destroys its plugins (each releases what it holds), core services, tools and adapter.
+   * Safe to call more than once and before {@link isReady} settles
+   */
+  public destroy(): void {
+    this.#core.destroy();
   }
 }
 

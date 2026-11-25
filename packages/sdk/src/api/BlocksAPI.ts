@@ -3,9 +3,11 @@ import type {
   BlockId,
   BlockNodeInit,
   DocumentData,
+  PluginDataSerialized,
   TextNodeSerialized,
   ValueSerialized
 } from '@editorjs/model-types';
+import type { PluginDataFor, PluginId } from '../index.js';
 
 /**
  * Blocks API interface
@@ -22,6 +24,7 @@ export interface BlocksAPI {
    * @param [params.focus] - flag indicates if new block should be focused @todo implement
    * @param [params.replace] - flag indicates if block at index should be replaced @todo implement
    * @param [params.id] - id of the inserted block @todo implement
+   * @param [params.plugins] - initial per-plugin data for the block, keyed by plugin name
    */
   insert(params?: {
     /** Block tool name to insert */
@@ -36,6 +39,8 @@ export interface BlocksAPI {
     replace?: boolean;
     /** Id of the inserted block */
     id?: string;
+    /** Initial per-plugin data for the block, keyed by plugin name */
+    plugins?: Record<string, PluginDataSerialized>;
     /** User id. Defaults to the current user id from the config */
     userId?: string | number;
   }): void;
@@ -150,6 +155,16 @@ export interface BlocksAPI {
   getIdByIndex(index: number): BlockId | undefined;
 
   /**
+   * Returns the name of the tool rendering the block at the given index, or undefined when no
+   * block is there.
+   *
+   * Exists so that a caller needing one scalar about one block is not pushed to
+   * `api.document.data`, which serializes the entire document to get there
+   * @param index - index of the block
+   */
+  getToolByIndex(index: number): string | undefined;
+
+  /**
    * Returns serialized data for provided data key
    * @param params - getData parameters
    * @param params.block - index or id of the block
@@ -217,6 +232,43 @@ export interface BlocksAPI {
   }): void;
 
   /**
+   * Returns the per-block data stored by the given plugin, or undefined when it stores none.
+   *
+   * The data type is resolved from `EditorjsPluginDataMap` for a plugin that declares its shape,
+   * and falls back to a plain record otherwise.
+   * @param params - getPluginData parameters
+   * @param params.block - index or id of the block
+   * @param params.plugin - name the data is stored under, by convention the plugin's `name`
+   */
+  getPluginData<Id extends PluginId>(params: {
+    /** Index or id of the block */
+    block: number | string;
+    /** Name the data is stored under */
+    plugin: Id;
+  }): PluginDataFor<Id> | undefined;
+
+  /**
+   * Merges the passed keys into the per-block data of the given plugin, creating the entry when
+   * the block has none yet; a key set to `undefined` is removed. Each key is recorded as its own
+   * modification, so writing several keys is not a single undo step.
+   * @param params - updatePluginData parameters
+   * @param params.block - index or id of the block
+   * @param params.plugin - name the data is stored under, by convention the plugin's `name`
+   * @param params.data - keys to merge into the plugin's data
+   * @param [params.userId] - user id. Defaults to the current user id from the config
+   */
+  updatePluginData<Id extends PluginId>(params: {
+    /** Index or id of the block */
+    block: number | string;
+    /** Name the data is stored under */
+    plugin: Id;
+    /** Keys to merge into the plugin's data */
+    data: Partial<PluginDataFor<Id>>;
+    /** User id. Defaults to the current user id from the config */
+    userId?: string | number;
+  }): void;
+
+  /**
    * Splits the block at the given data key and character offset.
    * If the tool supports splitting (canBeSplit = true) a new block of the same type is inserted after the current one.
    * Otherwise, the default block is inserted with the content after the caret.
@@ -243,9 +295,8 @@ export interface BlocksAPI {
    * Updates block data by id
    * @param id - id of the block to update
    * @param data - (optional) the new data. Can be partial.
-   * @param tunes - (optional) tune data
    */
-  // update(id: string, data?: Partial<BlockToolData>, tunes?: { [name: string]: BlockTuneData }): Promise<BlockAPI>;
+  // update(id: string, data?: Partial<BlockToolData>): Promise<BlockAPI>;
 
   /**
    * Converts block to another type. Both blocks should provide the conversionConfig.

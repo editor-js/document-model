@@ -4,6 +4,7 @@ import { EditorDocument, EditorJSModel } from '@editorjs/model';
 import EditorJS from '@editorjs/editorjs';
 import { ref, onMounted } from 'vue';
 import { Node } from './components';
+import { Header } from '@editorjs/header';
 /**
  * Editor document for visualizing
  */
@@ -49,7 +50,13 @@ onMounted(() => {
             text: '333',
           },
         },
-
+        ...([1, 2, 3, 4, 5, 6] as const).map(level => ({
+          type: 'header',
+          data: {
+            text: `Heading ${level}`,
+            level,
+          },
+        })),
       ],
     },
     onModelUpdate: (m: unknown) => {
@@ -58,6 +65,9 @@ onMounted(() => {
       editorDocument.value = (m as EditorJSModel).devModeGetDocument();
     },
 
+    tools: {
+      header: { class: Header, config: { levels: [1, 2, 3, 4, 5, 6], defaultLevel: 2 } },
+    },
   });
 
   editor.isReady.catch((error: unknown) => console.error('Editor.js failed to initialize', error));

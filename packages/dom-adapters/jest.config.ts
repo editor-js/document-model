@@ -2,7 +2,7 @@ import type { JestConfigWithTsJest } from 'ts-jest';
 
 export default {
   preset: 'ts-jest',
-  testEnvironment: 'jsdom',
+  testEnvironment: 'node',
   testMatch: [ '<rootDir>/src/**/*.spec.ts' ],
   modulePathIgnorePatterns: [ '<rootDir>/.*/__mocks__' ],
   extensionsToTreatAsEsm: ['.ts'],

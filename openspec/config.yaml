@@ -21,6 +21,7 @@ rules:
     - Name test cases in should-notation, e.g. it('should return X when Y').
     - Check off the final task only after `openspec validate <change> --type change` passes. A fully-checked tasks.md is the signal that the change is ready to archive, and CI (the "OpenSpec archive gate") then requires the archive commit to be present in this PR before it can merge.
   proposal:
+    - "Bug fixes get a very short proposal: only a `## Bug` section (what's broken) and a `## Fix` section (the change), a few sentences each. No Why/What Changes/Capabilities/Impact sections and no design.md."
     - Cross-check against existing docs in docs/ and note if the proposal supersedes any of them.
   specs:
     # CI folds deltas by running the `openspec archive` CLI mechanically (no agent), so deltas must fold correctly on their own.

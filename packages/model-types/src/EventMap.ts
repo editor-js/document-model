@@ -5,7 +5,7 @@ import type { TextRemovedEvent } from './events/TextRemovedEvent.js';
 import type { TextFormattedEvent } from './events/TextFormattedEvent.js';
 import type { TextUnformattedEvent } from './events/TextUnformattedEvent.js';
 import type { ValueModifiedEvent } from './events/ValueModifiedEvent.js';
-import type { TuneModifiedEvent } from './events/TuneModifiedEvent.js';
+import type { PluginDataModifiedEvent } from './events/PluginDataModifiedEvent.js';
 import type { PropertyModifiedEvent } from './events/PropertyModifiedEvent.js';
 import type { CaretManagerCaretAddedEvent } from './events/CaretManagerCaretAddedEvent.js';
 import type { CaretManagerCaretRemovedEvent } from './events/CaretManagerCaretRemovedEvent.js';
@@ -27,9 +27,9 @@ export type TextNodeEvents = TextAddedEvent | TextRemovedEvent | TextFormattedEv
 export type ValueNodeEvents = ValueModifiedEvent;
 
 /**
- * Alias for all block tune events
+ * Alias for all plugin data events
  */
-export type BlockTuneEvents = TuneModifiedEvent;
+export type PluginDataEvents = PluginDataModifiedEvent;
 
 /**
  * Alias for all document-level events
@@ -39,7 +39,7 @@ export type DocumentEvents = PropertyModifiedEvent;
 /**
  * Union of all events that can be emitted by the document model
  */
-export type ModelEvents = BlockEvents | TextNodeEvents | ValueNodeEvents | BlockTuneEvents | DocumentEvents;
+export type ModelEvents = BlockEvents | TextNodeEvents | ValueNodeEvents | PluginDataEvents | DocumentEvents;
 
 /**
  * Union of all events that can be emitted by the caret manager

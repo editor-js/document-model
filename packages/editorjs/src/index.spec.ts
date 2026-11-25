@@ -9,6 +9,7 @@ import { jest, describe, it, expect, beforeEach } from '@jest/globals';
  */
 const use = jest.fn();
 const initialize = jest.fn<() => Promise<void>>();
+const destroy = jest.fn();
 
 /**
  * Minimal Core stand-in recording `use()` calls and delegating `initialize()`.
@@ -16,6 +17,7 @@ const initialize = jest.fn<() => Promise<void>>();
 class MockCore {
   public use = use;
   public initialize = initialize;
+  public destroy = destroy;
 }
 
 jest.unstable_mockModule('@editorjs/core', () => ({ default: MockCore }));
@@ -27,12 +29,23 @@ jest.unstable_mockModule('@editorjs/italic', () => ({ ItalicInlineTool: class It
 jest.unstable_mockModule('@editorjs/inline-link', () => ({ LinkInlineTool: class LinkInlineTool {} }));
 jest.unstable_mockModule('@editorjs/clipboard-plugin', () => ({ ClipboardPlugin: class ClipboardPlugin {} }));
 jest.unstable_mockModule('@editorjs/shortcuts-plugin', () => ({ ShortcutsPlugin: class ShortcutsPlugin {} }));
+jest.unstable_mockModule('@editorjs/default-block-settings-plugin', () => ({
+  /**
+   * The assertions below read `ctor.name`, and this plugin declares a static `name`, so
+   * what they see is its plugin id rather than the class name. The mock declares it too,
+   * otherwise the test would assert a name the real module never reports
+   */
+  DefaultBlockSettingsPlugin: class DefaultBlockSettingsPlugin {
+    public static readonly name = 'default-block-settings';
+  },
+}));
 jest.unstable_mockModule('@editorjs/ui', () => ({
   EditorjsUI: class EditorjsUI {},
   BlocksUI: class BlocksUI {},
   InlineToolbarUI: class InlineToolbarUI {},
   ToolbarUI: class ToolbarUI {},
   ToolboxUI: class ToolboxUI {},
+  BlockSettingsUI: class BlockSettingsUI {},
 }));
 const { default: EditorJS } = await import('./index.js');
 
@@ -40,6 +53,40 @@ describe('EditorJS bundle', () => {
   beforeEach(() => {
     use.mockClear();
     initialize.mockReset();
+    destroy.mockClear();
+  });
+
+  describe('isReady interrupted by destroy', () => {
+    /**
+     * Lets an unhandled rejection surface: Jest fails the test that leaves one behind
+     */
+    const flush = (): Promise<void> => new Promise(resolve => setTimeout(resolve, 0));
+
+    it('should not leave an AbortError from isReady unhandled', async () => {
+      initialize.mockRejectedValue(new DOMException('Editor was destroyed during initialization', 'AbortError'));
+
+      void new EditorJS({} as any);
+
+      await expect(flush()).resolves.toBeUndefined();
+    });
+
+    it('should still reject isReady with the AbortError', async () => {
+      initialize.mockRejectedValue(new DOMException('Editor was destroyed during initialization', 'AbortError'));
+
+      const editor = new EditorJS({} as any);
+
+      await expect(editor.isReady).rejects.toMatchObject({ name: 'AbortError' });
+    });
+  });
+
+  it('should delegate destroy to Core', () => {
+    initialize.mockResolvedValue(undefined);
+
+    const editor = new EditorJS({} as any);
+
+    editor.destroy();
+
+    expect(destroy).toHaveBeenCalledTimes(1);
   });
 
   it('exposes isReady that resolves when Core initialization completes', async () => {
@@ -52,11 +99,16 @@ describe('EditorJS bundle', () => {
   });
 
   it('rejects isReady when Core initialization fails', async () => {
+    const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
     initialize.mockRejectedValue(new Error('init failed'));
 
     const editor = new EditorJS({} as any);
 
     await expect(editor.isReady).rejects.toThrow('init failed');
+    expect(error).toHaveBeenCalledWith('[EditorJS] Initialization failed', expect.any(Error));
+
+    error.mockRestore();
   });
 
   it('registers a rendering adapter on the underlying Core', () => {
@@ -78,5 +130,49 @@ describe('EditorJS bundle', () => {
 
     expect(registered).toContain('ClipboardPlugin');
     expect(registered).toContain('ShortcutsPlugin');
+    expect(registered).toContain('default-block-settings');
+  });
+
+  it('registers the default UI packages on the underlying Core', () => {
+    initialize.mockResolvedValue(undefined);
+
+    void new EditorJS({} as any);
+
+    const registered = use.mock.calls.map(([ctor]) => (ctor as { name: string }).name);
+
+    expect(registered).toContain('EditorjsUI');
+    expect(registered).toContain('ToolbarUI');
+    expect(registered).toContain('ToolboxUI');
+    expect(registered).toContain('BlockSettingsUI');
+  });
+
+  it('configures a user tool with the options it was registered with', () => {
+    initialize.mockResolvedValue(undefined);
+    class Header {
+      public static name = 'header';
+    }
+    const options = { config: { levels: [1, 2] } };
+
+    void new EditorJS({
+      tools: {
+        header: {
+          class: Header,
+          ...options,
+        },
+      },
+    } as any);
+
+    expect(use).toHaveBeenCalledWith(Header, options);
+  });
+
+  it('leaves a user tool unconfigured when no options are given', () => {
+    initialize.mockResolvedValue(undefined);
+    class Header {
+      public static name = 'header';
+    }
+
+    void new EditorJS({ tools: { header: Header } } as any);
+
+    expect(use).toHaveBeenCalledWith(Header, undefined);
   });
 });

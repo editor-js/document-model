@@ -11,11 +11,15 @@ For a general, non-technical overview of ways to get involved, see the [Want to 
 - Yarn `4.0.1` via [Corepack](https://yarnpkg.com/corepack) (`corepack enable`)
 
 **Setup**
+
+Clone with `git clone --recurse-submodules https://github.com/editor-js/document-model.git`, or initialize submodules in an existing clone before installing dependencies:
+
 ```bash
+git submodule update --init
 yarn install
 ```
 
-This installs dependencies for every workspace under `packages/*` and `packages/tools/*`, and sets up the Husky git hook (`yarn constraints` runs on pre-commit to keep workspace dependency versions consistent).
+Header is a workspace package, so `yarn install` needs its submodule directory. The install also sets up the Husky git hook (`yarn constraints` runs on pre-commit to keep workspace dependency versions consistent).
 
 **Common commands** (from the repo root, across all packages):
 ```bash

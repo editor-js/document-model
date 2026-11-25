@@ -35,17 +35,24 @@ The system SHALL provide a `Core` class owning two IoC containers (one for singl
 Implemented in `src/index.ts`, validated by its co-located `.spec.ts`.
 
 ### Requirement: Tool registration and validation
-The system SHALL validate configured tools via `ToolsManager`, calling each tool's static `prepare()`, and sorting tools into `available`/`unavailable` collections exposed as `blockTools`/`inlineTools`/`blockTunes`.
+The system SHALL validate configured tools via `ToolsManager`, calling each tool's static `prepare()`, and sorting tools into `available`/`unavailable` collections exposed as `blockTools`/`inlineTools`. `Core#use` SHALL accept block tools, inline tools, adapter plugins, and generic plugins; there SHALL be no separate Block Tune registration path.
 
 #### Scenario: Rejecting a malformed tool
 - **GIVEN** a configured tool is neither a constructor function nor an object with a `class` property
 - **WHEN** `ToolsManager` validates the configuration
 - **THEN** it throws an error naming the offending tool and describing the required shape
 
-Implemented in `src/tools/ToolsManager.ts`, `src/tools/ToolsFactory.ts`, validated by co-located `.spec.ts` files.
+#### Scenario: A former tune is registered as a plugin
+- **GIVEN** a class implementing `EditorjsPlugin` that does what a Block Tune used to do
+- **WHEN** it is registered via `core.use()`
+- **THEN** it is instantiated with the other plugins and never appears in `ToolsManager`'s collections
+
+Implemented in `src/tools/ToolsManager.ts`, `src/tools/ToolsFactory.ts`, validated by `src/index.spec.ts` and co-located `.spec.ts` files.
 
 ### Requirement: EditorAPI surface
-The system SHALL expose an `EditorAPI` aggregating `BlocksAPI` (insert/insertMany/delete/move/render/clear/getBlocksCount), `SelectionAPI` (applyInlineTool, selectedBlocks), `DocumentAPI` (serialized data, onUpdate, insertData/removeData/modifyData, undo/redo), and `TextAPI` (insert/remove/format/unformat/getFragments/get) to tools, plugins, and adapters.
+The system SHALL expose an `EditorAPI` aggregating `BlocksAPI` (insert/insertMany/delete/move/render/clear/getBlocksCount/getPluginData/updatePluginData/getToolByIndex), `SelectionAPI` (applyInlineTool, selectedBlocks), `DocumentAPI` (serialized data, onUpdate, insertData/removeData/modifyData, undo/redo), and `TextAPI` (insert/remove/format/unformat/getFragments/get) to tools, plugins, and adapters.
+
+`BlocksAPI` SHALL offer a reader for a single block's tool name, so that a caller needing one scalar about one block does not reach for `DocumentAPI.data` — which serializes every block, every text node and every inline fragment tree in the document, and would do so on each open of a menu.
 
 #### Scenario: Deleting with no block selected
 - **GIVEN** no block is currently selected/no caret is set
@@ -57,10 +64,25 @@ The system SHALL expose an `EditorAPI` aggregating `BlocksAPI` (insert/insertMan
 - **WHEN** the operation is attempted
 - **THEN** it throws an error identifying the missing key or tool
 
+#### Scenario: Inserting a block with plugin data
+- **GIVEN** `BlocksAPI.insert` is called with both `data` and `plugins: { anchors: { id: 'intro' } }`
+- **WHEN** the block is added to the model
+- **THEN** the serialized block carries both its tool data and that plugin data, each under its own key
+
+#### Scenario: Reading a block's tool name
+- **GIVEN** a document whose block at index 1 was inserted with tool `header`
+- **WHEN** `BlocksAPI.getToolByIndex(1)` is called
+- **THEN** it returns `"header"`
+
+#### Scenario: Reading the tool name of a block that is not there
+- **GIVEN** an index outside the document, or a negative one
+- **WHEN** `BlocksAPI.getToolByIndex` is called with it
+- **THEN** it returns `undefined` rather than throwing, matching `getIdByIndex`
+
 Implemented in `src/api/index.ts`, `src/api/BlocksAPI.ts`, `src/api/SelectionAPI.ts`, `src/api/DocumentAPI/DocumentAPI.ts`, `src/api/TextAPI.ts`, `src/components/BlockManager.ts`, validated by co-located `.spec.ts`/`.integration.spec.ts` files.
 
 ### Requirement: Block rendering lifecycle
-The system SHALL provide `BlockRenderer`, which listens for model `BlockAddedEvent`/`BlockRemovedEvent`, creates a `BlockToolAdapter` per block, instantiates and renders the corresponding tool, and dispatches `BlockAddedCoreEvent`/`BlockRemovedCoreEvent`.
+The system SHALL provide `BlockRenderer`, which listens for model `BlockAddedEvent`/`BlockRemovedEvent`, creates a `BlockToolAdapter` per block, instantiates and renders the corresponding tool, and dispatches `BlockAddedCoreEvent`/`BlockRemovedCoreEvent`. `BlockRenderer` SHALL keep the tool instance of each rendered block, keyed by block id, and SHALL call that instance's optional `destroy()` exactly once, either when the block is removed or when the editor is destroyed.
 
 #### Scenario: Malformed or unknown block events
 - **GIVEN** a block event with an undefined index, or referencing a tool name that isn't registered
@@ -71,6 +93,26 @@ The system SHALL provide `BlockRenderer`, which listens for model `BlockAddedEve
 - **GIVEN** a tool's `render()` method returns a rejected promise
 - **WHEN** `BlockRenderer` renders that block
 - **THEN** the rejection is logged rather than propagated as an uncaught error
+
+#### Scenario: Removing a block destroys its tool instance
+- **GIVEN** a rendered block whose tool instance implements `destroy()`
+- **WHEN** the model emits `BlockRemovedEvent` for that block
+- **THEN** the tool instance's `destroy()` is called, the block's adapter is destroyed, and `BlockRemovedCoreEvent` is dispatched
+
+#### Scenario: Destroying the renderer releases every remaining block
+- **GIVEN** several rendered blocks
+- **WHEN** `BlockRenderer.destroy()` is called
+- **THEN** each remaining tool instance's `destroy()` is called, each remaining block's adapter is destroyed, no `BlockRemovedCoreEvent` is dispatched, and the renderer stops listening to model events
+
+#### Scenario: A block that finishes rendering after it was released
+- **GIVEN** a block tool's `render()` is still pending when its block is removed (or removed and added again, as a move does), or when `BlockRenderer.destroy()` is called
+- **WHEN** `render()` settles
+- **THEN** no `BlockAddedCoreEvent` is dispatched for that instance, and the instance and its adapter are still destroyed; only the render of the instance currently tracked for the block is dispatched
+
+#### Scenario: A block adapter fails to destroy
+- **GIVEN** several rendered blocks, one of whose adapters throws when destroyed
+- **WHEN** `BlockRenderer.destroy()` is called
+- **THEN** the error is logged with `console.error`, and every other block's tool instance and adapter are still destroyed
 
 Implemented in `src/components/BlockRenderer.ts`, validated by its co-located `.spec.ts`.
 
@@ -135,4 +177,85 @@ Implemented in `src/components/UndoRedoManager.ts`, validated by its co-located 
 - **GIVEN** plugins have been registered and the editor is torn down
 - **WHEN** each plugin's `destroy()` runs
 - **THEN** its registry entry is removed so no stale public API remains reachable
+
+### Requirement: v2 data conversion carries tune data into plugin data
+`composeDataFromVersion2` SHALL map each v2 block's `tunes` map into the v3 block's `plugins` map, preserving each entry's key verbatim, so a v3 plugin that takes over a v2 tune's `name` finds its data. An entry whose v2 data is a plain object SHALL be copied key by key. An entry whose v2 data is a primitive or an array SHALL be stored under the single key `value`. A v2 block without `tunes`, or with an empty `tunes` map, SHALL produce no `plugins` entry.
+
+#### Scenario: Converting object tune data
+- **GIVEN** a v2 block with `tunes: { anchors: { id: 'intro' } }`
+- **WHEN** it is converted to v3
+- **THEN** the resulting block init carries `plugins: { anchors: { id: 'intro' } }`
+
+#### Scenario: Converting non-object tune data
+- **GIVEN** a v2 block with `tunes: { alignment: 'left' }`
+- **WHEN** it is converted
+- **THEN** the resulting entry is `plugins: { alignment: { value: 'left' } }`
+
+#### Scenario: Block without tunes
+- **GIVEN** a v2 block with no `tunes` key, or with `tunes: {}`
+- **WHEN** it is converted
+- **THEN** the resulting block init has no `plugins` key
+
+#### Scenario: Tune with no registered plugin
+- **GIVEN** a v2 block carrying tune data whose name matches no plugin registered in this editor
+- **WHEN** the document is converted and loaded
+- **THEN** the entry is still present in the block's `plugins` and survives serialization, per the plugin data store's preservation rule
+
+### Requirement: Editor teardown
+`Core` SHALL expose a synchronous `destroy()` that releases everything the editor created: plugin instances, the adapter plugin, block and inline tool instances, block adapters, and every model, EventBus, DOM, timer, and network subscription that editor-owned code registered. Teardown SHALL NOT mutate the document model, so no removal events reach undo history, collaboration, or `onModelUpdate`. The holder element passed in the configuration belongs to the integrator and SHALL be left in the DOM.
+
+#### Scenario: Plugins are destroyed in reverse construction order
+- **GIVEN** plugins A, B, and C were constructed in that order during `initialize()`
+- **WHEN** `destroy()` is called
+- **THEN** `destroy()` is called on C, then B, then A, and plugins that don't implement `destroy()` are skipped
+
+#### Scenario: Plugin registry entries are removed
+- **GIVEN** a plugin registered a `publicApi` under its `name`
+- **WHEN** `destroy()` is called
+- **THEN** that name is no longer present on `api.plugins`
+
+#### Scenario: A failing plugin does not abort teardown
+- **GIVEN** one plugin's `destroy()` throws
+- **WHEN** `destroy()` is called
+- **THEN** the error is logged with `console.error`, and every other plugin, the core services, the rendered blocks, and the adapter plugin are still torn down
+
+#### Scenario: Core services stop listening
+- **GIVEN** an initialized editor
+- **WHEN** `destroy()` is called
+- **THEN** `UndoRedoManager`, `BlockRenderer`, and `SelectionManager` remove their model and EventBus listeners, so model changes or `core:undo`/`core:redo` events dispatched afterwards have no effect on them
+
+#### Scenario: Rendered blocks are released without touching the model
+- **GIVEN** an initialized editor with rendered blocks
+- **WHEN** `destroy()` is called
+- **THEN** each rendered block tool's `destroy()` is called, each block's adapter is destroyed, the adapter plugin's `destroy()` is called, and the model emits no events
+
+#### Scenario: Shared inline tool instances are destroyed last, once each
+- **GIVEN** an initialized editor whose inline tools have been used by the formatting adapter, the selection manager and the inline toolbar
+- **WHEN** `destroy()` is called
+- **THEN** each inline tool instance's `destroy()` is called once, after the adapter plugin's `destroy()`; a throwing hook is logged with `console.error` and the other inline tools are still destroyed; inline tools that were never instantiated are not constructed
+
+#### Scenario: Destroying twice is a no-op
+- **GIVEN** `destroy()` has already been called, or is still running and a teardown hook calls it again
+- **WHEN** `destroy()` is called again
+- **THEN** it returns without calling any plugin, tool, or adapter `destroy()` a second time
+
+#### Scenario: Destroying before initialization
+- **GIVEN** `use()` has been called but `initialize()` has not
+- **WHEN** `destroy()` is called
+- **THEN** it completes without error and no plugin or tool is constructed
+
+#### Scenario: Destroying while initialization is pending
+- **GIVEN** `initialize()` has been called and its promise has not settled
+- **WHEN** `destroy()` is called
+- **THEN** whatever was constructed so far is torn down, the pending `initialize()` rejects with a `DOMException` named `AbortError` without initializing the document or dispatching `CoreEventType.Ready`, any tool or plugin it would have constructed afterwards is not constructed, tools still queued for preparation are not prepared, and a tool whose `prepare()` settles after `destroy()` is neither created nor registered and dispatches no `CoreEventType.ToolLoaded`
+
+#### Scenario: Initialization code destroys the editor
+- **GIVEN** a plugin constructor, a `CoreEventType.ToolLoaded` listener, or `onModelUpdate` during document initialization calls `destroy()`
+- **WHEN** control returns to `initialize()`
+- **THEN** `initialize()` rejects with a `DOMException` named `AbortError` without dispatching `CoreEventType.Ready`, a plugin constructed in that call is destroyed, and no further plugin or tool is constructed, registered or announced
+
+#### Scenario: Using a destroyed editor
+- **GIVEN** `destroy()` has been called
+- **WHEN** `use()` or `initialize()` is called
+- **THEN** it throws an error stating that the editor has been destroyed
 

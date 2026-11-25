@@ -85,6 +85,35 @@ export class DOMAdapters implements EditorJSAdapterPlugin {
   }
 
   /**
+   * Destroys every block adapter still alive, then stops the caret and formatting adapters.
+   * Called by Core after every rendered block has been released.
+   *
+   * Each step is logged if it throws and the rest still run: a caret adapter left alive would keep
+   * the holder subscribed to the page-wide selection watcher
+   */
+  public destroy(): void {
+    for (const blockId of [...this.#adapters.keys()]) {
+      this.#safely(`the adapter of block ${blockId}`, () => this.destroyBlockToolAdapter(blockId));
+    }
+
+    this.#safely('CaretAdapter', () => this.#iocContainer.get(CaretAdapter).destroy());
+    this.#safely('FormattingAdapter', () => this.#iocContainer.get(FormattingAdapter).destroy());
+  }
+
+  /**
+   * Runs one teardown step, logging its error so the remaining steps still run
+   * @param label - what is being destroyed, for the log
+   * @param step - teardown step
+   */
+  #safely(label: string, step: () => void): void {
+    try {
+      step();
+    } catch (error) {
+      console.error(`[DOMAdapters] Failed to destroy ${label}`, error);
+    }
+  }
+
+  /**
    * Destroys the BlockToolAdapter for the given block.
    * Cleans up all inputs registered for the block and removes the adapter instance.
    * Called by BlockRenderer when a block is removed from the model.
@@ -93,14 +122,16 @@ export class DOMAdapters implements EditorJSAdapterPlugin {
   public destroyBlockToolAdapter(blockId: BlockId): void {
     const adapter = this.#adapters.get(blockId);
 
-    if (adapter !== undefined) {
-      adapter.destroy();
-      this.#adapters.delete(blockId);
+    /**
+     * Released before its destroy() runs, so a throwing adapter isn't kept, or destroyed again
+     */
+    this.#adapters.delete(blockId);
+
+    try {
+      adapter?.destroy();
+    } finally {
+      this.#iocContainer.get(InputsRegistry).removeBlock(blockId);
     }
-
-    const registry = this.#iocContainer.get(InputsRegistry);
-
-    registry.removeBlock(blockId);
   }
 }
 

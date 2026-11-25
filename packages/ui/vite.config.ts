@@ -9,7 +9,10 @@ import postcssApply from 'postcss-apply';
 
 export default defineConfig({
   plugins: [
-    dts(),
+    // `tsconfig.json` includes everything under `src`, which now matches the spec
+    // files too. `tsconfig.build.json` is the one that excludes them, so declaration
+    // emit must read that instead or `dist` grows `.d.ts` files for the tests.
+    dts({ tsconfigPath: './tsconfig.build.json' }),
     // vite-plugin-css-injected-by-js caches injected CSS across rebuilds in a
     // persistent `vite build --watch` process, so edits always show up one
     // rebuild late. That's why `dev` uses chokidar to re-run a fresh `vite build`

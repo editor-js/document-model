@@ -1,0 +1,61 @@
+name: "E2E tests"
+inputs:
+  package-name:
+    description: 'Name of the package'
+    required: true
+  working-directory:
+    description: 'Package working directory'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version-file: .nvmrc
+
+    - name: Setup environment
+      uses: ./.github/actions/setup
+
+    # Each Playwright release pins its own browser builds, so the installed version is all the
+    # cache key needs. Keying by the lockfile would drop the ~400MB of browsers on any unrelated
+    # dependency bump.
+    - name: Resolve Playwright version
+      id: playwright-version
+      shell: bash
+      run: echo "version=$(yarn workspace ${{ inputs.package-name }} exec playwright --version | awk '{ print $2 }')" >> "$GITHUB_OUTPUT"
+
+    # Cached separately from the yarn cache. No restore-keys on purpose: restoring another
+    # version's browsers would only have them cached again next to the ones actually used.
+    - name: Restore Playwright browsers
+      uses: actions/cache@v5
+      id: playwright-cache
+      with:
+        path: ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}
+
+    # `--with-deps` is what makes webkit runnable on a bare ubuntu runner. Re-run without the
+    # browser download on a cache hit, since the system libraries are not part of the cache.
+    - name: Install Playwright browsers
+      shell: bash
+      run: |
+        if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
+          yarn workspace ${{ inputs.package-name }} exec playwright install-deps chromium webkit
+        else
+          yarn workspace ${{ inputs.package-name }} exec playwright install --with-deps chromium webkit
+        fi
+
+    # The suite's own webServer command builds the workspace dependencies first — the fixture
+    # reaches @editorjs/ui and the tools through their `dist`, so an unbuilt change is invisible
+    # to it. See packages/editorjs/e2e/README.md.
+    - name: Run e2e tests
+      shell: bash
+      run: yarn workspace ${{ inputs.package-name }} run test:e2e
+
+    - name: Upload Playwright report
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: playwright-report
+        path: ${{ inputs.working-directory }}/playwright-report/
+        retention-days: 7

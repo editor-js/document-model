@@ -1,0 +1,64 @@
+name: "VoiceOver tests"
+description: Run a package's Guidepup VoiceOver suite against a real screen reader
+inputs:
+  package-name:
+    description: 'Name of the package'
+    required: true
+  working-directory:
+    description: 'Package working directory'
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version-file: .nvmrc
+
+    - name: Setup environment
+      uses: ./.github/actions/setup
+
+    # `--ci` skips the prompts for manual steps a local machine would need.
+    - name: Configure the runner for screen reader automation
+      shell: bash
+      run: npx --yes @guidepup/setup setup --ci
+
+    # Separate from `setup` and also required: it installs the preferences disk image.
+    - name: Install screen reader assets
+      shell: bash
+      run: npx --yes @guidepup/setup install
+
+    - name: Resolve Playwright version
+      id: playwright-version
+      shell: bash
+      run: echo "version=$(yarn workspace ${{ inputs.package-name }} exec playwright --version | awk '{ print $2 }')" >> "$GITHUB_OUTPUT"
+
+    - name: Restore Playwright browsers
+      uses: actions/cache@v5
+      id: playwright-cache
+      with:
+        path: ~/Library/Caches/ms-playwright
+        key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}
+
+    # webkit only, matching playwright.voiceover.config.ts.
+    - name: Install Playwright webkit
+      if: ${{ steps.playwright-cache.outputs.cache-hit != 'true' }}
+      shell: bash
+      run: yarn workspace ${{ inputs.package-name }} exec playwright install webkit
+
+    # The suite's webServer builds the workspace dependencies first; the fixture loads their dist.
+    - name: Run VoiceOver tests
+      shell: bash
+      run: yarn workspace ${{ inputs.package-name }} run test:e2e:voiceover
+
+    # The transcript of what VoiceOver said is the whole diagnosis on a failure.
+    - name: Upload VoiceOver transcripts
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: voiceover-recordings
+        path: |
+          ${{ inputs.working-directory }}/test-results/
+          ${{ inputs.working-directory }}/recordings/
+        if-no-files-found: ignore
+        retention-days: 7

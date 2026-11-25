@@ -29,20 +29,9 @@ export type InputWithCaret = HTMLElement;
  */
 export const useSelectionChange = createSingleton(() => {
   /**
-   * Stores the last input that was related to the selection.
-   * We need that to send update when selection is moved to another input.
+   * Subscriber of each watched input, in subscription order
    */
-  let lastRelatedInput: HTMLElement | null = null;
-
-  /**
-   * Used to iterate over all inputs and check if selection is related to them.
-   */
-  const inputsWatched: InputWithCaret[] = [];
-
-  /**
-   * WeakMap that stores subscribers for each input.
-   */
-  const subscribers = new WeakMap<InputWithCaret, Subscriber>();
+  const subscribers = new Map<InputWithCaret, Subscriber>();
 
   /**
    * Checks if selection is related to input
@@ -79,34 +68,41 @@ export const useSelectionChange = createSingleton(() => {
     const selection = document.getSelection();
 
     /**
-     * Iterate over all subscribers WeakMap and call their callbacks.
+     * Each subscriber gets the selection while it is inside its input, and null otherwise,
+     * so an input the selection has moved away from learns it lost it
      */
-    inputsWatched.forEach((input) => {
-      const subscriber = subscribers.get(input);
-
-      let isRelatedInputFound = false;
-
-      if (subscriber && isSelectionRelatedToInput(selection, input)) {
-        lastRelatedInput = input;
-        isRelatedInputFound = true;
-
-        subscriber.callback.call(subscriber.context, selection);
-      }
-
-      /**
-       * If no related input found or input is changed, we need to notify subscriber selection is out of it's input
-       */
-      if (!isRelatedInputFound || input !== lastRelatedInput) {
-        subscriber?.callback.call(subscriber.context, null);
-      }
-
-      /**
-       * If no related input found, we need to reset last related input
-       */
-      if (!isRelatedInputFound) {
-        lastRelatedInput = null;
-      }
+    subscribers.forEach((subscriber, input) => {
+      subscriber.callback.call(subscriber.context, isSelectionRelatedToInput(selection, input) ? selection : null);
     });
+  }
+
+  /**
+   * Controls the single document listener; null while no input is subscribed
+   */
+  let documentListener: AbortController | null = null;
+
+  /**
+   * Registers the document listener, unless it is already registered: editors on the page share it
+   */
+  function listen(): void {
+    if (documentListener !== null) {
+      return;
+    }
+
+    documentListener = new AbortController();
+
+    /**
+     * We use single for document "selection change" event and delegate the provided callbacks to subscribers.
+     */
+    document.addEventListener('selectionchange', onDocumentSelectionChanged, { signal: documentListener.signal });
+  }
+
+  /**
+   * Releases the shared document listener
+   */
+  function stopListening(): void {
+    documentListener?.abort();
+    documentListener = null;
   }
 
   /**
@@ -120,18 +116,12 @@ export const useSelectionChange = createSingleton(() => {
       throw new Error('Input is already subscribed to "selection change" event.');
     }
 
-    /**
-     * Add input to the list of watched inputs.
-     */
-    inputsWatched.push(input);
-
-    /**
-     * Store subscription
-     */
     subscribers.set(input, {
       callback,
       context,
     });
+
+    listen();
   }
 
   /**
@@ -140,40 +130,25 @@ export const useSelectionChange = createSingleton(() => {
    */
   function off(input: InputWithCaret): void {
     subscribers.delete(input);
-    inputsWatched.splice(inputsWatched.indexOf(input), 1);
-  }
 
-  /**
-   * Initialize document selection change watcher.
-   */
-  function init(): void {
     /**
-     * We use single for document "selection change" event and delegate the provided callbacks to subscribers.
+     * Editors on the page share the document listener, so it is removed with the last subscriber only
      */
-    document.addEventListener('selectionchange', onDocumentSelectionChanged);
+    if (subscribers.size === 0) {
+      stopListening();
+    }
   }
 
   /**
-   * Destroy document selection change watcher.
+   * Destroy document selection change watcher: unsubscribes every input, which removes the document listener
    */
   function destroy(): void {
-    document.removeEventListener('selectionchange', onDocumentSelectionChanged);
-
-    inputsWatched.forEach((input) => {
-      const subscriber = subscribers.get(input);
-
-      if (subscriber) {
-        off(input);
-      }
-    });
+    [...subscribers.keys()].forEach(input => off(input));
   }
-
-  init();
 
   return {
     on,
     off,
-    init,
     destroy,
   };
 });

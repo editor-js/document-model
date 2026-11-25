@@ -4,7 +4,7 @@ The editor exposes two public event transports.
 
 | Transport | Dispatched on | Event types |
 |---|---|---|
-| `EditorJSModel` `EventType.Changed` | `EditorJSModel` instance | `BlockAddedEvent`, `BlockRemovedEvent`, `TextAddedEvent`, `TextRemovedEvent`, `TextFormattedEvent`, `TextUnformattedEvent`, `ValueModifiedEvent`, `TuneModifiedEvent`, `DataNodeAddedEvent`, `DataNodeRemovedEvent`, `PropertyModifiedEvent` |
+| `EditorJSModel` `EventType.Changed` | `EditorJSModel` instance | `BlockAddedEvent`, `BlockRemovedEvent`, `TextAddedEvent`, `TextRemovedEvent`, `TextFormattedEvent`, `TextUnformattedEvent`, `ValueModifiedEvent`, `PluginDataModifiedEvent`, `DataNodeAddedEvent`, `DataNodeRemovedEvent`, `PropertyModifiedEvent` |
 | `EditorJSModel` `EventType.CaretManagerUpdated` | `EditorJSModel` instance | `CaretManagerCaretUpdatedEvent`, `CaretManagerCaretAddedEvent`, `CaretManagerCaretRemovedEvent` |
 | Core `EventBus` (per editor instance) | `EventBus` held in the IoC container | `BlockAddedCoreEvent`, `BlockRemovedCoreEvent`, `ToolLoadedCoreEvent`, `SelectionChangedCoreEvent`, `UndoCoreEvent`, `RedoCoreEvent`, `BeforeInputUIEvent` |
 
@@ -27,7 +27,7 @@ All document mutation events extend `BaseDocumentEvent`:
 | `TextFormattedEvent` | `{ tool, data }` | An inline tool was applied to a text range |
 | `TextUnformattedEvent` | `{ tool, data }` | An inline tool was removed from a text range |
 | `ValueModifiedEvent` | `{ value, previous }` | A `ValueNode`'s value was changed |
-| `TuneModifiedEvent` | `{ value, previous }` | A `BlockTune`'s data was updated |
+| `PluginDataModifiedEvent` | `{ value, previous }` | One key of a plugin's per-block data was updated; `value` is `undefined` when the key was removed |
 | `DataNodeAddedEvent` | `BlockNodeDataSerializedValue` | A data node (text or value) was created on a block |
 | `DataNodeRemovedEvent` | `BlockNodeDataSerializedValue` | A data node was removed from a block |
 | `PropertyModifiedEvent` | `{ value, previous }` | A top-level document property was set |
@@ -47,8 +47,23 @@ Dispatched on the IoC-managed `EventBus` (one instance per editor) with prefixed
 | `UndoCoreEvent` | `core:undo` | — | `DocumentAPI.undo()` or `BlocksUI` (Cmd/Ctrl+Z) |
 | `RedoCoreEvent` | `core:redo` | — | `DocumentAPI.redo()` or `BlocksUI` (Cmd/Ctrl+Shift+Z) |
 | `BeforeInputUIEvent` | `ui:before-input` | `{ data, inputType, targetRanges, isCrossInputSelection, isComposing }` | `BlocksUI` |
+| `BlockSelectedUIEvent` | `ui:blocks:block-selected` | `{ block: HTMLElement, index }` | `BlocksUI`, on pointer enter and on the caret moving into another block |
+| `BlockSettingsOpenUIEvent` | `ui:block-settings:open` | `{ index }` | anyone opening the menu programmatically |
+| `BlockSettingsRenderedUIEvent` | `ui:block-settings:rendered` | `{ button: HTMLElement, blockSettings: HTMLElement }` | `BlockSettingsUI` |
+| `BlockSettingsOpenedUIEvent` | `ui:block-settings:opened` | — | `BlockSettingsUI` |
+| `BlockSettingsClosedUIEvent` | `ui:block-settings:closed` | — | `BlockSettingsUI` |
 
 `BlockAddedCoreEvent` carries the rendered `HTMLElement` in `detail.ui`, while the model-level `BlockAddedEvent` carries serialised data — they are complementary.
+
+`BlockSettingsUI` owns both its menu and the button that opens it, and announces the two
+together so a host can place them: `ToolbarUI` puts the button among its own controls and the
+menu beside the toolbox popover. `ui:block-settings:open` is therefore not how the button works
+— it is the way anything *else* opens the menu, naming the target block by index.
+
+`BlockSelectedUIEvent` is what "the selected block" means to the toolbar and to anything
+mounted in it. It is dispatched for the pointer entering a block *and* for the caret moving
+into one, so a control acting on the selected block still works for someone who never touches
+a mouse. Repeats for the same block are not dispatched.
 
 Use core/UI events for UI workflows and extension coordination.
 

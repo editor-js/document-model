@@ -1,0 +1,823 @@
+import { make } from '@editorjs/dom';
+import { IconMenuSmall } from '@codexteam/icons';
+import type {
+  BlockId,
+  CoreConfigValidated,
+  EditorAPI,
+  EditorjsPlugin,
+  EditorjsPluginParams,
+  EventBus
+} from '@editorjs/sdk';
+import { UiComponentType } from '@editorjs/sdk';
+import type { PopoverItemDefaultBaseParams, PopoverItemParams } from '@editorjs/ui-kit';
+import { PopoverDesktop, PopoverEvent, PopoverItemType } from '@editorjs/ui-kit';
+import { messages } from '../messages.js';
+import ControlStyle from '../controls.module.pcss';
+import type { BlockSelectedUIEvent } from '../Blocks/events/index.js';
+import {
+  BlockSettingsClosedUIEvent,
+  BlockSettingsOpenedUIEvent,
+  BlockSettingsRenderedUIEvent
+} from './events/index.js';
+import type { BlockSettingsOpenUIEvent } from './events/index.js';
+
+/**
+ * Items a provider contributes to the block settings menu.
+ *
+ * A single item or a list of them, in the vocabulary `@editorjs/ui-kit` popovers already use.
+ * Named apart from `@editorjs/sdk`'s `MenuConfig`, which is a different, narrower shape for
+ * inline tools' toolbar config:
+ * an item's behaviour comes entirely from its own params (`onActivate`, `isActive`,
+ * `isDisabled`, `closeOnActivate`, `children`, or a `confirmation` whose handler runs on the
+ * second activation), so the menu itself interprets nothing.
+ */
+export type BlockSettingsMenuConfig = PopoverItemParams | PopoverItemParams[];
+
+/**
+ * The block a provider is being asked about
+ */
+export interface BlockSettingsContext {
+  /**
+   * Id of the block the menu is being built for.
+   *
+   * Identifies the block for as long as it exists, which is why an item's handler should
+   * resolve the block's current position from it rather than reusing {@link blockIndex}
+   */
+  blockId: BlockId;
+
+  /**
+   * Position the block held at the moment the menu was built.
+   *
+   * Only valid then: the document may change while the menu is open, so a handler acting on
+   * this number can hit a different block than the user opened the menu on
+   */
+  blockIndex: number;
+
+  /**
+   * Name of the tool rendering the block, for providers that only apply to some tools.
+   *
+   * Absent when it could not be determined, which means the editor's own view of this block
+   * disagrees with the Model's -- the id resolved and the tool did not. A provider matching on
+   * a tool simply does not match, rather than being handed an empty name that matches nothing
+   * while looking like an answer
+   */
+  tool?: string;
+}
+
+/**
+ * A function asked for its menu items each time block settings open.
+ *
+ * Returning `undefined` or an empty list opts out for that block, contributing neither items
+ * nor a separator.
+ *
+ * Expected to answer from what it already has: the menu shows nothing until every provider has
+ * answered, and one that has not answered within its timeout is left out of it. A provider that
+ * genuinely needs longer than the default says so through `options.timeout`.
+ */
+export type BlockSettingsProvider = (
+  context: BlockSettingsContext
+) => BlockSettingsMenuConfig | undefined | Promise<BlockSettingsMenuConfig | undefined>;
+
+/**
+ * Options a provider is registered with
+ */
+export interface BlockSettingsRegisterOptions {
+  /**
+   * Ascending sort key for this provider's contribution, defaulting to `0` with ties broken by
+   * registration order. The built-in settings sit last, at `1000`
+   */
+  order?: number;
+
+  /**
+   * How long this provider may take before the menu is built without it, in milliseconds. A backstop rather than a
+   * budget: the menu shows nothing until every provider has answered, so one that needs this is one worth noticing
+   */
+  timeout?: number;
+}
+
+/**
+ * Public API the Block settings plugin exposes as `api.plugins['block-settings']`
+ */
+export interface BlockSettingsAPI {
+  /**
+   * Registers a settings provider.
+   *
+   * Unregistering takes effect from the next open: providers are asked as the menu is built, so
+   * one already on screen keeps the items it was built with until it closes
+   * @param provider - called with the target block each time the menu opens
+   * @param options - registration options, `order` and `timeout` among them
+   * @returns a function that unregisters the provider
+   */
+  register(provider: BlockSettingsProvider, options?: BlockSettingsRegisterOptions): () => void;
+
+  /**
+   * Closes the menu if it is open
+   */
+  close(): void;
+}
+
+declare module '@editorjs/sdk' {
+  /* eslint-disable jsdoc/require-jsdoc -- interface members are documented on the types they alias */
+  interface EditorjsPluginApiMap {
+    /**
+     * Block settings plugin's public API
+     */
+    // eslint-disable-next-line @typescript-eslint/naming-convention -- the key is the plugin's `name`, which is kebab-case
+    'block-settings': BlockSettingsAPI;
+  }
+  /* eslint-enable jsdoc/require-jsdoc */
+}
+
+/**
+ * How long one provider may take before the menu is built without it.
+ *
+ * Long enough that a provider reading something off the network still makes it, short enough
+ * that the menu is not simply unresponsive while one waits
+ */
+const PROVIDER_TIMEOUT_MS = 500;
+
+/**
+ * A registered provider together with what it was registered with
+ */
+interface Registration {
+  /** The provider itself */
+  provider: BlockSettingsProvider;
+  /** Sort key */
+  order: number;
+  /** Registration counter, used to keep equal orders in registration sequence */
+  sequence: number;
+  /** How long this provider may take, in milliseconds */
+  timeout: number;
+}
+
+/**
+ * Takes the callbacks ui-kit will call on a contributed item out of harm's way: `isActive`, which it reads as it
+ * renders, and `onActivate`, which it calls on a click -- both long after the provider's own `try` has returned
+ * @param item - item as the provider returned it
+ */
+/**
+ * Signature ui-kit calls a contributed item's handler with
+ */
+type ItemActivate = (activated: PopoverItemParams, event?: PointerEvent) => void;
+
+/**
+ * The handler with its failures reported rather than left to escape
+ * @param activate - the handler the provider supplied
+ */
+function guarded(activate: ItemActivate): ItemActivate {
+  return (activated, event): void => {
+    try {
+      activate(activated, event);
+    } catch (error) {
+      console.error('[BlockSettingsUI] A block settings item failed on activation', error);
+    }
+  };
+}
+
+/**
+ * The resolved active state, shaped to be spread over the item it came from
+ */
+interface ActiveStatePatch {
+  /**
+   * What the item's `isActive` callback returned, absent when it carried none
+   */
+  isActive?: boolean;
+}
+
+/**
+ * The item's `isActive` resolved to the boolean it returns, as a patch to spread over the item
+ * @param item - item carrying it, if it carries one at all
+ */
+function resolvedActiveState(item: PopoverItemParams): ActiveStatePatch {
+  if (!('isActive' in item) || typeof item.isActive !== 'function') {
+    return {};
+  }
+
+  return { isActive: item.isActive() };
+}
+
+/**
+ * Takes the callbacks ui-kit will call on a contributed item out of harm's way: `isActive`, which it reads as it
+ * renders, and `onActivate`, which it calls on a click -- both long after the provider's own `try` has returned
+ * @param item - item as the provider returned it
+ */
+function withIsolatedCallbacks(item: PopoverItemParams): PopoverItemParams {
+  /**
+   * A separator carries no behaviour at all
+   */
+  if ('type' in item && item.type === PopoverItemType.Separator) {
+    return item;
+  }
+
+  if ('children' in item) {
+    return {
+      ...item,
+      ...resolvedActiveState(item),
+      children: {
+        ...item.children,
+        items: item.children.items?.map(withIsolatedCallbacks),
+      },
+    };
+  }
+
+  if ('confirmation' in item) {
+    return {
+      ...item,
+      ...resolvedActiveState(item),
+      confirmation: withIsolatedCallbacks(item.confirmation) as PopoverItemDefaultBaseParams,
+    };
+  }
+
+  if ('onActivate' in item && typeof item.onActivate === 'function') {
+    return {
+      ...item,
+      ...resolvedActiveState(item),
+      onActivate: guarded(item.onActivate),
+    };
+  }
+
+  return {
+    ...item,
+    ...resolvedActiveState(item),
+  };
+}
+
+/**
+ * UI plugin that renders the per-block settings menu and the button that opens it, announcing
+ * both once for a host to mount. It owns no items of its own -- everything in the menu comes
+ * from registered providers, the built-in Move/Delete entries included.
+ *
+ * Register it after whatever mounts it. The announcement is made once, from the constructor, and
+ * is not replayed, so a host registered later never hears it and the button and menu stay off
+ * the page with nothing reported
+ */
+export class BlockSettingsUI implements EditorjsPlugin<'block-settings'> {
+  /**
+   * Plugin type
+   */
+  public static readonly type = UiComponentType.BlockSettings;
+
+  /**
+   * Plugin name -- keys `api.plugins['block-settings']`
+   */
+  public static readonly name = 'block-settings';
+
+  /**
+   * API registering providers and closing the menu
+   */
+  public readonly publicApi: BlockSettingsAPI;
+
+  /**
+   * EditorAPI instance, used to resolve the target block
+   */
+  #api: EditorAPI;
+
+  /**
+   * EventBus instance to exchange events between components
+   */
+  #eventBus: EventBus;
+
+  /**
+   * Editor configuration
+   */
+  #editorConfig: CoreConfigValidated;
+
+  /**
+   * Stable element handed to the host. The popover inside it is replaced per open,
+   * so this is what stays mounted
+   */
+  #holder: HTMLElement;
+
+  /**
+   * The control that opens the menu. Owned here rather than by the toolbar: the button and
+   * the menu are one widget, and every piece of its menu-button contract -- the accessible
+   * name, `aria-haspopup`, the `aria-expanded` that has to track the menu's real state --
+   * depends on state only this plugin has
+   */
+  #button: HTMLButtonElement;
+
+  /**
+   * The block the menu will be built for, as last reported by block selection. Held by id, not position: a block
+   * inserted or removed above it shifts every position below, and nothing reports that as a selection
+   */
+  #selectedBlockId: BlockId | undefined;
+
+  /**
+   * Whether the toolbox popover is open. The toolbar holds its position while it is, since that popover renders inside
+   * the toolbar -- so the button stays beside one block, and the block the menu acts on has to stay there with it
+   */
+  #isToolboxOpen = false;
+
+  /**
+   * Popover rendering the current menu, absent until the menu is first built
+   */
+  #popover: PopoverDesktop | undefined;
+
+  /**
+   * Whether the menu is open, as this plugin understands it.
+   *
+   * Tracked here rather than read back off the popover, whose own shown state is its business
+   * and does not reliably survive the click that opened the menu. This is the state the
+   * button's `aria-expanded` and the `opened`/`closed` events promise
+   */
+  #isOpen = false;
+
+  /**
+   * Whether the menu was open when the activation that is now in progress began.
+   *
+   * The popover closes itself from the click, and it gets there before this button's own
+   * handler -- so by `click` the menu is already gone, and a toggle reading the state then
+   * would see every second activation as a fresh open. The last moment the answer is still
+   * true is `mousedown` for a pointer, and the `keydown` of Enter or Space for a keyboard,
+   * which is why both are recorded here rather than only the first
+   */
+  #wasOpenOnActivationStart = false;
+
+  /**
+   * Registered providers
+   */
+  readonly #registrations = new Set<Registration>();
+
+  /**
+   * Incremented per registration so providers sharing an `order` keep their registration sequence
+   */
+  #sequence = 0;
+
+  /**
+   * Incremented on every open request. Building a menu is asynchronous, so a request that
+   * finishes after a newer one started has been superseded and must not render
+   */
+  #openToken = 0;
+
+  /**
+   * Index the request currently being built is for, or `null` when nothing is in flight.
+   *
+   * Providers may be asynchronous, so the block a menu is being built for can stop being the
+   * selected one before the menu exists
+   */
+  #buildingFor: BlockId | null = null;
+
+  /**
+   * BlockSettingsUI class constructor
+   * @param params - Plugin parameters
+   */
+  constructor({ api, eventBus, config }: EditorjsPluginParams) {
+    this.#api = api;
+    this.#eventBus = eventBus;
+    this.#editorConfig = config;
+
+    this.publicApi = {
+      register: (provider, options) => this.#register(provider, options),
+      close: () => this.#close(),
+    };
+
+    this.#holder = make('div');
+    this.#button = make('button', ControlStyle['toolbar-button'], {
+      innerHTML: IconMenuSmall,
+      /**
+       * A button defaults to `submit`, and the editor's holder may sit inside a form, where
+       * opening the settings menu would submit it
+       */
+      type: 'button',
+    }) as HTMLButtonElement;
+
+    this.#renderButton();
+
+    this.#eventBus.dispatchEvent(new BlockSettingsRenderedUIEvent({
+      button: this.#button,
+      blockSettings: this.#holder,
+    }));
+
+    this.#eventBus.addEventListener('ui:blocks:block-selected', this.#handleBlockSelected);
+    this.#eventBus.addEventListener('ui:block-settings:open', this.#handleOpenRequest);
+    this.#eventBus.addEventListener('ui:toolbox:opened', this.#handleToolboxOpened);
+    this.#eventBus.addEventListener('ui:toolbox:closed', this.#handleToolboxClosed);
+  }
+
+  /**
+   * Cleanup when plugin is destroyed
+   */
+  public destroy(): void {
+    /**
+     * The bus outlives the plugin, so a listener left on it keeps this instance alive and
+     * answering: an open request after destroy would build a menu into a detached holder
+     */
+    this.#eventBus.removeEventListener('ui:blocks:block-selected', this.#handleBlockSelected);
+    this.#eventBus.removeEventListener('ui:block-settings:open', this.#handleOpenRequest);
+    this.#eventBus.removeEventListener('ui:toolbox:opened', this.#handleToolboxOpened);
+    this.#eventBus.removeEventListener('ui:toolbox:closed', this.#handleToolboxClosed);
+
+    /**
+     * Dropping the listeners stops new requests, but not one already waiting on its providers.
+     * That one would render into the holder removed just below
+     */
+    this.#abandonPendingBuild();
+
+    this.#popover?.destroy();
+    this.#popover = undefined;
+    this.#holder.remove();
+    this.#button.remove();
+  }
+
+  /**
+   * Where the target sits now, or -1 when there is no target or the document no longer holds it. Resolved on
+   * demand rather than stored, so it cannot go stale between the selection and the open
+   */
+  get #selectedBlockIndex(): number {
+    if (this.#selectedBlockId === undefined) {
+      return -1;
+    }
+
+    return this.#api.blocks.getIndexById(this.#selectedBlockId);
+  }
+
+  /**
+   * Follows block selection, except while the menu or the toolbox is open: whenever the toolbar holds its position,
+   * re-targeting here would leave the button and this target on different blocks
+   * @param event - the selection event
+   */
+  #handleBlockSelected = (event: BlockSelectedUIEvent): void => {
+    if (this.#isOpen || this.#isToolboxOpen) {
+      return;
+    }
+
+    const blockId = this.#api.blocks.getIdByIndex(event.detail.index);
+
+    /**
+     * A build in flight was started for whichever block was selected at the time. Letting it
+     * finish after the selection has moved would open that block's actions beside this one,
+     * which is a menu that acts on a block the user is no longer pointing at
+     */
+    if (this.#buildingFor !== null && this.#buildingFor !== blockId) {
+      this.#abandonPendingBuild();
+    }
+
+    this.#selectedBlockId = blockId;
+  };
+
+  /**
+   * Opens the menu for the block another component asked about
+   * @param event - the open request
+   */
+  #handleOpenRequest = (event: BlockSettingsOpenUIEvent): void => {
+    void this.#open(event.detail.index);
+  };
+
+  /**
+   * Freezes the target for as long as the toolbox holds the toolbar in place
+   */
+  #handleToolboxOpened = (): void => {
+    this.#isToolboxOpen = true;
+  };
+
+  /**
+   * Lets the target follow the selection again, from the next block reported
+   */
+  #handleToolboxClosed = (): void => {
+    this.#isToolboxOpen = false;
+    this.#catchUpWithSelection();
+  };
+
+  /**
+   * Targets the block the UI treats as selected now, so the button acts on the block the caret reached while the
+   * target was frozen: selection arrives as a one-shot event, and the ones ignored here are not repeated
+   */
+  #catchUpWithSelection(): void {
+    /**
+     * Either state alone freezes the target, so this waits for both. While frozen the target has to stay with the
+     * button, which the toolbar is holding beside another block
+     */
+    if (this.#isOpen || this.#isToolboxOpen) {
+      return;
+    }
+
+    const selected = this.#api.plugins.blocksUI?.getSelectedBlock();
+
+    if (selected === undefined) {
+      return;
+    }
+
+    this.#selectedBlockId = selected.id;
+  }
+
+  /**
+   * Gives the button its menu-button semantics and wires it to the menu
+   */
+  #renderButton(): void {
+    this.#button.setAttribute('aria-label', messages.blockSettingsButton);
+    this.#button.setAttribute('aria-haspopup', 'menu');
+    this.#button.setAttribute('aria-expanded', 'false');
+
+    this.#button.addEventListener('mousedown', () => {
+      this.#wasOpenOnActivationStart = this.#isOpen;
+    });
+
+    /**
+     * Enter and Space send a `click` of their own, with no pointer events before it. Their
+     * `keydown` is where that activation starts, so it is the keyboard's `mousedown`
+     */
+    this.#button.addEventListener('keydown', (event: KeyboardEvent) => {
+      if (event.key !== 'Enter' && event.key !== ' ') {
+        return;
+      }
+
+      this.#wasOpenOnActivationStart = this.#isOpen;
+
+      /**
+       * No click follows a key the open menu's own handling has claimed, so the toggle on it never runs: closing
+       * here is the only way left to dismiss the menu from the button that opened it
+       */
+      if (this.#isOpen && event.defaultPrevented) {
+        this.#close();
+      }
+    });
+
+    this.#button.addEventListener('click', () => {
+      /**
+       * The snapshot is the answer whenever the popover has already dismissed itself over this
+       * activation, which is the usual order. The live state covers the case where it has not
+       * got there yet, so the toggle does not depend on which of the two runs first
+       */
+      const wasOpen = this.#wasOpenOnActivationStart || this.#isOpen;
+
+      this.#wasOpenOnActivationStart = false;
+
+      /**
+       * Safari leaves a clicked button unfocused, and the popover would then capture
+       * `document.body` as the element to restore focus to when it closes. Focusing the
+       * button that owns the menu is also what the WAI-ARIA menu button pattern asks for
+       */
+      this.#button.focus();
+
+      /**
+       * A menu button dismisses the menu it opened. The popover has already closed itself by
+       * now, so there is usually nothing left to close -- what matters is not re-opening it,
+       * which is what made the button look inert on every second click
+       */
+      if (wasOpen) {
+        this.#close();
+
+        return;
+      }
+
+      void this.#open(this.#selectedBlockIndex);
+    });
+  }
+
+  /**
+   * Registers a provider and returns its unregister function
+   * @param provider - called with the target block each time the menu opens
+   * @param options - registration options
+   */
+  #register(provider: BlockSettingsProvider, options?: BlockSettingsRegisterOptions): () => void {
+    const registration: Registration = {
+      provider,
+      order: options?.order ?? 0,
+      sequence: this.#sequence++,
+      timeout: options?.timeout ?? PROVIDER_TIMEOUT_MS,
+    };
+
+    this.#registrations.add(registration);
+
+    return () => {
+      this.#registrations.delete(registration);
+    };
+  }
+
+  /**
+   * Closes the menu if it is open.
+   *
+   * `hide()` is asked first, so the popover tears down its own focus handling, and the
+   * bookkeeping is then run directly: a popover that has already dropped its shown state hides
+   * without emitting anything, which would leave the button advertising a menu that is gone
+   */
+  #close(): void {
+    this.#abandonPendingBuild();
+
+    if (!this.#isOpen) {
+      return;
+    }
+
+    this.#popover?.hide();
+
+    this.#handleClosed();
+  }
+
+  /**
+   * Records the menu as closed, once, whichever route closed it
+   */
+  #handleClosed = (): void => {
+    /**
+     * Escape and a click outside reach this directly from the popover, without passing through
+     * `#close()`, so the two close paths have to abandon a build in flight alike. A menu can be
+     * mid-build rather than open -- `#isOpen` is only set once the providers have returned --
+     * which is why this runs before the open-state guard below
+     */
+    this.#abandonPendingBuild();
+
+    if (!this.#isOpen) {
+      return;
+    }
+
+    this.#isOpen = false;
+
+    this.#button.setAttribute('aria-expanded', 'false');
+
+    this.#eventBus.dispatchEvent(new BlockSettingsClosedUIEvent({}));
+
+    this.#catchUpWithSelection();
+  };
+
+  /**
+   * Discards whichever menu is still being built, so that it never reaches the screen.
+   *
+   * Bumping the token is what the build checks before rendering; `#buildingFor` goes with it,
+   * since there is no longer a block being built for
+   */
+  #abandonPendingBuild(): void {
+    this.#openToken++;
+    this.#buildingFor = null;
+  }
+
+  /**
+   * Builds the menu for a block and opens it, unless there is nothing to show
+   * @param index - position the opening request named
+   */
+  async #open(index: number): Promise<void> {
+    const token = ++this.#openToken;
+
+    const blockId = this.#api.blocks.getIdByIndex(index);
+
+    /**
+     * Nothing is selected, or the index is stale, so no provider is asked. Any menu still on
+     * screen was built for a different block, and leaving it open would present one block's
+     * settings as another's
+     */
+    if (blockId === undefined) {
+      this.#close();
+
+      return;
+    }
+
+    this.#buildingFor = blockId;
+
+    const items = await this.#collectItems({
+      blockId,
+      blockIndex: index,
+      tool: this.#api.blocks.getToolByIndex(index),
+    });
+
+    /**
+     * A newer request started while this one was waiting on its providers. That one owns the
+     * menu now, and rendering this result would replace it with a stale block's items
+     */
+    if (token !== this.#openToken) {
+      return;
+    }
+
+    this.#buildingFor = null;
+
+    /**
+     * Every provider opted out of this block. Same reasoning as the missing block above: the
+     * menu does not open, and whatever was open closes rather than misrepresenting this block
+     */
+    if (items.length === 0) {
+      this.#close();
+
+      return;
+    }
+
+    this.#renderPopover(items);
+
+    this.#popover?.show();
+
+    this.#isOpen = true;
+    this.#button.setAttribute('aria-expanded', 'true');
+
+    this.#eventBus.dispatchEvent(new BlockSettingsOpenedUIEvent({}));
+  }
+
+  /**
+   * Asks every registered provider for its items and concatenates the contributions,
+   * separated from one another
+   * @param context - the block being asked about
+   */
+  async #collectItems(context: BlockSettingsContext): Promise<PopoverItemParams[]> {
+    const ordered = [...this.#registrations].sort(
+      (a, b) => (a.order - b.order) || (a.sequence - b.sequence)
+    );
+
+    const contributions = await Promise.all(
+      ordered.map(async ({ provider, timeout }) => {
+        try {
+          const result = await this.#withTimeout(provider(context), timeout);
+
+          if (result === undefined) {
+            return [];
+          }
+
+          const items = Array.isArray(result) ? result : [result];
+
+          /**
+           * Inside the `try` on purpose: an `isActive` that throws is this provider failing, so it costs this
+           * provider's items rather than the whole menu
+           */
+          return items.map(withIsolatedCallbacks);
+        } catch (error) {
+          /**
+           * Providers are third-party code and this is the one place all of it runs, so without
+           * isolation a single plugin throwing takes the whole menu down for every block. It
+           * contributes nothing instead, and the stack identifies which one it was
+           */
+          console.error('[BlockSettingsUI] A block settings provider failed and was skipped', error);
+
+          return [];
+        }
+      })
+    );
+
+    return contributions
+      .filter(contribution => contribution.length > 0)
+      .reduce<PopoverItemParams[]>((items, contribution) => {
+        if (items.length > 0) {
+          items.push({ type: PopoverItemType.Separator });
+        }
+
+        return items.concat(contribution);
+      }, []);
+  }
+
+  /**
+   * Rejects if a provider has not settled in time, so that the one waiting on it is skipped
+   * rather than holding up the menu.
+   *
+   * Without this the `Promise.all` over providers has no floor: a provider that never settles
+   * means the menu never opens, and never opens again either, because every later attempt waits
+   * on the same provider. A rejection instead lands in the same skip-and-log path as one that
+   * threw, which is the behaviour a plugin author already has to expect
+   * @param result - what the provider returned
+   * @param timeout - how long that provider may take, in milliseconds
+   */
+  async #withTimeout(
+    result: BlockSettingsMenuConfig | undefined | Promise<BlockSettingsMenuConfig | undefined>,
+    timeout: number
+  ): Promise<BlockSettingsMenuConfig | undefined> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    try {
+      return await Promise.race([
+        result,
+        new Promise<never>((_resolve, reject) => {
+          timer = setTimeout(
+            () => reject(new Error(`A block settings provider did not return within ${timeout}ms`)),
+            timeout
+          );
+        }),
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  /**
+   * Replaces the popover inside the holder with one built for the given items. Rebuilt rather
+   * than edited in place because `removeItemByName` is ui-kit's only removal and a separator
+   * carries no name, so a fresh popover is what keeps the previous block's items out of the
+   * accessibility tree
+   * @param items - items the menu should consist of
+   */
+  #renderPopover(items: PopoverItemParams[]): void {
+    /**
+     * `destroy()` hides before it tears down, and hiding emits `Closed`. Left subscribed, the
+     * popover being replaced would report the menu as closed and open again on every rebuild
+     */
+    this.#popover?.off(PopoverEvent.Closed, this.#handleClosed);
+    this.#popover?.destroy();
+
+    /**
+     * The item wrapper is left at ui-kit's default: `wrapperTag: 'button'`, carried over from
+     * PR #157, is what ui-kit uses for its *inline* popover, where shrink-to-fit is the right
+     * width. In a vertical menu a form control does not stretch to its container, so each row
+     * came out as wide as its own label -- a partial hover highlight and the UA button font
+     */
+    this.#popover = new PopoverDesktop({
+      scopeElement: this.#editorConfig.holder,
+      searchable: false,
+      items,
+
+      /**
+       * Names the menu for assistive technologies, matching the button that opens it
+       */
+      messages: {
+        label: messages.blockSettingsMenu,
+      },
+    });
+
+    this.#popover.on(PopoverEvent.Closed, this.#handleClosed);
+
+    this.#holder.innerHTML = '';
+    this.#holder.appendChild(this.#popover.getElement());
+  }
+}
+
+export * from './events/index.js';

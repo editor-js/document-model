@@ -1,7 +1,7 @@
 /* eslint-disable jsdoc/require-jsdoc,@typescript-eslint/no-magic-numbers */
 
 import { describe, expect, it } from '@jest/globals';
-import type { PluginsAPI, ToolPluginOptions } from './index.js';
+import type { PluginDataFor, PluginsAPI, ToolPluginOptions } from './index.js';
 
 /**
  * Public API a fake plugin exposes — stands in for a real plugin package's API type
@@ -25,6 +25,16 @@ interface ProbeToolOptions {
 }
 
 /**
+ * Per-block data the fake plugin stores in the Model
+ */
+interface ProbePluginData {
+  /**
+   * Arbitrary key used to check the data shape is type-checked
+   */
+  id: string;
+}
+
+/**
  * Augments the maps the same way a real plugin package does, but through a relative
  * specifier since this file lives inside the declaring package itself
  */
@@ -41,6 +51,13 @@ declare module './index.js' {
      * Fake plugin's tool-directed options
      */
     probe: ProbeToolOptions;
+  }
+
+  interface EditorjsPluginDataMap {
+    /**
+     * Fake plugin's per-block data
+     */
+    probe: ProbePluginData;
   }
 }
 
@@ -76,6 +93,29 @@ describe('Plugin type maps', () => {
       };
 
       expect(plugins.probe).toBeDefined();
+    });
+  });
+
+  describe('EditorjsPluginDataMap', () => {
+    it('should resolve an augmented id to the declared data shape', () => {
+      const data: PluginDataFor<'probe'> = { id: 'intro' };
+
+      const typed: ProbePluginData = data;
+
+      expect(typed.id).toBe('intro');
+    });
+
+    it('should reject data that does not match the declared shape', () => {
+      // @ts-expect-error -- `id` is a string
+      const data: PluginDataFor<'probe'> = { id: 42 };
+
+      expect(data).toBeDefined();
+    });
+
+    it('should fall back to a plain record for an id no package has augmented', () => {
+      const data: PluginDataFor<'unknownPlugin'> = { anything: true };
+
+      expect(data.anything).toBe(true);
     });
   });
 

@@ -36,12 +36,12 @@ export interface EditorJSModel {
   /**
    * Overload for EditorDocument events
    */
-  addEventListener<K extends ModelEvents>(type: EventType.Changed, listener: (event: K) => void): void;
+  addEventListener<K extends ModelEvents>(type: EventType.Changed, listener: (event: K) => void, options?: AddEventListenerOptions | boolean): void;
 
   /**
    * Overload for CaretManager events
    */
-  addEventListener<K extends CaretManagerEvents>(type: EventType.CaretManagerUpdated, listener: (event: K) => void): void;
+  addEventListener<K extends CaretManagerEvents>(type: EventType.CaretManagerUpdated, listener: (event: K) => void, options?: AddEventListenerOptions | boolean): void;
 }
 
 /**
@@ -349,17 +349,17 @@ export class EditorJSModel extends EventBus {
   }
 
   /**
-   * Updates BlockTune data associated with the BlockNode at the specified index.
+   * Updates one plugin's per-block data on the BlockNode at the specified index.
    * @param _userId - user identifier which is being set to the context
-   * @param parameters - updateTuneData method parameters
+   * @param parameters - updatePluginData method parameters
    * @param parameters.blockIndex - The index of the BlockNode to update
-   * @param parameters.tuneName - The name of the BlockTune to update
-   * @param parameters.data - The data to update the BlockTune with
+   * @param parameters.pluginName - Name the data is stored under, by convention the plugin's `name`
+   * @param parameters.data - Keys to merge into the plugin's data
    * @throws Error if the index is out of bounds
    */
   @WithContext
-  public updateTuneData(_userId: string | number, ...parameters: Parameters<EditorDocument['updateTuneData']>): ReturnType<EditorDocument['updateTuneData']> {
-    return this.#document.updateTuneData(...parameters);
+  public updatePluginData(_userId: string | number, ...parameters: Parameters<EditorDocument['updatePluginData']>): ReturnType<EditorDocument['updatePluginData']> {
+    return this.#document.updatePluginData(...parameters);
   }
 
   /**

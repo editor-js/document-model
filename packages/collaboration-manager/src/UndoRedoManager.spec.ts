@@ -1,5 +1,5 @@
 import type { BlockIndex, DocumentId, TextIndex } from '@editorjs/sdk';
-import { createDataKey, Index } from '@editorjs/sdk';
+import { createDataKey, createPluginDataName, Index } from '@editorjs/sdk';
 import { describe } from '@jest/globals';
 import { jest } from '@jest/globals';
 import { Operation, OperationType } from './Operation.js';
@@ -222,6 +222,56 @@ describe('UndoRedoManager', () => {
       /* eslint-disable @typescript-eslint/no-magic-numbers */
       expect((undone?.index as TextIndex | undefined)?.textRange).toEqual([4, 7]);
       /* eslint-enable @typescript-eslint/no-magic-numbers */
+    });
+
+    /**
+     * Stack entries carry no revision, and are transformed against operations the model has applied: an entry a
+     * collaborator overwrote would write a value that is gone and delete theirs instead of undoing anything
+     */
+    it('should drop a plugin data entry a collaborator has overwritten', () => {
+      const manager = new UndoRedoManager();
+      const index = Index.pluginData(0, createPluginDataName('anchors'), 'color', 'doc' as DocumentId);
+
+      manager.put(new Operation(
+        OperationType.Modify,
+        index,
+        { payload: 'red',
+          prevPayload: undefined },
+        userId
+      ));
+
+      manager.transformStacks(new Operation(
+        OperationType.Modify,
+        index,
+        { payload: 'blue',
+          prevPayload: 'red' },
+        'remote'
+      ));
+
+      expect(manager.undo()).toBeUndefined();
+    });
+
+    it('should keep a plugin data entry for a key the collaborator did not touch', () => {
+      const manager = new UndoRedoManager();
+      const doc = 'doc' as DocumentId;
+
+      manager.put(new Operation(
+        OperationType.Modify,
+        Index.pluginData(0, createPluginDataName('anchors'), 'color', doc),
+        { payload: 'red',
+          prevPayload: undefined },
+        userId
+      ));
+
+      manager.transformStacks(new Operation(
+        OperationType.Modify,
+        Index.pluginData(0, createPluginDataName('anchors'), 'label', doc),
+        { payload: 'blue',
+          prevPayload: undefined },
+        'remote'
+      ));
+
+      expect(manager.undo()?.type).toBe(OperationType.Modify);
     });
   });
 });

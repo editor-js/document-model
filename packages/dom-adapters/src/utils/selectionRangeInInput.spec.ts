@@ -1,9 +1,6 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers, jsdoc/require-jsdoc */
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 
-/**
- * Tests run as ESM, where module mocks must be registered before the modules under test are imported
- */
 jest.unstable_mockModule('./getAbsoluteRangeOffset.js', () => ({
   getAbsoluteRangeOffset: jest.fn(),
 }));

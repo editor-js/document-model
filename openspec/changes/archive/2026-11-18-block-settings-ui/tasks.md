@@ -1,0 +1,141 @@
+## 0. Preconditions
+
+- [x] 0.1 Confirm `test/editorjs-e2e-and-aria-openspec` is merged into `main` and rebase onto it. It supplies `packages/ui/src/messages.ts`, the toolbar's ARIA/roving-tabindex behavior, the Playwright harness and `@editorjs/ui-kit` 2.x. If it has not landed, stop and re-plan
+  - Landed as #187 (squash-merged; the branch is deleted). Verified on `main`: `packages/ui/src/messages.ts`, the Playwright harness under `packages/editorjs/e2e/` with `playwright.config.ts` and `playwright.voiceover.config.ts`, `@editorjs/ui-kit` `^2.0.0` in `packages/ui/package.json`, and the ARIA requirements in `openspec/specs/ui/spec.md`
+- [x] 0.2 Refresh this change's `specs/ui/spec.md` delta from the merged `openspec/specs/ui/spec.md`, so the `Floating toolbar` requirement keeps that branch's ARIA scenarios instead of reverting them at archive time
+  - The feared revert never applied: #187 put its ARIA work in **separate** requirements (`Accessible floating toolbar`, `The block actions toolbar is a single tab stop`), not into `Floating toolbar`
+  - The delta now modifies all three, each header matching the merged spec verbatim. `Floating toolbar` keeps both merged scenarios and only widens the repositioning clause to "unless the Toolbox or block settings are open"; the settings button's ARIA assertions moved to the two requirements that own that vocabulary, each sitting beside the plus-button scenario it mirrors
+  - Dropped the delta's own `Scenario: The toolbar keeps exactly one tab stop`: the merged `Scenario: Only one control is in the tab order` already asserts exactly-one-`tabindex="0"` across *all* of the container's controls, the settings button included
+  - Added `Scenario: Block settings keyboard navigation is not intercepted`, mirroring the toolbox one — the settings popover is the second thing rendering inside the actions container whose arrow keys the toolbar must leave alone
+- [x] 0.3 Resolve the "block actions" collision before writing any of it
+  - **Resolved by renaming the plugin, not the toolbar.** `main` ships `messages.blockActionsToolbar = 'Block actions'` as the actions container's accessible name, asserted by `aria.spec.ts` in two places, relied on by `voiceover.spec.ts`, documented in the e2e README's locator table, and carried in the requirement name `The block actions toolbar is a single tab stop`. The plugin is still only spec text, so it is far the cheaper side to move
+  - `@editorjs/block-actions-plugin` → `@editorjs/default-block-settings-plugin`, `static name` `block-actions` → `default-block-settings`, class `BlockActionsPlugin` → `DefaultBlockSettingsPlugin`, capability `block-actions-plugin` → `default-block-settings-plugin`
+  - Rejected `block-operations` (`Operation`, `OperationsTransformer` and `ModifyOperationData` already own that word in `collaboration-manager`) and `block-controls` (the roving-tabindex requirement calls the container's children "controls" throughout). The chosen name states the plugin's actual role: the default entries of the block settings menu
+  - Every surviving "block actions" in this change refers to the toolbar container and must stay verbatim, or the archive fold stops matching the merged requirement
+
+## 1. UI test setup
+
+- [x] 1.1 Add Jest to `packages/ui`: `jest.config.ts` with `testEnvironment: 'jsdom'`, a `moduleNameMapper` for `\.pcss$` and the `@codexteam/ui/styles*` side-effect imports, `transformIgnorePatterns` covering `@codexteam/*` as well as `@editorjs/*`, and the `test`/`test:coverage` scripts using `node --experimental-vm-modules`
+- [x] 1.2 Add the dev dependencies: `jest`, `jest-environment-jsdom` (no package uses jsdom yet, so it must be explicit), `ts-jest`, `babel-jest`, `@babel/core`, `@babel/preset-env`, `@jest/globals`, `@types/jest`, `ts-node`
+- [x] 1.3 Add a `files: ['**/*.spec.ts']` override to `packages/ui/eslint.config.mjs` allowing `@jest/globals`, mirroring `packages/core/eslint.config.mjs`, or `yarn lint` fails on the new specs
+- [x] 1.4 Point `vite.config.ts`'s `dts()` at `tsconfig.build.json` so declaration emit keeps excluding `*.spec.ts`
+- [x] 1.5 Add `.github/workflows/ui.yml` following `.github/workflows/core.yml`, and handle the first-run `base-coverage` step, which checks out the base ref and runs `test:coverage` for a package that has no such script there
+  - `base-coverage` already skipped a package absent from the base ref, but `packages/ui/package.json` *is* there — only the script is missing, so the file test passed and `yarn workspace @editorjs/ui test:coverage` would have failed with "couldn't find a script". Its guard now also checks that the base ref declares `test:coverage`, which covers every future package that adds its first suite
+- [x] 1.6 Hand-edit the note in `openspec/specs/ui/spec.md`'s preamble that says the package has no automated test suite — it sits outside any `### Requirement:` block, so the archive fold will not rewrite it
+
+## 2. Block settings plugin
+
+- [x] 2.1 Port the `BlockTunes*UIEvent` classes from PR #157 as `BlockSettings{Open,Opened,Closed,Rendered}UIEvent` under `ui/src/BlockSettings/events`, using `ui:block-settings:*` names. Credit ported work with `Co-authored-by: Betty Steger <244475+bettysteger@users.noreply.github.com>`
+- [x] 2.2 Write failing `BlockSettings.spec.ts` cases:
+  - the target block's id should be resolved from the reported index via `api.blocks.getIdByIndex`
+  - providers should be called with `{ blockId, blockIndex, tool }` on each open
+  - results should be ordered by `order` then registration, with separators between providers
+  - `undefined`/empty results should contribute nothing
+  - unregister should work
+  - no popover should open when there are no items
+  - `close()` should dispatch closed
+  - the context handed to providers should carry `blockId`, and the spec's rule that handlers resolve positions from it should be covered by the default-block-settings tests
+- [x] 2.3 Add a `UiComponentType.BlockSettings` member in `sdk` and declare it as `BlockSettingsUI`'s `static type` (`EditorjsPluginConstructor` requires an `EntityType` value)
+- [x] 2.4 Implement `BlockSettingsUI` (`static name = 'block-settings'`, `publicApi: { register, close }`) on a ui-kit popover, porting its setup from PR #157's `BlockTunesUI` (`scopeElement: config.holder`, `searchable: false`, `wrapperTag: 'button'`, closed event from `PopoverEvent.Closed`, element handed over via the rendered event)
+- [x] 2.5 Write failing tests, then give the popover an accessible name from a new `messages.ts` entry, and make removed items leave the accessibility tree
+  - The menu is rebuilt from scratch on each open rather than edited in place. `removeItemByName` is ui-kit's only removal and a separator is constructed without params, so it has no name to be removed by; handing a fresh popover the whole item list is what guarantees the previous block's items leave the tree. The swap happens inside the plugin's own holder, so ui-kit's rendered DOM is never touched
+- [x] 2.6 Write a failing test, then make a request with no resolvable block id a no-op (no providers invoked, no popover, no throw)
+- [x] 2.7 Export `BlockSettingsUI` plus the `BlockSettingsAPI`/`BlockSettingsProvider` types from `@editorjs/ui`, and augment `EditorjsPluginApiMap` under `'block-settings'` there — `sdk` stays unaware of individual plugins
+
+## 3. Toolbar settings button
+
+- [x] 3.1 Port the settings button styles from PR #157 (`IconMenuSmall`, the `__settings-button` rule, and `display: flex; align-items: center` on `__actions`). The button itself is rendered by `BlockSettingsUI` and announced with the menu, so `ToolbarUI` mounts it **before** the roving-tabindex initialization and reassigns its single tab stop once it joins
+- [x] 3.2 Take PR #157's fix for `new ToolboxOpenUIEvent('ui:toolbox:open')` passing a string instead of a payload object (`packages/ui/src/Toolbar/Toolbar.ts:151`), with a test that the dispatched event carries an object payload
+  - The string type-checked because the payload interface is empty, so every listener had been receiving `detail: 'ui:toolbox:open'`. The event name was never affected -- it comes from the class -- so nothing downstream had to change with it
+- [x] 3.3 Track the selected block index in `BlockSettingsUI` from `ui:blocks:block-selected` (the toolbar's handler reads only `event.detail.block`), following `ToolboxUI`'s `#selectedBlockIndex`. It belongs to the plugin that owns the button, so the button and the menu cannot come to mean different blocks
+- [x] 3.4 Write failing cases, in `Toolbar.spec.ts` for what the toolbar owns and in `BlockSettings.spec.ts` for what the plugin owns:
+  - both announced elements should be mounted on `ui:block-settings:rendered`, the button as a direct child of the actions container
+  - the toolbar should not reposition while settings are open
+  - exactly one control of the actions container should have `tabindex="0"` after the button joins
+  - the settings button should have an accessible name from `messages.ts` and `aria-haspopup="menu"`
+  - `aria-expanded` should follow the plugin's own open state
+  - the button should be focused before the popover opens
+  - activating the button again should close the menu rather than rebuild it
+- [x] 3.5 Implement the behavior, splitting it as above: mounting, positioning and the tab stop in `ToolbarUI`, the button and its state in `BlockSettingsUI`
+
+## 4. Default block settings plugin
+
+- [x] 4.1 Scaffold `packages/plugins/default-block-settings-plugin` as a full copy of `shortcuts-plugin`'s layout: `package.json` (the same `build`/`build:declaration`/`lint`/`lint:ci`/`lint:fix`/`test`/`test:coverage`/`test:mutations`/`clear` scripts), `tsconfig.json`, `tsconfig.build.json`, `tsconfig.eslint.json`, `eslint.config.mjs`, `jest.config.ts`, `stryker.conf.mjs`, `.gitignore`, `README.md`, `src/index.ts`, `src/index.spec.ts`
+- [x] 4.2 Add `.github/workflows/default-block-settings-plugin.yml` following `shortcuts-plugin.yml` — without it the package is never linted, tested or built in CI
+- [x] 4.3 Depend on `@editorjs/sdk` at runtime and on `@editorjs/ui` as a devDependency for `import type` only, so `api.plugins['block-settings']` typechecks without runtime coupling
+  - `@codexteam/icons` turned out to be a second runtime dependency: the items carry icons, and the package was resolving it through workspace hoisting alone, which would break a standalone install. Declared it, and widened the capability's requirement text, which had said `@editorjs/sdk` was the only one
+- [x] 4.4 Write failing tests:
+  - should register at `order: 1000` on `core:ready`
+  - should stay inert without `block-settings`
+  - move up/down should call `api.blocks.move` and be disabled at the boundaries
+  - handlers should resolve the block's index from `ctx.blockId` at activation, so an insertion above the block while the menu is open still moves the intended block
+  - actions should do nothing when the target block no longer exists
+  - delete should use `confirmation` and call `api.blocks.delete` by block id only on confirm
+- [x] 4.5 Implement `DefaultBlockSettingsPlugin`, porting behavior and test cases from PR #157's internal delete/move-up/move-down tunes (keeping their `getIndexById`-at-activation approach) and adding the delete confirmation they lack. Credit with the `Co-authored-by` line from 2.1
+- [x] 4.6 Register `BlockSettingsUI` and `DefaultBlockSettingsPlugin` in `@editorjs/editorjs`: add `"@editorjs/default-block-settings-plugin": "workspace:^"` to its `package.json`, update the lockfile, extend the `@editorjs/ui` mock factory in `editorjs/src/index.spec.ts` with `BlockSettingsUI`, add a `jest.unstable_mockModule` for the new package, and note that its assertions read `ctor.name` — which for `static name = 'default-block-settings'` is `'default-block-settings'`, not the class name
+- [x] 4.7 Hand-edit `openspec/specs/editorjs-bundle/spec.md`'s Purpose preamble, which enumerates the default plugins — outside any requirement block, so the fold will not rewrite it
+- [x] 4.8 Add `packages/editorjs/e2e/tests/block-settings.spec.ts` using the harness's `mountDocument(page, '?text=Alpha&text=Beta')` fixture: open settings on the second block, move it up, then delete it with confirmation. Confirm `include-e2e: true` is set for the bundle workflow
+
+## 5. Docs and wrap-up
+
+- [x] 5.1 Update `docs/plugins.md` (the block settings API and default-block-settings as the reference "tune") and `docs/events.md` (the `ui:block-settings:*` events)
+- [x] 5.2 Run `yarn lint`, `yarn test`, and the e2e suite. Fix any regressions
+  - Clean: lint and build workspace-wide, 1,099 unit tests, and 92 e2e across Chromium and WebKit. The one `✘` in the e2e run is `aria.spec.ts`'s `test.fail()` case for the unfixed `focus: true` caret todo, which Playwright counts as passing
+- [x] 5.3 Run `openspec validate block-settings-ui --type change` and confirm it passes
+- [x] 5.4 Archive the change, then fill the `## Purpose` of the new `block-settings` and `default-block-settings-plugin` specs from the proposal's intended-Purpose text, which `openspec archive` leaves as a `TBD` placeholder
+
+## 6. Review follow-ups
+
+- [x] 6.1 Write a failing `Blocks.spec.ts` case, then dispatch `BlockSelectedUIEvent` for the caret moving into a block as well as for `mouseenter`. Without it `#selectedBlockIndex` stays `-1` for anyone who never moves a pointer, and the settings button is a control that silently does nothing. Read the caret from the document selection: the editor's own caret state is cleared when focus leaves the editable, which is what reaching for the button does
+- [x] 6.2 Write a failing case, then make the settings button close an open menu instead of rebuilding it, per the menu button pattern. ui-kit closes the popover before the button's own handler runs, so the state has to be read on `mousedown` and tracked by the plugin. Cover it in the e2e suite too, since what is being asserted is a second real click
+- [x] 6.3 Add `getToolByIndex` to `BlocksAPI` (core + sdk) and read the provider context's `tool` through it. `api.document.data` serializes the whole document, and the menu was paying that on every open
+- [x] 6.4 Replace the two `api.document.data.blocks.length` reads in `DefaultBlockSettingsPlugin` with `api.blocks.getBlocksCount()`, for the same reason
+- [x] 6.5 Rename the UI package's `MenuConfig` to `BlockSettingsMenuConfig`: `@editorjs/sdk` already exports an unrelated `MenuConfig`, and the two are not interchangeable
+- [x] 6.6 Make `BlockSettingsUI`, `DefaultBlockSettingsPlugin` and `ToolbarUI` drop their event bus listeners in `destroy()`, and stop the plugin registering a provider after it has been destroyed
+- [x] 6.7 Restore `packages/ui`'s `build:declaration` to a script that emits declarations, now that it has dependencies to build first
+
+## 7. Review follow-ups (second round)
+
+- [x] 7.1 Write a failing `BlockSettings.spec.ts` case for a provider whose promise never settles, then race each provider against a timeout and route the expiry into the existing skip-and-log path. `#collectItems` awaits `Promise.all`, so one hanging provider means the menu never opens — and never opens again, because every later attempt waits on the same provider
+- [x] 7.2 Write a failing case, then make `#close()` abandon a build in flight by bumping `#openToken` before its open-state guard. A `close()` during the build window is currently ignored, because `#isOpen` is only set once the providers have returned, and the menu then opens after the close
+- [x] 7.3 Reconcile `design.md` with the specs on who owns the settings button: the specs and the code give the button, its ARIA state and the block it acts on to `BlockSettingsUI`, while the design doc still has `ToolbarUI` owning them and dispatching `ui:block-settings:open`. Rename its remaining `MenuConfig` references to `BlockSettingsMenuConfig`
+
+## 8. Review follow-ups (third round)
+
+- [x] 8.1 Write a failing case, then abandon a build in flight from `#handleClosed` as well as `#close()`. Escape and a click outside reach it straight from the popover, so a menu dismissed while a replacement was being built reappeared when that replacement's providers returned
+- [x] 8.2 Write a failing case, then abandon a build when the selection leaves the block it is for. `#isOpen` is false until the providers return, so selection is still being followed, and the build would open one block's actions beside another
+- [x] 8.3 Write a failing case, then record the toggle's state on the `keydown` of Enter and Space as well as on `mousedown`. A keyboard activation sends a `click` with no pointer events, so the snapshot always said "closed". Note in the PR that the browser path is blocked earlier: ui-kit's flipper calls `preventDefault()` on that Enter, so no click is produced at all and the menu cannot be dismissed from the button — that half belongs upstream
+- [x] 8.4 Give the settings button `type="button"`, so an editor mounted inside a form is not submitted when the menu opens
+- [x] 8.5 Write a failing `Blocks.spec.ts` case, then stop deduplicating pointer entry, keeping it for caret moves. `mouseenter` only fires on crossing into a block, and suppressing a repeat stranded the toolbar and the settings menu, which both ignore selection while the menu is open
+
+## 9. Review follow-ups (fourth round)
+
+- [x] 9.1 Write a failing `BlockSettings.spec.ts` case for a block hovered while the toolbox is open, then stop following block selection for as long as the toolbox holds the toolbar in place, as the open menu already does. The toolbar freezes on `#isToolboxOpen` because the toolbox popover renders inside it; nothing told the settings plugin, so the button stayed beside one block while its target moved to another — and `Delete` then removed the block the user was not pointing at
+- [x] 9.2 Write a failing case for an item whose `isActive` throws, then call those callbacks inside the provider's own `try`/`catch` and hand ui-kit the resolved values. ui-kit reads `isActive` while it renders the item, which happens in `#renderPopover`, long after `#collectItems` has returned: the throw aborted the popover, so one bad callback cost every provider's items and the menu did not open at all. Resolved at any depth of nested items and on an item's confirmation state, which render the same way; nothing is lost by resolving early, since the popover is rebuilt on every open
+
+## 10. Review follow-ups (fifth round)
+
+- [x] 10.1 Write a failing `BlockSettings.spec.ts` case for an Enter whose default was prevented before it reached the button, then dismiss the menu from the keydown handler when that is so, and restore the e2e case 8.3 dropped. 8.3 found that ui-kit's flipper claims the key for the open menu and suppresses the click, and concluded the remaining half belonged upstream — which was wrong: the handler still receives the keydown, and `defaultPrevented` identifies exactly the activation that will produce no click, so the dismissal has somewhere to live. A real-browser probe confirms the shape in both Chromium and WebKit: focus stays on the button, the keydown reaches it with the default already prevented in the capture phase, and no click ever arrives. The click stays the primary path, so the pointer and open-from-keyboard behaviour is untouched, and the unit helper that dispatches a keydown and a click together keeps meaning what it did
+
+## 11. Review follow-ups (sixth round)
+
+- [x] 11.1 Write failing `BlockSettings.spec.ts` cases for a block inserted above the target and for the target being removed, then hold the target by block id and resolve its position when the menu opens. The target was a position, updated only by `ui:blocks:block-selected`, so a collaborator, an undo or a move inserting above it left the button acting on whichever block slid into that position -- with `Delete` among the items. `design.md` said the plugin resolves the id from the index it last saw; it is the other way round now, and `getIndexById` returning `-1` for a block that is gone lands in the existing "no block" path
+- [x] 11.2 Write failing `Blocks.selection.spec.ts` cases for a block landing on the reported position and for one added above the caret, then recognise a repeat as the same block at the same position rather than the position alone. `#addBlock`/`#removeBlock` splice the block list without touching the recorded position, so after a removal the next block to take that number read as already reported and the caret arriving there was announced to nobody. Keeping the position in the comparison matters as much as adding the block: the toolbar takes its vertical position from this event and nothing else, so a block pushed down the page by an insert above it has to be re-announced even though the selection never moved
+- [x] 11.3 Write failing `Toolbar.spec.ts` and `BlockSettings.spec.ts` cases for a selection arriving while the toolbar is held, then give `BlocksUI` a `publicApi` -- `api.plugins.blocksUI.getSelectedBlock()` -- and have both consumers ask it once nothing is holding them. `BlocksUI` announces a selection once and records it, and both consumers deliberately ignore selections while frozen, so the announcement was destroyed: clicking into another block moves the caret on mousedown while the popover closes on the click, leaving the toolbar and the target on the block the caret had left. The review suggested re-announcing from `BlocksUI` or resetting its deduplication, both of which make the producer track which consumers are busy; exposing the selection as readable state instead leaves that knowledge with the consumers, which is also what lets each keep its own rule for the frozen window. 11.2 is what makes the API writable at all: with a position for state there is no correct answer to give, and the position is resolved on each call so an insert above the reported block cannot leave it naming someone else's slot. Nothing is returned once that block is removed, which is also why `#removeBlock` needs no cleanup of its own
+- [x] 11.4 Add `static name = 'blocksUI'` to `BlocksUI` and augment `EditorjsPluginApiMap` from its own module, as `BlockSettingsUI` does for `block-settings`. The 8.3 and 9.1 tests expected a skipped selection to be dropped; the invariant they were written for -- the button and the block it acts on naming the same block -- still holds, since both consumers now read the same answer
+- [x] 11.5 Write a failing `BlockSettings.spec.ts` case for a menu rebuilt while open, then unsubscribe from the popover's `Closed` before destroying it. `PopoverDesktop.destroy()` hides before tearing down and hiding emits `Closed`, so the popover being replaced reported the menu as closed and open again on every rebuild, flipping `aria-expanded` with it. Worse since 11.3: the toolbar catches up with the selection on a `closed`, so a spurious one could move it mid-rebuild
+- [x] 11.6 Write a failing `BlockSettings.spec.ts` case for an item whose `onActivate` throws, then wrap that callback where `isActive` is already resolved, at every depth and on the confirmation state. ui-kit calls the handler from its own click handler and honours `closeOnActivate` only after it returns (`e.handleClick(), ..., e.closeOnActivate === !0 && (this.hide(), ...)`), so a throw abandoned the rest of the activation. Wrapped rather than resolved, since unlike `isActive` it cannot be called early. Only the report is asserted: jsdom swallows a listener's exception, so neither the escape nor the abandoned close is observable there -- a first attempt to assert the menu still closes passed before the fix and was dropped as a false positive
+
+- [x] 11.7 Add `options.timeout` to `register`, defaulting to 500ms rather than the 2000ms the constant carried, and document on the provider type that the menu shows nothing until every provider has answered. The budget belongs with the provider it contains, not with the editor: a slow provider is a property of that provider. Both the longer and the shorter budget are covered by cases that fail when the option is ignored -- the shorter one has to answer inside the default, or it would be skipped either way
+
+- [x] 11.8 Document on `BlockSettingsUI` and in the spec that it has to be registered after whatever mounts it. `ui:block-settings:rendered` is dispatched once from the constructor and never replayed, so a host registered later never hears it and both elements stay off the page silently. Documented rather than fixed: `publicApi` is registered right after each plugin's constructor, so a `getElements()` for late mounting would work, but this is one instance of the general problem already on the board as "UI component registered before its parent never mounts", and fixing it here for this pair alone would leave the rest of it
+
+- [x] 11.9 Make `tool` optional on `BlockSettingsContext` instead of falling back to `''`. The id and the tool are read from the same position, so an undefined tool means the editor's view of the block disagrees with the Model's; an empty name matched no provider while looking like an answer. Not opening at all was the other option in the review, and was rejected: the block does exist, so refusing the menu turns a disagreement the user cannot see into one they cannot work around
+
+- [x] 11.10 Say on `register` and in the spec that unregistering takes effect from the next open, since providers are asked as the menu is built and one already on screen keeps the items it was built with
+
+- [x] 11.11 Move the item titles out of `#items` into a `messages.ts` of the plugin's own, as `@editorjs/ui` keeps its own strings. Plugin config was the other suggestion and is left open: a catalogue is where localisation would read from either way, and it needs no options plumbing to be worth having now. The plugin's own tests go on asserting the literal titles, since those are what a user reads
+
+- [x] 11.12 Give the toolbar's plus button `type="button"`, as the settings button already had. Both sit in the same container and an editor mounted inside a form was posted by whichever of them still defaulted to `submit`
+- [x] 11.13 Rewrite the item walk over the `PopoverItemParams` union instead of a `Record<string, unknown>`, as the review asked. One cast is left, on the confirmation state, since the walk returns the wide union while that field holds the base variant. Longer than the record form by half again -- five branches, two helpers, and a named patch type, because the lint config rejects an inline object return type -- but the wrapper's parameters are typed rather than `unknown[]`, a misspelled key no longer compiles, and the variants that forbid `onActivate` are honoured by the branching rather than written through a string key. The first draft dropped the `typeof` guard on `onActivate`: ui-kit optional-chains it, so an item without one at runtime is legal, and it would have been given a wrapper that throws on click
+- [x] 11.14 Cover the fourth of the review's missing tests: the caret leaving the menu's block while it is open, and the menu then reopened from the keyboard rather than the pointer. The other three arrived with 11.1, 11.5 and 11.6

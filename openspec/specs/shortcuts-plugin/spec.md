@@ -52,7 +52,7 @@ The system SHALL provide a `ShortcutsPlugin` (an `EditorjsPlugin` with `name` `s
 - **WHEN** `destroy()` is called
 - **THEN** it clears the registered shortcuts so subsequent keydowns dispatch nothing
 
-Shortcuts for block tools and block tunes (a `shortcuts` map under `options.plugins.shortcuts`) are reserved for future work and not yet implemented.
+Shortcuts for block tools and block settings items (a `shortcuts` map under `options.plugins.shortcuts`) are reserved for future work and not yet implemented.
 
 Implemented in `src/index.ts`, validated by its co-located `.spec.ts`.
 

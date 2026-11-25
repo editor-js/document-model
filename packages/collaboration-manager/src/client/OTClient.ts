@@ -18,7 +18,8 @@ export class OTClient {
   #rev: number = 0;
 
   /**
-   * Array of pending operations to send
+   * Operations the server has not acknowledged yet, oldest first. The one being sent stays at
+   * the head until its acknowledgement, so remote operations are transformed against it too
    */
   #pendingOperations: Operation[] = [];
 
@@ -26,6 +27,16 @@ export class OTClient {
    * Array of resolved operations
    */
   #resolvedOperations: Operation[] = [];
+
+  /**
+   * Releases every socket listener on close, including one-shot handlers still awaiting a reply
+   */
+  readonly #controller = new AbortController();
+
+  /**
+   * The socket itself, so close() can close it even before it opens
+   */
+  #socket: WebSocket;
 
   /**
    * Promise resolving the WebSocket client
@@ -66,12 +77,16 @@ export class OTClient {
     this.#userId = userId;
     this.#onRemoteOperation = onRemoteOperation;
     this.#onHandshake = onHandshake;
+    const ws = new WebSocket(serverAddr);
+
+    this.#socket = ws;
+
     this.#ws = new Promise((resolve) => {
-      const ws = new WebSocket(serverAddr);
+      const { signal } = this.#controller;
 
       ws.addEventListener('open', () => {
         resolve(ws);
-      });
+      }, { signal });
 
       ws.addEventListener('message', (message) => {
         try {
@@ -79,7 +94,7 @@ export class OTClient {
         } catch (e) {
           console.error('[OTClient] Couldn\'t process a message', message.data);
         }
-      });
+      }, { signal });
     });
   }
 
@@ -113,7 +128,7 @@ export class OTClient {
         }
       };
 
-      ws.addEventListener('message', onMessage);
+      ws.addEventListener('message', onMessage, { signal: this.#controller.signal });
     });
 
     ws.send(JSON.stringify({
@@ -143,9 +158,8 @@ export class OTClient {
    * Closes websocket connection
    */
   public close(): void {
-    void this.#ws.then((ws) => {
-      ws.close();
-    });
+    this.#controller.abort();
+    this.#socket.close();
   }
 
   /**
@@ -156,17 +170,25 @@ export class OTClient {
       return;
     }
 
-    const nextOperation = this.#pendingOperations.shift();
-
-    if (!nextOperation) {
+    if (this.#pendingOperations.length === 0) {
       this.#awaitingAcknowledgement = false;
 
       return;
     }
 
-    const ws = await this.#ws;
+    /**
+     * Read, not removed: an operation is pending until acknowledged, and dropping it here left the round trip
+     * unguarded, so a remote write to the same value was applied over the local one and never corrected
+     */
+    const nextOperation = this.#pendingOperations[0];
 
+    /**
+     * Claimed before the first await, so that a concurrent `send` sees the flag and queues
+     * instead of reading the same head operation and sending it twice
+     */
     this.#awaitingAcknowledgement = true;
+
+    const ws = await this.#ws;
 
     /**
      * Handles acknowledgment response and sends the next operation
@@ -184,6 +206,11 @@ export class OTClient {
           return;
         }
 
+        /**
+         * Acknowledged, so it stops being pending. The server orders its messages, so whatever arrives after
+         * this was ordered after the local operation, and whatever arrived before it was ordered before
+         */
+        this.#pendingOperations.shift();
         this.#resolvedOperations.push(nextOperation);
 
         ws.removeEventListener('message', onMessage);
@@ -197,7 +224,7 @@ export class OTClient {
       }
     };
 
-    ws.addEventListener('message', onMessage);
+    ws.addEventListener('message', onMessage, { signal: this.#controller.signal });
 
     ws.send(JSON.stringify({
       type: MessageType.Operation,

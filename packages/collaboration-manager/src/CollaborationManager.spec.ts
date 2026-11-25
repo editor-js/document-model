@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
-import { createDataKey, EventType, Index } from '@editorjs/sdk';
+import { createDataKey, createPluginDataName, EventType, Index } from '@editorjs/sdk';
 import { EditorJSModel } from '@editorjs/model';
 import { CoreEventType, type CoreConfig } from '@editorjs/sdk';
 import { beforeAll, jest } from '@jest/globals';
@@ -67,7 +67,7 @@ describe('CollaborationManager', () => {
         identifier: documentId,
         blocks: [expect.objectContaining({
           name: 'paragraph',
-          tunes: {},
+          plugins: {},
           data: {
             text: {
               $t: 't',
@@ -109,7 +109,7 @@ describe('CollaborationManager', () => {
         identifier: documentId,
         blocks: [expect.objectContaining({
           name: 'paragraph',
-          tunes: {},
+          plugins: {},
           data: {
             text: {
               $t: 't',
@@ -147,7 +147,7 @@ describe('CollaborationManager', () => {
         identifier: documentId,
         blocks: [expect.objectContaining({
           name: 'paragraph',
-          tunes: {},
+          plugins: {},
           data: {
             text: {
               $t: 't',
@@ -221,7 +221,7 @@ describe('CollaborationManager', () => {
         identifier: documentId,
         blocks: [expect.objectContaining({
           name: 'paragraph',
-          tunes: {},
+          plugins: {},
           data: {
             text: {
               $t: 't',
@@ -313,7 +313,7 @@ describe('CollaborationManager', () => {
         identifier: documentId,
         blocks: [expect.objectContaining({
           name: 'paragraph',
-          tunes: {},
+          plugins: {},
           data: {
             text: {
               $t: 't',
@@ -362,7 +362,7 @@ describe('CollaborationManager', () => {
         identifier: documentId,
         blocks: [expect.objectContaining({
           name: 'paragraph',
-          tunes: {},
+          plugins: {},
           data: {
             text: {
               $t: 't',
@@ -376,6 +376,67 @@ describe('CollaborationManager', () => {
         })],
         properties: {},
       });
+    });
+  });
+
+  describe('plugin data operations', () => {
+    const pluginName = createPluginDataName('anchors');
+
+    /**
+     * Creates a model with one paragraph block
+     */
+    function createModel(): InstanceType<typeof EditorJSModel> {
+      const model = new EditorJSModel(userId, { identifier: documentId });
+
+      model.initializeDocument({
+        blocks: [{
+          name: 'paragraph',
+          data: {},
+        }],
+      });
+
+      return model;
+    }
+
+    it('should turn a plugin data change into a Modify operation instead of logging an unknown event', () => {
+      const model = createModel();
+      const { manager } = createManager(config as Required<CoreConfig>, model);
+      const transformSpy = jest.spyOn(UndoRedoManager.prototype, 'transformStacks');
+
+      /**
+       * A change by another user takes the remote path, where the operation built from the event
+       * is handed to the undo/redo stacks — which is observable without a connected client.
+       */
+      model.updatePluginData('another-user', 0, pluginName, { visible: false });
+
+      expect(transformSpy).toHaveBeenCalledTimes(1);
+
+      const operation = transformSpy.mock.calls[0][0];
+
+      expect(operation.type).toBe(OperationType.Modify);
+      expect(operation.data).toEqual({ payload: false,
+        prevPayload: undefined });
+      expect(operation.index.serialize()).toContain('"k":"plugin"');
+
+      transformSpy.mockRestore();
+      manager.destroy();
+    });
+
+    it('should apply a remote plugin data operation to the model', () => {
+      const model = createModel();
+      const { manager } = createManager(config as Required<CoreConfig>, model);
+
+      manager.applyOperation(new Operation(
+        OperationType.Modify,
+        Index.pluginData(0, pluginName, 'visible'),
+        { payload: false,
+          prevPayload: undefined },
+        'remote-user'
+      ));
+
+      expect(model.serialized.blocks[0].plugins?.[pluginName]).toEqual({ visible: false });
+
+      manager.destroy();
     });
   });
 
@@ -414,7 +475,7 @@ describe('CollaborationManager', () => {
         identifier: documentId,
         blocks: [expect.objectContaining({
           name: 'paragraph',
-          tunes: {},
+          plugins: {},
           data: {
             text: {
               $t: 't',
@@ -457,7 +518,7 @@ describe('CollaborationManager', () => {
         identifier: documentId,
         blocks: [expect.objectContaining({
           name: 'paragraph',
-          tunes: {},
+          plugins: {},
           data: {
             text: {
               $t: 't',
@@ -501,7 +562,7 @@ describe('CollaborationManager', () => {
         identifier: documentId,
         blocks: [expect.objectContaining({
           name: 'paragraph',
-          tunes: {},
+          plugins: {},
           data: {
             text: {
               $t: 't',
@@ -546,7 +607,7 @@ describe('CollaborationManager', () => {
         identifier: documentId,
         blocks: [expect.objectContaining({
           name: 'paragraph',
-          tunes: {},
+          plugins: {},
           data: {
             text: {
               $t: 't',
@@ -624,7 +685,7 @@ describe('CollaborationManager', () => {
         identifier: documentId,
         blocks: [expect.objectContaining({
           name: 'paragraph',
-          tunes: {},
+          plugins: {},
           data: {
             text: {
               $t: 't',
@@ -675,7 +736,7 @@ describe('CollaborationManager', () => {
         identifier: documentId,
         blocks: [expect.objectContaining({
           name: 'paragraph',
-          tunes: {},
+          plugins: {},
           data: {
             text: {
               $t: 't',
@@ -730,7 +791,7 @@ describe('CollaborationManager', () => {
         identifier: documentId,
         blocks: [expect.objectContaining({
           name: 'paragraph',
-          tunes: {},
+          plugins: {},
           data: {
             text: {
               $t: 't',
@@ -757,7 +818,7 @@ describe('CollaborationManager', () => {
             fragments: [],
           },
         },
-        tunes: {},
+        plugins: {},
       };
 
       model.initializeDocument({
@@ -792,7 +853,7 @@ describe('CollaborationManager', () => {
           fragments: [],
         },
       },
-      tunes: {},
+      plugins: {},
     };
 
     model.initializeDocument({
@@ -830,7 +891,7 @@ describe('CollaborationManager', () => {
           fragments: [],
         },
       },
-      tunes: {},
+      plugins: {},
     };
 
     model.initializeDocument({
@@ -871,7 +932,7 @@ describe('CollaborationManager', () => {
           fragments: [],
         },
       },
-      tunes: {},
+      plugins: {},
     };
 
     model.initializeDocument({
@@ -941,7 +1002,7 @@ describe('CollaborationManager', () => {
       identifier: documentId,
       blocks: [expect.objectContaining({
         name: 'paragraph',
-        tunes: {},
+        plugins: {},
         data: {
           text: {
             $t: 't',
@@ -993,7 +1054,7 @@ describe('CollaborationManager', () => {
       identifier: documentId,
       blocks: [expect.objectContaining({
         name: 'paragraph',
-        tunes: {},
+        plugins: {},
         data: {
           text: {
             $t: 't',
@@ -1030,7 +1091,7 @@ describe('CollaborationManager', () => {
       identifier: documentId,
       blocks: [expect.objectContaining({
         name: 'paragraph',
-        tunes: {},
+        plugins: {},
         data: {
           text: {
             $t: 't',
@@ -1124,7 +1185,7 @@ describe('CollaborationManager', () => {
         identifier: documentId,
         blocks: [expect.objectContaining({
           name: 'paragraph',
-          tunes: {},
+          plugins: {},
           data: {
             text: {
               $t: 't',
@@ -1165,7 +1226,7 @@ describe('CollaborationManager', () => {
         identifier: documentId,
         blocks: [expect.objectContaining({
           name: 'paragraph',
-          tunes: {},
+          plugins: {},
           data: {
             text: {
               $t: 't',
@@ -1233,7 +1294,7 @@ describe('CollaborationManager', () => {
         identifier: documentId,
         blocks: [expect.objectContaining({
           name: 'paragraph',
-          tunes: {},
+          plugins: {},
           data: {
             text: {
               $t: 't',
@@ -1296,7 +1357,7 @@ describe('CollaborationManager', () => {
         identifier: documentId,
         blocks: [expect.objectContaining({
           name: 'paragraph',
-          tunes: {},
+          plugins: {},
           data: {
             text: {
               $t: 't',
@@ -1349,7 +1410,7 @@ describe('CollaborationManager', () => {
         identifier: documentId,
         blocks: [expect.objectContaining({
           name: 'paragraph',
-          tunes: {},
+          plugins: {},
           data: {
             text: {
               $t: 't',
@@ -1364,18 +1425,50 @@ describe('CollaborationManager', () => {
   });
 
   describe('destroy', () => {
-    it('should unsubscribe model and core event listeners', () => {
+    it('should unsubscribe from model updates', () => {
       const model = new EditorJSModel(userId, { identifier: documentId });
       const removeModelListenerSpy = jest.spyOn(model, 'removeEventListener');
-      const { manager, eventBus } = createManager(config as Required<CoreConfig>, model);
-      const removeEventBusListenerSpy = jest.spyOn(eventBus, 'removeEventListener');
+      const { manager } = createManager(config as Required<CoreConfig>, model);
 
       manager.destroy();
 
       expect(removeModelListenerSpy).toHaveBeenCalledWith(EventType.Changed, expect.any(Function));
-      expect(removeEventBusListenerSpy).toHaveBeenCalledWith(`core:${CoreEventType.Undo}`, expect.any(Function));
-      expect(removeEventBusListenerSpy).toHaveBeenCalledWith(`core:${CoreEventType.Redo}`, expect.any(Function));
-      expect(removeEventBusListenerSpy).toHaveBeenCalledWith(`core:${CoreEventType.Ready}`, expect.any(Function));
+    });
+
+    it('should stop handling core undo and redo events', () => {
+      const model = new EditorJSModel(userId, { identifier: documentId });
+      const { manager, eventBus } = createManager(config as Required<CoreConfig>, model);
+      const undo = jest.spyOn(manager, 'undo');
+      const redo = jest.spyOn(manager, 'redo');
+
+      manager.destroy();
+
+      const undoEvent = new CustomEvent(`core:${CoreEventType.Undo}`, { cancelable: true });
+      const redoEvent = new CustomEvent(`core:${CoreEventType.Redo}`, { cancelable: true });
+
+      eventBus.dispatchEvent(undoEvent);
+      eventBus.dispatchEvent(redoEvent);
+
+      expect(undo).not.toHaveBeenCalled();
+      expect(redo).not.toHaveBeenCalled();
+      expect(undoEvent.defaultPrevented).toBe(false);
+      expect(redoEvent.defaultPrevented).toBe(false);
+    });
+
+    it('should not connect when the editor becomes ready after destroy', async () => {
+      const model = new EditorJSModel(userId, { identifier: documentId });
+      const { manager, eventBus } = createManager({
+        ...config,
+        collaborationServer: 'ws://test-collab.invalid/document',
+      } as Required<CoreConfig>, model);
+      const connectSpy = jest.spyOn(OTClient.prototype, 'connectDocument');
+
+      manager.destroy();
+      eventBus.dispatchEvent(new CustomEvent(`core:${CoreEventType.Ready}`));
+      await Promise.resolve();
+
+      expect(connectSpy).not.toHaveBeenCalled();
+      connectSpy.mockRestore();
     });
 
     it('should close ot client connection', async () => {

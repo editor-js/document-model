@@ -55,14 +55,37 @@ runs:
 
           core.setOutput('message', processMutationReport('mutation-report', `${process.env.WORKING_DIR}/reports/mutation/mutation.json`, 'changed-files.json', process.env.PR_NUMBER, process.env.PACKAGE_NAME));
 
+    # Fork PRs get a read-only GITHUB_TOKEN on `pull_request`, so posting the comment fails with a
+    # 403. Put the report in the job summary instead.
+    - name: Write report to job summary
+      if: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
+      shell: bash
+      env:
+        MUTATION_MESSAGE: ${{ steps.process_mutation_report.outputs.message }}
+        UNIT_TEST_MESSAGE: ${{ steps.process_test_report.outputs.message }}
+      run: |
+        {
+          echo '## Unit Tests'
+          echo '| Package | Coverage | Delta |'
+          echo '| --- | --- | --- |'
+          echo "$UNIT_TEST_MESSAGE"
+          echo
+          echo '## Mutation Tests'
+          echo '| Package | Mutation score | Dashboard URL |'
+          echo '| --- | --- | --- |'
+          echo "$MUTATION_MESSAGE"
+        } >> "$GITHUB_STEP_SUMMARY"
+
     - name: Acquire comment-update lock
       id: acquire_lock
+      if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
       # Pinned to a full SHA (v3.3.2) rather than the moving v3 tag.
       uses: softprops/turnstyle@afaccda0f3c0136fb7cb4a734b9b96be03599948 # v3.3.2
       with:
         queue-name: aggregated-comment-${{ github.event.pull_request.number }}
 
     - name: Create or update PR comment with report
+      if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
       uses: actions/github-script@v9
       env:
         PACKAGE: ${{ inputs.package-name }}

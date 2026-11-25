@@ -1,5 +1,5 @@
 import type { EditorDocument } from '../../EditorDocument/index.js';
-import type { BlockId, BlockNodeDataSerialized, BlockTuneSerialized } from '@editorjs/model-types';
+import type { BlockId, BlockNodeDataSerialized, PluginDataSerialized } from '@editorjs/model-types';
 
 export interface BlockNodeConstructorParameters {
   /**
@@ -24,7 +24,7 @@ export interface BlockNodeConstructorParameters {
   parent?: EditorDocument;
 
   /**
-   * The BlockTunes associated with the BlockNode
+   * Per-plugin data associated with the BlockNode, keyed by plugin name
    */
-  tunes?: Record<string, BlockTuneSerialized>;
+  plugins?: Record<string, PluginDataSerialized>;
 }

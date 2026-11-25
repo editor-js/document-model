@@ -10,7 +10,7 @@ Each `BlockNode` contains keyed data nodes:
 
 - `TextNode`: rich text. Inline formatting is stored as spans: pieces of text with the set of formats (inline tool + data) applied to every character. Spans are canonical (no empty spans, neighbours never have equal format sets, at most one format per tool), so the same formatting always gives the same state. `getFragments()` derives maximal fragments from the spans, sorted by start, then end descending, then tool name.
 - `ValueNode<T>`: non-text typed value for tools.
-- `BlockTune`: per-block tune configuration.
+- `PluginDataNode`: per-block data owned by a plugin, keyed by the plugin's `name`.
 
 ## Inline formatting terms
 
@@ -57,7 +57,7 @@ IndexBase (abstract)
 ├── PropertyIndex   — top-level document property
 ├── BlockIndex      — a single block
 ├── DataIndex       — a data key inside a block
-├── TuneIndex       — a key inside a block tune
+├── PluginDataIndex — a key inside one plugin's per-block data
 └── TextIndex       — character range(s) inside a text node
 ```
 
@@ -84,7 +84,7 @@ Index.document(documentId)
 Index.property(name, documentId?)
 Index.block(blockIndex, documentId?)
 Index.data(blockIndex, dataKey, documentId?)
-Index.tune(blockIndex, tuneName, tuneKey, documentId?)
+Index.pluginData(blockIndex, pluginName, pluginKey, documentId?)
 Index.text(segments)
 Index.parse(serialized)        // deserialize from string
 ```
